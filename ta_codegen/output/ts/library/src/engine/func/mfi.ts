@@ -91,7 +91,7 @@ export * from '../../func/mfi.ts';
  * const { begIdx, values } = mfi({ high, low, close, volume }, {
  *   timePeriod: 14,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`ad`](https://ta-lib.org/functions/ad)

@@ -524,7 +524,7 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  *   fastPeriod: 9,
  *   slowPeriod: 25,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`cvi`](https://ta-lib.org/functions/cvi)
  * @see [`atr`](https://ta-lib.org/functions/atr)
@@ -1140,9 +1140,9 @@ export function massiOpenAndFillPositional(
  * import { massiOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = massiOpen({ high, low }, { fastPeriod: 9, slowPeriod: 25 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1183,9 +1183,9 @@ export function massiOpen(prices: { open?: ArrayLike<number> | undefined; high: 
  * import { massiOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = massiOpenAndFill({ high, low }, {
  *   fastPeriod: 9,
  *   slowPeriod: 25,

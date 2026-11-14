@@ -599,14 +599,18 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series = vec![0.0; 252]; // your data, oldest first
-    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series: Vec<f64> = (0..252)
+    /// #     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut sine = vec![0.0; 252];
     /// let mut lead_sine = vec![0.0; 252];
     ///
     /// let core = Core::new();
     /// let range = core.ht_sine(0, series.len() - 1, &series, &mut sine, &mut lead_sine)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last sine = {}", range.count, range.beg_idx, sine[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("sine = [{:.4}, ..., {:.4}]", sine[0], sine[range.count - 1]);
+    /// println!("lead_sine = [{:.4}, ..., {:.4}]", lead_sine[0], lead_sine[range.count - 1]);
     /// # assert!(sine[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
@@ -1500,7 +1504,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.ht_sine_open(&series).expect("enough history");
@@ -1532,7 +1538,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_sine = vec![0.0; 252];

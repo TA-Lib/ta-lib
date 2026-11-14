@@ -314,7 +314,7 @@ export function momDisplayShift(outputIdx: number, options?: MomOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = mom(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`roc`](https://ta-lib.org/functions/roc)
  * @see [`rocp`](https://ta-lib.org/functions/rocp)
@@ -680,7 +680,7 @@ export function momOpenAndFillPositional(
  * import { momOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = momOpen(series, { timePeriod: 10 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -716,7 +716,7 @@ export function momOpen(real: ArrayLike<number>, options?: MomOptions): MomStrea
  * import { momOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = momOpenAndFill(series, { timePeriod: 10 });
  * // values[k] is the value at bar begIdx + k
  * ```

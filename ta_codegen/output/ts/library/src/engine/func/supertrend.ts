@@ -119,7 +119,9 @@ const WASM_FROM_BARS = 1000;
  *   timePeriod: 10,
  *   multiplier: 3,
  * });
- * console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
+ * console.log(outSupertrend.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSupertrend = [' + outSupertrend[0].toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1].toFixed(4) + ']');
+ * console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

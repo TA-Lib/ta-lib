@@ -576,7 +576,7 @@ export function tsiDisplayShift(outputIdx: number, options?: TsiOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = tsi(series, { firstPeriod: 25, secondPeriod: 13 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`smi`](https://ta-lib.org/functions/smi)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -1325,7 +1325,7 @@ export function tsiOpenAndFillPositional(
  * import { tsiOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = tsiOpen(series, { firstPeriod: 25, secondPeriod: 13 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -1362,7 +1362,7 @@ export function tsiOpen(real: ArrayLike<number>, options?: TsiOptions): TsiStrea
  * import { tsiOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = tsiOpenAndFill(series, {
  *   firstPeriod: 25,
  *   secondPeriod: 13,

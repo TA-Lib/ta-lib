@@ -446,7 +446,10 @@ export function donchianDisplayShift(outputIdx: number, options?: DonchianOption
  *   outMiddleBand,
  *   outLowerBand,
  * } = donchian({ high, low }, { timePeriod: 20 });
- * console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
+ * console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
+ * console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
+ * console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
+ * console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
  * ```
  */
 export function donchian(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianResult {
@@ -1111,9 +1114,9 @@ export function donchianOpenAndFillPositional(
  * import { donchianOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = donchianOpen({ high, low }, { timePeriod: 20 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1153,9 +1156,9 @@ export function donchianOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * import { donchianOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

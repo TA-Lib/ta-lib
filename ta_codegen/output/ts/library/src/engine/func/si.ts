@@ -90,7 +90,7 @@ export * from '../../func/si.ts';
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = si({ open, high, low, close }, { limitMove: 3 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`asi`](https://ta-lib.org/functions/asi)
  * @see [`wad`](https://ta-lib.org/functions/wad)

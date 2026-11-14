@@ -488,7 +488,10 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  *   outTrend,
  *   outPivotIdx,
  * } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
- * console.log(outZigZag.length + ' values from bar ' + begIdx + '; last outZigZag = ' + outZigZag[outZigZag.length - 1]);
+ * console.log(outZigZag.length + ' values from bar ' + begIdx + ':');
+ * console.log('outZigZag = [' + outZigZag[0].toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1].toFixed(4) + ']');
+ * console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
+ * console.log('outPivotIdx = [' + outPivotIdx[0] + ', ..., ' + outPivotIdx[outPivotIdx.length - 1] + ']');
  * ```
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`supertrend`](https://ta-lib.org/functions/supertrend)
@@ -1122,9 +1125,9 @@ export function zigzagOpenAndFillPositional(
  * import { zigzagOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = zigzagOpen({ high, low }, { sensitivity: 5, minTrendLength: 1 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1165,9 +1168,9 @@ export function zigzagOpen(prices: { open?: ArrayLike<number> | undefined; high:
  * import { zigzagOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

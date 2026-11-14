@@ -96,7 +96,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_MAMA( 0, n - 1, series, 0.5, 0.05, &outBegIdx, &outNBElement, mama, fama );
-printf( "%d values from bar %d; last mama = %f\n", outNBElement, outBegIdx, mama[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "mama = [%.4f, ..., %.4f]\n", mama[0], mama[outNBElement - 1] );
+printf( "fama = [%.4f, ..., %.4f]\n", fama[0], fama[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -110,7 +112,9 @@ let mut fama = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.mama(0, series.len() - 1, &series, 0.5, 0.05, &mut mama, &mut fama)?;
-println!("{} values from bar {}; last mama = {}", range.count, range.beg_idx, mama[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("mama = [{:.4}, ..., {:.4}]", mama[0], mama[range.count - 1]);
+println!("fama = [{:.4}, ..., {:.4}]", fama[0], fama[range.count - 1]);
 ```
 
 @tab Java
@@ -118,6 +122,7 @@ println!("{} values from bar {}; last mama = {}", range.count, range.beg_idx, ma
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] mama = new double[252];
@@ -125,7 +130,9 @@ double[] fama = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.mama(0, series.length - 1, series, 0.5, 0.05, mama, fama);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last mama = " + mama[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "mama = [%.4f, ..., %.4f]%n", mama[0], mama[r.count() - 1]);
+System.out.printf(Locale.ROOT, "fama = [%.4f, ..., %.4f]%n", fama[0], fama[r.count() - 1]);
 ```
 
 @tab C\#
@@ -140,7 +147,9 @@ var fama = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Mama(0, series.Length - 1, series, 0.5, 0.05, mama, fama);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last mama = {mama[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"mama = [{mama[0]:F4}, ..., {mama[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"fama = [{fama[0]:F4}, ..., {fama[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -154,7 +163,9 @@ const { begIdx, outMama, outFama } = mama(series, {
   fastLimit: 0.5,
   slowLimit: 0.05,
 });
-console.log(outMama.length + ' values from bar ' + begIdx + '; last outMama = ' + outMama[outMama.length - 1]);
+console.log(outMama.length + ' values from bar ' + begIdx + ':');
+console.log('outMama = [' + outMama[0].toFixed(4) + ', ..., ' + outMama[outMama.length - 1].toFixed(4) + ']');
+console.log('outFama = [' + outFama[0].toFixed(4) + ', ..., ' + outFama[outFama.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -176,7 +187,9 @@ r, err := core.MAMA(0, len(series)-1, series, 0.5, 0.05, mama, fama)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last mama = %.4f\n", r.NBElement, r.BegIdx, mama[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("mama = [%.4f, ..., %.4f]\n", mama[0], mama[r.NBElement-1])
+fmt.Printf("fama = [%.4f, ..., %.4f]\n", fama[0], fama[r.NBElement-1])
 ```
 
 :::

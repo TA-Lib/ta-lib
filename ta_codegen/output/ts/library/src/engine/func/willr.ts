@@ -79,7 +79,7 @@ export * from '../../func/willr.ts';
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = willr({ high, low, close }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)

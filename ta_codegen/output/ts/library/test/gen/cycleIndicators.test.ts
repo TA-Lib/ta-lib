@@ -46,20 +46,20 @@ import {
 
 test('HT_DCPERIOD: htDcperiod example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htDcperiod(series);
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('HT_DCPERIOD: htDcperiodOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = htDcperiodOpen(series);
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -72,7 +72,7 @@ test('HT_DCPERIOD: htDcperiodOpen example', () => {
 
 test('HT_DCPERIOD: htDcperiodOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = htDcperiodOpenAndFill(series);
   // values[k] is the value at bar begIdx + k
 
@@ -88,20 +88,20 @@ test('HT_DCPERIOD: htDcperiodOpenAndFill example', () => {
 
 test('HT_DCPHASE: htDcphase example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htDcphase(series);
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('HT_DCPHASE: htDcphaseOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = htDcphaseOpen(series);
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -114,7 +114,7 @@ test('HT_DCPHASE: htDcphaseOpen example', () => {
 
 test('HT_DCPHASE: htDcphaseOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = htDcphaseOpenAndFill(series);
   // values[k] is the value at bar begIdx + k
 
@@ -130,13 +130,15 @@ test('HT_DCPHASE: htDcphaseOpenAndFill example', () => {
 
 test('HT_PHASOR: htPhasor example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
-  console.log(outInPhase.length + ' values from bar ' + begIdx + '; last outInPhase = ' + outInPhase[outInPhase.length - 1]);
+  console.log(outInPhase.length + ' values from bar ' + begIdx + ':');
+  console.log('outInPhase = [' + outInPhase[0].toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1].toFixed(4) + ']');
+  console.log('outQuadrature = [' + outQuadrature[0].toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1].toFixed(4) + ']');
 
   const count = outInPhase.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outQuadrature.length, count);
   assert.ok(outInPhase.every(Number.isFinite));
@@ -144,7 +146,7 @@ test('HT_PHASOR: htPhasor example', () => {
 
 test('HT_PHASOR: htPhasorOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = htPhasorOpen(series);
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -157,7 +159,7 @@ test('HT_PHASOR: htPhasorOpen example', () => {
 
 test('HT_PHASOR: htPhasorOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -179,13 +181,15 @@ test('HT_PHASOR: htPhasorOpenAndFill example', () => {
 
 test('HT_SINE: htSine example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outSine, outLeadSine } = htSine(series);
-  console.log(outSine.length + ' values from bar ' + begIdx + '; last outSine = ' + outSine[outSine.length - 1]);
+  console.log(outSine.length + ' values from bar ' + begIdx + ':');
+  console.log('outSine = [' + outSine[0].toFixed(4) + ', ..., ' + outSine[outSine.length - 1].toFixed(4) + ']');
+  console.log('outLeadSine = [' + outLeadSine[0].toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1].toFixed(4) + ']');
 
   const count = outSine.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outLeadSine.length, count);
   assert.ok(outSine.every(Number.isFinite));
@@ -193,7 +197,7 @@ test('HT_SINE: htSine example', () => {
 
 test('HT_SINE: htSineOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = htSineOpen(series);
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -206,7 +210,7 @@ test('HT_SINE: htSineOpen example', () => {
 
 test('HT_SINE: htSineOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -228,13 +232,13 @@ test('HT_SINE: htSineOpenAndFill example', () => {
 
 test('HT_TRENDMODE: htTrendmode example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htTrendmode(series);
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   // the mode is a flag: 1 in a trend, 0 in a cycle
   assert.ok(values.subarray(0, count).every((v) => v === 0 || v === 1));
@@ -242,7 +246,7 @@ test('HT_TRENDMODE: htTrendmode example', () => {
 
 test('HT_TRENDMODE: htTrendmodeOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = htTrendmodeOpen(series);
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -255,7 +259,7 @@ test('HT_TRENDMODE: htTrendmodeOpen example', () => {
 
 test('HT_TRENDMODE: htTrendmodeOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = htTrendmodeOpenAndFill(series);
   // values[k] is the value at bar begIdx + k
 
@@ -271,20 +275,20 @@ test('HT_TRENDMODE: htTrendmodeOpenAndFill example', () => {
 
 test('SWAK_2PHP: swak2php example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swak2php(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('SWAK_2PHP: swak2phpOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = swak2phpOpen(series, { timePeriod: 20 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -297,7 +301,7 @@ test('SWAK_2PHP: swak2phpOpen example', () => {
 
 test('SWAK_2PHP: swak2phpOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = swak2phpOpenAndFill(series, {
     timePeriod: 20,
   });
@@ -315,20 +319,20 @@ test('SWAK_2PHP: swak2phpOpenAndFill example', () => {
 
 test('SWAK_BP: swakBp example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakBp(series, { timePeriod: 20, delta: 0.1 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('SWAK_BP: swakBpOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = swakBpOpen(series, { timePeriod: 20, delta: 0.1 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -341,7 +345,7 @@ test('SWAK_BP: swakBpOpen example', () => {
 
 test('SWAK_BP: swakBpOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = swakBpOpenAndFill(series, {
     timePeriod: 20,
     delta: 0.1,
@@ -360,20 +364,20 @@ test('SWAK_BP: swakBpOpenAndFill example', () => {
 
 test('SWAK_HP: swakHp example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakHp(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('SWAK_HP: swakHpOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = swakHpOpen(series, { timePeriod: 20 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -386,7 +390,7 @@ test('SWAK_HP: swakHpOpen example', () => {
 
 test('SWAK_HP: swakHpOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = swakHpOpenAndFill(series, {
     timePeriod: 20,
   });

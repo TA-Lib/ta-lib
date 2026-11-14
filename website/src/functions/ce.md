@@ -107,7 +107,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_CE( 0, n - 1, high, low, close, 22, 3.0, &outBegIdx, &outNBElement, outLong, outShort );
-printf( "%d values from bar %d; last outLong = %f\n", outNBElement, outBegIdx, outLong[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "outLong = [%.4f, ..., %.4f]\n", outLong[0], outLong[outNBElement - 1] );
+printf( "outShort = [%.4f, ..., %.4f]\n", outShort[0], outShort[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -124,7 +126,9 @@ let mut out_short = vec![0.0; 252];
 let core = Core::new();
 let range = core.ce(0, high.len() - 1, &high, &low, &close, 22, 3.0,
                     &mut out_long, &mut out_short)?;
-println!("{} values from bar {}; last out_long = {}", range.count, range.beg_idx, out_long[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("out_long = [{:.4}, ..., {:.4}]", out_long[0], out_long[range.count - 1]);
+println!("out_short = [{:.4}, ..., {:.4}]", out_short[0], out_short[range.count - 1]);
 ```
 
 @tab Java
@@ -132,6 +136,7 @@ println!("{} values from bar {}; last out_long = {}", range.count, range.beg_idx
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -141,7 +146,9 @@ double[] outShort = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.ce(0, high.length - 1, high, low, close, 22, 3.0, outLong, outShort);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last outLong = " + outLong[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "outLong = [%.4f, ..., %.4f]%n", outLong[0], outLong[r.count() - 1]);
+System.out.printf(Locale.ROOT, "outShort = [%.4f, ..., %.4f]%n", outShort[0], outShort[r.count() - 1]);
 ```
 
 @tab C\#
@@ -158,7 +165,9 @@ var outShort = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Ce(0, high.Length - 1, high, low, close, 22, 3.0, outLong, outShort);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outLong = {outLong[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"outLong = [{outLong[0]:F4}, ..., {outLong[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"outShort = [{outShort[0]:F4}, ..., {outShort[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -174,7 +183,9 @@ const { begIdx, outLong, outShort } = ce({ high, low, close }, {
   timePeriod: 22,
   multiplier: 3,
 });
-console.log(outLong.length + ' values from bar ' + begIdx + '; last outLong = ' + outLong[outLong.length - 1]);
+console.log(outLong.length + ' values from bar ' + begIdx + ':');
+console.log('outLong = [' + outLong[0].toFixed(4) + ', ..., ' + outLong[outLong.length - 1].toFixed(4) + ']');
+console.log('outShort = [' + outShort[0].toFixed(4) + ', ..., ' + outShort[outShort.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -198,7 +209,9 @@ r, err := core.CE(0, len(high)-1, high, low, close, 22, 3, outLong, outShort)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last outLong = %.4f\n", r.NBElement, r.BegIdx, outLong[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("outLong = [%.4f, ..., %.4f]\n", outLong[0], outLong[r.NBElement-1])
+fmt.Printf("outShort = [%.4f, ..., %.4f]\n", outShort[0], outShort[r.NBElement-1])
 ```
 
 :::

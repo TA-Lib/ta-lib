@@ -101,7 +101,7 @@ const WASM_FROM_BARS = 10000;
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cg(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`wma`](https://ta-lib.org/functions/wma)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

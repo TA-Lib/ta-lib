@@ -563,7 +563,10 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  *   signalPeriod: 9,
  *   signalMaType: MAType.SMA,
  * });
- * console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+ * console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+ * console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+ * console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
@@ -1186,7 +1189,7 @@ export function macdextOpenAndFillPositional(
  * import { MAType, macdextOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = macdextOpen(series, {
  *   fastPeriod: 12,
  *   fastMaType: MAType.SMA,
@@ -1234,7 +1237,7 @@ export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): 
  * import { MAType, macdextOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

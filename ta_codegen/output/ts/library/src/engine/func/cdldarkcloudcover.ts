@@ -89,7 +89,7 @@ const WASM_FROM_BARS = 1000;
  * const { begIdx, values } = cdldarkcloudcover({ open, high, low, close }, {
  *   penetration: 0.5,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlpiercing`](https://ta-lib.org/functions/cdlpiercing)
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)

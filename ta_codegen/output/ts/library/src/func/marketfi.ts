@@ -286,7 +286,7 @@ export function marketfiDisplayShift(outputIdx: number, options?: MarketfiOption
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = marketfi({ high, low, volume });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
@@ -650,11 +650,11 @@ export function marketfiOpenAndFillPositional(
  * import { marketfiOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = marketfiOpen({ high, low, volume });
  * const peeked = stream.peek(101.4, 99.1, 12345); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 12345); // the bar closes
@@ -693,11 +693,11 @@ export function marketfiOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * import { marketfiOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = marketfiOpenAndFill({ high, low, volume });
  * // values[k] is the value at bar begIdx + k
  * ```

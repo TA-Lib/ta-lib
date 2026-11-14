@@ -404,7 +404,7 @@ export function aoDisplayShift(outputIdx: number, options?: AoOptions): number {
  * const low = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = ao({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`apo`](https://ta-lib.org/functions/apo)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -936,9 +936,9 @@ export function aoOpenAndFillPositional(
  * import { aoOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = aoOpen({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -979,9 +979,9 @@ export function aoOpen(prices: { open?: ArrayLike<number> | undefined; high: Arr
  * import { aoOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = aoOpenAndFill({ high, low }, {
  *   fastPeriod: 5,
  *   slowPeriod: 34,

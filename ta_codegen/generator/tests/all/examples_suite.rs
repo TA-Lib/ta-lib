@@ -150,8 +150,9 @@ fn the_go_tab_is_an_example_go_test_runs() {
         let head = format!("func {}() {{", backends::go_examples::example_name(&func.name));
         let at = text.find(&head).unwrap_or_else(|| panic!("{}: no `{head}`", func.name));
         let end = occur_in_order(&text, at, &snippet.body_text().iter().map(|l| l.trim_start().to_string()).collect::<Vec<_>>(), &func.name);
-        let close = match backends::go_examples::expected_output(func) {
-            Some(output) => format!("// Output: {output}\n}}"),
+        let close = match backends::go_examples::expected_output(func).as_deref() {
+            Some([line]) => format!("// Output: {line}\n}}"),
+            Some(lines) => format!("// Output:\n{}\n}}", lines.iter().map(|l| format!("\t// {l}")).collect::<Vec<_>>().join("\n")),
             None => "}".to_string(),
         };
         assert!(text[end..].trim_start().starts_with(&close), "{}: the example does not close with `{close}`", func.name);
@@ -162,9 +163,10 @@ fn the_go_tab_is_an_example_go_test_runs() {
 }
 
 /// One shape in every language: the arrays named after the inputs, every parameter at
-/// its default, the last value printed.
+/// its default, the first and last value of each output printed, a real one at four
+/// decimals.
 #[test]
-fn every_tab_names_the_inputs_and_prints_the_last_value() {
+fn every_tab_names_the_inputs_and_prints_first_and_last() {
     let (funcs, enums) = corpus();
     let mut cdl = 0;
     for func in &funcs {
@@ -207,6 +209,21 @@ fn every_tab_names_the_inputs_and_prints_the_last_value() {
             assert!(text.contains("252"), "{} {title}: no 252-bar array", func.name);
             assert!(text.contains("values from bar"), "{} {title}: nothing printed", func.name);
             assert_eq!(text.matches("values from bar").count(), 1, "{} {title}: one printed line", func.name);
+            let lists = lines.iter().filter(|l| l.contains(", ..., ")).count();
+            assert_eq!(lists, func.outputs.len(), "{} {title}: one list per output:\n{text}", func.name);
+            if func.outputs.len() > 1 {
+                let named = lines.iter().filter(|l| l.contains(" = [")).count();
+                assert_eq!(named, func.outputs.len(), "{} {title}: a named line per output:\n{text}", func.name);
+            }
+            if func.outputs.iter().any(|o| o.param_type != ir::ParamType::Integer) {
+                let spec = match *title {
+                    "Rust" => "{:.4}",
+                    "C\\#" => ":F4",
+                    "TypeScript" => ".toFixed(4)",
+                    _ => "%.4f",
+                };
+                assert!(text.contains(spec), "{} {title}: no `{spec}`:\n{text}", func.name);
+            }
         }
         // Defaults, not hard-coded numbers: the first optional parameter's default is in the call.
         if let Some(opt) = func.optional_inputs.first() {

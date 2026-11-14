@@ -94,7 +94,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_AROON( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, aroonDown, aroonUp );
-printf( "%d values from bar %d; last aroonDown = %f\n", outNBElement, outBegIdx, aroonDown[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "aroonDown = [%.4f, ..., %.4f]\n", aroonDown[0], aroonDown[outNBElement - 1] );
+printf( "aroonUp = [%.4f, ..., %.4f]\n", aroonUp[0], aroonUp[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -109,7 +111,9 @@ let mut aroon_up = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.aroon(0, high.len() - 1, &high, &low, 14, &mut aroon_down, &mut aroon_up)?;
-println!("{} values from bar {}; last aroon_down = {}", range.count, range.beg_idx, aroon_down[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("aroon_down = [{:.4}, ..., {:.4}]", aroon_down[0], aroon_down[range.count - 1]);
+println!("aroon_up = [{:.4}, ..., {:.4}]", aroon_up[0], aroon_up[range.count - 1]);
 ```
 
 @tab Java
@@ -117,6 +121,7 @@ println!("{} values from bar {}; last aroon_down = {}", range.count, range.beg_i
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -125,7 +130,9 @@ double[] aroonUp = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.aroon(0, high.length - 1, high, low, 14, aroonDown, aroonUp);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last aroonDown = " + aroonDown[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "aroonDown = [%.4f, ..., %.4f]%n", aroonDown[0], aroonDown[r.count() - 1]);
+System.out.printf(Locale.ROOT, "aroonUp = [%.4f, ..., %.4f]%n", aroonUp[0], aroonUp[r.count() - 1]);
 ```
 
 @tab C\#
@@ -141,7 +148,9 @@ var aroonUp = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Aroon(0, high.Length - 1, high, low, 14, aroonDown, aroonUp);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last aroonDown = {aroonDown[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"aroonDown = [{aroonDown[0]:F4}, ..., {aroonDown[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"aroonUp = [{aroonUp[0]:F4}, ..., {aroonUp[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -155,7 +164,9 @@ const low = new Float64Array(252); // your data, oldest first
 const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
   timePeriod: 14,
 });
-console.log(outAroonDown.length + ' values from bar ' + begIdx + '; last outAroonDown = ' + outAroonDown[outAroonDown.length - 1]);
+console.log(outAroonDown.length + ' values from bar ' + begIdx + ':');
+console.log('outAroonDown = [' + outAroonDown[0].toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1].toFixed(4) + ']');
+console.log('outAroonUp = [' + outAroonUp[0].toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -178,7 +189,9 @@ r, err := core.AROON(0, len(high)-1, high, low, 14, aroonDown, aroonUp)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d\n", r.NBElement, r.BegIdx)
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("aroonDown = [%.4f, ..., %.4f]\n", aroonDown[0], aroonDown[r.NBElement-1])
+fmt.Printf("aroonUp = [%.4f, ..., %.4f]\n", aroonUp[0], aroonUp[r.NBElement-1])
 ```
 
 :::

@@ -129,7 +129,9 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_SQZMOM( 0, n - 1, high, low, close, 20, 2.0, 20, 2.0, 1.5, 1.0,
            &outBegIdx, &outNBElement, momentum, squeeze );
-printf( "%d values from bar %d; last momentum = %f\n", outNBElement, outBegIdx, momentum[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "momentum = [%.4f, ..., %.4f]\n", momentum[0], momentum[outNBElement - 1] );
+printf( "squeeze = [%d, ..., %d]\n", squeeze[0], squeeze[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -146,7 +148,9 @@ let mut squeeze = vec![0i32; 252];
 let core = Core::new();
 let range = core.sqzmom(0, high.len() - 1, &high, &low, &close, 20, 2.0, 20, 2.0, 1.5, 1.0,
                         &mut momentum, &mut squeeze)?;
-println!("{} values from bar {}; last momentum = {}", range.count, range.beg_idx, momentum[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("momentum = [{:.4}, ..., {:.4}]", momentum[0], momentum[range.count - 1]);
+println!("squeeze = [{}, ..., {}]", squeeze[0], squeeze[range.count - 1]);
 ```
 
 @tab Java
@@ -154,6 +158,7 @@ println!("{} values from bar {}; last momentum = {}", range.count, range.beg_idx
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -164,7 +169,9 @@ int[] squeeze = new int[252];
 Core core = Core.DEFAULT;
 OutRange r = core.sqzmom(0, high.length - 1, high, low, close, 20, 2.0, 20, 2.0, 1.5, 1.0,
                          momentum, squeeze);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last momentum = " + momentum[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "momentum = [%.4f, ..., %.4f]%n", momentum[0], momentum[r.count() - 1]);
+System.out.printf(Locale.ROOT, "squeeze = [%d, ..., %d]%n", squeeze[0], squeeze[r.count() - 1]);
 ```
 
 @tab C\#
@@ -182,7 +189,9 @@ var squeeze = new int[252];
 var core = Core.Default;
 OutRange r = core.Sqzmom(0, high.Length - 1, high, low, close, 20, 2.0, 20, 2.0, 1.5, 1.0,
                          momentum, squeeze);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last momentum = {momentum[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"momentum = [{momentum[0]:F4}, ..., {momentum[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"squeeze = [{squeeze[0]}, ..., {squeeze[r.Count - 1]}]"));
 ```
 
 @tab TypeScript
@@ -202,7 +211,9 @@ const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
   factorNormal: 1.5,
   factorNarrow: 1,
 });
-console.log(outMomentum.length + ' values from bar ' + begIdx + '; last outMomentum = ' + outMomentum[outMomentum.length - 1]);
+console.log(outMomentum.length + ' values from bar ' + begIdx + ':');
+console.log('outMomentum = [' + outMomentum[0].toFixed(4) + ', ..., ' + outMomentum[outMomentum.length - 1].toFixed(4) + ']');
+console.log('outSqueeze = [' + outSqueeze[0] + ', ..., ' + outSqueeze[outSqueeze.length - 1] + ']');
 ```
 
 @tab Go
@@ -226,7 +237,9 @@ r, err := core.SQZMOM(0, len(high)-1, high, low, close, 20, 2, 20, 2, 1.5, 1, mo
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last momentum = %.4f\n", r.NBElement, r.BegIdx, momentum[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("momentum = [%.4f, ..., %.4f]\n", momentum[0], momentum[r.NBElement-1])
+fmt.Printf("squeeze = [%d, ..., %d]\n", squeeze[0], squeeze[r.NBElement-1])
 ```
 
 :::

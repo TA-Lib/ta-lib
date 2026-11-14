@@ -488,7 +488,7 @@ export function acDisplayShift(outputIdx: number, options?: AcOptions): number {
  *   slowPeriod: 34,
  *   signalPeriod: 5,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ao`](https://ta-lib.org/functions/ao)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -1153,9 +1153,9 @@ export function acOpenAndFillPositional(
  * import { acOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = acOpen({ high, low }, {
  *   fastPeriod: 5,
  *   slowPeriod: 34,
@@ -1201,9 +1201,9 @@ export function acOpen(prices: { open?: ArrayLike<number> | undefined; high: Arr
  * import { acOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = acOpenAndFill({ high, low }, {
  *   fastPeriod: 5,
  *   slowPeriod: 34,

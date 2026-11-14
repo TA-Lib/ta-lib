@@ -538,7 +538,9 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  *   timePeriod: 10,
  *   multiplier: 3,
  * });
- * console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
+ * console.log(outSupertrend.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSupertrend = [' + outSupertrend[0].toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1].toFixed(4) + ']');
+ * console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
@@ -1304,11 +1306,11 @@ export function supertrendOpenAndFillPositional(
  * import { supertrendOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = supertrendOpen({ high, low, close }, {
  *   timePeriod: 10,
  *   multiplier: 3,
@@ -1353,11 +1355,11 @@ export function supertrendOpen(prices: { open?: ArrayLike<number> | undefined; h
  * import { supertrendOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const {
  *   stream,
  *   begIdx,

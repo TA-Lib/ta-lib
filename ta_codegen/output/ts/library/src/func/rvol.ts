@@ -342,7 +342,7 @@ export function rvolDisplayShift(outputIdx: number, options?: RvolOptions): numb
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`pvo`](https://ta-lib.org/functions/pvo)
@@ -760,7 +760,7 @@ export function rvolOpenAndFillPositional(
  * import { rvolOpen } from 'ta-lib';
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = rvolOpen({ volume }, { timePeriod: 20 });
  * const peeked = stream.peek(12345); // a forming bar: commits nothing
  * const updated = stream.update(12345); // the bar closes
@@ -799,7 +799,7 @@ export function rvolOpen(prices: { open?: ArrayLike<number> | undefined; high?: 
  * import { rvolOpenAndFill } from 'ta-lib';
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = rvolOpenAndFill({ volume }, {
  *   timePeriod: 20,
  * });

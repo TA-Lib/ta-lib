@@ -653,7 +653,7 @@ pub enum Series {
     Price,
     /// A straight line from `lo` on the first bar to `hi` on the last.
     Ramp,
-    /// `mid + half * sin(0.1 * i)`, the examples' default sine mapped into the domain.
+    /// The examples' price wave mapped strictly inside the domain; a sine in the reference data.
     Sine,
 }
 

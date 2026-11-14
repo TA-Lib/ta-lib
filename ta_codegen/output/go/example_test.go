@@ -38,7 +38,6 @@ package talib_test
 import (
 	"fmt"
 	"log"
-	"math"
 
 	talib "ta-lib.github.io/go"
 )
@@ -46,11 +45,11 @@ import (
 func ExampleCore_AC() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -59,22 +58,22 @@ func ExampleCore_AC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 215 values from bar 37; last out = 2.1274
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 215 values from bar 37: [2.9000, ..., -2.7471]
 }
 
 func ExampleCore_ACCBANDS() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	upperBand := make([]float64, 252)
 	middleBand := make([]float64, 252)
@@ -85,8 +84,15 @@ func ExampleCore_ACCBANDS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
-	// Output: 233 values from bar 19; last upperBand = 98.0389
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+	fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+	fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
+	// Output:
+	// 233 values from bar 19:
+	// upperBand = [107.3403, ..., 111.7328]
+	// middleBand = [97.0250, ..., 101.4250]
+	// lowerBand = [87.3403, ..., 91.7328]
 }
 
 func ExampleCore_ACOS() {
@@ -101,26 +107,26 @@ func ExampleCore_ACOS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d\n", r.NBElement, r.BegIdx)
-	// Output: 252 values from bar 0
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [3.1416, ..., 0.0000]
 }
 
 func ExampleCore_AD() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -129,14 +135,14 @@ func ExampleCore_AD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.3f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -29731.694
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [10400.0000, ..., -793032.0000]
 }
 
 func ExampleCore_ADD() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 10 * math.Sin(0.1*float64(i))
+		series0[i] = float64(10*(i%40-20)*(i%40-20)-2000) / 201
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
@@ -149,26 +155,26 @@ func ExampleCore_ADD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 4.6726
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [4.9502, ..., -0.9204]
 }
 
 func ExampleCore_ADOSC() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -177,18 +183,18 @@ func ExampleCore_ADOSC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 243 values from bar 9; last out = -19503.2409
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [-2760.9701, ..., -21154.1607]
 }
 
 func ExampleCore_ADR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -197,22 +203,22 @@ func ExampleCore_ADR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 2.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [4.0000, ..., 4.0000]
 }
 
 func ExampleCore_ADX() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -221,22 +227,22 @@ func ExampleCore_ADX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 225 values from bar 27; last out = 46.6974
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 225 values from bar 27: [90.5943, ..., 31.2795]
 }
 
 func ExampleCore_ADXR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -245,18 +251,18 @@ func ExampleCore_ADXR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 212 values from bar 40; last out = 57.8734
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 212 values from bar 40: [74.5926, ..., 35.0204]
 }
 
 func ExampleCore_ALLIGATOR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	jaw := make([]float64, 252)
 	teeth := make([]float64, 252)
@@ -267,14 +273,21 @@ func ExampleCore_ALLIGATOR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last jaw = %.4f\n", r.NBElement, r.BegIdx, jaw[r.NBElement-1])
-	// Output: 240 values from bar 12; last jaw = 95.1848
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("jaw = [%.4f, ..., %.4f]\n", jaw[0], jaw[r.NBElement-1])
+	fmt.Printf("teeth = [%.4f, ..., %.4f]\n", teeth[0], teeth[r.NBElement-1])
+	fmt.Printf("lips = [%.4f, ..., %.4f]\n", lips[0], lips[r.NBElement-1])
+	// Output:
+	// 240 values from bar 12:
+	// jaw = [100.5000, ..., 99.1056]
+	// teeth = [96.8750, ..., 99.1236]
+	// lips = [95.1000, ..., 98.0754]
 }
 
 func ExampleCore_ALMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -283,18 +296,18 @@ func ExampleCore_ALMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 244 values from bar 8; last out = 97.5709
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 244 values from bar 8: [100.1040, ..., 96.3088]
 }
 
 func ExampleCore_AO() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -303,14 +316,14 @@ func ExampleCore_AO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 219 values from bar 33; last out = 3.5158
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 219 values from bar 33: [0.7250, ..., -1.4103]
 }
 
 func ExampleCore_APO() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -319,18 +332,18 @@ func ExampleCore_APO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 227 values from bar 25; last out = 0.4815
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 227 values from bar 25: [-3.9399, ..., -0.2779]
 }
 
 func ExampleCore_AROON() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	aroonDown := make([]float64, 252)
 	aroonUp := make([]float64, 252)
@@ -340,18 +353,23 @@ func ExampleCore_AROON() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d\n", r.NBElement, r.BegIdx)
-	// Output: 238 values from bar 14
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("aroonDown = [%.4f, ..., %.4f]\n", aroonDown[0], aroonDown[r.NBElement-1])
+	fmt.Printf("aroonUp = [%.4f, ..., %.4f]\n", aroonUp[0], aroonUp[r.NBElement-1])
+	// Output:
+	// 238 values from bar 14:
+	// aroonDown = [100.0000, ..., 100.0000]
+	// aroonUp = [0.0000, ..., 21.4286]
 }
 
 func ExampleCore_AROONOSC() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -360,26 +378,26 @@ func ExampleCore_AROONOSC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 100.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [-100.0000, ..., -78.5714]
 }
 
 func ExampleCore_ASI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -388,8 +406,8 @@ func ExampleCore_ASI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -7.7919
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., -551.9390]
 }
 
 func ExampleCore_ASIN() {
@@ -404,8 +422,8 @@ func ExampleCore_ASIN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 1.5708
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-1.5708, ..., 1.5708]
 }
 
 func ExampleCore_ATAN() {
@@ -420,22 +438,22 @@ func ExampleCore_ATAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 1.3734
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-1.3734, ..., 1.3734]
 }
 
 func ExampleCore_ATR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -444,14 +462,14 @@ func ExampleCore_ATR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 2.1838
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [4.2143, ..., 4.2647]
 }
 
 func ExampleCore_AVGDEV() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -460,26 +478,26 @@ func ExampleCore_AVGDEV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 2.6224
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [4.7429, ..., 4.5679]
 }
 
 func ExampleCore_AVGPRICE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -488,14 +506,14 @@ func ExampleCore_AVGPRICE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 99.5024
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [109.9125, ..., 94.6875]
 }
 
 func ExampleCore_BBANDS() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	upperBand := make([]float64, 252)
 	middleBand := make([]float64, 252)
@@ -507,14 +525,21 @@ func ExampleCore_BBANDS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
-	// Output: 233 values from bar 19; last upperBand = 99.2241
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+	fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+	fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
+	// Output:
+	// 233 values from bar 19:
+	// upperBand = [109.6414, ..., 110.6508]
+	// middleBand = [97.1750, ..., 101.5750]
+	// lowerBand = [84.7086, ..., 92.4992]
 }
 
 func ExampleCore_BBW() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -523,18 +548,18 @@ func ExampleCore_BBW() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 233 values from bar 19; last out = 13.3946
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [25.6576, ..., 17.8702]
 }
 
 func ExampleCore_BETA() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series0[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
-		series1[i] = 100 + 10*math.Sin(0.1*float64(i)+0.7)
+		series1[i] = 90 + float64(((i+7)%40-20)*((i+7)%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -543,26 +568,26 @@ func ExampleCore_BETA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 247 values from bar 5; last out = -2.1297
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 247 values from bar 5: [1.3807, ..., 1.2096]
 }
 
 func ExampleCore_BOP() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -571,22 +596,22 @@ func ExampleCore_BOP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.1587
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.8875, ..., 0.1625]
 }
 
 func ExampleCore_CCI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -595,26 +620,26 @@ func ExampleCore_CCI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 139.8309
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [-112.8095, ..., -104.0762]
 }
 
 func ExampleCore_CDL2CROWS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -623,26 +648,26 @@ func ExampleCore_CDL2CROWS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDL3BLACKCROWS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -651,26 +676,26 @@ func ExampleCore_CDL3BLACKCROWS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [0, ..., 0]
 }
 
 func ExampleCore_CDL3INSIDE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -679,26 +704,26 @@ func ExampleCore_CDL3INSIDE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDL3LINESTRIKE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -707,26 +732,26 @@ func ExampleCore_CDL3LINESTRIKE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 244 values from bar 8; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 244 values from bar 8: [0, ..., 0]
 }
 
 func ExampleCore_CDL3OUTSIDE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -735,26 +760,26 @@ func ExampleCore_CDL3OUTSIDE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 249 values from bar 3; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 249 values from bar 3: [0, ..., 0]
 }
 
 func ExampleCore_CDL3STARSINSOUTH() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -763,26 +788,26 @@ func ExampleCore_CDL3STARSINSOUTH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDL3WHITESOLDIERS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -791,26 +816,26 @@ func ExampleCore_CDL3WHITESOLDIERS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLABANDONEDBABY() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -819,26 +844,26 @@ func ExampleCore_CDLABANDONEDBABY() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLADVANCEBLOCK() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -847,26 +872,26 @@ func ExampleCore_CDLADVANCEBLOCK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLBELTHOLD() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -875,26 +900,26 @@ func ExampleCore_CDLBELTHOLD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLBREAKAWAY() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -903,26 +928,26 @@ func ExampleCore_CDLBREAKAWAY() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0, ..., 0]
 }
 
 func ExampleCore_CDLCLOSINGMARUBOZU() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -931,26 +956,26 @@ func ExampleCore_CDLCLOSINGMARUBOZU() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLCONCEALBABYSWALL() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -959,26 +984,26 @@ func ExampleCore_CDLCONCEALBABYSWALL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [0, ..., 0]
 }
 
 func ExampleCore_CDLCOUNTERATTACK() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -987,26 +1012,26 @@ func ExampleCore_CDLCOUNTERATTACK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLDARKCLOUDCOVER() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1015,26 +1040,26 @@ func ExampleCore_CDLDARKCLOUDCOVER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLDOJI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1043,26 +1068,26 @@ func ExampleCore_CDLDOJI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLDOJISTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1071,26 +1096,26 @@ func ExampleCore_CDLDOJISTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLDRAGONFLYDOJI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1099,26 +1124,26 @@ func ExampleCore_CDLDRAGONFLYDOJI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLENGULFING() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1127,26 +1152,26 @@ func ExampleCore_CDLENGULFING() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 250 values from bar 2; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 250 values from bar 2: [0, ..., 0]
 }
 
 func ExampleCore_CDLEVENINGDOJISTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1155,26 +1180,26 @@ func ExampleCore_CDLEVENINGDOJISTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLEVENINGSTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1183,26 +1208,26 @@ func ExampleCore_CDLEVENINGSTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLGAPSIDESIDEWHITE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1211,26 +1236,26 @@ func ExampleCore_CDLGAPSIDESIDEWHITE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 245 values from bar 7; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 245 values from bar 7: [0, ..., 0]
 }
 
 func ExampleCore_CDLGRAVESTONEDOJI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1239,26 +1264,26 @@ func ExampleCore_CDLGRAVESTONEDOJI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLHAMMER() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1267,26 +1292,26 @@ func ExampleCore_CDLHAMMER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLHANGINGMAN() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1295,26 +1320,26 @@ func ExampleCore_CDLHANGINGMAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLHARAMI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1323,26 +1348,26 @@ func ExampleCore_CDLHARAMI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLHARAMICROSS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1351,26 +1376,26 @@ func ExampleCore_CDLHARAMICROSS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLHIGHWAVE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1379,26 +1404,26 @@ func ExampleCore_CDLHIGHWAVE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLHIKKAKE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1407,26 +1432,26 @@ func ExampleCore_CDLHIKKAKE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 247 values from bar 5; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 247 values from bar 5: [0, ..., 0]
 }
 
 func ExampleCore_CDLHIKKAKEMOD() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1435,26 +1460,26 @@ func ExampleCore_CDLHIKKAKEMOD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLHOMINGPIGEON() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1463,26 +1488,26 @@ func ExampleCore_CDLHOMINGPIGEON() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLIDENTICAL3CROWS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1491,26 +1516,26 @@ func ExampleCore_CDLIDENTICAL3CROWS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLINNECK() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1519,26 +1544,26 @@ func ExampleCore_CDLINNECK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLINVERTEDHAMMER() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1547,26 +1572,26 @@ func ExampleCore_CDLINVERTEDHAMMER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLKICKING() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1575,26 +1600,26 @@ func ExampleCore_CDLKICKING() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLKICKINGBYLENGTH() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1603,26 +1628,26 @@ func ExampleCore_CDLKICKINGBYLENGTH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLLADDERBOTTOM() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1631,26 +1656,26 @@ func ExampleCore_CDLLADDERBOTTOM() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0, ..., 0]
 }
 
 func ExampleCore_CDLLONGLEGGEDDOJI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1659,26 +1684,26 @@ func ExampleCore_CDLLONGLEGGEDDOJI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLLONGLINE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1687,26 +1712,26 @@ func ExampleCore_CDLLONGLINE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLMARUBOZU() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1715,26 +1740,26 @@ func ExampleCore_CDLMARUBOZU() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLMATCHINGLOW() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1743,26 +1768,26 @@ func ExampleCore_CDLMATCHINGLOW() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 246 values from bar 6; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 246 values from bar 6: [0, ..., 0]
 }
 
 func ExampleCore_CDLMATHOLD() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1771,26 +1796,26 @@ func ExampleCore_CDLMATHOLD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0, ..., 0]
 }
 
 func ExampleCore_CDLMORNINGDOJISTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1799,26 +1824,26 @@ func ExampleCore_CDLMORNINGDOJISTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLMORNINGSTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1827,26 +1852,26 @@ func ExampleCore_CDLMORNINGSTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLONNECK() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1855,26 +1880,26 @@ func ExampleCore_CDLONNECK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLPIERCING() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1883,26 +1908,26 @@ func ExampleCore_CDLPIERCING() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLRICKSHAWMAN() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1911,26 +1936,26 @@ func ExampleCore_CDLRICKSHAWMAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLRISEFALL3METHODS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1939,26 +1964,26 @@ func ExampleCore_CDLRISEFALL3METHODS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0, ..., 0]
 }
 
 func ExampleCore_CDLSEPARATINGLINES() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1967,26 +1992,26 @@ func ExampleCore_CDLSEPARATINGLINES() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLSHOOTINGSTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -1995,26 +2020,26 @@ func ExampleCore_CDLSHOOTINGSTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLSHORTLINE() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2023,26 +2048,26 @@ func ExampleCore_CDLSHORTLINE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLSPINNINGTOP() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2051,26 +2076,26 @@ func ExampleCore_CDLSPINNINGTOP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 100
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [-100, ..., 0]
 }
 
 func ExampleCore_CDLSTALLEDPATTERN() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2079,26 +2104,26 @@ func ExampleCore_CDLSTALLEDPATTERN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLSTICKSANDWICH() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2107,26 +2132,26 @@ func ExampleCore_CDLSTICKSANDWICH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 245 values from bar 7; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 245 values from bar 7: [0, ..., 0]
 }
 
 func ExampleCore_CDLTAKURI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2135,26 +2160,26 @@ func ExampleCore_CDLTAKURI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0, ..., 0]
 }
 
 func ExampleCore_CDLTASUKIGAP() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2163,26 +2188,26 @@ func ExampleCore_CDLTASUKIGAP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 245 values from bar 7; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 245 values from bar 7: [0, ..., 0]
 }
 
 func ExampleCore_CDLTHRUSTING() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2191,26 +2216,26 @@ func ExampleCore_CDLTHRUSTING() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 241 values from bar 11; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 241 values from bar 11: [0, ..., 0]
 }
 
 func ExampleCore_CDLTRISTAR() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2219,26 +2244,26 @@ func ExampleCore_CDLTRISTAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLUNIQUE3RIVER() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2247,26 +2272,26 @@ func ExampleCore_CDLUNIQUE3RIVER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLUPSIDEGAP2CROWS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2275,26 +2300,26 @@ func ExampleCore_CDLUPSIDEGAP2CROWS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 240 values from bar 12; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 240 values from bar 12: [0, ..., 0]
 }
 
 func ExampleCore_CDLXSIDEGAP3METHODS() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]int32, 252)
 
@@ -2303,22 +2328,22 @@ func ExampleCore_CDLXSIDEGAP3METHODS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 250 values from bar 2; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 250 values from bar 2: [0, ..., 0]
 }
 
 func ExampleCore_CE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	outLong := make([]float64, 252)
 	outShort := make([]float64, 252)
@@ -2328,8 +2353,13 @@ func ExampleCore_CE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last outLong = %.4f\n", r.NBElement, r.BegIdx, outLong[r.NBElement-1])
-	// Output: 230 values from bar 22; last outLong = 94.1975
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("outLong = [%.4f, ..., %.4f]\n", outLong[0], outLong[r.NBElement-1])
+	fmt.Printf("outShort = [%.4f, ..., %.4f]\n", outShort[0], outShort[r.NBElement-1])
+	// Output:
+	// 230 values from bar 22:
+	// outLong = [97.6409, ..., 99.2564]
+	// outShort = [100.4091, ..., 104.7936]
 }
 
 func ExampleCore_CEIL() {
@@ -2344,14 +2374,14 @@ func ExampleCore_CEIL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 3.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-3.0000, ..., 3.0000]
 }
 
 func ExampleCore_CG() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2360,22 +2390,22 @@ func ExampleCore_CG() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 243 values from bar 9; last out = -5.4254
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [-5.6248, ..., -5.6119]
 }
 
 func ExampleCore_CHOP() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -2384,22 +2414,22 @@ func ExampleCore_CHOP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 37.2545
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [40.5214, ..., 43.3312]
 }
 
 func ExampleCore_CHOPTR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -2408,22 +2438,22 @@ func ExampleCore_CHOPTR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 37.2545
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [37.7266, ..., 43.3312]
 }
 
 func ExampleCore_CKSP() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	highStop := make([]float64, 252)
 	lowStop := make([]float64, 252)
@@ -2433,26 +2463,31 @@ func ExampleCore_CKSP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last highStop = %.4f\n", r.NBElement, r.BegIdx, highStop[r.NBElement-1])
-	// Output: 234 values from bar 18; last highStop = 98.4568
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("highStop = [%.4f, ..., %.4f]\n", highStop[0], highStop[r.NBElement-1])
+	fmt.Printf("lowStop = [%.4f, ..., %.4f]\n", lowStop[0], lowStop[r.NBElement-1])
+	// Output:
+	// 234 values from bar 18:
+	// highStop = [105.7500, ..., 107.6798]
+	// lowStop = [92.3291, ..., 96.3094]
 }
 
 func ExampleCore_CMF() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -2461,14 +2496,14 @@ func ExampleCore_CMF() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 233 values from bar 19; last out = -0.0430
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [-0.0581, ..., -0.0787]
 }
 
 func ExampleCore_CMO() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2477,14 +2512,14 @@ func ExampleCore_CMO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 49.9603
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [-100.0000, ..., -30.0460]
 }
 
 func ExampleCore_CMOU() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2493,14 +2528,14 @@ func ExampleCore_CMOU() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 100.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [-100.0000, ..., -48.3721]
 }
 
 func ExampleCore_COPPOCK() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2509,18 +2544,18 @@ func ExampleCore_COPPOCK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 229 values from bar 23; last out = 14.2573
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 229 values from bar 23: [-15.8856, ..., -9.0582]
 }
 
 func ExampleCore_CORREL() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series0[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
-		series1[i] = 100 + 10*math.Sin(0.1*float64(i)+0.7)
+		series1[i] = 90 + float64(((i+7)%40-20)*((i+7)%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2529,8 +2564,8 @@ func ExampleCore_CORREL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 0.5647
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [0.2399, ..., 0.1179]
 }
 
 func ExampleCore_COS() {
@@ -2545,8 +2580,8 @@ func ExampleCore_COS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.9999
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.9999, ..., 0.9999]
 }
 
 func ExampleCore_COSH() {
@@ -2561,14 +2596,14 @@ func ExampleCore_COSH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 74.2099
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [74.2099, ..., 74.2099]
 }
 
 func ExampleCore_CRSI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2577,14 +2612,14 @@ func ExampleCore_CRSI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 151 values from bar 101; last out = 99.6494
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 151 values from bar 101: [54.9139, ..., 10.6055]
 }
 
 func ExampleCore_CTI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2593,14 +2628,14 @@ func ExampleCore_CTI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 233 values from bar 19; last out = 0.9286
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [-0.9713, ..., -0.3788]
 }
 
 func ExampleCore_CUMSUM() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2609,18 +2644,18 @@ func ExampleCore_CUMSUM() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.3f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 25199.890
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.0000, ..., 24415.3000]
 }
 
 func ExampleCore_CVI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2629,14 +2664,14 @@ func ExampleCore_CVI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d\n", r.NBElement, r.BegIdx)
-	// Output: 233 values from bar 19
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [0.0000, ..., 0.0000]
 }
 
 func ExampleCore_DEMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2645,14 +2680,14 @@ func ExampleCore_DEMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 194 values from bar 58; last out = 93.7847
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 194 values from bar 58: [94.5185, ..., 100.0249]
 }
 
 func ExampleCore_DIV() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 10 * math.Sin(0.1*float64(i))
+		series0[i] = float64(10*(i%40-20)*(i%40-20)-2000) / 201
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
@@ -2665,18 +2700,18 @@ func ExampleCore_DIV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -0.0546
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [9.9502, ..., -0.9867]
 }
 
 func ExampleCore_DONCHIAN() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	upperBand := make([]float64, 252)
 	middleBand := make([]float64, 252)
@@ -2687,14 +2722,21 @@ func ExampleCore_DONCHIAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
-	// Output: 233 values from bar 19; last upperBand = 100.6726
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+	fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+	fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
+	// Output:
+	// 233 values from bar 19:
+	// upperBand = [112.0000, ..., 112.0000]
+	// middleBand = [100.0250, ..., 102.0250]
+	// lowerBand = [88.0500, ..., 92.0500]
 }
 
 func ExampleCore_DOSC() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2703,14 +2745,14 @@ func ExampleCore_DOSC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 224 values from bar 28; last out = 19.1206
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 224 values from bar 28: [9.8390, ..., -15.2676]
 }
 
 func ExampleCore_DPO() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2719,22 +2761,22 @@ func ExampleCore_DPO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 233 values from bar 19; last out = -2.0516
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [0.0250, ..., 8.4250]
 }
 
 func ExampleCore_DX() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -2743,18 +2785,18 @@ func ExampleCore_DX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 49.9603
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [100.0000, ..., 30.0460]
 }
 
 func ExampleCore_EFI() {
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -2763,14 +2805,14 @@ func ExampleCore_EFI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.3f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 23253.498
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [-18526.9615, ..., -18180.3499]
 }
 
 func ExampleCore_EMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2779,22 +2821,22 @@ func ExampleCore_EMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 95.4341
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [95.2583, ..., 98.9224]
 }
 
 func ExampleCore_EMV() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -2803,14 +2845,14 @@ func ExampleCore_EMV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 0.4082
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [-4.5357, ..., -0.8488]
 }
 
 func ExampleCore_ER() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2819,22 +2861,22 @@ func ExampleCore_ER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 1.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [1.0000, ..., 1.0000]
 }
 
 func ExampleCore_ERI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	bullPower := make([]float64, 252)
 	bearPower := make([]float64, 252)
@@ -2844,8 +2886,13 @@ func ExampleCore_ERI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last bullPower = %.4f\n", r.NBElement, r.BegIdx, bullPower[r.NBElement-1])
-	// Output: 240 values from bar 12; last bullPower = 5.2935
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("bullPower = [%.4f, ..., %.4f]\n", bullPower[0], bullPower[r.NBElement-1])
+	fmt.Printf("bearPower = [%.4f, ..., %.4f]\n", bearPower[0], bearPower[r.NBElement-1])
+	// Output:
+	// 240 values from bar 12:
+	// bullPower = [-5.0846, ..., -2.6983]
+	// bearPower = [-9.0846, ..., -6.6983]
 }
 
 func ExampleCore_EXP() {
@@ -2860,18 +2907,18 @@ func ExampleCore_EXP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 148.4132
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0067, ..., 148.4132]
 }
 
 func ExampleCore_FISHER() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	fisher := make([]float64, 252)
 	trigger := make([]float64, 252)
@@ -2881,8 +2928,13 @@ func ExampleCore_FISHER() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last fisher = %.4f\n", r.NBElement, r.BegIdx, fisher[r.NBElement-1])
-	// Output: 243 values from bar 9; last fisher = 4.5012
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("fisher = [%.4f, ..., %.4f]\n", fisher[0], fisher[r.NBElement-1])
+	fmt.Printf("trigger = [%.4f, ..., %.4f]\n", trigger[0], trigger[r.NBElement-1])
+	// Output:
+	// 243 values from bar 9:
+	// fisher = [-0.3428, ..., -2.9406]
+	// trigger = [0.0000, ..., -2.5030]
 }
 
 func ExampleCore_FLOOR() {
@@ -2897,14 +2949,14 @@ func ExampleCore_FLOOR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 3.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-3.0000, ..., 3.0000]
 }
 
 func ExampleCore_FOSC() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2913,18 +2965,18 @@ func ExampleCore_FOSC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 247 values from bar 5; last out = 0.0873
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 247 values from bar 5: [0.3457, ..., 0.3721]
 }
 
 func ExampleCore_FRACTAL() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	swingHigh := make([]int32, 252)
 	swingLow := make([]int32, 252)
@@ -2934,18 +2986,23 @@ func ExampleCore_FRACTAL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last swingHigh = %d\n", r.NBElement, r.BegIdx, swingHigh[r.NBElement-1])
-	// Output: 248 values from bar 4; last swingHigh = 0
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("swingHigh = [%d, ..., %d]\n", swingHigh[0], swingHigh[r.NBElement-1])
+	fmt.Printf("swingLow = [%d, ..., %d]\n", swingLow[0], swingLow[r.NBElement-1])
+	// Output:
+	// 248 values from bar 4:
+	// swingHigh = [0, ..., 0]
+	// swingLow = [0, ..., 0]
 }
 
 func ExampleCore_FRAMA() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -2954,18 +3011,18 @@ func ExampleCore_FRAMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 236 values from bar 16; last out = 98.2824
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 236 values from bar 16: [91.0548, ..., 100.0477]
 }
 
 func ExampleCore_GATOR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	upper := make([]float64, 252)
 	lower := make([]float64, 252)
@@ -2975,26 +3032,31 @@ func ExampleCore_GATOR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last upper = %.4f\n", r.NBElement, r.BegIdx, upper[r.NBElement-1])
-	// Output: 237 values from bar 15; last upper = 1.0825
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upper = [%.4f, ..., %.4f]\n", upper[0], upper[r.NBElement-1])
+	fmt.Printf("lower = [%.4f, ..., %.4f]\n", lower[0], lower[r.NBElement-1])
+	// Output:
+	// 237 values from bar 15:
+	// upper = [6.6250, ..., 1.1017]
+	// lower = [-3.2250, ..., -2.4656]
 }
 
 func ExampleCore_HA() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	haOpen := make([]float64, 252)
 	haHigh := make([]float64, 252)
@@ -3006,14 +3068,23 @@ func ExampleCore_HA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last haOpen = %.4f\n", r.NBElement, r.BegIdx, haOpen[r.NBElement-1])
-	// Output: 252 values from bar 0; last haOpen = 97.4644
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("haOpen = [%.4f, ..., %.4f]\n", haOpen[0], haOpen[r.NBElement-1])
+	fmt.Printf("haHigh = [%.4f, ..., %.4f]\n", haHigh[0], haHigh[r.NBElement-1])
+	fmt.Printf("haLow = [%.4f, ..., %.4f]\n", haLow[0], haLow[r.NBElement-1])
+	fmt.Printf("haClose = [%.4f, ..., %.4f]\n", haClose[0], haClose[r.NBElement-1])
+	// Output:
+	// 252 values from bar 0:
+	// haOpen = [109.8250, ..., 96.3273]
+	// haHigh = [112.0000, ..., 96.3273]
+	// haLow = [108.0000, ..., 92.0500]
+	// haClose = [109.9125, ..., 94.6875]
 }
 
 func ExampleCore_HMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3022,14 +3093,14 @@ func ExampleCore_HMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 230 values from bar 22; last out = 97.9906
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 230 values from bar 22: [88.4667, ..., 96.2755]
 }
 
 func ExampleCore_ht_dcperiod() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3038,14 +3109,14 @@ func ExampleCore_ht_dcperiod() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 220 values from bar 32; last out = 50.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 220 values from bar 32: [15.6467, ..., 39.1993]
 }
 
 func ExampleCore_ht_dcphase() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3054,14 +3125,14 @@ func ExampleCore_ht_dcphase() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 189 values from bar 63; last out = 30.0507
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 189 values from bar 63: [28.7296, ..., 192.6522]
 }
 
 func ExampleCore_ht_phasor() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	inPhase := make([]float64, 252)
 	quadrature := make([]float64, 252)
@@ -3071,14 +3142,19 @@ func ExampleCore_ht_phasor() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last inPhase = %.4f\n", r.NBElement, r.BegIdx, inPhase[r.NBElement-1])
-	// Output: 220 values from bar 32; last inPhase = 5.4596
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("inPhase = [%.4f, ..., %.4f]\n", inPhase[0], inPhase[r.NBElement-1])
+	fmt.Printf("quadrature = [%.4f, ..., %.4f]\n", quadrature[0], quadrature[r.NBElement-1])
+	// Output:
+	// 220 values from bar 32:
+	// inPhase = [1.2892, ..., -9.5366]
+	// quadrature = [1.0596, ..., 2.0052]
 }
 
 func ExampleCore_ht_sine() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	sine := make([]float64, 252)
 	leadSine := make([]float64, 252)
@@ -3088,14 +3164,19 @@ func ExampleCore_ht_sine() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last sine = %.4f\n", r.NBElement, r.BegIdx, sine[r.NBElement-1])
-	// Output: 189 values from bar 63; last sine = 0.5008
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("sine = [%.4f, ..., %.4f]\n", sine[0], sine[r.NBElement-1])
+	fmt.Printf("leadSine = [%.4f, ..., %.4f]\n", leadSine[0], leadSine[r.NBElement-1])
+	// Output:
+	// 189 values from bar 63:
+	// sine = [0.4807, ..., -0.2190]
+	// leadSine = [0.9600, ..., -0.8448]
 }
 
 func ExampleCore_ht_trendline() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3104,14 +3185,14 @@ func ExampleCore_ht_trendline() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 189 values from bar 63; last out = 98.7363
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 189 values from bar 63: [95.6417, ..., 96.7034]
 }
 
 func ExampleCore_ht_trendmode() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]int32, 252)
 
@@ -3120,22 +3201,22 @@ func ExampleCore_ht_trendmode() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 189 values from bar 63; last out = 0
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 189 values from bar 63: [1, ..., 1]
 }
 
 func ExampleCore_IBS() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -3144,18 +3225,18 @@ func ExampleCore_IBS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.4091
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.9000, ..., 0.9000]
 }
 
 func ExampleCore_ICHIMOKU() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	tenkanSen := make([]float64, 252)
 	kijunSen := make([]float64, 252)
@@ -3168,18 +3249,27 @@ func ExampleCore_ICHIMOKU() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last tenkanSen = %.4f\n", r.NBElement, r.BegIdx, tenkanSen[r.NBElement-1])
-	// Output: 201 values from bar 51; last tenkanSen = 96.1374
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("tenkanSen = [%.4f, ..., %.4f]\n", tenkanSen[0], tenkanSen[r.NBElement-1])
+	fmt.Printf("kijunSen = [%.4f, ..., %.4f]\n", kijunSen[0], kijunSen[r.NBElement-1])
+	fmt.Printf("senkouSpanA = [%.4f, ..., %.4f]\n", senkouSpanA[0], senkouSpanA[r.NBElement-1])
+	fmt.Printf("senkouSpanB = [%.4f, ..., %.4f]\n", senkouSpanB[0], senkouSpanB[r.NBElement-1])
+	// Output:
+	// 201 values from bar 51:
+	// tenkanSen = [99.2500, ..., 99.2500]
+	// kijunSen = [100.9000, ..., 100.9000]
+	// senkouSpanA = [100.0750, ..., 100.0750]
+	// senkouSpanB = [100.0000, ..., 100.0000]
 }
 
 func ExampleCore_IMI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -3188,14 +3278,14 @@ func ExampleCore_IMI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 69.7836
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [15.1568, ..., 12.2449]
 }
 
 func ExampleCore_KAMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3204,22 +3294,22 @@ func ExampleCore_KAMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 222 values from bar 30; last out = 93.3165
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 222 values from bar 30: [94.2222, ..., 101.7081]
 }
 
 func ExampleCore_KC() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	upperBand := make([]float64, 252)
 	middleBand := make([]float64, 252)
@@ -3230,22 +3320,29 @@ func ExampleCore_KC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
-	// Output: 233 values from bar 19; last upperBand = 99.4752
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+	fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+	fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
+	// Output:
+	// 233 values from bar 19:
+	// upperBand = [105.2550, ..., 107.6686]
+	// middleBand = [97.1250, ..., 99.1498]
+	// lowerBand = [88.9950, ..., 90.6311]
 }
 
 func ExampleCore_KDJ() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	k := make([]float64, 252)
 	d := make([]float64, 252)
@@ -3257,14 +3354,21 @@ func ExampleCore_KDJ() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last k = %.4f\n", r.NBElement, r.BegIdx, k[r.NBElement-1])
-	// Output: 240 values from bar 12; last k = 83.1870
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("k = [%.4f, ..., %.4f]\n", k[0], k[r.NBElement-1])
+	fmt.Printf("d = [%.4f, ..., %.4f]\n", d[0], d[r.NBElement-1])
+	fmt.Printf("j = [%.4f, ..., %.4f]\n", j[0], j[r.NBElement-1])
+	// Output:
+	// 240 values from bar 12:
+	// k = [11.9746, ..., 16.7012]
+	// d = [15.7327, ..., 18.8837]
+	// j = [4.4585, ..., 12.3364]
 }
 
 func ExampleCore_KST() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	kst := make([]float64, 252)
 	kstSignal := make([]float64, 252)
@@ -3274,14 +3378,19 @@ func ExampleCore_KST() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last kst = %.4f\n", r.NBElement, r.BegIdx, kst[r.NBElement-1])
-	// Output: 200 values from bar 52; last kst = -21.5503
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("kst = [%.4f, ..., %.4f]\n", kst[0], kst[r.NBElement-1])
+	fmt.Printf("kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[r.NBElement-1])
+	// Output:
+	// 200 values from bar 52:
+	// kst = [50.9384, ..., 65.5115]
+	// kstSignal = [92.4793, ..., 97.9562]
 }
 
 func ExampleCore_KSTEXT() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	kst := make([]float64, 252)
 	kstSignal := make([]float64, 252)
@@ -3292,14 +3401,19 @@ func ExampleCore_KSTEXT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last kst = %.4f\n", r.NBElement, r.BegIdx, kst[r.NBElement-1])
-	// Output: 200 values from bar 52; last kst = -21.5503
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("kst = [%.4f, ..., %.4f]\n", kst[0], kst[r.NBElement-1])
+	fmt.Printf("kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[r.NBElement-1])
+	// Output:
+	// 200 values from bar 52:
+	// kst = [50.9384, ..., 65.5115]
+	// kstSignal = [92.4793, ..., 97.9562]
 }
 
 func ExampleCore_KURTOSIS() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3308,26 +3422,26 @@ func ExampleCore_KURTOSIS() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = -0.8621
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [0.3612, ..., -1.0060]
 }
 
 func ExampleCore_KVO() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	kvo := make([]float64, 252)
 	kvoSignal := make([]float64, 252)
@@ -3337,14 +3451,19 @@ func ExampleCore_KVO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last kvo = %.2f\n", r.NBElement, r.BegIdx, kvo[r.NBElement-1])
-	// Output: 197 values from bar 55; last kvo = 419369.88
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("kvo = [%.4f, ..., %.4f]\n", kvo[0], kvo[r.NBElement-1])
+	fmt.Printf("kvoSignal = [%.4f, ..., %.4f]\n", kvoSignal[0], kvoSignal[r.NBElement-1])
+	// Output:
+	// 197 values from bar 55:
+	// kvo = [-157095.3955, ..., -217092.2525]
+	// kvoSignal = [-38661.0952, ..., 62008.6574]
 }
 
 func ExampleCore_LINEARREG() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3353,14 +3472,14 @@ func ExampleCore_LINEARREG() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 98.9941
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [91.1500, ..., 94.0071]
 }
 
 func ExampleCore_linearreg_angle() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3369,14 +3488,14 @@ func ExampleCore_linearreg_angle() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 36.4615
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [-53.4711, ..., -50.7680]
 }
 
 func ExampleCore_linearreg_intercept() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3385,14 +3504,14 @@ func ExampleCore_linearreg_intercept() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 89.3881
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [108.7000, ..., 109.9286]
 }
 
 func ExampleCore_linearreg_slope() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3401,8 +3520,8 @@ func ExampleCore_linearreg_slope() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 0.7389
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [-1.3500, ..., -1.2247]
 }
 
 func ExampleCore_LN() {
@@ -3417,8 +3536,8 @@ func ExampleCore_LN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 2.3026
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-2.3026, ..., 2.3026]
 }
 
 func ExampleCore_LOG10() {
@@ -3433,14 +3552,14 @@ func ExampleCore_LOG10() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 1.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-1.0000, ..., 1.0000]
 }
 
 func ExampleCore_MA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3449,14 +3568,14 @@ func ExampleCore_MA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 93.3730
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [95.2583, ..., 98.5583]
 }
 
 func ExampleCore_MACD() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	macd := make([]float64, 252)
 	macdSignal := make([]float64, 252)
@@ -3467,14 +3586,21 @@ func ExampleCore_MACD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
-	// Output: 219 values from bar 33; last macd = 0.4815
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("macd = [%.4f, ..., %.4f]\n", macd[0], macd[r.NBElement-1])
+	fmt.Printf("macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[r.NBElement-1])
+	fmt.Printf("macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[r.NBElement-1])
+	// Output:
+	// 219 values from bar 33:
+	// macd = [-1.1241, ..., -0.2779]
+	// macdSignal = [-3.1026, ..., 1.1676]
+	// macdHist = [1.9785, ..., -1.4455]
 }
 
 func ExampleCore_MACDEXT() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	macd := make([]float64, 252)
 	macdSignal := make([]float64, 252)
@@ -3486,14 +3612,21 @@ func ExampleCore_MACDEXT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
-	// Output: 219 values from bar 33; last macd = 1.9286
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("macd = [%.4f, ..., %.4f]\n", macd[0], macd[r.NBElement-1])
+	fmt.Printf("macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[r.NBElement-1])
+	fmt.Printf("macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[r.NBElement-1])
+	// Output:
+	// 219 values from bar 33:
+	// macd = [0.5833, ..., 1.3372]
+	// macdSignal = [-2.2167, ..., 4.7594]
+	// macdHist = [2.8000, ..., -3.4222]
 }
 
 func ExampleCore_MACDFIX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	macd := make([]float64, 252)
 	macdSignal := make([]float64, 252)
@@ -3504,22 +3637,29 @@ func ExampleCore_MACDFIX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
-	// Output: 219 values from bar 33; last macd = 0.4383
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("macd = [%.4f, ..., %.4f]\n", macd[0], macd[r.NBElement-1])
+	fmt.Printf("macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[r.NBElement-1])
+	fmt.Printf("macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[r.NBElement-1])
+	// Output:
+	// 219 values from bar 33:
+	// macd = [-1.1885, ..., -0.2372]
+	// macdSignal = [-3.1260, ..., 1.1277]
+	// macdHist = [1.9375, ..., -1.3649]
 }
 
 func ExampleCore_MACDV() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	macdv := make([]float64, 252)
 	macdvSignal := make([]float64, 252)
@@ -3530,14 +3670,21 @@ func ExampleCore_MACDV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last macdv = %.4f\n", r.NBElement, r.BegIdx, macdv[r.NBElement-1])
-	// Output: 218 values from bar 34; last macdv = 18.1241
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("macdv = [%.4f, ..., %.4f]\n", macdv[0], macdv[r.NBElement-1])
+	fmt.Printf("macdvSignal = [%.4f, ..., %.4f]\n", macdvSignal[0], macdvSignal[r.NBElement-1])
+	fmt.Printf("macdvHist = [%.4f, ..., %.4f]\n", macdvHist[0], macdvHist[r.NBElement-1])
+	// Output:
+	// 218 values from bar 34:
+	// macdv = [-11.1542, ..., -4.8924]
+	// macdvSignal = [-55.9162, ..., 26.4387]
+	// macdvHist = [44.7620, ..., -31.3311]
 }
 
 func ExampleCore_MAMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	mama := make([]float64, 252)
 	fama := make([]float64, 252)
@@ -3547,22 +3694,27 @@ func ExampleCore_MAMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last mama = %.4f\n", r.NBElement, r.BegIdx, mama[r.NBElement-1])
-	// Output: 220 values from bar 32; last mama = 94.7430
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("mama = [%.4f, ..., %.4f]\n", mama[0], mama[r.NBElement-1])
+	fmt.Printf("fama = [%.4f, ..., %.4f]\n", fama[0], fama[r.NBElement-1])
+	// Output:
+	// 220 values from bar 32:
+	// mama = [93.6315, ..., 101.1241]
+	// fama = [86.3780, ..., 102.5800]
 }
 
 func ExampleCore_MARKETFI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -3571,18 +3723,18 @@ func ExampleCore_MARKETFI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.0001
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0003, ..., 0.0001]
 }
 
 func ExampleCore_MASSI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3591,18 +3743,18 @@ func ExampleCore_MASSI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 212 values from bar 40; last out = 25.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 212 values from bar 40: [25.0000, ..., 25.0000]
 }
 
 func ExampleCore_MAVP() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	periods := make([]float64, 252) // one period per bar
 	for i := range periods {
-		periods[i] = 5 + float64(i%10)
+		periods[i] = float64(5 + i%10)
 	}
 	out := make([]float64, 252)
 
@@ -3611,14 +3763,14 @@ func ExampleCore_MAVP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 97.2506
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [91.1250, ..., 96.7583]
 }
 
 func ExampleCore_MAX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3627,14 +3779,14 @@ func ExampleCore_MAX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 99.6726
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [110.0000, ..., 110.0000]
 }
 
 func ExampleCore_MAXINDEX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]int32, 252)
 
@@ -3643,14 +3795,14 @@ func ExampleCore_MAXINDEX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 251
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [0, ..., 240]
 }
 
 func ExampleCore_MCGD() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3659,14 +3811,14 @@ func ExampleCore_MCGD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 94.4564
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [100.5076, ..., 97.7884]
 }
 
 func ExampleCore_MEDIAN() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3675,18 +3827,18 @@ func ExampleCore_MEDIAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 92.6836
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [92.8250, ..., 97.8250]
 }
 
 func ExampleCore_MEDPRICE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3695,26 +3847,26 @@ func ExampleCore_MEDPRICE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 99.6726
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.0000, ..., 94.0500]
 }
 
 func ExampleCore_MFI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -3723,14 +3875,14 @@ func ExampleCore_MFI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 100.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0.0000, ..., 23.1186]
 }
 
 func ExampleCore_MIDPOINT() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3739,18 +3891,18 @@ func ExampleCore_MIDPOINT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 94.9773
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [101.2250, ..., 102.0250]
 }
 
 func ExampleCore_MIDPRICE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3759,14 +3911,14 @@ func ExampleCore_MIDPRICE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 94.9773
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [101.2250, ..., 102.0250]
 }
 
 func ExampleCore_MIN() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3775,14 +3927,14 @@ func ExampleCore_MIN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 90.0072
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [90.0000, ..., 90.2000]
 }
 
 func ExampleCore_MININDEX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]int32, 252)
 
@@ -3791,14 +3943,14 @@ func ExampleCore_MININDEX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 236
+	fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [20, ..., 222]
 }
 
 func ExampleCore_MINMAX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	min := make([]float64, 252)
 	max := make([]float64, 252)
@@ -3808,14 +3960,19 @@ func ExampleCore_MINMAX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last min = %.4f\n", r.NBElement, r.BegIdx, min[r.NBElement-1])
-	// Output: 223 values from bar 29; last min = 90.0072
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("min = [%.4f, ..., %.4f]\n", min[0], min[r.NBElement-1])
+	fmt.Printf("max = [%.4f, ..., %.4f]\n", max[0], max[r.NBElement-1])
+	// Output:
+	// 223 values from bar 29:
+	// min = [90.0000, ..., 90.2000]
+	// max = [110.0000, ..., 110.0000]
 }
 
 func ExampleCore_MINMAXINDEX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	minIdx := make([]int32, 252)
 	maxIdx := make([]int32, 252)
@@ -3825,22 +3982,27 @@ func ExampleCore_MINMAXINDEX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last minIdx = %d\n", r.NBElement, r.BegIdx, minIdx[r.NBElement-1])
-	// Output: 223 values from bar 29; last minIdx = 236
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("minIdx = [%d, ..., %d]\n", minIdx[0], minIdx[r.NBElement-1])
+	fmt.Printf("maxIdx = [%d, ..., %d]\n", maxIdx[0], maxIdx[r.NBElement-1])
+	// Output:
+	// 223 values from bar 29:
+	// minIdx = [20, ..., 222]
+	// maxIdx = [0, ..., 240]
 }
 
 func ExampleCore_minus_di() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -3849,18 +4011,18 @@ func ExampleCore_minus_di() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 7.7593
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [30.7717, ..., 19.4593]
 }
 
 func ExampleCore_minus_dm() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3869,14 +4031,14 @@ func ExampleCore_minus_dm() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 2.3722
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [17.5500, ..., 11.6182]
 }
 
 func ExampleCore_MOM() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3885,14 +4047,14 @@ func ExampleCore_MOM() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 8.2597
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [-15.0000, ..., -14.0000]
 }
 
 func ExampleCore_MULT() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 10 * math.Sin(0.1*float64(i))
+		series0[i] = float64(10*(i%40-20)*(i%40-20)-2000) / 201
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
@@ -3905,22 +4067,22 @@ func ExampleCore_MULT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -1.6368
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-49.7512, ..., -29.6020]
 }
 
 func ExampleCore_NATR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -3929,18 +4091,18 @@ func ExampleCore_NATR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 2.1949
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [4.6618, ..., 4.4586]
 }
 
 func ExampleCore_NVI() {
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -3949,18 +4111,18 @@ func ExampleCore_NVI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 1004.5938
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [1000.0000, ..., 522.1223]
 }
 
 func ExampleCore_OBV() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -3969,14 +4131,14 @@ func ExampleCore_OBV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.3f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -62737.888
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [13000.0000, ..., -136180.0000]
 }
 
 func ExampleCore_PERCENTB() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -3985,14 +4147,14 @@ func ExampleCore_PERCENTB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 233 values from bar 19; last out = 1.0360
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 233 values from bar 19: [0.2142, ..., 0.0854]
 }
 
 func ExampleCore_PERCENTILE() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4001,14 +4163,14 @@ func ExampleCore_PERCENTILE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 153 values from bar 99; last out = 96.7336
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 153 values from bar 99: [95.0000, ..., 97.2000]
 }
 
 func ExampleCore_PERCENTRANK() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4017,22 +4179,22 @@ func ExampleCore_PERCENTRANK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 152 values from bar 100; last out = 61.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 152 values from bar 100: [0.0000, ..., 34.0000]
 }
 
 func ExampleCore_plus_di() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4041,18 +4203,18 @@ func ExampleCore_plus_di() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 23.2533
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0.0000, ..., 10.4675]
 }
 
 func ExampleCore_plus_dm() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4061,14 +4223,14 @@ func ExampleCore_plus_dm() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 7.1092
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [0.0000, ..., 6.2496]
 }
 
 func ExampleCore_PPO() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4077,22 +4239,22 @@ func ExampleCore_PPO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 227 values from bar 25; last out = 0.5056
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 227 values from bar 25: [-4.1202, ..., -0.2805]
 }
 
 func ExampleCore_PSO() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4101,18 +4263,18 @@ func ExampleCore_PSO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 237 values from bar 15; last out = 0.9068
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 237 values from bar 15: [-0.9560, ..., -0.9116]
 }
 
 func ExampleCore_PVI() {
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -4121,14 +4283,14 @@ func ExampleCore_PVI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 990.3595
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [1000.0000, ..., 1641.5289]
 }
 
 func ExampleCore_PVO() {
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -4137,18 +4299,18 @@ func ExampleCore_PVO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 227 values from bar 25; last out = 1.0389
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 227 values from bar 25: [7.7662, ..., 1.3007]
 }
 
 func ExampleCore_PVT() {
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -4157,18 +4319,18 @@ func ExampleCore_PVT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 67.6849
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., -1111.0302]
 }
 
 func ExampleCore_QSTICK() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4177,14 +4339,14 @@ func ExampleCore_QSTICK() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 243 values from bar 9; last out = 0.3998
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [-1.2800, ..., -1.4800]
 }
 
 func ExampleCore_RMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4193,14 +4355,14 @@ func ExampleCore_RMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 96.9778
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [95.2583, ..., 98.0766]
 }
 
 func ExampleCore_ROC() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4209,14 +4371,14 @@ func ExampleCore_ROC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 9.0356
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [-13.6364, ..., -12.9570]
 }
 
 func ExampleCore_ROCP() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4225,14 +4387,14 @@ func ExampleCore_ROCP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 0.0904
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [-0.1364, ..., -0.1296]
 }
 
 func ExampleCore_ROCR() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4241,14 +4403,14 @@ func ExampleCore_ROCR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 1.0904
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [0.8636, ..., 0.8704]
 }
 
 func ExampleCore_ROCR100() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4257,26 +4419,26 @@ func ExampleCore_ROCR100() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 242 values from bar 10; last out = 109.0356
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 242 values from bar 10: [86.3636, ..., 87.0430]
 }
 
 func ExampleCore_ROGERSSATCHELL() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4285,14 +4447,14 @@ func ExampleCore_ROGERSSATCHELL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 243 values from bar 9; last out = 0.2375
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [0.3974, ..., 0.4482]
 }
 
 func ExampleCore_RSI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4301,14 +4463,14 @@ func ExampleCore_RSI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 238 values from bar 14; last out = 74.9801
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 238 values from bar 14: [0.0000, ..., 34.9770]
 }
 
 func ExampleCore_RVI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4317,18 +4479,18 @@ func ExampleCore_RVI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 230 values from bar 22; last out = 63.7384
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 230 values from bar 22: [5.1115, ..., 28.9200]
 }
 
 func ExampleCore_RVIR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4337,14 +4499,14 @@ func ExampleCore_RVIR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 230 values from bar 22; last out = 63.7384
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 230 values from bar 22: [5.1115, ..., 28.9200]
 }
 
 func ExampleCore_RVOL() {
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -4353,18 +4515,18 @@ func ExampleCore_RVOL() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 232 values from bar 20; last out = 1.0248
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 232 values from bar 20: [1.2547, ..., 1.0021]
 }
 
 func ExampleCore_SAR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4373,18 +4535,18 @@ func ExampleCore_SAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 251 values from bar 1; last out = 96.1246
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 251 values from bar 1: [112.0000, ..., 101.7750]
 }
 
 func ExampleCore_SAREXT() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4393,14 +4555,14 @@ func ExampleCore_SAREXT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 251 values from bar 1; last out = 96.1246
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 251 values from bar 1: [-112.0000, ..., -101.7750]
 }
 
 func ExampleCore_SHARPE() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4409,26 +4571,26 @@ func ExampleCore_SHARPE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 232 values from bar 20; last out = 14.7254
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 232 values from bar 20: [-29.1890, ..., -0.9883]
 }
 
 func ExampleCore_SI() {
 	open := make([]float64, 252) // your data, oldest first
 	for i := range open {
-		open[i] = 100 + 10*math.Sin(0.1*float64(i)-0.05)
+		open[i] = 90 + float64(((i+39)%40-20)*((i+39)%40-20))/20
 	}
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4437,8 +4599,8 @@ func ExampleCore_SI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 251 values from bar 1; last out = 29.4313
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 251 values from bar 1: [-54.5199, ..., 7.0104]
 }
 
 func ExampleCore_SIN() {
@@ -4453,8 +4615,8 @@ func ExampleCore_SIN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.0168
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-0.0168, ..., 0.0168]
 }
 
 func ExampleCore_SINH() {
@@ -4469,14 +4631,14 @@ func ExampleCore_SINH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 74.2032
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-74.2032, ..., 74.2032]
 }
 
 func ExampleCore_SKEW() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4485,14 +4647,14 @@ func ExampleCore_SKEW() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 0.5920
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [1.2121, ..., 0.3185]
 }
 
 func ExampleCore_SMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4501,22 +4663,22 @@ func ExampleCore_SMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 93.3730
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [95.2583, ..., 98.5583]
 }
 
 func ExampleCore_SMI() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	smi := make([]float64, 252)
 	smiSignal := make([]float64, 252)
@@ -4526,14 +4688,19 @@ func ExampleCore_SMI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last smi = %.4f\n", r.NBElement, r.BegIdx, smi[r.NBElement-1])
-	// Output: 207 values from bar 45; last smi = 4.6102
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("smi = [%.4f, ..., %.4f]\n", smi[0], smi[r.NBElement-1])
+	fmt.Printf("smiSignal = [%.4f, ..., %.4f]\n", smiSignal[0], smiSignal[r.NBElement-1])
+	// Output:
+	// 207 values from bar 45:
+	// smi = [14.9323, ..., -15.2832]
+	// smiSignal = [7.2409, ..., 5.0751]
 }
 
 func ExampleCore_SORTINO() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4542,8 +4709,8 @@ func ExampleCore_SORTINO() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 232 values from bar 20; last out = 52.5390
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 232 values from bar 20: [-14.0258, ..., -1.4064]
 }
 
 func ExampleCore_SQRT() {
@@ -4558,22 +4725,22 @@ func ExampleCore_SQRT() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 10.0000
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., 10.0000]
 }
 
 func ExampleCore_SQZMOM() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	momentum := make([]float64, 252)
 	squeeze := make([]int32, 252)
@@ -4583,14 +4750,19 @@ func ExampleCore_SQZMOM() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last momentum = %.4f\n", r.NBElement, r.BegIdx, momentum[r.NBElement-1])
-	// Output: 214 values from bar 38; last momentum = 5.9795
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("momentum = [%.4f, ..., %.4f]\n", momentum[0], momentum[r.NBElement-1])
+	fmt.Printf("squeeze = [%d, ..., %d]\n", squeeze[0], squeeze[r.NBElement-1])
+	// Output:
+	// 214 values from bar 38:
+	// momentum = [10.2640, ..., -5.0158]
+	// squeeze = [-1, ..., -1]
 }
 
 func ExampleCore_STC() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4599,14 +4771,14 @@ func ExampleCore_STC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 185 values from bar 67; last out = 99.9512
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 185 values from bar 67: [100.0000, ..., 0.7354]
 }
 
 func ExampleCore_STDDEV() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4615,22 +4787,22 @@ func ExampleCore_STDDEV() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 248 values from bar 4; last out = 1.3684
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 248 values from bar 4: [2.5470, ..., 1.5579]
 }
 
 func ExampleCore_STOCH() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	slowK := make([]float64, 252)
 	slowD := make([]float64, 252)
@@ -4641,22 +4813,27 @@ func ExampleCore_STOCH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last slowK = %.4f\n", r.NBElement, r.BegIdx, slowK[r.NBElement-1])
-	// Output: 244 values from bar 8; last slowK = 73.0890
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("slowK = [%.4f, ..., %.4f]\n", slowK[0], slowK[r.NBElement-1])
+	fmt.Printf("slowD = [%.4f, ..., %.4f]\n", slowD[0], slowD[r.NBElement-1])
+	// Output:
+	// 244 values from bar 8:
+	// slowK = [23.6795, ..., 26.9669]
+	// slowD = [14.5331, ..., 16.4986]
 }
 
 func ExampleCore_STOCHF() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	fastK := make([]float64, 252)
 	fastD := make([]float64, 252)
@@ -4666,14 +4843,19 @@ func ExampleCore_STOCHF() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last fastK = %.4f\n", r.NBElement, r.BegIdx, fastK[r.NBElement-1])
-	// Output: 246 values from bar 6; last fastK = 79.8551
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("fastK = [%.4f, ..., %.4f]\n", fastK[0], fastK[r.NBElement-1])
+	fmt.Printf("fastD = [%.4f, ..., %.4f]\n", fastD[0], fastD[r.NBElement-1])
+	// Output:
+	// 246 values from bar 6:
+	// fastK = [11.5385, ..., 42.8571]
+	// fastD = [6.8885, ..., 26.9669]
 }
 
 func ExampleCore_STOCHRSI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	fastK := make([]float64, 252)
 	fastD := make([]float64, 252)
@@ -4683,14 +4865,19 @@ func ExampleCore_STOCHRSI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last fastK = %.4f\n", r.NBElement, r.BegIdx, fastK[r.NBElement-1])
-	// Output: 232 values from bar 20; last fastK = 100.0000
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("fastK = [%.4f, ..., %.4f]\n", fastK[0], fastK[r.NBElement-1])
+	fmt.Printf("fastD = [%.4f, ..., %.4f]\n", fastD[0], fastD[r.NBElement-1])
+	// Output:
+	// 232 values from bar 20:
+	// fastK = [0.0000, ..., 0.0000]
+	// fastD = [0.0000, ..., 0.0000]
 }
 
 func ExampleCore_SUB() {
 	series0 := make([]float64, 252) // your data, oldest first
 	for i := range series0 {
-		series0[i] = 10 * math.Sin(0.1*float64(i))
+		series0[i] = float64(10*(i%40-20)*(i%40-20)-2000) / 201
 	}
 	series1 := make([]float64, 252) // your data, oldest first
 	for i := range series1 {
@@ -4703,14 +4890,14 @@ func ExampleCore_SUB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = -5.3274
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [14.9502, ..., -10.9204]
 }
 
 func ExampleCore_SUM() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4719,22 +4906,22 @@ func ExampleCore_SUM() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 2801.1911
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [2857.7500, ..., 2956.7500]
 }
 
 func ExampleCore_SUPERTREND() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	supertrend := make([]float64, 252)
 	trend := make([]int32, 252)
@@ -4744,14 +4931,19 @@ func ExampleCore_SUPERTREND() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last supertrend = %.4f\n", r.NBElement, r.BegIdx, supertrend[r.NBElement-1])
-	// Output: 242 values from bar 10; last supertrend = 93.0252
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("supertrend = [%.4f, ..., %.4f]\n", supertrend[0], supertrend[r.NBElement-1])
+	fmt.Printf("trend = [%d, ..., %d]\n", trend[0], trend[r.NBElement-1])
+	// Output:
+	// 242 values from bar 10:
+	// supertrend = [82.1000, ..., 106.8282]
+	// trend = [1, ..., -1]
 }
 
 func ExampleCore_swak2php() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4760,14 +4952,14 @@ func ExampleCore_swak2php() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.1869
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., 0.2147]
 }
 
 func ExampleCore_swak_bp() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4776,14 +4968,14 @@ func ExampleCore_swak_bp() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.7085
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., -3.1313]
 }
 
 func ExampleCore_swak_butter() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4792,14 +4984,14 @@ func ExampleCore_swak_butter() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 95.8350
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.0000, ..., 98.8859]
 }
 
 func ExampleCore_swak_gauss() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4808,14 +5000,14 @@ func ExampleCore_swak_gauss() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 96.7078
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.0000, ..., 97.7048]
 }
 
 func ExampleCore_swak_hp() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4824,14 +5016,14 @@ func ExampleCore_swak_hp() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 2.8415
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., -3.4618]
 }
 
 func ExampleCore_T3() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4840,8 +5032,8 @@ func ExampleCore_T3() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 228 values from bar 24; last out = 97.5664
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 228 values from bar 24: [89.7982, ..., 96.4619]
 }
 
 func ExampleCore_TAN() {
@@ -4856,8 +5048,8 @@ func ExampleCore_TAN() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 2.5722
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-2.5722, ..., 2.5722]
 }
 
 func ExampleCore_TANH() {
@@ -4872,14 +5064,14 @@ func ExampleCore_TANH() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 0.9951
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [-0.9951, ..., 0.9951]
 }
 
 func ExampleCore_TEMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4888,22 +5080,22 @@ func ExampleCore_TEMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 165 values from bar 87; last out = 94.5313
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 165 values from bar 87: [104.1646, ..., 100.0117]
 }
 
 func ExampleCore_TRANGE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -4912,14 +5104,14 @@ func ExampleCore_TRANGE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 251 values from bar 1; last out = 2.6371
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 251 values from bar 1: [5.5500, ..., 4.0000]
 }
 
 func ExampleCore_TRIMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4928,14 +5120,14 @@ func ExampleCore_TRIMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 91.8752
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [93.5083, ..., 100.8417]
 }
 
 func ExampleCore_TRIX() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4944,14 +5136,14 @@ func ExampleCore_TRIX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 164 values from bar 88; last out = -0.1658
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 164 values from bar 88: [0.0692, ..., 0.0796]
 }
 
 func ExampleCore_TSF() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4960,14 +5152,14 @@ func ExampleCore_TSF() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = 99.7330
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [89.8000, ..., 92.7824]
 }
 
 func ExampleCore_TSI() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -4976,22 +5168,22 @@ func ExampleCore_TSI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 215 values from bar 37; last out = 10.1218
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 215 values from bar 37: [-16.9532, ..., -2.2395]
 }
 
 func ExampleCore_TYPPRICE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -5000,22 +5192,22 @@ func ExampleCore_TYPPRICE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 99.6121
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.5333, ..., 94.5833]
 }
 
 func ExampleCore_ULTOSC() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -5024,14 +5216,14 @@ func ExampleCore_ULTOSC() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 224 values from bar 28; last out = 48.7576
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 224 values from bar 28: [48.7400, ..., 39.2301]
 }
 
 func ExampleCore_VAR() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -5040,14 +5232,14 @@ func ExampleCore_VAR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 248 values from bar 4; last out = 1.8726
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 248 values from bar 4: [6.4870, ..., 2.4270]
 }
 
 func ExampleCore_VHF() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -5056,14 +5248,14 @@ func ExampleCore_VHF() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 224 values from bar 28; last out = 0.5816
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 224 values from bar 28: [0.7780, ..., 0.5408]
 }
 
 func ExampleCore_VIDYA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -5072,22 +5264,22 @@ func ExampleCore_VIDYA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 243 values from bar 9; last out = 95.7454
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [102.2203, ..., 99.2604]
 }
 
 func ExampleCore_VORTEX() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	plusVi := make([]float64, 252)
 	minusVi := make([]float64, 252)
@@ -5097,26 +5289,31 @@ func ExampleCore_VORTEX() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last plusVi = %.4f\n", r.NBElement, r.BegIdx, plusVi[r.NBElement-1])
-	// Output: 238 values from bar 14; last plusVi = 1.2342
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("plusVi = [%.4f, ..., %.4f]\n", plusVi[0], plusVi[r.NBElement-1])
+	fmt.Printf("minusVi = [%.4f, ..., %.4f]\n", minusVi[0], minusVi[r.NBElement-1])
+	// Output:
+	// 238 values from bar 14:
+	// plusVi = [0.6407, ..., 0.7284]
+	// minusVi = [1.2576, ..., 1.0607]
 }
 
 func ExampleCore_VWAP() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -5125,18 +5322,18 @@ func ExampleCore_VWAP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 99.5557
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.5333, ..., 96.9388]
 }
 
 func ExampleCore_VWMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	volume := make([]float64, 252) // your data, oldest first
 	for i := range volume {
-		volume[i] = 10000 + 100*float64(i) + 2000*math.Sin(0.3*float64(i))
+		volume[i] = float64(10000 + 100*i + 30*(i%20-10)*(i%20-10))
 	}
 	out := make([]float64, 252)
 
@@ -5145,22 +5342,22 @@ func ExampleCore_VWMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 93.3041
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [95.0090, ..., 98.7219]
 }
 
 func ExampleCore_WAD() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -5169,22 +5366,22 @@ func ExampleCore_WAD() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 2.8085
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [0.0000, ..., -81.0000]
 }
 
 func ExampleCore_WAVETREND() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	wt1 := make([]float64, 252)
 	wt2 := make([]float64, 252)
@@ -5194,22 +5391,27 @@ func ExampleCore_WAVETREND() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last wt1 = %.4f\n", r.NBElement, r.BegIdx, wt1[r.NBElement-1])
-	// Output: 211 values from bar 41; last wt1 = 37.9981
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("wt1 = [%.4f, ..., %.4f]\n", wt1[0], wt1[r.NBElement-1])
+	fmt.Printf("wt2 = [%.4f, ..., %.4f]\n", wt2[0], wt2[r.NBElement-1])
+	// Output:
+	// 211 values from bar 41:
+	// wt1 = [49.0117, ..., -11.2816]
+	// wt2 = [45.6703, ..., -1.7372]
 }
 
 func ExampleCore_WCLPRICE() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -5218,22 +5420,22 @@ func ExampleCore_WCLPRICE() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 252 values from bar 0; last out = 99.5818
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 252 values from bar 0: [110.8000, ..., 94.8500]
 }
 
 func ExampleCore_WILLR() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	close := make([]float64, 252) // your data, oldest first
 	for i := range close {
-		close[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+		close[i] = 88.4 + float64((i%40-20)*(i%40-20)+4*(i%9-4)*(i%9-4))/20
 	}
 	out := make([]float64, 252)
 
@@ -5242,14 +5444,14 @@ func ExampleCore_WILLR() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 239 values from bar 13; last out = -10.3748
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 239 values from bar 13: [-98.1439, ..., -81.9549]
 }
 
 func ExampleCore_WMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -5258,18 +5460,18 @@ func ExampleCore_WMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 223 values from bar 29; last out = 93.7100
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 223 values from bar 29: [92.6000, ..., 100.1935]
 }
 
 func ExampleCore_ZIGZAG() {
 	high := make([]float64, 252) // your data, oldest first
 	for i := range high {
-		high[i] = 101 + 10*math.Sin(0.1*float64(i))
+		high[i] = 92 + float64((i%40-20)*(i%40-20))/20
 	}
 	low := make([]float64, 252) // your data, oldest first
 	for i := range low {
-		low[i] = 99 + 10*math.Sin(0.1*float64(i))
+		low[i] = 88 + float64((i%40-20)*(i%40-20))/20
 	}
 	zigZag := make([]float64, 252)
 	trend := make([]int32, 252)
@@ -5280,14 +5482,21 @@ func ExampleCore_ZIGZAG() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last zigZag = %.4f\n", r.NBElement, r.BegIdx, zigZag[r.NBElement-1])
-	// Output: 251 values from bar 1; last zigZag = 100.6726
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("zigZag = [%.4f, ..., %.4f]\n", zigZag[0], zigZag[r.NBElement-1])
+	fmt.Printf("trend = [%d, ..., %d]\n", trend[0], trend[r.NBElement-1])
+	fmt.Printf("pivotIdx = [%d, ..., %d]\n", pivotIdx[0], pivotIdx[r.NBElement-1])
+	// Output:
+	// 251 values from bar 1:
+	// zigZag = [106.0500, ..., 92.0500]
+	// trend = [-1, ..., -1]
+	// pivotIdx = [1, ..., 251]
 }
 
 func ExampleCore_ZLEMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
-		series[i] = 100 + 10*math.Sin(0.1*float64(i))
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
 	}
 	out := make([]float64, 252)
 
@@ -5296,6 +5505,6 @@ func ExampleCore_ZLEMA() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
-	// Output: 209 values from bar 43; last out = 94.7548
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 209 values from bar 43: [97.8583, ..., 101.5795]
 }

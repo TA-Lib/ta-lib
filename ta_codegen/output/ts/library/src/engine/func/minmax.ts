@@ -74,7 +74,9 @@ export * from '../../func/minmax.ts';
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
- * console.log(outMin.length + ' values from bar ' + begIdx + '; last outMin = ' + outMin[outMin.length - 1]);
+ * console.log(outMin.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMin = [' + outMin[0].toFixed(4) + ', ..., ' + outMin[outMin.length - 1].toFixed(4) + ']');
+ * console.log('outMax = [' + outMax[0].toFixed(4) + ', ..., ' + outMax[outMax.length - 1].toFixed(4) + ']');
  * ```
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)

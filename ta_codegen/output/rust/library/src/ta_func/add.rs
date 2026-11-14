@@ -171,15 +171,17 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series0 = vec![0.0; 252]; // your data, oldest first
-    /// # let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series0: Vec<f64> = (0..252)
+    /// #     .map(|i| (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) as f64 / 201.0)
+    /// #     .collect();
     /// let series1 = vec![0.0; 252]; // your data, oldest first
     /// # let series1: Vec<f64> = (0..252).map(|i| -5.0 + 10.0 * i as f64 / 251.0).collect();
     /// let mut out = vec![0.0; 252];
     ///
     /// let core = Core::new();
     /// let range = core.add(0, series0.len() - 1, &series0, &series1, &mut out)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}: [{:.4}, ..., {:.4}]", range.count, range.beg_idx, out[0], out[range.count - 1]);
     /// # assert!(out[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
@@ -334,7 +336,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series0: Vec<f64> = (0..252)
+    ///     .map(|i| (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) as f64 / 201.0)
+    ///     .collect();
     /// let series1: Vec<f64> = (0..252).map(|i| -5.0 + 10.0 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();
@@ -366,7 +370,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series0: Vec<f64> = (0..252)
+    ///     .map(|i| (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) as f64 / 201.0)
+    ///     .collect();
     /// let series1: Vec<f64> = (0..252).map(|i| -5.0 + 10.0 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();

@@ -407,7 +407,7 @@ export function cmouDisplayShift(outputIdx: number, options?: CmouOptions): numb
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cmou(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`cmo`](https://ta-lib.org/functions/cmo)
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
@@ -943,7 +943,7 @@ export function cmouOpenAndFillPositional(
  * import { cmouOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = cmouOpen(series, { timePeriod: 14 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -979,7 +979,7 @@ export function cmouOpen(real: ArrayLike<number>, options?: CmouOptions): CmouSt
  * import { cmouOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = cmouOpenAndFill(series, { timePeriod: 14 });
  * // values[k] is the value at bar begIdx + k
  * ```

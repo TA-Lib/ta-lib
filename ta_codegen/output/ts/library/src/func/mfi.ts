@@ -465,7 +465,7 @@ export function mfiDisplayShift(outputIdx: number, options?: MfiOptions): number
  * const { begIdx, values } = mfi({ high, low, close, volume }, {
  *   timePeriod: 14,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`ad`](https://ta-lib.org/functions/ad)
@@ -1088,13 +1088,13 @@ export function mfiOpenAndFillPositional(
  * import { mfiOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = mfiOpen({ high, low, close, volume }, { timePeriod: 14 });
  * const peeked = stream.peek(101.4, 99.1, 100.9, 12345); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
@@ -1135,13 +1135,13 @@ export function mfiOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { mfiOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = mfiOpenAndFill({ high, low, close, volume }, {
  *   timePeriod: 14,
  * });

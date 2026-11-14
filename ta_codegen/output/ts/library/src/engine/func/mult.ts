@@ -72,7 +72,7 @@ export * from '../../func/mult.ts';
  * const series1 = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = mult(series0, series1);
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`add`](https://ta-lib.org/functions/add)
  * @see [`sub`](https://ta-lib.org/functions/sub)

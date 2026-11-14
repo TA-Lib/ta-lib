@@ -95,7 +95,7 @@ const WASM_FROM_BARS = 250;
  * const { begIdx, values } = cdlmorningstar({ open, high, low, close }, {
  *   penetration: 0.3,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)
  * @see [`cdleveningstar`](https://ta-lib.org/functions/cdleveningstar)

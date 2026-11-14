@@ -100,7 +100,10 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_MACDFIX( 0, n - 1, series, 9, &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
-printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "macd = [%.4f, ..., %.4f]\n", macd[0], macd[outNBElement - 1] );
+printf( "macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[outNBElement - 1] );
+printf( "macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -116,7 +119,10 @@ let mut macd_hist = vec![0.0; 252];
 let core = Core::new();
 let range = core.macdfix(0, series.len() - 1, &series, 9,
                          &mut macd, &mut macd_signal, &mut macd_hist)?;
-println!("{} values from bar {}; last macd = {}", range.count, range.beg_idx, macd[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("macd = [{:.4}, ..., {:.4}]", macd[0], macd[range.count - 1]);
+println!("macd_signal = [{:.4}, ..., {:.4}]", macd_signal[0], macd_signal[range.count - 1]);
+println!("macd_hist = [{:.4}, ..., {:.4}]", macd_hist[0], macd_hist[range.count - 1]);
 ```
 
 @tab Java
@@ -124,6 +130,7 @@ println!("{} values from bar {}; last macd = {}", range.count, range.beg_idx, ma
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] macd = new double[252];
@@ -132,7 +139,10 @@ double[] macdHist = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.macdfix(0, series.length - 1, series, 9, macd, macdSignal, macdHist);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last macd = " + macd[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "macd = [%.4f, ..., %.4f]%n", macd[0], macd[r.count() - 1]);
+System.out.printf(Locale.ROOT, "macdSignal = [%.4f, ..., %.4f]%n", macdSignal[0], macdSignal[r.count() - 1]);
+System.out.printf(Locale.ROOT, "macdHist = [%.4f, ..., %.4f]%n", macdHist[0], macdHist[r.count() - 1]);
 ```
 
 @tab C\#
@@ -148,7 +158,10 @@ var macdHist = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Macdfix(0, series.Length - 1, series, 9, macd, macdSignal, macdHist);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last macd = {macd[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"macd = [{macd[0]:F4}, ..., {macd[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"macdSignal = [{macdSignal[0]:F4}, ..., {macdSignal[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"macdHist = [{macdHist[0]:F4}, ..., {macdHist[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -164,7 +177,10 @@ const {
   outMacdSignal,
   outMacdHist,
 } = macdfix(series, { signalPeriod: 9 });
-console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -187,7 +203,10 @@ r, err := core.MACDFIX(0, len(series)-1, series, 9, macd, macdSignal, macdHist)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("macd = [%.4f, ..., %.4f]\n", macd[0], macd[r.NBElement-1])
+fmt.Printf("macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[r.NBElement-1])
+fmt.Printf("macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[r.NBElement-1])
 ```
 
 :::

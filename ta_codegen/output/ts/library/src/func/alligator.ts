@@ -564,7 +564,10 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  *   lipsPeriod: 5,
  *   lipsShift: 3,
  * });
- * console.log(outJaw.length + ' values from bar ' + begIdx + '; last outJaw = ' + outJaw[outJaw.length - 1]);
+ * console.log(outJaw.length + ' values from bar ' + begIdx + ':');
+ * console.log('outJaw = [' + outJaw[0].toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1].toFixed(4) + ']');
+ * console.log('outTeeth = [' + outTeeth[0].toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1].toFixed(4) + ']');
+ * console.log('outLips = [' + outLips[0].toFixed(4) + ', ..., ' + outLips[outLips.length - 1].toFixed(4) + ']');
  * ```
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
@@ -1172,9 +1175,9 @@ export function alligatorOpenAndFillPositional(
  * import { alligatorOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = alligatorOpen({ high, low }, {
  *   jawPeriod: 13,
  *   jawShift: 8,
@@ -1226,9 +1229,9 @@ export function alligatorOpen(prices: { open?: ArrayLike<number> | undefined; hi
  * import { alligatorOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

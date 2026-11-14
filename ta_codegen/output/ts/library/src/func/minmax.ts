@@ -434,7 +434,9 @@ export function minmaxDisplayShift(outputIdx: number, options?: MinmaxOptions): 
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
- * console.log(outMin.length + ' values from bar ' + begIdx + '; last outMin = ' + outMin[outMin.length - 1]);
+ * console.log(outMin.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMin = [' + outMin[0].toFixed(4) + ', ..., ' + outMin[outMin.length - 1].toFixed(4) + ']');
+ * console.log('outMax = [' + outMax[0].toFixed(4) + ', ..., ' + outMax[outMax.length - 1].toFixed(4) + ']');
  * ```
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)
@@ -1019,7 +1021,7 @@ export function minmaxOpenAndFillPositional(
  * import { minmaxOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = minmaxOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -1055,7 +1057,7 @@ export function minmaxOpen(real: ArrayLike<number>, options?: MinmaxOptions): Mi
  * import { minmaxOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, outMin, outMax } = minmaxOpenAndFill(series, {
  *   timePeriod: 30,
  * });

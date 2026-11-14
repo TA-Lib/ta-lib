@@ -500,7 +500,7 @@ export function coppockDisplayShift(outputIdx: number, options?: CoppockOptions)
  *   roc1Period: 11,
  *   roc2Period: 14,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  */
 export function coppock(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult {
@@ -1218,7 +1218,7 @@ export function coppockOpenAndFillPositional(
  * import { coppockOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = coppockOpen(series, {
  *   wmaPeriod: 10,
  *   roc1Period: 11,
@@ -1261,7 +1261,7 @@ export function coppockOpen(real: ArrayLike<number>, options?: CoppockOptions): 
  * import { coppockOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = coppockOpenAndFill(series, {
  *   wmaPeriod: 10,
  *   roc1Period: 11,

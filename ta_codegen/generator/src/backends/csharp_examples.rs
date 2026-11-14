@@ -2,19 +2,12 @@
 //! and runs every one on the synthetic series.
 
 use super::examples::{self, hidden, shown, Snippet, LEN};
-use crate::ir::{EnumDef, FuncDef, ParamType};
+use crate::ir::{EnumDef, FuncDef, Output, ParamType};
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
 
 const WRAP: usize = 100;
-
-const SYNTAX: examples::Syntax<'static> = examples::Syntax {
-    real: super::doc_meta::fmt_real,
-    bar: "i",
-    sin: |x| format!("Math.Sin({x})"),
-    modulo: |m| format!("(i % {m})"),
-};
 
 /// The batch call through the public tier, `Core.Default`.
 #[allow(clippy::implicit_hasher)]
@@ -32,7 +25,7 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
         body.push(hidden(format!(
             "for (int i = 0; i < {LEN}; i++) {}[i] = {};",
             s.var,
-            examples::render(s, &SYNTAX)
+            examples::render(s, &examples::C_FAMILY)
         )));
     }
     // `out` is a C# keyword, so a lone output keeps its own name (`outReal`).
@@ -55,11 +48,23 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
     body.extend(
         examples::wrap_call(&format!("OutRange r = core.{method}("), &args, &out_vars, ");", WRAP).into_iter().map(shown),
     );
-    body.push(hidden(format!("if (!Check(\"{name}\", r.Count > 0)) return;")));
-    let printed = &out_vars[0];
-    body.push(shown(format!(
-        "Console.WriteLine($\"{{r.Count}} values from bar {{r.BegIdx}}; last {printed} = {{{printed}[r.Count - 1]}}\");"
-    )));
+    let ends = examples::Ends::of(func);
+    body.push(hidden(format!("if (!Check(\"{name}\", r.Count {})) return;", ends.claim())));
+    let list = |output: &Output, var: &str| {
+        let spec = if output.param_type == ParamType::Integer { "" } else { ":F4" };
+        ends.list(&format!("{{{var}[0]{spec}}}"), &format!("{{{var}[r.Count - 1]{spec}}}"))
+    };
+    if let [output] = func.outputs.as_slice() {
+        let values = list(output, &out_vars[0]);
+        body.push(shown(format!(
+            "Console.WriteLine(FormattableString.Invariant($\"{{r.Count}} values from bar {{r.BegIdx}}: {values}\"));"
+        )));
+    } else {
+        body.push(shown("Console.WriteLine($\"{r.Count} values from bar {r.BegIdx}:\");"));
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            body.push(shown(format!("Console.WriteLine(FormattableString.Invariant($\"{var} = {}\"));", list(output, var))));
+        }
+    }
     if let Some((_, var)) = func.outputs.iter().zip(&out_vars).find(|(o, _)| o.param_type != ParamType::Integer) {
         let helper = if examples::allows_infinity(func) { "NoNaN" } else { "AllFinite" };
         body.push(hidden(format!("Check(\"{name}\", {helper}({var}, r.Count));")));

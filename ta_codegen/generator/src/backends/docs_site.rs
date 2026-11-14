@@ -252,7 +252,7 @@ pub fn example_tabs(
 }
 
 /// The `## Example` section: one `code-tabs` block, every parameter at its default,
-/// the last computed value printed. None when an input has no example shape.
+/// the first and last value of each output printed. None when an input has no example shape.
 #[allow(clippy::implicit_hasher)]
 #[must_use]
 pub fn example_section(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<String> {

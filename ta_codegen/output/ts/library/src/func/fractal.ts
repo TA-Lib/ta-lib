@@ -412,7 +412,9 @@ export function fractalDisplayShift(outputIdx: number, options?: FractalOptions)
  *   leftBars: 2,
  *   rightBars: 2,
  * });
- * console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+ * console.log(outSwingHigh.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSwingHigh = [' + outSwingHigh[0] + ', ..., ' + outSwingHigh[outSwingHigh.length - 1] + ']');
+ * console.log('outSwingLow = [' + outSwingLow[0] + ', ..., ' + outSwingLow[outSwingLow.length - 1] + ']');
  * ```
  * @see [`aroon`](https://ta-lib.org/functions/aroon)
  * @see [`maxindex`](https://ta-lib.org/functions/maxindex)
@@ -995,9 +997,9 @@ export function fractalOpenAndFillPositional(
  * import { fractalOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = fractalOpen({ high, low }, { leftBars: 2, rightBars: 2 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1038,9 +1040,9 @@ export function fractalOpen(prices: { open?: ArrayLike<number> | undefined; high
  * import { fractalOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

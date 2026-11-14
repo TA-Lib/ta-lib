@@ -953,7 +953,10 @@ export function macdvDisplayShift(outputIdx: number, options?: MacdvOptions): nu
  *   slowPeriod: 26,
  *   signalPeriod: 9,
  * });
- * console.log(outMacdv.length + ' values from bar ' + begIdx + '; last outMacdv = ' + outMacdv[outMacdv.length - 1]);
+ * console.log(outMacdv.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMacdv = [' + outMacdv[0].toFixed(4) + ', ..., ' + outMacdv[outMacdv.length - 1].toFixed(4) + ']');
+ * console.log('outMacdvSignal = [' + outMacdvSignal[0].toFixed(4) + ', ..., ' + outMacdvSignal[outMacdvSignal.length - 1].toFixed(4) + ']');
+ * console.log('outMacdvHist = [' + outMacdvHist[0].toFixed(4) + ', ..., ' + outMacdvHist[outMacdvHist.length - 1].toFixed(4) + ']');
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`atr`](https://ta-lib.org/functions/atr)
@@ -2227,11 +2230,11 @@ export function macdvOpenAndFillPositional(
  * import { macdvOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = macdvOpen({ high, low, close }, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
@@ -2278,11 +2281,11 @@ export function macdvOpen(prices: { open?: ArrayLike<number> | undefined; high: 
  * import { macdvOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const {
  *   stream,
  *   begIdx,

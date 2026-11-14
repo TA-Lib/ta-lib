@@ -90,7 +90,7 @@ const WASM_FROM_BARS = 2500;
  *   timePeriod2: 14,
  *   timePeriod3: 28,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`trange`](https://ta-lib.org/functions/trange)

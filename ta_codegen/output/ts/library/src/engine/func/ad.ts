@@ -78,7 +78,7 @@ export * from '../../func/ad.ts';
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = ad({ high, low, close, volume });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)

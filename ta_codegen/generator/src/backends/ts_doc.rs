@@ -899,7 +899,7 @@ fn series(func: &FuncDef, input: &str) -> Option<(&'static str, String, String)>
         }
         .to_string(),
     };
-    Some((s.var, examples::render(&s, &examples::MATH_SIN), bar))
+    Some((s.var, examples::render(&s, &examples::C_FAMILY), bar))
 }
 
 fn series_lines(var: &str, expr: &str) -> Vec<String> {
@@ -1060,14 +1060,24 @@ pub fn batch_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option
     body.extend(pre.into_iter().map(shown));
     body.extend(api_call(&lead, &names.public, &api_args(func, &s), &example_opts(func, &s)).into_iter().map(shown));
     // Concatenation, not a template literal: `${` reads as TeX to the doc gate.
-    body.push(shown(format!(
-        "console.log({0}.length + ' values from bar ' + begIdx + '; last {0} = ' + {0}[{0}.length - 1]);",
-        outs[0]
-    )));
+    let ends = examples::Ends::of(func);
+    let list = |out: &Output, var: &str| {
+        let fixed = if out.param_type == ParamType::Integer { "" } else { ".toFixed(4)" };
+        ends.list(&format!("' + {var}[0]{fixed} + '"), &format!("' + {var}[{var}.length - 1]{fixed} + '"))
+    };
+    let head = format!("{}.length + ' values from bar ' + begIdx + ':", outs[0]);
+    if let [out] = func.outputs.as_slice() {
+        body.push(shown(format!("console.log({head} {}');", list(out, &outs[0]))));
+    } else {
+        body.push(shown(format!("console.log({head}');")));
+        for (out, var) in func.outputs.iter().zip(&outs) {
+            body.push(shown(format!("console.log('{var} = {}');", list(out, var))));
+        }
+    }
 
     let mut checks = vec![
         format!("const count = {}.length;", outs[0]),
-        "assert.ok(count > 0);".to_string(),
+        format!("assert.ok(count {});", ends.claim()),
         format!("assert.equal(begIdx + count, {first}.length);"),
     ];
     for var in &outs[1..] {

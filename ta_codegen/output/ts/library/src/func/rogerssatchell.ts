@@ -475,7 +475,7 @@ export function rogerssatchellDisplayShift(outputIdx: number, options?: Rogerssa
  *   timePeriod: 10,
  *   annualization: 252,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`natr`](https://ta-lib.org/functions/natr)
@@ -1180,13 +1180,13 @@ export function rogerssatchellOpenAndFillPositional(
  * import { rogerssatchellOpen } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = rogerssatchellOpen({ open, high, low, close }, {
  *   timePeriod: 10,
  *   annualization: 252,
@@ -1231,13 +1231,13 @@ export function rogerssatchellOpen(prices: { open: ArrayLike<number>; high: Arra
  * import { rogerssatchellOpenAndFill } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, values } = rogerssatchellOpenAndFill({ open, high, low, close }, {
  *   timePeriod: 10,
  *   annualization: 252,

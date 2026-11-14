@@ -292,7 +292,7 @@ export function pviDisplayShift(outputIdx: number, options?: PviOptions): number
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = pvi({ close, volume });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  */
 export function pvi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PviOptions): PviResult {
@@ -681,9 +681,9 @@ export function pviOpenAndFillPositional(
  * import { pviOpen } from 'ta-lib';
  *
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = pviOpen({ close, volume });
  * const peeked = stream.peek(100.9, 12345); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 12345); // the bar closes
@@ -721,9 +721,9 @@ export function pviOpen(prices: { open?: ArrayLike<number> | undefined; high?: A
  * import { pviOpenAndFill } from 'ta-lib';
  *
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = pviOpenAndFill({ close, volume });
  * // values[k] is the value at bar begIdx + k
  * ```

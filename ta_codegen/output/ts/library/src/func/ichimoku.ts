@@ -499,7 +499,11 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  *   kijunPeriod: 26,
  *   senkouBPeriod: 52,
  * });
- * console.log(outTenkanSen.length + ' values from bar ' + begIdx + '; last outTenkanSen = ' + outTenkanSen[outTenkanSen.length - 1]);
+ * console.log(outTenkanSen.length + ' values from bar ' + begIdx + ':');
+ * console.log('outTenkanSen = [' + outTenkanSen[0].toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1].toFixed(4) + ']');
+ * console.log('outKijunSen = [' + outKijunSen[0].toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1].toFixed(4) + ']');
+ * console.log('outSenkouSpanA = [' + outSenkouSpanA[0].toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1].toFixed(4) + ']');
+ * console.log('outSenkouSpanB = [' + outSenkouSpanB[0].toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1].toFixed(4) + ']');
  * ```
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
@@ -1111,9 +1115,9 @@ export function ichimokuOpenAndFillPositional(
  * import { ichimokuOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = ichimokuOpen({ high, low }, {
  *   tenkanPeriod: 9,
  *   kijunPeriod: 26,
@@ -1159,9 +1163,9 @@ export function ichimokuOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * import { ichimokuOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

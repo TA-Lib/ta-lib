@@ -111,7 +111,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_CKSP( 0, n - 1, high, low, close, 10, 1.0, 9, &outBegIdx, &outNBElement, highStop, lowStop );
-printf( "%d values from bar %d; last highStop = %f\n", outNBElement, outBegIdx, highStop[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "highStop = [%.4f, ..., %.4f]\n", highStop[0], highStop[outNBElement - 1] );
+printf( "lowStop = [%.4f, ..., %.4f]\n", lowStop[0], lowStop[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -128,7 +130,9 @@ let mut low_stop = vec![0.0; 252];
 let core = Core::new();
 let range = core.cksp(0, high.len() - 1, &high, &low, &close, 10, 1.0, 9,
                       &mut high_stop, &mut low_stop)?;
-println!("{} values from bar {}; last high_stop = {}", range.count, range.beg_idx, high_stop[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("high_stop = [{:.4}, ..., {:.4}]", high_stop[0], high_stop[range.count - 1]);
+println!("low_stop = [{:.4}, ..., {:.4}]", low_stop[0], low_stop[range.count - 1]);
 ```
 
 @tab Java
@@ -136,6 +140,7 @@ println!("{} values from bar {}; last high_stop = {}", range.count, range.beg_id
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -145,7 +150,9 @@ double[] lowStop = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.cksp(0, high.length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last highStop = " + highStop[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "highStop = [%.4f, ..., %.4f]%n", highStop[0], highStop[r.count() - 1]);
+System.out.printf(Locale.ROOT, "lowStop = [%.4f, ..., %.4f]%n", lowStop[0], lowStop[r.count() - 1]);
 ```
 
 @tab C\#
@@ -162,7 +169,9 @@ var lowStop = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Cksp(0, high.Length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last highStop = {highStop[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"highStop = [{highStop[0]:F4}, ..., {highStop[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"lowStop = [{lowStop[0]:F4}, ..., {lowStop[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -179,7 +188,9 @@ const { begIdx, outHighStop, outLowStop } = cksp({ high, low, close }, {
   multiplier: 1,
   stopPeriod: 9,
 });
-console.log(outHighStop.length + ' values from bar ' + begIdx + '; last outHighStop = ' + outHighStop[outHighStop.length - 1]);
+console.log(outHighStop.length + ' values from bar ' + begIdx + ':');
+console.log('outHighStop = [' + outHighStop[0].toFixed(4) + ', ..., ' + outHighStop[outHighStop.length - 1].toFixed(4) + ']');
+console.log('outLowStop = [' + outLowStop[0].toFixed(4) + ', ..., ' + outLowStop[outLowStop.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -203,7 +214,9 @@ r, err := core.CKSP(0, len(high)-1, high, low, close, 10, 1, 9, highStop, lowSto
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last highStop = %.4f\n", r.NBElement, r.BegIdx, highStop[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("highStop = [%.4f, ..., %.4f]\n", highStop[0], highStop[r.NBElement-1])
+fmt.Printf("lowStop = [%.4f, ..., %.4f]\n", lowStop[0], lowStop[r.NBElement-1])
 ```
 
 :::

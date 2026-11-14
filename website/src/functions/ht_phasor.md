@@ -92,7 +92,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_HT_PHASOR( 0, n - 1, series, &outBegIdx, &outNBElement, inPhase, quadrature );
-printf( "%d values from bar %d; last inPhase = %f\n", outNBElement, outBegIdx, inPhase[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "inPhase = [%.4f, ..., %.4f]\n", inPhase[0], inPhase[outNBElement - 1] );
+printf( "quadrature = [%.4f, ..., %.4f]\n", quadrature[0], quadrature[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -106,7 +108,9 @@ let mut quadrature = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.ht_phasor(0, series.len() - 1, &series, &mut in_phase, &mut quadrature)?;
-println!("{} values from bar {}; last in_phase = {}", range.count, range.beg_idx, in_phase[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("in_phase = [{:.4}, ..., {:.4}]", in_phase[0], in_phase[range.count - 1]);
+println!("quadrature = [{:.4}, ..., {:.4}]", quadrature[0], quadrature[range.count - 1]);
 ```
 
 @tab Java
@@ -114,6 +118,7 @@ println!("{} values from bar {}; last in_phase = {}", range.count, range.beg_idx
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] inPhase = new double[252];
@@ -121,7 +126,9 @@ double[] quadrature = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.htPhasor(0, series.length - 1, series, inPhase, quadrature);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last inPhase = " + inPhase[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "inPhase = [%.4f, ..., %.4f]%n", inPhase[0], inPhase[r.count() - 1]);
+System.out.printf(Locale.ROOT, "quadrature = [%.4f, ..., %.4f]%n", quadrature[0], quadrature[r.count() - 1]);
 ```
 
 @tab C\#
@@ -136,7 +143,9 @@ var quadrature = new double[252];
 
 var core = Core.Default;
 OutRange r = core.HtPhasor(0, series.Length - 1, series, inPhase, quadrature);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last inPhase = {inPhase[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"inPhase = [{inPhase[0]:F4}, ..., {inPhase[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"quadrature = [{quadrature[0]:F4}, ..., {quadrature[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -147,7 +156,9 @@ import { htPhasor } from 'ta-lib';
 const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
-console.log(outInPhase.length + ' values from bar ' + begIdx + '; last outInPhase = ' + outInPhase[outInPhase.length - 1]);
+console.log(outInPhase.length + ' values from bar ' + begIdx + ':');
+console.log('outInPhase = [' + outInPhase[0].toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1].toFixed(4) + ']');
+console.log('outQuadrature = [' + outQuadrature[0].toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -169,7 +180,9 @@ r, err := core.HT_PHASOR(0, len(series)-1, series, inPhase, quadrature)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last inPhase = %.4f\n", r.NBElement, r.BegIdx, inPhase[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("inPhase = [%.4f, ..., %.4f]\n", inPhase[0], inPhase[r.NBElement-1])
+fmt.Printf("quadrature = [%.4f, ..., %.4f]\n", quadrature[0], quadrature[r.NBElement-1])
 ```
 
 :::

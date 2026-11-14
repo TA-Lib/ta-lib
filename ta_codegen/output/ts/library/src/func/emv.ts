@@ -404,7 +404,7 @@ export function emvDisplayShift(outputIdx: number, options?: EmvOptions): number
  *   timePeriod: 14,
  *   volumeDivisor: 10000,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  * @see [`marketfi`](https://ta-lib.org/functions/marketfi)
@@ -919,11 +919,11 @@ export function emvOpenAndFillPositional(
  * import { emvOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = emvOpen({ high, low, volume }, {
  *   timePeriod: 14,
  *   volumeDivisor: 10000,
@@ -968,11 +968,11 @@ export function emvOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { emvOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = emvOpenAndFill({ high, low, volume }, {
  *   timePeriod: 14,
  *   volumeDivisor: 10000,

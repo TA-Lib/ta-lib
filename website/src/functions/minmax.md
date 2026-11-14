@@ -93,7 +93,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_MINMAX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, min, max );
-printf( "%d values from bar %d; last min = %f\n", outNBElement, outBegIdx, min[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "min = [%.4f, ..., %.4f]\n", min[0], min[outNBElement - 1] );
+printf( "max = [%.4f, ..., %.4f]\n", max[0], max[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -107,7 +109,9 @@ let mut max = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.minmax(0, series.len() - 1, &series, 30, &mut min, &mut max)?;
-println!("{} values from bar {}; last min = {}", range.count, range.beg_idx, min[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("min = [{:.4}, ..., {:.4}]", min[0], min[range.count - 1]);
+println!("max = [{:.4}, ..., {:.4}]", max[0], max[range.count - 1]);
 ```
 
 @tab Java
@@ -115,6 +119,7 @@ println!("{} values from bar {}; last min = {}", range.count, range.beg_idx, min
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] min = new double[252];
@@ -122,7 +127,9 @@ double[] max = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.minmax(0, series.length - 1, series, 30, min, max);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last min = " + min[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "min = [%.4f, ..., %.4f]%n", min[0], min[r.count() - 1]);
+System.out.printf(Locale.ROOT, "max = [%.4f, ..., %.4f]%n", max[0], max[r.count() - 1]);
 ```
 
 @tab C\#
@@ -137,7 +144,9 @@ var max = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Minmax(0, series.Length - 1, series, 30, min, max);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last min = {min[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"min = [{min[0]:F4}, ..., {min[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"max = [{max[0]:F4}, ..., {max[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -148,7 +157,9 @@ import { minmax } from 'ta-lib';
 const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
-console.log(outMin.length + ' values from bar ' + begIdx + '; last outMin = ' + outMin[outMin.length - 1]);
+console.log(outMin.length + ' values from bar ' + begIdx + ':');
+console.log('outMin = [' + outMin[0].toFixed(4) + ', ..., ' + outMin[outMin.length - 1].toFixed(4) + ']');
+console.log('outMax = [' + outMax[0].toFixed(4) + ', ..., ' + outMax[outMax.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -170,7 +181,9 @@ r, err := core.MINMAX(0, len(series)-1, series, 30, min, max)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last min = %.4f\n", r.NBElement, r.BegIdx, min[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("min = [%.4f, ..., %.4f]\n", min[0], min[r.NBElement-1])
+fmt.Printf("max = [%.4f, ..., %.4f]\n", max[0], max[r.NBElement-1])
 ```
 
 :::

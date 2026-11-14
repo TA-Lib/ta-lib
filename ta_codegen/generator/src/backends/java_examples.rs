@@ -2,7 +2,7 @@
 //! and runs every one on the synthetic series.
 
 use super::examples::{self, hidden, shown, Snippet, LEN};
-use crate::ir::{EnumDef, FuncDef, ParamType};
+use crate::ir::{EnumDef, FuncDef, Output, ParamType};
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
@@ -18,7 +18,11 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
     let name = &func.name;
     let method = super::common::camel_words(name);
 
-    let mut imports = vec!["import io.github.talib.Core;".to_string(), "import io.github.talib.OutRange;".to_string()];
+    let mut imports = vec![
+        "import io.github.talib.Core;".to_string(),
+        "import io.github.talib.OutRange;".to_string(),
+        "import java.util.Locale;".to_string(),
+    ];
     imports.extend(super::rust_doc::example_enum_imports(func).iter().map(|e| format!("import io.github.talib.{e};")));
     imports.sort();
 
@@ -28,7 +32,7 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
         body.push(hidden(format!(
             "for (int i = 0; i < {LEN}; i++) {}[i] = {};",
             s.var,
-            examples::render(s, &examples::MATH_SIN)
+            examples::render(s, &examples::C_FAMILY)
         )));
     }
     let out_vars = examples::output_vars(func);
@@ -46,12 +50,24 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
     body.extend(
         examples::wrap_call(&format!("OutRange r = core.{method}("), &args, &out_vars, ");", WRAP).into_iter().map(shown),
     );
-    body.push(hidden(format!("if (!check(\"{name}\", r.count() > 0)) return;")));
-    let printed = &out_vars[0];
-    body.push(shown(format!(
-        "System.out.println(r.count() + \" values from bar \" + r.begIdx() + \"; last {printed} = \" + \
-         {printed}[r.count() - 1]);"
-    )));
+    let ends = examples::Ends::of(func);
+    body.push(hidden(format!("if (!check(\"{name}\", r.count() {})) return;", ends.claim())));
+    let list = |output: &Output, var: &str| {
+        let spec = if output.param_type == ParamType::Integer { "%d" } else { "%.4f" };
+        (ends.list(spec, spec), ends.args(format!("{var}[0]"), format!("{var}[r.count() - 1]")).join(", "))
+    };
+    if let [output] = func.outputs.as_slice() {
+        let (fmt, args) = list(output, &out_vars[0]);
+        body.push(shown(format!(
+            "System.out.printf(Locale.ROOT, \"%d values from bar %d: {fmt}%n\", r.count(), r.begIdx(), {args});"
+        )));
+    } else {
+        body.push(shown("System.out.printf(Locale.ROOT, \"%d values from bar %d:%n\", r.count(), r.begIdx());"));
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            let (fmt, args) = list(output, var);
+            body.push(shown(format!("System.out.printf(Locale.ROOT, \"{var} = {fmt}%n\", {args});")));
+        }
+    }
     if let Some((_, var)) = func.outputs.iter().zip(&out_vars).find(|(o, _)| o.param_type != ParamType::Integer) {
         let helper = if examples::allows_infinity(func) { "noNaN" } else { "allFinite" };
         body.push(hidden(format!("check(\"{name}\", {helper}({var}, r.count()));")));

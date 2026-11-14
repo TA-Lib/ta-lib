@@ -502,7 +502,7 @@ export function sharpeDisplayShift(outputIdx: number, options?: SharpeOptions): 
  *   riskFreeRate: 0,
  *   annualization: 252,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`var_`](https://ta-lib.org/functions/var)
@@ -1331,7 +1331,7 @@ export function sharpeOpenAndFillPositional(
  * import { sharpeOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = sharpeOpen(series, {
  *   timePeriod: 20,
  *   riskFreeRate: 0,
@@ -1375,7 +1375,7 @@ export function sharpeOpen(real: ArrayLike<number>, options?: SharpeOptions): Sh
  * import { sharpeOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = sharpeOpenAndFill(series, {
  *   timePeriod: 20,
  *   riskFreeRate: 0,

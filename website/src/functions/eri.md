@@ -103,7 +103,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_ERI( 0, n - 1, high, low, close, 13, &outBegIdx, &outNBElement, bullPower, bearPower );
-printf( "%d values from bar %d; last bullPower = %f\n", outNBElement, outBegIdx, bullPower[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "bullPower = [%.4f, ..., %.4f]\n", bullPower[0], bullPower[outNBElement - 1] );
+printf( "bearPower = [%.4f, ..., %.4f]\n", bearPower[0], bearPower[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -120,7 +122,9 @@ let mut bear_power = vec![0.0; 252];
 let core = Core::new();
 let range = core.eri(0, high.len() - 1, &high, &low, &close, 13,
                      &mut bull_power, &mut bear_power)?;
-println!("{} values from bar {}; last bull_power = {}", range.count, range.beg_idx, bull_power[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("bull_power = [{:.4}, ..., {:.4}]", bull_power[0], bull_power[range.count - 1]);
+println!("bear_power = [{:.4}, ..., {:.4}]", bear_power[0], bear_power[range.count - 1]);
 ```
 
 @tab Java
@@ -128,6 +132,7 @@ println!("{} values from bar {}; last bull_power = {}", range.count, range.beg_i
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -137,7 +142,9 @@ double[] bearPower = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.eri(0, high.length - 1, high, low, close, 13, bullPower, bearPower);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last bullPower = " + bullPower[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "bullPower = [%.4f, ..., %.4f]%n", bullPower[0], bullPower[r.count() - 1]);
+System.out.printf(Locale.ROOT, "bearPower = [%.4f, ..., %.4f]%n", bearPower[0], bearPower[r.count() - 1]);
 ```
 
 @tab C\#
@@ -154,7 +161,9 @@ var bearPower = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Eri(0, high.Length - 1, high, low, close, 13, bullPower, bearPower);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last bullPower = {bullPower[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"bullPower = [{bullPower[0]:F4}, ..., {bullPower[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"bearPower = [{bearPower[0]:F4}, ..., {bearPower[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -169,7 +178,9 @@ const close = new Float64Array(252); // your data, oldest first
 const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
   timePeriod: 13,
 });
-console.log(outBullPower.length + ' values from bar ' + begIdx + '; last outBullPower = ' + outBullPower[outBullPower.length - 1]);
+console.log(outBullPower.length + ' values from bar ' + begIdx + ':');
+console.log('outBullPower = [' + outBullPower[0].toFixed(4) + ', ..., ' + outBullPower[outBullPower.length - 1].toFixed(4) + ']');
+console.log('outBearPower = [' + outBearPower[0].toFixed(4) + ', ..., ' + outBearPower[outBearPower.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -193,7 +204,9 @@ r, err := core.ERI(0, len(high)-1, high, low, close, 13, bullPower, bearPower)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last bullPower = %.4f\n", r.NBElement, r.BegIdx, bullPower[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("bullPower = [%.4f, ..., %.4f]\n", bullPower[0], bullPower[r.NBElement-1])
+fmt.Printf("bearPower = [%.4f, ..., %.4f]\n", bearPower[0], bearPower[r.NBElement-1])
 ```
 
 :::

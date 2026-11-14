@@ -265,14 +265,18 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series = vec![0.0; 252]; // your data, oldest first
-    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series: Vec<f64> = (0..252)
+    /// #     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut min_idx = vec![0i32; 252];
     /// let mut max_idx = vec![0i32; 252];
     ///
     /// let core = Core::new();
     /// let range = core.minmaxindex(0, series.len() - 1, &series, 30, &mut min_idx, &mut max_idx)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last min_idx = {}", range.count, range.beg_idx, min_idx[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("min_idx = [{}, ..., {}]", min_idx[0], min_idx[range.count - 1]);
+    /// println!("max_idx = [{}, ..., {}]", max_idx[0], max_idx[range.count - 1]);
     /// # assert_eq!(range.beg_idx + range.count, series.len());
     /// # // every reported index locates the lowest value of its 30-bar window
     /// # for (k, &idx) in min_idx[..range.count].iter().enumerate() {
@@ -585,7 +589,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.minmaxindex_open(&series, 30).expect("enough history");
@@ -617,7 +623,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_min_idx = vec![0_i32; 252];

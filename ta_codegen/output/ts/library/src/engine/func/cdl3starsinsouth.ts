@@ -94,7 +94,7 @@ const WASM_FROM_BARS = 125;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdl3starsinsouth({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdl3blackcrows`](https://ta-lib.org/functions/cdl3blackcrows)
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)

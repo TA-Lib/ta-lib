@@ -116,7 +116,9 @@ const WASM_FROM_BARS = 60;
  *   factorNormal: 1.5,
  *   factorNarrow: 1,
  * });
- * console.log(outMomentum.length + ' values from bar ' + begIdx + '; last outMomentum = ' + outMomentum[outMomentum.length - 1]);
+ * console.log(outMomentum.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMomentum = [' + outMomentum[0].toFixed(4) + ', ..., ' + outMomentum[outMomentum.length - 1].toFixed(4) + ']');
+ * console.log('outSqueeze = [' + outSqueeze[0] + ', ..., ' + outSqueeze[outSqueeze.length - 1] + ']');
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`kc`](https://ta-lib.org/functions/kc)

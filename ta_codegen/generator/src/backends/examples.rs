@@ -54,16 +54,28 @@ impl Snippet {
     }
 }
 
-/// One term of a synthetic series in the bar index `i`.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Term {
-    Const(f64),
+/// One integer term in the bar index `i`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Int {
+    Const(i64),
     /// `coef * i`
-    Linear(f64),
-    /// `amp * sin(freq * i + phase)`
-    Sin { amp: f64, freq: f64, phase: f64 },
-    /// `(i % m)`
+    Linear(i64),
+    /// `i % m`
     Mod(i64),
+    /// `coef * k * k` with `k = (i + shift) % period - period / 2`: a parabola every
+    /// `period` bars, 0 on its middle bar and `coef * (period / 2)^2` on its first.
+    Wave { coef: i64, period: i64, shift: i64 },
+}
+
+/// How a synthetic series is computed from the bar index `i`.
+///
+/// The inputs must be the same bits in every language, so no transcendental, and no
+/// real product may be an addend: Go fuses `a*b + c` into an FMA on some targets.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Shape {
+    /// `offset + scale * sum / div`, `sum` the integer sum of `terms`: exact
+    /// everywhere, so what follows is one division and at most two more roundings.
+    Waves { offset: f64, scale: f64, terms: Vec<Int>, div: i64 },
     /// `lo + (hi - lo) * i / (LEN - 1)`: `lo` on the first bar, `hi` on the last.
     Ramp { lo: f64, hi: f64 },
 }
@@ -74,20 +86,32 @@ pub struct Series {
     pub var: &'static str,
     /// What the shown declaration says the array is.
     pub comment: &'static str,
-    pub terms: Vec<Term>,
+    pub shape: Shape,
 }
 
-const SIN: Term = Term::Sin { amp: 10.0, freq: 0.1, phase: 0.0 };
+/// The price wave: 0 to 400 over 40 bars.
+const PRICE: Int = Int::Wave { coef: 1, period: 40, shift: 0 };
+
+/// `offset + sum / 20`: the price wave spans 20 on the price scale.
+fn price(offset: f64, terms: Vec<Int>) -> Shape {
+    Shape::Waves { offset, scale: 1.0, terms, div: 20 }
+}
+
+fn integers(terms: Vec<Int>) -> Shape {
+    Shape::Waves { offset: 0.0, scale: 1.0, terms, div: 1 }
+}
 
 /// The series of the input named `input`, or `None` for a shape no example knows.
 ///
-/// `open` and `close` stay inside `[low, high]`: their offset from the bar midpoint
-/// never reaches 1.0. `close` carries a second harmonic so it is never at the exact
-/// midpoint of the bar, which left the money-flow multiplier identically zero and the
-/// AD/ADOSC/CMF examples unable to fail (#136). `volume` rises overall but falls on
-/// some bars, or NVI never takes its down-volume branch. An input declaring a
-/// synthetic `series` gets it over its `domain`: the default sine mapped affinely
-/// onto it, or a ramp from `lo` to `hi`. `ta_refdata` feeds the same two formulas.
+/// `high` and `low` sit 2 either side of the price wave. `open` is the previous bar's
+/// midpoint, at most 1.95 from this one. `close` adds a second, 9-bar wave that keeps
+/// it within 1.6 of the midpoint and never on it: a close on the midpoint leaves the
+/// money-flow multiplier identically zero and the AD/ADOSC/CMF examples unable to
+/// fail (#136). `volume`
+/// rises overall but falls on some bars, or NVI never takes its down-volume branch.
+/// An input declaring a synthetic `series` gets it over its `domain`: the price wave
+/// mapped strictly inside it, so a function undefined at an end never meets that end,
+/// or a ramp from `lo` to `hi`.
 pub fn series(func: &FuncDef, input: &str) -> Option<Series> {
     const DATA: &str = "your data, oldest first";
     let decl = func.inputs.iter().find(|i| i.name == input);
@@ -97,44 +121,45 @@ pub fn series(func: &FuncDef, input: &str) -> Option<Series> {
             "inReal1" => "series1",
             _ => "series",
         };
-        let mut terms = Vec::new();
-        match kind {
-            ir::Series::Ramp => terms.push(Term::Ramp { lo, hi }),
+        let shape = match kind {
+            ir::Series::Ramp => Shape::Ramp { lo, hi },
             ir::Series::Sine | ir::Series::Price => {
+                // (PRICE - 200) / 201 stays within 200/201 of 0.
                 let (mid, half) = (f64::midpoint(lo, hi), (hi - lo) / 2.0);
-                if mid != 0.0 {
-                    terms.push(Term::Const(mid));
+                if doc_meta::is_integral(half) {
+                    #[allow(clippy::cast_possible_truncation)]
+                    let h = half as i64;
+                    let terms = vec![Int::Wave { coef: h, period: 40, shift: 0 }, Int::Const(-200 * h)];
+                    Shape::Waves { offset: mid, scale: 1.0, terms, div: 201 }
+                } else {
+                    Shape::Waves { offset: mid, scale: half, terms: vec![PRICE, Int::Const(-200)], div: 201 }
                 }
-                terms.push(Term::Sin { amp: half, freq: 0.1, phase: 0.0 });
             }
-        }
-        return Some(Series { var, comment: DATA, terms });
+        };
+        return Some(Series { var, comment: DATA, shape });
     }
-    let (var, terms) = match input {
-        "inOpen" => ("open", vec![Term::Const(100.0), Term::Sin { amp: 10.0, freq: 0.1, phase: -0.05 }]),
-        "inHigh" => ("high", vec![Term::Const(101.0), SIN]),
-        "inLow" => ("low", vec![Term::Const(99.0), SIN]),
-        "inClose" => (
-            "close",
-            vec![Term::Const(100.0), SIN, Term::Sin { amp: 0.8, freq: 0.7, phase: 0.0 }],
-        ),
+    let (var, shape) = match input {
+        "inOpen" => ("open", price(90.0, vec![Int::Wave { coef: 1, period: 40, shift: 39 }])),
+        "inHigh" => ("high", price(92.0, vec![PRICE])),
+        "inLow" => ("low", price(88.0, vec![PRICE])),
+        "inClose" => ("close", price(88.4, vec![PRICE, Int::Wave { coef: 4, period: 9, shift: 0 }])),
         "inVolume" => (
             "volume",
-            vec![Term::Const(10000.0), Term::Linear(100.0), Term::Sin { amp: 2000.0, freq: 0.3, phase: 0.0 }],
+            integers(vec![Int::Const(10000), Int::Linear(100), Int::Wave { coef: 30, period: 20, shift: 0 }]),
         ),
         "inPeriods" => {
             return Some(Series {
                 var: "periods",
                 comment: "one period per bar",
-                terms: vec![Term::Const(5.0), Term::Mod(10)],
+                shape: integers(vec![Int::Const(5), Int::Mod(10)]),
             })
         }
-        "inReal" => ("series", vec![Term::Const(100.0), SIN]),
-        "inReal0" => ("series0", vec![Term::Const(100.0), SIN]),
-        "inReal1" => ("series1", vec![Term::Const(100.0), Term::Sin { amp: 10.0, freq: 0.1, phase: 0.7 }]),
+        "inReal" => ("series", price(90.0, vec![PRICE])),
+        "inReal0" => ("series0", price(90.0, vec![PRICE])),
+        "inReal1" => ("series1", price(90.0, vec![Int::Wave { coef: 1, period: 40, shift: 7 }])),
         _ => return None,
     };
-    Some(Series { var, comment: DATA, terms })
+    Some(Series { var, comment: DATA, shape })
 }
 
 /// The series of every input, in call order; `None` when one has no example shape.
@@ -148,52 +173,74 @@ pub struct Syntax<'a> {
     pub real: fn(f64) -> String,
     /// The bar index as a real: `i as f64` in Rust, `i` where it widens.
     pub bar: &'a str,
-    /// `sin(x)` of a rendered argument.
-    pub sin: fn(&str) -> String,
-    /// `(i % m)` as a real.
-    pub modulo: fn(i64) -> String,
+    /// An integer expression as a real, or `None` where arithmetic with a real widens it.
+    pub widen: Option<fn(&str) -> String>,
 }
 
-/// The element expression of `series` in one language.
-#[allow(clippy::float_cmp)] // the amplitudes are literals, not measurements
-pub fn render(series: &Series, syn: &Syntax) -> String {
+/// `k` of a [`Int::Wave`], parenthesised.
+fn wave_k(period: i64, shift: i64) -> String {
+    let at = if shift == 0 { "i".to_string() } else { format!("(i + {shift})") };
+    format!("({at} % {period} - {})", period / 2)
+}
+
+/// The integer sum of `terms`, spelled the same in C, Java, C#, TypeScript and Rust.
+fn int_sum(terms: &[Int]) -> String {
     let mut out = String::new();
-    for term in &series.terms {
-        let text = match *term {
-            Term::Const(c) => (syn.real)(c),
-            Term::Linear(c) => format!("{} * {}", (syn.real)(c), syn.bar),
-            Term::Sin { amp, freq, phase } => {
-                let mut arg = format!("{} * {}", (syn.real)(freq), syn.bar);
-                if phase != 0.0 {
-                    let sign = if phase < 0.0 { '-' } else { '+' };
-                    arg.push_str(&format!(" {sign} {}", (syn.real)(phase.abs())));
-                }
-                let s = (syn.sin)(&arg);
-                if amp == 1.0 { s } else { format!("{} * {s}", (syn.real)(amp)) }
-            }
-            Term::Mod(m) => (syn.modulo)(m),
-            // The divisor is spelled `251.0` in every language: `i` is an integer
-            // in C, Java and C#, and `span * i / 251` would divide as one.
-            Term::Ramp { lo, hi } => {
-                let ramp = format!("{} * {} / {}.0", (syn.real)(hi - lo), syn.bar, LEN - 1);
-                if lo == 0.0 { ramp } else { format!("{} + {ramp}", (syn.real)(lo)) }
+    for term in terms {
+        let (negative, text) = match *term {
+            Int::Const(c) => (c < 0, c.abs().to_string()),
+            Int::Linear(1) => (false, "i".to_string()),
+            Int::Linear(c) => (false, format!("{c} * i")),
+            Int::Mod(m) => (false, format!("i % {m}")),
+            Int::Wave { coef, period, shift } => {
+                let k = wave_k(period, shift);
+                (false, if coef == 1 { format!("{k} * {k}") } else { format!("{coef} * {k} * {k}") })
             }
         };
-        if !out.is_empty() {
-            out.push_str(" + ");
+        match (out.is_empty(), negative) {
+            (true, true) => out.push('-'),
+            (true, false) => {}
+            (false, true) => out.push_str(" - "),
+            (false, false) => out.push_str(" + "),
         }
         out.push_str(&text);
     }
     out
 }
 
-/// The `Math.sin` family: TypeScript, Java and C# agree on this spelling but for case.
-pub const MATH_SIN: Syntax<'static> = Syntax {
-    real: doc_meta::fmt_real,
-    bar: "i",
-    sin: |x| format!("Math.sin({x})"),
-    modulo: |m| format!("(i % {m})"),
-};
+/// The element expression of `series` in one language.
+#[allow(clippy::float_cmp)] // the scales are literals, not measurements
+pub fn render(series: &Series, syn: &Syntax) -> String {
+    match &series.shape {
+        // The divisor is spelled `251.0` in every language: `i` is an integer in C,
+        // Java and C#, and `span * i / 251` would divide as one.
+        Shape::Ramp { lo, hi } => {
+            let ramp = format!("{} * {} / {}.0", (syn.real)(hi - lo), syn.bar, LEN - 1);
+            if *lo == 0.0 { ramp } else { format!("{} + {ramp}", (syn.real)(*lo)) }
+        }
+        Shape::Waves { offset, scale, terms, div } => {
+            let sum = int_sum(terms);
+            let mut value = if *scale == 1.0 && *div == 1 {
+                syn.widen.map_or_else(|| sum.clone(), |w| w(&sum))
+            } else {
+                let operand = match syn.widen {
+                    Some(w) => w(&sum),
+                    None if terms.len() > 1 || *scale != 1.0 => format!("({sum})"),
+                    None => sum,
+                };
+                let scaled = if *scale == 1.0 { operand } else { format!("{} * {operand}", (syn.real)(*scale)) };
+                if *div == 1 { scaled } else { format!("{scaled} / {div}.0") }
+            };
+            if *offset != 0.0 {
+                value = format!("{} + {value}", (syn.real)(*offset));
+            }
+            value
+        }
+    }
+}
+
+/// C, Java, C# and TypeScript: one spelling, `i` an `int` in the first three.
+pub const C_FAMILY: Syntax<'static> = Syntax { real: doc_meta::fmt_real, bar: "i", widen: None };
 
 /// Words no sample may bind in C, Java, C# or Rust (`outRealLong` is CE's output).
 const RESERVED: [&str; 14] =
@@ -216,6 +263,54 @@ pub fn output_vars(func: &FuncDef) -> Vec<String> {
             if RESERVED.contains(&bare.as_str()) { key } else { bare }
         })
         .collect()
+}
+
+/// Which elements of each output a sample prints: the first and the last, `...`
+/// between them once there are more than two.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Ends {
+    One,
+    Two,
+    Many,
+}
+
+impl Ends {
+    /// From the count `bless-go-examples` recorded, which is every language's. An
+    /// unrecorded function prints `Many`; each compiled copy asserts [`Self::claim`].
+    #[must_use]
+    pub fn of(func: &FuncDef) -> Self {
+        match super::go_examples::recorded_count(&func.name) {
+            Some(1) => Self::One,
+            Some(2) => Self::Two,
+            _ => Self::Many,
+        }
+    }
+
+    /// `[first, ..., last]`, `[first, last]` or `[first]`.
+    #[must_use]
+    pub fn list(self, first: &str, last: &str) -> String {
+        match self {
+            Self::One => format!("[{first}]"),
+            Self::Two => format!("[{first}, {last}]"),
+            Self::Many => format!("[{first}, ..., {last}]"),
+        }
+    }
+
+    /// The values [`Self::list`] prints, in order.
+    #[must_use]
+    pub fn args<T>(self, first: T, last: T) -> Vec<T> {
+        if self == Self::One { vec![first] } else { vec![first, last] }
+    }
+
+    /// What the count must satisfy for this form, written after the count.
+    #[must_use]
+    pub fn claim(self) -> &'static str {
+        match self {
+            Self::One => "== 1",
+            Self::Two => "== 2",
+            Self::Many => "> 2",
+        }
+    }
 }
 
 /// An optional parameter at its default: an `enum:` one by name, through `variant`.
@@ -262,13 +357,33 @@ pub fn wrap_call(lead: &str, first: &[String], second: &[String], tail: &str, wi
 mod tests {
     use super::*;
 
-    fn rust_syntax() -> Syntax<'static> {
-        Syntax {
-            real: super::super::rust_doc::fmt_real_literal,
-            bar: "i as f64",
-            sin: |x| format!("({x}).sin()"),
-            modulo: |m| format!("(i % {m}) as f64"),
+    use super::super::rust_doc::RUST_SYNTAX;
+
+    /// What a rendering computes, term by term in the same order.
+    #[allow(clippy::cast_precision_loss)]
+    fn eval(s: &Series, i: i64) -> f64 {
+        match &s.shape {
+            Shape::Ramp { lo, hi } => lo + (hi - lo) * i as f64 / 251.0,
+            Shape::Waves { offset, scale, terms, div } => {
+                let sum: i64 = terms
+                    .iter()
+                    .map(|t| match *t {
+                        Int::Const(c) => c,
+                        Int::Linear(c) => c * i,
+                        Int::Mod(m) => i % m,
+                        Int::Wave { coef, period, shift } => {
+                            let k = (i + shift) % period - period / 2;
+                            coef * k * k
+                        }
+                    })
+                    .sum();
+                offset + scale * sum as f64 / *div as f64
+            }
         }
+    }
+
+    fn values(s: &Series) -> Vec<f64> {
+        (0..i64::try_from(LEN).unwrap()).map(|i| eval(s, i)).collect()
     }
 
     fn fixture(input: &str, domain: Option<(f64, f64)>) -> FuncDef {
@@ -306,28 +421,54 @@ mod tests {
         let close = series(&fixture("inClose", None), "inClose").unwrap();
         assert_eq!(close.var, "close");
         assert_eq!(
-            render(&close, &rust_syntax()),
-            "100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin()"
+            render(&close, &RUST_SYNTAX),
+            "88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) as f64 / 20.0"
         );
-        assert_eq!(render(&close, &MATH_SIN), "100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i)");
+        assert_eq!(
+            render(&close, &C_FAMILY),
+            "88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0"
+        );
         let open = series(&fixture("inOpen", None), "inOpen").unwrap();
-        assert_eq!(render(&open, &MATH_SIN), "100 + 10 * Math.sin(0.1 * i - 0.05)");
+        assert_eq!(render(&open, &C_FAMILY), "90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0");
         let volume = series(&fixture("inVolume", None), "inVolume").unwrap();
-        assert_eq!(render(&volume, &MATH_SIN), "10000 + 100 * i + 2000 * Math.sin(0.3 * i)");
+        assert_eq!(render(&volume, &C_FAMILY), "10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10)");
+        assert_eq!(render(&volume, &RUST_SYNTAX), "(10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10)) as f64");
         let periods = series(&fixture("inPeriods", None), "inPeriods").unwrap();
-        assert_eq!(render(&periods, &rust_syntax()), "5.0 + (i % 10) as f64");
-        assert_eq!(render(&periods, &MATH_SIN), "5 + (i % 10)");
+        assert_eq!(render(&periods, &RUST_SYNTAX), "(5 + i % 10) as f64");
+        assert_eq!(render(&periods, &C_FAMILY), "5 + i % 10");
+    }
+
+    /// Every bar a valid OHLCV bar, with a close off the midpoint and a falling volume.
+    #[test]
+    #[allow(clippy::float_cmp)]
+    fn the_price_series_are_valid_bars() {
+        let of = |input: &str| values(&series(&fixture(input, None), input).unwrap());
+        let (open, high, low, close, volume) = (of("inOpen"), of("inHigh"), of("inLow"), of("inClose"), of("inVolume"));
+        for i in 0..LEN {
+            for (what, v) in [("open", open[i]), ("close", close[i])] {
+                assert!(low[i] < v && v < high[i], "bar {i}: {what} {v} outside [{}, {}]", low[i], high[i]);
+            }
+            assert!(close[i] != f64::midpoint(low[i], high[i]), "bar {i}: close on the midpoint");
+            assert!(volume[i] > 0.0);
+        }
+        assert!(volume.windows(2).any(|w| w[1] < w[0]), "volume never falls");
+        assert!(volume[LEN - 1] > volume[0], "volume does not rise overall");
     }
 
     #[test]
-    fn a_domain_maps_the_sine_and_drops_the_unit_factors() {
+    fn a_domain_maps_the_wave_strictly_inside() {
         let unit = series(&fixture("inReal", Some((-1.0, 1.0))), "inReal").unwrap();
         assert_eq!(unit.var, "series");
-        assert_eq!(render(&unit, &rust_syntax()), "(0.1 * i as f64).sin()");
+        assert_eq!(render(&unit, &RUST_SYNTAX), "((i % 40 - 20) * (i % 40 - 20) - 200) as f64 / 201.0");
         let wide = series(&fixture("inReal", Some((-3.0, 3.0))), "inReal").unwrap();
-        assert_eq!(render(&wide, &MATH_SIN), "3 * Math.sin(0.1 * i)");
+        assert_eq!(render(&wide, &C_FAMILY), "(3 * (i % 40 - 20) * (i % 40 - 20) - 600) / 201.0");
         let offset = series(&fixture("inReal", Some((0.0, 5.0))), "inReal").unwrap();
-        assert_eq!(render(&offset, &MATH_SIN), "2.5 + 2.5 * Math.sin(0.1 * i)");
+        assert_eq!(render(&offset, &C_FAMILY), "2.5 + 2.5 * ((i % 40 - 20) * (i % 40 - 20) - 200) / 201.0");
+        assert_eq!(render(&offset, &RUST_SYNTAX), "2.5 + 2.5 * ((i % 40 - 20) * (i % 40 - 20) - 200) as f64 / 201.0");
+        for (s, (lo, hi)) in [(&unit, (-1.0, 1.0)), (&wide, (-3.0, 3.0)), (&offset, (0.0, 5.0))] {
+            let v = values(s);
+            assert!(v.iter().all(|&x| lo < x && x < hi), "{v:?} leaves ({lo}, {hi})");
+        }
         assert!(series(&fixture("inNonesuch", None), "inNonesuch").is_none());
     }
 
@@ -335,16 +476,25 @@ mod tests {
     fn a_ramp_runs_from_lo_to_hi_with_a_real_divisor() {
         let unit = series(&fixture_series("inReal", ir::Series::Ramp, Some((-1.0, 1.0))), "inReal").unwrap();
         assert_eq!(unit.var, "series");
-        assert_eq!(render(&unit, &rust_syntax()), "-1.0 + 2.0 * i as f64 / 251.0");
-        assert_eq!(render(&unit, &MATH_SIN), "-1 + 2 * i / 251.0");
+        assert_eq!(render(&unit, &RUST_SYNTAX), "-1.0 + 2.0 * i as f64 / 251.0");
+        assert_eq!(render(&unit, &C_FAMILY), "-1 + 2 * i / 251.0");
         let from_zero = series(&fixture_series("inReal", ir::Series::Ramp, Some((0.0, 100.0))), "inReal").unwrap();
-        assert_eq!(render(&from_zero, &MATH_SIN), "100 * i / 251.0");
+        assert_eq!(render(&from_zero, &C_FAMILY), "100 * i / 251.0");
         let second = series(&fixture_series("inReal1", ir::Series::Ramp, Some((95.0, 105.0))), "inReal1").unwrap();
         assert_eq!(second.var, "series1");
-        assert_eq!(render(&second, &MATH_SIN), "95 + 10 * i / 251.0");
+        assert_eq!(render(&second, &C_FAMILY), "95 + 10 * i / 251.0");
         let first = series(&fixture_series("inReal0", ir::Series::Sine, Some((90.0, 110.0))), "inReal0").unwrap();
         assert_eq!(first.var, "series0");
-        assert_eq!(render(&first, &MATH_SIN), "100 + 10 * Math.sin(0.1 * i)");
+        assert_eq!(render(&first, &C_FAMILY), "100 + (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0");
+    }
+
+    #[test]
+    fn the_printed_list_drops_the_ellipsis_for_one_or_two_values() {
+        assert_eq!(Ends::Many.list("a", "b"), "[a, ..., b]");
+        assert_eq!(Ends::Two.list("a", "b"), "[a, b]");
+        assert_eq!(Ends::One.list("a", "b"), "[a]");
+        assert_eq!(Ends::One.args(0, 9), [0]);
+        assert_eq!(Ends::Many.args(0, 9), [0, 9]);
     }
 
     #[test]

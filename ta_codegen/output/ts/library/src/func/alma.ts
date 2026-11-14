@@ -423,7 +423,7 @@ export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): numb
  *   sigma: 6,
  *   offset: 0.85,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`wma`](https://ta-lib.org/functions/wma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
@@ -909,7 +909,7 @@ export function almaOpenAndFillPositional(
  * import { almaOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = almaOpen(series, { timePeriod: 9, sigma: 6, offset: 0.85 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -948,7 +948,7 @@ export function almaOpen(real: ArrayLike<number>, options?: AlmaOptions): AlmaSt
  * import { almaOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = almaOpenAndFill(series, {
  *   timePeriod: 9,
  *   sigma: 6,

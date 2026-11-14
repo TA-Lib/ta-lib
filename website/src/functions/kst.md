@@ -120,7 +120,9 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_KST( 0, n - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9,
         &outBegIdx, &outNBElement, kst, kstSignal );
-printf( "%d values from bar %d; last kst = %f\n", outNBElement, outBegIdx, kst[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "kst = [%.4f, ..., %.4f]\n", kst[0], kst[outNBElement - 1] );
+printf( "kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -135,7 +137,9 @@ let mut kst_signal = vec![0.0; 252];
 let core = Core::new();
 let range = core.kst(0, series.len() - 1, &series, 10, 15, 20, 30, 10, 10, 10, 15, 9,
                      &mut kst, &mut kst_signal)?;
-println!("{} values from bar {}; last kst = {}", range.count, range.beg_idx, kst[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("kst = [{:.4}, ..., {:.4}]", kst[0], kst[range.count - 1]);
+println!("kst_signal = [{:.4}, ..., {:.4}]", kst_signal[0], kst_signal[range.count - 1]);
 ```
 
 @tab Java
@@ -143,6 +147,7 @@ println!("{} values from bar {}; last kst = {}", range.count, range.beg_idx, kst
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] kst = new double[252];
@@ -151,7 +156,9 @@ double[] kstSignal = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.kst(0, series.length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9,
                       kst, kstSignal);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last kst = " + kst[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "kst = [%.4f, ..., %.4f]%n", kst[0], kst[r.count() - 1]);
+System.out.printf(Locale.ROOT, "kstSignal = [%.4f, ..., %.4f]%n", kstSignal[0], kstSignal[r.count() - 1]);
 ```
 
 @tab C\#
@@ -167,7 +174,9 @@ var kstSignal = new double[252];
 var core = Core.Default;
 OutRange r = core.Kst(0, series.Length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9,
                       kst, kstSignal);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last kst = {kst[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"kst = [{kst[0]:F4}, ..., {kst[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"kstSignal = [{kstSignal[0]:F4}, ..., {kstSignal[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -188,7 +197,9 @@ const { begIdx, outKst, outKstSignal } = kst(series, {
   sma4Period: 15,
   signalPeriod: 9,
 });
-console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
+console.log(outKst.length + ' values from bar ' + begIdx + ':');
+console.log('outKst = [' + outKst[0].toFixed(4) + ', ..., ' + outKst[outKst.length - 1].toFixed(4) + ']');
+console.log('outKstSignal = [' + outKstSignal[0].toFixed(4) + ', ..., ' + outKstSignal[outKstSignal.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -210,7 +221,9 @@ r, err := core.KST(0, len(series)-1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, 
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last kst = %.4f\n", r.NBElement, r.BegIdx, kst[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("kst = [%.4f, ..., %.4f]\n", kst[0], kst[r.NBElement-1])
+fmt.Printf("kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[r.NBElement-1])
 ```
 
 :::

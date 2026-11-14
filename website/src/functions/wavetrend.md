@@ -116,7 +116,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_WAVETREND( 0, n - 1, high, low, close, 10, 21, 4, &outBegIdx, &outNBElement, wt1, wt2 );
-printf( "%d values from bar %d; last wt1 = %f\n", outNBElement, outBegIdx, wt1[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "wt1 = [%.4f, ..., %.4f]\n", wt1[0], wt1[outNBElement - 1] );
+printf( "wt2 = [%.4f, ..., %.4f]\n", wt2[0], wt2[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -133,7 +135,9 @@ let mut wt2 = vec![0.0; 252];
 let core = Core::new();
 let range = core.wavetrend(0, high.len() - 1, &high, &low, &close, 10, 21, 4,
                            &mut wt1, &mut wt2)?;
-println!("{} values from bar {}; last wt1 = {}", range.count, range.beg_idx, wt1[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("wt1 = [{:.4}, ..., {:.4}]", wt1[0], wt1[range.count - 1]);
+println!("wt2 = [{:.4}, ..., {:.4}]", wt2[0], wt2[range.count - 1]);
 ```
 
 @tab Java
@@ -141,6 +145,7 @@ println!("{} values from bar {}; last wt1 = {}", range.count, range.beg_idx, wt1
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -150,7 +155,9 @@ double[] wt2 = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.wavetrend(0, high.length - 1, high, low, close, 10, 21, 4, wt1, wt2);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last wt1 = " + wt1[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "wt1 = [%.4f, ..., %.4f]%n", wt1[0], wt1[r.count() - 1]);
+System.out.printf(Locale.ROOT, "wt2 = [%.4f, ..., %.4f]%n", wt2[0], wt2[r.count() - 1]);
 ```
 
 @tab C\#
@@ -167,7 +174,9 @@ var wt2 = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Wavetrend(0, high.Length - 1, high, low, close, 10, 21, 4, wt1, wt2);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last wt1 = {wt1[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"wt1 = [{wt1[0]:F4}, ..., {wt1[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"wt2 = [{wt2[0]:F4}, ..., {wt2[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -184,7 +193,9 @@ const { begIdx, outWt1, outWt2 } = wavetrend({ high, low, close }, {
   averagePeriod: 21,
   signalPeriod: 4,
 });
-console.log(outWt1.length + ' values from bar ' + begIdx + '; last outWt1 = ' + outWt1[outWt1.length - 1]);
+console.log(outWt1.length + ' values from bar ' + begIdx + ':');
+console.log('outWt1 = [' + outWt1[0].toFixed(4) + ', ..., ' + outWt1[outWt1.length - 1].toFixed(4) + ']');
+console.log('outWt2 = [' + outWt2[0].toFixed(4) + ', ..., ' + outWt2[outWt2.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -208,7 +219,9 @@ r, err := core.WAVETREND(0, len(high)-1, high, low, close, 10, 21, 4, wt1, wt2)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last wt1 = %.4f\n", r.NBElement, r.BegIdx, wt1[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("wt1 = [%.4f, ..., %.4f]\n", wt1[0], wt1[r.NBElement-1])
+fmt.Printf("wt2 = [%.4f, ..., %.4f]\n", wt2[0], wt2[r.NBElement-1])
 ```
 
 :::

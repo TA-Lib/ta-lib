@@ -95,7 +95,7 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_TRIX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -108,7 +108,7 @@ let mut out = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.trix(0, series.len() - 1, &series, 30, &mut out)?;
-println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+println!("{} values from bar {}: [{:.4}, ..., {:.4}]", range.count, range.beg_idx, out[0], out[range.count - 1]);
 ```
 
 @tab Java
@@ -116,13 +116,14 @@ println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] out = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.trix(0, series.length - 1, series, 30, out);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d: [%.4f, ..., %.4f]%n", r.count(), r.begIdx(), out[0], out[r.count() - 1]);
 ```
 
 @tab C\#
@@ -136,7 +137,7 @@ var outReal = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Trix(0, series.Length - 1, series, 30, outReal);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+Console.WriteLine(FormattableString.Invariant($"{r.Count} values from bar {r.BegIdx}: [{outReal[0]:F4}, ..., {outReal[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -147,7 +148,7 @@ import { trix } from 'ta-lib';
 const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, values } = trix(series, { timePeriod: 30 });
-console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -168,7 +169,7 @@ r, err := core.TRIX(0, len(series)-1, series, 30, out)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
 ```
 
 :::

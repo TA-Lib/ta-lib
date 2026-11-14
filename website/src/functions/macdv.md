@@ -111,7 +111,10 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_MACDV( 0, n - 1, high, low, close, 12, 26, 9,
           &outBegIdx, &outNBElement, macdv, macdvSignal, macdvHist );
-printf( "%d values from bar %d; last macdv = %f\n", outNBElement, outBegIdx, macdv[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "macdv = [%.4f, ..., %.4f]\n", macdv[0], macdv[outNBElement - 1] );
+printf( "macdvSignal = [%.4f, ..., %.4f]\n", macdvSignal[0], macdvSignal[outNBElement - 1] );
+printf( "macdvHist = [%.4f, ..., %.4f]\n", macdvHist[0], macdvHist[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -129,7 +132,10 @@ let mut macdv_hist = vec![0.0; 252];
 let core = Core::new();
 let range = core.macdv(0, high.len() - 1, &high, &low, &close, 12, 26, 9,
                        &mut macdv, &mut macdv_signal, &mut macdv_hist)?;
-println!("{} values from bar {}; last macdv = {}", range.count, range.beg_idx, macdv[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("macdv = [{:.4}, ..., {:.4}]", macdv[0], macdv[range.count - 1]);
+println!("macdv_signal = [{:.4}, ..., {:.4}]", macdv_signal[0], macdv_signal[range.count - 1]);
+println!("macdv_hist = [{:.4}, ..., {:.4}]", macdv_hist[0], macdv_hist[range.count - 1]);
 ```
 
 @tab Java
@@ -137,6 +143,7 @@ println!("{} values from bar {}; last macdv = {}", range.count, range.beg_idx, m
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -148,7 +155,10 @@ double[] macdvHist = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.macdv(0, high.length - 1, high, low, close, 12, 26, 9,
                         macdv, macdvSignal, macdvHist);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last macdv = " + macdv[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "macdv = [%.4f, ..., %.4f]%n", macdv[0], macdv[r.count() - 1]);
+System.out.printf(Locale.ROOT, "macdvSignal = [%.4f, ..., %.4f]%n", macdvSignal[0], macdvSignal[r.count() - 1]);
+System.out.printf(Locale.ROOT, "macdvHist = [%.4f, ..., %.4f]%n", macdvHist[0], macdvHist[r.count() - 1]);
 ```
 
 @tab C\#
@@ -167,7 +177,10 @@ var macdvHist = new double[252];
 var core = Core.Default;
 OutRange r = core.Macdv(0, high.Length - 1, high, low, close, 12, 26, 9,
                         macdv, macdvSignal, macdvHist);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last macdv = {macdv[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"macdv = [{macdv[0]:F4}, ..., {macdv[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"macdvSignal = [{macdvSignal[0]:F4}, ..., {macdvSignal[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"macdvHist = [{macdvHist[0]:F4}, ..., {macdvHist[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -189,7 +202,10 @@ const {
   slowPeriod: 26,
   signalPeriod: 9,
 });
-console.log(outMacdv.length + ' values from bar ' + begIdx + '; last outMacdv = ' + outMacdv[outMacdv.length - 1]);
+console.log(outMacdv.length + ' values from bar ' + begIdx + ':');
+console.log('outMacdv = [' + outMacdv[0].toFixed(4) + ', ..., ' + outMacdv[outMacdv.length - 1].toFixed(4) + ']');
+console.log('outMacdvSignal = [' + outMacdvSignal[0].toFixed(4) + ', ..., ' + outMacdvSignal[outMacdvSignal.length - 1].toFixed(4) + ']');
+console.log('outMacdvHist = [' + outMacdvHist[0].toFixed(4) + ', ..., ' + outMacdvHist[outMacdvHist.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -214,7 +230,10 @@ r, err := core.MACDV(0, len(high)-1, high, low, close, 12, 26, 9, macdv, macdvSi
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last macdv = %.4f\n", r.NBElement, r.BegIdx, macdv[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("macdv = [%.4f, ..., %.4f]\n", macdv[0], macdv[r.NBElement-1])
+fmt.Printf("macdvSignal = [%.4f, ..., %.4f]\n", macdvSignal[0], macdvSignal[r.NBElement-1])
+fmt.Printf("macdvHist = [%.4f, ..., %.4f]\n", macdvHist[0], macdvHist[r.NBElement-1])
 ```
 
 :::

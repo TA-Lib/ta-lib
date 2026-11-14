@@ -72,28 +72,28 @@ import {
 
 test('AC: ac example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ac({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
     signalPeriod: 5,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('AC: acOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = acOpen({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -110,9 +110,9 @@ test('AC: acOpen example', () => {
 
 test('AC: acOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = acOpenAndFill({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -136,28 +136,28 @@ test('AC: acOpenAndFill example', () => {
 
 test('ADX: adx example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = adx({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ADX: adxOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = adxOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -170,11 +170,11 @@ test('ADX: adxOpen example', () => {
 
 test('ADX: adxOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = adxOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -192,28 +192,28 @@ test('ADX: adxOpenAndFill example', () => {
 
 test('ADXR: adxr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = adxr({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ADXR: adxrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = adxrOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -226,11 +226,11 @@ test('ADXR: adxrOpen example', () => {
 
 test('ADXR: adxrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = adxrOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -248,24 +248,24 @@ test('ADXR: adxrOpenAndFill example', () => {
 
 test('AO: ao example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ao({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('AO: aoOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = aoOpen({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -278,9 +278,9 @@ test('AO: aoOpen example', () => {
 
 test('AO: aoOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = aoOpenAndFill({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -299,24 +299,24 @@ test('AO: aoOpenAndFill example', () => {
 
 test('APO: apo example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = apo(series, {
     fastPeriod: 12,
     slowPeriod: 26,
     maType: MAType.EMA,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('APO: apoOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = apoOpen(series, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -333,7 +333,7 @@ test('APO: apoOpen example', () => {
 
 test('APO: apoOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = apoOpenAndFill(series, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -357,17 +357,19 @@ test('APO: apoOpenAndFill example', () => {
 
 test('AROON: aroon example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
     timePeriod: 14,
   });
-  console.log(outAroonDown.length + ' values from bar ' + begIdx + '; last outAroonDown = ' + outAroonDown[outAroonDown.length - 1]);
+  console.log(outAroonDown.length + ' values from bar ' + begIdx + ':');
+  console.log('outAroonDown = [' + outAroonDown[0].toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1].toFixed(4) + ']');
+  console.log('outAroonUp = [' + outAroonUp[0].toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1].toFixed(4) + ']');
 
   const count = outAroonDown.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outAroonUp.length, count);
   assert.ok(outAroonDown.every(Number.isFinite));
@@ -375,9 +377,9 @@ test('AROON: aroon example', () => {
 
 test('AROON: aroonOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = aroonOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -390,9 +392,9 @@ test('AROON: aroonOpen example', () => {
 
 test('AROON: aroonOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -414,24 +416,24 @@ test('AROON: aroonOpenAndFill example', () => {
 
 test('AROONOSC: aroonosc example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = aroonosc({ high, low }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('AROONOSC: aroonoscOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = aroonoscOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -444,9 +446,9 @@ test('AROONOSC: aroonoscOpen example', () => {
 
 test('AROONOSC: aroonoscOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = aroonoscOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -464,32 +466,32 @@ test('AROONOSC: aroonoscOpenAndFill example', () => {
 
 test('ASI: asi example', () => {
   const open = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = asi({ open, high, low, close }, { limitMove: 3 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, open.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ASI: asiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = asiOpen({ open, high, low, close }, { limitMove: 3 });
   const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
@@ -502,13 +504,13 @@ test('ASI: asiOpen example', () => {
 
 test('ASI: asiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = asiOpenAndFill({ open, high, low, close }, {
     limitMove: 3,
   });
@@ -526,32 +528,32 @@ test('ASI: asiOpenAndFill example', () => {
 
 test('BOP: bop example', () => {
   const open = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = bop({ open, high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, open.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('BOP: bopOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = bopOpen({ open, high, low, close });
   const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
@@ -564,13 +566,13 @@ test('BOP: bopOpen example', () => {
 
 test('BOP: bopOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = bopOpenAndFill({ open, high, low, close });
   // values[k] is the value at bar begIdx + k
 
@@ -586,28 +588,28 @@ test('BOP: bopOpenAndFill example', () => {
 
 test('CCI: cci example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = cci({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CCI: cciOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cciOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -620,11 +622,11 @@ test('CCI: cciOpen example', () => {
 
 test('CCI: cciOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cciOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -642,20 +644,20 @@ test('CCI: cciOpenAndFill example', () => {
 
 test('CG: cg example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = cg(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CG: cgOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = cgOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -668,7 +670,7 @@ test('CG: cgOpen example', () => {
 
 test('CG: cgOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = cgOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -684,28 +686,28 @@ test('CG: cgOpenAndFill example', () => {
 
 test('CHOP: chop example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = chop({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CHOP: chopOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = chopOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -718,11 +720,11 @@ test('CHOP: chopOpen example', () => {
 
 test('CHOP: chopOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = chopOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -740,28 +742,28 @@ test('CHOP: chopOpenAndFill example', () => {
 
 test('CHOPTR: choptr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = choptr({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CHOPTR: choptrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = choptrOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -774,11 +776,11 @@ test('CHOPTR: choptrOpen example', () => {
 
 test('CHOPTR: choptrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = choptrOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -796,20 +798,20 @@ test('CHOPTR: choptrOpenAndFill example', () => {
 
 test('CMO: cmo example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = cmo(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CMO: cmoOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = cmoOpen(series, { timePeriod: 14 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -822,7 +824,7 @@ test('CMO: cmoOpen example', () => {
 
 test('CMO: cmoOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = cmoOpenAndFill(series, { timePeriod: 14 });
   // values[k] is the value at bar begIdx + k
 
@@ -838,20 +840,20 @@ test('CMO: cmoOpenAndFill example', () => {
 
 test('CMOU: cmou example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = cmou(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CMOU: cmouOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = cmouOpen(series, { timePeriod: 14 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -864,7 +866,7 @@ test('CMOU: cmouOpen example', () => {
 
 test('CMOU: cmouOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = cmouOpenAndFill(series, { timePeriod: 14 });
   // values[k] is the value at bar begIdx + k
 
@@ -880,24 +882,24 @@ test('CMOU: cmouOpenAndFill example', () => {
 
 test('COPPOCK: coppock example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = coppock(series, {
     wmaPeriod: 10,
     roc1Period: 11,
     roc2Period: 14,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('COPPOCK: coppockOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = coppockOpen(series, {
     wmaPeriod: 10,
     roc1Period: 11,
@@ -914,7 +916,7 @@ test('COPPOCK: coppockOpen example', () => {
 
 test('COPPOCK: coppockOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = coppockOpenAndFill(series, {
     wmaPeriod: 10,
     roc1Period: 11,
@@ -938,24 +940,24 @@ test('COPPOCK: coppockOpenAndFill example', () => {
 
 test('CRSI: crsi example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = crsi(series, {
     timePeriod: 3,
     streakPeriod: 2,
     rankPeriod: 100,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CRSI: crsiOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = crsiOpen(series, {
     timePeriod: 3,
     streakPeriod: 2,
@@ -972,7 +974,7 @@ test('CRSI: crsiOpen example', () => {
 
 test('CRSI: crsiOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = crsiOpenAndFill(series, {
     timePeriod: 3,
     streakPeriod: 2,
@@ -992,20 +994,20 @@ test('CRSI: crsiOpenAndFill example', () => {
 
 test('CTI: cti example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = cti(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('CTI: ctiOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = ctiOpen(series, { timePeriod: 20 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -1018,7 +1020,7 @@ test('CTI: ctiOpen example', () => {
 
 test('CTI: ctiOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = ctiOpenAndFill(series, { timePeriod: 20 });
   // values[k] is the value at bar begIdx + k
 
@@ -1034,7 +1036,7 @@ test('CTI: ctiOpenAndFill example', () => {
 
 test('DOSC: dosc example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = dosc(series, {
     timePeriod: 14,
@@ -1042,17 +1044,17 @@ test('DOSC: dosc example', () => {
     secondPeriod: 3,
     signalPeriod: 9,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('DOSC: doscOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = doscOpen(series, {
     timePeriod: 14,
     firstPeriod: 5,
@@ -1070,7 +1072,7 @@ test('DOSC: doscOpen example', () => {
 
 test('DOSC: doscOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = doscOpenAndFill(series, {
     timePeriod: 14,
     firstPeriod: 5,
@@ -1096,20 +1098,20 @@ test('DOSC: doscOpenAndFill example', () => {
 
 test('DPO: dpo example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = dpo(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('DPO: dpoOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = dpoOpen(series, { timePeriod: 20 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -1122,7 +1124,7 @@ test('DPO: dpoOpen example', () => {
 
 test('DPO: dpoOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = dpoOpenAndFill(series, { timePeriod: 20 });
   // values[k] is the value at bar begIdx + k
 
@@ -1138,28 +1140,28 @@ test('DPO: dpoOpenAndFill example', () => {
 
 test('DX: dx example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = dx({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('DX: dxOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = dxOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -1172,11 +1174,11 @@ test('DX: dxOpen example', () => {
 
 test('DX: dxOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = dxOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -1194,20 +1196,20 @@ test('DX: dxOpenAndFill example', () => {
 
 test('ER: er example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = er(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ER: erOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = erOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -1220,7 +1222,7 @@ test('ER: erOpen example', () => {
 
 test('ER: erOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = erOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -1236,19 +1238,21 @@ test('ER: erOpenAndFill example', () => {
 
 test('ERI: eri example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
     timePeriod: 13,
   });
-  console.log(outBullPower.length + ' values from bar ' + begIdx + '; last outBullPower = ' + outBullPower[outBullPower.length - 1]);
+  console.log(outBullPower.length + ' values from bar ' + begIdx + ':');
+  console.log('outBullPower = [' + outBullPower[0].toFixed(4) + ', ..., ' + outBullPower[outBullPower.length - 1].toFixed(4) + ']');
+  console.log('outBearPower = [' + outBearPower[0].toFixed(4) + ', ..., ' + outBearPower[outBearPower.length - 1].toFixed(4) + ']');
 
   const count = outBullPower.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outBearPower.length, count);
   assert.ok(outBullPower.every(Number.isFinite));
@@ -1256,11 +1260,11 @@ test('ERI: eri example', () => {
 
 test('ERI: eriOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = eriOpen({ high, low, close }, { timePeriod: 13 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -1273,11 +1277,11 @@ test('ERI: eriOpen example', () => {
 
 test('ERI: eriOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
     stream,
     begIdx,
@@ -1299,17 +1303,19 @@ test('ERI: eriOpenAndFill example', () => {
 
 test('FISHER: fisher example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
     timePeriod: 10,
   });
-  console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
+  console.log(outFisher.length + ' values from bar ' + begIdx + ':');
+  console.log('outFisher = [' + outFisher[0].toFixed(4) + ', ..., ' + outFisher[outFisher.length - 1].toFixed(4) + ']');
+  console.log('outTrigger = [' + outTrigger[0].toFixed(4) + ', ..., ' + outTrigger[outTrigger.length - 1].toFixed(4) + ']');
 
   const count = outFisher.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outTrigger.length, count);
   assert.ok(outFisher.every(Number.isFinite));
@@ -1317,9 +1323,9 @@ test('FISHER: fisher example', () => {
 
 test('FISHER: fisherOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = fisherOpen({ high, low }, { timePeriod: 10 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1332,9 +1338,9 @@ test('FISHER: fisherOpen example', () => {
 
 test('FISHER: fisherOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -1356,20 +1362,20 @@ test('FISHER: fisherOpenAndFill example', () => {
 
 test('FOSC: fosc example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = fosc(series, { timePeriod: 5 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('FOSC: foscOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = foscOpen(series, { timePeriod: 5 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -1382,7 +1388,7 @@ test('FOSC: foscOpen example', () => {
 
 test('FOSC: foscOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = foscOpenAndFill(series, { timePeriod: 5 });
   // values[k] is the value at bar begIdx + k
 
@@ -1398,18 +1404,20 @@ test('FOSC: foscOpenAndFill example', () => {
 
 test('FRACTAL: fractal example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
     leftBars: 2,
     rightBars: 2,
   });
-  console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+  console.log(outSwingHigh.length + ' values from bar ' + begIdx + ':');
+  console.log('outSwingHigh = [' + outSwingHigh[0] + ', ..., ' + outSwingHigh[outSwingHigh.length - 1] + ']');
+  console.log('outSwingLow = [' + outSwingLow[0] + ', ..., ' + outSwingLow[outSwingLow.length - 1] + ']');
 
   const count = outSwingHigh.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outSwingLow.length, count);
   // a pattern output writes only the values its flags declare
@@ -1420,9 +1428,9 @@ test('FRACTAL: fractal example', () => {
 
 test('FRACTAL: fractalOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = fractalOpen({ high, low }, { leftBars: 2, rightBars: 2 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1435,9 +1443,9 @@ test('FRACTAL: fractalOpen example', () => {
 
 test('FRACTAL: fractalOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -1459,9 +1467,9 @@ test('FRACTAL: fractalOpenAndFill example', () => {
 
 test('GATOR: gator example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outUpper, outLower } = gator({ high, low }, {
     jawPeriod: 13,
@@ -1471,10 +1479,12 @@ test('GATOR: gator example', () => {
     lipsPeriod: 5,
     lipsShift: 3,
   });
-  console.log(outUpper.length + ' values from bar ' + begIdx + '; last outUpper = ' + outUpper[outUpper.length - 1]);
+  console.log(outUpper.length + ' values from bar ' + begIdx + ':');
+  console.log('outUpper = [' + outUpper[0].toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1].toFixed(4) + ']');
+  console.log('outLower = [' + outLower[0].toFixed(4) + ', ..., ' + outLower[outLower.length - 1].toFixed(4) + ']');
 
   const count = outUpper.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outLower.length, count);
   assert.ok(outUpper.every(Number.isFinite));
@@ -1482,9 +1492,9 @@ test('GATOR: gator example', () => {
 
 test('GATOR: gatorOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = gatorOpen({ high, low }, {
     jawPeriod: 13,
     jawShift: 8,
@@ -1504,9 +1514,9 @@ test('GATOR: gatorOpen example', () => {
 
 test('GATOR: gatorOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, outUpper, outLower } = gatorOpenAndFill({ high, low }, {
     jawPeriod: 13,
     jawShift: 8,
@@ -1537,28 +1547,28 @@ test('GATOR: gatorOpenAndFill example', () => {
 
 test('IBS: ibs example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = ibs({ high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('IBS: ibsOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = ibsOpen({ high, low, close });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -1571,11 +1581,11 @@ test('IBS: ibsOpen example', () => {
 
 test('IBS: ibsOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = ibsOpenAndFill({ high, low, close });
   // values[k] is the value at bar begIdx + k
 
@@ -1591,24 +1601,24 @@ test('IBS: ibsOpenAndFill example', () => {
 
 test('IMI: imi example', () => {
   const open = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = imi({ open, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, open.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('IMI: imiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = imiOpen({ open, close }, { timePeriod: 14 });
   const peeked = stream.peek(100.2, 100.9); // a forming bar: commits nothing
   const updated = stream.update(100.2, 100.9); // the bar closes
@@ -1621,9 +1631,9 @@ test('IMI: imiOpen example', () => {
 
 test('IMI: imiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = imiOpenAndFill({ open, close }, {
     timePeriod: 14,
   });
@@ -1641,11 +1651,11 @@ test('IMI: imiOpenAndFill example', () => {
 
 test('KDJ: kdj example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outK, outD, outJ } = kdj({ high, low, close }, {
     fastKPeriod: 9,
@@ -1654,10 +1664,13 @@ test('KDJ: kdj example', () => {
     slowDPeriod: 3,
     slowDMaType: MAType.RMA,
   });
-  console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
+  console.log(outK.length + ' values from bar ' + begIdx + ':');
+  console.log('outK = [' + outK[0].toFixed(4) + ', ..., ' + outK[outK.length - 1].toFixed(4) + ']');
+  console.log('outD = [' + outD[0].toFixed(4) + ', ..., ' + outD[outD.length - 1].toFixed(4) + ']');
+  console.log('outJ = [' + outJ[0].toFixed(4) + ', ..., ' + outJ[outJ.length - 1].toFixed(4) + ']');
 
   const count = outK.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outD.length, count);
   assert.equal(outJ.length, count);
@@ -1666,11 +1679,11 @@ test('KDJ: kdj example', () => {
 
 test('KDJ: kdjOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = kdjOpen({ high, low, close }, {
     fastKPeriod: 9,
     slowKPeriod: 3,
@@ -1690,11 +1703,11 @@ test('KDJ: kdjOpen example', () => {
 
 test('KDJ: kdjOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outK, outD, outJ } = kdjOpenAndFill({ high, low, close }, {
     fastKPeriod: 9,
     slowKPeriod: 3,
@@ -1724,7 +1737,7 @@ test('KDJ: kdjOpenAndFill example', () => {
 
 test('KST: kst example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outKst, outKstSignal } = kst(series, {
     roc1Period: 10,
@@ -1737,10 +1750,12 @@ test('KST: kst example', () => {
     sma4Period: 15,
     signalPeriod: 9,
   });
-  console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
+  console.log(outKst.length + ' values from bar ' + begIdx + ':');
+  console.log('outKst = [' + outKst[0].toFixed(4) + ', ..., ' + outKst[outKst.length - 1].toFixed(4) + ']');
+  console.log('outKstSignal = [' + outKstSignal[0].toFixed(4) + ', ..., ' + outKstSignal[outKstSignal.length - 1].toFixed(4) + ']');
 
   const count = outKst.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outKstSignal.length, count);
   assert.ok(outKst.every(Number.isFinite));
@@ -1748,7 +1763,7 @@ test('KST: kst example', () => {
 
 test('KST: kstOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = kstOpen(series, {
     roc1Period: 10,
     roc2Period: 15,
@@ -1771,7 +1786,7 @@ test('KST: kstOpen example', () => {
 
 test('KST: kstOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -1813,7 +1828,7 @@ test('KST: kstOpenAndFill example', () => {
 
 test('KSTEXT: kstext example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outKst, outKstSignal } = kstext(series, {
     roc1Period: 10,
@@ -1828,10 +1843,12 @@ test('KSTEXT: kstext example', () => {
     rocMaType: MAType.SMA,
     signalMaType: MAType.SMA,
   });
-  console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
+  console.log(outKst.length + ' values from bar ' + begIdx + ':');
+  console.log('outKst = [' + outKst[0].toFixed(4) + ', ..., ' + outKst[outKst.length - 1].toFixed(4) + ']');
+  console.log('outKstSignal = [' + outKstSignal[0].toFixed(4) + ', ..., ' + outKstSignal[outKstSignal.length - 1].toFixed(4) + ']');
 
   const count = outKst.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outKstSignal.length, count);
   assert.ok(outKst.every(Number.isFinite));
@@ -1839,7 +1856,7 @@ test('KSTEXT: kstext example', () => {
 
 test('KSTEXT: kstextOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = kstextOpen(series, {
     roc1Period: 10,
     roc2Period: 15,
@@ -1864,7 +1881,7 @@ test('KSTEXT: kstextOpen example', () => {
 
 test('KSTEXT: kstextOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -1910,7 +1927,7 @@ test('KSTEXT: kstextOpenAndFill example', () => {
 
 test('MACD: macd example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const {
     begIdx,
@@ -1918,10 +1935,13 @@ test('MACD: macd example', () => {
     outMacdSignal,
     outMacdHist,
   } = macd(series, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
-  console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+  console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+  console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+  console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+  console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
 
   const count = outMacd.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outMacdSignal.length, count);
   assert.equal(outMacdHist.length, count);
@@ -1930,7 +1950,7 @@ test('MACD: macd example', () => {
 
 test('MACD: macdOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = macdOpen(series, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -1948,7 +1968,7 @@ test('MACD: macdOpen example', () => {
 
 test('MACD: macdOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -1976,7 +1996,7 @@ test('MACD: macdOpenAndFill example', () => {
 
 test('MACDEXT: macdext example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const {
     begIdx,
@@ -1991,10 +2011,13 @@ test('MACDEXT: macdext example', () => {
     signalPeriod: 9,
     signalMaType: MAType.SMA,
   });
-  console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+  console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+  console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+  console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+  console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
 
   const count = outMacd.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outMacdSignal.length, count);
   assert.equal(outMacdHist.length, count);
@@ -2003,7 +2026,7 @@ test('MACDEXT: macdext example', () => {
 
 test('MACDEXT: macdextOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = macdextOpen(series, {
     fastPeriod: 12,
     fastMaType: MAType.SMA,
@@ -2024,7 +2047,7 @@ test('MACDEXT: macdextOpen example', () => {
 
 test('MACDEXT: macdextOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -2062,7 +2085,7 @@ test('MACDEXT: macdextOpenAndFill example', () => {
 
 test('MACDFIX: macdfix example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const {
     begIdx,
@@ -2070,10 +2093,13 @@ test('MACDFIX: macdfix example', () => {
     outMacdSignal,
     outMacdHist,
   } = macdfix(series, { signalPeriod: 9 });
-  console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+  console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+  console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+  console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+  console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
 
   const count = outMacd.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outMacdSignal.length, count);
   assert.equal(outMacdHist.length, count);
@@ -2082,7 +2108,7 @@ test('MACDFIX: macdfix example', () => {
 
 test('MACDFIX: macdfixOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = macdfixOpen(series, { signalPeriod: 9 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2096,7 +2122,7 @@ test('MACDFIX: macdfixOpen example', () => {
 
 test('MACDFIX: macdfixOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const {
     stream,
     begIdx,
@@ -2120,11 +2146,11 @@ test('MACDFIX: macdfixOpenAndFill example', () => {
 
 test('MACDV: macdv example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const {
     begIdx,
@@ -2136,10 +2162,13 @@ test('MACDV: macdv example', () => {
     slowPeriod: 26,
     signalPeriod: 9,
   });
-  console.log(outMacdv.length + ' values from bar ' + begIdx + '; last outMacdv = ' + outMacdv[outMacdv.length - 1]);
+  console.log(outMacdv.length + ' values from bar ' + begIdx + ':');
+  console.log('outMacdv = [' + outMacdv[0].toFixed(4) + ', ..., ' + outMacdv[outMacdv.length - 1].toFixed(4) + ']');
+  console.log('outMacdvSignal = [' + outMacdvSignal[0].toFixed(4) + ', ..., ' + outMacdvSignal[outMacdvSignal.length - 1].toFixed(4) + ']');
+  console.log('outMacdvHist = [' + outMacdvHist[0].toFixed(4) + ', ..., ' + outMacdvHist[outMacdvHist.length - 1].toFixed(4) + ']');
 
   const count = outMacdv.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outMacdvSignal.length, count);
   assert.equal(outMacdvHist.length, count);
@@ -2148,11 +2177,11 @@ test('MACDV: macdv example', () => {
 
 test('MACDV: macdvOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = macdvOpen({ high, low, close }, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -2170,11 +2199,11 @@ test('MACDV: macdvOpen example', () => {
 
 test('MACDV: macdvOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
     stream,
     begIdx,
@@ -2206,34 +2235,34 @@ test('MACDV: macdvOpenAndFill example', () => {
 
 test('MFI: mfi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 2000 * Math.sin(0.3 * i);
+  for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = mfi({ high, low, close, volume }, {
     timePeriod: 14,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('MFI: mfiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
-    10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+    10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const stream = mfiOpen({ high, low, close, volume }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9, 12345); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
@@ -2246,13 +2275,13 @@ test('MFI: mfiOpen example', () => {
 
 test('MFI: mfiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
-    10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+    10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const { stream, begIdx, values } = mfiOpenAndFill({ high, low, close, volume }, {
     timePeriod: 14,
   });
@@ -2270,28 +2299,28 @@ test('MFI: mfiOpenAndFill example', () => {
 
 test('MINUS_DI: minusDi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = minusDi({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('MINUS_DI: minusDiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = minusDiOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -2304,11 +2333,11 @@ test('MINUS_DI: minusDiOpen example', () => {
 
 test('MINUS_DI: minusDiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = minusDiOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -2326,24 +2355,24 @@ test('MINUS_DI: minusDiOpenAndFill example', () => {
 
 test('MINUS_DM: minusDm example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = minusDm({ high, low }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('MINUS_DM: minusDmOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = minusDmOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -2356,9 +2385,9 @@ test('MINUS_DM: minusDmOpen example', () => {
 
 test('MINUS_DM: minusDmOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = minusDmOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -2376,20 +2405,20 @@ test('MINUS_DM: minusDmOpenAndFill example', () => {
 
 test('MOM: mom example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = mom(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('MOM: momOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = momOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2402,7 +2431,7 @@ test('MOM: momOpen example', () => {
 
 test('MOM: momOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = momOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -2418,28 +2447,28 @@ test('MOM: momOpenAndFill example', () => {
 
 test('PLUS_DI: plusDi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = plusDi({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('PLUS_DI: plusDiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = plusDiOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -2452,11 +2481,11 @@ test('PLUS_DI: plusDiOpen example', () => {
 
 test('PLUS_DI: plusDiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = plusDiOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });
@@ -2474,24 +2503,24 @@ test('PLUS_DI: plusDiOpenAndFill example', () => {
 
 test('PLUS_DM: plusDm example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = plusDm({ high, low }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('PLUS_DM: plusDmOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = plusDmOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -2504,9 +2533,9 @@ test('PLUS_DM: plusDmOpen example', () => {
 
 test('PLUS_DM: plusDmOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = plusDmOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -2524,24 +2553,24 @@ test('PLUS_DM: plusDmOpenAndFill example', () => {
 
 test('PPO: ppo example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ppo(series, {
     fastPeriod: 12,
     slowPeriod: 26,
     maType: MAType.EMA,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('PPO: ppoOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = ppoOpen(series, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -2558,7 +2587,7 @@ test('PPO: ppoOpen example', () => {
 
 test('PPO: ppoOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = ppoOpenAndFill(series, {
     fastPeriod: 12,
     slowPeriod: 26,
@@ -2582,31 +2611,31 @@ test('PPO: ppoOpenAndFill example', () => {
 
 test('PSO: pso example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = pso({ high, low, close }, {
     fastKPeriod: 8,
     emaPeriod: 5,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('PSO: psoOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = psoOpen({ high, low, close }, { fastKPeriod: 8, emaPeriod: 5 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -2619,11 +2648,11 @@ test('PSO: psoOpen example', () => {
 
 test('PSO: psoOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = psoOpenAndFill({ high, low, close }, {
     fastKPeriod: 8,
     emaPeriod: 5,
@@ -2642,24 +2671,24 @@ test('PSO: psoOpenAndFill example', () => {
 
 test('QSTICK: qstick example', () => {
   const open = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = qstick({ open, close }, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, open.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('QSTICK: qstickOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = qstickOpen({ open, close }, { timePeriod: 10 });
   const peeked = stream.peek(100.2, 100.9); // a forming bar: commits nothing
   const updated = stream.update(100.2, 100.9); // the bar closes
@@ -2672,9 +2701,9 @@ test('QSTICK: qstickOpen example', () => {
 
 test('QSTICK: qstickOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = qstickOpenAndFill({ open, close }, {
     timePeriod: 10,
   });
@@ -2692,20 +2721,20 @@ test('QSTICK: qstickOpenAndFill example', () => {
 
 test('ROC: roc example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = roc(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ROC: rocOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = rocOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2718,7 +2747,7 @@ test('ROC: rocOpen example', () => {
 
 test('ROC: rocOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = rocOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -2734,20 +2763,20 @@ test('ROC: rocOpenAndFill example', () => {
 
 test('ROCP: rocp example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = rocp(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ROCP: rocpOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = rocpOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2760,7 +2789,7 @@ test('ROCP: rocpOpen example', () => {
 
 test('ROCP: rocpOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = rocpOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -2776,20 +2805,20 @@ test('ROCP: rocpOpenAndFill example', () => {
 
 test('ROCR: rocr example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = rocr(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ROCR: rocrOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = rocrOpen(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2802,7 +2831,7 @@ test('ROCR: rocrOpen example', () => {
 
 test('ROCR: rocrOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = rocrOpenAndFill(series, { timePeriod: 10 });
   // values[k] is the value at bar begIdx + k
 
@@ -2818,20 +2847,20 @@ test('ROCR: rocrOpenAndFill example', () => {
 
 test('ROCR100: rocr100 example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = rocr100(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ROCR100: rocr100Open example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = rocr100Open(series, { timePeriod: 10 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2844,7 +2873,7 @@ test('ROCR100: rocr100Open example', () => {
 
 test('ROCR100: rocr100OpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = rocr100OpenAndFill(series, {
     timePeriod: 10,
   });
@@ -2862,20 +2891,20 @@ test('ROCR100: rocr100OpenAndFill example', () => {
 
 test('RSI: rsi example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = rsi(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('RSI: rsiOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = rsiOpen(series, { timePeriod: 14 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -2888,7 +2917,7 @@ test('RSI: rsiOpen example', () => {
 
 test('RSI: rsiOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = rsiOpenAndFill(series, { timePeriod: 14 });
   // values[k] is the value at bar begIdx + k
 
@@ -2904,32 +2933,32 @@ test('RSI: rsiOpenAndFill example', () => {
 
 test('SI: si example', () => {
   const open = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = si({ open, high, low, close }, { limitMove: 3 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, open.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('SI: siOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = siOpen({ open, high, low, close }, { limitMove: 3 });
   const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
@@ -2942,13 +2971,13 @@ test('SI: siOpen example', () => {
 
 test('SI: siOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
+    90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = siOpenAndFill({ open, high, low, close }, {
     limitMove: 3,
   });
@@ -2966,11 +2995,11 @@ test('SI: siOpenAndFill example', () => {
 
 test('SMI: smi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
     timePeriod: 13,
@@ -2978,10 +3007,12 @@ test('SMI: smi example', () => {
     slowPeriod: 25,
     signalPeriod: 9,
   });
-  console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
+  console.log(outSmi.length + ' values from bar ' + begIdx + ':');
+  console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
+  console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
 
   const count = outSmi.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outSmiSignal.length, count);
   assert.ok(outSmi.every(Number.isFinite));
@@ -2989,11 +3020,11 @@ test('SMI: smi example', () => {
 
 test('SMI: smiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = smiOpen({ high, low, close }, {
     timePeriod: 13,
     fastPeriod: 2,
@@ -3011,11 +3042,11 @@ test('SMI: smiOpen example', () => {
 
 test('SMI: smiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
     stream,
     begIdx,
@@ -3047,11 +3078,11 @@ test('SMI: smiOpenAndFill example', () => {
 
 test('SQZMOM: sqzmom example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
     bbPeriod: 20,
@@ -3061,10 +3092,12 @@ test('SQZMOM: sqzmom example', () => {
     factorNormal: 1.5,
     factorNarrow: 1,
   });
-  console.log(outMomentum.length + ' values from bar ' + begIdx + '; last outMomentum = ' + outMomentum[outMomentum.length - 1]);
+  console.log(outMomentum.length + ' values from bar ' + begIdx + ':');
+  console.log('outMomentum = [' + outMomentum[0].toFixed(4) + ', ..., ' + outMomentum[outMomentum.length - 1].toFixed(4) + ']');
+  console.log('outSqueeze = [' + outSqueeze[0] + ', ..., ' + outSqueeze[outSqueeze.length - 1] + ']');
 
   const count = outMomentum.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outSqueeze.length, count);
   assert.ok(outMomentum.every(Number.isFinite));
@@ -3074,11 +3107,11 @@ test('SQZMOM: sqzmom example', () => {
 
 test('SQZMOM: sqzmomOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = sqzmomOpen({ high, low, close }, {
     bbPeriod: 20,
     nbDev: 2,
@@ -3098,11 +3131,11 @@ test('SQZMOM: sqzmomOpen example', () => {
 
 test('SQZMOM: sqzmomOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
     stream,
     begIdx,
@@ -3138,24 +3171,24 @@ test('SQZMOM: sqzmomOpenAndFill example', () => {
 
 test('STC: stc example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = stc(series, {
     fastPeriod: 23,
     slowPeriod: 50,
     cyclePeriod: 10,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('STC: stcOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = stcOpen(series, {
     fastPeriod: 23,
     slowPeriod: 50,
@@ -3172,7 +3205,7 @@ test('STC: stcOpen example', () => {
 
 test('STC: stcOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = stcOpenAndFill(series, {
     fastPeriod: 23,
     slowPeriod: 50,
@@ -3192,11 +3225,11 @@ test('STC: stcOpenAndFill example', () => {
 
 test('STOCH: stoch example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
     fastKPeriod: 5,
@@ -3205,10 +3238,12 @@ test('STOCH: stoch example', () => {
     slowDPeriod: 3,
     slowDMaType: MAType.SMA,
   });
-  console.log(outSlowK.length + ' values from bar ' + begIdx + '; last outSlowK = ' + outSlowK[outSlowK.length - 1]);
+  console.log(outSlowK.length + ' values from bar ' + begIdx + ':');
+  console.log('outSlowK = [' + outSlowK[0].toFixed(4) + ', ..., ' + outSlowK[outSlowK.length - 1].toFixed(4) + ']');
+  console.log('outSlowD = [' + outSlowD[0].toFixed(4) + ', ..., ' + outSlowD[outSlowD.length - 1].toFixed(4) + ']');
 
   const count = outSlowK.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outSlowD.length, count);
   assert.ok(outSlowK.every(Number.isFinite));
@@ -3216,11 +3251,11 @@ test('STOCH: stoch example', () => {
 
 test('STOCH: stochOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = stochOpen({ high, low, close }, {
     fastKPeriod: 5,
     slowKPeriod: 3,
@@ -3239,11 +3274,11 @@ test('STOCH: stochOpen example', () => {
 
 test('STOCH: stochOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outSlowK, outSlowD } = stochOpenAndFill({ high, low, close }, {
     fastKPeriod: 5,
     slowKPeriod: 3,
@@ -3272,21 +3307,23 @@ test('STOCH: stochOpenAndFill example', () => {
 
 test('STOCHF: stochf example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outFastK, outFastD } = stochf({ high, low, close }, {
     fastKPeriod: 5,
     fastDPeriod: 3,
     fastDMaType: MAType.SMA,
   });
-  console.log(outFastK.length + ' values from bar ' + begIdx + '; last outFastK = ' + outFastK[outFastK.length - 1]);
+  console.log(outFastK.length + ' values from bar ' + begIdx + ':');
+  console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
+  console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
 
   const count = outFastK.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outFastD.length, count);
   assert.ok(outFastK.every(Number.isFinite));
@@ -3294,11 +3331,11 @@ test('STOCHF: stochf example', () => {
 
 test('STOCHF: stochfOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = stochfOpen({ high, low, close }, {
     fastKPeriod: 5,
     fastDPeriod: 3,
@@ -3315,11 +3352,11 @@ test('STOCHF: stochfOpen example', () => {
 
 test('STOCHF: stochfOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outFastK, outFastD } = stochfOpenAndFill({ high, low, close }, {
     fastKPeriod: 5,
     fastDPeriod: 3,
@@ -3344,7 +3381,7 @@ test('STOCHF: stochfOpenAndFill example', () => {
 
 test('STOCHRSI: stochrsi example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, outFastK, outFastD } = stochrsi(series, {
     timePeriod: 14,
@@ -3352,10 +3389,12 @@ test('STOCHRSI: stochrsi example', () => {
     fastDPeriod: 3,
     fastDMaType: MAType.SMA,
   });
-  console.log(outFastK.length + ' values from bar ' + begIdx + '; last outFastK = ' + outFastK[outFastK.length - 1]);
+  console.log(outFastK.length + ' values from bar ' + begIdx + ':');
+  console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
+  console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
 
   const count = outFastK.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.equal(outFastD.length, count);
   assert.ok(outFastK.every(Number.isFinite));
@@ -3363,7 +3402,7 @@ test('STOCHRSI: stochrsi example', () => {
 
 test('STOCHRSI: stochrsiOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = stochrsiOpen(series, {
     timePeriod: 14,
     fastKPeriod: 5,
@@ -3381,7 +3420,7 @@ test('STOCHRSI: stochrsiOpen example', () => {
 
 test('STOCHRSI: stochrsiOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, outFastK, outFastD } = stochrsiOpenAndFill(series, {
     timePeriod: 14,
     fastKPeriod: 5,
@@ -3408,20 +3447,20 @@ test('STOCHRSI: stochrsiOpenAndFill example', () => {
 
 test('TRIX: trix example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = trix(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('TRIX: trixOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = trixOpen(series, { timePeriod: 30 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -3434,7 +3473,7 @@ test('TRIX: trixOpen example', () => {
 
 test('TRIX: trixOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = trixOpenAndFill(series, { timePeriod: 30 });
   // values[k] is the value at bar begIdx + k
 
@@ -3450,20 +3489,20 @@ test('TRIX: trixOpenAndFill example', () => {
 
 test('TSI: tsi example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = tsi(series, { firstPeriod: 25, secondPeriod: 13 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('TSI: tsiOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = tsiOpen(series, { firstPeriod: 25, secondPeriod: 13 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -3476,7 +3515,7 @@ test('TSI: tsiOpen example', () => {
 
 test('TSI: tsiOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = tsiOpenAndFill(series, {
     firstPeriod: 25,
     secondPeriod: 13,
@@ -3495,32 +3534,32 @@ test('TSI: tsiOpenAndFill example', () => {
 
 test('ULTOSC: ultosc example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = ultosc({ high, low, close }, {
     timePeriod1: 7,
     timePeriod2: 14,
     timePeriod3: 28,
   });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('ULTOSC: ultoscOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = ultoscOpen({ high, low, close }, {
     timePeriod1: 7,
     timePeriod2: 14,
@@ -3537,11 +3576,11 @@ test('ULTOSC: ultoscOpen example', () => {
 
 test('ULTOSC: ultoscOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = ultoscOpenAndFill({ high, low, close }, {
     timePeriod1: 7,
     timePeriod2: 14,
@@ -3565,20 +3604,20 @@ test('ULTOSC: ultoscOpenAndFill example', () => {
 
 test('VHF: vhf example', () => {
   const series = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = vhf(series, { timePeriod: 28 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('VHF: vhfOpen example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const stream = vhfOpen(series, { timePeriod: 28 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
@@ -3591,7 +3630,7 @@ test('VHF: vhfOpen example', () => {
 
 test('VHF: vhfOpenAndFill example', () => {
   const series = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const { stream, begIdx, values } = vhfOpenAndFill(series, { timePeriod: 28 });
   // values[k] is the value at bar begIdx + k
 
@@ -3607,19 +3646,21 @@ test('VHF: vhfOpenAndFill example', () => {
 
 test('VORTEX: vortex example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
     timePeriod: 14,
   });
-  console.log(outPlusVi.length + ' values from bar ' + begIdx + '; last outPlusVi = ' + outPlusVi[outPlusVi.length - 1]);
+  console.log(outPlusVi.length + ' values from bar ' + begIdx + ':');
+  console.log('outPlusVi = [' + outPlusVi[0].toFixed(4) + ', ..., ' + outPlusVi[outPlusVi.length - 1].toFixed(4) + ']');
+  console.log('outMinusVi = [' + outMinusVi[0].toFixed(4) + ', ..., ' + outMinusVi[outMinusVi.length - 1].toFixed(4) + ']');
 
   const count = outPlusVi.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outMinusVi.length, count);
   assert.ok(outPlusVi.every(Number.isFinite));
@@ -3627,11 +3668,11 @@ test('VORTEX: vortex example', () => {
 
 test('VORTEX: vortexOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = vortexOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -3644,11 +3685,11 @@ test('VORTEX: vortexOpen example', () => {
 
 test('VORTEX: vortexOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
     stream,
     begIdx,
@@ -3670,28 +3711,28 @@ test('VORTEX: vortexOpenAndFill example', () => {
 
 test('WAD: wad example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = wad({ high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('WAD: wadOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = wadOpen({ high, low, close });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -3704,11 +3745,11 @@ test('WAD: wadOpen example', () => {
 
 test('WAD: wadOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = wadOpenAndFill({ high, low, close });
   // values[k] is the value at bar begIdx + k
 
@@ -3724,21 +3765,23 @@ test('WAD: wadOpenAndFill example', () => {
 
 test('WAVETREND: wavetrend example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, outWt1, outWt2 } = wavetrend({ high, low, close }, {
     channelPeriod: 10,
     averagePeriod: 21,
     signalPeriod: 4,
   });
-  console.log(outWt1.length + ' values from bar ' + begIdx + '; last outWt1 = ' + outWt1[outWt1.length - 1]);
+  console.log(outWt1.length + ' values from bar ' + begIdx + ':');
+  console.log('outWt1 = [' + outWt1[0].toFixed(4) + ', ..., ' + outWt1[outWt1.length - 1].toFixed(4) + ']');
+  console.log('outWt2 = [' + outWt2[0].toFixed(4) + ', ..., ' + outWt2[outWt2.length - 1].toFixed(4) + ']');
 
   const count = outWt1.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.equal(outWt2.length, count);
   assert.ok(outWt1.every(Number.isFinite));
@@ -3746,11 +3789,11 @@ test('WAVETREND: wavetrend example', () => {
 
 test('WAVETREND: wavetrendOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = wavetrendOpen({ high, low, close }, {
     channelPeriod: 10,
     averagePeriod: 21,
@@ -3767,11 +3810,11 @@ test('WAVETREND: wavetrendOpen example', () => {
 
 test('WAVETREND: wavetrendOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outWt1, outWt2 } = wavetrendOpenAndFill({ high, low, close }, {
     channelPeriod: 10,
     averagePeriod: 21,
@@ -3796,28 +3839,28 @@ test('WAVETREND: wavetrendOpenAndFill example', () => {
 
 test('WILLR: willr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+  for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = willr({ high, low, close }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
 
   const count = values.length;
-  assert.ok(count > 0);
+  assert.ok(count > 2);
   assert.equal(begIdx + count, high.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('WILLR: willrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = willrOpen({ high, low, close }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
@@ -3830,11 +3873,11 @@ test('WILLR: willrOpen example', () => {
 
 test('WILLR: willrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
+    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+    88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = willrOpenAndFill({ high, low, close }, {
     timePeriod: 14,
   });

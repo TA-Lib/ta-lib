@@ -665,7 +665,7 @@ export function ppoDisplayShift(outputIdx: number, options?: PpoOptions): number
  *   slowPeriod: 26,
  *   maType: MAType.EMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`apo`](https://ta-lib.org/functions/apo)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -1144,7 +1144,7 @@ export function ppoOpenAndFillPositional(
  * import { MAType, ppoOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = ppoOpen(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
@@ -1186,7 +1186,7 @@ export function ppoOpen(real: ArrayLike<number>, options?: PpoOptions): PpoStrea
  * import { MAType, ppoOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = ppoOpenAndFill(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,

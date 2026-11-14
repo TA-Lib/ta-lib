@@ -91,7 +91,7 @@ export * from '../../func/cdlhikkake.ts';
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlhikkake({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlhikkakemod`](https://ta-lib.org/functions/cdlhikkakemod)
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)

@@ -105,7 +105,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_VORTEX( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, plusVi, minusVi );
-printf( "%d values from bar %d; last plusVi = %f\n", outNBElement, outBegIdx, plusVi[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "plusVi = [%.4f, ..., %.4f]\n", plusVi[0], plusVi[outNBElement - 1] );
+printf( "minusVi = [%.4f, ..., %.4f]\n", minusVi[0], minusVi[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -122,7 +124,9 @@ let mut minus_vi = vec![0.0; 252];
 let core = Core::new();
 let range = core.vortex(0, high.len() - 1, &high, &low, &close, 14,
                         &mut plus_vi, &mut minus_vi)?;
-println!("{} values from bar {}; last plus_vi = {}", range.count, range.beg_idx, plus_vi[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("plus_vi = [{:.4}, ..., {:.4}]", plus_vi[0], plus_vi[range.count - 1]);
+println!("minus_vi = [{:.4}, ..., {:.4}]", minus_vi[0], minus_vi[range.count - 1]);
 ```
 
 @tab Java
@@ -130,6 +134,7 @@ println!("{} values from bar {}; last plus_vi = {}", range.count, range.beg_idx,
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -139,7 +144,9 @@ double[] minusVi = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.vortex(0, high.length - 1, high, low, close, 14, plusVi, minusVi);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last plusVi = " + plusVi[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "plusVi = [%.4f, ..., %.4f]%n", plusVi[0], plusVi[r.count() - 1]);
+System.out.printf(Locale.ROOT, "minusVi = [%.4f, ..., %.4f]%n", minusVi[0], minusVi[r.count() - 1]);
 ```
 
 @tab C\#
@@ -156,7 +163,9 @@ var minusVi = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Vortex(0, high.Length - 1, high, low, close, 14, plusVi, minusVi);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last plusVi = {plusVi[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"plusVi = [{plusVi[0]:F4}, ..., {plusVi[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"minusVi = [{minusVi[0]:F4}, ..., {minusVi[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -171,7 +180,9 @@ const close = new Float64Array(252); // your data, oldest first
 const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
   timePeriod: 14,
 });
-console.log(outPlusVi.length + ' values from bar ' + begIdx + '; last outPlusVi = ' + outPlusVi[outPlusVi.length - 1]);
+console.log(outPlusVi.length + ' values from bar ' + begIdx + ':');
+console.log('outPlusVi = [' + outPlusVi[0].toFixed(4) + ', ..., ' + outPlusVi[outPlusVi.length - 1].toFixed(4) + ']');
+console.log('outMinusVi = [' + outMinusVi[0].toFixed(4) + ', ..., ' + outMinusVi[outMinusVi.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -195,7 +206,9 @@ r, err := core.VORTEX(0, len(high)-1, high, low, close, 14, plusVi, minusVi)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last plusVi = %.4f\n", r.NBElement, r.BegIdx, plusVi[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("plusVi = [%.4f, ..., %.4f]\n", plusVi[0], plusVi[r.NBElement-1])
+fmt.Printf("minusVi = [%.4f, ..., %.4f]\n", minusVi[0], minusVi[r.NBElement-1])
 ```
 
 :::

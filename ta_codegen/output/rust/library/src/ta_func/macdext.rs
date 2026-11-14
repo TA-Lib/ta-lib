@@ -405,7 +405,9 @@ impl Core {
     /// use ta_lib::{Core, MAType};
     ///
     /// let series = vec![0.0; 252]; // your data, oldest first
-    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series: Vec<f64> = (0..252)
+    /// #     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut macd = vec![0.0; 252];
     /// let mut macd_signal = vec![0.0; 252];
     /// let mut macd_hist = vec![0.0; 252];
@@ -413,8 +415,11 @@ impl Core {
     /// let core = Core::new();
     /// let range = core.macdext(0, series.len() - 1, &series, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA,
     ///                          &mut macd, &mut macd_signal, &mut macd_hist)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last macd = {}", range.count, range.beg_idx, macd[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("macd = [{:.4}, ..., {:.4}]", macd[0], macd[range.count - 1]);
+    /// println!("macd_signal = [{:.4}, ..., {:.4}]", macd_signal[0], macd_signal[range.count - 1]);
+    /// println!("macd_hist = [{:.4}, ..., {:.4}]", macd_hist[0], macd_hist[range.count - 1]);
     /// # assert!(macd[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
@@ -789,7 +794,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.macdext_open(&series, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA).expect("enough history");
@@ -822,7 +829,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_macd = vec![0.0; 252];

@@ -811,7 +811,9 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  *   slowPeriod: 25,
  *   signalPeriod: 9,
  * });
- * console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
+ * console.log(outSmi.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
+ * console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
@@ -2081,11 +2083,11 @@ export function smiOpenAndFillPositional(
  * import { smiOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = smiOpen({ high, low, close }, {
  *   timePeriod: 13,
  *   fastPeriod: 2,
@@ -2133,11 +2135,11 @@ export function smiOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { smiOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const {
  *   stream,
  *   begIdx,

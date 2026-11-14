@@ -109,7 +109,9 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_STOCH( 0, n - 1, high, low, close, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA,
           &outBegIdx, &outNBElement, slowK, slowD );
-printf( "%d values from bar %d; last slowK = %f\n", outNBElement, outBegIdx, slowK[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "slowK = [%.4f, ..., %.4f]\n", slowK[0], slowK[outNBElement - 1] );
+printf( "slowD = [%.4f, ..., %.4f]\n", slowD[0], slowD[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -126,7 +128,9 @@ let mut slow_d = vec![0.0; 252];
 let core = Core::new();
 let range = core.stoch(0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA,
                        &mut slow_k, &mut slow_d)?;
-println!("{} values from bar {}; last slow_k = {}", range.count, range.beg_idx, slow_k[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("slow_k = [{:.4}, ..., {:.4}]", slow_k[0], slow_k[range.count - 1]);
+println!("slow_d = [{:.4}, ..., {:.4}]", slow_d[0], slow_d[range.count - 1]);
 ```
 
 @tab Java
@@ -135,6 +139,7 @@ println!("{} values from bar {}; last slow_k = {}", range.count, range.beg_idx, 
 import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -145,7 +150,9 @@ double[] slowD = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.stoch(0, high.length - 1, high, low, close, 5, 3, MAType.SMA, 3, MAType.SMA,
                         slowK, slowD);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last slowK = " + slowK[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "slowK = [%.4f, ..., %.4f]%n", slowK[0], slowK[r.count() - 1]);
+System.out.printf(Locale.ROOT, "slowD = [%.4f, ..., %.4f]%n", slowD[0], slowD[r.count() - 1]);
 ```
 
 @tab C\#
@@ -163,7 +170,9 @@ var slowD = new double[252];
 var core = Core.Default;
 OutRange r = core.Stoch(0, high.Length - 1, high, low, close, 5, 3, MAType.SMA, 3, MAType.SMA,
                         slowK, slowD);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last slowK = {slowK[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"slowK = [{slowK[0]:F4}, ..., {slowK[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"slowD = [{slowD[0]:F4}, ..., {slowD[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -182,7 +191,9 @@ const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
   slowDPeriod: 3,
   slowDMaType: MAType.SMA,
 });
-console.log(outSlowK.length + ' values from bar ' + begIdx + '; last outSlowK = ' + outSlowK[outSlowK.length - 1]);
+console.log(outSlowK.length + ' values from bar ' + begIdx + ':');
+console.log('outSlowK = [' + outSlowK[0].toFixed(4) + ', ..., ' + outSlowK[outSlowK.length - 1].toFixed(4) + ']');
+console.log('outSlowD = [' + outSlowD[0].toFixed(4) + ', ..., ' + outSlowD[outSlowD.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -207,7 +218,9 @@ r, err := core.STOCH(0, len(high)-1, high, low, close, 5, 3, talib.MATypeSMA, 3,
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last slowK = %.4f\n", r.NBElement, r.BegIdx, slowK[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("slowK = [%.4f, ..., %.4f]\n", slowK[0], slowK[r.NBElement-1])
+fmt.Printf("slowD = [%.4f, ..., %.4f]\n", slowD[0], slowD[r.NBElement-1])
 ```
 
 :::

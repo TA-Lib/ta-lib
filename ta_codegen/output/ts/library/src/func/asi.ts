@@ -343,7 +343,7 @@ export function asiDisplayShift(outputIdx: number, options?: AsiOptions): number
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = asi({ open, high, low, close }, { limitMove: 3 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`si`](https://ta-lib.org/functions/si)
  * @see [`wad`](https://ta-lib.org/functions/wad)
@@ -825,13 +825,13 @@ export function asiOpenAndFillPositional(
  * import { asiOpen } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = asiOpen({ open, high, low, close }, { limitMove: 3 });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
@@ -871,13 +871,13 @@ export function asiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
  * import { asiOpenAndFill } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, values } = asiOpenAndFill({ open, high, low, close }, {
  *   limitMove: 3,
  * });

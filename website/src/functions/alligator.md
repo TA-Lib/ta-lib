@@ -113,7 +113,10 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_ALLIGATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, jaw, teeth, lips );
-printf( "%d values from bar %d; last jaw = %f\n", outNBElement, outBegIdx, jaw[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "jaw = [%.4f, ..., %.4f]\n", jaw[0], jaw[outNBElement - 1] );
+printf( "teeth = [%.4f, ..., %.4f]\n", teeth[0], teeth[outNBElement - 1] );
+printf( "lips = [%.4f, ..., %.4f]\n", lips[0], lips[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -130,7 +133,10 @@ let mut lips = vec![0.0; 252];
 let core = Core::new();
 let range = core.alligator(0, high.len() - 1, &high, &low, 13, 8, 8, 5, 5, 3,
                            &mut jaw, &mut teeth, &mut lips)?;
-println!("{} values from bar {}; last jaw = {}", range.count, range.beg_idx, jaw[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("jaw = [{:.4}, ..., {:.4}]", jaw[0], jaw[range.count - 1]);
+println!("teeth = [{:.4}, ..., {:.4}]", teeth[0], teeth[range.count - 1]);
+println!("lips = [{:.4}, ..., {:.4}]", lips[0], lips[range.count - 1]);
 ```
 
 @tab Java
@@ -138,6 +144,7 @@ println!("{} values from bar {}; last jaw = {}", range.count, range.beg_idx, jaw
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -147,7 +154,10 @@ double[] lips = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.alligator(0, high.length - 1, high, low, 13, 8, 8, 5, 5, 3, jaw, teeth, lips);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last jaw = " + jaw[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "jaw = [%.4f, ..., %.4f]%n", jaw[0], jaw[r.count() - 1]);
+System.out.printf(Locale.ROOT, "teeth = [%.4f, ..., %.4f]%n", teeth[0], teeth[r.count() - 1]);
+System.out.printf(Locale.ROOT, "lips = [%.4f, ..., %.4f]%n", lips[0], lips[r.count() - 1]);
 ```
 
 @tab C\#
@@ -164,7 +174,10 @@ var lips = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Alligator(0, high.Length - 1, high, low, 13, 8, 8, 5, 5, 3, jaw, teeth, lips);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last jaw = {jaw[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"jaw = [{jaw[0]:F4}, ..., {jaw[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"teeth = [{teeth[0]:F4}, ..., {teeth[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"lips = [{lips[0]:F4}, ..., {lips[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -183,7 +196,10 @@ const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
   lipsPeriod: 5,
   lipsShift: 3,
 });
-console.log(outJaw.length + ' values from bar ' + begIdx + '; last outJaw = ' + outJaw[outJaw.length - 1]);
+console.log(outJaw.length + ' values from bar ' + begIdx + ':');
+console.log('outJaw = [' + outJaw[0].toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1].toFixed(4) + ']');
+console.log('outTeeth = [' + outTeeth[0].toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1].toFixed(4) + ']');
+console.log('outLips = [' + outLips[0].toFixed(4) + ', ..., ' + outLips[outLips.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -207,7 +223,10 @@ r, err := core.ALLIGATOR(0, len(high)-1, high, low, 13, 8, 8, 5, 5, 3, jaw, teet
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last jaw = %.4f\n", r.NBElement, r.BegIdx, jaw[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("jaw = [%.4f, ..., %.4f]\n", jaw[0], jaw[r.NBElement-1])
+fmt.Printf("teeth = [%.4f, ..., %.4f]\n", teeth[0], teeth[r.NBElement-1])
+fmt.Printf("lips = [%.4f, ..., %.4f]\n", lips[0], lips[r.NBElement-1])
 ```
 
 :::

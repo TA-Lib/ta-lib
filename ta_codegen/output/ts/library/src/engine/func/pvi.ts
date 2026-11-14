@@ -86,7 +86,7 @@ export * from '../../func/pvi.ts';
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = pvi({ close, volume });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  */
 export function pvi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PviOptions): PviResult {

@@ -86,7 +86,9 @@ export * from '../../func/stochf.ts';
  *   fastDPeriod: 3,
  *   fastDMaType: MAType.SMA,
  * });
- * console.log(outFastK.length + ' values from bar ' + begIdx + '; last outFastK = ' + outFastK[outFastK.length - 1]);
+ * console.log(outFastK.length + ' values from bar ' + begIdx + ':');
+ * console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
+ * console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)

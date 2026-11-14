@@ -616,7 +616,9 @@ export function stochDisplayShift(outputIdx: number, options?: StochOptions): nu
  *   slowDPeriod: 3,
  *   slowDMaType: MAType.SMA,
  * });
- * console.log(outSlowK.length + ' values from bar ' + begIdx + '; last outSlowK = ' + outSlowK[outSlowK.length - 1]);
+ * console.log(outSlowK.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSlowK = [' + outSlowK[0].toFixed(4) + ', ..., ' + outSlowK[outSlowK.length - 1].toFixed(4) + ']');
+ * console.log('outSlowD = [' + outSlowD[0].toFixed(4) + ', ..., ' + outSlowD[outSlowD.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
@@ -1488,11 +1490,11 @@ export function stochOpenAndFillPositional(
  * import { MAType, stochOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = stochOpen({ high, low, close }, {
  *   fastKPeriod: 5,
  *   slowKPeriod: 3,
@@ -1543,11 +1545,11 @@ export function stochOpen(prices: { open?: ArrayLike<number> | undefined; high: 
  * import { MAType, stochOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, outSlowK, outSlowD } = stochOpenAndFill({ high, low, close }, {
  *   fastKPeriod: 5,
  *   slowKPeriod: 3,

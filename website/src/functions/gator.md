@@ -110,7 +110,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_GATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, upper, lower );
-printf( "%d values from bar %d; last upper = %f\n", outNBElement, outBegIdx, upper[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "upper = [%.4f, ..., %.4f]\n", upper[0], upper[outNBElement - 1] );
+printf( "lower = [%.4f, ..., %.4f]\n", lower[0], lower[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -126,7 +128,9 @@ let mut lower = vec![0.0; 252];
 let core = Core::new();
 let range = core.gator(0, high.len() - 1, &high, &low, 13, 8, 8, 5, 5, 3,
                        &mut upper, &mut lower)?;
-println!("{} values from bar {}; last upper = {}", range.count, range.beg_idx, upper[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("upper = [{:.4}, ..., {:.4}]", upper[0], upper[range.count - 1]);
+println!("lower = [{:.4}, ..., {:.4}]", lower[0], lower[range.count - 1]);
 ```
 
 @tab Java
@@ -134,6 +138,7 @@ println!("{} values from bar {}; last upper = {}", range.count, range.beg_idx, u
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -142,7 +147,9 @@ double[] lower = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.gator(0, high.length - 1, high, low, 13, 8, 8, 5, 5, 3, upper, lower);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last upper = " + upper[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "upper = [%.4f, ..., %.4f]%n", upper[0], upper[r.count() - 1]);
+System.out.printf(Locale.ROOT, "lower = [%.4f, ..., %.4f]%n", lower[0], lower[r.count() - 1]);
 ```
 
 @tab C\#
@@ -158,7 +165,9 @@ var lower = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Gator(0, high.Length - 1, high, low, 13, 8, 8, 5, 5, 3, upper, lower);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last upper = {upper[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"upper = [{upper[0]:F4}, ..., {upper[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"lower = [{lower[0]:F4}, ..., {lower[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -177,7 +186,9 @@ const { begIdx, outUpper, outLower } = gator({ high, low }, {
   lipsPeriod: 5,
   lipsShift: 3,
 });
-console.log(outUpper.length + ' values from bar ' + begIdx + '; last outUpper = ' + outUpper[outUpper.length - 1]);
+console.log(outUpper.length + ' values from bar ' + begIdx + ':');
+console.log('outUpper = [' + outUpper[0].toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1].toFixed(4) + ']');
+console.log('outLower = [' + outLower[0].toFixed(4) + ', ..., ' + outLower[outLower.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -200,7 +211,9 @@ r, err := core.GATOR(0, len(high)-1, high, low, 13, 8, 8, 5, 5, 3, upper, lower)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last upper = %.4f\n", r.NBElement, r.BegIdx, upper[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("upper = [%.4f, ..., %.4f]\n", upper[0], upper[r.NBElement-1])
+fmt.Printf("lower = [%.4f, ..., %.4f]\n", lower[0], lower[r.NBElement-1])
 ```
 
 :::

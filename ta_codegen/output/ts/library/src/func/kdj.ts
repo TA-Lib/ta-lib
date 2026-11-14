@@ -479,7 +479,10 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  *   slowDPeriod: 3,
  *   slowDMaType: MAType.RMA,
  * });
- * console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
+ * console.log(outK.length + ' values from bar ' + begIdx + ':');
+ * console.log('outK = [' + outK[0].toFixed(4) + ', ..., ' + outK[outK.length - 1].toFixed(4) + ']');
+ * console.log('outD = [' + outD[0].toFixed(4) + ', ..., ' + outD[outD.length - 1].toFixed(4) + ']');
+ * console.log('outJ = [' + outJ[0].toFixed(4) + ', ..., ' + outJ[outJ.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
@@ -1060,11 +1063,11 @@ export function kdjOpenAndFillPositional(
  * import { MAType, kdjOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = kdjOpen({ high, low, close }, {
  *   fastKPeriod: 9,
  *   slowKPeriod: 3,
@@ -1115,11 +1118,11 @@ export function kdjOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { MAType, kdjOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, outK, outD, outJ } = kdjOpenAndFill({ high, low, close }, {
  *   fastKPeriod: 9,
  *   slowKPeriod: 3,

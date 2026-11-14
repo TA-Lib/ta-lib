@@ -3,15 +3,13 @@
 //! pkg.go.dev.
 //!
 //! `generate` cannot run Go, so what each example prints is read from
-//! [`LEDGER`], which `ta_codegen bless-go-examples` records from the package.
-//! The printed value takes the most decimals, up to four, that leave it further
-//! than [`MARGIN`] from a rounding boundary, so a last-bit difference between
-//! machines or Go versions cannot change the text; a value with no such count
-//! prints the range alone. A function the ledger lacks gets an example with no
-//! `// Output:`, which `go test` compiles but does not run, and which
+//! [`LEDGER`], which `ta_codegen bless-go-examples` records from the package:
+//! the first and last value of every output, which `// Output:` prints at four
+//! decimals. A function the ledger lacks gets an example with no `// Output:`,
+//! which `go test` compiles but does not run, and which
 //! `build-libraries --backend=go` refuses.
 
-use super::examples::{self, hidden, shown, Snippet, Term, LEN};
+use super::examples::{self, hidden, shown, Ends, Int, Shape, Snippet, LEN};
 use super::go_fmt::{GExpr, GOp};
 use crate::ir::{EnumDef, FuncDef, ParamType};
 use std::collections::{BTreeMap, HashMap};
@@ -25,13 +23,6 @@ pub const LEDGER: &str = "ta_codegen/input/go_example_values.yaml";
 /// The module path the examples import.
 pub const MODULE: &str = "ta-lib.github.io/go";
 
-/// Relative distance a printed value keeps from a rounding boundary: the
-/// largest difference between GOARCH, GOAMD64 and Go versions measured on these
-/// samples is under 1e-11.
-const MARGIN: f64 = 1e-9;
-
-const MAX_DECIMALS: usize = 4;
-
 const WRAP: usize = 100;
 
 /// One example's output as the package printed it.
@@ -39,8 +30,11 @@ const WRAP: usize = 100;
 pub struct Recorded {
     pub beg: usize,
     pub count: usize,
-    /// The last value of the first output, as Go's shortest round-trip text.
-    pub last: String,
+    /// Element 0 of each output, in declaration order, as Go's shortest
+    /// round-trip text.
+    pub first: Vec<String>,
+    /// Element `count - 1` of each output.
+    pub last: Vec<String>,
 }
 
 pub type Ledger = BTreeMap<String, Recorded>;
@@ -72,34 +66,10 @@ fn recorded(name: &str) -> Option<Recorded> {
     ledger.get(name).cloned()
 }
 
-/// Decimals that print `v` the same on every machine, or `None`.
+/// How many values `name`'s example computes, when the ledger has its row.
 #[must_use]
-pub fn stable_decimals(v: f64) -> Option<usize> {
-    if !v.is_finite() {
-        return None;
-    }
-    let margin = MARGIN * v.abs().max(1.0);
-    if v.abs() <= margin {
-        return None; // the sign of zero is noise
-    }
-    (0..=MAX_DECIMALS).rev().find(|&d| {
-        let scale = 10f64.powi(i32::try_from(d).expect("small"));
-        let x = v.abs() * scale;
-        ((x - x.floor()) - 0.5).abs() / scale > margin
-    })
-}
-
-/// How the sample prints its result.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Print {
-    /// The last value with this many decimals.
-    Decimals(usize),
-    /// The last value of an integer output.
-    Integer,
-    /// The range alone.
-    Range,
-    /// A line `bless-go-examples` parses.
-    Bless,
+pub fn recorded_count(name: &str) -> Option<usize> {
+    recorded(name).map(|r| r.count)
 }
 
 /// Names a sample's output may not take: Go's keywords and what the sample
@@ -119,57 +89,65 @@ fn lit(v: f64) -> GExpr {
     GExpr::name(super::doc_meta::fmt_real(v))
 }
 
-fn bar() -> GExpr {
-    GExpr::call("float64", vec![GExpr::name("i")])
+fn int(v: i64) -> GExpr {
+    GExpr::name(v.to_string())
 }
 
-#[allow(clippy::float_cmp)] // the amplitudes are literals, not measurements
-fn term(t: &Term) -> GExpr {
-    match *t {
-        Term::Const(c) => lit(c),
-        Term::Linear(c) => GExpr::bin(lit(c), GOp::Mul, bar()),
-        Term::Sin { amp, freq, phase } => {
-            let mut arg = GExpr::bin(lit(freq), GOp::Mul, bar());
-            if phase != 0.0 {
-                arg = GExpr::bin(arg, if phase < 0.0 { GOp::Sub } else { GOp::Add }, lit(phase.abs()));
-            }
-            let s = GExpr::call("math.Sin", vec![arg]);
-            if amp == 1.0 { s } else { GExpr::bin(lit(amp), GOp::Mul, s) }
+fn int_term(t: Int) -> GExpr {
+    let i = || GExpr::name("i");
+    match t {
+        Int::Const(c) => int(c.abs()),
+        Int::Linear(1) => i(),
+        Int::Linear(c) => GExpr::bin(int(c), GOp::Mul, i()),
+        Int::Mod(m) => GExpr::bin(i(), GOp::Rem, int(m)),
+        Int::Wave { coef, period, shift } => {
+            let at = if shift == 0 { i() } else { GExpr::bin(i(), GOp::Add, int(shift)).paren() };
+            let k = || GExpr::bin(GExpr::bin(at.clone(), GOp::Rem, int(period)), GOp::Sub, int(period / 2));
+            let square = GExpr::bin(k(), GOp::Mul, k());
+            if coef == 1 { square } else { GExpr::bin(GExpr::bin(int(coef), GOp::Mul, k()), GOp::Mul, k()) }
         }
-        Term::Mod(m) => GExpr::call(
-            "float64",
-            vec![GExpr::bin(GExpr::name("i"), GOp::Rem, GExpr::name(m.to_string()))],
-        ),
-        Term::Ramp { lo, hi } => {
+    }
+}
+
+#[allow(clippy::float_cmp)] // the scales are literals, not measurements
+fn series_expr(s: &examples::Series) -> String {
+    match &s.shape {
+        Shape::Ramp { lo, hi } => {
+            let bar = GExpr::call("float64", vec![GExpr::name("i")]);
             let ramp = GExpr::bin(
-                GExpr::bin(lit(hi - lo), GOp::Mul, bar()),
+                GExpr::bin(lit(hi - lo), GOp::Mul, bar),
                 GOp::Quo,
                 GExpr::name(format!("{}.0", LEN - 1)),
             );
-            if lo == 0.0 { ramp } else { GExpr::bin(lit(lo), GOp::Add, ramp) }
+            if *lo == 0.0 { ramp } else { GExpr::bin(lit(*lo), GOp::Add, ramp) }
+        }
+        Shape::Waves { offset, scale, terms, div } => {
+            let mut sum: Option<GExpr> = None;
+            for t in terms {
+                let negative = matches!(t, Int::Const(c) if *c < 0);
+                sum = Some(match sum {
+                    None if negative => GExpr::unary("-", int_term(*t)),
+                    None => int_term(*t),
+                    Some(acc) => GExpr::bin(acc, if negative { GOp::Sub } else { GOp::Add }, int_term(*t)),
+                });
+            }
+            let mut value = GExpr::call("float64", vec![sum.expect("a series has a term")]);
+            if *scale != 1.0 {
+                value = GExpr::call("float64", vec![GExpr::bin(lit(*scale), GOp::Mul, value)]);
+            }
+            if *div != 1 {
+                value = GExpr::bin(value, GOp::Quo, int(*div));
+            }
+            if *offset != 0.0 {
+                value = GExpr::bin(lit(*offset), GOp::Add, value);
+            }
+            value
         }
     }
+    .render()
 }
 
-fn series_expr(s: &examples::Series) -> String {
-    let mut terms = s.terms.iter().map(term);
-    let first = terms.next().expect("a series has a term");
-    terms.fold(first, |acc, t| GExpr::bin(acc, GOp::Add, t)).render()
-}
-
-fn print_mode(func: &FuncDef) -> (Print, Option<Recorded>) {
-    let rec = recorded(&func.name);
-    if func.outputs[0].param_type == ParamType::Integer {
-        return (Print::Integer, rec);
-    }
-    let mode = match &rec {
-        Some(r) => r.last.parse::<f64>().ok().and_then(stable_decimals).map_or(Print::Range, Print::Decimals),
-        None => Print::Decimals(MAX_DECIMALS),
-    };
-    (mode, rec)
-}
-
-fn sample(func: &FuncDef, enums: &HashMap<String, EnumDef>, print: Print) -> Option<Snippet> {
+fn sample(func: &FuncDef, enums: &HashMap<String, EnumDef>, bless: bool) -> Option<Snippet> {
     let series = examples::all_series(func)?;
     let first = series.first()?.var;
     let imports = ["import (", "\t\"fmt\"", "\t\"log\"", "", &format!("\ttalib \"{MODULE}\""), ")"]
@@ -204,24 +182,37 @@ fn sample(func: &FuncDef, enums: &HashMap<String, EnumDef>, print: Print) -> Opt
         body.push(shown(format!("\t{})", out_vars.join(", "))));
     }
     body.extend(["if err != nil {", "\tlog.Fatal(err)", "}"].into_iter().map(shown));
-    let printed = &out_vars[0];
-    let last = format!("{printed}[r.NBElement-1]");
-    body.push(match print {
-        Print::Decimals(d) => shown(format!(
-            "fmt.Printf(\"%d values from bar %d; last {printed} = %.{d}f\\n\", r.NBElement, r.BegIdx, {last})"
-        )),
-        Print::Integer => shown(format!(
-            "fmt.Printf(\"%d values from bar %d; last {printed} = %d\\n\", r.NBElement, r.BegIdx, {last})"
-        )),
-        Print::Range => shown("fmt.Printf(\"%d values from bar %d\\n\", r.NBElement, r.BegIdx)".to_string()),
-        Print::Bless if func.outputs[0].param_type == ParamType::Integer => {
-            hidden(format!("fmt.Println(\"{}\", r.BegIdx, r.NBElement, {last})", func.name))
+    let at = |var: &str| [format!("{var}[0]"), format!("{var}[r.NBElement-1]")];
+    if bless {
+        let mut values = Vec::new();
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            for v in at(var) {
+                values.push(if output.param_type == ParamType::Integer {
+                    v
+                } else {
+                    format!("strconv.FormatFloat({v}, 'g', -1, 64)")
+                });
+            }
         }
-        Print::Bless => hidden(format!(
-            "fmt.Println(\"{}\", r.BegIdx, r.NBElement, strconv.FormatFloat({last}, 'g', -1, 64))",
-            func.name
-        )),
-    });
+        body.push(hidden(format!("fmt.Println(\"{}\", r.BegIdx, r.NBElement, {})", func.name, values.join(", "))));
+        return Some(Snippet { imports, body });
+    }
+    let ends = Ends::of(func);
+    let list = |output: &crate::ir::Output, var: &str| {
+        let spec = if output.param_type == ParamType::Integer { "%d" } else { "%.4f" };
+        let [first, last] = at(var);
+        (ends.list(spec, spec), ends.args(first, last).join(", "))
+    };
+    if let [output] = func.outputs.as_slice() {
+        let (fmt, args) = list(output, &out_vars[0]);
+        body.push(shown(format!("fmt.Printf(\"%d values from bar %d: {fmt}\\n\", r.NBElement, r.BegIdx, {args})")));
+    } else {
+        body.push(shown("fmt.Printf(\"%d values from bar %d:\\n\", r.NBElement, r.BegIdx)"));
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            let (fmt, args) = list(output, var);
+            body.push(shown(format!("fmt.Printf(\"{var} = {fmt}\\n\", {args})")));
+        }
+    }
     Some(Snippet { imports, body })
 }
 
@@ -229,21 +220,52 @@ fn sample(func: &FuncDef, enums: &HashMap<String, EnumDef>, print: Print) -> Opt
 #[allow(clippy::implicit_hasher)]
 #[must_use]
 pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snippet> {
-    sample(func, enums, print_mode(func).0)
+    sample(func, enums, false)
 }
 
-/// The `// Output:` of `func`'s example, when the ledger has its row.
+/// One recorded value as `// Output:` prints it.
+///
+/// # Errors
+/// On a value that is not a finite number of the output's type.
+fn printed(func: &FuncDef, output: usize, value: &str) -> Result<String, String> {
+    let bad = |why: &str| format!("{}: output {} recorded `{value}`, {why}", func.name, func.outputs[output].name);
+    if func.outputs[output].param_type == ParamType::Integer {
+        return value.parse::<i64>().map(|v| v.to_string()).map_err(|_| bad("not an integer"));
+    }
+    match value.parse::<f64>() {
+        Ok(v) if v.is_finite() => Ok(format!("{v:.4}")),
+        Ok(_) => Err(bad("not finite: fix the example's input series")),
+        Err(_) => Err(bad("not a number")),
+    }
+}
+
+/// The lines of `func`'s `// Output:`, when the ledger has its row.
+///
+/// # Panics
+/// On a row that does not hold one finite first and last value per output.
 #[must_use]
-pub fn expected_output(func: &FuncDef) -> Option<String> {
-    let (print, rec) = print_mode(func);
-    let rec = rec?;
-    let printed = &output_vars(func)[0];
-    let head = format!("{} values from bar {}", rec.count, rec.beg);
-    Some(match print {
-        Print::Decimals(d) => format!("{head}; last {printed} = {:.d$}", rec.last.parse::<f64>().ok()?),
-        Print::Integer => format!("{head}; last {printed} = {}", rec.last),
-        Print::Range | Print::Bless => head,
-    })
+pub fn expected_output(func: &FuncDef) -> Option<Vec<String>> {
+    let rec = recorded(&func.name)?;
+    let n = func.outputs.len();
+    assert!(
+        rec.first.len() == n && rec.last.len() == n,
+        "{}: {LEDGER} records {} first and {} last values for {n} outputs; run `ta_codegen bless-go-examples`",
+        func.name,
+        rec.first.len(),
+        rec.last.len()
+    );
+    let ends = Ends::of(func);
+    let list = |k: usize| {
+        let value = |v: &str| printed(func, k, v).unwrap_or_else(|e| panic!("{LEDGER}: {e}"));
+        ends.list(&value(&rec.first[k]), &value(&rec.last[k]))
+    };
+    let head = format!("{} values from bar {}:", rec.count, rec.beg);
+    if n == 1 {
+        return Some(vec![format!("{head} {}", list(0))]);
+    }
+    let mut lines = vec![head];
+    lines.extend(output_vars(func).iter().enumerate().map(|(k, var)| format!("{var} = {}", list(k))));
+    Some(lines)
 }
 
 /// The example's name: `ExampleCore_SMA` attaches it to the method. `go vet`
@@ -291,13 +313,22 @@ fn push_body(out: &mut String, snippet: &Snippet) {
 #[must_use]
 pub fn render_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut out = file_head("talib_test");
-    let _ = write!(out, "\nimport (\n\t\"fmt\"\n\t\"log\"\n\t\"math\"\n\n\ttalib \"{MODULE}\"\n)\n");
+    let _ = write!(out, "\nimport (\n\t\"fmt\"\n\t\"log\"\n\n\ttalib \"{MODULE}\"\n)\n");
     for func in sorted(funcs) {
         let Some(snippet) = example(func, enums) else { continue };
         let _ = write!(out, "\nfunc {}() {{\n", example_name(&func.name));
         push_body(&mut out, &snippet);
-        if let Some(expected) = expected_output(func) {
-            let _ = writeln!(out, "\t// Output: {expected}");
+        match expected_output(func).as_deref() {
+            Some([line]) => {
+                let _ = writeln!(out, "\t// Output: {line}");
+            }
+            Some(lines) => {
+                out.push_str("\t// Output:\n");
+                for line in lines {
+                    let _ = writeln!(out, "\t// {line}");
+                }
+            }
+            None => {}
         }
         out.push_str("}\n");
     }
@@ -305,17 +336,17 @@ pub fn render_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> Strin
 }
 
 /// The program `bless-go-examples` runs: every sample, each printing its name,
-/// range and last value in full.
+/// range and the first and last value of each output in full.
 #[allow(clippy::implicit_hasher)]
 #[must_use]
 pub fn render_bless_program(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut out = format!(
-        "package main\n\nimport (\n\t\"fmt\"\n\t\"log\"\n\t\"math\"\n\t\"strconv\"\n\n\ttalib \"{MODULE}\"\n)\n\n\
-         var _ = math.Sin\nvar _ = strconv.Itoa\n"
+        "package main\n\nimport (\n\t\"fmt\"\n\t\"log\"\n\t\"strconv\"\n\n\ttalib \"{MODULE}\"\n)\n\n\
+         var _ = strconv.Itoa\n"
     );
     let mut calls = Vec::new();
     for (k, func) in sorted(funcs).into_iter().enumerate() {
-        let Some(snippet) = sample(func, enums, Print::Bless) else { continue };
+        let Some(snippet) = sample(func, enums, true) else { continue };
         let _ = write!(out, "\nfunc sample{k}() {{\n");
         push_body(&mut out, &snippet);
         out.push_str("}\n");
@@ -330,16 +361,24 @@ pub fn render_bless_program(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 /// Parses the bless program's output into a ledger.
 ///
 /// # Errors
-/// On a line that is not `NAME BEG COUNT LAST`.
+/// On a line that is not `NAME BEG COUNT` then a first and last value per
+/// output, or on a value that is not a finite number.
 pub fn parse_bless_output(text: &str) -> Result<Ledger, String> {
     let mut ledger = Ledger::new();
     for line in text.lines().filter(|l| !l.trim().is_empty()) {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        let [name, beg, count, last] = parts.as_slice() else {
+        let [name, beg, count, values @ ..] = parts.as_slice() else {
             return Err(format!("unexpected line `{line}`"));
         };
+        if values.is_empty() || values.len() % 2 != 0 {
+            return Err(format!("unexpected line `{line}`"));
+        }
+        if let Some(bad) = values.iter().find(|v| !v.parse::<f64>().is_ok_and(f64::is_finite)) {
+            return Err(format!("{name}: the example printed `{bad}`, not a finite value: fix its input series"));
+        }
         let num = |s: &str| s.parse::<usize>().map_err(|e| format!("`{line}`: {e}"));
-        ledger.insert((*name).to_string(), Recorded { beg: num(beg)?, count: num(count)?, last: (*last).to_string() });
+        let pick = |k: usize| values.iter().skip(k).step_by(2).map(|v| (*v).to_string()).collect();
+        ledger.insert((*name).to_string(), Recorded { beg: num(beg)?, count: num(count)?, first: pick(0), last: pick(1) });
     }
     Ok(ledger)
 }
@@ -348,12 +387,20 @@ pub fn parse_bless_output(text: &str) -> Result<Ledger, String> {
 #[must_use]
 pub fn render_ledger(ledger: &Ledger) -> String {
     let mut s = String::from(
-        "# What each Go example prints, recorded from the package by\n\
-         # `ta_codegen bless-go-examples`. generate writes each example's\n\
-         # `// Output:` and the decimals it prints from this file.\n",
+        "# The first and last value of each output of each Go example, recorded\n\
+         # from the package by `ta_codegen bless-go-examples`. generate writes\n\
+         # each example's `// Output:` from this file, at four decimals.\n",
     );
+    let quoted = |v: &[String]| v.iter().map(|x| format!("\"{x}\"")).collect::<Vec<_>>().join(", ");
     for (name, r) in ledger {
-        let _ = writeln!(s, "{name}: {{beg: {}, count: {}, last: \"{}\"}}", r.beg, r.count, r.last);
+        let _ = writeln!(
+            s,
+            "{name}: {{beg: {}, count: {}, first: [{}], last: [{}]}}",
+            r.beg,
+            r.count,
+            quoted(&r.first),
+            quoted(&r.last)
+        );
     }
     s
 }
@@ -377,17 +424,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn decimals_back_off_from_a_rounding_boundary() {
-        assert_eq!(stable_decimals(99.123_44), Some(4));
-        assert_eq!(stable_decimals(0.123_45), Some(3), "4 decimals sit on the boundary");
-        assert_eq!(stable_decimals(0.123_450_000_000_1), Some(3), "inside the margin");
-        assert_eq!(stable_decimals(1e-12), None, "the sign of zero is noise");
-        assert_eq!(stable_decimals(-0.000_03), Some(4), "a sign far from zero is stable");
-        assert_eq!(stable_decimals(f64::NAN), None);
-        assert_eq!(stable_decimals(f64::INFINITY), None);
-    }
-
-    #[test]
     fn a_name_with_an_underscore_attaches_to_core() {
         assert_eq!(example_name("SMA"), "ExampleCore_SMA");
         assert_eq!(example_name("HT_DCPERIOD"), "ExampleCore_ht_dcperiod");
@@ -396,9 +432,16 @@ mod tests {
 
     #[test]
     fn the_bless_output_round_trips_through_the_ledger() {
-        let ledger = parse_bless_output("SMA 29 223 99.12345678901234\nCDLDOJI 10 242 -100\n").unwrap();
+        let ledger =
+            parse_bless_output("SMA 29 223 98.5 99.12345678901234\nCDLDOJI 10 242 0 -100\nMACD 33 219 1 2 3 4 5 6\n").unwrap();
+        assert_eq!(ledger["MACD"].first, ["1", "3", "5"]);
+        assert_eq!(ledger["MACD"].last, ["2", "4", "6"]);
         let back: Ledger = serde_yaml::from_str(&render_ledger(&ledger)).unwrap();
         assert_eq!(back, ledger);
         assert!(parse_bless_output("SMA 29\n").is_err());
+        assert!(parse_bless_output("SMA 29 223 1\n").is_err());
+        let nan = parse_bless_output("SMA 29 223 NaN 1\n").unwrap_err();
+        assert!(nan.starts_with("SMA: ") && nan.contains("`NaN`"), "{nan}");
+        assert!(parse_bless_output("SMA 29 223 1 +Inf\n").is_err());
     }
 }

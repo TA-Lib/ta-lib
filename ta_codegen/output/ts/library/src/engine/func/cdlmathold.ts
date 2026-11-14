@@ -101,7 +101,7 @@ const WASM_FROM_BARS = 1000;
  * const { begIdx, values } = cdlmathold({ open, high, low, close }, {
  *   penetration: 0.5,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlrisefall3methods`](https://ta-lib.org/functions/cdlrisefall3methods)
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)

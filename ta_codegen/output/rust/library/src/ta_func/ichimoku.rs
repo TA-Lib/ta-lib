@@ -318,9 +318,13 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let high = vec![0.0; 252]; // your data, oldest first
-    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let high: Vec<f64> = (0..252)
+    /// #     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let low = vec![0.0; 252]; // your data, oldest first
-    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let low: Vec<f64> = (0..252)
+    /// #     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut tenkan_sen = vec![0.0; 252];
     /// let mut kijun_sen = vec![0.0; 252];
     /// let mut senkou_span_a = vec![0.0; 252];
@@ -329,8 +333,12 @@ impl Core {
     /// let core = Core::new();
     /// let range = core.ichimoku(0, high.len() - 1, &high, &low, 9, 26, 52,
     ///                           &mut tenkan_sen, &mut kijun_sen, &mut senkou_span_a, &mut senkou_span_b)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last tenkan_sen = {}", range.count, range.beg_idx, tenkan_sen[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("tenkan_sen = [{:.4}, ..., {:.4}]", tenkan_sen[0], tenkan_sen[range.count - 1]);
+    /// println!("kijun_sen = [{:.4}, ..., {:.4}]", kijun_sen[0], kijun_sen[range.count - 1]);
+    /// println!("senkou_span_a = [{:.4}, ..., {:.4}]", senkou_span_a[0], senkou_span_a[range.count - 1]);
+    /// println!("senkou_span_b = [{:.4}, ..., {:.4}]", senkou_span_b[0], senkou_span_b[range.count - 1]);
     /// # assert!(tenkan_sen[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
@@ -665,8 +673,12 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let high: Vec<f64> = (0..252)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
+    /// let low: Vec<f64> = (0..252)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.ichimoku_open(&high, &low, 9, 26, 52).expect("enough history");
@@ -700,8 +712,12 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let high: Vec<f64> = (0..252)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
+    /// let low: Vec<f64> = (0..252)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_tenkan_sen = vec![0.0; 252];

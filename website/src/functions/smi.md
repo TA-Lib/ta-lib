@@ -111,7 +111,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_SMI( 0, n - 1, high, low, close, 13, 2, 25, 9, &outBegIdx, &outNBElement, smi, smiSignal );
-printf( "%d values from bar %d; last smi = %f\n", outNBElement, outBegIdx, smi[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "smi = [%.4f, ..., %.4f]\n", smi[0], smi[outNBElement - 1] );
+printf( "smiSignal = [%.4f, ..., %.4f]\n", smiSignal[0], smiSignal[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -128,7 +130,9 @@ let mut smi_signal = vec![0.0; 252];
 let core = Core::new();
 let range = core.smi(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9,
                      &mut smi, &mut smi_signal)?;
-println!("{} values from bar {}; last smi = {}", range.count, range.beg_idx, smi[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("smi = [{:.4}, ..., {:.4}]", smi[0], smi[range.count - 1]);
+println!("smi_signal = [{:.4}, ..., {:.4}]", smi_signal[0], smi_signal[range.count - 1]);
 ```
 
 @tab Java
@@ -136,6 +140,7 @@ println!("{} values from bar {}; last smi = {}", range.count, range.beg_idx, smi
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -145,7 +150,9 @@ double[] smiSignal = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.smi(0, high.length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last smi = " + smi[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "smi = [%.4f, ..., %.4f]%n", smi[0], smi[r.count() - 1]);
+System.out.printf(Locale.ROOT, "smiSignal = [%.4f, ..., %.4f]%n", smiSignal[0], smiSignal[r.count() - 1]);
 ```
 
 @tab C\#
@@ -162,7 +169,9 @@ var smiSignal = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Smi(0, high.Length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last smi = {smi[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"smi = [{smi[0]:F4}, ..., {smi[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"smiSignal = [{smiSignal[0]:F4}, ..., {smiSignal[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -180,7 +189,9 @@ const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
   slowPeriod: 25,
   signalPeriod: 9,
 });
-console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
+console.log(outSmi.length + ' values from bar ' + begIdx + ':');
+console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
+console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -204,7 +215,9 @@ r, err := core.SMI(0, len(high)-1, high, low, close, 13, 2, 25, 9, smi, smiSigna
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last smi = %.4f\n", r.NBElement, r.BegIdx, smi[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("smi = [%.4f, ..., %.4f]\n", smi[0], smi[r.NBElement-1])
+fmt.Printf("smiSignal = [%.4f, ..., %.4f]\n", smiSignal[0], smiSignal[r.NBElement-1])
 ```
 
 :::

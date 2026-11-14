@@ -553,7 +553,7 @@ export function bbwDisplayShift(outputIdx: number, options?: BbwOptions): number
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`percentb`](https://ta-lib.org/functions/percentb)
@@ -1000,7 +1000,7 @@ export function bbwOpenAndFillPositional(
  * import { MAType, bbwOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = bbwOpen(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
@@ -1045,7 +1045,7 @@ export function bbwOpen(real: ArrayLike<number>, options?: BbwOptions): BbwStrea
  * import { MAType, bbwOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = bbwOpenAndFill(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,

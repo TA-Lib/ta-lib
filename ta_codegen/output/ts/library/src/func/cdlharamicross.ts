@@ -360,7 +360,7 @@ export function cdlharamicrossDisplayShift(outputIdx: number, options?: Cdlharam
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlharamicross({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
  * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
@@ -1101,13 +1101,13 @@ export function cdlharamicrossOpenAndFillPositional(
  * import { cdlharamicrossOpen } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = cdlharamicrossOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
@@ -1146,13 +1146,13 @@ export function cdlharamicrossOpen(prices: { open: ArrayLike<number>; high: Arra
  * import { cdlharamicrossOpenAndFill } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, values } = cdlharamicrossOpenAndFill({ open, high, low, close });
  * // values[k] is the value at bar begIdx + k
  * ```

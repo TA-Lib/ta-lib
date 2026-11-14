@@ -117,7 +117,11 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_ICHIMOKU( 0, n - 1, high, low, 9, 26, 52,
              &outBegIdx, &outNBElement, tenkanSen, kijunSen, senkouSpanA, senkouSpanB );
-printf( "%d values from bar %d; last tenkanSen = %f\n", outNBElement, outBegIdx, tenkanSen[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "tenkanSen = [%.4f, ..., %.4f]\n", tenkanSen[0], tenkanSen[outNBElement - 1] );
+printf( "kijunSen = [%.4f, ..., %.4f]\n", kijunSen[0], kijunSen[outNBElement - 1] );
+printf( "senkouSpanA = [%.4f, ..., %.4f]\n", senkouSpanA[0], senkouSpanA[outNBElement - 1] );
+printf( "senkouSpanB = [%.4f, ..., %.4f]\n", senkouSpanB[0], senkouSpanB[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -135,7 +139,11 @@ let mut senkou_span_b = vec![0.0; 252];
 let core = Core::new();
 let range = core.ichimoku(0, high.len() - 1, &high, &low, 9, 26, 52,
                           &mut tenkan_sen, &mut kijun_sen, &mut senkou_span_a, &mut senkou_span_b)?;
-println!("{} values from bar {}; last tenkan_sen = {}", range.count, range.beg_idx, tenkan_sen[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("tenkan_sen = [{:.4}, ..., {:.4}]", tenkan_sen[0], tenkan_sen[range.count - 1]);
+println!("kijun_sen = [{:.4}, ..., {:.4}]", kijun_sen[0], kijun_sen[range.count - 1]);
+println!("senkou_span_a = [{:.4}, ..., {:.4}]", senkou_span_a[0], senkou_span_a[range.count - 1]);
+println!("senkou_span_b = [{:.4}, ..., {:.4}]", senkou_span_b[0], senkou_span_b[range.count - 1]);
 ```
 
 @tab Java
@@ -143,6 +151,7 @@ println!("{} values from bar {}; last tenkan_sen = {}", range.count, range.beg_i
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -154,7 +163,11 @@ double[] senkouSpanB = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.ichimoku(0, high.length - 1, high, low, 9, 26, 52,
                            tenkanSen, kijunSen, senkouSpanA, senkouSpanB);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last tenkanSen = " + tenkanSen[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "tenkanSen = [%.4f, ..., %.4f]%n", tenkanSen[0], tenkanSen[r.count() - 1]);
+System.out.printf(Locale.ROOT, "kijunSen = [%.4f, ..., %.4f]%n", kijunSen[0], kijunSen[r.count() - 1]);
+System.out.printf(Locale.ROOT, "senkouSpanA = [%.4f, ..., %.4f]%n", senkouSpanA[0], senkouSpanA[r.count() - 1]);
+System.out.printf(Locale.ROOT, "senkouSpanB = [%.4f, ..., %.4f]%n", senkouSpanB[0], senkouSpanB[r.count() - 1]);
 ```
 
 @tab C\#
@@ -173,7 +186,11 @@ var senkouSpanB = new double[252];
 var core = Core.Default;
 OutRange r = core.Ichimoku(0, high.Length - 1, high, low, 9, 26, 52,
                            tenkanSen, kijunSen, senkouSpanA, senkouSpanB);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last tenkanSen = {tenkanSen[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"tenkanSen = [{tenkanSen[0]:F4}, ..., {tenkanSen[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"kijunSen = [{kijunSen[0]:F4}, ..., {kijunSen[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"senkouSpanA = [{senkouSpanA[0]:F4}, ..., {senkouSpanA[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"senkouSpanB = [{senkouSpanB[0]:F4}, ..., {senkouSpanB[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -195,7 +212,11 @@ const {
   kijunPeriod: 26,
   senkouBPeriod: 52,
 });
-console.log(outTenkanSen.length + ' values from bar ' + begIdx + '; last outTenkanSen = ' + outTenkanSen[outTenkanSen.length - 1]);
+console.log(outTenkanSen.length + ' values from bar ' + begIdx + ':');
+console.log('outTenkanSen = [' + outTenkanSen[0].toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1].toFixed(4) + ']');
+console.log('outKijunSen = [' + outKijunSen[0].toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1].toFixed(4) + ']');
+console.log('outSenkouSpanA = [' + outSenkouSpanA[0].toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1].toFixed(4) + ']');
+console.log('outSenkouSpanB = [' + outSenkouSpanB[0].toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -221,7 +242,11 @@ r, err := core.ICHIMOKU(0, len(high)-1, high, low, 9, 26, 52,
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last tenkanSen = %.4f\n", r.NBElement, r.BegIdx, tenkanSen[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("tenkanSen = [%.4f, ..., %.4f]\n", tenkanSen[0], tenkanSen[r.NBElement-1])
+fmt.Printf("kijunSen = [%.4f, ..., %.4f]\n", kijunSen[0], kijunSen[r.NBElement-1])
+fmt.Printf("senkouSpanA = [%.4f, ..., %.4f]\n", senkouSpanA[0], senkouSpanA[r.NBElement-1])
+fmt.Printf("senkouSpanB = [%.4f, ..., %.4f]\n", senkouSpanB[0], senkouSpanB[r.NBElement-1])
 ```
 
 :::

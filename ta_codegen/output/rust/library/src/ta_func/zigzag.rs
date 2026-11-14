@@ -318,9 +318,13 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let high = vec![0.0; 252]; // your data, oldest first
-    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let high: Vec<f64> = (0..252)
+    /// #     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let low = vec![0.0; 252]; // your data, oldest first
-    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let low: Vec<f64> = (0..252)
+    /// #     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut zig_zag = vec![0.0; 252];
     /// let mut trend = vec![0i32; 252];
     /// let mut pivot_idx = vec![0i32; 252];
@@ -328,8 +332,11 @@ impl Core {
     /// let core = Core::new();
     /// let range = core.zigzag(0, high.len() - 1, &high, &low, 5.0, 1,
     ///                         &mut zig_zag, &mut trend, &mut pivot_idx)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last zig_zag = {}", range.count, range.beg_idx, zig_zag[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("zig_zag = [{:.4}, ..., {:.4}]", zig_zag[0], zig_zag[range.count - 1]);
+    /// println!("trend = [{}, ..., {}]", trend[0], trend[range.count - 1]);
+    /// println!("pivot_idx = [{}, ..., {}]", pivot_idx[0], pivot_idx[range.count - 1]);
     /// # assert!(zig_zag[..range.count].iter().all(|v| v.is_finite()));
     /// # assert_eq!(range.beg_idx + range.count, high.len());
     /// # // the leg is a two-state latch: +1 while it runs up, -1 while it runs down
@@ -649,8 +656,12 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let high: Vec<f64> = (0..252)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
+    /// let low: Vec<f64> = (0..252)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.zigzag_open(&high, &low, 5.0, 1).expect("enough history");
@@ -683,8 +694,12 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let high: Vec<f64> = (0..252)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
+    /// let low: Vec<f64> = (0..252)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_zig_zag = vec![0.0; 252];

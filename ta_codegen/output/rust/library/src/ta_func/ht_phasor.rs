@@ -515,14 +515,18 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series = vec![0.0; 252]; // your data, oldest first
-    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series: Vec<f64> = (0..252)
+    /// #     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .collect();
     /// let mut in_phase = vec![0.0; 252];
     /// let mut quadrature = vec![0.0; 252];
     ///
     /// let core = Core::new();
     /// let range = core.ht_phasor(0, series.len() - 1, &series, &mut in_phase, &mut quadrature)?;
-    /// # assert!(range.count > 0);
-    /// println!("{} values from bar {}; last in_phase = {}", range.count, range.beg_idx, in_phase[range.count - 1]);
+    /// # assert!(range.count > 2);
+    /// println!("{} values from bar {}:", range.count, range.beg_idx);
+    /// println!("in_phase = [{:.4}, ..., {:.4}]", in_phase[0], in_phase[range.count - 1]);
+    /// println!("quadrature = [{:.4}, ..., {:.4}]", quadrature[0], quadrature[range.count - 1]);
     /// # assert!(in_phase[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
@@ -1261,7 +1265,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.ht_phasor_open(&series).expect("enough history");
@@ -1293,7 +1299,9 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252)
+    ///     .map(|i| 90.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_in_phase = vec![0.0; 252];

@@ -85,7 +85,10 @@ const WASM_FROM_BARS = 5000;
  *   outMiddleBand,
  *   outLowerBand,
  * } = accbands({ high, low, close }, { timePeriod: 20 });
- * console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
+ * console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
+ * console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
+ * console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
+ * console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`bbands`](https://ta-lib.org/functions/bbands)

@@ -76,7 +76,7 @@ const WASM_FROM_BARS = 50000;
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = midpoint(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`max`](https://ta-lib.org/functions/max)

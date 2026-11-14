@@ -231,7 +231,7 @@ export function log10DisplayShift(outputIdx: number, options?: Log10Options): nu
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = log10(series);
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ln`](https://ta-lib.org/functions/ln)
  * @see [`exp`](https://ta-lib.org/functions/exp)

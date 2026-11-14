@@ -485,8 +485,7 @@ pub(super) const EXAMPLE_LEN: usize = examples::LEN;
 pub(crate) const RUST_SYNTAX: examples::Syntax<'static> = examples::Syntax {
     real: fmt_real_literal,
     bar: "i as f64",
-    sin: |x| format!("({x}).sin()"),
-    modulo: |m| format!("(i % {m}) as f64"),
+    widen: Some(|x| format!("({x}) as f64")),
 };
 
 /// One further bar of a domain-mapped series: `x` in `[-1, 1]` mapped onto it.
@@ -584,12 +583,22 @@ pub(crate) fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Optio
             .into_iter()
             .map(shown),
     );
-    body.push(hidden("assert!(range.count > 0);"));
-    let printed = &out_vars[0];
-    body.push(shown(format!(
-        "println!(\"{{}} values from bar {{}}; last {printed} = {{}}\", range.count, range.beg_idx, \
-         {printed}[range.count - 1]);"
-    )));
+    let ends = examples::Ends::of(func);
+    body.push(hidden(format!("assert!(range.count {});", ends.claim())));
+    let list = |output: &Output, var: &str| {
+        let spec = if output.param_type == ParamType::Integer { "{}" } else { "{:.4}" };
+        (ends.list(spec, spec), ends.args(format!("{var}[0]"), format!("{var}[range.count - 1]")).join(", "))
+    };
+    if let [output] = func.outputs.as_slice() {
+        let (fmt, args) = list(output, &out_vars[0]);
+        body.push(shown(format!("println!(\"{{}} values from bar {{}}: {fmt}\", range.count, range.beg_idx, {args});")));
+    } else {
+        body.push(shown("println!(\"{} values from bar {}:\", range.count, range.beg_idx);"));
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            let (fmt, args) = list(output, var);
+            body.push(shown(format!("println!(\"{var} = {fmt}\", {args});")));
+        }
+    }
     // Assert on the values, not just the return code. A `nan_inf_output` function
     // may emit infinity on ordinary data, so it is held to no NaN instead.
     if let Some((_, var)) = func

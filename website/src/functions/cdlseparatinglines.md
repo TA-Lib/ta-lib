@@ -105,7 +105,7 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_CDLSEPARATINGLINES( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -122,7 +122,7 @@ let mut out = vec![0i32; 252];
 let core = Core::new();
 let range = core.cdlseparatinglines(0, open.len() - 1, &open, &high, &low, &close,
                                     &mut out)?;
-println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+println!("{} values from bar {}: [{}, ..., {}]", range.count, range.beg_idx, out[0], out[range.count - 1]);
 ```
 
 @tab Java
@@ -130,6 +130,7 @@ println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] open = new double[252]; // your data, oldest first
 double[] high = new double[252]; // your data, oldest first
@@ -139,7 +140,7 @@ int[] out = new int[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.cdlseparatinglines(0, open.length - 1, open, high, low, close, out);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d: [%d, ..., %d]%n", r.count(), r.begIdx(), out[0], out[r.count() - 1]);
 ```
 
 @tab C\#
@@ -156,7 +157,7 @@ var outInteger = new int[252];
 
 var core = Core.Default;
 OutRange r = core.Cdlseparatinglines(0, open.Length - 1, open, high, low, close, outInteger);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outInteger = {outInteger[r.Count - 1]}");
+Console.WriteLine(FormattableString.Invariant($"{r.Count} values from bar {r.BegIdx}: [{outInteger[0]}, ..., {outInteger[r.Count - 1]}]"));
 ```
 
 @tab TypeScript
@@ -170,7 +171,7 @@ const low = new Float64Array(252); // your data, oldest first
 const close = new Float64Array(252); // your data, oldest first
 
 const { begIdx, values } = cdlseparatinglines({ open, high, low, close });
-console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
 ```
 
 @tab Go
@@ -194,7 +195,7 @@ r, err := core.CDLSEPARATINGLINES(0, len(open)-1, open, high, low, close, out)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+fmt.Printf("%d values from bar %d: [%d, ..., %d]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
 ```
 
 :::

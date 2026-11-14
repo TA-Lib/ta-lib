@@ -91,7 +91,9 @@ export * from '../../func/vortex.ts';
  * const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
  *   timePeriod: 14,
  * });
- * console.log(outPlusVi.length + ' values from bar ' + begIdx + '; last outPlusVi = ' + outPlusVi[outPlusVi.length - 1]);
+ * console.log(outPlusVi.length + ' values from bar ' + begIdx + ':');
+ * console.log('outPlusVi = [' + outPlusVi[0].toFixed(4) + ', ..., ' + outPlusVi[outPlusVi.length - 1].toFixed(4) + ']');
+ * console.log('outMinusVi = [' + outMinusVi[0].toFixed(4) + ', ..., ' + outMinusVi[outMinusVi.length - 1].toFixed(4) + ']');
  * ```
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`plusDi`](https://ta-lib.org/functions/plus_di)

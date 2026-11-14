@@ -115,7 +115,10 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_KDJ( 0, n - 1, high, low, close, 9, 3, TA_MAType_RMA, 3, TA_MAType_RMA,
         &outBegIdx, &outNBElement, k, d, j );
-printf( "%d values from bar %d; last k = %f\n", outNBElement, outBegIdx, k[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "k = [%.4f, ..., %.4f]\n", k[0], k[outNBElement - 1] );
+printf( "d = [%.4f, ..., %.4f]\n", d[0], d[outNBElement - 1] );
+printf( "j = [%.4f, ..., %.4f]\n", j[0], j[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -133,7 +136,10 @@ let mut j = vec![0.0; 252];
 let core = Core::new();
 let range = core.kdj(0, high.len() - 1, &high, &low, &close, 9, 3, MAType::RMA, 3, MAType::RMA,
                      &mut k, &mut d, &mut j)?;
-println!("{} values from bar {}; last k = {}", range.count, range.beg_idx, k[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("k = [{:.4}, ..., {:.4}]", k[0], k[range.count - 1]);
+println!("d = [{:.4}, ..., {:.4}]", d[0], d[range.count - 1]);
+println!("j = [{:.4}, ..., {:.4}]", j[0], j[range.count - 1]);
 ```
 
 @tab Java
@@ -142,6 +148,7 @@ println!("{} values from bar {}; last k = {}", range.count, range.beg_idx, k[ran
 import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -153,7 +160,10 @@ double[] j = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.kdj(0, high.length - 1, high, low, close, 9, 3, MAType.RMA, 3, MAType.RMA,
                       k, d, j);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last k = " + k[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "k = [%.4f, ..., %.4f]%n", k[0], k[r.count() - 1]);
+System.out.printf(Locale.ROOT, "d = [%.4f, ..., %.4f]%n", d[0], d[r.count() - 1]);
+System.out.printf(Locale.ROOT, "j = [%.4f, ..., %.4f]%n", j[0], j[r.count() - 1]);
 ```
 
 @tab C\#
@@ -172,7 +182,10 @@ var j = new double[252];
 var core = Core.Default;
 OutRange r = core.Kdj(0, high.Length - 1, high, low, close, 9, 3, MAType.RMA, 3, MAType.RMA,
                       k, d, j);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last k = {k[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"k = [{k[0]:F4}, ..., {k[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"d = [{d[0]:F4}, ..., {d[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"j = [{j[0]:F4}, ..., {j[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -191,7 +204,10 @@ const { begIdx, outK, outD, outJ } = kdj({ high, low, close }, {
   slowDPeriod: 3,
   slowDMaType: MAType.RMA,
 });
-console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
+console.log(outK.length + ' values from bar ' + begIdx + ':');
+console.log('outK = [' + outK[0].toFixed(4) + ', ..., ' + outK[outK.length - 1].toFixed(4) + ']');
+console.log('outD = [' + outD[0].toFixed(4) + ', ..., ' + outD[outD.length - 1].toFixed(4) + ']');
+console.log('outJ = [' + outJ[0].toFixed(4) + ', ..., ' + outJ[outJ.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -217,7 +233,10 @@ r, err := core.KDJ(0, len(high)-1, high, low, close, 9, 3, talib.MATypeRMA, 3, t
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last k = %.4f\n", r.NBElement, r.BegIdx, k[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("k = [%.4f, ..., %.4f]\n", k[0], k[r.NBElement-1])
+fmt.Printf("d = [%.4f, ..., %.4f]\n", d[0], d[r.NBElement-1])
+fmt.Printf("j = [%.4f, ..., %.4f]\n", j[0], j[r.NBElement-1])
 ```
 
 :::

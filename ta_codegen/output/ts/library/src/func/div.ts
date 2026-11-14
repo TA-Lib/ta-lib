@@ -240,7 +240,7 @@ export function divDisplayShift(outputIdx: number, options?: DivOptions): number
  * const series1 = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = div(series0, series1);
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`mult`](https://ta-lib.org/functions/mult)
  * @see [`add`](https://ta-lib.org/functions/add)
@@ -522,7 +522,7 @@ export function divOpenAndFillPositional(
  * import { divOpen } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   10 * Math.sin(0.1 * i));
+ *   (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) => 1 + 5 * i / 251.0);
  * const stream = divOpen(series0, series1);
  * const peeked = stream.peek(4.2, 4.55); // a forming bar: commits nothing
@@ -559,7 +559,7 @@ export function divOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, opti
  * import { divOpenAndFill } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   10 * Math.sin(0.1 * i));
+ *   (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) => 1 + 5 * i / 251.0);
  * const { stream, begIdx, values } = divOpenAndFill(series0, series1);
  * // values[k] is the value at bar begIdx + k

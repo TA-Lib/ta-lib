@@ -126,7 +126,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_FRACTAL( 0, n - 1, high, low, 2, 2, &outBegIdx, &outNBElement, swingHigh, swingLow );
-printf( "%d values from bar %d; last swingHigh = %d\n", outNBElement, outBegIdx, swingHigh[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "swingHigh = [%d, ..., %d]\n", swingHigh[0], swingHigh[outNBElement - 1] );
+printf( "swingLow = [%d, ..., %d]\n", swingLow[0], swingLow[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -142,7 +144,9 @@ let mut swing_low = vec![0i32; 252];
 let core = Core::new();
 let range = core.fractal(0, high.len() - 1, &high, &low, 2, 2,
                          &mut swing_high, &mut swing_low)?;
-println!("{} values from bar {}; last swing_high = {}", range.count, range.beg_idx, swing_high[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("swing_high = [{}, ..., {}]", swing_high[0], swing_high[range.count - 1]);
+println!("swing_low = [{}, ..., {}]", swing_low[0], swing_low[range.count - 1]);
 ```
 
 @tab Java
@@ -150,6 +154,7 @@ println!("{} values from bar {}; last swing_high = {}", range.count, range.beg_i
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -158,7 +163,9 @@ int[] swingLow = new int[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.fractal(0, high.length - 1, high, low, 2, 2, swingHigh, swingLow);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last swingHigh = " + swingHigh[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "swingHigh = [%d, ..., %d]%n", swingHigh[0], swingHigh[r.count() - 1]);
+System.out.printf(Locale.ROOT, "swingLow = [%d, ..., %d]%n", swingLow[0], swingLow[r.count() - 1]);
 ```
 
 @tab C\#
@@ -174,7 +181,9 @@ var swingLow = new int[252];
 
 var core = Core.Default;
 OutRange r = core.Fractal(0, high.Length - 1, high, low, 2, 2, swingHigh, swingLow);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last swingHigh = {swingHigh[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"swingHigh = [{swingHigh[0]}, ..., {swingHigh[r.Count - 1]}]"));
+Console.WriteLine(FormattableString.Invariant($"swingLow = [{swingLow[0]}, ..., {swingLow[r.Count - 1]}]"));
 ```
 
 @tab TypeScript
@@ -189,7 +198,9 @@ const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
   leftBars: 2,
   rightBars: 2,
 });
-console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+console.log(outSwingHigh.length + ' values from bar ' + begIdx + ':');
+console.log('outSwingHigh = [' + outSwingHigh[0] + ', ..., ' + outSwingHigh[outSwingHigh.length - 1] + ']');
+console.log('outSwingLow = [' + outSwingLow[0] + ', ..., ' + outSwingLow[outSwingLow.length - 1] + ']');
 ```
 
 @tab Go
@@ -212,7 +223,9 @@ r, err := core.FRACTAL(0, len(high)-1, high, low, 2, 2, swingHigh, swingLow)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last swingHigh = %d\n", r.NBElement, r.BegIdx, swingHigh[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("swingHigh = [%d, ..., %d]\n", swingHigh[0], swingHigh[r.NBElement-1])
+fmt.Printf("swingLow = [%d, ..., %d]\n", swingLow[0], swingLow[r.NBElement-1])
 ```
 
 :::

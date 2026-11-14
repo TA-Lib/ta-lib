@@ -2,19 +2,12 @@
 //! and runs every one on the synthetic series (`src/tools/ta_examples/`).
 
 use super::examples::{self, hidden, shown, Snippet, LEN};
-use crate::ir::{EnumDef, FuncDef, ParamType};
+use crate::ir::{EnumDef, FuncDef, Output, ParamType};
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
 
 const WRAP: usize = 100;
-
-const SYNTAX: examples::Syntax<'static> = examples::Syntax {
-    real: super::doc_meta::fmt_real,
-    bar: "i",
-    sin: |x| format!("sin({x})"),
-    modulo: |m| format!("(i % {m})"),
-};
 
 /// The batch call, `TA_<N>`, after `TA_Initialize`.
 #[allow(clippy::implicit_hasher)]
@@ -47,7 +40,7 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
         body.push(hidden(format!(
             "{{ int i; for( i = 0; i < n; i++ ) {}[i] = {}; }}",
             s.var,
-            examples::render(s, &SYNTAX)
+            examples::render(s, &examples::C_FAMILY)
         )));
     }
     body.push(hidden("outBegIdx = -1; outNBElement = 0;"));
@@ -61,13 +54,25 @@ pub fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snipp
     let mut outs = vec!["&outBegIdx".to_string(), "&outNBElement".to_string()];
     outs.extend(out_vars.iter().cloned());
     body.extend(examples::wrap_call(&format!("TA_{name}( "), &args, &outs, " );", WRAP).into_iter().map(shown));
-    body.push(hidden(format!("if( !check( \"{name}\", outNBElement > 0 ) ) {{ TA_Shutdown(); return 1; }}")));
-    let printed = &out_vars[0];
-    let spec = if func.outputs[0].param_type == ParamType::Integer { "%d" } else { "%f" };
-    body.push(shown(format!(
-        "printf( \"%d values from bar %d; last {printed} = {spec}\\n\", outNBElement, outBegIdx, \
-         {printed}[outNBElement - 1] );"
+    let ends = examples::Ends::of(func);
+    body.push(hidden(format!(
+        "if( !check( \"{name}\", outNBElement {} ) ) {{ TA_Shutdown(); return 1; }}",
+        ends.claim()
     )));
+    let list = |output: &Output, var: &str| {
+        let spec = if output.param_type == ParamType::Integer { "%d" } else { "%.4f" };
+        (ends.list(spec, spec), ends.args(format!("{var}[0]"), format!("{var}[outNBElement - 1]")).join(", "))
+    };
+    if let [output] = func.outputs.as_slice() {
+        let (fmt, args) = list(output, &out_vars[0]);
+        body.push(shown(format!("printf( \"%d values from bar %d: {fmt}\\n\", outNBElement, outBegIdx, {args} );")));
+    } else {
+        body.push(shown("printf( \"%d values from bar %d:\\n\", outNBElement, outBegIdx );"));
+        for (output, var) in func.outputs.iter().zip(&out_vars) {
+            let (fmt, args) = list(output, var);
+            body.push(shown(format!("printf( \"{var} = {fmt}\\n\", {args} );")));
+        }
+    }
     if let Some((_, var)) = func.outputs.iter().zip(&out_vars).find(|(o, _)| o.param_type != ParamType::Integer) {
         let helper = if examples::allows_infinity(func) { "no_nan" } else { "all_finite" };
         body.push(hidden(format!(

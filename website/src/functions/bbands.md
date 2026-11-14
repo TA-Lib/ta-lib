@@ -118,7 +118,10 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_BBANDS( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA,
            &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
-printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[outNBElement - 1] );
+printf( "middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[outNBElement - 1] );
+printf( "lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -134,7 +137,10 @@ let mut lower_band = vec![0.0; 252];
 let core = Core::new();
 let range = core.bbands(0, series.len() - 1, &series, 20, 2.0, 2.0, MAType::SMA,
                         &mut upper_band, &mut middle_band, &mut lower_band)?;
-println!("{} values from bar {}; last upper_band = {}", range.count, range.beg_idx, upper_band[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("upper_band = [{:.4}, ..., {:.4}]", upper_band[0], upper_band[range.count - 1]);
+println!("middle_band = [{:.4}, ..., {:.4}]", middle_band[0], middle_band[range.count - 1]);
+println!("lower_band = [{:.4}, ..., {:.4}]", lower_band[0], lower_band[range.count - 1]);
 ```
 
 @tab Java
@@ -143,6 +149,7 @@ println!("{} values from bar {}; last upper_band = {}", range.count, range.beg_i
 import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] series = new double[252]; // your data, oldest first
 double[] upperBand = new double[252];
@@ -152,7 +159,10 @@ double[] lowerBand = new double[252];
 Core core = Core.DEFAULT;
 OutRange r = core.bbands(0, series.length - 1, series, 20, 2.0, 2.0, MAType.SMA,
                          upperBand, middleBand, lowerBand);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last upperBand = " + upperBand[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "upperBand = [%.4f, ..., %.4f]%n", upperBand[0], upperBand[r.count() - 1]);
+System.out.printf(Locale.ROOT, "middleBand = [%.4f, ..., %.4f]%n", middleBand[0], middleBand[r.count() - 1]);
+System.out.printf(Locale.ROOT, "lowerBand = [%.4f, ..., %.4f]%n", lowerBand[0], lowerBand[r.count() - 1]);
 ```
 
 @tab C\#
@@ -169,7 +179,10 @@ var lowerBand = new double[252];
 var core = Core.Default;
 OutRange r = core.Bbands(0, series.Length - 1, series, 20, 2.0, 2.0, MAType.SMA,
                          upperBand, middleBand, lowerBand);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last upperBand = {upperBand[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"upperBand = [{upperBand[0]:F4}, ..., {upperBand[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"middleBand = [{middleBand[0]:F4}, ..., {middleBand[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"lowerBand = [{lowerBand[0]:F4}, ..., {lowerBand[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -190,7 +203,10 @@ const {
   nbDevDn: 2,
   maType: MAType.SMA,
 });
-console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
+console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
+console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
+console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
+console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -214,7 +230,10 @@ r, err := core.BBANDS(0, len(series)-1, series, 20, 2, 2, talib.MATypeSMA,
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
 ```
 
 :::

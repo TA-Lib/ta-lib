@@ -93,7 +93,7 @@ export * from '../../func/sharpe.ts';
  *   riskFreeRate: 0,
  *   annualization: 252,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`var_`](https://ta-lib.org/functions/var)

@@ -88,7 +88,7 @@ const WASM_FROM_BARS = 60;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlhammer({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlinvertedhammer`](https://ta-lib.org/functions/cdlinvertedhammer)
  * @see [`cdlhangingman`](https://ta-lib.org/functions/cdlhangingman)

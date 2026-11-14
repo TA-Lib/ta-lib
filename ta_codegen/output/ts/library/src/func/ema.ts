@@ -342,7 +342,7 @@ export function emaDisplayShift(outputIdx: number, options?: EmaOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = ema(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`dema`](https://ta-lib.org/functions/dema)
@@ -731,7 +731,7 @@ export function emaOpenAndFillPositional(
  * import { emaOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = emaOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -767,7 +767,7 @@ export function emaOpen(real: ArrayLike<number>, options?: EmaOptions): EmaStrea
  * import { emaOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = emaOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```

@@ -91,7 +91,7 @@ const WASM_FROM_BARS = 500;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdl3inside({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
  * @see [`cdl3outside`](https://ta-lib.org/functions/cdl3outside)

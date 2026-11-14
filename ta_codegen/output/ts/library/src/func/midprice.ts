@@ -431,7 +431,7 @@ export function midpriceDisplayShift(outputIdx: number, options?: MidpriceOption
  * const low = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = midprice({ high, low }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`midpoint`](https://ta-lib.org/functions/midpoint)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
@@ -979,9 +979,9 @@ export function midpriceOpenAndFillPositional(
  * import { midpriceOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = midpriceOpen({ high, low }, { timePeriod: 14 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1021,9 +1021,9 @@ export function midpriceOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * import { midpriceOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = midpriceOpenAndFill({ high, low }, {
  *   timePeriod: 14,
  * });

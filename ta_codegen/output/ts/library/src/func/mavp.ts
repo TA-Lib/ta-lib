@@ -564,7 +564,7 @@ export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): numb
  *   maxPeriod: 30,
  *   maType: MAType.SMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
@@ -1153,8 +1153,8 @@ export function mavpOpenAndFillPositional(
  * import { MAType, mavpOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + i % 10);
  * const stream = mavpOpen(series, periods, {
  *   minPeriod: 2,
  *   maxPeriod: 30,
@@ -1198,8 +1198,8 @@ export function mavpOpen(real: ArrayLike<number>, periods: ArrayLike<number>, op
  * import { MAType, mavpOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + i % 10);
  * const { stream, begIdx, values } = mavpOpenAndFill(series, periods, {
  *   minPeriod: 2,
  *   maxPeriod: 30,

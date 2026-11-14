@@ -92,7 +92,7 @@ const WASM_FROM_BARS = 250;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlconcealbabyswall({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlmarubozu`](https://ta-lib.org/functions/cdlmarubozu)
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)

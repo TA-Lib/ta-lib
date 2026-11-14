@@ -422,7 +422,7 @@ export function varDisplayShift(outputIdx: number, options?: VarOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = var_(series, { timePeriod: 5, nbDev: 1 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
@@ -1097,7 +1097,7 @@ export function varOpenAndFillPositional(
  * import { varOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = varOpen(series, { timePeriod: 5, nbDev: 1 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
@@ -1135,7 +1135,7 @@ export function varOpen(real: ArrayLike<number>, options?: VarOptions): VarStrea
  * import { varOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = varOpenAndFill(series, {
  *   timePeriod: 5,
  *   nbDev: 1,

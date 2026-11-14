@@ -683,7 +683,10 @@ export function bbandsDisplayShift(outputIdx: number, options?: BbandsOptions): 
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
+ * console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
+ * console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
+ * console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
+ * console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
@@ -1255,7 +1258,7 @@ export function bbandsOpenAndFillPositional(
  * import { MAType, bbandsOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = bbandsOpen(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
@@ -1300,7 +1303,7 @@ export function bbandsOpen(real: ArrayLike<number>, options?: BbandsOptions): Bb
  * import { MAType, bbandsOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const {
  *   stream,
  *   begIdx,

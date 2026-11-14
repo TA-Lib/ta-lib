@@ -108,7 +108,9 @@ const WASM_FROM_BARS = 1000;
  *   timePeriod: 22,
  *   multiplier: 3,
  * });
- * console.log(outLong.length + ' values from bar ' + begIdx + '; last outLong = ' + outLong[outLong.length - 1]);
+ * console.log(outLong.length + ' values from bar ' + begIdx + ':');
+ * console.log('outLong = [' + outLong[0].toFixed(4) + ', ..., ' + outLong[outLong.length - 1].toFixed(4) + ']');
+ * console.log('outShort = [' + outShort[0].toFixed(4) + ', ..., ' + outShort[outShort.length - 1].toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`max`](https://ta-lib.org/functions/max)

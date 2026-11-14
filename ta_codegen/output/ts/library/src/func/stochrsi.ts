@@ -431,7 +431,9 @@ export function stochrsiDisplayShift(outputIdx: number, options?: StochrsiOption
  *   fastDPeriod: 3,
  *   fastDMaType: MAType.SMA,
  * });
- * console.log(outFastK.length + ' values from bar ' + begIdx + '; last outFastK = ' + outFastK[outFastK.length - 1]);
+ * console.log(outFastK.length + ' values from bar ' + begIdx + ':');
+ * console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
+ * console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
@@ -931,7 +933,7 @@ export function stochrsiOpenAndFillPositional(
  * import { MAType, stochrsiOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = stochrsiOpen(series, {
  *   timePeriod: 14,
  *   fastKPeriod: 5,
@@ -975,7 +977,7 @@ export function stochrsiOpen(real: ArrayLike<number>, options?: StochrsiOptions)
  * import { MAType, stochrsiOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, outFastK, outFastD } = stochrsiOpenAndFill(series, {
  *   timePeriod: 14,
  *   fastKPeriod: 5,

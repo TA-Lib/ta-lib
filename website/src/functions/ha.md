@@ -114,7 +114,11 @@ int outBegIdx, outNBElement;
 TA_Initialize();
 TA_HA( 0, n - 1, open, high, low, close,
        &outBegIdx, &outNBElement, haOpen, haHigh, haLow, haClose );
-printf( "%d values from bar %d; last haOpen = %f\n", outNBElement, outBegIdx, haOpen[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "haOpen = [%.4f, ..., %.4f]\n", haOpen[0], haOpen[outNBElement - 1] );
+printf( "haHigh = [%.4f, ..., %.4f]\n", haHigh[0], haHigh[outNBElement - 1] );
+printf( "haLow = [%.4f, ..., %.4f]\n", haLow[0], haLow[outNBElement - 1] );
+printf( "haClose = [%.4f, ..., %.4f]\n", haClose[0], haClose[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -134,7 +138,11 @@ let mut ha_close = vec![0.0; 252];
 let core = Core::new();
 let range = core.ha(0, open.len() - 1, &open, &high, &low, &close,
                     &mut ha_open, &mut ha_high, &mut ha_low, &mut ha_close)?;
-println!("{} values from bar {}; last ha_open = {}", range.count, range.beg_idx, ha_open[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("ha_open = [{:.4}, ..., {:.4}]", ha_open[0], ha_open[range.count - 1]);
+println!("ha_high = [{:.4}, ..., {:.4}]", ha_high[0], ha_high[range.count - 1]);
+println!("ha_low = [{:.4}, ..., {:.4}]", ha_low[0], ha_low[range.count - 1]);
+println!("ha_close = [{:.4}, ..., {:.4}]", ha_close[0], ha_close[range.count - 1]);
 ```
 
 @tab Java
@@ -142,6 +150,7 @@ println!("{} values from bar {}; last ha_open = {}", range.count, range.beg_idx,
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] open = new double[252]; // your data, oldest first
 double[] high = new double[252]; // your data, oldest first
@@ -154,7 +163,11 @@ double[] haClose = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.ha(0, open.length - 1, open, high, low, close, haOpen, haHigh, haLow, haClose);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last haOpen = " + haOpen[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "haOpen = [%.4f, ..., %.4f]%n", haOpen[0], haOpen[r.count() - 1]);
+System.out.printf(Locale.ROOT, "haHigh = [%.4f, ..., %.4f]%n", haHigh[0], haHigh[r.count() - 1]);
+System.out.printf(Locale.ROOT, "haLow = [%.4f, ..., %.4f]%n", haLow[0], haLow[r.count() - 1]);
+System.out.printf(Locale.ROOT, "haClose = [%.4f, ..., %.4f]%n", haClose[0], haClose[r.count() - 1]);
 ```
 
 @tab C\#
@@ -174,7 +187,11 @@ var haClose = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Ha(0, open.Length - 1, open, high, low, close, haOpen, haHigh, haLow, haClose);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last haOpen = {haOpen[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"haOpen = [{haOpen[0]:F4}, ..., {haOpen[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"haHigh = [{haHigh[0]:F4}, ..., {haHigh[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"haLow = [{haLow[0]:F4}, ..., {haLow[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"haClose = [{haClose[0]:F4}, ..., {haClose[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -194,7 +211,11 @@ const {
   outHaLow,
   outHaClose,
 } = ha({ open, high, low, close });
-console.log(outHaOpen.length + ' values from bar ' + begIdx + '; last outHaOpen = ' + outHaOpen[outHaOpen.length - 1]);
+console.log(outHaOpen.length + ' values from bar ' + begIdx + ':');
+console.log('outHaOpen = [' + outHaOpen[0].toFixed(4) + ', ..., ' + outHaOpen[outHaOpen.length - 1].toFixed(4) + ']');
+console.log('outHaHigh = [' + outHaHigh[0].toFixed(4) + ', ..., ' + outHaHigh[outHaHigh.length - 1].toFixed(4) + ']');
+console.log('outHaLow = [' + outHaLow[0].toFixed(4) + ', ..., ' + outHaLow[outHaLow.length - 1].toFixed(4) + ']');
+console.log('outHaClose = [' + outHaClose[0].toFixed(4) + ', ..., ' + outHaClose[outHaClose.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -221,7 +242,11 @@ r, err := core.HA(0, len(open)-1, open, high, low, close, haOpen, haHigh, haLow,
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last haOpen = %.4f\n", r.NBElement, r.BegIdx, haOpen[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("haOpen = [%.4f, ..., %.4f]\n", haOpen[0], haOpen[r.NBElement-1])
+fmt.Printf("haHigh = [%.4f, ..., %.4f]\n", haHigh[0], haHigh[r.NBElement-1])
+fmt.Printf("haLow = [%.4f, ..., %.4f]\n", haLow[0], haLow[r.NBElement-1])
+fmt.Printf("haClose = [%.4f, ..., %.4f]\n", haClose[0], haClose[r.NBElement-1])
 ```
 
 :::

@@ -115,7 +115,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_SUPERTREND( 0, n - 1, high, low, close, 10, 3.0, &outBegIdx, &outNBElement, supertrend, trend );
-printf( "%d values from bar %d; last supertrend = %f\n", outNBElement, outBegIdx, supertrend[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "supertrend = [%.4f, ..., %.4f]\n", supertrend[0], supertrend[outNBElement - 1] );
+printf( "trend = [%d, ..., %d]\n", trend[0], trend[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -132,7 +134,9 @@ let mut trend = vec![0i32; 252];
 let core = Core::new();
 let range = core.supertrend(0, high.len() - 1, &high, &low, &close, 10, 3.0,
                             &mut supertrend, &mut trend)?;
-println!("{} values from bar {}; last supertrend = {}", range.count, range.beg_idx, supertrend[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("supertrend = [{:.4}, ..., {:.4}]", supertrend[0], supertrend[range.count - 1]);
+println!("trend = [{}, ..., {}]", trend[0], trend[range.count - 1]);
 ```
 
 @tab Java
@@ -140,6 +144,7 @@ println!("{} values from bar {}; last supertrend = {}", range.count, range.beg_i
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -149,7 +154,9 @@ int[] trend = new int[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.supertrend(0, high.length - 1, high, low, close, 10, 3.0, supertrend, trend);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last supertrend = " + supertrend[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "supertrend = [%.4f, ..., %.4f]%n", supertrend[0], supertrend[r.count() - 1]);
+System.out.printf(Locale.ROOT, "trend = [%d, ..., %d]%n", trend[0], trend[r.count() - 1]);
 ```
 
 @tab C\#
@@ -166,7 +173,9 @@ var trend = new int[252];
 
 var core = Core.Default;
 OutRange r = core.Supertrend(0, high.Length - 1, high, low, close, 10, 3.0, supertrend, trend);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last supertrend = {supertrend[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"supertrend = [{supertrend[0]:F4}, ..., {supertrend[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"trend = [{trend[0]}, ..., {trend[r.Count - 1]}]"));
 ```
 
 @tab TypeScript
@@ -182,7 +191,9 @@ const { begIdx, outSupertrend, outTrend } = supertrend({ high, low, close }, {
   timePeriod: 10,
   multiplier: 3,
 });
-console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
+console.log(outSupertrend.length + ' values from bar ' + begIdx + ':');
+console.log('outSupertrend = [' + outSupertrend[0].toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1].toFixed(4) + ']');
+console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
 ```
 
 @tab Go
@@ -206,7 +217,9 @@ r, err := core.SUPERTREND(0, len(high)-1, high, low, close, 10, 3, supertrend, t
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last supertrend = %.4f\n", r.NBElement, r.BegIdx, supertrend[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("supertrend = [%.4f, ..., %.4f]\n", supertrend[0], supertrend[r.NBElement-1])
+fmt.Printf("trend = [%d, ..., %d]\n", trend[0], trend[r.NBElement-1])
 ```
 
 :::

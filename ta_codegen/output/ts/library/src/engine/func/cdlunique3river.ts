@@ -93,7 +93,7 @@ const WASM_FROM_BARS = 2500;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlunique3river({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
  * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)

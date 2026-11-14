@@ -660,7 +660,7 @@ export function pvoDisplayShift(outputIdx: number, options?: PvoOptions): number
  *   slowPeriod: 26,
  *   maType: MAType.EMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`obv`](https://ta-lib.org/functions/obv)
@@ -1142,7 +1142,7 @@ export function pvoOpenAndFillPositional(
  * import { MAType, pvoOpen } from 'ta-lib';
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = pvoOpen({ volume }, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
@@ -1187,7 +1187,7 @@ export function pvoOpen(prices: { open?: ArrayLike<number> | undefined; high?: A
  * import { MAType, pvoOpenAndFill } from 'ta-lib';
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = pvoOpenAndFill({ volume }, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,

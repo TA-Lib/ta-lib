@@ -81,14 +81,14 @@ static int example_AC( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AC( 0, n - 1, high, low, 5, 34, 5, &outBegIdx, &outNBElement, out );
-   if( !check( "AC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -102,16 +102,19 @@ static int example_ACCBANDS( void )
    double close[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ACCBANDS( 0, n - 1, high, low, close, 20,
                 &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
-   if( !check( "ACCBANDS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+   if( !check( "ACCBANDS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[outNBElement - 1] );
+   printf( "middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[outNBElement - 1] );
+   printf( "lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[outNBElement - 1] );
    if( !check( "ACCBANDS", all_finite( upperBand, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -128,8 +131,8 @@ static int example_ACOS( void )
 
    TA_Initialize();
    TA_ACOS( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "ACOS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ACOS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ACOS", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -144,16 +147,16 @@ static int example_AD( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AD( 0, n - 1, high, low, close, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "AD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AD", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -166,14 +169,14 @@ static int example_ADD( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0; }
    { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ADD( 0, n - 1, series0, series1, &outBegIdx, &outNBElement, out );
-   if( !check( "ADD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ADD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ADD", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -188,16 +191,16 @@ static int example_ADOSC( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ADOSC( 0, n - 1, high, low, close, volume, 3, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ADOSC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ADOSC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ADOSC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -210,14 +213,14 @@ static int example_ADR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ADR( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "ADR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ADR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ADR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -231,15 +234,15 @@ static int example_ADX( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ADX( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "ADX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ADX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ADX", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -253,15 +256,15 @@ static int example_ADXR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ADXR( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "ADXR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ADXR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ADXR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -274,14 +277,17 @@ static int example_ALLIGATOR( void )
    double low[252]; /* your data, oldest first */
    double jaw[252], teeth[252], lips[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ALLIGATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, jaw, teeth, lips );
-   if( !check( "ALLIGATOR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last jaw = %f\n", outNBElement, outBegIdx, jaw[outNBElement - 1] );
+   if( !check( "ALLIGATOR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "jaw = [%.4f, ..., %.4f]\n", jaw[0], jaw[outNBElement - 1] );
+   printf( "teeth = [%.4f, ..., %.4f]\n", teeth[0], teeth[outNBElement - 1] );
+   printf( "lips = [%.4f, ..., %.4f]\n", lips[0], lips[outNBElement - 1] );
    if( !check( "ALLIGATOR", all_finite( jaw, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -293,13 +299,13 @@ static int example_ALMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ALMA( 0, n - 1, series, 9, 6.0, 0.85, &outBegIdx, &outNBElement, out );
-   if( !check( "ALMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ALMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ALMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -312,14 +318,14 @@ static int example_AO( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AO( 0, n - 1, high, low, 5, 34, &outBegIdx, &outNBElement, out );
-   if( !check( "AO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -331,13 +337,13 @@ static int example_APO( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_APO( 0, n - 1, series, 12, 26, TA_MAType_EMA, &outBegIdx, &outNBElement, out );
-   if( !check( "APO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "APO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "APO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -350,14 +356,16 @@ static int example_AROON( void )
    double low[252]; /* your data, oldest first */
    double aroonDown[252], aroonUp[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AROON( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, aroonDown, aroonUp );
-   if( !check( "AROON", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last aroonDown = %f\n", outNBElement, outBegIdx, aroonDown[outNBElement - 1] );
+   if( !check( "AROON", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "aroonDown = [%.4f, ..., %.4f]\n", aroonDown[0], aroonDown[outNBElement - 1] );
+   printf( "aroonUp = [%.4f, ..., %.4f]\n", aroonUp[0], aroonUp[outNBElement - 1] );
    if( !check( "AROON", all_finite( aroonDown, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -370,14 +378,14 @@ static int example_AROONOSC( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AROONOSC( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "AROONOSC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AROONOSC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AROONOSC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -392,16 +400,16 @@ static int example_ASI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ASI( 0, n - 1, open, high, low, close, 3.0, &outBegIdx, &outNBElement, out );
-   if( !check( "ASI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ASI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ASI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -418,8 +426,8 @@ static int example_ASIN( void )
 
    TA_Initialize();
    TA_ASIN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "ASIN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ASIN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ASIN", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -436,8 +444,8 @@ static int example_ATAN( void )
 
    TA_Initialize();
    TA_ATAN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "ATAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ATAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ATAN", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -451,15 +459,15 @@ static int example_ATR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ATR( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "ATR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ATR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ATR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -471,13 +479,13 @@ static int example_AVGDEV( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AVGDEV( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "AVGDEV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AVGDEV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AVGDEV", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -492,16 +500,16 @@ static int example_AVGPRICE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_AVGPRICE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "AVGPRICE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "AVGPRICE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "AVGPRICE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -513,14 +521,17 @@ static int example_BBANDS( void )
    double series[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_BBANDS( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA,
               &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
-   if( !check( "BBANDS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+   if( !check( "BBANDS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[outNBElement - 1] );
+   printf( "middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[outNBElement - 1] );
+   printf( "lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[outNBElement - 1] );
    if( !check( "BBANDS", all_finite( upperBand, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -532,13 +543,13 @@ static int example_BBW( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_BBW( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA, &outBegIdx, &outNBElement, out );
-   if( !check( "BBW", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "BBW", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "BBW", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -551,14 +562,14 @@ static int example_BETA( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 90 + ((i + 7) % 40 - 20) * ((i + 7) % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_BETA( 0, n - 1, series0, series1, 5, &outBegIdx, &outNBElement, out );
-   if( !check( "BETA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "BETA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "BETA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -573,16 +584,16 @@ static int example_BOP( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_BOP( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "BOP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "BOP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "BOP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -596,15 +607,15 @@ static int example_CCI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CCI( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "CCI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CCI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CCI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -619,16 +630,16 @@ static int example_CDL2CROWS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL2CROWS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL2CROWS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL2CROWS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -642,16 +653,16 @@ static int example_CDL3BLACKCROWS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3BLACKCROWS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3BLACKCROWS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3BLACKCROWS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -665,16 +676,16 @@ static int example_CDL3INSIDE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3INSIDE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3INSIDE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3INSIDE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -688,16 +699,16 @@ static int example_CDL3LINESTRIKE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3LINESTRIKE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3LINESTRIKE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3LINESTRIKE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -711,16 +722,16 @@ static int example_CDL3OUTSIDE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3OUTSIDE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3OUTSIDE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3OUTSIDE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -734,16 +745,16 @@ static int example_CDL3STARSINSOUTH( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3STARSINSOUTH( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3STARSINSOUTH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3STARSINSOUTH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -757,16 +768,16 @@ static int example_CDL3WHITESOLDIERS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDL3WHITESOLDIERS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDL3WHITESOLDIERS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDL3WHITESOLDIERS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -780,16 +791,16 @@ static int example_CDLABANDONEDBABY( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLABANDONEDBABY( 0, n - 1, open, high, low, close, 0.3, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLABANDONEDBABY", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLABANDONEDBABY", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -803,16 +814,16 @@ static int example_CDLADVANCEBLOCK( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLADVANCEBLOCK( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLADVANCEBLOCK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLADVANCEBLOCK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -826,16 +837,16 @@ static int example_CDLBELTHOLD( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLBELTHOLD( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLBELTHOLD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLBELTHOLD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -849,16 +860,16 @@ static int example_CDLBREAKAWAY( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLBREAKAWAY( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLBREAKAWAY", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLBREAKAWAY", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -872,16 +883,16 @@ static int example_CDLCLOSINGMARUBOZU( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLCLOSINGMARUBOZU( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLCLOSINGMARUBOZU", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLCLOSINGMARUBOZU", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -895,16 +906,16 @@ static int example_CDLCONCEALBABYSWALL( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLCONCEALBABYSWALL( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLCONCEALBABYSWALL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLCONCEALBABYSWALL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -918,16 +929,16 @@ static int example_CDLCOUNTERATTACK( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLCOUNTERATTACK( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLCOUNTERATTACK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLCOUNTERATTACK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -941,16 +952,16 @@ static int example_CDLDARKCLOUDCOVER( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLDARKCLOUDCOVER( 0, n - 1, open, high, low, close, 0.5, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLDARKCLOUDCOVER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLDARKCLOUDCOVER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -964,16 +975,16 @@ static int example_CDLDOJI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLDOJI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLDOJI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLDOJI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -987,16 +998,16 @@ static int example_CDLDOJISTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLDOJISTAR( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLDOJISTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLDOJISTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1010,16 +1021,16 @@ static int example_CDLDRAGONFLYDOJI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLDRAGONFLYDOJI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLDRAGONFLYDOJI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLDRAGONFLYDOJI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1033,16 +1044,16 @@ static int example_CDLENGULFING( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLENGULFING( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLENGULFING", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLENGULFING", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1056,16 +1067,16 @@ static int example_CDLEVENINGDOJISTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLEVENINGDOJISTAR( 0, n - 1, open, high, low, close, 0.3, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLEVENINGDOJISTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLEVENINGDOJISTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1079,16 +1090,16 @@ static int example_CDLEVENINGSTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLEVENINGSTAR( 0, n - 1, open, high, low, close, 0.3, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLEVENINGSTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLEVENINGSTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1102,16 +1113,16 @@ static int example_CDLGAPSIDESIDEWHITE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLGAPSIDESIDEWHITE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLGAPSIDESIDEWHITE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLGAPSIDESIDEWHITE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1125,16 +1136,16 @@ static int example_CDLGRAVESTONEDOJI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLGRAVESTONEDOJI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLGRAVESTONEDOJI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLGRAVESTONEDOJI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1148,16 +1159,16 @@ static int example_CDLHAMMER( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHAMMER( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHAMMER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHAMMER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1171,16 +1182,16 @@ static int example_CDLHANGINGMAN( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHANGINGMAN( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHANGINGMAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHANGINGMAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1194,16 +1205,16 @@ static int example_CDLHARAMI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHARAMI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHARAMI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHARAMI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1217,16 +1228,16 @@ static int example_CDLHARAMICROSS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHARAMICROSS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHARAMICROSS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHARAMICROSS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1240,16 +1251,16 @@ static int example_CDLHIGHWAVE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHIGHWAVE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHIGHWAVE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHIGHWAVE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1263,16 +1274,16 @@ static int example_CDLHIKKAKE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHIKKAKE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHIKKAKE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHIKKAKE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1286,16 +1297,16 @@ static int example_CDLHIKKAKEMOD( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHIKKAKEMOD( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHIKKAKEMOD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHIKKAKEMOD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1309,16 +1320,16 @@ static int example_CDLHOMINGPIGEON( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLHOMINGPIGEON( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLHOMINGPIGEON", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLHOMINGPIGEON", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1332,16 +1343,16 @@ static int example_CDLIDENTICAL3CROWS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLIDENTICAL3CROWS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLIDENTICAL3CROWS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLIDENTICAL3CROWS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1355,16 +1366,16 @@ static int example_CDLINNECK( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLINNECK( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLINNECK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLINNECK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1378,16 +1389,16 @@ static int example_CDLINVERTEDHAMMER( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLINVERTEDHAMMER( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLINVERTEDHAMMER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLINVERTEDHAMMER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1401,16 +1412,16 @@ static int example_CDLKICKING( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLKICKING( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLKICKING", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLKICKING", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1424,16 +1435,16 @@ static int example_CDLKICKINGBYLENGTH( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLKICKINGBYLENGTH( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLKICKINGBYLENGTH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLKICKINGBYLENGTH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1447,16 +1458,16 @@ static int example_CDLLADDERBOTTOM( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLLADDERBOTTOM( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLLADDERBOTTOM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLLADDERBOTTOM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1470,16 +1481,16 @@ static int example_CDLLONGLEGGEDDOJI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLLONGLEGGEDDOJI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLLONGLEGGEDDOJI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLLONGLEGGEDDOJI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1493,16 +1504,16 @@ static int example_CDLLONGLINE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLLONGLINE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLLONGLINE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLLONGLINE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1516,16 +1527,16 @@ static int example_CDLMARUBOZU( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLMARUBOZU( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLMARUBOZU", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLMARUBOZU", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1539,16 +1550,16 @@ static int example_CDLMATCHINGLOW( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLMATCHINGLOW( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLMATCHINGLOW", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLMATCHINGLOW", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1562,16 +1573,16 @@ static int example_CDLMATHOLD( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLMATHOLD( 0, n - 1, open, high, low, close, 0.5, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLMATHOLD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLMATHOLD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1585,16 +1596,16 @@ static int example_CDLMORNINGDOJISTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLMORNINGDOJISTAR( 0, n - 1, open, high, low, close, 0.3, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLMORNINGDOJISTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLMORNINGDOJISTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1608,16 +1619,16 @@ static int example_CDLMORNINGSTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLMORNINGSTAR( 0, n - 1, open, high, low, close, 0.3, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLMORNINGSTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLMORNINGSTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1631,16 +1642,16 @@ static int example_CDLONNECK( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLONNECK( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLONNECK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLONNECK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1654,16 +1665,16 @@ static int example_CDLPIERCING( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLPIERCING( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLPIERCING", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLPIERCING", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1677,16 +1688,16 @@ static int example_CDLRICKSHAWMAN( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLRICKSHAWMAN( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLRICKSHAWMAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLRICKSHAWMAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1700,16 +1711,16 @@ static int example_CDLRISEFALL3METHODS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLRISEFALL3METHODS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLRISEFALL3METHODS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLRISEFALL3METHODS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1723,16 +1734,16 @@ static int example_CDLSEPARATINGLINES( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSEPARATINGLINES( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSEPARATINGLINES", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSEPARATINGLINES", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1746,16 +1757,16 @@ static int example_CDLSHOOTINGSTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSHOOTINGSTAR( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSHOOTINGSTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSHOOTINGSTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1769,16 +1780,16 @@ static int example_CDLSHORTLINE( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSHORTLINE( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSHORTLINE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSHORTLINE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1792,16 +1803,16 @@ static int example_CDLSPINNINGTOP( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSPINNINGTOP( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSPINNINGTOP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSPINNINGTOP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1815,16 +1826,16 @@ static int example_CDLSTALLEDPATTERN( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSTALLEDPATTERN( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSTALLEDPATTERN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSTALLEDPATTERN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1838,16 +1849,16 @@ static int example_CDLSTICKSANDWICH( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLSTICKSANDWICH( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLSTICKSANDWICH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLSTICKSANDWICH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1861,16 +1872,16 @@ static int example_CDLTAKURI( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLTAKURI( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLTAKURI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLTAKURI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1884,16 +1895,16 @@ static int example_CDLTASUKIGAP( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLTASUKIGAP( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLTASUKIGAP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLTASUKIGAP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1907,16 +1918,16 @@ static int example_CDLTHRUSTING( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLTHRUSTING( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLTHRUSTING", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLTHRUSTING", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1930,16 +1941,16 @@ static int example_CDLTRISTAR( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLTRISTAR( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLTRISTAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLTRISTAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1953,16 +1964,16 @@ static int example_CDLUNIQUE3RIVER( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLUNIQUE3RIVER( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLUNIQUE3RIVER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLUNIQUE3RIVER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1976,16 +1987,16 @@ static int example_CDLUPSIDEGAP2CROWS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLUPSIDEGAP2CROWS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLUPSIDEGAP2CROWS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLUPSIDEGAP2CROWS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -1999,16 +2010,16 @@ static int example_CDLXSIDEGAP3METHODS( void )
    double close[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CDLXSIDEGAP3METHODS( 0, n - 1, open, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "CDLXSIDEGAP3METHODS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CDLXSIDEGAP3METHODS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -2021,15 +2032,17 @@ static int example_CE( void )
    double close[252]; /* your data, oldest first */
    double outLong[252], outShort[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CE( 0, n - 1, high, low, close, 22, 3.0, &outBegIdx, &outNBElement, outLong, outShort );
-   if( !check( "CE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last outLong = %f\n", outNBElement, outBegIdx, outLong[outNBElement - 1] );
+   if( !check( "CE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "outLong = [%.4f, ..., %.4f]\n", outLong[0], outLong[outNBElement - 1] );
+   printf( "outShort = [%.4f, ..., %.4f]\n", outShort[0], outShort[outNBElement - 1] );
    if( !check( "CE", all_finite( outLong, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2046,8 +2059,8 @@ static int example_CEIL( void )
 
    TA_Initialize();
    TA_CEIL( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "CEIL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CEIL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CEIL", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2059,13 +2072,13 @@ static int example_CG( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CG( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "CG", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CG", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CG", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2079,15 +2092,15 @@ static int example_CHOP( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CHOP( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "CHOP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CHOP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CHOP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2101,15 +2114,15 @@ static int example_CHOPTR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CHOPTR( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "CHOPTR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CHOPTR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CHOPTR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2123,15 +2136,17 @@ static int example_CKSP( void )
    double close[252]; /* your data, oldest first */
    double highStop[252], lowStop[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CKSP( 0, n - 1, high, low, close, 10, 1.0, 9, &outBegIdx, &outNBElement, highStop, lowStop );
-   if( !check( "CKSP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last highStop = %f\n", outNBElement, outBegIdx, highStop[outNBElement - 1] );
+   if( !check( "CKSP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "highStop = [%.4f, ..., %.4f]\n", highStop[0], highStop[outNBElement - 1] );
+   printf( "lowStop = [%.4f, ..., %.4f]\n", lowStop[0], lowStop[outNBElement - 1] );
    if( !check( "CKSP", all_finite( highStop, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2146,16 +2161,16 @@ static int example_CMF( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CMF( 0, n - 1, high, low, close, volume, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "CMF", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CMF", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CMF", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2167,13 +2182,13 @@ static int example_CMO( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CMO( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "CMO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CMO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CMO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2185,13 +2200,13 @@ static int example_CMOU( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CMOU( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "CMOU", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CMOU", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CMOU", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2203,13 +2218,13 @@ static int example_COPPOCK( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_COPPOCK( 0, n - 1, series, 10, 11, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "COPPOCK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "COPPOCK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "COPPOCK", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2222,14 +2237,14 @@ static int example_CORREL( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 90 + ((i + 7) % 40 - 20) * ((i + 7) % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CORREL( 0, n - 1, series0, series1, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "CORREL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CORREL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CORREL", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2246,8 +2261,8 @@ static int example_COS( void )
 
    TA_Initialize();
    TA_COS( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "COS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "COS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "COS", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2264,8 +2279,8 @@ static int example_COSH( void )
 
    TA_Initialize();
    TA_COSH( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "COSH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "COSH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "COSH", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2277,13 +2292,13 @@ static int example_CRSI( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CRSI( 0, n - 1, series, 3, 2, 100, &outBegIdx, &outNBElement, out );
-   if( !check( "CRSI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CRSI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CRSI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2295,13 +2310,13 @@ static int example_CTI( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CTI( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "CTI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CTI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CTI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2313,13 +2328,13 @@ static int example_CUMSUM( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CUMSUM( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "CUMSUM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CUMSUM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CUMSUM", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2332,14 +2347,14 @@ static int example_CVI( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_CVI( 0, n - 1, high, low, 10, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "CVI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "CVI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "CVI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2351,13 +2366,13 @@ static int example_DEMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DEMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "DEMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "DEMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "DEMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2370,14 +2385,14 @@ static int example_DIV( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0; }
    { int i; for( i = 0; i < n; i++ ) series1[i] = 1 + 5 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DIV( 0, n - 1, series0, series1, &outBegIdx, &outNBElement, out );
-   if( !check( "DIV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "DIV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "DIV", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2390,14 +2405,17 @@ static int example_DONCHIAN( void )
    double low[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DONCHIAN( 0, n - 1, high, low, 20, &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
-   if( !check( "DONCHIAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+   if( !check( "DONCHIAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[outNBElement - 1] );
+   printf( "middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[outNBElement - 1] );
+   printf( "lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[outNBElement - 1] );
    if( !check( "DONCHIAN", all_finite( upperBand, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2409,13 +2427,13 @@ static int example_DOSC( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DOSC( 0, n - 1, series, 14, 5, 3, 9, &outBegIdx, &outNBElement, out );
-   if( !check( "DOSC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "DOSC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "DOSC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2427,13 +2445,13 @@ static int example_DPO( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DPO( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "DPO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "DPO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "DPO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2447,15 +2465,15 @@ static int example_DX( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_DX( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "DX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "DX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "DX", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2468,14 +2486,14 @@ static int example_EFI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_EFI( 0, n - 1, close, volume, 13, &outBegIdx, &outNBElement, out );
-   if( !check( "EFI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "EFI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "EFI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2487,13 +2505,13 @@ static int example_EMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_EMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "EMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "EMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "EMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2507,15 +2525,15 @@ static int example_EMV( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_EMV( 0, n - 1, high, low, volume, 14, 10000.0, &outBegIdx, &outNBElement, out );
-   if( !check( "EMV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "EMV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "EMV", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2527,13 +2545,13 @@ static int example_ER( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ER( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ER", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2547,15 +2565,17 @@ static int example_ERI( void )
    double close[252]; /* your data, oldest first */
    double bullPower[252], bearPower[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ERI( 0, n - 1, high, low, close, 13, &outBegIdx, &outNBElement, bullPower, bearPower );
-   if( !check( "ERI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last bullPower = %f\n", outNBElement, outBegIdx, bullPower[outNBElement - 1] );
+   if( !check( "ERI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "bullPower = [%.4f, ..., %.4f]\n", bullPower[0], bullPower[outNBElement - 1] );
+   printf( "bearPower = [%.4f, ..., %.4f]\n", bearPower[0], bearPower[outNBElement - 1] );
    if( !check( "ERI", all_finite( bullPower, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2572,8 +2592,8 @@ static int example_EXP( void )
 
    TA_Initialize();
    TA_EXP( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "EXP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "EXP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "EXP", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2586,14 +2606,16 @@ static int example_FISHER( void )
    double low[252]; /* your data, oldest first */
    double fisher[252], trigger[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_FISHER( 0, n - 1, high, low, 10, &outBegIdx, &outNBElement, fisher, trigger );
-   if( !check( "FISHER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last fisher = %f\n", outNBElement, outBegIdx, fisher[outNBElement - 1] );
+   if( !check( "FISHER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "fisher = [%.4f, ..., %.4f]\n", fisher[0], fisher[outNBElement - 1] );
+   printf( "trigger = [%.4f, ..., %.4f]\n", trigger[0], trigger[outNBElement - 1] );
    if( !check( "FISHER", all_finite( fisher, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2610,8 +2632,8 @@ static int example_FLOOR( void )
 
    TA_Initialize();
    TA_FLOOR( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "FLOOR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "FLOOR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "FLOOR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2623,13 +2645,13 @@ static int example_FOSC( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_FOSC( 0, n - 1, series, 5, &outBegIdx, &outNBElement, out );
-   if( !check( "FOSC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "FOSC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "FOSC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2642,14 +2664,16 @@ static int example_FRACTAL( void )
    double low[252]; /* your data, oldest first */
    int swingHigh[252], swingLow[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_FRACTAL( 0, n - 1, high, low, 2, 2, &outBegIdx, &outNBElement, swingHigh, swingLow );
-   if( !check( "FRACTAL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last swingHigh = %d\n", outNBElement, outBegIdx, swingHigh[outNBElement - 1] );
+   if( !check( "FRACTAL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "swingHigh = [%d, ..., %d]\n", swingHigh[0], swingHigh[outNBElement - 1] );
+   printf( "swingLow = [%d, ..., %d]\n", swingLow[0], swingLow[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -2661,14 +2685,14 @@ static int example_FRAMA( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_FRAMA( 0, n - 1, high, low, 16, &outBegIdx, &outNBElement, out );
-   if( !check( "FRAMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "FRAMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "FRAMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2681,14 +2705,16 @@ static int example_GATOR( void )
    double low[252]; /* your data, oldest first */
    double upper[252], lower[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_GATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, upper, lower );
-   if( !check( "GATOR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last upper = %f\n", outNBElement, outBegIdx, upper[outNBElement - 1] );
+   if( !check( "GATOR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "upper = [%.4f, ..., %.4f]\n", upper[0], upper[outNBElement - 1] );
+   printf( "lower = [%.4f, ..., %.4f]\n", lower[0], lower[outNBElement - 1] );
    if( !check( "GATOR", all_finite( upper, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2703,17 +2729,21 @@ static int example_HA( void )
    double close[252]; /* your data, oldest first */
    double haOpen[252], haHigh[252], haLow[252], haClose[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HA( 0, n - 1, open, high, low, close,
           &outBegIdx, &outNBElement, haOpen, haHigh, haLow, haClose );
-   if( !check( "HA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last haOpen = %f\n", outNBElement, outBegIdx, haOpen[outNBElement - 1] );
+   if( !check( "HA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "haOpen = [%.4f, ..., %.4f]\n", haOpen[0], haOpen[outNBElement - 1] );
+   printf( "haHigh = [%.4f, ..., %.4f]\n", haHigh[0], haHigh[outNBElement - 1] );
+   printf( "haLow = [%.4f, ..., %.4f]\n", haLow[0], haLow[outNBElement - 1] );
+   printf( "haClose = [%.4f, ..., %.4f]\n", haClose[0], haClose[outNBElement - 1] );
    if( !check( "HA", all_finite( haOpen, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2725,13 +2755,13 @@ static int example_HMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HMA( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "HMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "HMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "HMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2743,13 +2773,13 @@ static int example_HT_DCPERIOD( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_DCPERIOD( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "HT_DCPERIOD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "HT_DCPERIOD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "HT_DCPERIOD", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2761,13 +2791,13 @@ static int example_HT_DCPHASE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_DCPHASE( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "HT_DCPHASE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "HT_DCPHASE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "HT_DCPHASE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2779,13 +2809,15 @@ static int example_HT_PHASOR( void )
    double series[252]; /* your data, oldest first */
    double inPhase[252], quadrature[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_PHASOR( 0, n - 1, series, &outBegIdx, &outNBElement, inPhase, quadrature );
-   if( !check( "HT_PHASOR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last inPhase = %f\n", outNBElement, outBegIdx, inPhase[outNBElement - 1] );
+   if( !check( "HT_PHASOR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "inPhase = [%.4f, ..., %.4f]\n", inPhase[0], inPhase[outNBElement - 1] );
+   printf( "quadrature = [%.4f, ..., %.4f]\n", quadrature[0], quadrature[outNBElement - 1] );
    if( !check( "HT_PHASOR", all_finite( inPhase, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2797,13 +2829,15 @@ static int example_HT_SINE( void )
    double series[252]; /* your data, oldest first */
    double sine[252], leadSine[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_SINE( 0, n - 1, series, &outBegIdx, &outNBElement, sine, leadSine );
-   if( !check( "HT_SINE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last sine = %f\n", outNBElement, outBegIdx, sine[outNBElement - 1] );
+   if( !check( "HT_SINE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "sine = [%.4f, ..., %.4f]\n", sine[0], sine[outNBElement - 1] );
+   printf( "leadSine = [%.4f, ..., %.4f]\n", leadSine[0], leadSine[outNBElement - 1] );
    if( !check( "HT_SINE", all_finite( sine, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2815,13 +2849,13 @@ static int example_HT_TRENDLINE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_TRENDLINE( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "HT_TRENDLINE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "HT_TRENDLINE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "HT_TRENDLINE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2833,13 +2867,13 @@ static int example_HT_TRENDMODE( void )
    double series[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_HT_TRENDMODE( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "HT_TRENDMODE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "HT_TRENDMODE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -2852,15 +2886,15 @@ static int example_IBS( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_IBS( 0, n - 1, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "IBS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "IBS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "IBS", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2873,15 +2907,19 @@ static int example_ICHIMOKU( void )
    double low[252]; /* your data, oldest first */
    double tenkanSen[252], kijunSen[252], senkouSpanA[252], senkouSpanB[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ICHIMOKU( 0, n - 1, high, low, 9, 26, 52,
                 &outBegIdx, &outNBElement, tenkanSen, kijunSen, senkouSpanA, senkouSpanB );
-   if( !check( "ICHIMOKU", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last tenkanSen = %f\n", outNBElement, outBegIdx, tenkanSen[outNBElement - 1] );
+   if( !check( "ICHIMOKU", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "tenkanSen = [%.4f, ..., %.4f]\n", tenkanSen[0], tenkanSen[outNBElement - 1] );
+   printf( "kijunSen = [%.4f, ..., %.4f]\n", kijunSen[0], kijunSen[outNBElement - 1] );
+   printf( "senkouSpanA = [%.4f, ..., %.4f]\n", senkouSpanA[0], senkouSpanA[outNBElement - 1] );
+   printf( "senkouSpanB = [%.4f, ..., %.4f]\n", senkouSpanB[0], senkouSpanB[outNBElement - 1] );
    if( !check( "ICHIMOKU", all_finite( tenkanSen, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2894,14 +2932,14 @@ static int example_IMI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_IMI( 0, n - 1, open, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "IMI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "IMI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "IMI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2913,13 +2951,13 @@ static int example_KAMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KAMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "KAMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "KAMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "KAMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2933,16 +2971,19 @@ static int example_KC( void )
    double close[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KC( 0, n - 1, high, low, close, 20, 10, 2.0,
           &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
-   if( !check( "KC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+   if( !check( "KC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[outNBElement - 1] );
+   printf( "middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[outNBElement - 1] );
+   printf( "lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[outNBElement - 1] );
    if( !check( "KC", all_finite( upperBand, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2956,16 +2997,19 @@ static int example_KDJ( void )
    double close[252]; /* your data, oldest first */
    double k[252], d[252], j[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KDJ( 0, n - 1, high, low, close, 9, 3, TA_MAType_RMA, 3, TA_MAType_RMA,
            &outBegIdx, &outNBElement, k, d, j );
-   if( !check( "KDJ", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last k = %f\n", outNBElement, outBegIdx, k[outNBElement - 1] );
+   if( !check( "KDJ", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "k = [%.4f, ..., %.4f]\n", k[0], k[outNBElement - 1] );
+   printf( "d = [%.4f, ..., %.4f]\n", d[0], d[outNBElement - 1] );
+   printf( "j = [%.4f, ..., %.4f]\n", j[0], j[outNBElement - 1] );
    if( !check( "KDJ", all_finite( k, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2977,14 +3021,16 @@ static int example_KST( void )
    double series[252]; /* your data, oldest first */
    double kst[252], kstSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KST( 0, n - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9,
            &outBegIdx, &outNBElement, kst, kstSignal );
-   if( !check( "KST", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last kst = %f\n", outNBElement, outBegIdx, kst[outNBElement - 1] );
+   if( !check( "KST", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "kst = [%.4f, ..., %.4f]\n", kst[0], kst[outNBElement - 1] );
+   printf( "kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[outNBElement - 1] );
    if( !check( "KST", all_finite( kst, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -2996,14 +3042,16 @@ static int example_KSTEXT( void )
    double series[252]; /* your data, oldest first */
    double kst[252], kstSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KSTEXT( 0, n - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_SMA,
               &outBegIdx, &outNBElement, kst, kstSignal );
-   if( !check( "KSTEXT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last kst = %f\n", outNBElement, outBegIdx, kst[outNBElement - 1] );
+   if( !check( "KSTEXT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "kst = [%.4f, ..., %.4f]\n", kst[0], kst[outNBElement - 1] );
+   printf( "kstSignal = [%.4f, ..., %.4f]\n", kstSignal[0], kstSignal[outNBElement - 1] );
    if( !check( "KSTEXT", all_finite( kst, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3015,13 +3063,13 @@ static int example_KURTOSIS( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KURTOSIS( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "KURTOSIS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "KURTOSIS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "KURTOSIS", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3036,16 +3084,18 @@ static int example_KVO( void )
    double volume[252]; /* your data, oldest first */
    double kvo[252], kvoSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_KVO( 0, n - 1, high, low, close, volume, 34, 55, 13, &outBegIdx, &outNBElement, kvo, kvoSignal );
-   if( !check( "KVO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last kvo = %f\n", outNBElement, outBegIdx, kvo[outNBElement - 1] );
+   if( !check( "KVO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "kvo = [%.4f, ..., %.4f]\n", kvo[0], kvo[outNBElement - 1] );
+   printf( "kvoSignal = [%.4f, ..., %.4f]\n", kvoSignal[0], kvoSignal[outNBElement - 1] );
    if( !check( "KVO", all_finite( kvo, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3057,13 +3107,13 @@ static int example_LINEARREG( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_LINEARREG( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "LINEARREG", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LINEARREG", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LINEARREG", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3075,13 +3125,13 @@ static int example_LINEARREG_ANGLE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_LINEARREG_ANGLE( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "LINEARREG_ANGLE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LINEARREG_ANGLE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LINEARREG_ANGLE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3093,13 +3143,13 @@ static int example_LINEARREG_INTERCEPT( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_LINEARREG_INTERCEPT( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "LINEARREG_INTERCEPT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LINEARREG_INTERCEPT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LINEARREG_INTERCEPT", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3111,13 +3161,13 @@ static int example_LINEARREG_SLOPE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_LINEARREG_SLOPE( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "LINEARREG_SLOPE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LINEARREG_SLOPE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LINEARREG_SLOPE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3134,8 +3184,8 @@ static int example_LN( void )
 
    TA_Initialize();
    TA_LN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "LN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LN", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3152,8 +3202,8 @@ static int example_LOG10( void )
 
    TA_Initialize();
    TA_LOG10( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "LOG10", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "LOG10", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "LOG10", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3165,13 +3215,13 @@ static int example_MA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MA( 0, n - 1, series, 30, TA_MAType_SMA, &outBegIdx, &outNBElement, out );
-   if( !check( "MA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3183,13 +3233,16 @@ static int example_MACD( void )
    double series[252]; /* your data, oldest first */
    double macd[252], macdSignal[252], macdHist[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MACD( 0, n - 1, series, 12, 26, 9, &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
-   if( !check( "MACD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+   if( !check( "MACD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "macd = [%.4f, ..., %.4f]\n", macd[0], macd[outNBElement - 1] );
+   printf( "macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[outNBElement - 1] );
+   printf( "macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[outNBElement - 1] );
    if( !check( "MACD", all_finite( macd, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3201,14 +3254,17 @@ static int example_MACDEXT( void )
    double series[252]; /* your data, oldest first */
    double macd[252], macdSignal[252], macdHist[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MACDEXT( 0, n - 1, series, 12, TA_MAType_SMA, 26, TA_MAType_SMA, 9, TA_MAType_SMA,
                &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
-   if( !check( "MACDEXT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+   if( !check( "MACDEXT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "macd = [%.4f, ..., %.4f]\n", macd[0], macd[outNBElement - 1] );
+   printf( "macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[outNBElement - 1] );
+   printf( "macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[outNBElement - 1] );
    if( !check( "MACDEXT", all_finite( macd, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3220,13 +3276,16 @@ static int example_MACDFIX( void )
    double series[252]; /* your data, oldest first */
    double macd[252], macdSignal[252], macdHist[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MACDFIX( 0, n - 1, series, 9, &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
-   if( !check( "MACDFIX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+   if( !check( "MACDFIX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "macd = [%.4f, ..., %.4f]\n", macd[0], macd[outNBElement - 1] );
+   printf( "macdSignal = [%.4f, ..., %.4f]\n", macdSignal[0], macdSignal[outNBElement - 1] );
+   printf( "macdHist = [%.4f, ..., %.4f]\n", macdHist[0], macdHist[outNBElement - 1] );
    if( !check( "MACDFIX", all_finite( macd, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3240,16 +3299,19 @@ static int example_MACDV( void )
    double close[252]; /* your data, oldest first */
    double macdv[252], macdvSignal[252], macdvHist[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MACDV( 0, n - 1, high, low, close, 12, 26, 9,
              &outBegIdx, &outNBElement, macdv, macdvSignal, macdvHist );
-   if( !check( "MACDV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last macdv = %f\n", outNBElement, outBegIdx, macdv[outNBElement - 1] );
+   if( !check( "MACDV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "macdv = [%.4f, ..., %.4f]\n", macdv[0], macdv[outNBElement - 1] );
+   printf( "macdvSignal = [%.4f, ..., %.4f]\n", macdvSignal[0], macdvSignal[outNBElement - 1] );
+   printf( "macdvHist = [%.4f, ..., %.4f]\n", macdvHist[0], macdvHist[outNBElement - 1] );
    if( !check( "MACDV", all_finite( macdv, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3261,13 +3323,15 @@ static int example_MAMA( void )
    double series[252]; /* your data, oldest first */
    double mama[252], fama[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MAMA( 0, n - 1, series, 0.5, 0.05, &outBegIdx, &outNBElement, mama, fama );
-   if( !check( "MAMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last mama = %f\n", outNBElement, outBegIdx, mama[outNBElement - 1] );
+   if( !check( "MAMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "mama = [%.4f, ..., %.4f]\n", mama[0], mama[outNBElement - 1] );
+   printf( "fama = [%.4f, ..., %.4f]\n", fama[0], fama[outNBElement - 1] );
    if( !check( "MAMA", all_finite( mama, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3281,15 +3345,15 @@ static int example_MARKETFI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MARKETFI( 0, n - 1, high, low, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "MARKETFI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MARKETFI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MARKETFI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3302,14 +3366,14 @@ static int example_MASSI( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MASSI( 0, n - 1, high, low, 9, 25, &outBegIdx, &outNBElement, out );
-   if( !check( "MASSI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MASSI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MASSI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3322,14 +3386,14 @@ static int example_MAVP( void )
    double periods[252]; /* one period per bar */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) periods[i] = 5 + (i % 10); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) periods[i] = 5 + i % 10; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MAVP( 0, n - 1, series, periods, 2, 30, TA_MAType_SMA, &outBegIdx, &outNBElement, out );
-   if( !check( "MAVP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MAVP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MAVP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3341,13 +3405,13 @@ static int example_MAX( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MAX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "MAX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MAX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MAX", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3359,13 +3423,13 @@ static int example_MAXINDEX( void )
    double series[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MAXINDEX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "MAXINDEX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MAXINDEX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -3376,13 +3440,13 @@ static int example_MCGD( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MCGD( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MCGD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MCGD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MCGD", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3394,13 +3458,13 @@ static int example_MEDIAN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MEDIAN( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "MEDIAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MEDIAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MEDIAN", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3413,14 +3477,14 @@ static int example_MEDPRICE( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MEDPRICE( 0, n - 1, high, low, &outBegIdx, &outNBElement, out );
-   if( !check( "MEDPRICE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MEDPRICE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MEDPRICE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3435,16 +3499,16 @@ static int example_MFI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MFI( 0, n - 1, high, low, close, volume, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MFI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MFI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MFI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3456,13 +3520,13 @@ static int example_MIDPOINT( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MIDPOINT( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MIDPOINT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MIDPOINT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MIDPOINT", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3475,14 +3539,14 @@ static int example_MIDPRICE( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MIDPRICE( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MIDPRICE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MIDPRICE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MIDPRICE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3494,13 +3558,13 @@ static int example_MIN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MIN( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "MIN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MIN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MIN", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3512,13 +3576,13 @@ static int example_MININDEX( void )
    double series[252]; /* your data, oldest first */
    int out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MININDEX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "MININDEX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MININDEX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%d, ..., %d]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -3529,13 +3593,15 @@ static int example_MINMAX( void )
    double series[252]; /* your data, oldest first */
    double min[252], max[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MINMAX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, min, max );
-   if( !check( "MINMAX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last min = %f\n", outNBElement, outBegIdx, min[outNBElement - 1] );
+   if( !check( "MINMAX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "min = [%.4f, ..., %.4f]\n", min[0], min[outNBElement - 1] );
+   printf( "max = [%.4f, ..., %.4f]\n", max[0], max[outNBElement - 1] );
    if( !check( "MINMAX", all_finite( min, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3547,13 +3613,15 @@ static int example_MINMAXINDEX( void )
    double series[252]; /* your data, oldest first */
    int minIdx[252], maxIdx[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MINMAXINDEX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, minIdx, maxIdx );
-   if( !check( "MINMAXINDEX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last minIdx = %d\n", outNBElement, outBegIdx, minIdx[outNBElement - 1] );
+   if( !check( "MINMAXINDEX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "minIdx = [%d, ..., %d]\n", minIdx[0], minIdx[outNBElement - 1] );
+   printf( "maxIdx = [%d, ..., %d]\n", maxIdx[0], maxIdx[outNBElement - 1] );
    TA_Shutdown();
    return 0;
 }
@@ -3566,15 +3634,15 @@ static int example_MINUS_DI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MINUS_DI( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MINUS_DI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MINUS_DI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MINUS_DI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3587,14 +3655,14 @@ static int example_MINUS_DM( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MINUS_DM( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "MINUS_DM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MINUS_DM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MINUS_DM", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3606,13 +3674,13 @@ static int example_MOM( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MOM( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "MOM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MOM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MOM", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3625,14 +3693,14 @@ static int example_MULT( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0; }
    { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_MULT( 0, n - 1, series0, series1, &outBegIdx, &outNBElement, out );
-   if( !check( "MULT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "MULT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "MULT", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3646,15 +3714,15 @@ static int example_NATR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_NATR( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "NATR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "NATR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "NATR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3667,14 +3735,14 @@ static int example_NVI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_NVI( 0, n - 1, close, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "NVI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "NVI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "NVI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3687,14 +3755,14 @@ static int example_OBV( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_OBV( 0, n - 1, series, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "OBV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "OBV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "OBV", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3706,13 +3774,13 @@ static int example_PERCENTB( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PERCENTB( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA, &outBegIdx, &outNBElement, out );
-   if( !check( "PERCENTB", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PERCENTB", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PERCENTB", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3724,13 +3792,13 @@ static int example_PERCENTILE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PERCENTILE( 0, n - 1, series, 100, 50.0, &outBegIdx, &outNBElement, out );
-   if( !check( "PERCENTILE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PERCENTILE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PERCENTILE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3742,13 +3810,13 @@ static int example_PERCENTRANK( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PERCENTRANK( 0, n - 1, series, 100, &outBegIdx, &outNBElement, out );
-   if( !check( "PERCENTRANK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PERCENTRANK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PERCENTRANK", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3762,15 +3830,15 @@ static int example_PLUS_DI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PLUS_DI( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "PLUS_DI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PLUS_DI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PLUS_DI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3783,14 +3851,14 @@ static int example_PLUS_DM( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PLUS_DM( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "PLUS_DM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PLUS_DM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PLUS_DM", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3802,13 +3870,13 @@ static int example_PPO( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PPO( 0, n - 1, series, 12, 26, TA_MAType_EMA, &outBegIdx, &outNBElement, out );
-   if( !check( "PPO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PPO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PPO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3822,15 +3890,15 @@ static int example_PSO( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PSO( 0, n - 1, high, low, close, 8, 5, &outBegIdx, &outNBElement, out );
-   if( !check( "PSO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PSO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PSO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3843,14 +3911,14 @@ static int example_PVI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PVI( 0, n - 1, close, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "PVI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PVI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PVI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3862,13 +3930,13 @@ static int example_PVO( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PVO( 0, n - 1, volume, 12, 26, TA_MAType_EMA, &outBegIdx, &outNBElement, out );
-   if( !check( "PVO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PVO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PVO", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3881,14 +3949,14 @@ static int example_PVT( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_PVT( 0, n - 1, close, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "PVT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "PVT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "PVT", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3901,14 +3969,14 @@ static int example_QSTICK( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_QSTICK( 0, n - 1, open, close, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "QSTICK", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "QSTICK", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "QSTICK", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3920,13 +3988,13 @@ static int example_RMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_RMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "RMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "RMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "RMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3938,13 +4006,13 @@ static int example_ROC( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ROC( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ROC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ROC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ROC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3956,13 +4024,13 @@ static int example_ROCP( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ROCP( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ROCP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ROCP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ROCP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3974,13 +4042,13 @@ static int example_ROCR( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ROCR( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ROCR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ROCR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ROCR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -3992,13 +4060,13 @@ static int example_ROCR100( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ROCR100( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "ROCR100", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ROCR100", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ROCR100", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4013,16 +4081,16 @@ static int example_ROGERSSATCHELL( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ROGERSSATCHELL( 0, n - 1, open, high, low, close, 10, 252.0, &outBegIdx, &outNBElement, out );
-   if( !check( "ROGERSSATCHELL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ROGERSSATCHELL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ROGERSSATCHELL", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4034,13 +4102,13 @@ static int example_RSI( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_RSI( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "RSI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "RSI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "RSI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4052,13 +4120,13 @@ static int example_RVI( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_RVI( 0, n - 1, series, 14, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "RVI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "RVI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "RVI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4071,14 +4139,14 @@ static int example_RVIR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_RVIR( 0, n - 1, high, low, 14, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "RVIR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "RVIR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "RVIR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4090,13 +4158,13 @@ static int example_RVOL( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_RVOL( 0, n - 1, volume, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "RVOL", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "RVOL", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "RVOL", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4109,14 +4177,14 @@ static int example_SAR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SAR( 0, n - 1, high, low, 0.02, 0.2, &outBegIdx, &outNBElement, out );
-   if( !check( "SAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SAR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4129,15 +4197,15 @@ static int example_SAREXT( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SAREXT( 0, n - 1, high, low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
               &outBegIdx, &outNBElement, out );
-   if( !check( "SAREXT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SAREXT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SAREXT", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4149,13 +4217,13 @@ static int example_SHARPE( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SHARPE( 0, n - 1, series, 20, 0.0, 252.0, &outBegIdx, &outNBElement, out );
-   if( !check( "SHARPE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SHARPE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SHARPE", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4170,16 +4238,16 @@ static int example_SI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) open[i] = 100 + 10 * sin(0.1 * i - 0.05); }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SI( 0, n - 1, open, high, low, close, 3.0, &outBegIdx, &outNBElement, out );
-   if( !check( "SI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4196,8 +4264,8 @@ static int example_SIN( void )
 
    TA_Initialize();
    TA_SIN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "SIN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SIN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SIN", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4214,8 +4282,8 @@ static int example_SINH( void )
 
    TA_Initialize();
    TA_SINH( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "SINH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SINH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SINH", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4227,13 +4295,13 @@ static int example_SKEW( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SKEW( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "SKEW", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SKEW", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SKEW", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4245,13 +4313,13 @@ static int example_SMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "SMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4265,15 +4333,17 @@ static int example_SMI( void )
    double close[252]; /* your data, oldest first */
    double smi[252], smiSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SMI( 0, n - 1, high, low, close, 13, 2, 25, 9, &outBegIdx, &outNBElement, smi, smiSignal );
-   if( !check( "SMI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last smi = %f\n", outNBElement, outBegIdx, smi[outNBElement - 1] );
+   if( !check( "SMI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "smi = [%.4f, ..., %.4f]\n", smi[0], smi[outNBElement - 1] );
+   printf( "smiSignal = [%.4f, ..., %.4f]\n", smiSignal[0], smiSignal[outNBElement - 1] );
    if( !check( "SMI", all_finite( smi, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4285,13 +4355,13 @@ static int example_SORTINO( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SORTINO( 0, n - 1, series, 20, 0.0, 252.0, &outBegIdx, &outNBElement, out );
-   if( !check( "SORTINO", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SORTINO", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SORTINO", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4308,8 +4378,8 @@ static int example_SQRT( void )
 
    TA_Initialize();
    TA_SQRT( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "SQRT", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SQRT", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SQRT", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4324,16 +4394,18 @@ static int example_SQZMOM( void )
    double momentum[252];
    int squeeze[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SQZMOM( 0, n - 1, high, low, close, 20, 2.0, 20, 2.0, 1.5, 1.0,
               &outBegIdx, &outNBElement, momentum, squeeze );
-   if( !check( "SQZMOM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last momentum = %f\n", outNBElement, outBegIdx, momentum[outNBElement - 1] );
+   if( !check( "SQZMOM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "momentum = [%.4f, ..., %.4f]\n", momentum[0], momentum[outNBElement - 1] );
+   printf( "squeeze = [%d, ..., %d]\n", squeeze[0], squeeze[outNBElement - 1] );
    if( !check( "SQZMOM", all_finite( momentum, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4345,13 +4417,13 @@ static int example_STC( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_STC( 0, n - 1, series, 23, 50, 10, &outBegIdx, &outNBElement, out );
-   if( !check( "STC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "STC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "STC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4363,13 +4435,13 @@ static int example_STDDEV( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_STDDEV( 0, n - 1, series, 5, 1.0, &outBegIdx, &outNBElement, out );
-   if( !check( "STDDEV", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "STDDEV", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "STDDEV", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4383,16 +4455,18 @@ static int example_STOCH( void )
    double close[252]; /* your data, oldest first */
    double slowK[252], slowD[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_STOCH( 0, n - 1, high, low, close, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA,
              &outBegIdx, &outNBElement, slowK, slowD );
-   if( !check( "STOCH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last slowK = %f\n", outNBElement, outBegIdx, slowK[outNBElement - 1] );
+   if( !check( "STOCH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "slowK = [%.4f, ..., %.4f]\n", slowK[0], slowK[outNBElement - 1] );
+   printf( "slowD = [%.4f, ..., %.4f]\n", slowD[0], slowD[outNBElement - 1] );
    if( !check( "STOCH", all_finite( slowK, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4406,16 +4480,18 @@ static int example_STOCHF( void )
    double close[252]; /* your data, oldest first */
    double fastK[252], fastD[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_STOCHF( 0, n - 1, high, low, close, 5, 3, TA_MAType_SMA,
               &outBegIdx, &outNBElement, fastK, fastD );
-   if( !check( "STOCHF", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last fastK = %f\n", outNBElement, outBegIdx, fastK[outNBElement - 1] );
+   if( !check( "STOCHF", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "fastK = [%.4f, ..., %.4f]\n", fastK[0], fastK[outNBElement - 1] );
+   printf( "fastD = [%.4f, ..., %.4f]\n", fastD[0], fastD[outNBElement - 1] );
    if( !check( "STOCHF", all_finite( fastK, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4427,13 +4503,15 @@ static int example_STOCHRSI( void )
    double series[252]; /* your data, oldest first */
    double fastK[252], fastD[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_STOCHRSI( 0, n - 1, series, 14, 5, 3, TA_MAType_SMA, &outBegIdx, &outNBElement, fastK, fastD );
-   if( !check( "STOCHRSI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last fastK = %f\n", outNBElement, outBegIdx, fastK[outNBElement - 1] );
+   if( !check( "STOCHRSI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "fastK = [%.4f, ..., %.4f]\n", fastK[0], fastK[outNBElement - 1] );
+   printf( "fastD = [%.4f, ..., %.4f]\n", fastD[0], fastD[outNBElement - 1] );
    if( !check( "STOCHRSI", all_finite( fastK, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4446,14 +4524,14 @@ static int example_SUB( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0; }
    { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SUB( 0, n - 1, series0, series1, &outBegIdx, &outNBElement, out );
-   if( !check( "SUB", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SUB", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SUB", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4465,13 +4543,13 @@ static int example_SUM( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SUM( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "SUM", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SUM", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SUM", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4486,15 +4564,17 @@ static int example_SUPERTREND( void )
    double supertrend[252];
    int trend[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SUPERTREND( 0, n - 1, high, low, close, 10, 3.0, &outBegIdx, &outNBElement, supertrend, trend );
-   if( !check( "SUPERTREND", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last supertrend = %f\n", outNBElement, outBegIdx, supertrend[outNBElement - 1] );
+   if( !check( "SUPERTREND", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "supertrend = [%.4f, ..., %.4f]\n", supertrend[0], supertrend[outNBElement - 1] );
+   printf( "trend = [%d, ..., %d]\n", trend[0], trend[outNBElement - 1] );
    if( !check( "SUPERTREND", all_finite( supertrend, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4506,13 +4586,13 @@ static int example_SWAK_2PHP( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SWAK_2PHP( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "SWAK_2PHP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SWAK_2PHP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SWAK_2PHP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4524,13 +4604,13 @@ static int example_SWAK_BP( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SWAK_BP( 0, n - 1, series, 20, 0.1, &outBegIdx, &outNBElement, out );
-   if( !check( "SWAK_BP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SWAK_BP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SWAK_BP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4542,13 +4622,13 @@ static int example_SWAK_BUTTER( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SWAK_BUTTER( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "SWAK_BUTTER", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SWAK_BUTTER", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SWAK_BUTTER", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4560,13 +4640,13 @@ static int example_SWAK_GAUSS( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SWAK_GAUSS( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "SWAK_GAUSS", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SWAK_GAUSS", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SWAK_GAUSS", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4578,13 +4658,13 @@ static int example_SWAK_HP( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_SWAK_HP( 0, n - 1, series, 20, &outBegIdx, &outNBElement, out );
-   if( !check( "SWAK_HP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "SWAK_HP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "SWAK_HP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4596,13 +4676,13 @@ static int example_T3( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_T3( 0, n - 1, series, 5, 0.7, &outBegIdx, &outNBElement, out );
-   if( !check( "T3", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "T3", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "T3", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4619,8 +4699,8 @@ static int example_TAN( void )
 
    TA_Initialize();
    TA_TAN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "TAN", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TAN", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TAN", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4637,8 +4717,8 @@ static int example_TANH( void )
 
    TA_Initialize();
    TA_TANH( 0, n - 1, series, &outBegIdx, &outNBElement, out );
-   if( !check( "TANH", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TANH", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TANH", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4650,13 +4730,13 @@ static int example_TEMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TEMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "TEMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TEMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TEMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4670,15 +4750,15 @@ static int example_TRANGE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TRANGE( 0, n - 1, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "TRANGE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TRANGE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TRANGE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4690,13 +4770,13 @@ static int example_TRIMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TRIMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "TRIMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TRIMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TRIMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4708,13 +4788,13 @@ static int example_TRIX( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TRIX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "TRIX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TRIX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TRIX", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4726,13 +4806,13 @@ static int example_TSF( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TSF( 0, n - 1, series, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "TSF", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TSF", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TSF", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4744,13 +4824,13 @@ static int example_TSI( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TSI( 0, n - 1, series, 25, 13, &outBegIdx, &outNBElement, out );
-   if( !check( "TSI", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TSI", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TSI", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4764,15 +4844,15 @@ static int example_TYPPRICE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_TYPPRICE( 0, n - 1, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "TYPPRICE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "TYPPRICE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "TYPPRICE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4786,15 +4866,15 @@ static int example_ULTOSC( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ULTOSC( 0, n - 1, high, low, close, 7, 14, 28, &outBegIdx, &outNBElement, out );
-   if( !check( "ULTOSC", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ULTOSC", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ULTOSC", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4806,13 +4886,13 @@ static int example_VAR( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VAR( 0, n - 1, series, 5, 1.0, &outBegIdx, &outNBElement, out );
-   if( !check( "VAR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "VAR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "VAR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4824,13 +4904,13 @@ static int example_VHF( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VHF( 0, n - 1, series, 28, &outBegIdx, &outNBElement, out );
-   if( !check( "VHF", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "VHF", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "VHF", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4842,13 +4922,13 @@ static int example_VIDYA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VIDYA( 0, n - 1, series, 12, 9, &outBegIdx, &outNBElement, out );
-   if( !check( "VIDYA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "VIDYA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "VIDYA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4862,15 +4942,17 @@ static int example_VORTEX( void )
    double close[252]; /* your data, oldest first */
    double plusVi[252], minusVi[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VORTEX( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, plusVi, minusVi );
-   if( !check( "VORTEX", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last plusVi = %f\n", outNBElement, outBegIdx, plusVi[outNBElement - 1] );
+   if( !check( "VORTEX", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "plusVi = [%.4f, ..., %.4f]\n", plusVi[0], plusVi[outNBElement - 1] );
+   printf( "minusVi = [%.4f, ..., %.4f]\n", minusVi[0], minusVi[outNBElement - 1] );
    if( !check( "VORTEX", all_finite( plusVi, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4885,16 +4967,16 @@ static int example_VWAP( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VWAP( 0, n - 1, high, low, close, volume, &outBegIdx, &outNBElement, out );
-   if( !check( "VWAP", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "VWAP", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "VWAP", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4907,14 +4989,14 @@ static int example_VWMA( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 2000 * sin(0.3 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_VWMA( 0, n - 1, series, volume, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "VWMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "VWMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "VWMA", no_nan( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4928,15 +5010,15 @@ static int example_WAD( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_WAD( 0, n - 1, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "WAD", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "WAD", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "WAD", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4950,15 +5032,17 @@ static int example_WAVETREND( void )
    double close[252]; /* your data, oldest first */
    double wt1[252], wt2[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_WAVETREND( 0, n - 1, high, low, close, 10, 21, 4, &outBegIdx, &outNBElement, wt1, wt2 );
-   if( !check( "WAVETREND", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last wt1 = %f\n", outNBElement, outBegIdx, wt1[outNBElement - 1] );
+   if( !check( "WAVETREND", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "wt1 = [%.4f, ..., %.4f]\n", wt1[0], wt1[outNBElement - 1] );
+   printf( "wt2 = [%.4f, ..., %.4f]\n", wt2[0], wt2[outNBElement - 1] );
    if( !check( "WAVETREND", all_finite( wt1, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4972,15 +5056,15 @@ static int example_WCLPRICE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_WCLPRICE( 0, n - 1, high, low, close, &outBegIdx, &outNBElement, out );
-   if( !check( "WCLPRICE", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "WCLPRICE", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "WCLPRICE", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -4994,15 +5078,15 @@ static int example_WILLR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) close[i] = 100 + 10 * sin(0.1 * i) + 0.8 * sin(0.7 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_WILLR( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, out );
-   if( !check( "WILLR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "WILLR", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "WILLR", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -5014,13 +5098,13 @@ static int example_WMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_WMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "WMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "WMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "WMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -5034,14 +5118,17 @@ static int example_ZIGZAG( void )
    double zigZag[252];
    int trend[252], pivotIdx[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ZIGZAG( 0, n - 1, high, low, 5.0, 1, &outBegIdx, &outNBElement, zigZag, trend, pivotIdx );
-   if( !check( "ZIGZAG", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last zigZag = %f\n", outNBElement, outBegIdx, zigZag[outNBElement - 1] );
+   if( !check( "ZIGZAG", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+   printf( "zigZag = [%.4f, ..., %.4f]\n", zigZag[0], zigZag[outNBElement - 1] );
+   printf( "trend = [%d, ..., %d]\n", trend[0], trend[outNBElement - 1] );
+   printf( "pivotIdx = [%d, ..., %d]\n", pivotIdx[0], pivotIdx[outNBElement - 1] );
    if( !check( "ZIGZAG", all_finite( zigZag, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;
@@ -5053,13 +5140,13 @@ static int example_ZLEMA( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
    TA_ZLEMA( 0, n - 1, series, 30, &outBegIdx, &outNBElement, out );
-   if( !check( "ZLEMA", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
-   printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+   if( !check( "ZLEMA", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
    if( !check( "ZLEMA", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
    TA_Shutdown();
    return 0;

@@ -79,7 +79,9 @@ export * from '../../func/minmaxindex.ts';
  * const { begIdx, outMinIdx, outMaxIdx } = minmaxindex(series, {
  *   timePeriod: 30,
  * });
- * console.log(outMinIdx.length + ' values from bar ' + begIdx + '; last outMinIdx = ' + outMinIdx[outMinIdx.length - 1]);
+ * console.log(outMinIdx.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMinIdx = [' + outMinIdx[0] + ', ..., ' + outMinIdx[outMinIdx.length - 1] + ']');
+ * console.log('outMaxIdx = [' + outMaxIdx[0] + ', ..., ' + outMaxIdx[outMaxIdx.length - 1] + ']');
  * ```
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  * @see [`min`](https://ta-lib.org/functions/min)

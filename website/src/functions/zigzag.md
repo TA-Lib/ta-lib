@@ -125,7 +125,10 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_ZIGZAG( 0, n - 1, high, low, 5.0, 1, &outBegIdx, &outNBElement, zigZag, trend, pivotIdx );
-printf( "%d values from bar %d; last zigZag = %f\n", outNBElement, outBegIdx, zigZag[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "zigZag = [%.4f, ..., %.4f]\n", zigZag[0], zigZag[outNBElement - 1] );
+printf( "trend = [%d, ..., %d]\n", trend[0], trend[outNBElement - 1] );
+printf( "pivotIdx = [%d, ..., %d]\n", pivotIdx[0], pivotIdx[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -142,7 +145,10 @@ let mut pivot_idx = vec![0i32; 252];
 let core = Core::new();
 let range = core.zigzag(0, high.len() - 1, &high, &low, 5.0, 1,
                         &mut zig_zag, &mut trend, &mut pivot_idx)?;
-println!("{} values from bar {}; last zig_zag = {}", range.count, range.beg_idx, zig_zag[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("zig_zag = [{:.4}, ..., {:.4}]", zig_zag[0], zig_zag[range.count - 1]);
+println!("trend = [{}, ..., {}]", trend[0], trend[range.count - 1]);
+println!("pivot_idx = [{}, ..., {}]", pivot_idx[0], pivot_idx[range.count - 1]);
 ```
 
 @tab Java
@@ -150,6 +156,7 @@ println!("{} values from bar {}; last zig_zag = {}", range.count, range.beg_idx,
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -159,7 +166,10 @@ int[] pivotIdx = new int[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.zigzag(0, high.length - 1, high, low, 5.0, 1, zigZag, trend, pivotIdx);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last zigZag = " + zigZag[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "zigZag = [%.4f, ..., %.4f]%n", zigZag[0], zigZag[r.count() - 1]);
+System.out.printf(Locale.ROOT, "trend = [%d, ..., %d]%n", trend[0], trend[r.count() - 1]);
+System.out.printf(Locale.ROOT, "pivotIdx = [%d, ..., %d]%n", pivotIdx[0], pivotIdx[r.count() - 1]);
 ```
 
 @tab C\#
@@ -176,7 +186,10 @@ var pivotIdx = new int[252];
 
 var core = Core.Default;
 OutRange r = core.Zigzag(0, high.Length - 1, high, low, 5.0, 1, zigZag, trend, pivotIdx);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last zigZag = {zigZag[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"zigZag = [{zigZag[0]:F4}, ..., {zigZag[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"trend = [{trend[0]}, ..., {trend[r.Count - 1]}]"));
+Console.WriteLine(FormattableString.Invariant($"pivotIdx = [{pivotIdx[0]}, ..., {pivotIdx[r.Count - 1]}]"));
 ```
 
 @tab TypeScript
@@ -193,7 +206,10 @@ const {
   outTrend,
   outPivotIdx,
 } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
-console.log(outZigZag.length + ' values from bar ' + begIdx + '; last outZigZag = ' + outZigZag[outZigZag.length - 1]);
+console.log(outZigZag.length + ' values from bar ' + begIdx + ':');
+console.log('outZigZag = [' + outZigZag[0].toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1].toFixed(4) + ']');
+console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
+console.log('outPivotIdx = [' + outPivotIdx[0] + ', ..., ' + outPivotIdx[outPivotIdx.length - 1] + ']');
 ```
 
 @tab Go
@@ -217,7 +233,10 @@ r, err := core.ZIGZAG(0, len(high)-1, high, low, 5, 1, zigZag, trend, pivotIdx)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last zigZag = %.4f\n", r.NBElement, r.BegIdx, zigZag[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("zigZag = [%.4f, ..., %.4f]\n", zigZag[0], zigZag[r.NBElement-1])
+fmt.Printf("trend = [%d, ..., %d]\n", trend[0], trend[r.NBElement-1])
+fmt.Printf("pivotIdx = [%d, ..., %d]\n", pivotIdx[0], pivotIdx[r.NBElement-1])
 ```
 
 :::

@@ -98,7 +98,7 @@ const WASM_FROM_BARS = 10000;
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = vwma(series, { volume }, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`wma`](https://ta-lib.org/functions/wma)

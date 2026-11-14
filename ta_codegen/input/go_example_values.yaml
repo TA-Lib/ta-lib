@@ -1,247 +1,247 @@
-# What each Go example prints, recorded from the package by
-# `ta_codegen bless-go-examples`. generate writes each example's
-# `// Output:` and the decimals it prints from this file.
-AC: {beg: 37, count: 215, last: "2.1274322806578767"}
-ACCBANDS: {beg: 19, count: 233, last: "98.03892491741223"}
-ACOS: {beg: 0, count: 252, last: "0"}
-AD: {beg: 0, count: 252, last: "-29731.69437282111"}
-ADD: {beg: 0, count: 252, last: "4.672646206691547"}
-ADOSC: {beg: 9, count: 243, last: "-19503.240901049292"}
-ADR: {beg: 13, count: 239, last: "2"}
-ADX: {beg: 27, count: 225, last: "46.69737697506897"}
-ADXR: {beg: 40, count: 212, last: "57.87340691345565"}
-ALLIGATOR: {beg: 12, count: 240, last: "95.18483374724813"}
-ALMA: {beg: 8, count: 244, last: "97.57086000279237"}
-AO: {beg: 33, count: 219, last: "3.5157682458520725"}
-APO: {beg: 25, count: 227, last: "0.48147490329932907"}
-AROON: {beg: 14, count: 238, last: "0"}
-AROONOSC: {beg: 14, count: 238, last: "100"}
-ASI: {beg: 0, count: 252, last: "-7.791926408833632"}
-ASIN: {beg: 0, count: 252, last: "1.5707963267948966"}
-ATAN: {beg: 0, count: 252, last: "1.3734007669450157"}
-ATR: {beg: 14, count: 238, last: "2.1837751113019235"}
-AVGDEV: {beg: 13, count: 239, last: "2.6224202021819503"}
-AVGPRICE: {beg: 0, count: 252, last: "99.50243004229046"}
-BBANDS: {beg: 19, count: 233, last: "99.22409852027874"}
-BBW: {beg: 19, count: 233, last: "13.39464566920157"}
-BETA: {beg: 5, count: 247, last: "-2.129679443074881"}
-BOP: {beg: 0, count: 252, last: "0.158682395471196"}
-CCI: {beg: 13, count: 239, last: "139.8308740265379"}
-CDL2CROWS: {beg: 12, count: 240, last: "0"}
-CDL3BLACKCROWS: {beg: 13, count: 239, last: "0"}
-CDL3INSIDE: {beg: 12, count: 240, last: "0"}
-CDL3LINESTRIKE: {beg: 8, count: 244, last: "0"}
-CDL3OUTSIDE: {beg: 3, count: 249, last: "0"}
-CDL3STARSINSOUTH: {beg: 12, count: 240, last: "0"}
-CDL3WHITESOLDIERS: {beg: 12, count: 240, last: "0"}
-CDLABANDONEDBABY: {beg: 12, count: 240, last: "0"}
-CDLADVANCEBLOCK: {beg: 12, count: 240, last: "0"}
-CDLBELTHOLD: {beg: 10, count: 242, last: "0"}
-CDLBREAKAWAY: {beg: 14, count: 238, last: "0"}
-CDLCLOSINGMARUBOZU: {beg: 10, count: 242, last: "0"}
-CDLCONCEALBABYSWALL: {beg: 13, count: 239, last: "0"}
-CDLCOUNTERATTACK: {beg: 11, count: 241, last: "0"}
-CDLDARKCLOUDCOVER: {beg: 11, count: 241, last: "0"}
-CDLDOJI: {beg: 10, count: 242, last: "0"}
-CDLDOJISTAR: {beg: 11, count: 241, last: "0"}
-CDLDRAGONFLYDOJI: {beg: 10, count: 242, last: "0"}
-CDLENGULFING: {beg: 2, count: 250, last: "0"}
-CDLEVENINGDOJISTAR: {beg: 12, count: 240, last: "0"}
-CDLEVENINGSTAR: {beg: 12, count: 240, last: "0"}
-CDLGAPSIDESIDEWHITE: {beg: 7, count: 245, last: "0"}
-CDLGRAVESTONEDOJI: {beg: 10, count: 242, last: "0"}
-CDLHAMMER: {beg: 11, count: 241, last: "0"}
-CDLHANGINGMAN: {beg: 11, count: 241, last: "0"}
-CDLHARAMI: {beg: 11, count: 241, last: "0"}
-CDLHARAMICROSS: {beg: 11, count: 241, last: "0"}
-CDLHIGHWAVE: {beg: 10, count: 242, last: "0"}
-CDLHIKKAKE: {beg: 5, count: 247, last: "0"}
-CDLHIKKAKEMOD: {beg: 10, count: 242, last: "0"}
-CDLHOMINGPIGEON: {beg: 11, count: 241, last: "0"}
-CDLIDENTICAL3CROWS: {beg: 12, count: 240, last: "0"}
-CDLINNECK: {beg: 11, count: 241, last: "0"}
-CDLINVERTEDHAMMER: {beg: 11, count: 241, last: "0"}
-CDLKICKING: {beg: 11, count: 241, last: "0"}
-CDLKICKINGBYLENGTH: {beg: 11, count: 241, last: "0"}
-CDLLADDERBOTTOM: {beg: 14, count: 238, last: "0"}
-CDLLONGLEGGEDDOJI: {beg: 10, count: 242, last: "0"}
-CDLLONGLINE: {beg: 10, count: 242, last: "0"}
-CDLMARUBOZU: {beg: 10, count: 242, last: "0"}
-CDLMATCHINGLOW: {beg: 6, count: 246, last: "0"}
-CDLMATHOLD: {beg: 14, count: 238, last: "0"}
-CDLMORNINGDOJISTAR: {beg: 12, count: 240, last: "0"}
-CDLMORNINGSTAR: {beg: 12, count: 240, last: "0"}
-CDLONNECK: {beg: 11, count: 241, last: "0"}
-CDLPIERCING: {beg: 11, count: 241, last: "0"}
-CDLRICKSHAWMAN: {beg: 10, count: 242, last: "0"}
-CDLRISEFALL3METHODS: {beg: 14, count: 238, last: "0"}
-CDLSEPARATINGLINES: {beg: 11, count: 241, last: "0"}
-CDLSHOOTINGSTAR: {beg: 11, count: 241, last: "0"}
-CDLSHORTLINE: {beg: 10, count: 242, last: "0"}
-CDLSPINNINGTOP: {beg: 10, count: 242, last: "100"}
-CDLSTALLEDPATTERN: {beg: 12, count: 240, last: "0"}
-CDLSTICKSANDWICH: {beg: 7, count: 245, last: "0"}
-CDLTAKURI: {beg: 10, count: 242, last: "0"}
-CDLTASUKIGAP: {beg: 7, count: 245, last: "0"}
-CDLTHRUSTING: {beg: 11, count: 241, last: "0"}
-CDLTRISTAR: {beg: 12, count: 240, last: "0"}
-CDLUNIQUE3RIVER: {beg: 12, count: 240, last: "0"}
-CDLUPSIDEGAP2CROWS: {beg: 12, count: 240, last: "0"}
-CDLXSIDEGAP3METHODS: {beg: 2, count: 250, last: "0"}
-CE: {beg: 22, count: 230, last: "94.19752219993048"}
-CEIL: {beg: 0, count: 252, last: "3"}
-CG: {beg: 9, count: 243, last: "-5.425373462521587"}
-CHOP: {beg: 14, count: 238, last: "37.25449268301412"}
-CHOPTR: {beg: 14, count: 238, last: "37.25449268301412"}
-CKSP: {beg: 18, count: 234, last: "98.45683629589503"}
-CMF: {beg: 19, count: 233, last: "-0.043000719215697515"}
-CMO: {beg: 14, count: 238, last: "49.960284938035834"}
-CMOU: {beg: 14, count: 238, last: "100"}
-COPPOCK: {beg: 23, count: 229, last: "14.257327548329693"}
-CORREL: {beg: 29, count: 223, last: "0.5647379382004923"}
-COS: {beg: 0, count: 252, last: "0.9998586363834151"}
-COSH: {beg: 0, count: 252, last: "74.20994852478785"}
-CRSI: {beg: 101, count: 151, last: "99.64938774449604"}
-CTI: {beg: 19, count: 233, last: "0.928624313187123"}
-CUMSUM: {beg: 0, count: 252, last: "25199.88987304864"}
-CVI: {beg: 19, count: 233, last: "0"}
-DEMA: {beg: 58, count: 194, last: "93.78473680978023"}
-DIV: {beg: 0, count: 252, last: "-0.05455896555140886"}
-DONCHIAN: {beg: 19, count: 233, last: "100.67264620669155"}
-DOSC: {beg: 28, count: 224, last: "19.120641108282705"}
-DPO: {beg: 19, count: 233, last: "-2.0516488247566826"}
-DX: {beg: 14, count: 238, last: "49.960284852446165"}
-EFI: {beg: 13, count: 239, last: "23253.498047108504"}
-EMA: {beg: 29, count: 223, last: "95.43411818632399"}
-EMV: {beg: 14, count: 238, last: "0.4081519488317068"}
-ER: {beg: 10, count: 242, last: "1"}
-ERI: {beg: 12, count: 240, last: "5.293455910987362"}
-EXP: {beg: 0, count: 252, last: "148.4131591025766"}
-FISHER: {beg: 9, count: 243, last: "4.501161248233203"}
-FLOOR: {beg: 0, count: 252, last: "3"}
-FOSC: {beg: 5, count: 247, last: "0.08729748330682535"}
-FRACTAL: {beg: 4, count: 248, last: "0"}
-FRAMA: {beg: 16, count: 236, last: "98.28244531378006"}
-GATOR: {beg: 15, count: 237, last: "1.0824673257290556"}
-HA: {beg: 0, count: 252, last: "97.46435093533546"}
-HMA: {beg: 22, count: 230, last: "97.99060914248848"}
-HT_DCPERIOD: {beg: 32, count: 220, last: "50"}
-HT_DCPHASE: {beg: 63, count: 189, last: "30.050744126122122"}
-HT_PHASOR: {beg: 32, count: 220, last: "5.459557171365009"}
-HT_SINE: {beg: 63, count: 189, last: "0.5007668010023341"}
-HT_TRENDLINE: {beg: 63, count: 189, last: "98.73633565129323"}
-HT_TRENDMODE: {beg: 63, count: 189, last: "0"}
-IBS: {beg: 0, count: 252, last: "0.40912503333450445"}
-ICHIMOKU: {beg: 51, count: 201, last: "96.1374301779563"}
-IMI: {beg: 13, count: 239, last: "69.78357097976152"}
-KAMA: {beg: 30, count: 222, last: "93.31648353733073"}
-KC: {beg: 19, count: 233, last: "99.47517625433234"}
-KDJ: {beg: 12, count: 240, last: "83.1870476009809"}
-KST: {beg: 52, count: 200, last: "-21.550327941147337"}
-KSTEXT: {beg: 52, count: 200, last: "-21.550327941147337"}
-KURTOSIS: {beg: 29, count: 223, last: "-0.8620846799973516"}
-KVO: {beg: 55, count: 197, last: "419369.87767891376"}
-LINEARREG: {beg: 13, count: 239, last: "98.99412488132337"}
-LINEARREG_ANGLE: {beg: 13, count: 239, last: "36.46149846760203"}
-LINEARREG_INTERCEPT: {beg: 13, count: 239, last: "89.38814308717005"}
-LINEARREG_SLOPE: {beg: 13, count: 239, last: "0.738921676473333"}
-LN: {beg: 0, count: 252, last: "2.302585092994046"}
-LOG10: {beg: 0, count: 252, last: "1"}
-MA: {beg: 29, count: 223, last: "93.37303680319697"}
-MACD: {beg: 33, count: 219, last: "0.48147490329932907"}
-MACDEXT: {beg: 33, count: 219, last: "1.9285504976427603"}
-MACDFIX: {beg: 33, count: 219, last: "0.43833115513375276"}
-MACDV: {beg: 34, count: 218, last: "18.12412166318149"}
-MAMA: {beg: 32, count: 220, last: "94.74296558988867"}
-MARKETFI: {beg: 0, count: 252, last: "5.7300239028458305e-05"}
-MASSI: {beg: 40, count: 212, last: "25"}
-MAVP: {beg: 29, count: 223, last: "97.25062422012566"}
-MAX: {beg: 29, count: 223, last: "99.67264620669155"}
-MAXINDEX: {beg: 29, count: 223, last: "251"}
-MCGD: {beg: 13, count: 239, last: "94.45636201435096"}
-MEDIAN: {beg: 29, count: 223, last: "92.68363329438931"}
-MEDPRICE: {beg: 0, count: 252, last: "99.67264620669155"}
-MFI: {beg: 14, count: 238, last: "100"}
-MIDPOINT: {beg: 13, count: 239, last: "94.97733087462646"}
-MIDPRICE: {beg: 13, count: 239, last: "94.97733087462646"}
-MIN: {beg: 29, count: 223, last: "90.00724007863373"}
-MININDEX: {beg: 29, count: 223, last: "236"}
-MINMAX: {beg: 29, count: 223, last: "90.00724007863373"}
-MINMAXINDEX: {beg: 29, count: 223, last: "236"}
-MINUS_DI: {beg: 14, count: 238, last: "7.759296930299224"}
-MINUS_DM: {beg: 13, count: 239, last: "2.3722383288961866"}
-MOM: {beg: 10, count: 242, last: "8.25971623279085"}
-MULT: {beg: 0, count: 252, last: "-1.6367689665422658"}
-NATR: {beg: 14, count: 238, last: "2.1949496819304923"}
-NVI: {beg: 0, count: 252, last: "1004.5937563992891"}
-OBV: {beg: 0, count: 252, last: "-62737.88791464344"}
-PERCENTB: {beg: 19, count: 233, last: "1.036009223136372"}
-PERCENTILE: {beg: 99, count: 153, last: "96.73364873895278"}
-PERCENTRANK: {beg: 100, count: 152, last: "61"}
-PLUS_DI: {beg: 14, count: 238, last: "23.253257427450887"}
-PLUS_DM: {beg: 13, count: 239, last: "7.109183865059498"}
-PPO: {beg: 25, count: 227, last: "0.5056066770701706"}
-PSO: {beg: 15, count: 237, last: "0.9068069677684544"}
-PVI: {beg: 0, count: 252, last: "990.3594924774413"}
-PVO: {beg: 25, count: 227, last: "1.03887316753217"}
-PVT: {beg: 0, count: 252, last: "67.684928877897"}
-QSTICK: {beg: 9, count: 243, last: "0.39981219415446956"}
-RMA: {beg: 29, count: 223, last: "96.97783614846637"}
-ROC: {beg: 10, count: 242, last: "9.035610427484464"}
-ROCP: {beg: 10, count: 242, last: "0.09035610427484472"}
-ROCR: {beg: 10, count: 242, last: "1.0903561042748446"}
-ROCR100: {beg: 10, count: 242, last: "109.03561042748447"}
-ROGERSSATCHELL: {beg: 9, count: 243, last: "0.23750486239894694"}
-RSI: {beg: 14, count: 238, last: "74.98014246901793"}
-RVI: {beg: 22, count: 230, last: "63.738408763864626"}
-RVIR: {beg: 22, count: 230, last: "63.738408763864626"}
-RVOL: {beg: 20, count: 232, last: "1.024774416117351"}
-SAR: {beg: 1, count: 251, last: "96.12460178750239"}
-SAREXT: {beg: 1, count: 251, last: "96.12460178750239"}
-SHARPE: {beg: 20, count: 232, last: "14.725367947965104"}
-SI: {beg: 1, count: 251, last: "29.431301381134006"}
-SIN: {beg: 0, count: 252, last: "0.016813900484349713"}
-SINH: {beg: 0, count: 252, last: "74.20321057778875"}
-SKEW: {beg: 29, count: 223, last: "0.5919815336864798"}
-SMA: {beg: 29, count: 223, last: "93.37303680319697"}
-SMI: {beg: 45, count: 207, last: "4.610225042969388"}
-SORTINO: {beg: 20, count: 232, last: "52.53899693324491"}
-SQRT: {beg: 0, count: 252, last: "10"}
-SQZMOM: {beg: 38, count: 214, last: "5.979474478619283"}
-STC: {beg: 67, count: 185, last: "99.95117187501137"}
-STDDEV: {beg: 4, count: 248, last: "1.3684381612104914"}
-STOCH: {beg: 8, count: 244, last: "73.08895943215605"}
-STOCHF: {beg: 6, count: 246, last: "79.85512291378552"}
-STOCHRSI: {beg: 20, count: 232, last: "100"}
-SUB: {beg: 0, count: 252, last: "-5.327353793308453"}
-SUM: {beg: 29, count: 223, last: "2801.191104095909"}
-SUPERTREND: {beg: 10, count: 242, last: "93.02521647430197"}
-SWAK_2PHP: {beg: 0, count: 252, last: "0.18691050667162426"}
-SWAK_BP: {beg: 0, count: 252, last: "0.7084954333502168"}
-SWAK_BUTTER: {beg: 0, count: 252, last: "95.8350018384911"}
-SWAK_GAUSS: {beg: 0, count: 252, last: "96.70782000378584"}
-SWAK_HP: {beg: 0, count: 252, last: "2.8414863896166453"}
-T3: {beg: 24, count: 228, last: "97.56643422898617"}
-TAN: {beg: 0, count: 252, last: "2.5721516221263188"}
-TANH: {beg: 0, count: 252, last: "0.9950547536867305"}
-TEMA: {beg: 87, count: 165, last: "94.53134374173732"}
-TRANGE: {beg: 1, count: 251, last: "2.6370713838117155"}
-TRIMA: {beg: 29, count: 223, last: "91.87517744546687"}
-TRIX: {beg: 88, count: 164, last: "-0.1658297188218194"}
-TSF: {beg: 13, count: 239, last: "99.73304655779671"}
-TSI: {beg: 37, count: 215, last: "10.121798853998126"}
-TYPPRICE: {beg: 0, count: 252, last: "99.61206289558122"}
-ULTOSC: {beg: 28, count: 224, last: "48.757563999961015"}
-VAR: {beg: 4, count: 248, last: "1.8726230010571507"}
-VHF: {beg: 28, count: 224, last: "0.5816045081365847"}
-VIDYA: {beg: 9, count: 243, last: "95.74536297420353"}
-VORTEX: {beg: 14, count: 238, last: "1.2342295620607706"}
-VWAP: {beg: 0, count: 252, last: "99.55566161272378"}
-VWMA: {beg: 29, count: 223, last: "93.30408364979019"}
-WAD: {beg: 0, count: 252, last: "2.8085432710684586"}
-WAVETREND: {beg: 41, count: 211, last: "37.99810206673443"}
-WCLPRICE: {beg: 0, count: 252, last: "99.58177124002606"}
-WILLR: {beg: 13, count: 239, last: "-10.374754200857343"}
-WMA: {beg: 29, count: 223, last: "93.71002388595646"}
-ZIGZAG: {beg: 1, count: 251, last: "100.67264620669155"}
-ZLEMA: {beg: 43, count: 209, last: "94.75484736339835"}
+# The first and last value of each output of each Go example, recorded
+# from the package by `ta_codegen bless-go-examples`. generate writes
+# each example's `// Output:` from this file, at four decimals.
+AC: {beg: 37, count: 215, first: ["2.8999999999999915"], last: ["-2.7470588235294087"]}
+ACCBANDS: {beg: 19, count: 233, first: ["107.34030787366828", "97.02499999999999", "87.34030787366828"], last: ["111.73283264123734", "101.425", "91.73283264123734"]}
+ACOS: {beg: 0, count: 252, first: ["3.141592653589793"], last: ["0"]}
+AD: {beg: 0, count: 252, first: ["10400.000000000055"], last: ["-793031.9999999842"]}
+ADD: {beg: 0, count: 252, first: ["4.950248756218905"], last: ["-0.9203980099502491"]}
+ADOSC: {beg: 9, count: 243, first: ["-2760.97007392615"], last: ["-21154.160675446736"]}
+ADR: {beg: 13, count: 239, first: ["4"], last: ["4"]}
+ADX: {beg: 27, count: 225, first: ["90.59425305406145"], last: ["31.279462376265244"]}
+ADXR: {beg: 40, count: 212, first: ["74.5926358809132"], last: ["35.020437673510216"]}
+ALLIGATOR: {beg: 12, count: 240, first: ["100.5", "96.875", "95.1"], last: ["99.10562823609939", "99.1236275164081", "98.07542775328875"]}
+ALMA: {beg: 8, count: 244, first: ["100.10401526148226"], last: ["96.3087780549252"]}
+AO: {beg: 33, count: 219, first: ["0.7250000000000085"], last: ["-1.4102941176470551"]}
+APO: {beg: 25, count: 227, first: ["-3.9399331874892596"], last: ["-0.2779248930256699"]}
+AROON: {beg: 14, count: 238, first: ["100", "0"], last: ["100", "21.42857142857143"]}
+AROONOSC: {beg: 14, count: 238, first: ["-100"], last: ["-78.57142857142857"]}
+ASI: {beg: 0, count: 252, first: ["0"], last: ["-551.9389597558891"]}
+ASIN: {beg: 0, count: 252, first: ["-1.5707963267948966"], last: ["1.5707963267948966"]}
+ATAN: {beg: 0, count: 252, first: ["-1.3734007669450157"], last: ["1.3734007669450157"]}
+ATR: {beg: 14, count: 238, first: ["4.214285714285716"], last: ["4.264658290664686"]}
+AVGDEV: {beg: 13, count: 239, first: ["4.742857142857142"], last: ["4.567857142857143"]}
+AVGPRICE: {beg: 0, count: 252, first: ["109.91250000000001"], last: ["94.6875"]}
+BBANDS: {beg: 19, count: 233, first: ["109.64137477376643", "97.175", "84.70862522623356"], last: ["110.65081952222499", "101.575", "92.49918047777501"]}
+BBW: {beg: 19, count: 233, first: ["25.65757607155427"], last: ["17.87018365193205"]}
+BETA: {beg: 5, count: 247, first: ["1.3807300954197474"], last: ["1.2095546730025772"]}
+BOP: {beg: 0, count: 252, first: ["0.8875000000000028"], last: ["0.16250000000000142"]}
+CCI: {beg: 13, count: 239, first: ["-112.80949606757933"], last: ["-104.0762488298867"]}
+CDL2CROWS: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDL3BLACKCROWS: {beg: 13, count: 239, first: ["0"], last: ["0"]}
+CDL3INSIDE: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDL3LINESTRIKE: {beg: 8, count: 244, first: ["0"], last: ["0"]}
+CDL3OUTSIDE: {beg: 3, count: 249, first: ["0"], last: ["0"]}
+CDL3STARSINSOUTH: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDL3WHITESOLDIERS: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLABANDONEDBABY: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLADVANCEBLOCK: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLBELTHOLD: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLBREAKAWAY: {beg: 14, count: 238, first: ["0"], last: ["0"]}
+CDLCLOSINGMARUBOZU: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLCONCEALBABYSWALL: {beg: 13, count: 239, first: ["0"], last: ["0"]}
+CDLCOUNTERATTACK: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLDARKCLOUDCOVER: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLDOJI: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLDOJISTAR: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLDRAGONFLYDOJI: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLENGULFING: {beg: 2, count: 250, first: ["0"], last: ["0"]}
+CDLEVENINGDOJISTAR: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLEVENINGSTAR: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLGAPSIDESIDEWHITE: {beg: 7, count: 245, first: ["0"], last: ["0"]}
+CDLGRAVESTONEDOJI: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLHAMMER: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLHANGINGMAN: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLHARAMI: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLHARAMICROSS: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLHIGHWAVE: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLHIKKAKE: {beg: 5, count: 247, first: ["0"], last: ["0"]}
+CDLHIKKAKEMOD: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLHOMINGPIGEON: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLIDENTICAL3CROWS: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLINNECK: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLINVERTEDHAMMER: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLKICKING: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLKICKINGBYLENGTH: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLLADDERBOTTOM: {beg: 14, count: 238, first: ["0"], last: ["0"]}
+CDLLONGLEGGEDDOJI: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLLONGLINE: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLMARUBOZU: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLMATCHINGLOW: {beg: 6, count: 246, first: ["0"], last: ["0"]}
+CDLMATHOLD: {beg: 14, count: 238, first: ["0"], last: ["0"]}
+CDLMORNINGDOJISTAR: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLMORNINGSTAR: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLONNECK: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLPIERCING: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLRICKSHAWMAN: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLRISEFALL3METHODS: {beg: 14, count: 238, first: ["0"], last: ["0"]}
+CDLSEPARATINGLINES: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLSHOOTINGSTAR: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLSHORTLINE: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLSPINNINGTOP: {beg: 10, count: 242, first: ["-100"], last: ["0"]}
+CDLSTALLEDPATTERN: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLSTICKSANDWICH: {beg: 7, count: 245, first: ["0"], last: ["0"]}
+CDLTAKURI: {beg: 10, count: 242, first: ["0"], last: ["0"]}
+CDLTASUKIGAP: {beg: 7, count: 245, first: ["0"], last: ["0"]}
+CDLTHRUSTING: {beg: 11, count: 241, first: ["0"], last: ["0"]}
+CDLTRISTAR: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLUNIQUE3RIVER: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLUPSIDEGAP2CROWS: {beg: 12, count: 240, first: ["0"], last: ["0"]}
+CDLXSIDEGAP3METHODS: {beg: 2, count: 250, first: ["0"], last: ["0"]}
+CE: {beg: 22, count: 230, first: ["97.64090909090908", "100.4090909090909"], last: ["99.25635906828376", "104.79364093171624"]}
+CEIL: {beg: 0, count: 252, first: ["-3"], last: ["3"]}
+CG: {beg: 9, count: 243, first: ["-5.624847449353185"], last: ["-5.6119065561416726"]}
+CHOP: {beg: 14, count: 238, first: ["40.52138763158564"], last: ["43.33123505645453"]}
+CHOPTR: {beg: 14, count: 238, first: ["37.72663302679468"], last: ["43.33123505645453"]}
+CKSP: {beg: 18, count: 234, first: ["105.75", "92.329140163"], last: ["107.67975951428784", "96.30939479342685"]}
+CMF: {beg: 19, count: 233, first: ["-0.058063571727307924"], last: ["-0.07866875266675868"]}
+CMO: {beg: 14, count: 238, first: ["-100"], last: ["-30.046025847347014"]}
+CMOU: {beg: 14, count: 238, first: ["-100"], last: ["-48.372093023255836"]}
+COPPOCK: {beg: 23, count: 229, first: ["-15.885568010650532"], last: ["-9.058156209443364"]}
+CORREL: {beg: 29, count: 223, first: ["0.23985583120402226"], last: ["0.11791002171681018"]}
+COS: {beg: 0, count: 252, first: ["0.9998586363834151"], last: ["0.9998586363834151"]}
+COSH: {beg: 0, count: 252, first: ["74.20994852478785"], last: ["74.20994852478785"]}
+CRSI: {beg: 101, count: 151, first: ["54.91394458664561"], last: ["10.605534544499571"]}
+CTI: {beg: 19, count: 233, first: ["-0.9713482021963815"], last: ["-0.3788187965553856"]}
+CUMSUM: {beg: 0, count: 252, first: ["110"], last: ["24415.3"]}
+CVI: {beg: 19, count: 233, first: ["0"], last: ["0"]}
+DEMA: {beg: 58, count: 194, first: ["94.51851020560045"], last: ["100.02486996731812"]}
+DIV: {beg: 0, count: 252, first: ["9.950248756218905"], last: ["-0.9867330016583749"]}
+DONCHIAN: {beg: 19, count: 233, first: ["112", "100.025", "88.05"], last: ["112", "102.025", "92.05"]}
+DOSC: {beg: 28, count: 224, first: ["9.839032434890315"], last: ["-15.267598869122764"]}
+DPO: {beg: 19, count: 233, first: ["0.025000000000005684"], last: ["8.424999999999997"]}
+DX: {beg: 14, count: 238, first: ["100"], last: ["30.04602573170415"]}
+EFI: {beg: 13, count: 239, first: ["-18526.96153846154"], last: ["-18180.349867479254"]}
+EMA: {beg: 29, count: 223, first: ["95.25833333333334"], last: ["98.92244791909134"]}
+EMV: {beg: 14, count: 238, first: ["-4.5357241467634974"], last: ["-0.8488070886147467"]}
+ER: {beg: 10, count: 242, first: ["1"], last: ["1"]}
+ERI: {beg: 12, count: 240, first: ["-5.084615384615361", "-9.084615384615361"], last: ["-2.6982823276532883", "-6.698282327653288"]}
+EXP: {beg: 0, count: 252, first: ["0.006737946999085467"], last: ["148.4131591025766"]}
+FISHER: {beg: 9, count: 243, first: ["-0.34282825441539394", "0"], last: ["-2.9406045280373743", "-2.5029545666467286"]}
+FLOOR: {beg: 0, count: 252, first: ["-3"], last: ["3"]}
+FOSC: {beg: 5, count: 247, first: ["0.3456790123456734"], last: ["0.3721424774056293"]}
+FRACTAL: {beg: 4, count: 248, first: ["0", "0"], last: ["0", "0"]}
+FRAMA: {beg: 16, count: 236, first: ["91.05480009665466"], last: ["100.04768176809183"]}
+GATOR: {beg: 15, count: 237, first: ["6.625", "-3.2250000000000085"], last: ["1.101728522197476", "-2.4656367579381566"]}
+HA: {beg: 0, count: 252, first: ["109.825", "112", "108", "109.91250000000001"], last: ["96.32733343016145", "96.32733343016145", "92.05", "94.6875"]}
+HMA: {beg: 22, count: 230, first: ["88.46666666666667"], last: ["96.27545454545451"]}
+HT_DCPERIOD: {beg: 32, count: 220, first: ["15.646696015449784"], last: ["39.19933354363435"]}
+HT_DCPHASE: {beg: 63, count: 189, first: ["28.72962776593522"], last: ["192.65221161165923"]}
+HT_PHASOR: {beg: 32, count: 220, first: ["1.289173220045187", "1.0595825827001755"], last: ["-9.536562169281058", "2.0052065036933784"]}
+HT_SINE: {beg: 63, count: 189, first: ["0.48067700731147195", "0.959950296980294"], last: ["-0.2190324690306445", "-0.8448158548213655"]}
+HT_TRENDLINE: {beg: 63, count: 189, first: ["95.64166666666667"], last: ["96.70338492808006"]}
+HT_TRENDMODE: {beg: 63, count: 189, first: ["1"], last: ["1"]}
+IBS: {beg: 0, count: 252, first: ["0.9000000000000021"], last: ["0.9000000000000021"]}
+ICHIMOKU: {beg: 51, count: 201, first: ["99.25", "100.9", "100.075", "100"], last: ["99.25", "100.9", "100.075", "100"]}
+IMI: {beg: 13, count: 239, first: ["15.156794425087208"], last: ["12.244897959183797"]}
+KAMA: {beg: 30, count: 222, first: ["94.22224557752341"], last: ["101.7080741394305"]}
+KC: {beg: 19, count: 233, first: ["105.255", "97.125", "88.995"], last: ["107.66863087407462", "99.14984128722341", "90.6310517003722"]}
+KDJ: {beg: 12, count: 240, first: ["11.974626107753087", "15.732700487602491", "4.458477348054277"], last: ["16.701230152305833", "18.88366136491096", "12.336367727095578"]}
+KST: {beg: 52, count: 200, first: ["50.93841982460859", "92.47929660583819"], last: ["65.51152095732296", "97.95616453365176"]}
+KSTEXT: {beg: 52, count: 200, first: ["50.93841982460859", "92.47929660583819"], last: ["65.51152095732296", "97.95616453365176"]}
+KURTOSIS: {beg: 29, count: 223, first: ["0.3611837716071382"], last: ["-1.0060275314602496"]}
+KVO: {beg: 55, count: 197, first: ["-157095.395543153", "-38661.09519399554"], last: ["-217092.25247930782", "62008.65737473907"]}
+LINEARREG: {beg: 13, count: 239, first: ["91.14999999999998"], last: ["94.00714285714277"]}
+LINEARREG_ANGLE: {beg: 13, count: 239, first: ["-53.47114463301492"], last: ["-50.76803038958735"]}
+LINEARREG_INTERCEPT: {beg: 13, count: 239, first: ["108.70000000000003"], last: ["109.92857142857152"]}
+LINEARREG_SLOPE: {beg: 13, count: 239, first: ["-1.3500000000000045"], last: ["-1.2247252747252884"]}
+LN: {beg: 0, count: 252, first: ["-2.3025850929940455"], last: ["2.302585092994046"]}
+LOG10: {beg: 0, count: 252, first: ["-0.9999999999999999"], last: ["1"]}
+MA: {beg: 29, count: 223, first: ["95.25833333333334"], last: ["98.55833333333334"]}
+MACD: {beg: 33, count: 219, first: ["-1.124135389058054", "-3.1026306689754852", "1.9784952799174311"], last: ["-0.2779248930256699", "1.1675908541249727", "-1.4455157471506426"]}
+MACDEXT: {beg: 33, count: 219, first: ["0.583333333333357", "-2.2166666666666637", "2.8000000000000207"], last: ["1.3371794871794833", "4.759401709401713", "-3.4222222222222296"]}
+MACDFIX: {beg: 33, count: 219, first: ["-1.1885074787498269", "-3.126033076946366", "1.937525598196539"], last: ["-0.2372056713854107", "1.1277123002591796", "-1.3649179716445903"]}
+MACDV: {beg: 34, count: 218, first: ["-11.154163421880488", "-55.91617815014786", "44.76201472826737"], last: ["-4.8923676669155185", "26.438690450828233", "-31.33105811774375"]}
+MAMA: {beg: 32, count: 220, first: ["93.63146411467939", "86.3780457764065"], last: ["101.12406101009317", "102.57997223414577"]}
+MARKETFI: {beg: 0, count: 252, first: ["0.0003076923076923077"], last: ["0.00011386279533162539"]}
+MASSI: {beg: 40, count: 212, first: ["25"], last: ["25"]}
+MAVP: {beg: 29, count: 223, first: ["91.125"], last: ["96.75833333333333"]}
+MAX: {beg: 29, count: 223, first: ["110"], last: ["110"]}
+MAXINDEX: {beg: 29, count: 223, first: ["0"], last: ["240"]}
+MCGD: {beg: 13, count: 239, first: ["100.50758770158184"], last: ["97.78838137068591"]}
+MEDIAN: {beg: 29, count: 223, first: ["92.825"], last: ["97.825"]}
+MEDPRICE: {beg: 0, count: 252, first: ["110"], last: ["94.05"]}
+MFI: {beg: 14, count: 238, first: ["0"], last: ["23.118591561896405"]}
+MIDPOINT: {beg: 13, count: 239, first: ["101.225"], last: ["102.025"]}
+MIDPRICE: {beg: 13, count: 239, first: ["101.225"], last: ["102.025"]}
+MIN: {beg: 29, count: 223, first: ["90"], last: ["90.2"]}
+MININDEX: {beg: 29, count: 223, first: ["20"], last: ["222"]}
+MINMAX: {beg: 29, count: 223, first: ["90", "110"], last: ["90.2", "110"]}
+MINMAXINDEX: {beg: 29, count: 223, first: ["20", "0"], last: ["222", "240"]}
+MINUS_DI: {beg: 14, count: 238, first: ["30.77172503242541"], last: ["19.459313933687277"]}
+MINUS_DM: {beg: 13, count: 239, first: ["17.549999999999997"], last: ["11.618225411699223"]}
+MOM: {beg: 10, count: 242, first: ["-15"], last: ["-14"]}
+MULT: {beg: 0, count: 252, first: ["-49.75124378109452"], last: ["-29.601990049751244"]}
+NATR: {beg: 14, count: 238, first: ["4.661820480404553"], last: ["4.458607726779598"]}
+NVI: {beg: 0, count: 252, first: ["1000"], last: ["522.122316898676"]}
+OBV: {beg: 0, count: 252, first: ["13000"], last: ["-136180"]}
+PERCENTB: {beg: 19, count: 233, first: ["0.21423127696299224"], last: ["0.08543688635650566"]}
+PERCENTILE: {beg: 99, count: 153, first: ["95"], last: ["97.2"]}
+PERCENTRANK: {beg: 100, count: 152, first: ["0"], last: ["34"]}
+PLUS_DI: {beg: 14, count: 238, first: ["0"], last: ["10.467496707698215"]}
+PLUS_DM: {beg: 13, count: 239, first: ["0"], last: ["6.249641516689032"]}
+PPO: {beg: 25, count: 227, first: ["-4.120191568616219"], last: ["-0.2805306471036072"]}
+PSO: {beg: 15, count: 237, first: ["-0.9559742544269968"], last: ["-0.9116325429741783"]}
+PVI: {beg: 0, count: 252, first: ["1000"], last: ["1641.5288626954457"]}
+PVO: {beg: 25, count: 227, first: ["7.766221911442249"], last: ["1.3007451413374882"]}
+PVT: {beg: 0, count: 252, first: ["0"], last: ["-1111.0301761805824"]}
+QSTICK: {beg: 9, count: 243, first: ["-1.279999999999994"], last: ["-1.479999999999994"]}
+RMA: {beg: 29, count: 223, first: ["95.25833333333334"], last: ["98.07660048444566"]}
+ROC: {beg: 10, count: 242, first: ["-13.636363636363635"], last: ["-12.95696436834799"]}
+ROCP: {beg: 10, count: 242, first: ["-0.13636363636363635"], last: ["-0.12956964368347987"]}
+ROCR: {beg: 10, count: 242, first: ["0.8636363636363636"], last: ["0.8704303563165201"]}
+ROCR100: {beg: 10, count: 242, first: ["86.36363636363636"], last: ["87.043035631652"]}
+ROGERSSATCHELL: {beg: 9, count: 243, first: ["0.3974023125486359"], last: ["0.44818303907028356"]}
+RSI: {beg: 14, count: 238, first: ["0"], last: ["34.97698707632648"]}
+RVI: {beg: 22, count: 230, first: ["5.111479206028377"], last: ["28.920003362488128"]}
+RVIR: {beg: 22, count: 230, first: ["5.111479206028377"], last: ["28.920003362488128"]}
+RVOL: {beg: 20, count: 232, first: ["1.2547051442910917"], last: ["1.0021394950791613"]}
+SAR: {beg: 1, count: 251, first: ["112"], last: ["101.7749827595142"]}
+SAREXT: {beg: 1, count: 251, first: ["-112"], last: ["-101.7749827595142"]}
+SHARPE: {beg: 20, count: 232, first: ["-29.18900541250487"], last: ["-0.9883159563685812"]}
+SI: {beg: 1, count: 251, first: ["-54.519867549669"], last: ["7.01038575667666"]}
+SIN: {beg: 0, count: 252, first: ["-0.016813900484349713"], last: ["0.016813900484349713"]}
+SINH: {beg: 0, count: 252, first: ["-74.20321057778875"], last: ["74.20321057778875"]}
+SKEW: {beg: 29, count: 223, first: ["1.2120732678456008"], last: ["0.31854650104801246"]}
+SMA: {beg: 29, count: 223, first: ["95.25833333333334"], last: ["98.55833333333334"]}
+SMI: {beg: 45, count: 207, first: ["14.932307907683743", "7.240943483205159"], last: ["-15.283167385951757", "5.075072908734573"]}
+SORTINO: {beg: 20, count: 232, first: ["-14.025811028746464"], last: ["-1.4063995759445422"]}
+SQRT: {beg: 0, count: 252, first: ["0"], last: ["10"]}
+SQZMOM: {beg: 38, count: 214, first: ["10.263964285714287", "-1"], last: ["-5.0158214285713845", "-1"]}
+STC: {beg: 67, count: 185, first: ["100"], last: ["0.7353675807004538"]}
+STDDEV: {beg: 4, count: 248, first: ["2.5469589710083667"], last: ["1.5578831791890029"]}
+STOCH: {beg: 8, count: 244, first: ["23.67948717948723", "14.533102699769413"], last: ["26.966873706004176", "16.49861973775027"]}
+STOCHF: {beg: 6, count: 246, first: ["11.53846153846156", "6.888481888481938"], last: ["42.857142857142925", "26.966873706004176"]}
+STOCHRSI: {beg: 20, count: 232, first: ["0", "0"], last: ["0", "0"]}
+SUB: {beg: 0, count: 252, first: ["14.950248756218905"], last: ["-10.92039800995025"]}
+SUM: {beg: 29, count: 223, first: ["2857.75"], last: ["2956.75"]}
+SUPERTREND: {beg: 10, count: 242, first: ["82.1", "1"], last: ["106.82818438028055", "-1"]}
+SWAK_2PHP: {beg: 0, count: 252, first: ["0"], last: ["0.21469610666059546"]}
+SWAK_BP: {beg: 0, count: 252, first: ["0"], last: ["-3.1313076931730857"]}
+SWAK_BUTTER: {beg: 0, count: 252, first: ["110"], last: ["98.8859036562834"]}
+SWAK_GAUSS: {beg: 0, count: 252, first: ["110"], last: ["97.70481481468995"]}
+SWAK_HP: {beg: 0, count: 252, first: ["0"], last: ["-3.461772636825436"]}
+T3: {beg: 24, count: 228, first: ["89.79818270879508"], last: ["96.46192301855741"]}
+TAN: {beg: 0, count: 252, first: ["-2.5721516221263188"], last: ["2.5721516221263188"]}
+TANH: {beg: 0, count: 252, first: ["-0.9950547536867305"], last: ["0.9950547536867305"]}
+TEMA: {beg: 87, count: 165, first: ["104.16464918983029"], last: ["100.01165545666971"]}
+TRANGE: {beg: 1, count: 251, first: ["5.550000000000011"], last: ["4"]}
+TRIMA: {beg: 29, count: 223, first: ["93.50833333333333"], last: ["100.84166666666667"]}
+TRIX: {beg: 88, count: 164, first: ["0.06924132428955954"], last: ["0.07962587571568314"]}
+TSF: {beg: 13, count: 239, first: ["89.79999999999997"], last: ["92.78241758241748"]}
+TSI: {beg: 37, count: 215, first: ["-16.95324426158672"], last: ["-2.2394934162319013"]}
+TYPPRICE: {beg: 0, count: 252, first: ["110.53333333333335"], last: ["94.58333333333333"]}
+ULTOSC: {beg: 28, count: 224, first: ["48.740017746229064"], last: ["39.230146146879996"]}
+VAR: {beg: 4, count: 248, first: ["6.486999999999998"], last: ["2.427000000000035"]}
+VHF: {beg: 28, count: 224, first: ["0.7780172413793102"], last: ["0.5408450704225353"]}
+VIDYA: {beg: 9, count: 243, first: ["102.2203447616631"], last: ["99.26043199648552"]}
+VORTEX: {beg: 14, count: 238, first: ["0.6406779661016946", "1.2576271186440673"], last: ["0.7284345047923323", "1.0607028753993613"]}
+VWAP: {beg: 0, count: 252, first: ["110.53333333333335"], last: ["96.93884822875692"]}
+VWMA: {beg: 29, count: 223, first: ["95.00899240303877"], last: ["98.72186676321506"]}
+WAD: {beg: 0, count: 252, first: ["0"], last: ["-80.99999999999903"]}
+WAVETREND: {beg: 41, count: 211, first: ["49.01171597398369", "45.67027363276899"], last: ["-11.28158163514974", "-1.7371567516310944"]}
+WCLPRICE: {beg: 0, count: 252, first: ["110.80000000000001"], last: ["94.85"]}
+WILLR: {beg: 13, count: 239, first: ["-98.14385150812063"], last: ["-81.95488721804507"]}
+WMA: {beg: 29, count: 223, first: ["92.6"], last: ["100.19354838709677"]}
+ZIGZAG: {beg: 1, count: 251, first: ["106.05", "-1", "1"], last: ["92.05", "-1", "251"]}
+ZLEMA: {beg: 43, count: 209, first: ["97.85833333333332"], last: ["101.57952346559608"]}

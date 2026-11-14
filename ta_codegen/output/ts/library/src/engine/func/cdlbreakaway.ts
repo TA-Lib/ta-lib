@@ -93,7 +93,7 @@ const WASM_FROM_BARS = 1000;
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = cdlbreakaway({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  * @see [`cdlrisefall3methods`](https://ta-lib.org/functions/cdlrisefall3methods)

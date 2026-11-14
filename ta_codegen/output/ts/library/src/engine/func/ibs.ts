@@ -80,7 +80,7 @@ export * from '../../func/ibs.ts';
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = ibs({ high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  */
 export function ibs(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IbsOptions): IbsResult {

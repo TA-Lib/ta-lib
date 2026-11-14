@@ -118,7 +118,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_KVO( 0, n - 1, high, low, close, volume, 34, 55, 13, &outBegIdx, &outNBElement, kvo, kvoSignal );
-printf( "%d values from bar %d; last kvo = %f\n", outNBElement, outBegIdx, kvo[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "kvo = [%.4f, ..., %.4f]\n", kvo[0], kvo[outNBElement - 1] );
+printf( "kvoSignal = [%.4f, ..., %.4f]\n", kvoSignal[0], kvoSignal[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -136,7 +138,9 @@ let mut kvo_signal = vec![0.0; 252];
 let core = Core::new();
 let range = core.kvo(0, high.len() - 1, &high, &low, &close, &volume, 34, 55, 13,
                      &mut kvo, &mut kvo_signal)?;
-println!("{} values from bar {}; last kvo = {}", range.count, range.beg_idx, kvo[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("kvo = [{:.4}, ..., {:.4}]", kvo[0], kvo[range.count - 1]);
+println!("kvo_signal = [{:.4}, ..., {:.4}]", kvo_signal[0], kvo_signal[range.count - 1]);
 ```
 
 @tab Java
@@ -144,6 +148,7 @@ println!("{} values from bar {}; last kvo = {}", range.count, range.beg_idx, kvo
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -154,7 +159,9 @@ double[] kvoSignal = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.kvo(0, high.length - 1, high, low, close, volume, 34, 55, 13, kvo, kvoSignal);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last kvo = " + kvo[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "kvo = [%.4f, ..., %.4f]%n", kvo[0], kvo[r.count() - 1]);
+System.out.printf(Locale.ROOT, "kvoSignal = [%.4f, ..., %.4f]%n", kvoSignal[0], kvoSignal[r.count() - 1]);
 ```
 
 @tab C\#
@@ -172,7 +179,9 @@ var kvoSignal = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Kvo(0, high.Length - 1, high, low, close, volume, 34, 55, 13, kvo, kvoSignal);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last kvo = {kvo[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"kvo = [{kvo[0]:F4}, ..., {kvo[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"kvoSignal = [{kvoSignal[0]:F4}, ..., {kvoSignal[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -190,7 +199,9 @@ const { begIdx, outKvo, outKvoSignal } = kvo({ high, low, close, volume }, {
   slowPeriod: 55,
   signalPeriod: 13,
 });
-console.log(outKvo.length + ' values from bar ' + begIdx + '; last outKvo = ' + outKvo[outKvo.length - 1]);
+console.log(outKvo.length + ' values from bar ' + begIdx + ':');
+console.log('outKvo = [' + outKvo[0].toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1].toFixed(4) + ']');
+console.log('outKvoSignal = [' + outKvoSignal[0].toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -215,7 +226,9 @@ r, err := core.KVO(0, len(high)-1, high, low, close, volume, 34, 55, 13, kvo, kv
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last kvo = %.2f\n", r.NBElement, r.BegIdx, kvo[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("kvo = [%.4f, ..., %.4f]\n", kvo[0], kvo[r.NBElement-1])
+fmt.Printf("kvoSignal = [%.4f, ..., %.4f]\n", kvoSignal[0], kvoSignal[r.NBElement-1])
 ```
 
 :::

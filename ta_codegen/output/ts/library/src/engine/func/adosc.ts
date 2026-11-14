@@ -86,7 +86,7 @@ const WASM_FROM_BARS = 60;
  *   fastPeriod: 3,
  *   slowPeriod: 10,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`ema`](https://ta-lib.org/functions/ema)

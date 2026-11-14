@@ -237,7 +237,7 @@ export function subDisplayShift(outputIdx: number, options?: SubOptions): number
  * const series1 = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = sub(series0, series1);
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`add`](https://ta-lib.org/functions/add)
  * @see [`mult`](https://ta-lib.org/functions/mult)
@@ -520,7 +520,7 @@ export function subOpenAndFillPositional(
  * import { subOpen } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   10 * Math.sin(0.1 * i));
+ *   (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
  *   -5 + 10 * i / 251.0);
  * const stream = subOpen(series0, series1);
@@ -558,7 +558,7 @@ export function subOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, opti
  * import { subOpenAndFill } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   10 * Math.sin(0.1 * i));
+ *   (10 * (i % 40 - 20) * (i % 40 - 20) - 2000) / 201.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
  *   -5 + 10 * i / 251.0);
  * const { stream, begIdx, values } = subOpenAndFill(series0, series1);

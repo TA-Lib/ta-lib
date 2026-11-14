@@ -95,7 +95,7 @@ const WASM_FROM_BARS = 125;
  * const { begIdx, values } = cdlabandonedbaby({ open, high, low, close }, {
  *   penetration: 0.3,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
  * ```
  * @see [`cdleveningdojistar`](https://ta-lib.org/functions/cdleveningdojistar)
  * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)

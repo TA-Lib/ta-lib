@@ -102,7 +102,9 @@ const WASM_FROM_BARS = 30;
  *   lipsPeriod: 5,
  *   lipsShift: 3,
  * });
- * console.log(outUpper.length + ' values from bar ' + begIdx + '; last outUpper = ' + outUpper[outUpper.length - 1]);
+ * console.log(outUpper.length + ' values from bar ' + begIdx + ':');
+ * console.log('outUpper = [' + outUpper[0].toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1].toFixed(4) + ']');
+ * console.log('outLower = [' + outLower[0].toFixed(4) + ', ..., ' + outLower[outLower.length - 1].toFixed(4) + ']');
  * ```
  * @see [`alligator`](https://ta-lib.org/functions/alligator)
  * @see [`ao`](https://ta-lib.org/functions/ao)

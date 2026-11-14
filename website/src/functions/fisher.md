@@ -108,7 +108,9 @@ int outBegIdx, outNBElement;
 
 TA_Initialize();
 TA_FISHER( 0, n - 1, high, low, 10, &outBegIdx, &outNBElement, fisher, trigger );
-printf( "%d values from bar %d; last fisher = %f\n", outNBElement, outBegIdx, fisher[outNBElement - 1] );
+printf( "%d values from bar %d:\n", outNBElement, outBegIdx );
+printf( "fisher = [%.4f, ..., %.4f]\n", fisher[0], fisher[outNBElement - 1] );
+printf( "trigger = [%.4f, ..., %.4f]\n", trigger[0], trigger[outNBElement - 1] );
 ```
 
 @tab Rust
@@ -123,7 +125,9 @@ let mut trigger = vec![0.0; 252];
 
 let core = Core::new();
 let range = core.fisher(0, high.len() - 1, &high, &low, 10, &mut fisher, &mut trigger)?;
-println!("{} values from bar {}; last fisher = {}", range.count, range.beg_idx, fisher[range.count - 1]);
+println!("{} values from bar {}:", range.count, range.beg_idx);
+println!("fisher = [{:.4}, ..., {:.4}]", fisher[0], fisher[range.count - 1]);
+println!("trigger = [{:.4}, ..., {:.4}]", trigger[0], trigger[range.count - 1]);
 ```
 
 @tab Java
@@ -131,6 +135,7 @@ println!("{} values from bar {}; last fisher = {}", range.count, range.beg_idx, 
 ```java
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import java.util.Locale;
 
 double[] high = new double[252]; // your data, oldest first
 double[] low = new double[252]; // your data, oldest first
@@ -139,7 +144,9 @@ double[] trigger = new double[252];
 
 Core core = Core.DEFAULT;
 OutRange r = core.fisher(0, high.length - 1, high, low, 10, fisher, trigger);
-System.out.println(r.count() + " values from bar " + r.begIdx() + "; last fisher = " + fisher[r.count() - 1]);
+System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+System.out.printf(Locale.ROOT, "fisher = [%.4f, ..., %.4f]%n", fisher[0], fisher[r.count() - 1]);
+System.out.printf(Locale.ROOT, "trigger = [%.4f, ..., %.4f]%n", trigger[0], trigger[r.count() - 1]);
 ```
 
 @tab C\#
@@ -155,7 +162,9 @@ var trigger = new double[252];
 
 var core = Core.Default;
 OutRange r = core.Fisher(0, high.Length - 1, high, low, 10, fisher, trigger);
-Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last fisher = {fisher[r.Count - 1]}");
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+Console.WriteLine(FormattableString.Invariant($"fisher = [{fisher[0]:F4}, ..., {fisher[r.Count - 1]:F4}]"));
+Console.WriteLine(FormattableString.Invariant($"trigger = [{trigger[0]:F4}, ..., {trigger[r.Count - 1]:F4}]"));
 ```
 
 @tab TypeScript
@@ -169,7 +178,9 @@ const low = new Float64Array(252); // your data, oldest first
 const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
   timePeriod: 10,
 });
-console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
+console.log(outFisher.length + ' values from bar ' + begIdx + ':');
+console.log('outFisher = [' + outFisher[0].toFixed(4) + ', ..., ' + outFisher[outFisher.length - 1].toFixed(4) + ']');
+console.log('outTrigger = [' + outTrigger[0].toFixed(4) + ', ..., ' + outTrigger[outTrigger.length - 1].toFixed(4) + ']');
 ```
 
 @tab Go
@@ -192,7 +203,9 @@ r, err := core.FISHER(0, len(high)-1, high, low, 10, fisher, trigger)
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%d values from bar %d; last fisher = %.4f\n", r.NBElement, r.BegIdx, fisher[r.NBElement-1])
+fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+fmt.Printf("fisher = [%.4f, ..., %.4f]\n", fisher[0], fisher[r.NBElement-1])
+fmt.Printf("trigger = [%.4f, ..., %.4f]\n", trigger[0], trigger[r.NBElement-1])
 ```
 
 :::

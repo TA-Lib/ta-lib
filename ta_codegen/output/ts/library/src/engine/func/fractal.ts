@@ -102,7 +102,9 @@ const WASM_FROM_BARS = 1000;
  *   leftBars: 2,
  *   rightBars: 2,
  * });
- * console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+ * console.log(outSwingHigh.length + ' values from bar ' + begIdx + ':');
+ * console.log('outSwingHigh = [' + outSwingHigh[0] + ', ..., ' + outSwingHigh[outSwingHigh.length - 1] + ']');
+ * console.log('outSwingLow = [' + outSwingLow[0] + ', ..., ' + outSwingLow[outSwingLow.length - 1] + ']');
  * ```
  * @see [`aroon`](https://ta-lib.org/functions/aroon)
  * @see [`maxindex`](https://ta-lib.org/functions/maxindex)

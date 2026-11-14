@@ -565,7 +565,7 @@ export function percentbDisplayShift(outputIdx: number, options?: PercentbOption
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`bbw`](https://ta-lib.org/functions/bbw)
@@ -1056,7 +1056,7 @@ export function percentbOpenAndFillPositional(
  * import { MAType, percentbOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const stream = percentbOpen(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
@@ -1101,7 +1101,7 @@ export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions)
  * import { MAType, percentbOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = percentbOpenAndFill(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,

@@ -655,7 +655,9 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  *   slowPeriod: 55,
  *   signalPeriod: 13,
  * });
- * console.log(outKvo.length + ' values from bar ' + begIdx + '; last outKvo = ' + outKvo[outKvo.length - 1]);
+ * console.log(outKvo.length + ' values from bar ' + begIdx + ':');
+ * console.log('outKvo = [' + outKvo[0].toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1].toFixed(4) + ']');
+ * console.log('outKvoSignal = [' + outKvoSignal[0].toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1].toFixed(4) + ']');
  * ```
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)
@@ -1582,13 +1584,13 @@ export function kvoOpenAndFillPositional(
  * import { kvoOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = kvoOpen({ high, low, close, volume }, {
  *   fastPeriod: 34,
  *   slowPeriod: 55,
@@ -1635,13 +1637,13 @@ export function kvoOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { kvoOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const {
  *   stream,
  *   begIdx,

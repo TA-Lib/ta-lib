@@ -699,7 +699,9 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  *   averagePeriod: 21,
  *   signalPeriod: 4,
  * });
- * console.log(outWt1.length + ' values from bar ' + begIdx + '; last outWt1 = ' + outWt1[outWt1.length - 1]);
+ * console.log(outWt1.length + ' values from bar ' + begIdx + ':');
+ * console.log('outWt1 = [' + outWt1[0].toFixed(4) + ', ..., ' + outWt1[outWt1.length - 1].toFixed(4) + ']');
+ * console.log('outWt2 = [' + outWt2[0].toFixed(4) + ', ..., ' + outWt2[outWt2.length - 1].toFixed(4) + ']');
  * ```
  * @see [`cci`](https://ta-lib.org/functions/cci)
  * @see [`smi`](https://ta-lib.org/functions/smi)
@@ -1659,11 +1661,11 @@ export function wavetrendOpenAndFillPositional(
  * import { wavetrendOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = wavetrendOpen({ high, low, close }, {
  *   channelPeriod: 10,
  *   averagePeriod: 21,
@@ -1709,11 +1711,11 @@ export function wavetrendOpen(prices: { open?: ArrayLike<number> | undefined; hi
  * import { wavetrendOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
+ *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, outWt1, outWt2 } = wavetrendOpenAndFill({ high, low, close }, {
  *   channelPeriod: 10,
  *   averagePeriod: 21,

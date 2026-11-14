@@ -88,7 +88,10 @@ const WASM_FROM_BARS = 250;
  *   outMacdSignal,
  *   outMacdHist,
  * } = macd(series, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
- * console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+ * console.log(outMacd.length + ' values from bar ' + begIdx + ':');
+ * console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
+ * console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
+ * console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
  * ```
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)

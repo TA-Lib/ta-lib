@@ -533,7 +533,7 @@ export function correlDisplayShift(outputIdx: number, options?: CorrelOptions): 
  * const series1 = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = correl(series0, series1, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
  * ```
  * @see [`beta`](https://ta-lib.org/functions/beta)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
@@ -1540,9 +1540,9 @@ export function correlOpenAndFillPositional(
  * import { correlOpen } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i + 0.7));
+ *   90 + ((i + 7) % 40 - 20) * ((i + 7) % 40 - 20) / 20.0);
  * const stream = correlOpen(series0, series1, { timePeriod: 30 });
  * const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 101.3); // the bar closes
@@ -1580,9 +1580,9 @@ export function correlOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, o
  * import { correlOpenAndFill } from 'ta-lib';
  *
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i + 0.7));
+ *   90 + ((i + 7) % 40 - 20) * ((i + 7) % 40 - 20) / 20.0);
  * const { stream, begIdx, values } = correlOpenAndFill(series0, series1, {
  *   timePeriod: 30,
  * });
