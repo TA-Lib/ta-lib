@@ -14,8 +14,8 @@
  * ~5 orders of margin over libm noise while still failing any real algorithmic
  * regression (orders of magnitude larger). The TypeScript bound is the
  * owner's: when a function's TRANSCENDENTAL MAX goes over it, report the function
- * to the owner rather than widening it. Go's worst measured on amd64, GOAMD64 v1
- * and v3 alike, is 3.7e-11 (SWAK_BP). ---- */
+ * to the owner rather than widening it. Outside the tolerance rows, Go's worst
+ * measured on amd64, GOAMD64 v1 and v3 alike, is 3.7e-11 (SWAK_BP). ---- */
 #define CODEGEN_TRANSCENDENTAL_TOL    1e-9
 #define CODEGEN_TRANSCENDENTAL_TOL_TS 1e-11
 #define CODEGEN_TRANSCENDENTAL_TOL_GO 1e-9

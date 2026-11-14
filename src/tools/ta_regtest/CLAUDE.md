@@ -416,8 +416,8 @@ literal `"field":`, so `json.dumps`'s default `": "` makes every lookup miss and
 the C server answers `{"error":"Missing method field"}`. Use
 `separators=(",",":")`.
 
-**Send every optional parameter.** The servers disagree on an absent one: Rust
-and TS substitute the declared default, the C server reads zero. A period is then
+**Send every optional parameter.** The servers disagree on an absent one: Rust,
+TS and Go substitute the declared default, the C server reads zero. A period is then
 rejected, but a real optInput where `0.0` is legal answers `retCode` 0 with a
 wrong series: `TA_STDDEV` without `optInNbDev` is all zeros. To ask for a
 default, send the sentinel: `-4e37` for a real, `INT_MIN` for an integer;

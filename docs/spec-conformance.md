@@ -160,8 +160,8 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 outside the declared set is unrepresentable.
 
 [14] C's getter returns the period itself, so it has no error channel. Accepted,
-and pinned by `test_internals.c`; the other three reject it because a getter
-that can throw costs them nothing.
+and pinned by `test_internals.c`; every other backend rejects it because a
+getter that can fail costs it nothing.
 
 [16] Verified that a later valid setter does not clear an earlier latched
 rejection.

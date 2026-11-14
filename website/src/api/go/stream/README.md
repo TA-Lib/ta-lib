@@ -98,7 +98,7 @@ if err != nil {
 v, err := s.Update(newClose)
 ```
 
-`OpenAndFill` takes the [batch method](/api/go/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. An output must not share memory with the input or with another output.
+`OpenAndFill` takes the [batch method](/api/go/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. An output must not share memory with the input or with another output: that is `talib.BadParam`, but a slice whose capacity a three-index expression cut (`s[i:j:k]`, as `slices.Clip` makes) escapes the check unless both start at one element. `OpenAndFill` checks its outputs before the warm-up, so an empty output is `talib.BadParam` even when the history is too short.
 
 ## Utility Calls
 
@@ -126,6 +126,6 @@ Every error is a `RetCode`; test for one with `errors.Is`.
 
 | Call | Behaviour |
 |------|-----------|
-| `<NAME>Open` / `<NAME>OpenAndFill` | Too little history, an empty one included, returns `talib.InsufficientHistory`: accumulate more bars and retry. An out-of-range parameter returns `talib.BadParam`, and so does an `OpenAndFill` output that is too short or shares memory. |
+| `<NAME>Open` / `<NAME>OpenAndFill` | Too little history, an empty one included, returns `talib.InsufficientHistory`: accumulate more bars and retry. An out-of-range parameter returns `talib.BadParam`, and so do histories of different lengths and an `OpenAndFill` output that is empty, too short or shares memory; `OpenAndFill` checks its outputs before the warm-up, so an empty output is `talib.BadParam` even when the history is too short. A history longer than `talib.IndexMax + 1` bars returns `talib.OutOfRangeEndIndex`. |
 | `Update` / `Peek` | <ul><li>`talib.BadParam` on invalid input such as NaN or ±Inf</li><li>`talib.OutOfRangeEndIndex` from `Update` (never `Peek`) once the range has reached bar `talib.IndexMax`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `Advance` | `talib.OutOfRangeEndIndex` once the range has reached bar `talib.IndexMax`. |

@@ -61,9 +61,10 @@ type CandleSetting struct {
 }
 
 // Core holds the settings every call reads: the unstable periods and the
-// candlestick settings. Create one with [NewCore]. A Core is safe to share
-// between goroutines once configured; do not call its setters while another
-// goroutine uses it.
+// candlestick settings. Create one with [NewCore]. Do not use the zero value:
+// its candlestick settings are all zero, not the defaults. A Core is safe to
+// share between goroutines once configured: call its setters only while no other
+// goroutine uses it and no stream opened on it is in use.
 type Core struct {
 	unstablePeriod [funcUnstCount]int32
 	candleSettings [candleSettingCount]CandleSetting

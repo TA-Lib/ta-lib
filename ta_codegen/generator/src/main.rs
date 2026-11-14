@@ -1546,9 +1546,7 @@ fn build_go(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
     let mut step = run_build_step(
         "Go server",
         "go",
-        std::process::Command::new("go")
-            .args(["build", "-o", tmp.to_str().unwrap(), "."])
-            .current_dir(out_base.join("go/tools")),
+        go_command(&out_base.join("go/tools")).args(["build", "-o", tmp.to_str().unwrap(), "."]),
     );
     if step.ok {
         if let Err(e) = std::fs::rename(&tmp, &dst) {
@@ -1904,11 +1902,11 @@ fn report_step(step: &BuildStep, show_log: bool) -> bool {
     step.ok
 }
 
-/// A `go` command that sees no workspace file: the module under test is the
-/// whole build.
+/// A `go` command that sees no workspace file and never switches to another
+/// toolchain: the module under test is the whole build, on the Go on PATH.
 fn go_command(dir: &Path) -> std::process::Command {
     let mut cmd = std::process::Command::new("go");
-    cmd.env("GOWORK", "off").current_dir(dir);
+    cmd.env("GOWORK", "off").env("GOTOOLCHAIN", "local").current_dir(dir);
     cmd
 }
 

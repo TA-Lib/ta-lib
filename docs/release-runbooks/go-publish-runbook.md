@@ -19,7 +19,8 @@ Before the first Go tag of any kind, release candidates included:
    it would have to be re-pointed afterwards ([below](#if-the-history-is-rewritten-again)), and
    any untagged fetch made before it stops resolving, since its pseudo-version names a commit
    SHA the rewrite drops.
-2. The import-path page must serve the go-import tag. This prints one line:
+2. The import-path page must serve the go-import tag. This prints one line, which must contain
+   `ta-lib.github.io/go git https://github.com/TA-Lib/ta-lib ta_codegen/output/go`:
    `curl -s 'https://ta-lib.github.io/go?go-get=1' | grep go-import`
 3. After the first tag, GP2 is the first fetch of this subdirectory module through
    proxy.golang.org. Do not announce the version until it passes.
@@ -50,11 +51,13 @@ line from `ta_codegen/output/go/README.md` and the `::: warning Not yet released
 `website/src/api/go/README.md` and `website/src/api/go/stream/README.md`, if still there. The
 workflow refuses a final version while any is. In the same change add the install line,
 `go get ta-lib.github.io/go`, to that README, to section 2.0 of `website/src/api/go/README.md`
-and as a Go section of `website/src/install/README.md`. If the C release commit still carries them,
-remove them on dev, bring that to main, and pass the main commit as `commit` in GP5.
+and as a Go section of `website/src/install/README.md`, and put the pkg.go.dev link
+(`https://pkg.go.dev/ta-lib.github.io/go`) back in section 5.0 of `website/src/api/go/README.md`.
+If the C release commit still carries the line or a banner, remove them on dev, bring that to
+main, and pass the main commit as `commit` in GP5.
 
 (GP5) After `c-publish-runbook.md`, run "Release Go module" with version `vX.Y.Z`. Without
-`commit` it tags the commit of the C tag `vX.Y.Z`.
+`commit` it tags the commit of the C tag `vX.Y.Z`; a `commit` given must descend from that tag.
 
 (GP6) Verify:
 

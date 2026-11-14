@@ -3,9 +3,11 @@
 //!
 //! Line-based, over the emitter's own layout: one statement per line, tab
 //! indentation, a declaration's scope ending where indentation drops below it.
-//! It only removes, so a name it wrongly kept fails to compile and one it
-//! wrongly dropped fails to compile too. A write whose value has a side effect
-//! keeps its value as `_ = <value>`.
+//! It only removes, so a name it wrongly kept fails to compile. A dropped write
+//! keeps its value as `_ = <value>` only when the value contains `++`, `--`,
+//! `copy(`, `clear(` or an exported Core call (`c.` then an uppercase letter):
+//! every other call, an unexported `c.<lower>(` included, is assumed to have no
+//! side effect, and dropping one that has compiles.
 
 const ASSIGN_OPS: &[&str] = &["=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="];
 

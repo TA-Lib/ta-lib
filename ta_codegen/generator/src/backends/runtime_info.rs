@@ -206,7 +206,6 @@ pub fn ts_fn() -> String {
     )
 }
 
-/// The TypeScript server's handler: the library function, its rejection back as a code.
 /// The Go server's `TA_GetRuntimeInfo`: the Go package has no metadata layer to
 /// answer it, so the server answers the common keys itself.
 #[must_use]
@@ -223,6 +222,7 @@ pub fn go_server_handler() -> String {
     )
 }
 
+/// The TypeScript server's handler: the library function, its rejection back as a code.
 pub const TS_SERVER_HANDLER: &str = "function handleGetRuntimeInfo(p: Params): string {\n\
     \x20 let rc = 0;\n\
     \x20 let value = 0;\n\

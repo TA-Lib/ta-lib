@@ -773,6 +773,13 @@ static int json_is_error(const char *json)
     return strstr(json, "\"error\"") != NULL;
 }
 
+/* json_get_int reads an absent retCode as 0, which is TA_SUCCESS. */
+static int json_lacks_retcode(const char *json)
+{
+    int len;
+    return json_is_error(json) || !json_find_field(json, "retCode", &len);
+}
+
 /* The only error responses a `call` may legitimately answer: a name this
  * backend does not implement. Every other error on that path is a defect --
  * see the caller. */
@@ -5759,14 +5766,6 @@ static ErrorNumber test_codegen_for_language(
                        (unsigned)ctx.streamRangeSitesAll);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
-            /* The counts behind the floors above, which speak only on failure. */
-            printf("  stream verify: %d function(s), %d leg(s); fill %d; range %d (sites 0x%x "
-                   "of 0x%x); peek repeat %d / %lld probe(s); value %d / %lld; clone %d / %lld\n",
-                   ctx.streamFunctions, ctx.streamLegs, ctx.streamFillFunctions,
-                   ctx.streamRangeFunctions, (unsigned)ctx.streamRangeSites,
-                   (unsigned)ctx.streamRangeSitesAll, ctx.streamPeekRepFunctions,
-                   ctx.streamPeekRepProbes, ctx.streamValueFunctions, ctx.streamValueLegs,
-                   ctx.streamCloneFunctions, ctx.streamCloneLegs);
         }
         else if( probeErr == TA_TEST_PASS )
         {
@@ -7553,7 +7552,8 @@ CTolVerdict codegen_compare_tol(const char *resp,
     CTolDetail local;
     if( !detail ) detail = &local;
     memset(detail, 0, sizeof(*detail));
-    detail->rc        = json_get_int(resp, "retCode");
+    /* -1 equals no TA_RetCode, so such a reply is a retCode mismatch. */
+    detail->rc        = json_lacks_retcode(resp) ? -1 : json_get_int(resp, "retCode");
     detail->begIdx    = json_get_int(resp, "outBegIdx");
     detail->nbElement = json_get_int(resp, "outNBElement");
     if( detail->rc != (int)goldRc )   return CTOL_RETCODE;
@@ -8225,6 +8225,22 @@ typedef struct {
     int        haveOaf;
 } XlangTierResults;
 
+static int xlang_tier_reply_ok(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
+                               const double *optVals, XlangServer *sv, const char *leg)
+{
+    if( !json_lacks_retcode(ctx->tierRespBuf) ) return 1;
+    sv->mism++;
+    if( ctx->reportedThisFunc < 3 )
+    {
+        ctx->reportedThisFunc++;
+        printf("  XLANG TIER NO RETCODE TA_%s  %s on %s: %.160s  params:",
+               funcInfo->name, leg, sv->display, ctx->tierRespBuf);
+        xlang_print_params(funcInfo, optVals);
+        printf("\n");
+    }
+    return 0;
+}
+
 /* Same-backend tier agreement (issue #256's L2, B3+S5): calls batch/Open/
  * OpenAndFill on `sv` for `optVals`, and checks each retCode against
  * `lookbackVerdict` — THIS SAME backend's own lookback-tier answer (>= 0
@@ -8249,7 +8265,8 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
     int streamRejected = rejected || (lookbackVerdict >= LB_TIER_N);
 
     xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 0);
-    if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+    int called = xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf);
+    if( called && xlang_tier_reply_ok(ctx, funcInfo, optVals, sv, "BATCH") )
     {
         xlang_tier_parse(funcInfo, ctx->tierRespBuf, &out->batchR);
         out->haveBatch = 1;
@@ -8272,7 +8289,7 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
             }
         }
     }
-    else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+    else if( !called && ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
 
     /* Open/OpenAndFill exist only for streamable functions — every function
      * today, but read from the metadata rather than assume it, since it is a
@@ -8280,7 +8297,8 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
     if( funcInfo->flags & TA_FUNC_FLG_STREAM )
     {
         xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 1);
-        if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+        called = xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf);
+        if( called && xlang_tier_reply_ok(ctx, funcInfo, optVals, sv, "OPEN") )
         {
             /* Open's own value never reaches a JSON field (every backend's
              * bench_mode==1 arm computes it and discards it — server_gen.rs's
@@ -8308,10 +8326,11 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
                 }
             }
         }
-        else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+        else if( !called && ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
 
         xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 2);
-        if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+        called = xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf);
+        if( called && xlang_tier_reply_ok(ctx, funcInfo, optVals, sv, "OPENANDFILL") )
         {
             xlang_tier_parse(funcInfo, ctx->tierRespBuf, &out->oafR);
             out->haveOaf = 1;
@@ -8336,7 +8355,7 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
                 }
             }
         }
-        else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+        else if( !called && ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
 
         /* Data-match bonus: whenever this vector was ACCEPTED, batch and
          * OpenAndFill both produced a real array over the same fixed buffer —
@@ -9126,10 +9145,10 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
             }
 
             /* ---- Same-backend tier agreement (issue #256's L2) ----
-             * `srv` (this server's OWN lookback verdict, just parsed above) is
-             * the reference here — not `gold`. No cross-language comparison in
-             * this half: a backend validating its own params differently from
-             * C is server_verify()'s explicitly-declined question
+             * `srv` is the reference here: this server's own lookback verdict,
+             * or `gold` for a server without a metadata tier. A backend with
+             * one that validates its own params differently from C is
+             * server_verify()'s explicitly-declined question
              * (server_verify.c), not this one. */
             XlangTierResults r;
             xlang_tier_self_check(ctx, funcInfo, vec[k], sv, srv, &r);
@@ -9652,9 +9671,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                      * gen_present; hex servers (Java, C# — no fuzz_gen port) get
                      * the driver's exact arrays losslessly. The tolerance lane is
                      * a SEPARATE per-server flag, not implied by the transport:
-                     * only Java (tolTranscendental) drops a transcendental-using
-                     * call to the element compare — C# stays bitwise on all of
-                     * them. */
+                     * every server but Rust (tolTranscendental) drops a
+                     * transcendental-using call to the element compare. */
                     /* A hash cannot be held within a tolerance, so such a call
                      * leaves the seed transport for the arrays. */
                     int vm = kind[k] != FUZZ_VEC_REJECT &&
@@ -9809,10 +9827,10 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         return TA_CODEGEN_OUTPUT_MISMATCH;
 
     /* Each generated language server, diffed against the in-process C golden (C
-     * is the golden, not a server row). Rust uses the seed transport
+     * is the golden, not a server row). Rust and Go use the seed transport
      * (gen_present + fuzz_in_hash); Java, the managed C# and TS use the
-     * lossless hex-bits transport (usesSeed=0). Java, C# and TS relax their transcendental-using calls to an element
-     * compare at their language's bound: none of their `Math.*` is guaranteed
+     * lossless hex-bits transport (usesSeed=0). Java, C#, TS and Go relax their transcendental-using calls to an element
+     * compare at their language's bound: none of their math libraries is guaranteed
      * to be the platform libm. Every non-transcendental call stays bitwise. */
     static XlangServer servers[] = {
         {"rust",   "Rust",       argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0, 0, 0},

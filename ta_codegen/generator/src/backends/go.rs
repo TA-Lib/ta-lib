@@ -5,7 +5,8 @@
 //! statement is lowered at render time: an expression yields the statements that
 //! must run before it (`pre`) and after it (`post`), and an operand C evaluates
 //! lazily (a ternary arm, the right side of `&&`/`||`) gets its own scope so its
-//! statements land inside the branch that evaluates it.
+//! statements land inside the branch that evaluates it. A block-bodied helper is
+//! the exception: it is hoisted ahead of the statement even from a lazy operand.
 
 use std::cell::Cell;
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -398,8 +399,9 @@ impl<'a> Ctx<'a> {
         format!("_{prefix}{n}")
     }
 
-    /// The statement-level uniqueness rule that makes moving a step before or
-    /// after its statement exact: the stepped variable is read nowhere else in it.
+    /// A stepped variable is read nowhere else in its statement, so moving the step
+    /// before or after the statement is exact. Helpers are substituted after this
+    /// check, so it does not cover a step inside a helper call's argument.
     pub(super) fn check_steps(&self, exprs: &[&Expr]) {
         let mut stepped = Vec::new();
         let mut counts = HashMap::new();
@@ -1072,7 +1074,7 @@ impl<'a> Ctx<'a> {
     }
 
     /// A `for` post statement: one simple statement, or a parallel assignment
-    /// for C's comma-separated updates when none reads another's target.
+    /// for C's comma-separated updates when none reads an earlier update's target.
     fn for_post(&self, update: &Statement) -> String {
         let parts: Vec<&Statement> = match update {
             Statement::Block { body } => body.iter().collect(),

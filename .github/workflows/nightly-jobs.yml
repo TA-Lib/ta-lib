@@ -876,6 +876,8 @@ jobs:
     name: Go module built and tested
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      GOTOOLCHAIN: local
     permissions:
       contents: read
 

@@ -76,6 +76,8 @@ def install(name: str, sha256: str, cache: str, dest: str):
         unpacked = os.path.join(tmp, "go")
         if not usable(unpacked):
             fail(f"{url} holds no go/bin/go")
+        if usable(dest):
+            return
         if os.path.lexists(dest):
             shutil.rmtree(dest)
         try:

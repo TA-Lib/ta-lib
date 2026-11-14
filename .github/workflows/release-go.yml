@@ -14,7 +14,7 @@ on:
         required: true
         type: string
       commit:
-        description: "SHA of a main commit. Required for vX.Y.Z-rc.N; for vX.Y.Z defaults to the C tag's commit"
+        description: "SHA of a main commit. Required for vX.Y.Z-rc.N; for vX.Y.Z defaults to the C tag's commit, and must descend from it"
         required: false
         type: string
         default: ""
@@ -86,6 +86,17 @@ jobs:
             exit 1
           fi
 
+          if [ "$RC" = false ] && [ -n "$COMMIT_INPUT" ]; then
+            if ! C_COMMIT=$(git rev-parse --verify --quiet "refs/tags/${VERSION}^{commit}"); then
+              echo "::error::Tag ${VERSION} does not exist. Release C first (docs/release-runbooks/c-publish-runbook.md)."
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$C_COMMIT" "$COMMIT"; then
+              echo "::error::${COMMIT} does not descend from the C release ${VERSION} (${C_COMMIT}). Run again with a main commit that does, or without commit."
+              exit 1
+            fi
+          fi
+
           if [ "$RC" = false ]; then
             code=$(curl -sS -o /dev/null -w '%{http_code}' \
               -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
@@ -140,7 +151,7 @@ jobs:
         shell: bash
         run: python3 scripts/go_toolchain.py 1.22 >> "$GITHUB_PATH"
 
-      - name: Build and vet the module at the commit
+      - name: Build, vet and test the module at the commit
         if: steps.resolve.outputs.tagged == 'false'
         shell: bash
         env:
@@ -150,8 +161,8 @@ jobs:
           git checkout --quiet --detach "$COMMIT"
           cd ta_codegen/output/go
           go version
-          if ! { go build ./... && go vet ./...; }; then
-            echo "::error::The Go module at ${COMMIT} does not build or vet on Go 1.22. Fix it on dev and tag a later main commit."
+          if ! { go build ./... && go vet ./... && go test ./...; }; then
+            echo "::error::The Go module at ${COMMIT} does not build, vet or pass its tests on Go 1.22. Fix it on dev and tag a later main commit."
             exit 1
           fi
 

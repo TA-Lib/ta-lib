@@ -314,7 +314,7 @@ In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
 ([specification](/spec/settings-threads/#idle-settings)). Python raises
 `RuntimeError` on a change while a call runs or a stream object is alive. In Go,
-change a `Core`'s settings only while no other goroutine uses it.
+call a `Core`'s setters only while no other goroutine uses it and no stream opened on it is in use.
 
 ### Functions with an unstable period
 

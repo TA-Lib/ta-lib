@@ -156,7 +156,7 @@ Every TA function returns `(OutRange, error)`. A failed call returns a `RetCode`
 | `talib.BadParam` | A parameter outside its documented range |
 | `talib.BadParam` | An input too short for the range requested, or an output too short for the values written |
 | `talib.BadParam` | An empty input or output |
-| `talib.BadParam` | An output sharing memory with an input or another output, other than in place ([4.4](#input_type)) |
+| `talib.BadParam` | An output sharing memory with an input or another output, other than in place, unless a three-index slice hides it ([4.4](#input_type)) |
 
 ```go
 _, err := core.SMA(0, len(closes)-1, closes, 0, out)
@@ -203,7 +203,7 @@ A setter returns `talib.BadParam` for an argument out of range and changes nothi
 
 An input is a `[]float64`. An output is a `[]float64`, or an `[]int32` for an integer output such as a candlestick pattern, and is written from index 0.
 
-You can pass the same slice, with the same start and length, as an input and as an output to compute in place. An output may not otherwise share memory with an input or with another output: the call returns `talib.BadParam`.
+You can pass the same slice, with the same start and length, as an input and as an output to compute in place. An output may not otherwise share memory with an input or with another output: the call returns `talib.BadParam`. A slice whose capacity a three-index expression cut (`s[i:j:k]`, as `slices.Clip` makes) escapes the check: such a call can succeed with wrong values.
 
 ### 4.5 Index Range {#index_range}
 
@@ -211,8 +211,8 @@ You can pass the same slice, with the same start and length, as an input and as 
 
 ### 4.6 Goroutines {#goroutines}
 
-A `Core` is safe to share between goroutines once configured: call its setters before sharing it, and never while another goroutine uses it. For different settings, use another `Core`. A [stream](/api/go/stream/#rules) belongs to one goroutine.
+A `Core` is safe to share between goroutines once configured: call its setters only while no other goroutine uses it and no stream opened on it is in use. For different settings, use another `Core`. A [stream](/api/go/stream/#rules) belongs to one goroutine.
 
 ## 5.0 Documentation {#docs}
 
-Every exported name carries a doc comment, and every function a runnable example. Read them with `go doc`, or on [pkg.go.dev](https://pkg.go.dev/ta-lib.github.io/go).
+Every exported name carries a doc comment, and every function a runnable example. Read them with `go doc`.

@@ -50,8 +50,10 @@ Chrome or Chromium, found on `PATH` or named by `TA_BROWSER`, and fails without
 one. `scripts/node_toolchain.py <major>` supplies a pinned,
 verified Node of each CI major on a machine without one. Go needs **Go
 `>=1.22`**; without one on `PATH`, the build scripts take the pinned, verified
-one `scripts/go_toolchain.py` supplies, and `build-libraries --backend=go` also
-runs on `scripts/go_toolchain.py 1.22`, the floor `go.mod` declares.
+one `scripts/go_toolchain.py` supplies. `scripts/build.py libraries --language=go`
+runs `build-libraries --backend=go` on the floor `go.mod` declares
+(`scripts/go_toolchain.py 1.22`), and again on the Go on `PATH` when that is
+another.
 
 Correctness is verified against three baselines: the in-process C library, which
 `ta_regtest --codegen` and `--xlang-hash` diff every language server against; the

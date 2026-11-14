@@ -75,8 +75,9 @@
 //
 // # Goroutines
 //
-// A Core is safe to share between goroutines once configured: do not call its
-// setters while another goroutine uses it. A stream belongs to one goroutine.
+// A Core is safe to share between goroutines once configured: call its setters
+// only while no other goroutine uses it and no stream opened on it is in use. A
+// stream belongs to one goroutine.
 //
 // Documentation: https://ta-lib.org/api/go/
 package talib

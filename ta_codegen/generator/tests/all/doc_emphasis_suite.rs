@@ -163,7 +163,9 @@ fn mask_code_spans(line: &str) -> String {
     out
 }
 
-/// Positions of a run of exactly `len` asterisks, ignoring masked spans.
+/// Positions of a run of exactly `len` asterisks, ignoring masked spans. A run
+/// with whitespace (or the line's edge) on both sides delimits nothing in
+/// Markdown: it is a literal, as in `a * b`.
 fn emphasis_runs(line: &str, len: usize) -> usize {
     let chars: Vec<char> = line.chars().collect();
     let mut n = 0;
@@ -171,7 +173,9 @@ fn emphasis_runs(line: &str, len: usize) -> usize {
     while i < chars.len() {
         if chars[i] == '*' {
             let run = chars[i..].iter().take_while(|&&c| c == '*').count();
-            if run == len {
+            let open_before = i == 0 || chars[i - 1].is_whitespace();
+            let open_after = chars.get(i + run).is_none_or(|c| c.is_whitespace());
+            if run == len && !(open_before && open_after) {
                 n += 1;
             }
             i += run;

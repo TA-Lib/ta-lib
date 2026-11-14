@@ -120,8 +120,8 @@ core.RestoreCandleDefault(talib.CandleSettingTypeBodyLong)
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
-([specification](/spec/settings-threads/#idle-settings)). In Go, change a `Core`'s
-settings only while no other goroutine uses it.
+([specification](/spec/settings-threads/#idle-settings)). In Go, call a `Core`'s
+setters only while no other goroutine uses it and no stream opened on it is in use.
 
 ## Setting types and defaults
 
