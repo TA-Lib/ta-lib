@@ -102,6 +102,7 @@ ta_codegen/output/java/**/*.class
 ta_codegen/output/java/library/target/
 ta_codegen/output/ts/node_modules/
 ta_codegen/output/ts/library/dist/
+ta_codegen/output/go/tools/tools
 scripts/java_consumer_check/target/
 
 # Git worktrees

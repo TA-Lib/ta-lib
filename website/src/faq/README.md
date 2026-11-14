@@ -1,16 +1,16 @@
 ---
 title: FAQ
-description: "Whether TA-Lib is still maintained (yes, actively again since 2025), whether it works on a live feed, whether the Rust, Java, C# and TypeScript libraries need the C library, and where to get support."
+description: "Whether TA-Lib is still maintained (yes, actively again since 2025), whether it works on a live feed, whether the Rust, Java, C#, TypeScript and Go libraries need the C library, and where to get support."
 containerClass: faq
 ---
 
 ## Is TA-Lib maintained?
 
-Yes, and more actively than in years. Development resumed in 2025 after a quiet decade (2014 to 2024), adding automated releases, a streaming API, and native Rust, Java, C# and TypeScript libraries. The classic C library stays as reliable as ever.
+Yes, and more actively than in years. Development resumed in 2025 after a quiet decade (2014 to 2024), adding automated releases, a streaming API, and native Rust, Java, C#, TypeScript and Go libraries. The classic C library stays as reliable as ever.
 
 ## Does TA-Lib work on a live feed?
 
-Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/) or [TypeScript](/api/typescript/stream/).
+Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) or [Go](/api/go/stream/).
 
 ## Can the same code serve a backtest and live trading?
 
@@ -24,7 +24,7 @@ Yes. A stream fed bar by bar returns the values the batch function returns over 
 
 Many patterns are rare; see [How often patterns fire](/api/candlestick-outputs/#how-often-patterns-fire).
 
-## Do the Rust, Java, C# and TypeScript libraries need the C library?
+## Do the Rust, Java, C#, TypeScript and Go libraries need the C library?
 
 No. Each is a native implementation in its own language, with no binding to C.
 

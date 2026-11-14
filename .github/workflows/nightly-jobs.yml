@@ -869,6 +869,35 @@ jobs:
         shell: bash
         run: python scripts/ts_package_check.py
 
+  # The Go module vetted, format-checked and tested on its floor toolchain and on
+  # the runner image's Go when that is another, then consumed by a throwaway
+  # module that runs the README's snippets; the PR gate only compiles it.
+  go:
+    name: Go module built and tested
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Build the module and run every suite against it
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py libraries --language=go; then
+            echo "::error::The Go module does not build, or does not pass its own suites; see the log above."
+            exit 1
+          fi
+
   # Debug-profile Rust codegen gate. The release cross-language job above wraps a
   # usize overflow silently (the wrapped value is dead), so it cannot see the
   # IMI/APO/PPO-class arithmetic-overflow bugs: those only manifest as a debug
@@ -1387,13 +1416,14 @@ jobs:
         shell: bash
         run: python3 scripts/build.py servers --language=c,rust
 
-      # The codegen sweep for C and Rust: arm64's only Rust value comparison.
-      # --language=c,rust is also the invocation that was unreachable through
-      # the CLI until the prerequisite check became per-language, so this is its
-      # live regression test on a runner with no JDK and no .NET.
-      - name: Codegen sweep (C + Rust)
+      # The codegen sweep for C, Rust and Go: arm64 Linux's only Rust and Go
+      # value comparison; scripts/go_toolchain.py supplies Go. A narrowed
+      # --language is also the invocation that was unreachable through the CLI
+      # until the prerequisite check became per-language, so this is its live
+      # regression test on a runner with no JDK and no .NET.
+      - name: Codegen sweep (C + Rust + Go)
         shell: bash
-        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=c,rust
+        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=c,rust,go
 
   # C# on arm64 — the one place the managed FMA contract can diverge and nothing
   # would notice. Math.FusedMultiplyAdd is a JIT intrinsic: on x86-64 it becomes

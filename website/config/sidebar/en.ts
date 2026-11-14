@@ -40,6 +40,11 @@ export const enSidebar = sidebar({
           children: ["api/typescript/", "api/typescript/stream/"],
         },
         {
+          text: "Go API",
+          collapsible: true,
+          children: ["api/go/", "api/go/stream/"],
+        },
+        {
           text: "Specification (for AI agents)",
           collapsible: true,
           children: [

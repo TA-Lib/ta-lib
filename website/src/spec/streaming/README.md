@@ -1,13 +1,13 @@
 ---
 title: Streaming
-description: "Every function streams in C, Rust, Java, C# and TypeScript, bit for bit with the batch call outside stated exceptions: open on history, update per closed bar, peek at a forming bar without changing state, count a skipped bar, clone to fork, and release a handle; a rejected bar changes nothing."
+description: "Every function streams in C, Rust, Java, C#, TypeScript and Go, bit for bit with the batch call outside stated exceptions: open on history, update per closed bar, peek at a forming bar without changing state, count a skipped bar, clone to fork, and release a handle; a rejected bar changes nothing."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
 A stream is defined as the batch call over every bar fed to it, bit for bit outside the exceptions in [rH1](/spec/streaming/#rh1), so a live feed reproduces a backtest over the same bars.
 
-Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` once, then `Update` per closed bar and `Peek` per forming bar; `Value`, `OutRange`, `Advance` and `Clone` at any time; `Close` in C only. Calls, examples and per-language shapes: [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/). Rules use C's verbs ([names](/spec/#names)) and codes ([failures](/spec/#failures)).
+Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` once, then `Update` per closed bar and `Peek` per forming bar; `Value`, `OutRange`, `Advance` and `Clone` at any time; `Close` in C only. Calls, examples and per-language shapes: [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/), [Go](/api/go/stream/). Rules use C's verbs ([names](/spec/#names)) and codes ([failures](/spec/#failures)).
 
 ## The caller must {#caller}
 
@@ -25,7 +25,7 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 
 ## Opening
 
-For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `historyLen` their count: a C argument, and in Rust, Java, C# and TypeScript the length of the first declared input.
+For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `historyLen` their count: a C argument, and in Rust, Java, C#, TypeScript and Go the length of the first declared input.
 
 | Rule | Condition | Code | Not checked in |
 |---|---|---|---|
@@ -33,7 +33,7 @@ For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `
 | <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) or [rB9](/spec/errors/#rb9) | `TA_BAD_PARAM` | |
 | <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is [rS7](/spec/streaming/#rs7) | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([rB5](/spec/errors/#rb5)) |
-| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other | `TA_BAD_PARAM` | Rust: cannot alias |
+| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other; in Go, a slice that starts where the other does or overlaps it | `TA_BAD_PARAM` | Rust: cannot alias |
 | <a id="rs7"></a>**rS7** | The history holds fewer than [lookback](/spec/lookback/#rl1) `+ 1` bars, an empty history included | `TA_INSUFFICIENT_HISTORY` | |
 
 <a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes ([rW1](/spec/inputs-outputs/#rw1)), compared as in [rH1](/spec/streaming/#rh1), and reports the same range. The handle it returns then updates as the one `Open` returns on the same history.
@@ -44,8 +44,8 @@ A bar is counted when it enters the range, by an accepted `Update` or by `Advanc
 
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
-| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript: value returned |
+| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent; Go: not checked |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript, Go: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `OutRange`'s `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 

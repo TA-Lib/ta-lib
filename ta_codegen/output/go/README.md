@@ -2,15 +2,11 @@
 
 The official TA-Lib in pure Go: every technical analysis function, batch and streaming. No C library to install.
 
-The Go module is planned for official release in Q4 2026. Until then `go get` fetches it untagged from the `main` branch.
+The Go module is planned for official release in Q4 2026.
 
-## Install
+## Import
 
-```sh
-go get ta-lib.github.io/go
-```
-
-Import it as `talib "ta-lib.github.io/go"`.
+Import it as `talib "ta-lib.github.io/go"`. It needs Go 1.22 or later.
 
 ## Batch
 

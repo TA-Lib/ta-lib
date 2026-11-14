@@ -65,7 +65,7 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
-<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
+<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language but Go, which has none.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
 

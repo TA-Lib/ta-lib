@@ -5,7 +5,7 @@ toc: false
 ---
 
 ::: warning Not yet released
-The TypeScript library is not on npm yet. Until it is, build it from source ([2.0](#build)).
+The TypeScript library is planned for official release in Q4 2026. Until then it is not on npm: [build it from source](#build).
 :::
 
 <p><a href="#intro">1.0 Introduction</a></p>
@@ -55,7 +55,7 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 
 ## 2.0 Add it to your project {#build}
 
-The package is not on npm yet. Until it is, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib), with Rust installed for the WebAssembly engine:
+Until the package is on npm, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib), with Rust installed for the WebAssembly engine:
 
 ```bash
 scripts/build.py wasm

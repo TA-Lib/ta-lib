@@ -1,21 +1,21 @@
 ---
 title: Specification
-description: "TA-Lib's calling contract in C, Rust, Java, C# and TypeScript, for AI-agent-driven integration: what your code can rely on, in rules the test suite checks; what it must ensure; and how names and failures map across the five languages."
+description: "TA-Lib's calling contract in C, Rust, Java, C#, TypeScript and Go, for AI-agent-driven integration: what your code can rely on, in rules the test suite checks; what it must ensure; and how names and failures map across the six languages."
 ---
 
 **TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks every rule, so your code can rely on them.**
 
-Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/) or [TypeScript](/api/typescript/).
+Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/) or [Go](/api/go/).
 
 An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and, as the [release rules](/spec/versions/#releases) define, across releases.
 
-The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C# and TypeScript code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5); TypeScript Caveat: [rJ2](/spec/#rj2)).
+The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C#, TypeScript and Go code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5); TypeScript Caveat: [rJ2](/spec/#rj2)).
 
 ## Scope {#scope}
 
-- The native APIs (C, Rust, Java, C#, TypeScript).
+- The native APIs (C, Rust, Java, C#, TypeScript, Go).
 - A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
-- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/) and [TypeScript](/api/typescript/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
+- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) and [Go](/api/go/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
 - The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
@@ -53,39 +53,39 @@ A function's canonical name is its name on [/functions/](/functions/). Every spe
 | UpperCamel | lower case, upper-case the first letter of each `_`-separated part, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`). TypeScript Caveat: [rJ1](/spec/#rj1).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule); Go keeps the canonical name, suffixed for the other calls and the handle type (`HT_TRENDLINELookback`, `HT_TRENDLINEOpen`, `HT_TRENDLINEStream`). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`). TypeScript Caveat: [rJ1](/spec/#rj1).
 
-In Rust, Java and C#, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as the optional `core` key of its options:
+In Rust, Java, C# and Go, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as the optional `core` key of its options:
 
-| Surface | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` |
-| lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` |
-| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` |
-| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` |
-| handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
-| handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
-| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | returned `MacdOut`: the sink passed, or a new one |
+| Surface | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` | `SMA` returns `(OutRange, error)` |
+| lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` | `SMALookback` returns `(int, error)` |
+| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` | none |
+| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` | `SMAOpen`, `SMAOpenAndFill` |
+| handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` | `*SMAStream` |
+| handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Value`, `OutRange`, `Advance`, `Clone` |
+| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | returned `MacdOut`: the sink passed, or a new one | three returned `float64` |
 
-| Type | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` | package `ta-lib` |
-| settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` |
-| output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` |
+| Type | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` | package `ta-lib` | module `ta-lib.github.io/go`, package `talib` |
+| settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` | `NewCore()`, then its setters |
+| output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange{BegIdx, NBElement}` |
 
 Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
 
 Enum types drop C's `TA_`. Members:
 
-| Enum | C | Rust, C# | Java, TypeScript |
-|---|---|---|---|
-| `RetCode` | `TA_BAD_PARAM` | `BadParam` | `BAD_PARAM` |
-| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` |
-| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` |
-| `MAType` | `TA_MAType_SMA` | `SMA` | `SMA` |
-| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` | `HT_DCPERIOD` |
+| Enum | C | Rust, C# | Java, TypeScript | Go |
+|---|---|---|---|---|
+| `RetCode` | `TA_BAD_PARAM` | `BadParam` | `BAD_PARAM` | `BadParam` |
+| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `CandleSettingTypeBodyLong` |
+| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RangeTypeRealBody` |
+| `MAType` | `TA_MAType_SMA` | `SMA` | `SMA` | `MATypeSMA` |
+| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` | `HT_DCPERIOD` | `FuncUnstIdHT_DCPERIOD` |
 
-Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold them on `Core`, C# in UpperCamel (`Core.IndexMax`).
+Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold them on `Core`, C# in UpperCamel (`Core.IndexMax`); Go in the package, in UpperCamel (`talib.IndexMax`).
 
 | Constant | Value |
 |---|---|
@@ -110,37 +110,37 @@ Members are upper case in Rust, Java and TypeScript and UpperCamel in C#, and ca
 
 ## How a failure reaches the caller {#failures}
 
-| Success | C, returning `TA_SUCCESS` | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `{ begIdx, values }`, or one array per output |
-| open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle | handle |
-| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | `{ stream, begIdx, values }`; range also from `outRange()` |
-| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or the outputs in the sink passed or a new one |
+| Success | C, returning `TA_SUCCESS` | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `{ begIdx, values }`, or one array per output | `OutRange`, nil error |
+| open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle | handle | handle, value(s), nil error |
+| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | `{ stream, begIdx, values }`; range also from `outRange()` | handle, `OutRange`, nil error |
+| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or the outputs in the sink passed or a new one | value(s), nil error |
 
-| Failure | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) |
-| C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` |
-| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) |
-| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) |
+| Failure | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) | a returned `error` that is a `RetCode`; `errors.Is(err, talib.BadParam)` |
+| C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` | `int` conversion of the `RetCode` |
+| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) | `talib.BadParam` |
+| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) | no display-shift call |
 
 One row per [code a function call can report](/spec/errors/#return-codes). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works. TypeScript throws `TALibError : Error` for every code, its `code` being the code's C name.
 
-| Code | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|
-| `TA_BAD_PARAM` | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` | `'TA_BAD_PARAM'` |
-| `TA_OUT_OF_RANGE_START_INDEX` | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` | `'TA_OUT_OF_RANGE_START_INDEX'` |
-| `TA_OUT_OF_RANGE_END_INDEX` | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) | `'TA_OUT_OF_RANGE_END_INDEX'` |
-| `TA_INSUFFICIENT_HISTORY` | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` | `'TA_INSUFFICIENT_HISTORY'` |
-| `TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` | `'TA_INTERNAL_ERROR'` |
-| `TA_ALLOC_ERR` | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown | never thrown |
+| Code | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|
+| `TA_BAD_PARAM` | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` | `'TA_BAD_PARAM'` | `BadParam` |
+| `TA_OUT_OF_RANGE_START_INDEX` | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` | `'TA_OUT_OF_RANGE_START_INDEX'` | `OutOfRangeStartIndex` |
+| `TA_OUT_OF_RANGE_END_INDEX` | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) | `'TA_OUT_OF_RANGE_END_INDEX'` | `OutOfRangeEndIndex` |
+| `TA_INSUFFICIENT_HISTORY` | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` | `'TA_INSUFFICIENT_HISTORY'` | `InsufficientHistory` |
+| `TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` | `'TA_INTERNAL_ERROR'` | `InternalError` |
+| `TA_ALLOC_ERR` | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown | never thrown | `AllocErr`, never returned |
 
 Failed settings:
 
-| Failure | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code | throws `TALibError` `'TA_BAD_PARAM'` |
-| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter | as the setter |
+| Failure | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code | throws `TALibError` `'TA_BAD_PARAM'` | returns `talib.BadParam` |
+| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter | as the setter | as the setter |
 
 ## TypeScript Caveats {#typescript}
 

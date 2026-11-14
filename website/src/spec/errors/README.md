@@ -1,11 +1,11 @@
 ---
 title: Errors
-description: "A rejected batch or stream call reports one code and writes no output, the same code in every language that can detect the fault: the codes a function call can return and the batch call's conditions, in C, Rust, Java, C# and TypeScript."
+description: "A rejected batch or stream call reports one code and writes no output, the same code in every language that can detect the fault: the codes a function call can return and the batch call's conditions, in C, Rust, Java, C#, TypeScript and Go."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java, C# or TypeScript caller is on the [hub](/spec/#failures).
+The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java, C#, TypeScript or Go caller is on the [hub](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -51,10 +51,10 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
 | <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
-| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C# |
+| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C#; in Go, all but an integer optional parameter outside the `int32` range |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), an empty slice in Go, `nil` included, and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
-**rB7.** Rust, Java, C# and TypeScript allocate through their runtime.
+**rB7.** Rust, Java, C#, TypeScript and Go allocate through their runtime.
 
-**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java, C# and TypeScript report `TA_INTERNAL_ERROR` without an id.
+**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java, C#, TypeScript and Go report `TA_INTERNAL_ERROR` without an id.

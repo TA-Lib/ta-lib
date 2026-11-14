@@ -52,6 +52,7 @@ NOT_PUBLISHED = "not-published"
 # reports NOT_PUBLISHED when the registry says the artifact does not exist. A
 # lookup that answers None instead puts that backend in `unknown` on every run,
 # so `--check` exits 2 and the nightly warns every night with nothing wrong.
+# Go has no row: its pages install with `go get` and name no version.
 PAGES = (
     ("C", ('website', 'src', 'install', 'c', 'README.md'), VERSION_PATTERN),
     ("Java", ('website', 'src', 'api', 'java', 'README.md'), MAVEN_VERSION_PATTERN),

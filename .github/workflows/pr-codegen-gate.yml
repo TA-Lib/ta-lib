@@ -6,8 +6,8 @@
 # output is broken on arrival. Until now the only thing checking that was the
 # 5AM regen-check on dev — i.e. after merge, one branch too late (#211).
 #
-# Cargo + Python for the regen and Rust halves, plus a JDK, a .NET SDK and Node
-# for the three managed compile jobs. WRITING a .java or a .cs is text emission
+# Cargo + Python for the regen and Rust halves, plus a JDK, a .NET SDK, Node and
+# Go for the Java, C#, TypeScript and Go compile jobs. WRITING a .java or a .cs is text emission
 # from the IR — but the text has to compile, and until #326 nothing on the PR
 # path checked that; see the java-compiles job for what that cost. RUNNING the
 # cross-language suites still needs more toolchain than this gate carries and
@@ -295,6 +295,52 @@ jobs:
       - name: Software fma, bit for bit against libm
         shell: bash
         run: python3 scripts/ts_fma_check.py --random=1000000
+
+  # The same units for Go, on the floor toolchain go.mod promises. `go vet`
+  # type-checks each package with its tests, so it compiles the hand-written
+  # suite and the generated Example functions without linking or running them;
+  # running stays in the nightly.
+  go-compiles:
+    name: Generated Go compiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: local
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the floor Go
+        shell: bash
+        run: python3 scripts/go_toolchain.py 1.22 >> "$GITHUB_PATH"
+
+      - name: Build and vet the module
+        shell: bash
+        working-directory: ta_codegen/output/go
+        run: |
+          go version
+          if ! { go build ./... && go vet ./...; }; then
+            echo "::error::The generated Go module does not compile or vet on Go 1.22. Fix the emitter (ta_codegen/generator/src/backends/go*.rs), never the generated file; core.go, doc.go, retcode.go, runtime.go and talib_test.go are hand-written."
+            exit 1
+          fi
+
+      - name: Build and vet the JSON-RPC server
+        shell: bash
+        working-directory: ta_codegen/output/go/tools
+        run: |
+          if ! { go build -o /dev/null . && go vet ./...; }; then
+            echo "::error::The generated Go server does not compile against the generated module. Fix server_gen.rs; reproduce with scripts/build.py servers --language=go."
+            exit 1
+          fi
+
+      - name: Every Go file is gofmt-clean
+        shell: bash
+        run: |
+          unformatted=$(gofmt -l ta_codegen/output/go)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt would rewrite these files: $unformatted. A generated file means the emitter's layout (backends/go_fmt.rs) drifted from gofmt's; a hand-written one, run gofmt -w on it."
+            exit 1
+          fi
 
   # The same hole for C, and the shipped library is the one that lands in the
   # tarball. Nothing on this gate compiled a line of it: regen-check writes the

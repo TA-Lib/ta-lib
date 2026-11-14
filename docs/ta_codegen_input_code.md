@@ -266,7 +266,7 @@ decorations:
 TA_RetCode <name>_ALT<n>( /* the same parameters as <name> */ )
 
 <api>  ::= BATCH | STREAM | ALL_API
-<lang> ::= C | RUST | JAVA | CSHARP | ALL_LANGUAGES
+<lang> ::= C | RUST | JAVA | CSHARP | TS | GO | ALL_LANGUAGES
 ```
 
 An alternate claims the union of its decorations, so `{ALL_API,JAVA}` plus

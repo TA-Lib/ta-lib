@@ -45,7 +45,7 @@ Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an i
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
+Every function has a display-shift call, except in Go, which has none. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
 
 | Rule | Statement |
 |---|---|

@@ -5,7 +5,7 @@ toc: false
 ---
 
 ::: warning Not yet released
-The TypeScript library is not on npm yet. Until it is, [build it from source](/api/typescript/#build).
+The TypeScript library is planned for official release in Q4 2026. Until then it is not on npm: [build it from source](/api/typescript/#build).
 :::
 
 The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.

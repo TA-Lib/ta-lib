@@ -33,22 +33,24 @@ messages quote it, and the website and generated docs print it.
 Each backend uses one fold per kind of identifier: Rust snake for functions and
 UpperCamel for types, Java lowerCamel for methods and UpperCamel for types, C#
 UpperCamel for both, TypeScript as Java with free functions in place of methods.
+Go keeps the canonical name in exported identifiers (`HT_TRENDLINE`,
+`HT_TRENDLINEStream`) and lowerCamel in unexported ones (`htTrendlineImpl`).
 
 ## 2. Per-function surface
 
-| surface | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` |
-| lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` | `smaLookback` |
-| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` | `smaDisplayShift` |
-| numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` | `smaImpl` |
-| opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` | `smaOpen` |
-| filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` | `smaOpenAndFill` |
-| open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` |
-| positional tier (not public) | the public signature | the public signature | the public signature | the public signature | `smaPositional`, `smaLookbackPositional`, `smaDisplayShiftPositional`, `smaOpenPositional`, `smaOpenAndFillPositional` |
-| handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
-| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
-| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) | `AccbandsOut` (`outUpperBand`) |
+| surface | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` | `SMA` |
+| lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` | `smaLookback` | `SMALookback` |
+| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` | `smaDisplayShift` | none |
+| numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` | `smaImpl` | `smaImpl` |
+| opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` | `smaOpen` | `SMAOpen` |
+| filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` | `smaOpenAndFill` | `SMAOpenAndFill` |
+| open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` |
+| positional tier (not public) | the public signature | the public signature | the public signature | the public signature | `smaPositional`, `smaLookbackPositional`, `smaDisplayShiftPositional`, `smaOpenPositional`, `smaOpenAndFillPositional` | the public signature |
+| handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` | `SMAStream` |
+| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Value`, `OutRange`, `Advance`, `Clone` |
+| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) | `AccbandsOut` (`outUpperBand`) | `(float64, float64, float64)` |
 
 The carrier row looks inconsistent and is not. **The suffix names the construct,
 not the function**: `<N>Out` is a mutable object the call writes into (in
@@ -63,28 +65,29 @@ there, while C#'s struct and Rust's tuple do not.
 
 ## 3. Shared types
 
-| type | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| function holder | (globals) | `Core` | `Core` | `Core` | none: one module per function |
-| builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` |
-| output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` |
-| candle setting | none: the arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` | `CandleSetting`, `rangeType`, `avgPeriod`, `factor` |
-| enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same | same |
+| type | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| function holder | (globals) | `Core` | `Core` | `Core` | none: one module per function | `Core` |
+| builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | none: `NewCore`, then `SetUnstablePeriod`, `SetCandleSetting`, `RestoreCandleDefault` on `Core` |
+| output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange{BegIdx, NBElement}` |
+| candle setting | none: the arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` | `CandleSetting`, `rangeType`, `avgPeriod`, `factor` | `CandleSetting{SettingType, RangeType, AvgPeriod, Factor}` |
+| enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same | same | same |
 
 C's word carries over where it is idiomatic in the target and is replaced where
-it is not: `outBegIdx` gives `begIdx`, `outNBElement` gives `count`.
+it is not: `outBegIdx` gives `begIdx`, `outNBElement` gives `count`. Go keeps
+`BegIdx` and `NBElement`.
 
 `MAType` keeps its two capitals in every managed backend; see E5.
 
 ## 4. Enum members
 
-| enum | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| `RetCode` | `TA_SUCCESS`, `TA_BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` |
-| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `BodyLong` | `BODY_LONG` |
-| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RealBody` | `REAL_BODY` |
-| `MAType` | `TA_MAType_SMA` | `SMA` (E2) | `SMA` | `SMA` (E2) | `SMA` |
-| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` |
+| enum | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| `RetCode` | `TA_SUCCESS`, `TA_BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` | `Success`, `BadParam` |
+| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `BodyLong` | `BODY_LONG` | `CandleSettingTypeBodyLong` |
+| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RealBody` | `REAL_BODY` | `RangeTypeRealBody` |
+| `MAType` | `TA_MAType_SMA` | `SMA` (E2) | `SMA` | `SMA` (E2) | `SMA` | `MATypeSMA` (E2) |
+| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` | `FuncUnstIdHT_DCPERIOD` (E2) |
 
 The two function-keyed enums keep the canonical spelling everywhere, Rust's
 `FuncId` with them: their members are the published metadata strings, down to
@@ -97,9 +100,9 @@ their enum rather than splitting it.
 
 ## 5. Constants
 
-| constant | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_INDEX_MAX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` |
+| constant | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_INDEX_MAX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax`, in the package |
 
 Screaming snake is the Java, TypeScript and Rust rule and the C inheritance; .NET spells
 constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
@@ -107,14 +110,14 @@ constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
 
 ## 6. Failures
 
-| surface | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown | thrown |
-| marker | n/a | n/a | `TALibFailure` | `ITALibFailure` | n/a: one class, `TALibError` |
-| bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` | `code` `'TA_BAD_PARAM'` |
-| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except rU4 ([failures](https://ta-lib.org/spec/#failures)) | `code` `'TA_OUT_OF_RANGE_*'` |
-| bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` | `code` `'TA_INTERNAL_ERROR'` |
-| short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` | `code` `'TA_INSUFFICIENT_HISTORY'` |
+| surface | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown | thrown | returned `error`, a `RetCode` |
+| marker | n/a | n/a | `TALibFailure` | `ITALibFailure` | n/a: one class, `TALibError` | n/a |
+| bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` | `code` `'TA_BAD_PARAM'` | `BadParam` |
+| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except rU4 ([failures](https://ta-lib.org/spec/#failures)) | `code` `'TA_OUT_OF_RANGE_*'` | `OutOfRange*` |
+| bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` | `code` `'TA_INTERNAL_ERROR'` | `InternalError` |
+| short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` | `code` `'TA_INSUFFICIENT_HISTORY'` | `InsufficientHistory` |
 
 Rule: an exception type is named after the platform base type it extends, so
 Java's `TALibIndexException` and C#'s `TALibArgumentOutOfRangeException` are the
@@ -129,7 +132,11 @@ TypeScript throws one class, `TALibError`, and names the failure in its `code`,
 C's spelling as a string: a `code` match survives a second copy of the package
 or a second realm, where `instanceof` does not.
 
+Go returns the `RetCode` itself as the `error`; `errors.Is` matches it.
+
 ## 7. Metadata tier
+
+Go has none.
 
 | surface | C (frozen) | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
@@ -161,12 +168,12 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 
 ## 8. Parameter names
 
-| surface | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| index range | `startIdx`, `endIdx` | `startIdx`, `endIdx` (E1) | same | same | same |
-| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same | `real`, `real0`, `prices` (E6) |
-| parameters | `optInTimePeriod` | same (E1) | same | same | `timePeriod` (E6) |
-| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same | `values`, `outMacdSignal`, `begIdx` (E6) |
+| surface | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| index range | `startIdx`, `endIdx` | `startIdx`, `endIdx` (E1) | same | same | same | same |
+| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same | `real`, `real0`, `prices` (E6) | same |
+| parameters | `optInTimePeriod` | same (E1) | same | same | `timePeriod` (E6) | same |
+| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same | `values`, `outMacdSignal`, `begIdx` (E6) | same |
 
 ## 9. Package identity
 
@@ -177,6 +184,7 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
 | C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
 | TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js` and `ta-lib/metadata` |
+| Go | module `ta-lib.github.io/go`, package `talib`, version tags `ta_codegen/output/go/vX.Y.Z` |
 
 ## 10. Exceptions: idiom loses
 
@@ -192,8 +200,8 @@ none is inherited by default.
   `#![allow(non_snake_case)]`.
 - **E2. `MAType`, `FuncUnstId` and `FuncId` members keep the canonical function
   spelling** (`SMA`, `HT_DCPERIOD`, `UNUSED_1`): the same tokens are the
-  published metadata strings, which is E3 in identifier position. Rust and C#
-  deviate from their conventions to do it; Java's and TypeScript's agree.
+  published metadata strings, which is E3 in identifier position. Rust, C# and
+  Go deviate from their conventions to do it; Java's and TypeScript's agree.
 - **E3. The canonical name stays upper-case wherever it is data**, whatever the
   method is called: `byName("RSI")`, the metadata tables, the XML, the error
   messages, rustdoc and javadoc prose, the website. A rename of the methods must
@@ -217,5 +225,5 @@ none is inherited by default.
   (E1).
 
 Also deliberate, and cheaper to state than to re-litigate: file names track the
-canonical name (`src/ta_func/ta_SMA.c`, `Core_SMA.cs`, `sma.rs`, `sma.ts`) and are not part
+canonical name (`src/ta_func/ta_SMA.c`, `Core_SMA.cs`, `sma.rs`, `sma.ts`, `sma.go`) and are not part
 of the API.

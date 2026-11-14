@@ -1,6 +1,6 @@
 ---
 title: Install
-description: "Install TA-Lib: a dozen languages, natively or through a wrapper. Native C/C++, Java, C#, Rust and TypeScript, plus community wrappers for Python, R, Go, Ruby, PHP, Zig and more."
+description: "Install TA-Lib: a dozen languages, natively or through a wrapper. Native C/C++, Java, C#, Rust, TypeScript and Go, plus community wrappers for Python, R, Ruby, PHP, Zig and more."
 toc: false
 ---
 
@@ -10,6 +10,7 @@ TA-Lib reaches a dozen languages: natively, or through a wrapper.
 
 - [C/C++](/install/c/)
 - [C#](/api/csharp/)
+- [Go](/api/go/)
 - [Java](/api/java/)
 - [Rust](/api/rust/)
 - [TypeScript](/api/typescript/)

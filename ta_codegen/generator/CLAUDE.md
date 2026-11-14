@@ -129,8 +129,8 @@ cargo run -- build-libraries [--backend=java] # Build + test the publishable lib
 `generate` writes **everything committed**, so "regenerate, then `git status` is
 clean" is a total gate over the tree. `generate-servers` and `generate-bench` are
 narrowings for callers that rebuild a server without a full regeneration; they
-own no path `generate` does not write. Emitting `.java`, `.cs` or `.ts` is text, so
-none of this needs a JDK, the .NET SDK or Node — those belong to `build`.
+own no path `generate` does not write. Emitting `.java`, `.cs`, `.ts` or `.go` is text,
+so none of this needs a JDK, the .NET SDK, Node or Go: those belong to `build`.
 
 The exception is `--func=`: whole-corpus files (`Core.java`, the servers, the
 benches) are skipped, because rendering them from a filtered set would drop every

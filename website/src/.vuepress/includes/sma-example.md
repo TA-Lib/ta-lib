@@ -96,4 +96,23 @@ const p = s.peek(formingClose);      // bar still forming; state unchanged
 
 [API](/api/typescript/) · [Streaming](/api/typescript/stream/)
 
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Batch: out[0] is the value at bar r.BegIdx.
+out := make([]float64, len(close))
+r, err := core.SMA(0, len(close)-1, close, 30, out)
+
+// Streaming: open on history, then one call per bar.
+s, last, err := core.SMAOpen(close, 30)
+v, err := s.Update(newClose)         // a bar closed
+p, err := s.Peek(formingClose)       // bar still forming; state unchanged
+```
+
+[API](/api/go/) · [Streaming](/api/go/stream/)
+
 :::

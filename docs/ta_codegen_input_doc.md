@@ -26,6 +26,7 @@ like every other backend — into each ecosystem's native format:
 - **embedded rustdoc** in the generated Rust crate (docs.rs / IDE hover / offline `cargo doc`),
 - **Javadoc** and the **C# XML doc** on the generated `Core` methods,
 - **TSDoc** on the generated TypeScript modules,
+- **Go doc comments** on the generated Go methods (pkg.go.dev / `go doc`),
 - later, the `ta_func_api.xml` description.
 
 Documentation is **authored once**, then **embedded** into each package — never merely

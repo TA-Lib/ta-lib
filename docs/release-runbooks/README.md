@@ -9,10 +9,11 @@ run it.
    - `rust-publish-runbook.md`
    - `csharp-publish-runbook.md`
    - `typescript-publish-runbook.md`
+   - `go-publish-runbook.md`
 3. `post-publish-runbook.md`
 
 About backends at rank 2: each waits for the C publish of the same version,
-none waits for another.
+none waits for another. A Go release candidate waits for nothing.
 
 **The order is load-bearing, in one direction.** Every backend takes its version
 from `VERSION`, and the last runbook bumps it.

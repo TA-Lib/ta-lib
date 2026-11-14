@@ -1,17 +1,18 @@
 ---
 title: Settings and Threads
-description: "Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across threads with no synchronization in Rust, Java and C#, C's initialization and process-wide settings and when they may change, setting validation, and the caller's rules across threads."
+description: "Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across threads with no synchronization in Rust, Java and C#, or in a Go Core configured before goroutines share it, C's initialization and process-wide settings and when they may change, setting validation, and the caller's rules across threads."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
-- <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java, C# and TypeScript have no lifecycle call: a `Core` is ready when constructed.
+- <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java, C#, TypeScript and Go have no lifecycle call: a `Core` is ready when constructed.
 - <a id="idle-settings"></a>**In C, change a setting only while no TA function is running and no stream is open.** A change is a call to `TA_SetUnstablePeriod`, `TA_SetCandleSettings`, `TA_RestoreCandleDefaultSettings` or `TA_Shutdown`. Between changes, any number of threads may call the library ([rT11](/spec/settings-threads/#rt11)); it assumes the `malloc` and `free` it allocates with are thread-safe.
-- <a id="one-writer"></a>**Run a writer alone on its stream handle.** The writers are `Update`, `Advance` and C's `Close`; not even `Peek` or `Value` may run alongside one. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`.
+- <a id="one-writer"></a>**Run a writer alone on its stream handle.** The writers are `Update`, `Advance` and C's `Close`; not even `Peek` or `Value` may run alongside one. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`. A Go stream belongs to one goroutine: no call on it may run alongside another.
+- <a id="go-settings"></a>**In Go, configure a `Core` before sharing it.** Call its setters only while no other goroutine uses it and no stream opened on it is in use. Between changes, any number of goroutines may call through it.
 - <a id="confine"></a>**Confine holders, builders and sinks to one thread.** A [parameter holder](/spec/abstract/#provides) is not thread-safe in C, Java and C#; neither is a Java or C# `CoreBuilder` nor the sink a Java multi-output stream writes into ([names](/spec/#names)). In C, the `const` in `TA_CallFunc`'s signature does not make a holder shareable: the call writes the output buffers bound to it.
 
 ## `Core` in Rust, Java, C# and TypeScript
@@ -24,7 +25,7 @@ The rows hold for every setter and getter in every language, except where a note
 
 | Rule | Condition | Language notes |
 |---|---|---|
-| <a id="rt2"></a>**rT2** | A setter fails on a target outside its enum. `TA_SetCandleSettings` and the builders' candle setter also fail on `TA_AllCandleSettings`. | In Rust and Java only the wildcard fails. |
+| <a id="rt2"></a>**rT2** | A setter fails on a target outside its enum. `TA_SetCandleSettings`, the builders' candle setter and Go's `SetCandleSetting` also fail on `TA_AllCandleSettings`. | In Rust and Java only the wildcard fails. |
 | <a id="rt3"></a>**rT3** | An unstable period is a count in `[0, TA_INDEX_MAX]` or an Auto level: `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` ([constants](/spec/#names)). | C takes an `unsigned int`, so a negative value arrives above every level and fails. Rust's `u32` cannot hold one. |
 | <a id="rt4"></a>**rT4** | Reading a setting for the set-all wildcard fails. | For the wildcard or an out-of-range id, C's `TA_GetUnstablePeriod` returns 0, which is also a legal period. |
 | <a id="rt5"></a>**rT5** | A candle setting's range type is a `TA_RangeType` member. | |
@@ -32,13 +33,13 @@ The rows hold for every setter and getter in every language, except where a note
 | <a id="rt7"></a>**rT7** | A candle setting's `factor` is finite and not negative. | |
 | <a id="rt8"></a>**rT8** | A failed call leaves every setting as it was, a wildcard call included. | Rust's `build()` returns the first failure, even after a later valid setter or `restore_candle_default`. |
 
-<a id="rt9"></a>**rT9** Two wildcards act on every member at once: `TA_FUNC_UNST_ALL` sets every unstable period, and `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings` and the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`).
+<a id="rt9"></a>**rT9** Two wildcards act on every member at once: `TA_FUNC_UNST_ALL` sets every unstable period, and `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings`, the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`) and Go's `RestoreCandleDefault`.
 
 <a id="rt12"></a>**rT12** A getter returns the value the setter stored. For an unstable period on an Auto level that is the level's constant, not the number of bars it adds ([rL6](/spec/lookback/#rl6)).
 
 ## Initial state
 
-<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default.
+<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default, and so does Go's `NewCore`.
 
 ## Threads in C
 

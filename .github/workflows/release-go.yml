@@ -1,0 +1,185 @@
+# Tag the Go module: ta_codegen/output/go/<version>, from which Go's module proxy
+# serves it. Never moves a tag.
+#
+# More info: docs/release-runbooks/go-publish-runbook.md
+
+name: Release Go module
+run-name: Release Go module ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "vX.Y.Z (after the C release of vX.Y.Z) or vX.Y.Z-rc.N"
+        required: true
+        type: string
+      commit:
+        description: "SHA of a main commit. Required for vX.Y.Z-rc.N; for vX.Y.Z defaults to the C tag's commit"
+        required: false
+        type: string
+        default: ""
+
+# Shared with the C release steps: step 1 may move the C tag this run reads.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.resolve.outputs.commit }}
+      tagged: ${{ steps.resolve.outputs.tagged }}
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0 # Fetch all history for all tags
+
+      - name: Resolve and check the commit to tag
+        id: resolve
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          COMMIT_INPUT: ${{ inputs.commit }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+            echo "::error::version '${VERSION}' is not vX.Y.Z or vX.Y.Z-rc.N. Run again with e.g. v0.8.4 or v0.8.4-rc.1."
+            exit 1
+          fi
+          RC=false
+          [[ "$VERSION" == *-rc.* ]] && RC=true
+          GO_TAG="ta_codegen/output/go/${VERSION}"
+
+          if [ -n "$COMMIT_INPUT" ]; then
+            if ! [[ "$COMMIT_INPUT" =~ ^[0-9a-f]{7,40}$ ]] || ! COMMIT=$(git rev-parse --verify --quiet "${COMMIT_INPUT}^{commit}"); then
+              echo "::error::commit '${COMMIT_INPUT}' is not the SHA of a commit in this repository. Run again with the SHA of a main commit."
+              exit 1
+            fi
+          elif [ "$RC" = true ]; then
+            echo "::error::A release candidate needs commit. Run again with the SHA of the main commit to tag."
+            exit 1
+          elif ! COMMIT=$(git rev-parse --verify --quiet "refs/tags/${VERSION}^{commit}"); then
+            echo "::error::Tag ${VERSION} does not exist. Release C first (docs/release-runbooks/c-publish-runbook.md), or pass commit."
+            exit 1
+          fi
+
+          if EXISTING=$(git rev-parse --verify --quiet "refs/tags/${GO_TAG}^{commit}"); then
+            if [ "$EXISTING" != "$COMMIT" ]; then
+              echo "::error::${GO_TAG} already exists on ${EXISTING}, not on ${COMMIT}. A Go version never moves: release the next version instead."
+              exit 1
+            fi
+            echo "${GO_TAG} is already on ${COMMIT}. Nothing to do."
+            echo "commit=${COMMIT}" >> "$GITHUB_OUTPUT"
+            echo "tagged=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git merge-base --is-ancestor "$COMMIT" refs/remotes/origin/main; then
+            echo "::error::${COMMIT} is not on main. Run again with a commit main carries."
+            exit 1
+          fi
+
+          if [ "$RC" = false ]; then
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION}") || code=000
+            case "$code" in
+              200) ;;
+              404) echo "::error::The C release ${VERSION} is not published. Finish docs/release-runbooks/c-publish-runbook.md first."; exit 1 ;;
+              *)   echo "::error::Could not check whether the C release ${VERSION} is published (HTTP ${code}). Run again."; exit 1 ;;
+            esac
+          fi
+
+          show() { git show "${COMMIT}:$1" 2>/dev/null || true; }
+          GO_MOD=ta_codegen/output/go/go.mod
+          GO_README=ta_codegen/output/go/README.md
+          MARK='planned for official release'
+          BANNER='::: warning Not yet released'
+
+          if ! grep -qx 'module ta-lib.github.io/go' <<<"$(show "$GO_MOD")"; then
+            echo "::error::${GO_MOD} at ${COMMIT} does not declare module ta-lib.github.io/go. Run again with a commit that carries the Go module."
+            exit 1
+          fi
+
+          if [ "$RC" = true ]; then
+            if ! grep -qF "$MARK" <<<"$(show "$GO_README")"; then
+              echo "::error::${GO_README} at ${COMMIT} no longer says the module is ${MARK}, so it is released content. Tag a final version, or a commit from before the line was removed."
+              exit 1
+            fi
+          else
+            bad=false
+            if grep -qF "$MARK" <<<"$(show "$GO_README")"; then
+              echo "::error::${GO_README} at ${COMMIT} still says the module is ${MARK}. Remove that line."
+              bad=true
+            fi
+            for page in website/src/api/go/README.md website/src/api/go/stream/README.md; do
+              if grep -qF "$BANNER" <<<"$(show "$page")"; then
+                echo "::error::${page} at ${COMMIT} still carries the '${BANNER}' banner. Remove that block."
+                bad=true
+              fi
+            done
+            if [ "$bad" = true ]; then
+              echo "::error::Remove them on dev, bring the change to main, and run again with commit set to that main commit."
+              exit 1
+            fi
+          fi
+
+          echo "Tagging ${GO_TAG} on ${COMMIT}."
+          echo "commit=${COMMIT}" >> "$GITHUB_OUTPUT"
+          echo "tagged=false" >> "$GITHUB_OUTPUT"
+
+      - name: Install the floor Go
+        if: steps.resolve.outputs.tagged == 'false'
+        shell: bash
+        run: python3 scripts/go_toolchain.py 1.22 >> "$GITHUB_PATH"
+
+      - name: Build and vet the module at the commit
+        if: steps.resolve.outputs.tagged == 'false'
+        shell: bash
+        env:
+          COMMIT: ${{ steps.resolve.outputs.commit }}
+          GOTOOLCHAIN: local
+        run: |
+          git checkout --quiet --detach "$COMMIT"
+          cd ta_codegen/output/go
+          go version
+          if ! { go build ./... && go vet ./...; }; then
+            echo "::error::The Go module at ${COMMIT} does not build or vet on Go 1.22. Fix it on dev and tag a later main commit."
+            exit 1
+          fi
+
+  # The Go toolchain above runs without this job's write token.
+  tag:
+    needs: check
+    if: needs.check.outputs.tagged == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0 # Fetch all history for all tags
+
+      - name: Push the Go module tag
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          COMMIT: ${{ needs.check.outputs.commit }}
+        run: |
+          GO_TAG="ta_codegen/output/go/${VERSION}"
+          git tag "$GO_TAG" "$COMMIT"
+          if ! git push origin "refs/tags/${GO_TAG}"; then
+            echo "::error::Pushing ${GO_TAG} failed. Run the workflow again: it reports a tag already on ${COMMIT} as done, and refuses one elsewhere."
+            exit 1
+          fi
+          echo "Tagged ${GO_TAG} on ${COMMIT}."

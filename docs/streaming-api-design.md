@@ -1,6 +1,6 @@
 # Streaming (incremental) API
 
-Every function in the corpus streams, in C, Rust, Java, C# and TypeScript: a handle warmed
+Every function in the corpus streams, in C, Rust, Java, C#, TypeScript and Go: a handle warmed
 on history, then one bar in and that bar's value out, bit-identical to what the
 batch tier reports for the same bar. The flag is per function (`stream` in the
 YAML `flags:`, surfaced as `TA_FUNC_FLG_STREAM`); everything else — the plan,
@@ -33,7 +33,7 @@ contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
 it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
-`out_range()`, `outRange()` (Java, TypeScript), `OutRange`. It is the batch tier's range and lives
+`out_range()`, `outRange()` (Java, TypeScript), `OutRange` (C#, Go). It is the batch tier's range and lives
 in the batch tier's domain, so the last bar a handle can reach is `INDEX_MAX`:
 past it `update` and `advance` refuse, permanently. Which calls move
 it is rules rU4, rH5 and rH6 (https://ta-lib.org/spec/streaming/#ru4); how the
@@ -46,12 +46,13 @@ the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
 apart. The `INDEX_MAX` ceiling is what makes it fallible: C's returns a
-`TA_RetCode`, Rust's `Result<(), RetCode>`, and Java's, C#'s and TypeScript's are
-`void` and throw.
+`TA_RetCode`, Rust's `Result<(), RetCode>`, Go's an `error`, and Java's, C#'s and
+TypeScript's are `void` and throw.
 
 Multi-output functions produce one value per output per update: an out-pointer
 each in C, a tuple in Rust, a caller-owned sink in Java, a `<N>Out` in TypeScript
-(filled into the caller's sink when one is passed), a `readonly record struct` in C#.
+(filled into the caller's sink when one is passed), a `readonly record struct` in C#,
+positional results in Go.
 
 ## Peek commits nothing, and copies nothing that grows
 
@@ -250,6 +251,8 @@ Shape rules that are not visible in those lines:
   call's options object, `core` included. Every rejection throws `TALibError`, whose `code` names it.
   The state fields are public and tagged `@internal`: the module-local step and
   open frames must reach them, which neither `private` nor `#private` allows.
+- Go handles are `*<N>Stream`, opened by methods of `Core`. `Open`, `Update`,
+  `Peek` and `Advance` return an `error` that is a `RetCode`.
 - `value()` re-reads the value(s) at the last bar the stream counted, without
   recomputing.
 - A **multi-output Java** handle answers through a caller-owned sink —
@@ -281,6 +284,9 @@ Shape rules that are not visible in those lines:
   `MemoryMarshal.AsBytes`, which is what makes the two comparable at all.
   TypeScript compares the views' `buffer` and byte ranges, so it catches a partial
   or cross-typed overlap too; `===` would miss two views of one buffer.
+  Go catches the same start and a partial overlap, except through a slice whose
+  capacity a three-index expression cut, which passes unreported as in C. A
+  `float64`/`int32` pair cannot share memory without `unsafe`, so none is compared.
 - `Integer.MIN_VALUE` keeps its batch meaning — use the documented default — in a
   streaming open, and the gate asserts `open(MIN_VALUE) == open(default)`
   bitwise.
@@ -324,6 +330,10 @@ One rule holds in every language, each enforcing it its own way:
 - **TypeScript** keeps settings per `Core` as Java does, and a stream captures
   its `Core` at open. JavaScript shares no object between threads, so a handle
   never meets a concurrent writer.
+- **Go** states it as a caller rule, as C does
+  (https://ta-lib.org/spec/settings-threads/#go-settings): a `Core`'s setters
+  change it in place, and a handle keeps a pointer to the `Core` that opened it.
+  A handle belongs to one goroutine.
 
 ## How it fits ta_codegen
 

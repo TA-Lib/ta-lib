@@ -97,6 +97,24 @@ if __name__ == "__main__":
             print("       Remove the banner block; this release ships it.")
             exit(1)
 
+    # The Go module is released on its own (release-go.yml), so a C release may
+    # carry these lines or not, but all three or none.
+    go_unreleased = (
+        (path_join(root_dir, 'ta_codegen', 'output', 'go', 'README.md'), 'planned for official release'),
+        (path_join(root_dir, 'website', 'src', 'api', 'go', 'README.md'), '::: warning Not yet released'),
+        (path_join(root_dir, 'website', 'src', 'api', 'go', 'stream', 'README.md'), '::: warning Not yet released'),
+    )
+    go_marked = []
+    for page, banner in go_unreleased:
+        with open(page, 'r') as f:
+            go_marked.append(banner in f.read())
+    if any(go_marked) and not all(go_marked):
+        print("Error: the Go module's \"not yet released\" lines disagree.")
+        for (page, banner), marked in zip(go_unreleased, go_marked):
+            print(f"       {page}: {'has' if marked else 'lacks'} '{banner}'")
+        print("       Remove all three or none.")
+        exit(1)
+
     sources_digest = check_sources_digest(root_dir)
     if not sources_digest:
         print("Error: Source digest inconsistencies found. Did you forget to run scripts/sync.py?")

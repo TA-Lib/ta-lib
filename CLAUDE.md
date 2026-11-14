@@ -4,9 +4,9 @@
 
 All indicator code is **generated** by a single generator, **`ta_codegen`**
 (`ta_codegen/generator/`, Rust): it parses `ta_codegen/input/` → IR → renders
-per-backend (C, Java, C#, Rust, TypeScript). The C backend is generated **in
+per-backend (C, Java, C#, Rust, TypeScript, Go). The C backend is generated **in
 place** into `src/ta_func` / `src/ta_abstract` (the shipped library); the
-Rust/Java/C#/TypeScript bindings live under `ta_codegen/output/`. `generate` owns
+Rust/Java/C#/TypeScript/Go bindings live under `ta_codegen/output/`. `generate` owns
 every committed file it writes — the build-system source lists and the ta-lib.org
 function pages included — so "regenerate, then `git status` is clean" is a total
 gate over the tree.
@@ -48,7 +48,10 @@ which the build runs itself whenever the lockfile's hash differs from the
 in a throwaway project; `scripts/ts_browser_check.py` runs it in a headless
 Chrome or Chromium, found on `PATH` or named by `TA_BROWSER`, and fails without
 one. `scripts/node_toolchain.py <major>` supplies a pinned,
-verified Node of each CI major on a machine without one.
+verified Node of each CI major on a machine without one. Go needs **Go
+`>=1.22`**; without one on `PATH`, the build scripts take the pinned, verified
+one `scripts/go_toolchain.py` supplies, and `build-libraries --backend=go` also
+runs on `scripts/go_toolchain.py 1.22`, the floor `go.mod` declares.
 
 Correctness is verified against three baselines: the in-process C library, which
 `ta_regtest --codegen` and `--xlang-hash` diff every language server against; the
@@ -110,7 +113,9 @@ function maps its options object onto `<n>Positional` (`@internal`), which holds
 the checks in C's argument order and is what the metadata API and cross-calls
 call. TypeScript adds that one word to the vocabulary below: there, each public
 entry point is its `Positional` function behind that wrapper, so the aliasing
-guard sits in `<n>OpenAndFillPositional`.
+guard sits in `<n>OpenAndFillPositional`. Go has the same two tiers: the
+exported `<N>` returns `(OutRange, error)`, and the unexported `<n>Impl` keeps
+C's shape.
 
 **Two suffixes, one meaning each:**
 
@@ -122,9 +127,9 @@ guard sits in `<n>OpenAndFillPositional`.
 That is the whole vocabulary, deliberately — one word per concept. C spells them
 `<N>_OpenImpl` / `<N>_StepImpl` (plus its own `TA_<N>_ReleaseImpl`; Rust has
 `Drop`, the managed backends have GC) and stays the reference spelling below.
-Rust, Java, C# and TypeScript recase `<N>` and the verb to their own idiom rather
-than mirroring C: Rust `<n>_open_impl`, Java and TypeScript `<n>OpenImpl`, C#
-`<N>OpenImpl` (`<n>` =
+Rust, Java, C#, TypeScript and Go recase `<N>` and the verb to their own idiom
+rather than mirroring C: Rust `<n>_open_impl`, Java, TypeScript and Go
+`<n>OpenImpl`, C# `<N>OpenImpl` (`<n>` =
 camelCase, `<N>` = PascalCase, the acronym single-capitalized — `Sma`, not
 `SMA`). Neither tier is public anywhere, so no runtime gate can see the spelling:
 `the_transition_tier_is_step_impl_in_every_backend` pins the *shape* — one word
@@ -171,7 +176,7 @@ key on rather than a name list.
 
 A cross-call inside a body calls the callee's *public* tier, in every backend,
 and lets its rejection surface: a throw in Java, C# and TypeScript, an
-`Err(RetCode)` in Rust, a returned code in C. The callers that need a code back
+`Err(RetCode)` in Rust, a returned error in Go, a returned code in C. The callers that need a code back
 convert it themselves: the JSON-RPC servers, and C#'s `ParamHolder.TryCall`
 (whose conversion is the direct path's too — its thunk calls the function's own
 public overload, like C's frames and Java's `Dispatch`).
@@ -181,6 +186,7 @@ public overload, like C's frames and Java's `Dispatch`).
 (`ParamHolder::call`) and TypeScript (`ParamHolder.call`) all do, so binding a
 leg shorter than the requested range is `TA_BAD_PARAM` in every port and
 inexpressible in C, whose setters take a bare pointer and carry no length.
+Go has no metadata tier.
 
 **And a rejected setter leaves the holder as it found it** — the price setter
 validates every consumed component before it writes any. The case that makes it
@@ -239,9 +245,9 @@ scripts/build.py generate       # Regenerate every committed source for all back
                                 # so no JDK or .NET SDK for the Java/C# sources)
 scripts/build.py servers        # Generate + compile the JSON-RPC language servers (cargo),
                                 # and refresh bin/ta_regtest so bin/ can be driven by hand
-scripts/build.py libraries      # Build the publishable Java jars, C# library and npm
-                                # package from the committed source and run their
-                                # suites against them
+scripts/build.py libraries      # Build the publishable Java jars, C# library, npm
+                                # package and Go module from the committed source and
+                                # run their suites against them
 
 # Test
 scripts/build.py regen-check    # The PR gate: regenerating must change nothing
@@ -263,8 +269,9 @@ cargo run -- generate --func=SMA --backend=rust  # Specific function + backend
 cargo run -- generate-servers                    # Only the JSON-RPC servers (a narrowing
                                                  # of `generate`, for `build`)
 cargo run -- build                               # Compile servers into bin/
-cargo run -- build-libraries                     # Build the publishable Java/C# libraries
-                                                 # and run their suites (no server, no bench)
+cargo run -- build-libraries                     # Build the publishable Java/C#/TS/Go
+                                                 # libraries and run their suites (no
+                                                 # server, no bench)
 cargo test                                       # ta_codegen's own test suite
 
 # ta_regtest directly (from bin/)
@@ -285,7 +292,7 @@ wire shape; that is the server's job, not the library's. In **Java, C# and
 TypeScript** a request declaring itself timed (`"timed":1`, sent only by
 `ta_bench`) calls the BODY instead: these servers double as the cross-language
 benchmark, and nothing measured may quietly acquire the public tier's argument
-checks. Rust cannot split, `tools` being a separate crate.
+checks. Rust and Go cannot split, their `tools` being a separate crate or module.
 
 A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the
 autotools `Makefile.am` — the dist-verification CI path builds with autotools, so
