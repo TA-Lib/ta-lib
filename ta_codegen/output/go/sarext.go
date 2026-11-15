@@ -374,7 +374,8 @@ func (c *Core) SAREXTDisplayShift(optInStartValue, optInOffsetOnReverse, optInAc
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SAREXT(startIdx, endIdx int, inHigh, inLow []float64, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort float64, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -937,8 +938,9 @@ func (c *Core) sarextOpenInternal(inHigh, inLow []float64, startIdx int32, optIn
 // of [Core.SAREXT].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.SAREXTLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.SAREXTLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) SAREXTOpen(inHigh, inLow []float64, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort float64) (*SAREXTStream, float64, error) {
 	sp, err := c.sarextOpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
 	if err != nil {
@@ -955,7 +957,8 @@ func (c *Core) SAREXTOpen(inHigh, inLow []float64, optInStartValue, optInOffsetO
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.SAREXTOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SAREXTOpenAndFill(inHigh, inLow []float64, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort float64, outReal []float64) (*SAREXTStream, OutRange, error) {
 	if len(inHigh) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

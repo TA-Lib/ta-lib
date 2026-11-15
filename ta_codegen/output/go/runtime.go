@@ -92,6 +92,16 @@ func minI(a, b int32) int32 {
 	return b
 }
 
+// selF is c ? a : b without a branch: Go selects an integer with a
+// conditional move but a float with a jump.
+func selF(c bool, a, b float64) float64 {
+	ab, bb := math.Float64bits(a), math.Float64bits(b)
+	if c {
+		bb = ab
+	}
+	return math.Float64frombits(bb)
+}
+
 func isZero(x float64) bool {
 	return -0.00000000000001 < x && x < 0.00000000000001
 }
@@ -108,8 +118,7 @@ func isFinite(x float64) bool {
 	return !math.IsNaN(x) && !math.IsInf(x, 0)
 }
 
-// candleRange and candleAverage are ta_utility.h's TA_CANDLERANGE_OF and
-// TA_CANDLEAVERAGE_OF, term for term.
+// candleRange is ta_utility.h's TA_CANDLERANGE_OF, term for term.
 func candleRange(rangeType int32, open, high, low, close float64) float64 {
 	switch rangeType {
 	case 0:
@@ -124,20 +133,6 @@ func candleRange(rangeType int32, open, high, low, close float64) float64 {
 		return (high - upper) + (lower - low)
 	}
 	return 0.0
-}
-
-func candleAverage(rangeType, avgPeriod int32, factor, sum, open, high, low, close float64) float64 {
-	var avg float64
-	if avgPeriod != 0 {
-		avg = sum / float64(avgPeriod)
-	} else {
-		avg = candleRange(rangeType, open, high, low, close)
-	}
-	divisor := 1.0
-	if rangeType == 2 {
-		divisor = 2.0
-	}
-	return float64(factor*avg) / divisor
 }
 
 // sameStart is C's pointer equality: both slices start at one element.

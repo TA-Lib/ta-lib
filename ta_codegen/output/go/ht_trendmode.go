@@ -1748,7 +1748,8 @@ func (c *Core) htTrendmodeOpenInternal(inReal []float64, startIdx int32) (*HT_TR
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.HT_TRENDMODELookback] bars.
+// [Core.HT_TRENDMODELookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) HT_TRENDMODEOpen(inReal []float64) (*HT_TRENDMODEStream, int32, error) {
 	sp, err := c.htTrendmodeOpenInternal(inReal, 0)
 	if err != nil {

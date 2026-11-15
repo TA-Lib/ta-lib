@@ -139,7 +139,9 @@ func (c *Core) TRANGEDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) TRANGE(startIdx, endIdx int, inHigh, inLow, inClose, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -372,8 +374,8 @@ func (c *Core) trangeOpenInternal(inHigh, inLow, inClose []float64, startIdx int
 // inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.TRANGELookback] bars, and [BadParam] for histories of different
-// lengths.
+// [Core.TRANGELookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) TRANGEOpen(inHigh, inLow, inClose []float64) (*TRANGEStream, float64, error) {
 	sp, err := c.trangeOpenInternal(inHigh, inLow, inClose, 0)
 	if err != nil {
@@ -390,7 +392,8 @@ func (c *Core) TRANGEOpen(inHigh, inLow, inClose []float64) (*TRANGEStream, floa
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.TRANGEOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) TRANGEOpenAndFill(inHigh, inLow, inClose, outReal []float64) (*TRANGEStream, OutRange, error) {
 	if len(inHigh) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

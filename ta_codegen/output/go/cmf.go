@@ -235,7 +235,8 @@ func (c *Core) CMFDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) CMF(startIdx, endIdx int, inHigh, inLow, inClose, inVolume []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -602,8 +603,9 @@ func (c *Core) cmfOpenInternal(inHigh, inLow, inClose, inVolume []float64, start
 // parameters are those of [Core.CMF].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.CMFLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.CMFLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) CMFOpen(inHigh, inLow, inClose, inVolume []float64, optInTimePeriod int) (*CMFStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -623,7 +625,8 @@ func (c *Core) CMFOpen(inHigh, inLow, inClose, inVolume []float64, optInTimePeri
 // no memory with an input or another output.
 //
 // The errors are those of [Core.CMFOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) CMFOpenAndFill(inHigh, inLow, inClose, inVolume []float64, optInTimePeriod int, outReal []float64) (*CMFStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

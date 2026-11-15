@@ -188,7 +188,8 @@ func (c *Core) SIDisplayShift(optInLimitMove float64, outputIdx int) (int, error
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SI(startIdx, endIdx int, inOpen, inHigh, inLow, inClose []float64, optInLimitMove float64, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -481,8 +482,8 @@ func (c *Core) siOpenInternal(inOpen, inHigh, inLow, inClose []float64, startIdx
 // parameters are those of [Core.SI].
 //
 // The error is [InsufficientHistory] for a history of at most [Core.SILookback]
-// bars, and [BadParam] for a parameter out of range or histories of different
-// lengths.
+// bars, [OutOfRangeEndIndex] for one longer than [IndexMax]+1 bars, and
+// [BadParam] for a parameter out of range or histories of different lengths.
 func (c *Core) SIOpen(inOpen, inHigh, inLow, inClose []float64, optInLimitMove float64) (*SIStream, float64, error) {
 	sp, err := c.siOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInLimitMove)
 	if err != nil {
@@ -499,7 +500,8 @@ func (c *Core) SIOpen(inOpen, inHigh, inLow, inClose []float64, optInLimitMove f
 // memory with an input or another output.
 //
 // The errors are those of [Core.SIOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SIOpenAndFill(inOpen, inHigh, inLow, inClose []float64, optInLimitMove float64, outReal []float64) (*SIStream, OutRange, error) {
 	if len(inOpen) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

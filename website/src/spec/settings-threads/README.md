@@ -39,7 +39,7 @@ The rows hold for every setter and getter in every language, except where a note
 
 ## Initial state
 
-<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default, and so does Go's `NewCore`.
+<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default, and so do Go's `NewCore` and a zero `Core`.
 
 ## Threads in C
 

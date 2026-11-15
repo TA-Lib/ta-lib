@@ -44,7 +44,7 @@ const SHADOWED: &[&str] = &[
     "iota", "len", "make", "max", "min", "new", "nil", "panic", "print", "println", "real", "recover", "rune",
     "string", "true", "uint", "uint16", "uint32", "uint64", "uint8", "uintptr", "c", "math", "unsafe", "b2i", "f2i",
     "maxF", "minF", "maxI", "minI", "isZero", "isZeroScaled", "isZeroOrNeg", "isFinite", "candleRange",
-    "candleAverage", "sameStart", "overlaps", "overlapsPartly", "fitsInt32", "requiredOut", "Core", "OutRange",
+    "candles", "selF", "sameStart", "overlaps", "overlapsPartly", "fitsInt32", "requiredOut", "Core", "OutRange",
     "RetCode", "MAType", "FuncUnstId", "IndexMax", "IntegerDefault", "RealDefault", "RealMin", "RealMax",
 ];
 
@@ -236,6 +236,8 @@ pub(super) struct Ctx<'a> {
     /// Locals of C type `TA_RetCode`.
     pub(super) codes: HashSet<String>,
     pub(super) ret: Ret,
+    /// A batch or open body, whose candle colour bounds take no branch.
+    pub(super) colour_selects: Cell<bool>,
 }
 
 const RETCODE_NAMES: &[(&str, &str)] = &[
@@ -367,6 +369,7 @@ impl<'a> Ctx<'a> {
             arrays,
             codes,
             ret,
+            colour_selects: Cell::new(false),
         }
     }
 
@@ -385,7 +388,19 @@ impl<'a> Ctx<'a> {
         let mut arrays = HashSet::new();
         let mut codes = HashSet::new();
         collect_decl_kinds(body, &mut arrays, &mut codes);
-        Ctx { svc, func, env, fma: None, fma_ref: Some(fma), counter: Cell::new(0), shared_counter: Some(counter), arrays, codes, ret }
+        Ctx {
+            svc,
+            func,
+            env,
+            fma: None,
+            fma_ref: Some(fma),
+            counter: Cell::new(0),
+            shared_counter: Some(counter),
+            arrays,
+            codes,
+            ret,
+            colour_selects: Cell::new(false),
+        }
     }
 
     fn fma_sets(&self) -> Option<&FmaVarSets> {
@@ -407,8 +422,9 @@ impl<'a> Ctx<'a> {
     }
 
     /// A stepped variable is read nowhere else in its statement, so moving the step
-    /// before or after the statement is exact. Helpers are substituted after this
-    /// check, so it does not cover a step inside a helper call's argument.
+    /// before or after the statement is exact. A helper substituted textually may
+    /// read a parameter twice, so a step in its argument is refused where the
+    /// helper is substituted.
     pub(super) fn check_steps(&self, exprs: &[&Expr]) {
         let mut stepped = Vec::new();
         let mut counts = HashMap::new();
@@ -423,7 +439,24 @@ impl<'a> Ctx<'a> {
         }
     }
 
+    fn refuse_stepped_args(&self, helper: &str, args: &[Expr]) {
+        let mut stepped = Vec::new();
+        for a in args {
+            stepped_vars(a, &mut stepped);
+        }
+        if let Some(v) = stepped.first() {
+            self.fail(&format!("`{v}` is stepped in an argument of `{helper}`, which is substituted textually"));
+        }
+    }
+
     pub(super) fn hoist(&self, e: &Expr) -> (Expr, Vec<(String, VarType, Vec<Statement>)>) {
+        crate::streaming::walk_expr(e, &mut |x| {
+            if let Expr::FuncCall(name, args) = x {
+                if self.svc.helpers.get(name).is_some() && !JAVA_CANDLE_FNS.contains(&name.as_str()) {
+                    self.refuse_stepped_args(name, args);
+                }
+            }
+        });
         let mut hoisted = Vec::new();
         let mut cnt = self.counter().get();
         let new = hoist_block_helpers(e, self.svc.helpers, &mut hoisted, &mut cnt, JAVA_CANDLE_FNS);
@@ -752,6 +785,10 @@ impl<'a> Ctx<'a> {
         let svc = self.svc;
         if let Some(helper) = svc.helpers.get(fname) {
             if let Some(inlined) = self.env.inline_helper(helper, args) {
+                self.refuse_stepped_args(fname, args);
+                if let Some(g) = self.colour_bound(fname, args) {
+                    return (g, CType::Real);
+                }
                 return self.lower(&inlined, sc);
             }
         }
@@ -764,11 +801,8 @@ impl<'a> Ctx<'a> {
                 return (GExpr::call("candleRange", a), CType::Real);
             }
             "ta_candleaverage" if args.len() == 8 => {
-                let mut a = vec![self.lower_as(&args[0], CType::Int32, sc), self.lower_as(&args[1], CType::Int32, sc)];
-                for x in &args[2..] {
-                    a.push(self.lower_as(x, CType::Real, sc));
-                }
-                return (GExpr::call("candleAverage", a), CType::Real);
+                self.refuse_stepped_args(fname, args);
+                return self.lower(&candle_average(args), sc);
             }
             _ => {}
         }
@@ -803,7 +837,10 @@ impl<'a> Ctx<'a> {
                     (copy_call(d, doff, s, soff, n), CType::Int32)
                 }
                 SpecialBuiltin::PerToK => {
-                    let x = self.lower_as(&args[0], CType::Real, sc);
+                    let mut x = self.lower_as(&args[0], CType::Real, sc);
+                    if is_const(&args[0]) {
+                        x = typed(x);
+                    }
                     let den = GExpr::bin(x, GOp::Add, GExpr::name("1.0")).paren();
                     (GExpr::bin(GExpr::name("2.0"), GOp::Quo, den), CType::Real)
                 }
@@ -858,6 +895,30 @@ impl<'a> Ctx<'a> {
             };
         }
         self.registry_call(fname, args, sc)
+    }
+
+    /// `high - colour max` or `colour min - low`, the colour picked by bits:
+    /// close against open is a coin flip on real bars, and Go branches on a
+    /// float select.
+    fn colour_bound(&self, fname: &str, args: &[Expr]) -> Option<GExpr> {
+        if !self.colour_selects.get() {
+            return None;
+        }
+        let (upper, [bound, close, open]) = (fname == "ta_uppershadow", args) else { return None };
+        if !upper && fname != "ta_lowershadow" {
+            return None;
+        }
+        let mut sc = Scope::default();
+        let [bound, close, open] = [bound, close, open].map(|e| self.lower_as(e, CType::Real, &mut sc));
+        if !sc.is_empty() {
+            return None;
+        }
+        let white = GExpr::bin(close.clone(), GOp::Ge, open.clone());
+        Some(if upper {
+            GExpr::bin(bound, GOp::Sub, GExpr::call("selF", vec![white, close, open]))
+        } else {
+            GExpr::bin(GExpr::call("selF", vec![white, open, close]), GOp::Sub, bound)
+        })
     }
 
     fn array_ref(&self, e: &Expr, sc: &mut Scope) -> (GExpr, GExpr) {
@@ -1432,6 +1493,74 @@ impl<'a> Ctx<'a> {
     }
 }
 
+/// `ta_utility.h`'s `TA_CANDLEAVERAGE_OF` as an expression: a call would cost
+/// every register the loop holds, and a literal range type folds its arms.
+fn candle_average(a: &[Expr]) -> Expr {
+    let bin = |l: Expr, op: BinOp, r: Expr| Expr::BinOp(Box::new(l), op, Box::new(r));
+    let (rt, period, factor, sum) = (&a[0], &a[1], &a[2], &a[3]);
+    let range = Expr::FuncCall("ta_candlerange".to_string(), std::iter::once(rt.clone()).chain(a[4..].iter().cloned()).collect());
+    let avg = Expr::Ternary(
+        Box::new(bin(period.clone(), BinOp::NotEq, Expr::IntLiteral(0))),
+        Box::new(bin(sum.clone(), BinOp::Div, period.clone())),
+        Box::new(range),
+    );
+    let scaled = bin(factor.clone(), BinOp::Mul, avg);
+    match rt {
+        Expr::IntLiteral(2) => bin(scaled, BinOp::Div, Expr::Literal(2.0)),
+        Expr::IntLiteral(_) => scaled,
+        _ => {
+            let shadows = bin(rt.clone(), BinOp::Eq, Expr::IntLiteral(2));
+            bin(scaled, BinOp::Div, Expr::Ternary(Box::new(shadows), Box::new(Expr::Literal(2.0)), Box::new(Expr::Literal(1.0))))
+        }
+    }
+}
+
+/// A candlestick body's range-type copies, each folded type a literal
+/// `candleRange` inlines to its one arm.
+pub(super) fn range_type_copies(body: &[Statement], func: &FuncDef) -> Option<super::range_type_copy::Copies> {
+    super::range_type_copy::split(body, &func.opt_outs, &|t| Expr::IntLiteral(range_type_code(t)))
+}
+
+fn range_type_code(t: super::range_type_copy::RangeType) -> i64 {
+    use super::range_type_copy::RangeType;
+    match t {
+        RangeType::RealBody => 0,
+        RangeType::HighLow => 1,
+        RangeType::Shadows => 2,
+    }
+}
+
+impl Ctx<'_> {
+    /// The statements of `body` but its declarations, a candlestick's in its
+    /// range-type copies.
+    pub(super) fn body_stmts(&self, body: &[Statement], func: &FuncDef, out: &mut Vec<String>) {
+        let top = |stmts: &[Statement], out: &mut Vec<String>| {
+            for s in stmts.iter().filter(|s| !matches!(s, Statement::VarDecl { .. })) {
+                self.stmt(s, out);
+            }
+        };
+        let Some(copies) = range_type_copies(body, func) else { return top(body, out) };
+        top(&copies.head, out);
+        for (k, arm) in copies.arms.iter().enumerate() {
+            let guard = arm.guard.as_ref().map(|g| {
+                g.iter()
+                    .map(|(s, t)| format!("{} == {}", super::range_type_copy::range_type_var(s), range_type_code(*t)))
+                    .collect::<Vec<_>>()
+                    .join(" && ")
+            });
+            out.push(match (k, guard) {
+                (0, Some(g)) => format!("if {g} {{"),
+                (_, Some(g)) => format!("}} else if {g} {{"),
+                (_, None) => "} else {".to_string(),
+            });
+            let mut inner = Vec::new();
+            top(&arm.body, &mut inner);
+            out.extend(indented(&inner));
+        }
+        out.push("}".to_string());
+    }
+}
+
 /// An `int32` value where the public tier takes an `int`.
 pub(super) fn as_int(g: GExpr) -> GExpr {
     match &g {
@@ -1644,8 +1773,11 @@ pub(super) fn opt_validation(func: &FuncDef, fail: &str, enums: &HashMap<String,
 
 pub(super) fn emit_candle_unpacking(settings: &BTreeSet<String>) -> Vec<String> {
     let mut out = Vec::new();
+    if !settings.is_empty() {
+        out.push("candles := c.candles()".to_string());
+    }
     for s in settings {
-        let at = format!("c.candleSettings[CandleSettingType{s}]");
+        let at = format!("candles[CandleSettingType{s}]");
         out.push(format!("{s}_rangeType := int32({at}.RangeType)"));
         out.push(format!("{s}_avgPeriod := int32({at}.AvgPeriod)"));
         out.push(format!("{s}_factor := {at}.Factor"));
@@ -1766,6 +1898,7 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
     let body: &[Statement] = &folded;
     let ctx = Ctx::new(svc, &func.name, body, &func.outputs, true, Ret::Code);
     ctx.env.seed_signature(func);
+    ctx.colour_selects.set(true);
 
     let mut params = vec![("startIdx".to_string(), "int32".to_string()), ("endIdx".to_string(), "int32".to_string())];
     for i in &func.inputs {
@@ -1822,11 +1955,7 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
         }
     }
     ctx.initializers(body, &mut lines);
-    for stmt in body {
-        if !matches!(stmt, Statement::VarDecl { .. }) {
-            ctx.stmt(stmt, &mut lines);
-        }
-    }
+    ctx.body_stmts(body, func, &mut lines);
     func_text(&format!("func (c *Core) {name}({}) RetCode", param_list(&params)), &lines)
 }
 
@@ -1895,18 +2024,7 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
         l.push(format!("if len({0}) == 0 || len({0}) < outLen {{", o.name));
         l.extend(fail("BadParam"));
     }
-    let mut overlap = Vec::new();
-    for o in &func.outputs {
-        for i in func.inputs.iter().filter(|i| array_type(&i.param_type) == array_type(&o.param_type)) {
-            let partly = o.param_type == ParamType::Real && i.param_type == ParamType::Real;
-            overlap.push(format!("{}({}, {})", if partly { "overlapsPartly" } else { "overlaps" }, o.name, i.name));
-        }
-    }
-    for (k, a) in func.outputs.iter().enumerate() {
-        for b in func.outputs[k + 1..].iter().filter(|b| array_type(&b.param_type) == array_type(&a.param_type)) {
-            overlap.push(format!("overlaps({}, {})", a.name, b.name));
-        }
-    }
+    let overlap = batch_overlap_checks(func);
     if !overlap.is_empty() {
         l.push(format!("if {} {{", overlap.join(" || ")));
         l.extend(fail("BadParam"));
@@ -1924,6 +2042,24 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
     l.push("return OutRange{BegIdx: int(outBegIdx), NBElement: int(outNBElement)}, nil".to_string());
     let doc = super::go_doc::batch_docs(func, svc.enums, svc.registry);
     format!("{doc}{}", func_text(&format!("func (c *Core) {}({}) (OutRange, error)", names.public, param_list(&params)), &l))
+}
+
+/// The public batch tier's sharing tests: each output against every input and
+/// every other output of its element type.
+pub(super) fn batch_overlap_checks(func: &FuncDef) -> Vec<String> {
+    let mut overlap = Vec::new();
+    for o in &func.outputs {
+        for i in func.inputs.iter().filter(|i| array_type(&i.param_type) == array_type(&o.param_type)) {
+            let partly = o.param_type == ParamType::Real && i.param_type == ParamType::Real;
+            overlap.push(format!("{}({}, {})", if partly { "overlapsPartly" } else { "overlaps" }, o.name, i.name));
+        }
+    }
+    for (k, a) in func.outputs.iter().enumerate() {
+        for b in func.outputs[k + 1..].iter().filter(|b| array_type(&b.param_type) == array_type(&a.param_type)) {
+            overlap.push(format!("overlaps({}, {})", a.name, b.name));
+        }
+    }
+    overlap
 }
 
 /// The near-zero predicates as `runtime.go` computes them: the indicators call

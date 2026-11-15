@@ -107,7 +107,9 @@ func (c *Core) FLOORDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) FLOOR(startIdx, endIdx int, inReal, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -269,7 +271,8 @@ func (c *Core) floorOpenInternal(inReal []float64, startIdx int32) (*FLOORStream
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.FLOORLookback] bars.
+// [Core.FLOORLookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) FLOOROpen(inReal []float64) (*FLOORStream, float64, error) {
 	sp, err := c.floorOpenInternal(inReal, 0)
 	if err != nil {
@@ -286,7 +289,8 @@ func (c *Core) FLOOROpen(inReal []float64) (*FLOORStream, float64, error) {
 // no memory with an input or another output.
 //
 // The errors are those of [Core.FLOOROpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) FLOOROpenAndFill(inReal, outReal []float64) (*FLOORStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

@@ -337,7 +337,8 @@ func (c *Core) CEDisplayShift(optInTimePeriod int, optInMultiplier float64, outp
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) CE(startIdx, endIdx int, inHigh, inLow, inClose []float64, optInTimePeriod int, optInMultiplier float64, outRealLong, outRealShort []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -885,8 +886,8 @@ func (c *Core) ceOpenInternal(inHigh, inLow, inClose []float64, startIdx, optInT
 // are those of [Core.CE].
 //
 // The error is [InsufficientHistory] for a history of at most [Core.CELookback]
-// bars, and [BadParam] for a parameter out of range or histories of different
-// lengths.
+// bars, [OutOfRangeEndIndex] for one longer than [IndexMax]+1 bars, and
+// [BadParam] for a parameter out of range or histories of different lengths.
 func (c *Core) CEOpen(inHigh, inLow, inClose []float64, optInTimePeriod int, optInMultiplier float64) (*CEStream, float64, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, 0, BadParam
@@ -906,7 +907,8 @@ func (c *Core) CEOpen(inHigh, inLow, inClose []float64, optInTimePeriod int, opt
 // memory with an input or another output.
 //
 // The errors are those of [Core.CEOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) CEOpenAndFill(inHigh, inLow, inClose []float64, optInTimePeriod int, optInMultiplier float64, outRealLong, outRealShort []float64) (*CEStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

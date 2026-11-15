@@ -514,6 +514,107 @@ func (c *Core) cdlengulfingOpenImpl(sp *CDLENGULFINGStream, inOpen, inHigh, inLo
 	return Success
 }
 
+func (c *Core) cdlengulfingOpenSinkFrame(sp *CDLENGULFINGStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32) RetCode {
+	var i int32
+	var outIdx int32
+	var lookbackTotal int32
+	if len(inOpen) > IndexMax+1 {
+		return OutOfRangeEndIndex
+	}
+	historyLen := int32(len(inOpen))
+	endIdx := historyLen - 1
+	if len(inHigh) != len(inOpen) || len(inLow) != len(inOpen) || len(inClose) != len(inOpen) {
+		return BadParam
+	}
+	if startIdx >= historyLen {
+		*outBegIdx = 0
+		*outNBElement = 0
+		return InsufficientHistory
+	}
+	lookbackTotal = c.cdlengulfingLookback()
+	if startIdx < lookbackTotal {
+		startIdx = lookbackTotal
+	}
+	if startIdx > endIdx {
+		*outBegIdx = 0
+		*outNBElement = 0
+		return InsufficientHistory
+	}
+	i = startIdx
+	outIdx = 0
+	for i < endIdx {
+		outIdx += 1
+		i += 1
+	}
+	var _T27 int32
+	if inClose[i] >= inOpen[i] {
+		_T27 = 1
+	} else {
+		_T27 = -1
+	}
+	_B29 := _T27 == 1
+	if _B29 {
+		var _T28 int32
+		if inClose[i-1] >= inOpen[i-1] {
+			_T28 = 1
+		} else {
+			_T28 = -1
+		}
+		_B29 = _T28 == -1
+	}
+	_B33 := _B29 && (inClose[i] >= inOpen[i-1] && inOpen[i] < inClose[i-1] || inClose[i] > inOpen[i-1] && inOpen[i] <= inClose[i-1])
+	if !_B33 {
+		var _T30 int32
+		if inClose[i] >= inOpen[i] {
+			_T30 = 1
+		} else {
+			_T30 = -1
+		}
+		_B32 := _T30 == -1
+		if _B32 {
+			var _T31 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T31 = 1
+			} else {
+				_T31 = -1
+			}
+			_B32 = _T31 == 1
+		}
+		_B33 = _B32 && (inOpen[i] >= inClose[i-1] && inClose[i] < inOpen[i-1] || inOpen[i] > inClose[i-1] && inClose[i] <= inOpen[i-1])
+	}
+	if _B33 {
+		if inOpen[i] != inClose[i-1] && inClose[i] != inOpen[i-1] {
+			var _T34 int32
+			if inClose[i] >= inOpen[i] {
+				_T34 = 1
+			} else {
+				_T34 = -1
+			}
+			outInteger[0] = _T34 * 100
+			outIdx += 1
+		} else {
+			var _T35 int32
+			if inClose[i] >= inOpen[i] {
+				_T35 = 1
+			} else {
+				_T35 = -1
+			}
+			outInteger[0] = _T35 * 80
+			outIdx += 1
+		}
+	} else {
+		outInteger[0] = 0
+		outIdx += 1
+	}
+	i += 1
+	*outNBElement = outIdx
+	*outBegIdx = startIdx
+	sp.lag1_inOpen = inOpen[historyLen-1]
+	sp.lag1_inClose = inClose[historyLen-1]
+	sp.cur_outInteger = outInteger[0]
+	return Success
+}
+
 func (c *Core) cdlengulfingOpenAndFillInternal(inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32) (*CDLENGULFINGStream, error) {
 	sp := &CDLENGULFINGStream{core: c}
 	if retCode := c.cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1); retCode != Success {
@@ -528,7 +629,7 @@ func (c *Core) cdlengulfingOpenInternal(inOpen, inHigh, inLow, inClose []float64
 	sp := &CDLENGULFINGStream{core: c}
 	var outBegIdx, outNBElement int32
 	var sink_outInteger [1]int32
-	if retCode := c.cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, &outBegIdx, &outNBElement, sink_outInteger[:], 0); retCode != Success {
+	if retCode := c.cdlengulfingOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, &outBegIdx, &outNBElement, sink_outInteger[:]); retCode != Success {
 		return nil, retCode
 	}
 	sp.outRangeBegIdx = int(outBegIdx)
@@ -543,8 +644,8 @@ func (c *Core) cdlengulfingOpenInternal(inOpen, inHigh, inLow, inClose []float64
 // inOpen, inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.CDLENGULFINGLookback] bars, and [BadParam] for histories of different
-// lengths.
+// [Core.CDLENGULFINGLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) CDLENGULFINGOpen(inOpen, inHigh, inLow, inClose []float64) (*CDLENGULFINGStream, int32, error) {
 	sp, err := c.cdlengulfingOpenInternal(inOpen, inHigh, inLow, inClose, 0)
 	if err != nil {

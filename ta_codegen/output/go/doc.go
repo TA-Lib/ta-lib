@@ -67,7 +67,8 @@
 //
 // A [Core] holds what every call reads: the unstable periods
 // ([Core.SetUnstablePeriod]) and the candlestick settings
-// ([Core.SetCandleSetting]). [NewCore] returns one with the defaults.
+// ([Core.SetCandleSetting]). A zero Core holds the defaults, as the one
+// [NewCore] returns does.
 //
 // # Errors
 //

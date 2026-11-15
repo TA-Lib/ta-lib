@@ -323,7 +323,8 @@ func (c *Core) SORTINODisplayShift(optInTimePeriod int, optInMAR, optInAnnualiza
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SORTINO(startIdx, endIdx int, inReal []float64, optInTimePeriod int, optInMAR, optInAnnualization float64, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -992,7 +993,8 @@ func (c *Core) sortinoOpenInternal(inReal []float64, startIdx, optInTimePeriod i
 // inReal is the history; the parameters are those of [Core.SORTINO].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.SORTINOLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.SORTINOLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) SORTINOOpen(inReal []float64, optInTimePeriod int, optInMAR, optInAnnualization float64) (*SORTINOStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -1012,7 +1014,8 @@ func (c *Core) SORTINOOpen(inReal []float64, optInTimePeriod int, optInMAR, optI
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.SORTINOOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SORTINOOpenAndFill(inReal []float64, optInTimePeriod int, optInMAR, optInAnnualization float64, outReal []float64) (*SORTINOStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

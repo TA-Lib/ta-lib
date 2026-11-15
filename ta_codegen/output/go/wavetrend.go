@@ -331,7 +331,8 @@ func (c *Core) WAVETRENDDisplayShift(optInChannelPeriod, optInAveragePeriod, opt
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) WAVETREND(startIdx, endIdx int, inHigh, inLow, inClose []float64, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod int, outWT1, outWT2 []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -777,8 +778,9 @@ func (c *Core) wavetrendOpenInternal(inHigh, inLow, inClose []float64, startIdx,
 // are those of [Core.WAVETREND].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.WAVETRENDLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.WAVETRENDLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) WAVETRENDOpen(inHigh, inLow, inClose []float64, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod int) (*WAVETRENDStream, float64, float64, error) {
 	if !fitsInt32(optInChannelPeriod) {
 		return nil, 0, 0, BadParam
@@ -804,7 +806,9 @@ func (c *Core) WAVETRENDOpen(inHigh, inLow, inClose []float64, optInChannelPerio
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.WAVETRENDOpen], and [BadParam] for an output
-// that is empty, too short or sharing memory.
+// that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) WAVETRENDOpenAndFill(inHigh, inLow, inClose []float64, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod int, outWT1, outWT2 []float64) (*WAVETRENDStream, OutRange, error) {
 	if !fitsInt32(optInChannelPeriod) {
 		return nil, OutRange{}, BadParam

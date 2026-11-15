@@ -494,8 +494,8 @@ func (c *Core) cdlhikkakeOpenInternal(inOpen, inHigh, inLow, inClose []float64, 
 // inOpen, inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.CDLHIKKAKELookback] bars, and [BadParam] for histories of different
-// lengths.
+// [Core.CDLHIKKAKELookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) CDLHIKKAKEOpen(inOpen, inHigh, inLow, inClose []float64) (*CDLHIKKAKEStream, int32, error) {
 	sp, err := c.cdlhikkakeOpenInternal(inOpen, inHigh, inLow, inClose, 0)
 	if err != nil {

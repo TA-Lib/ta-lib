@@ -7232,26 +7232,17 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
  * reference (exactly as --ref uses the in-process current library). Each
  * language server crosses the boundary and is diffed against it, per its
  * transport (XlangServer.usesSeed):
- *   - Rust: the seed transport (gen_present + fuzz_in_hash self-check).
- *   - Java: no in-server fuzz_gen port (#114 is complete), so the driver sends
- *     the exact seed-generated arrays losslessly (hex-of-IEEE-bits, the #115
- *     server_verify transport) and requests want_hash. Non-transcendental calls
- *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
- *     libm, a few ULP) drops to an element compare at Java's bound
- *     (codegen_lang_transcendental_tol), and HT_DCPHASE/HT_SINE/HT_TRENDMODE
- *     on the zero-variance constant shape are skipped outright (xlang_illcond — atan2 of a null signal amplifies
- *     the ULP unboundedly; C and Rust stay bitwise there).
- *   - C#: the same hex-bits transport as Java (the managed server has no
- *     fuzz_gen port either), and it takes the SAME tolerance lane. It was
- *     briefly configured as fully bitwise on the strength of a green local run;
- *     dev-nightly 30776189041 then produced 25 TA_LN mismatches on
- *     ubuntu-latest x86-64 from a commit that was clean on aarch64 and on the
- *     dev box. .NET does not guarantee `Math.*` reaches the platform libm.
- *     Math.FusedMultiplyAdd IS correctly rounded, so the FMA contract is
- *     unaffected — only the transcendentals moved.
- * Current-vs-current, so no release's carve-outs apply: every case is bitwise
- * except the transcendental calls of Java and C#, and a kernel-batch function
- * on a kernel build. See fuzz_data.h and
+ *   - Rust and Go: the seed transport (gen_present + fuzz_in_hash self-check).
+ *   - Java, C# and TypeScript: no in-server fuzz_gen port, so the driver sends
+ *     the seed-generated arrays losslessly (hex-of-IEEE-bits, the server_verify
+ *     transport) and requests want_hash.
+ * Every server but Rust takes the tolerance lane on a call that reaches a
+ * transcendental: an element compare at its language's bound
+ * (codegen_lang_transcendental_tol), since none of their math libraries is
+ * the C libm. HT_DCPHASE/HT_SINE/HT_TRENDMODE on the constant shape are
+ * skipped for those servers (xlang_illcond).
+ * Current-vs-current, so no release's carve-outs apply: every other case is
+ * bitwise, bar a kernel-batch function on a kernel build. See fuzz_data.h and
  * src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
@@ -7266,8 +7257,8 @@ typedef struct {
     const char        *display;   /* "Rust", "Java", "C#"                     */
     const char *const *argv;      /* server launch command                   */
     int                usesSeed;  /* transport: 1 = seed (gen_present + fuzz_in_hash
-                                   * self-check), 0 = lossless hex-bits inputs (no
-                                   * fuzz_gen port — Java #114, C#)           */
+                                   * self-check: Rust, Go), 0 = lossless hex-bits
+                                   * inputs (no fuzz_gen port: Java, C#, TS)  */
     double             tolTranscendental; /* > 0: calls reaching a transcendental
                                    * drop to an element compare at this bound;
                                    * 0 = every call is bitwise. DELIBERATELY independent

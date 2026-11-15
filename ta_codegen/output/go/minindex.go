@@ -471,7 +471,8 @@ func (c *Core) minindexOpenInternal(inReal []float64, startIdx, optInTimePeriod 
 // inReal is the history; the parameters are those of [Core.MININDEX].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.MININDEXLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.MININDEXLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) MININDEXOpen(inReal []float64, optInTimePeriod int) (*MININDEXStream, int32, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam

@@ -201,7 +201,8 @@ func (c *Core) EFIDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) EFI(startIdx, endIdx int, inClose, inVolume []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -493,8 +494,9 @@ func (c *Core) efiOpenInternal(inClose, inVolume []float64, startIdx, optInTimeP
 // those of [Core.EFI].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.EFILookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.EFILookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) EFIOpen(inClose, inVolume []float64, optInTimePeriod int) (*EFIStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -514,7 +516,8 @@ func (c *Core) EFIOpen(inClose, inVolume []float64, optInTimePeriod int) (*EFISt
 // no memory with an input or another output.
 //
 // The errors are those of [Core.EFIOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) EFIOpenAndFill(inClose, inVolume []float64, optInTimePeriod int, outReal []float64) (*EFIStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

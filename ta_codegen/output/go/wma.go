@@ -200,7 +200,8 @@ func (c *Core) WMADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) WMA(startIdx, endIdx int, inReal []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -583,7 +584,8 @@ func (c *Core) wmaOpenInternal(inReal []float64, startIdx, optInTimePeriod int32
 // inReal is the history; the parameters are those of [Core.WMA].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.WMALookback] bars, and [BadParam] for a parameter out of range.
+// [Core.WMALookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) WMAOpen(inReal []float64, optInTimePeriod int) (*WMAStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -603,7 +605,8 @@ func (c *Core) WMAOpen(inReal []float64, optInTimePeriod int) (*WMAStream, float
 // no memory with an input or another output.
 //
 // The errors are those of [Core.WMAOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) WMAOpenAndFill(inReal []float64, optInTimePeriod int, outReal []float64) (*WMAStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

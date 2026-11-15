@@ -111,7 +111,9 @@ func (c *Core) WCLPRICEDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) WCLPRICE(startIdx, endIdx int, inHigh, inLow, inClose, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -285,8 +287,8 @@ func (c *Core) wclpriceOpenInternal(inHigh, inLow, inClose []float64, startIdx i
 // inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.WCLPRICELookback] bars, and [BadParam] for histories of different
-// lengths.
+// [Core.WCLPRICELookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) WCLPRICEOpen(inHigh, inLow, inClose []float64) (*WCLPRICEStream, float64, error) {
 	sp, err := c.wclpriceOpenInternal(inHigh, inLow, inClose, 0)
 	if err != nil {
@@ -303,7 +305,9 @@ func (c *Core) WCLPRICEOpen(inHigh, inLow, inClose []float64) (*WCLPRICEStream, 
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.WCLPRICEOpen], and [BadParam] for an output
-// that is empty, too short or sharing memory.
+// that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) WCLPRICEOpenAndFill(inHigh, inLow, inClose, outReal []float64) (*WCLPRICEStream, OutRange, error) {
 	if len(inHigh) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

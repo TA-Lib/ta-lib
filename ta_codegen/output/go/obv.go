@@ -120,7 +120,9 @@ func (c *Core) OBVDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) OBV(startIdx, endIdx int, inReal, inVolume, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -312,7 +314,8 @@ func (c *Core) obvOpenInternal(inReal, inVolume []float64, startIdx int32) (*OBV
 // inReal and inVolume are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.OBVLookback] bars, and [BadParam] for histories of different lengths.
+// [Core.OBVLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) OBVOpen(inReal, inVolume []float64) (*OBVStream, float64, error) {
 	sp, err := c.obvOpenInternal(inReal, inVolume, 0)
 	if err != nil {
@@ -329,7 +332,8 @@ func (c *Core) OBVOpen(inReal, inVolume []float64) (*OBVStream, float64, error) 
 // no memory with an input or another output.
 //
 // The errors are those of [Core.OBVOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) OBVOpenAndFill(inReal, inVolume, outReal []float64) (*OBVStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

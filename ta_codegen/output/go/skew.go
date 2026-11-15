@@ -258,7 +258,8 @@ func (c *Core) SKEWDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SKEW(startIdx, endIdx int, inReal []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -784,7 +785,8 @@ func (c *Core) skewOpenInternal(inReal []float64, startIdx, optInTimePeriod int3
 // inReal is the history; the parameters are those of [Core.SKEW].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.SKEWLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.SKEWLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) SKEWOpen(inReal []float64, optInTimePeriod int) (*SKEWStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -804,7 +806,8 @@ func (c *Core) SKEWOpen(inReal []float64, optInTimePeriod int) (*SKEWStream, flo
 // no memory with an input or another output.
 //
 // The errors are those of [Core.SKEWOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SKEWOpenAndFill(inReal []float64, optInTimePeriod int, outReal []float64) (*SKEWStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

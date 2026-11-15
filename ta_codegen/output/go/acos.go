@@ -108,7 +108,9 @@ func (c *Core) ACOSDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) ACOS(startIdx, endIdx int, inReal, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -270,7 +272,8 @@ func (c *Core) acosOpenInternal(inReal []float64, startIdx int32) (*ACOSStream, 
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.ACOSLookback] bars.
+// [Core.ACOSLookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) ACOSOpen(inReal []float64) (*ACOSStream, float64, error) {
 	sp, err := c.acosOpenInternal(inReal, 0)
 	if err != nil {
@@ -287,7 +290,8 @@ func (c *Core) ACOSOpen(inReal []float64) (*ACOSStream, float64, error) {
 // no memory with an input or another output.
 //
 // The errors are those of [Core.ACOSOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) ACOSOpenAndFill(inReal, outReal []float64) (*ACOSStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

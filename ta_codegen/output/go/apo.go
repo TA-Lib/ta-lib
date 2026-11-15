@@ -315,7 +315,8 @@ func (c *Core) APODisplayShift(optInFastPeriod, optInSlowPeriod int, optInMAType
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) APO(startIdx, endIdx int, inReal []float64, optInFastPeriod, optInSlowPeriod int, optInMAType MAType, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -558,7 +559,8 @@ func (c *Core) apoOpenInternal(inReal []float64, startIdx, optInFastPeriod, optI
 // inReal is the history; the parameters are those of [Core.APO].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.APOLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.APOLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) APOOpen(inReal []float64, optInFastPeriod, optInSlowPeriod int, optInMAType MAType) (*APOStream, float64, error) {
 	if !fitsInt32(optInFastPeriod) {
 		return nil, 0, BadParam
@@ -581,7 +583,8 @@ func (c *Core) APOOpen(inReal []float64, optInFastPeriod, optInSlowPeriod int, o
 // no memory with an input or another output.
 //
 // The errors are those of [Core.APOOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) APOOpenAndFill(inReal []float64, optInFastPeriod, optInSlowPeriod int, optInMAType MAType, outReal []float64) (*APOStream, OutRange, error) {
 	if !fitsInt32(optInFastPeriod) {
 		return nil, OutRange{}, BadParam

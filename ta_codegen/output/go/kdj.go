@@ -214,7 +214,8 @@ func (c *Core) KDJDisplayShift(optInFastK_Period, optInSlowK_Period int, optInSl
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) KDJ(startIdx, endIdx int, inHigh, inLow, inClose []float64, optInFastK_Period, optInSlowK_Period int, optInSlowK_MAType MAType, optInSlowD_Period int, optInSlowD_MAType MAType, outK, outD, outJ []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -495,8 +496,9 @@ func (c *Core) kdjOpenInternal(inHigh, inLow, inClose []float64, startIdx, optIn
 // are those of [Core.KDJ].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.KDJLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.KDJLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) KDJOpen(inHigh, inLow, inClose []float64, optInFastK_Period, optInSlowK_Period int, optInSlowK_MAType MAType, optInSlowD_Period int, optInSlowD_MAType MAType) (*KDJStream, float64, float64, float64, error) {
 	if !fitsInt32(optInFastK_Period) {
 		return nil, 0, 0, 0, BadParam
@@ -522,7 +524,8 @@ func (c *Core) KDJOpen(inHigh, inLow, inClose []float64, optInFastK_Period, optI
 // no memory with an input or another output.
 //
 // The errors are those of [Core.KDJOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) KDJOpenAndFill(inHigh, inLow, inClose []float64, optInFastK_Period, optInSlowK_Period int, optInSlowK_MAType MAType, optInSlowD_Period int, optInSlowD_MAType MAType, outK, outD, outJ []float64) (*KDJStream, OutRange, error) {
 	if !fitsInt32(optInFastK_Period) {
 		return nil, OutRange{}, BadParam

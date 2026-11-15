@@ -130,7 +130,9 @@ func (c *Core) NVIDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) NVI(startIdx, endIdx int, inClose, inVolume, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -343,7 +345,8 @@ func (c *Core) nviOpenInternal(inClose, inVolume []float64, startIdx int32) (*NV
 // inClose and inVolume are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.NVILookback] bars, and [BadParam] for histories of different lengths.
+// [Core.NVILookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) NVIOpen(inClose, inVolume []float64) (*NVIStream, float64, error) {
 	sp, err := c.nviOpenInternal(inClose, inVolume, 0)
 	if err != nil {
@@ -360,7 +363,8 @@ func (c *Core) NVIOpen(inClose, inVolume []float64) (*NVIStream, float64, error)
 // no memory with an input or another output.
 //
 // The errors are those of [Core.NVIOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) NVIOpenAndFill(inClose, inVolume, outReal []float64) (*NVIStream, OutRange, error) {
 	if len(inClose) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

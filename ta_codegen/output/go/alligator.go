@@ -325,7 +325,8 @@ func (c *Core) ALLIGATORDisplayShift(optInJawPeriod, optInJawShift, optInTeethPe
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) ALLIGATOR(startIdx, endIdx int, inHigh, inLow []float64, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift int, outJaw, outTeeth, outLips []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -692,8 +693,9 @@ func (c *Core) alligatorOpenInternal(inHigh, inLow []float64, startIdx, optInJaw
 // of [Core.ALLIGATOR].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.ALLIGATORLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.ALLIGATORLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) ALLIGATOROpen(inHigh, inLow []float64, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift int) (*ALLIGATORStream, float64, float64, float64, error) {
 	if !fitsInt32(optInJawPeriod) {
 		return nil, 0, 0, 0, BadParam
@@ -728,7 +730,9 @@ func (c *Core) ALLIGATOROpen(inHigh, inLow []float64, optInJawPeriod, optInJawSh
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.ALLIGATOROpen], and [BadParam] for an output
-// that is empty, too short or sharing memory.
+// that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) ALLIGATOROpenAndFill(inHigh, inLow []float64, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift int, outJaw, outTeeth, outLips []float64) (*ALLIGATORStream, OutRange, error) {
 	if !fitsInt32(optInJawPeriod) {
 		return nil, OutRange{}, BadParam

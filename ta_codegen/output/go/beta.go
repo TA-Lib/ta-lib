@@ -330,7 +330,8 @@ func (c *Core) BETADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) BETA(startIdx, endIdx int, inReal0, inReal1 []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -1063,8 +1064,9 @@ func (c *Core) betaOpenInternal(inReal0, inReal1 []float64, startIdx, optInTimeP
 // those of [Core.BETA].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.BETALookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.BETALookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) BETAOpen(inReal0, inReal1 []float64, optInTimePeriod int) (*BETAStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -1084,7 +1086,8 @@ func (c *Core) BETAOpen(inReal0, inReal1 []float64, optInTimePeriod int) (*BETAS
 // no memory with an input or another output.
 //
 // The errors are those of [Core.BETAOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) BETAOpenAndFill(inReal0, inReal1 []float64, optInTimePeriod int, outReal []float64) (*BETAStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

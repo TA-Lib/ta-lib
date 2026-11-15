@@ -460,7 +460,9 @@ func (c *Core) HT_SINEDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) HT_SINE(startIdx, endIdx int, inReal, outSine, outLeadSine []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -1479,7 +1481,8 @@ func (c *Core) htSineOpenInternal(inReal []float64, startIdx int32) (*HT_SINEStr
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.HT_SINELookback] bars.
+// [Core.HT_SINELookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) HT_SINEOpen(inReal []float64) (*HT_SINEStream, float64, float64, error) {
 	sp, err := c.htSineOpenInternal(inReal, 0)
 	if err != nil {
@@ -1496,7 +1499,8 @@ func (c *Core) HT_SINEOpen(inReal []float64) (*HT_SINEStream, float64, float64, 
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.HT_SINEOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) HT_SINEOpenAndFill(inReal, outSine, outLeadSine []float64) (*HT_SINEStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

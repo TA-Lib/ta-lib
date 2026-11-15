@@ -213,7 +213,8 @@ func (c *Core) LINEARREG_INTERCEPTDisplayShift(optInTimePeriod, outputIdx int) (
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) LINEARREG_INTERCEPT(startIdx, endIdx int, inReal []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -589,8 +590,8 @@ func (c *Core) linearregInterceptOpenInternal(inReal []float64, startIdx, optInT
 // [Core.LINEARREG_INTERCEPT].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.LINEARREG_INTERCEPTLookback] bars, and [BadParam] for a parameter out
-// of range.
+// [Core.LINEARREG_INTERCEPTLookback] bars, [OutOfRangeEndIndex] for one longer
+// than [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) LINEARREG_INTERCEPTOpen(inReal []float64, optInTimePeriod int) (*LINEARREG_INTERCEPTStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -611,7 +612,9 @@ func (c *Core) LINEARREG_INTERCEPTOpen(inReal []float64, optInTimePeriod int) (*
 // values and share no memory with an input or another output.
 //
 // The errors are those of [Core.LINEARREG_INTERCEPTOpen], and [BadParam] for an
-// output that is empty, too short or sharing memory.
+// output that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) LINEARREG_INTERCEPTOpenAndFill(inReal []float64, optInTimePeriod int, outReal []float64) (*LINEARREG_INTERCEPTStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

@@ -61,19 +61,29 @@ type CandleSetting struct {
 }
 
 // Core holds the settings every call reads: the unstable periods and the
-// candlestick settings. Create one with [NewCore]. Do not use the zero value:
-// its candlestick settings are all zero, not the defaults. A Core is safe to
-// share between goroutines once configured: call its setters only while no other
-// goroutine uses it and no stream opened on it is in use.
+// candlestick settings. The zero value is ready to use and holds C's defaults,
+// as [NewCore] does. A Core is safe to share between goroutines once configured:
+// call its setters only while no other goroutine uses it and no stream opened
+// on it is in use.
 type Core struct {
 	unstablePeriod [funcUnstCount]int32
+	// Read only while candleCustom is set, so the zero value reads the defaults.
 	candleSettings [candleSettingCount]CandleSetting
+	candleCustom   bool
 }
 
 // NewCore returns a Core with C's defaults: no unstable period and the
 // default candlestick settings.
 func NewCore() *Core {
-	return &Core{candleSettings: defaultCandleSettings}
+	return &Core{}
+}
+
+// candles is the candlestick settings table every call reads.
+func (c *Core) candles() *[candleSettingCount]CandleSetting {
+	if c.candleCustom {
+		return &c.candleSettings
+	}
+	return &defaultCandleSettings
 }
 
 // SetUnstablePeriod sets the extra warm-up bars of one function, or of every
@@ -120,6 +130,10 @@ func (c *Core) SetCandleSetting(settingType CandleSettingType, rangeType RangeTy
 	if !(factor >= 0 && factor <= math.MaxFloat64) {
 		return BadParam
 	}
+	if !c.candleCustom {
+		c.candleSettings = defaultCandleSettings
+		c.candleCustom = true
+	}
 	c.candleSettings[settingType] = CandleSetting{settingType, rangeType, avgPeriod, factor}
 	return nil
 }
@@ -129,20 +143,22 @@ func (c *Core) CandleSetting(settingType CandleSettingType) (CandleSetting, erro
 	if settingType < 0 || settingType >= candleSettingCount {
 		return CandleSetting{}, BadParam
 	}
-	return c.candleSettings[settingType], nil
+	return c.candles()[settingType], nil
 }
 
 // RestoreCandleDefault restores one candlestick setting to its default, or
 // every one given CandleSettingTypeAllCandleSettings.
 func (c *Core) RestoreCandleDefault(settingType CandleSettingType) error {
 	if settingType == CandleSettingTypeAllCandleSettings {
-		c.candleSettings = defaultCandleSettings
+		c.candleCustom = false
 		return nil
 	}
 	if settingType < 0 || settingType >= candleSettingCount {
 		return BadParam
 	}
-	c.candleSettings[settingType] = defaultCandleSettings[settingType]
+	if c.candleCustom {
+		c.candleSettings[settingType] = defaultCandleSettings[settingType]
+	}
 	return nil
 }
 

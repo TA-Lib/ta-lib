@@ -316,7 +316,8 @@ func (c *Core) SQZMOMDisplayShift(optInBBPeriod int, optInNbDev float64, optInKC
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SQZMOM(startIdx, endIdx int, inHigh, inLow, inClose []float64, optInBBPeriod int, optInNbDev float64, optInKCPeriod int, optInFactorWide, optInFactorNormal, optInFactorNarrow float64, outMomentum []float64, outSqueeze []int32) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -830,8 +831,9 @@ func (c *Core) sqzmomOpenInternal(inHigh, inLow, inClose []float64, startIdx, op
 // are those of [Core.SQZMOM].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.SQZMOMLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.SQZMOMLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) SQZMOMOpen(inHigh, inLow, inClose []float64, optInBBPeriod int, optInNbDev float64, optInKCPeriod int, optInFactorWide, optInFactorNormal, optInFactorNarrow float64) (*SQZMOMStream, float64, int32, error) {
 	if !fitsInt32(optInBBPeriod) {
 		return nil, 0, 0, BadParam
@@ -854,7 +856,8 @@ func (c *Core) SQZMOMOpen(inHigh, inLow, inClose []float64, optInBBPeriod int, o
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.SQZMOMOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SQZMOMOpenAndFill(inHigh, inLow, inClose []float64, optInBBPeriod int, optInNbDev float64, optInKCPeriod int, optInFactorWide, optInFactorNormal, optInFactorNarrow float64, outMomentum []float64, outSqueeze []int32) (*SQZMOMStream, OutRange, error) {
 	if !fitsInt32(optInBBPeriod) {
 		return nil, OutRange{}, BadParam

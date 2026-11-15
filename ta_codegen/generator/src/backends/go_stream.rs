@@ -12,7 +12,7 @@ use std::cell::Cell;
 use std::collections::{BTreeSet, HashMap};
 
 use crate::candle_settings::detect_candle_settings;
-use crate::ir::{CircBuf, Expr, FuncDef, Lang, ParamType, Statement, Tier, VarType};
+use crate::ir::{BinOp, CircBuf, Expr, FuncDef, Lang, ParamType, Statement, Tier, VarType};
 use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::common;
@@ -477,6 +477,7 @@ impl<'a> Em<'a> {
     fn open_ctx(&self, open_body: &[Statement]) -> Ctx<'a> {
         let ctx = self.ctx(open_body, Ret::Code);
         ctx.env.seed_signature(self.func);
+        ctx.colour_selects.set(true);
         ctx.env.seed_candles(&detect_candle_settings(open_body));
         for n in ["outStride", "historyLen", "fillJ", "fillLb", "fillIdx"] {
             ctx.env.declare(n, CType::Int32);
@@ -577,8 +578,12 @@ fn emit_loop_shape(o: &mut String, em: &Em, model: &StreamModel, body: &[Stateme
     emit_handle(o, em, &fields, &Members::default(), frame.as_ref(), false);
     emit_step(o, em, model, &fields, &step_settings);
     emit_open_body(o, em, model, body, &fields, &step_settings);
+    let sink = sink_frame_body(em, model, body);
+    if let Some(sink) = &sink {
+        emit_sink_frame(o, em, model, sink, &step_settings);
+    }
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, model.open_needs_last_bar_only());
+    emit_open_wrappers(o, em, true, model.open_needs_last_bar_only(), sink.is_some());
     if em.svc.registry.in_tape_set(&em.func.name.to_lowercase()) {
         let tier = TapeTier { models: &[model], dual: None, fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1063,10 +1068,53 @@ fn emit_open_body(
     emit_anchor_guard(&mut b);
     emit_extras_and_candle(&mut b, em, &open_body, &ctx);
     emit_identity_fast_path(&mut b, em, model, fields, &ctx);
-    emit_open_region(&mut b, &open_body, &ctx, &[], &BTreeSet::new());
+    emit_open_region(&mut b, em.func, &open_body, &ctx, &[], &BTreeSet::new());
     emit_capture(&mut b, em, model, &model.state, step_settings, &ctx, Some(CurSource::StridedArray), &[]);
     b.line("return Success");
     o.push_str(&go::func_text(&open_sig(em, OutMode::Core), &b.lines));
+}
+
+/// A candlestick opener's stride-0 region, from [`super::open_frames::sink_body`]
+/// over its unstrided region. `None` leaves stride 0 to `OpenImpl`.
+fn sink_frame_body(em: &Em, model: &StreamModel, body: &[Statement]) -> Option<Vec<Statement>> {
+    if !super::open_frames::is_framed(em.func, model) {
+        return None;
+    }
+    let outputs = &model.outputs;
+    // The split recognises only a plain store index.
+    let unstrided = streaming::rewrite_stmts(
+        &build_open_body_java(model, body),
+        &|e| match e {
+            Expr::ArrayAccess(n, idx) if outputs.contains(&n) => match *idx {
+                Expr::BinOp(i, BinOp::Mul, s) if matches!(s.as_ref(), Expr::Var(v) if v == "outStride") => Expr::ArrayAccess(n, i),
+                idx => Expr::ArrayAccess(n, Box::new(idx)),
+            },
+            other => other,
+        },
+        &|s| Some(s),
+    );
+    let fill = cleanup_open_body(&unstrided, em);
+    let helpers = em.svc.helpers;
+    let pure = |n: &str| super::open_frames::is_pure_call(n, helpers);
+    super::open_frames::sink_body(&fill, outputs, &pure)
+}
+
+/// `<n>OpenSinkFrame`: `OpenInternal`'s opener, `OpenImpl`'s checks then a pass
+/// that decides only the last bar. `OpenImpl` keeps serving stride 1.
+fn emit_sink_frame(o: &mut String, em: &Em, model: &StreamModel, sink: &[Statement], step_settings: &BTreeSet<String>) {
+    let ctx = em.open_ctx(sink);
+    let mut b = B::default();
+    emit_body_decls(&mut b, sink);
+    emit_open_head(&mut b, em);
+    emit_open_validation(&mut b, em, OutMode::Core);
+    emit_anchor_guard(&mut b);
+    emit_extras_and_candle(&mut b, em, sink, &ctx);
+    emit_open_region(&mut b, em.func, sink, &ctx, &[], &BTreeSet::new());
+    emit_capture(&mut b, em, model, &model.state, step_settings, &ctx, Some(CurSource::SlotZero), &[]);
+    b.line("return Success");
+    let sig = open_sig(em, OutMode::Core);
+    let sig = sig.replacen(&em.names.open_impl, &format!("{}OpenSinkFrame", em.camel), 1).replacen(", outStride int32", "", 1);
+    o.push_str(&go::func_text(&sig, &b.lines));
 }
 
 fn open_sig(em: &Em, mode: OutMode) -> String {
@@ -1136,7 +1184,7 @@ fn emit_open_head(b: &mut B, em: &Em) {
     b.line("endIdx := historyLen - 1");
 }
 
-fn alias_pairs(func: &FuncDef) -> Vec<(String, String)> {
+pub(super) fn alias_pairs(func: &FuncDef) -> Vec<(String, String)> {
     let mut pairs = Vec::new();
     for out in &func.outputs {
         for i in &bars(func) {
@@ -1209,10 +1257,23 @@ fn emit_extras_and_candle(b: &mut B, em: &Em, open_body: &[Statement], ctx: &Ctx
 
 /// The transcribed region: initializers, then the statements, with a tier's
 /// inserts spliced before the statement at their index.
-fn emit_open_region(b: &mut B, open_body: &[Statement], ctx: &Ctx, inserts: &[(usize, Vec<String>)], replaced: &BTreeSet<usize>) {
+fn emit_open_region(
+    b: &mut B,
+    func: &FuncDef,
+    open_body: &[Statement],
+    ctx: &Ctx,
+    inserts: &[(usize, Vec<String>)],
+    replaced: &BTreeSet<usize>,
+) {
     let mut init = Vec::new();
     ctx.initializers(open_body, &mut init);
     b.extend(init);
+    if inserts.is_empty() && replaced.is_empty() {
+        let mut lines = Vec::new();
+        ctx.body_stmts(open_body, func, &mut lines);
+        b.extend(lines);
+        return;
+    }
     for (i, stmt) in open_body.iter().enumerate() {
         for (at, text) in inserts {
             if *at == i {
@@ -1275,6 +1336,7 @@ fn emit_identity_fast_path(b: &mut B, em: &Em, model: &StreamModel, fields: &[Fi
 enum CurSource {
     StridedArray,
     Scratch,
+    SlotZero,
 }
 
 /// The capture epilogue: buffer capacities from the still-live batch locals,
@@ -1451,6 +1513,7 @@ fn emit_cur_capture(b: &mut B, outputs: &[String], source: CurSource) {
         let expr = match source {
             CurSource::StridedArray => last_strided(&go_ident(out)),
             CurSource::Scratch => format!("sc_{out}[*outNBElement-1]"),
+            CurSource::SlotZero => format!("{}[0]", go_ident(out)),
         };
         b.line(format!("sp.cur_{out} = {expr}"));
     }
@@ -1476,7 +1539,7 @@ fn new_handle(em: &Em) -> String {
     format!("sp := &{}{{core: c}}", em.names.stream)
 }
 
-fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
+fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only: bool, sink_frame: bool) {
     let func = em.func;
     let st = &em.names.stream;
     let mut params = internal_in_params(func);
@@ -1503,9 +1566,16 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only:
             b.line(format!("var sink_{} [1]{}", out.name, scalar_ty(out_ctype(func, &out.name))));
             args.push(format!("sink_{}[:]", out.name));
         }
-        args.push("0".to_string());
     }
-    b.guard(format!("retCode := c.{}({}); retCode != Success", em.names.open_impl, args.join(", ")), "return nil, retCode");
+    let opener = if sink_frame {
+        format!("{}OpenSinkFrame", em.camel)
+    } else {
+        if merged {
+            args.push("0".to_string());
+        }
+        em.names.open_impl.clone()
+    };
+    b.guard(format!("retCode := c.{opener}({}); retCode != Success", args.join(", ")), "return nil, retCode");
     if merged {
         if last_bar_only {
             b.line(format!("begIdx := {}", em.lookback_call("c")));
@@ -1579,10 +1649,10 @@ fn emit_public_open_guards(b: &mut B, em: &Em, with_outputs: bool, fail: &str) {
     }
 }
 
-fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
+fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool, last_bar_only: bool, sink_frame: bool) {
     let func = em.func;
     let st = &em.names.stream;
-    emit_open_internal_seam(o, em, merged, last_bar_only);
+    emit_open_internal_seam(o, em, merged, last_bar_only, sink_frame);
 
     let open_fail = format!("nil, {}", func.outputs.iter().map(|_| "0").collect::<Vec<_>>().join(", "));
     let mut b = B::default();
@@ -1766,7 +1836,7 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
         let ctx = em.open_ctx(&open_body);
         emit_body_decls(&mut b, &open_body);
         emit_extras_and_candle(&mut b, em, &open_body, &ctx);
-        emit_open_region(&mut b, &open_body, &ctx, &[], &BTreeSet::new());
+        emit_open_region(&mut b, em.func, &open_body, &ctx, &[], &BTreeSet::new());
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let own_names: BTreeSet<&String> = own.iter().map(|f| &f.name).collect();
         let complement: Vec<String> = other
@@ -1780,7 +1850,7 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
     b.close("}");
     o.push_str(&go::func_text(&open_sig(em, OutMode::Core), &b.lines));
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, false);
+    emit_open_wrappers(o, em, true, false, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         let tier = TapeTier { models: &[ma, mb], dual: Some(dmp), fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1874,7 +1944,7 @@ fn emit_dispatch(o: &mut String, em: &Em, dp: &streaming::DispatchPlan) {
     for mode in [OutMode::Scalar, OutMode::Fill, OutMode::FillInternal] {
         emit_dispatch_open(o, em, dp, mode, &ctx);
     }
-    emit_open_wrappers(o, em, false, false);
+    emit_open_wrappers(o, em, false, false, false);
     emit_open_and_fill_internal_wrapper(o, em, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         emit_dispatch_tape(o, em, dp);
@@ -2472,7 +2542,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     body.line("return Success");
     o.push_str(&go::func_text(&open_sig(em, OutMode::Fill), &body.lines));
 
-    emit_open_wrappers(o, em, false, false);
+    emit_open_wrappers(o, em, false, false, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -2729,7 +2799,7 @@ fn emit_composed_open(o: &mut String, em: &Em, cp: &streaming::ComposedPlan, ste
         .map(|(at, t)| (at, t.lines().filter(|l| !l.is_empty()).map(str::to_string).collect()))
         .collect();
 
-    emit_open_region(&mut b, &combined, &ctx, &inserts, &replaced);
+    emit_open_region(&mut b, em.func, &combined, &ctx, &inserts, &replaced);
 
     b.guard("*outNBElement < 1", "return InsufficientHistory");
     for (at, action) in &cp.open_actions {
@@ -2912,5 +2982,5 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
     o.push_str(&go::func_text(&step_sig(em, true), &with_core(step)));
     emit_composed_open(o, em, cp, &step_settings, &outputs);
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, false);
+    emit_open_wrappers(o, em, true, false, false);
 }

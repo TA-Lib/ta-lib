@@ -472,7 +472,8 @@ func (c *Core) maxindexOpenInternal(inReal []float64, startIdx, optInTimePeriod 
 // inReal is the history; the parameters are those of [Core.MAXINDEX].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.MAXINDEXLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.MAXINDEXLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) MAXINDEXOpen(inReal []float64, optInTimePeriod int) (*MAXINDEXStream, int32, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam

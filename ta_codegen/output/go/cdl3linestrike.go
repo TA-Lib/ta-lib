@@ -36,7 +36,8 @@
 package talib
 
 func (c *Core) cdl3linestrikeLookback() int32 {
-	Near_avgPeriod := int32(c.candleSettings[CandleSettingTypeNear].AvgPeriod)
+	candles := c.candles()
+	Near_avgPeriod := int32(candles[CandleSettingTypeNear].AvgPeriod)
 	return Near_avgPeriod + 3
 }
 
@@ -50,9 +51,10 @@ func (c *Core) cdl3linestrikeImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 	var outIdx int32
 	var NearTrailingIdx int32
 	var lookbackTotal int32
-	Near_rangeType := int32(c.candleSettings[CandleSettingTypeNear].RangeType)
-	Near_avgPeriod := int32(c.candleSettings[CandleSettingTypeNear].AvgPeriod)
-	Near_factor := c.candleSettings[CandleSettingTypeNear].Factor
+	candles := c.candles()
+	Near_rangeType := int32(candles[CandleSettingTypeNear].RangeType)
+	Near_avgPeriod := int32(candles[CandleSettingTypeNear].AvgPeriod)
+	Near_factor := candles[CandleSettingTypeNear].Factor
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -68,112 +70,619 @@ func (c *Core) cdl3linestrikeImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 		*outNBElement = 0
 		return Success
 	}
-	NearPeriodTotal[3] = 0.0
-	NearPeriodTotal[2] = 0.0
-	NearTrailingIdx = startIdx - Near_avgPeriod
-	i = NearTrailingIdx
-	for i < startIdx {
-		NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
-		NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		i += 1
-	}
-	i = startIdx
-	outIdx = 0
-	NearPeriodTotalRange3 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
-	NearPeriodTotalTrailRange3 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
-	for {
-		var _T0 int32
-		if inClose[i-3] >= inOpen[i-3] {
-			_T0 = 1
-		} else {
-			_T0 = -1
+	if Near_rangeType == 0 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
 		}
-		var _T1 int32
-		if inClose[i-2] >= inOpen[i-2] {
-			_T1 = 1
-		} else {
-			_T1 = -1
-		}
-		_B4 := _T0 == _T1
-		if _B4 {
-			var _T2 int32
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(0, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T0 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T0 = 1
+			} else {
+				_T0 = -1
+			}
+			var _T1 int32
 			if inClose[i-2] >= inOpen[i-2] {
-				_T2 = 1
+				_T1 = 1
 			} else {
-				_T2 = -1
+				_T1 = -1
 			}
-			var _T3 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T3 = 1
-			} else {
-				_T3 = -1
-			}
-			_B4 = _T2 == _T3
-		}
-		_B7 := _B4
-		if _B7 {
-			var _T5 int32
-			if inClose[i] >= inOpen[i] {
-				_T5 = 1
-			} else {
-				_T5 = -1
-			}
-			var _T6 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T6 = 1
-			} else {
-				_T6 = -1
-			}
-			_B7 = _T5 == -_T6
-		}
-		_B11 := _B7 && inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) && inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) && inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		if _B11 {
-			var _T8 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T8 = 1
-			} else {
-				_T8 = -1
-			}
-			_B10 := _T8 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
-			if !_B10 {
-				var _T9 int32
-				if inClose[i-1] >= inOpen[i-1] {
-					_T9 = 1
+			_B4 := _T0 == _T1
+			if _B4 {
+				var _T2 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T2 = 1
 				} else {
-					_T9 = -1
+					_T2 = -1
 				}
-				_B10 = _T9 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				var _T3 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T3 = 1
+				} else {
+					_T3 = -1
+				}
+				_B4 = _T2 == _T3
 			}
-			_B11 = _B10
-		}
-		if _B11 {
-			var _T12 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T12 = 1
+			_B7 := _B4
+			if _B7 {
+				var _T5 int32
+				if inClose[i] >= inOpen[i] {
+					_T5 = 1
+				} else {
+					_T5 = -1
+				}
+				var _T6 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T6 = 1
+				} else {
+					_T6 = -1
+				}
+				_B7 = _T5 == -_T6
+			}
+			_B9 := _B7
+			if _B9 {
+				var _T8 float64
+				if Near_avgPeriod != 0 {
+					_T8 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T8 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B9 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T8)
+			}
+			_B11 := _B9
+			if _B11 {
+				var _T10 float64
+				if Near_avgPeriod != 0 {
+					_T10 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T10 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B11 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T10)
+			}
+			_B13 := _B11
+			if _B13 {
+				var _T12 float64
+				if Near_avgPeriod != 0 {
+					_T12 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T12 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B13 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T12)
+			}
+			_B15 := _B13
+			if _B15 {
+				var _T14 float64
+				if Near_avgPeriod != 0 {
+					_T14 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T14 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B15 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T14)
+			}
+			_B19 := _B15
+			if _B19 {
+				var _T16 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T16 = 1
+				} else {
+					_T16 = -1
+				}
+				_B18 := _T16 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B18 {
+					var _T17 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T17 = 1
+					} else {
+						_T17 = -1
+					}
+					_B18 = _T17 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B19 = _B18
+			}
+			if _B19 {
+				var _T20 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T20 = 1
+				} else {
+					_T20 = -1
+				}
+				outInteger[outIdx] = _T20 * 100
+				outIdx++
 			} else {
-				_T12 = -1
+				outInteger[outIdx] = 0
+				outIdx++
 			}
-			outInteger[outIdx] = _T12 * 100
-			outIdx++
-		} else {
-			outInteger[outIdx] = 0
-			outIdx++
+			NearPeriodTotalRange2 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(0, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
 		}
-		NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
-		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
-		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
-		NearPeriodTotalRange3 = NearPeriodTotalRange2
-		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
-		i += 1
-		NearTrailingIdx += 1
-		if !(i <= endIdx) {
-			break
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+		return Success
+	} else if Near_rangeType == 1 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
 		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(1, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T21 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T21 = 1
+			} else {
+				_T21 = -1
+			}
+			var _T22 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T22 = 1
+			} else {
+				_T22 = -1
+			}
+			_B25 := _T21 == _T22
+			if _B25 {
+				var _T23 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T23 = 1
+				} else {
+					_T23 = -1
+				}
+				var _T24 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T24 = 1
+				} else {
+					_T24 = -1
+				}
+				_B25 = _T23 == _T24
+			}
+			_B28 := _B25
+			if _B28 {
+				var _T26 int32
+				if inClose[i] >= inOpen[i] {
+					_T26 = 1
+				} else {
+					_T26 = -1
+				}
+				var _T27 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T27 = 1
+				} else {
+					_T27 = -1
+				}
+				_B28 = _T26 == -_T27
+			}
+			_B30 := _B28
+			if _B30 {
+				var _T29 float64
+				if Near_avgPeriod != 0 {
+					_T29 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T29 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B30 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T29)
+			}
+			_B32 := _B30
+			if _B32 {
+				var _T31 float64
+				if Near_avgPeriod != 0 {
+					_T31 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T31 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B32 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T31)
+			}
+			_B34 := _B32
+			if _B34 {
+				var _T33 float64
+				if Near_avgPeriod != 0 {
+					_T33 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T33 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B34 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T33)
+			}
+			_B36 := _B34
+			if _B36 {
+				var _T35 float64
+				if Near_avgPeriod != 0 {
+					_T35 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T35 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B36 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T35)
+			}
+			_B40 := _B36
+			if _B40 {
+				var _T37 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T37 = 1
+				} else {
+					_T37 = -1
+				}
+				_B39 := _T37 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B39 {
+					var _T38 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T38 = 1
+					} else {
+						_T38 = -1
+					}
+					_B39 = _T38 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B40 = _B39
+			}
+			if _B40 {
+				var _T41 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T41 = 1
+				} else {
+					_T41 = -1
+				}
+				outInteger[outIdx] = _T41 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(1, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+		return Success
+	} else if Near_rangeType == 2 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(2, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T42 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T42 = 1
+			} else {
+				_T42 = -1
+			}
+			var _T43 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T43 = 1
+			} else {
+				_T43 = -1
+			}
+			_B46 := _T42 == _T43
+			if _B46 {
+				var _T44 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T44 = 1
+				} else {
+					_T44 = -1
+				}
+				var _T45 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T45 = 1
+				} else {
+					_T45 = -1
+				}
+				_B46 = _T44 == _T45
+			}
+			_B49 := _B46
+			if _B49 {
+				var _T47 int32
+				if inClose[i] >= inOpen[i] {
+					_T47 = 1
+				} else {
+					_T47 = -1
+				}
+				var _T48 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T48 = 1
+				} else {
+					_T48 = -1
+				}
+				_B49 = _T47 == -_T48
+			}
+			_B51 := _B49
+			if _B51 {
+				var _T50 float64
+				if Near_avgPeriod != 0 {
+					_T50 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T50 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B51 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T50)/2.0
+			}
+			_B53 := _B51
+			if _B53 {
+				var _T52 float64
+				if Near_avgPeriod != 0 {
+					_T52 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T52 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B53 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T52)/2.0
+			}
+			_B55 := _B53
+			if _B55 {
+				var _T54 float64
+				if Near_avgPeriod != 0 {
+					_T54 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T54 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B55 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T54)/2.0
+			}
+			_B57 := _B55
+			if _B57 {
+				var _T56 float64
+				if Near_avgPeriod != 0 {
+					_T56 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T56 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B57 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T56)/2.0
+			}
+			_B61 := _B57
+			if _B61 {
+				var _T58 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T58 = 1
+				} else {
+					_T58 = -1
+				}
+				_B60 := _T58 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B60 {
+					var _T59 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T59 = 1
+					} else {
+						_T59 = -1
+					}
+					_B60 = _T59 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B61 = _B60
+			}
+			if _B61 {
+				var _T62 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T62 = 1
+				} else {
+					_T62 = -1
+				}
+				outInteger[outIdx] = _T62 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(2, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+		return Success
+	} else {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T63 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T63 = 1
+			} else {
+				_T63 = -1
+			}
+			var _T64 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T64 = 1
+			} else {
+				_T64 = -1
+			}
+			_B67 := _T63 == _T64
+			if _B67 {
+				var _T65 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T65 = 1
+				} else {
+					_T65 = -1
+				}
+				var _T66 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T66 = 1
+				} else {
+					_T66 = -1
+				}
+				_B67 = _T65 == _T66
+			}
+			_B70 := _B67
+			if _B70 {
+				var _T68 int32
+				if inClose[i] >= inOpen[i] {
+					_T68 = 1
+				} else {
+					_T68 = -1
+				}
+				var _T69 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T69 = 1
+				} else {
+					_T69 = -1
+				}
+				_B70 = _T68 == -_T69
+			}
+			_B73 := _B70
+			if _B73 {
+				var _T71 float64
+				if Near_avgPeriod != 0 {
+					_T71 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T71 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				var _T72 float64
+				if Near_rangeType == 2 {
+					_T72 = 2.0
+				} else {
+					_T72 = 1.0
+				}
+				_B73 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T71)/_T72
+			}
+			_B76 := _B73
+			if _B76 {
+				var _T74 float64
+				if Near_avgPeriod != 0 {
+					_T74 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T74 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				var _T75 float64
+				if Near_rangeType == 2 {
+					_T75 = 2.0
+				} else {
+					_T75 = 1.0
+				}
+				_B76 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T74)/_T75
+			}
+			_B79 := _B76
+			if _B79 {
+				var _T77 float64
+				if Near_avgPeriod != 0 {
+					_T77 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T77 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				var _T78 float64
+				if Near_rangeType == 2 {
+					_T78 = 2.0
+				} else {
+					_T78 = 1.0
+				}
+				_B79 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T77)/_T78
+			}
+			_B82 := _B79
+			if _B82 {
+				var _T80 float64
+				if Near_avgPeriod != 0 {
+					_T80 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T80 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				var _T81 float64
+				if Near_rangeType == 2 {
+					_T81 = 2.0
+				} else {
+					_T81 = 1.0
+				}
+				_B82 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T80)/_T81
+			}
+			_B86 := _B82
+			if _B86 {
+				var _T83 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T83 = 1
+				} else {
+					_T83 = -1
+				}
+				_B85 := _T83 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B85 {
+					var _T84 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T84 = 1
+					} else {
+						_T84 = -1
+					}
+					_B85 = _T84 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B86 = _B85
+			}
+			if _B86 {
+				var _T87 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T87 = 1
+				} else {
+					_T87 = -1
+				}
+				outInteger[outIdx] = _T87 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+		return Success
 	}
-	*outNBElement = outIdx
-	*outBegIdx = startIdx
-	return Success
 }
 
 // CDL3LINESTRIKELookback returns how many leading bars [Core.CDL3LINESTRIKE]
@@ -391,34 +900,98 @@ func (sp *CDL3LINESTRIKEStream) Peek(inOpen, inHigh, inLow, inClose float64) (in
 		}
 		_B7 = _T5 == -_T6
 	}
-	_B11 := _B7 && sp.lag2_inOpen >= minF(sp.lag3_inOpen, sp.lag3_inClose)-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[3], sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose) && sp.lag2_inOpen <= maxF(sp.lag3_inOpen, sp.lag3_inClose)+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[3], sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose) && sp.lag1_inOpen >= minF(sp.lag2_inOpen, sp.lag2_inClose)-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[2], sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose) && sp.lag1_inOpen <= maxF(sp.lag2_inOpen, sp.lag2_inClose)+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[2], sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
-	if _B11 {
-		var _T8 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T8 = 1
+	_B10 := _B7
+	if _B10 {
+		var _T8 float64
+		if Near_avgPeriod != 0 {
+			_T8 = sp.NearPeriodTotal[3] / float64(Near_avgPeriod)
 		} else {
-			_T8 = -1
+			_T8 = candleRange(Near_rangeType, sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose)
 		}
-		_B10 := _T8 == 1 && sp.lag1_inClose > sp.lag2_inClose && sp.lag2_inClose > sp.lag3_inClose && inOpen > sp.lag1_inClose && inClose < sp.lag3_inOpen
-		if !_B10 {
-			var _T9 int32
-			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T9 = 1
-			} else {
-				_T9 = -1
-			}
-			_B10 = _T9 == -1 && sp.lag1_inClose < sp.lag2_inClose && sp.lag2_inClose < sp.lag3_inClose && inOpen < sp.lag1_inClose && inClose > sp.lag3_inOpen
+		var _T9 float64
+		if Near_rangeType == 2 {
+			_T9 = 2.0
+		} else {
+			_T9 = 1.0
 		}
-		_B11 = _B10
+		_B10 = sp.lag2_inOpen >= minF(sp.lag3_inOpen, sp.lag3_inClose)-float64(Near_factor*_T8)/_T9
 	}
-	if _B11 {
-		var _T12 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T12 = 1
+	_B13 := _B10
+	if _B13 {
+		var _T11 float64
+		if Near_avgPeriod != 0 {
+			_T11 = sp.NearPeriodTotal[3] / float64(Near_avgPeriod)
 		} else {
-			_T12 = -1
+			_T11 = candleRange(Near_rangeType, sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose)
 		}
-		cur_outInteger = _T12 * 100
+		var _T12 float64
+		if Near_rangeType == 2 {
+			_T12 = 2.0
+		} else {
+			_T12 = 1.0
+		}
+		_B13 = sp.lag2_inOpen <= maxF(sp.lag3_inOpen, sp.lag3_inClose)+float64(Near_factor*_T11)/_T12
+	}
+	_B16 := _B13
+	if _B16 {
+		var _T14 float64
+		if Near_avgPeriod != 0 {
+			_T14 = sp.NearPeriodTotal[2] / float64(Near_avgPeriod)
+		} else {
+			_T14 = candleRange(Near_rangeType, sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
+		}
+		var _T15 float64
+		if Near_rangeType == 2 {
+			_T15 = 2.0
+		} else {
+			_T15 = 1.0
+		}
+		_B16 = sp.lag1_inOpen >= minF(sp.lag2_inOpen, sp.lag2_inClose)-float64(Near_factor*_T14)/_T15
+	}
+	_B19 := _B16
+	if _B19 {
+		var _T17 float64
+		if Near_avgPeriod != 0 {
+			_T17 = sp.NearPeriodTotal[2] / float64(Near_avgPeriod)
+		} else {
+			_T17 = candleRange(Near_rangeType, sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
+		}
+		var _T18 float64
+		if Near_rangeType == 2 {
+			_T18 = 2.0
+		} else {
+			_T18 = 1.0
+		}
+		_B19 = sp.lag1_inOpen <= maxF(sp.lag2_inOpen, sp.lag2_inClose)+float64(Near_factor*_T17)/_T18
+	}
+	_B23 := _B19
+	if _B23 {
+		var _T20 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T20 = 1
+		} else {
+			_T20 = -1
+		}
+		_B22 := _T20 == 1 && sp.lag1_inClose > sp.lag2_inClose && sp.lag2_inClose > sp.lag3_inClose && inOpen > sp.lag1_inClose && inClose < sp.lag3_inOpen
+		if !_B22 {
+			var _T21 int32
+			if sp.lag1_inClose >= sp.lag1_inOpen {
+				_T21 = 1
+			} else {
+				_T21 = -1
+			}
+			_B22 = _T21 == -1 && sp.lag1_inClose < sp.lag2_inClose && sp.lag2_inClose < sp.lag3_inClose && inOpen < sp.lag1_inClose && inClose > sp.lag3_inOpen
+		}
+		_B23 = _B22
+	}
+	if _B23 {
+		var _T24 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T24 = 1
+		} else {
+			_T24 = -1
+		}
+		cur_outInteger = _T24 * 100
 	} else {
 		cur_outInteger = 0
 	}
@@ -446,78 +1019,142 @@ func cdl3linestrikeStepImpl(sp *CDL3LINESTRIKEStream, inOpen, inHigh, inLow, inC
 	Near_avgPeriod := sp.cs_Near_avgPeriod
 	Near_factor := sp.cs_Near_factor
 	sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = candleRange(Near_rangeType, inOpen, inHigh, inLow, inClose)
-	var _T13 int32
+	var _T25 int32
 	if sp.lag3_inClose >= sp.lag3_inOpen {
-		_T13 = 1
+		_T25 = 1
 	} else {
-		_T13 = -1
+		_T25 = -1
 	}
-	var _T14 int32
+	var _T26 int32
 	if sp.lag2_inClose >= sp.lag2_inOpen {
-		_T14 = 1
+		_T26 = 1
 	} else {
-		_T14 = -1
+		_T26 = -1
 	}
-	_B17 := _T13 == _T14
-	if _B17 {
-		var _T15 int32
+	_B29 := _T25 == _T26
+	if _B29 {
+		var _T27 int32
 		if sp.lag2_inClose >= sp.lag2_inOpen {
-			_T15 = 1
+			_T27 = 1
 		} else {
-			_T15 = -1
+			_T27 = -1
 		}
-		var _T16 int32
+		var _T28 int32
 		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T16 = 1
+			_T28 = 1
 		} else {
-			_T16 = -1
+			_T28 = -1
 		}
-		_B17 = _T15 == _T16
+		_B29 = _T27 == _T28
 	}
-	_B20 := _B17
-	if _B20 {
-		var _T18 int32
+	_B32 := _B29
+	if _B32 {
+		var _T30 int32
 		if inClose >= inOpen {
-			_T18 = 1
+			_T30 = 1
 		} else {
-			_T18 = -1
+			_T30 = -1
 		}
-		var _T19 int32
+		var _T31 int32
 		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T19 = 1
+			_T31 = 1
 		} else {
-			_T19 = -1
+			_T31 = -1
 		}
-		_B20 = _T18 == -_T19
+		_B32 = _T30 == -_T31
 	}
-	_B24 := _B20 && sp.lag2_inOpen >= minF(sp.lag3_inOpen, sp.lag3_inClose)-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[3], sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose) && sp.lag2_inOpen <= maxF(sp.lag3_inOpen, sp.lag3_inClose)+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[3], sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose) && sp.lag1_inOpen >= minF(sp.lag2_inOpen, sp.lag2_inClose)-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[2], sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose) && sp.lag1_inOpen <= maxF(sp.lag2_inOpen, sp.lag2_inClose)+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, sp.NearPeriodTotal[2], sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
-	if _B24 {
-		var _T21 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T21 = 1
+	_B35 := _B32
+	if _B35 {
+		var _T33 float64
+		if Near_avgPeriod != 0 {
+			_T33 = sp.NearPeriodTotal[3] / float64(Near_avgPeriod)
 		} else {
-			_T21 = -1
+			_T33 = candleRange(Near_rangeType, sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose)
 		}
-		_B23 := _T21 == 1 && sp.lag1_inClose > sp.lag2_inClose && sp.lag2_inClose > sp.lag3_inClose && inOpen > sp.lag1_inClose && inClose < sp.lag3_inOpen
-		if !_B23 {
-			var _T22 int32
+		var _T34 float64
+		if Near_rangeType == 2 {
+			_T34 = 2.0
+		} else {
+			_T34 = 1.0
+		}
+		_B35 = sp.lag2_inOpen >= minF(sp.lag3_inOpen, sp.lag3_inClose)-float64(Near_factor*_T33)/_T34
+	}
+	_B38 := _B35
+	if _B38 {
+		var _T36 float64
+		if Near_avgPeriod != 0 {
+			_T36 = sp.NearPeriodTotal[3] / float64(Near_avgPeriod)
+		} else {
+			_T36 = candleRange(Near_rangeType, sp.lag3_inOpen, sp.lag3_inHigh, sp.lag3_inLow, sp.lag3_inClose)
+		}
+		var _T37 float64
+		if Near_rangeType == 2 {
+			_T37 = 2.0
+		} else {
+			_T37 = 1.0
+		}
+		_B38 = sp.lag2_inOpen <= maxF(sp.lag3_inOpen, sp.lag3_inClose)+float64(Near_factor*_T36)/_T37
+	}
+	_B41 := _B38
+	if _B41 {
+		var _T39 float64
+		if Near_avgPeriod != 0 {
+			_T39 = sp.NearPeriodTotal[2] / float64(Near_avgPeriod)
+		} else {
+			_T39 = candleRange(Near_rangeType, sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
+		}
+		var _T40 float64
+		if Near_rangeType == 2 {
+			_T40 = 2.0
+		} else {
+			_T40 = 1.0
+		}
+		_B41 = sp.lag1_inOpen >= minF(sp.lag2_inOpen, sp.lag2_inClose)-float64(Near_factor*_T39)/_T40
+	}
+	_B44 := _B41
+	if _B44 {
+		var _T42 float64
+		if Near_avgPeriod != 0 {
+			_T42 = sp.NearPeriodTotal[2] / float64(Near_avgPeriod)
+		} else {
+			_T42 = candleRange(Near_rangeType, sp.lag2_inOpen, sp.lag2_inHigh, sp.lag2_inLow, sp.lag2_inClose)
+		}
+		var _T43 float64
+		if Near_rangeType == 2 {
+			_T43 = 2.0
+		} else {
+			_T43 = 1.0
+		}
+		_B44 = sp.lag1_inOpen <= maxF(sp.lag2_inOpen, sp.lag2_inClose)+float64(Near_factor*_T42)/_T43
+	}
+	_B48 := _B44
+	if _B48 {
+		var _T45 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T45 = 1
+		} else {
+			_T45 = -1
+		}
+		_B47 := _T45 == 1 && sp.lag1_inClose > sp.lag2_inClose && sp.lag2_inClose > sp.lag3_inClose && inOpen > sp.lag1_inClose && inClose < sp.lag3_inOpen
+		if !_B47 {
+			var _T46 int32
 			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T22 = 1
+				_T46 = 1
 			} else {
-				_T22 = -1
+				_T46 = -1
 			}
-			_B23 = _T22 == -1 && sp.lag1_inClose < sp.lag2_inClose && sp.lag2_inClose < sp.lag3_inClose && inOpen < sp.lag1_inClose && inClose > sp.lag3_inOpen
+			_B47 = _T46 == -1 && sp.lag1_inClose < sp.lag2_inClose && sp.lag2_inClose < sp.lag3_inClose && inOpen < sp.lag1_inClose && inClose > sp.lag3_inOpen
 		}
-		_B24 = _B23
+		_B48 = _B47
 	}
-	if _B24 {
-		var _T25 int32
+	if _B48 {
+		var _T49 int32
 		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T25 = 1
+			_T49 = 1
 		} else {
-			_T25 = -1
+			_T49 = -1
 		}
-		sp.cur_outInteger = _T25 * 100
+		sp.cur_outInteger = _T49 * 100
 	} else {
 		sp.cur_outInteger = 0
 	}
@@ -570,9 +1207,10 @@ func (c *Core) cdl3linestrikeOpenImpl(sp *CDL3LINESTRIKEStream, inOpen, inHigh, 
 		*outNBElement = 0
 		return InsufficientHistory
 	}
-	Near_rangeType := int32(c.candleSettings[CandleSettingTypeNear].RangeType)
-	Near_avgPeriod := int32(c.candleSettings[CandleSettingTypeNear].AvgPeriod)
-	Near_factor := c.candleSettings[CandleSettingTypeNear].Factor
+	candles := c.candles()
+	Near_rangeType := int32(candles[CandleSettingTypeNear].RangeType)
+	Near_avgPeriod := int32(candles[CandleSettingTypeNear].AvgPeriod)
+	Near_factor := candles[CandleSettingTypeNear].Factor
 	lookbackTotal = c.cdl3linestrikeLookback()
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
@@ -582,111 +1220,615 @@ func (c *Core) cdl3linestrikeOpenImpl(sp *CDL3LINESTRIKEStream, inOpen, inHigh, 
 		*outNBElement = 0
 		return InsufficientHistory
 	}
-	NearPeriodTotal[3] = 0.0
-	NearPeriodTotal[2] = 0.0
-	NearTrailingIdx = startIdx - Near_avgPeriod
-	i = NearTrailingIdx
-	for i < startIdx {
-		NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
-		NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		i += 1
-	}
-	i = startIdx
-	outIdx = 0
-	NearPeriodTotalRange3 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
-	NearPeriodTotalTrailRange3 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
-	for {
-		var _T26 int32
-		if inClose[i-3] >= inOpen[i-3] {
-			_T26 = 1
-		} else {
-			_T26 = -1
+	if Near_rangeType == 0 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
 		}
-		var _T27 int32
-		if inClose[i-2] >= inOpen[i-2] {
-			_T27 = 1
-		} else {
-			_T27 = -1
-		}
-		_B30 := _T26 == _T27
-		if _B30 {
-			var _T28 int32
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(0, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T50 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T50 = 1
+			} else {
+				_T50 = -1
+			}
+			var _T51 int32
 			if inClose[i-2] >= inOpen[i-2] {
-				_T28 = 1
+				_T51 = 1
 			} else {
-				_T28 = -1
+				_T51 = -1
 			}
-			var _T29 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T29 = 1
-			} else {
-				_T29 = -1
-			}
-			_B30 = _T28 == _T29
-		}
-		_B33 := _B30
-		if _B33 {
-			var _T31 int32
-			if inClose[i] >= inOpen[i] {
-				_T31 = 1
-			} else {
-				_T31 = -1
-			}
-			var _T32 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T32 = 1
-			} else {
-				_T32 = -1
-			}
-			_B33 = _T31 == -_T32
-		}
-		_B37 := _B33 && inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) && inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) && inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+candleAverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		if _B37 {
-			var _T34 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T34 = 1
-			} else {
-				_T34 = -1
-			}
-			_B36 := _T34 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
-			if !_B36 {
-				var _T35 int32
-				if inClose[i-1] >= inOpen[i-1] {
-					_T35 = 1
+			_B54 := _T50 == _T51
+			if _B54 {
+				var _T52 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T52 = 1
 				} else {
-					_T35 = -1
+					_T52 = -1
 				}
-				_B36 = _T35 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				var _T53 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T53 = 1
+				} else {
+					_T53 = -1
+				}
+				_B54 = _T52 == _T53
 			}
-			_B37 = _B36
-		}
-		if _B37 {
-			var _T38 int32
-			if inClose[i-1] >= inOpen[i-1] {
-				_T38 = 1
+			_B57 := _B54
+			if _B57 {
+				var _T55 int32
+				if inClose[i] >= inOpen[i] {
+					_T55 = 1
+				} else {
+					_T55 = -1
+				}
+				var _T56 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T56 = 1
+				} else {
+					_T56 = -1
+				}
+				_B57 = _T55 == -_T56
+			}
+			_B59 := _B57
+			if _B59 {
+				var _T58 float64
+				if Near_avgPeriod != 0 {
+					_T58 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T58 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B59 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T58)
+			}
+			_B61 := _B59
+			if _B61 {
+				var _T60 float64
+				if Near_avgPeriod != 0 {
+					_T60 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T60 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B61 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T60)
+			}
+			_B63 := _B61
+			if _B63 {
+				var _T62 float64
+				if Near_avgPeriod != 0 {
+					_T62 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T62 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B63 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T62)
+			}
+			_B65 := _B63
+			if _B65 {
+				var _T64 float64
+				if Near_avgPeriod != 0 {
+					_T64 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T64 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B65 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T64)
+			}
+			_B69 := _B65
+			if _B69 {
+				var _T66 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T66 = 1
+				} else {
+					_T66 = -1
+				}
+				_B68 := _T66 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B68 {
+					var _T67 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T67 = 1
+					} else {
+						_T67 = -1
+					}
+					_B68 = _T67 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B69 = _B68
+			}
+			if _B69 {
+				var _T70 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T70 = 1
+				} else {
+					_T70 = -1
+				}
+				outInteger[outIdx*outStride] = _T70 * 100
+				outIdx++
 			} else {
-				_T38 = -1
+				outInteger[outIdx*outStride] = 0
+				outIdx++
 			}
-			outInteger[outIdx*outStride] = _T38 * 100
-			outIdx++
-		} else {
-			outInteger[outIdx*outStride] = 0
-			outIdx++
+			NearPeriodTotalRange2 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(0, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
 		}
-		NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-		NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
-		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
-		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
-		NearPeriodTotalRange3 = NearPeriodTotalRange2
-		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
-		i += 1
-		NearTrailingIdx += 1
-		if !(i <= endIdx) {
-			break
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else if Near_rangeType == 1 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
 		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(1, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T71 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T71 = 1
+			} else {
+				_T71 = -1
+			}
+			var _T72 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T72 = 1
+			} else {
+				_T72 = -1
+			}
+			_B75 := _T71 == _T72
+			if _B75 {
+				var _T73 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T73 = 1
+				} else {
+					_T73 = -1
+				}
+				var _T74 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T74 = 1
+				} else {
+					_T74 = -1
+				}
+				_B75 = _T73 == _T74
+			}
+			_B78 := _B75
+			if _B78 {
+				var _T76 int32
+				if inClose[i] >= inOpen[i] {
+					_T76 = 1
+				} else {
+					_T76 = -1
+				}
+				var _T77 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T77 = 1
+				} else {
+					_T77 = -1
+				}
+				_B78 = _T76 == -_T77
+			}
+			_B80 := _B78
+			if _B80 {
+				var _T79 float64
+				if Near_avgPeriod != 0 {
+					_T79 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T79 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B80 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T79)
+			}
+			_B82 := _B80
+			if _B82 {
+				var _T81 float64
+				if Near_avgPeriod != 0 {
+					_T81 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T81 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B82 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T81)
+			}
+			_B84 := _B82
+			if _B84 {
+				var _T83 float64
+				if Near_avgPeriod != 0 {
+					_T83 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T83 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B84 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T83)
+			}
+			_B86 := _B84
+			if _B86 {
+				var _T85 float64
+				if Near_avgPeriod != 0 {
+					_T85 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T85 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B86 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T85)
+			}
+			_B90 := _B86
+			if _B90 {
+				var _T87 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T87 = 1
+				} else {
+					_T87 = -1
+				}
+				_B89 := _T87 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B89 {
+					var _T88 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T88 = 1
+					} else {
+						_T88 = -1
+					}
+					_B89 = _T88 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B90 = _B89
+			}
+			if _B90 {
+				var _T91 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T91 = 1
+				} else {
+					_T91 = -1
+				}
+				outInteger[outIdx*outStride] = _T91 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx*outStride] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(1, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else if Near_rangeType == 2 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(2, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T92 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T92 = 1
+			} else {
+				_T92 = -1
+			}
+			var _T93 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T93 = 1
+			} else {
+				_T93 = -1
+			}
+			_B96 := _T92 == _T93
+			if _B96 {
+				var _T94 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T94 = 1
+				} else {
+					_T94 = -1
+				}
+				var _T95 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T95 = 1
+				} else {
+					_T95 = -1
+				}
+				_B96 = _T94 == _T95
+			}
+			_B99 := _B96
+			if _B99 {
+				var _T97 int32
+				if inClose[i] >= inOpen[i] {
+					_T97 = 1
+				} else {
+					_T97 = -1
+				}
+				var _T98 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T98 = 1
+				} else {
+					_T98 = -1
+				}
+				_B99 = _T97 == -_T98
+			}
+			_B101 := _B99
+			if _B101 {
+				var _T100 float64
+				if Near_avgPeriod != 0 {
+					_T100 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T100 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B101 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T100)/2.0
+			}
+			_B103 := _B101
+			if _B103 {
+				var _T102 float64
+				if Near_avgPeriod != 0 {
+					_T102 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T102 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				_B103 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T102)/2.0
+			}
+			_B105 := _B103
+			if _B105 {
+				var _T104 float64
+				if Near_avgPeriod != 0 {
+					_T104 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T104 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B105 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T104)/2.0
+			}
+			_B107 := _B105
+			if _B107 {
+				var _T106 float64
+				if Near_avgPeriod != 0 {
+					_T106 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T106 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				_B107 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T106)/2.0
+			}
+			_B111 := _B107
+			if _B111 {
+				var _T108 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T108 = 1
+				} else {
+					_T108 = -1
+				}
+				_B110 := _T108 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B110 {
+					var _T109 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T109 = 1
+					} else {
+						_T109 = -1
+					}
+					_B110 = _T109 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B111 = _B110
+			}
+			if _B111 {
+				var _T112 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T112 = 1
+				} else {
+					_T112 = -1
+				}
+				outInteger[outIdx*outStride] = _T112 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx*outStride] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(2, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for {
+			var _T113 int32
+			if inClose[i-3] >= inOpen[i-3] {
+				_T113 = 1
+			} else {
+				_T113 = -1
+			}
+			var _T114 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T114 = 1
+			} else {
+				_T114 = -1
+			}
+			_B117 := _T113 == _T114
+			if _B117 {
+				var _T115 int32
+				if inClose[i-2] >= inOpen[i-2] {
+					_T115 = 1
+				} else {
+					_T115 = -1
+				}
+				var _T116 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T116 = 1
+				} else {
+					_T116 = -1
+				}
+				_B117 = _T115 == _T116
+			}
+			_B120 := _B117
+			if _B120 {
+				var _T118 int32
+				if inClose[i] >= inOpen[i] {
+					_T118 = 1
+				} else {
+					_T118 = -1
+				}
+				var _T119 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T119 = 1
+				} else {
+					_T119 = -1
+				}
+				_B120 = _T118 == -_T119
+			}
+			_B123 := _B120
+			if _B123 {
+				var _T121 float64
+				if Near_avgPeriod != 0 {
+					_T121 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T121 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				var _T122 float64
+				if Near_rangeType == 2 {
+					_T122 = 2.0
+				} else {
+					_T122 = 1.0
+				}
+				_B123 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T121)/_T122
+			}
+			_B126 := _B123
+			if _B126 {
+				var _T124 float64
+				if Near_avgPeriod != 0 {
+					_T124 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+				} else {
+					_T124 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+				}
+				var _T125 float64
+				if Near_rangeType == 2 {
+					_T125 = 2.0
+				} else {
+					_T125 = 1.0
+				}
+				_B126 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T124)/_T125
+			}
+			_B129 := _B126
+			if _B129 {
+				var _T127 float64
+				if Near_avgPeriod != 0 {
+					_T127 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T127 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				var _T128 float64
+				if Near_rangeType == 2 {
+					_T128 = 2.0
+				} else {
+					_T128 = 1.0
+				}
+				_B129 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T127)/_T128
+			}
+			_B132 := _B129
+			if _B132 {
+				var _T130 float64
+				if Near_avgPeriod != 0 {
+					_T130 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+				} else {
+					_T130 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+				}
+				var _T131 float64
+				if Near_rangeType == 2 {
+					_T131 = 2.0
+				} else {
+					_T131 = 1.0
+				}
+				_B132 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T130)/_T131
+			}
+			_B136 := _B132
+			if _B136 {
+				var _T133 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T133 = 1
+				} else {
+					_T133 = -1
+				}
+				_B135 := _T133 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+				if !_B135 {
+					var _T134 int32
+					if inClose[i-1] >= inOpen[i-1] {
+						_T134 = 1
+					} else {
+						_T134 = -1
+					}
+					_B135 = _T134 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+				}
+				_B136 = _B135
+			}
+			if _B136 {
+				var _T137 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T137 = 1
+				} else {
+					_T137 = -1
+				}
+				outInteger[outIdx*outStride] = _T137 * 100
+				outIdx++
+			} else {
+				outInteger[outIdx*outStride] = 0
+				outIdx++
+			}
+			NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+			if !(i <= endIdx) {
+				break
+			}
+		}
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
 	}
-	*outNBElement = outIdx
-	*outBegIdx = startIdx
 	capLag_NearTrailingIdx := i - NearTrailingIdx
 	cap_NearTrailingIdx := capLag_NearTrailingIdx + 3
 	if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen {
@@ -722,6 +1864,710 @@ func (c *Core) cdl3linestrikeOpenImpl(sp *CDL3LINESTRIKEStream, inOpen, inHigh, 
 	return Success
 }
 
+func (c *Core) cdl3linestrikeOpenSinkFrame(sp *CDL3LINESTRIKEStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32) RetCode {
+	var NearPeriodTotal [4]float64
+	var NearPeriodTotalRange2 float64
+	var NearPeriodTotalTrailRange2 float64
+	var NearPeriodTotalRange3 float64
+	var NearPeriodTotalTrailRange3 float64
+	var i int32
+	var outIdx int32
+	var NearTrailingIdx int32
+	var lookbackTotal int32
+	if len(inOpen) > IndexMax+1 {
+		return OutOfRangeEndIndex
+	}
+	historyLen := int32(len(inOpen))
+	endIdx := historyLen - 1
+	if len(inHigh) != len(inOpen) || len(inLow) != len(inOpen) || len(inClose) != len(inOpen) {
+		return BadParam
+	}
+	if startIdx >= historyLen {
+		*outBegIdx = 0
+		*outNBElement = 0
+		return InsufficientHistory
+	}
+	candles := c.candles()
+	Near_rangeType := int32(candles[CandleSettingTypeNear].RangeType)
+	Near_avgPeriod := int32(candles[CandleSettingTypeNear].AvgPeriod)
+	Near_factor := candles[CandleSettingTypeNear].Factor
+	lookbackTotal = c.cdl3linestrikeLookback()
+	if startIdx < lookbackTotal {
+		startIdx = lookbackTotal
+	}
+	if startIdx > endIdx {
+		*outBegIdx = 0
+		*outNBElement = 0
+		return InsufficientHistory
+	}
+	if Near_rangeType == 0 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(0, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for i < endIdx {
+			outIdx += 1
+			NearPeriodTotalRange2 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(0, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+		}
+		var _T138 int32
+		if inClose[i-3] >= inOpen[i-3] {
+			_T138 = 1
+		} else {
+			_T138 = -1
+		}
+		var _T139 int32
+		if inClose[i-2] >= inOpen[i-2] {
+			_T139 = 1
+		} else {
+			_T139 = -1
+		}
+		_B142 := _T138 == _T139
+		if _B142 {
+			var _T140 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T140 = 1
+			} else {
+				_T140 = -1
+			}
+			var _T141 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T141 = 1
+			} else {
+				_T141 = -1
+			}
+			_B142 = _T140 == _T141
+		}
+		_B145 := _B142
+		if _B145 {
+			var _T143 int32
+			if inClose[i] >= inOpen[i] {
+				_T143 = 1
+			} else {
+				_T143 = -1
+			}
+			var _T144 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T144 = 1
+			} else {
+				_T144 = -1
+			}
+			_B145 = _T143 == -_T144
+		}
+		_B147 := _B145
+		if _B147 {
+			var _T146 float64
+			if Near_avgPeriod != 0 {
+				_T146 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T146 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B147 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T146)
+		}
+		_B149 := _B147
+		if _B149 {
+			var _T148 float64
+			if Near_avgPeriod != 0 {
+				_T148 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T148 = candleRange(0, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B149 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T148)
+		}
+		_B151 := _B149
+		if _B151 {
+			var _T150 float64
+			if Near_avgPeriod != 0 {
+				_T150 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T150 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B151 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T150)
+		}
+		_B153 := _B151
+		if _B153 {
+			var _T152 float64
+			if Near_avgPeriod != 0 {
+				_T152 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T152 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B153 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T152)
+		}
+		_B157 := _B153
+		if _B157 {
+			var _T154 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T154 = 1
+			} else {
+				_T154 = -1
+			}
+			_B156 := _T154 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+			if !_B156 {
+				var _T155 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T155 = 1
+				} else {
+					_T155 = -1
+				}
+				_B156 = _T155 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+			}
+			_B157 = _B156
+		}
+		if _B157 {
+			var _T158 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T158 = 1
+			} else {
+				_T158 = -1
+			}
+			outInteger[0] = _T158 * 100
+			outIdx += 1
+		} else {
+			outInteger[0] = 0
+			outIdx += 1
+		}
+		NearPeriodTotalRange2 = candleRange(0, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+		NearPeriodTotalTrailRange2 = candleRange(0, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+		NearPeriodTotalRange3 = NearPeriodTotalRange2
+		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+		i += 1
+		NearTrailingIdx += 1
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else if Near_rangeType == 1 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(1, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for i < endIdx {
+			outIdx += 1
+			NearPeriodTotalRange2 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(1, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+		}
+		var _T159 int32
+		if inClose[i-3] >= inOpen[i-3] {
+			_T159 = 1
+		} else {
+			_T159 = -1
+		}
+		var _T160 int32
+		if inClose[i-2] >= inOpen[i-2] {
+			_T160 = 1
+		} else {
+			_T160 = -1
+		}
+		_B163 := _T159 == _T160
+		if _B163 {
+			var _T161 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T161 = 1
+			} else {
+				_T161 = -1
+			}
+			var _T162 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T162 = 1
+			} else {
+				_T162 = -1
+			}
+			_B163 = _T161 == _T162
+		}
+		_B166 := _B163
+		if _B166 {
+			var _T164 int32
+			if inClose[i] >= inOpen[i] {
+				_T164 = 1
+			} else {
+				_T164 = -1
+			}
+			var _T165 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T165 = 1
+			} else {
+				_T165 = -1
+			}
+			_B166 = _T164 == -_T165
+		}
+		_B168 := _B166
+		if _B168 {
+			var _T167 float64
+			if Near_avgPeriod != 0 {
+				_T167 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T167 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B168 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T167)
+		}
+		_B170 := _B168
+		if _B170 {
+			var _T169 float64
+			if Near_avgPeriod != 0 {
+				_T169 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T169 = candleRange(1, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B170 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T169)
+		}
+		_B172 := _B170
+		if _B172 {
+			var _T171 float64
+			if Near_avgPeriod != 0 {
+				_T171 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T171 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B172 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T171)
+		}
+		_B174 := _B172
+		if _B174 {
+			var _T173 float64
+			if Near_avgPeriod != 0 {
+				_T173 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T173 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B174 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T173)
+		}
+		_B178 := _B174
+		if _B178 {
+			var _T175 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T175 = 1
+			} else {
+				_T175 = -1
+			}
+			_B177 := _T175 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+			if !_B177 {
+				var _T176 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T176 = 1
+				} else {
+					_T176 = -1
+				}
+				_B177 = _T176 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+			}
+			_B178 = _B177
+		}
+		if _B178 {
+			var _T179 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T179 = 1
+			} else {
+				_T179 = -1
+			}
+			outInteger[0] = _T179 * 100
+			outIdx += 1
+		} else {
+			outInteger[0] = 0
+			outIdx += 1
+		}
+		NearPeriodTotalRange2 = candleRange(1, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+		NearPeriodTotalTrailRange2 = candleRange(1, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+		NearPeriodTotalRange3 = NearPeriodTotalRange2
+		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+		i += 1
+		NearTrailingIdx += 1
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else if Near_rangeType == 2 {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(2, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for i < endIdx {
+			outIdx += 1
+			NearPeriodTotalRange2 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(2, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+		}
+		var _T180 int32
+		if inClose[i-3] >= inOpen[i-3] {
+			_T180 = 1
+		} else {
+			_T180 = -1
+		}
+		var _T181 int32
+		if inClose[i-2] >= inOpen[i-2] {
+			_T181 = 1
+		} else {
+			_T181 = -1
+		}
+		_B184 := _T180 == _T181
+		if _B184 {
+			var _T182 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T182 = 1
+			} else {
+				_T182 = -1
+			}
+			var _T183 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T183 = 1
+			} else {
+				_T183 = -1
+			}
+			_B184 = _T182 == _T183
+		}
+		_B187 := _B184
+		if _B187 {
+			var _T185 int32
+			if inClose[i] >= inOpen[i] {
+				_T185 = 1
+			} else {
+				_T185 = -1
+			}
+			var _T186 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T186 = 1
+			} else {
+				_T186 = -1
+			}
+			_B187 = _T185 == -_T186
+		}
+		_B189 := _B187
+		if _B189 {
+			var _T188 float64
+			if Near_avgPeriod != 0 {
+				_T188 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T188 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B189 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T188)/2.0
+		}
+		_B191 := _B189
+		if _B191 {
+			var _T190 float64
+			if Near_avgPeriod != 0 {
+				_T190 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T190 = candleRange(2, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			_B191 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T190)/2.0
+		}
+		_B193 := _B191
+		if _B193 {
+			var _T192 float64
+			if Near_avgPeriod != 0 {
+				_T192 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T192 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B193 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T192)/2.0
+		}
+		_B195 := _B193
+		if _B195 {
+			var _T194 float64
+			if Near_avgPeriod != 0 {
+				_T194 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T194 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			_B195 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T194)/2.0
+		}
+		_B199 := _B195
+		if _B199 {
+			var _T196 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T196 = 1
+			} else {
+				_T196 = -1
+			}
+			_B198 := _T196 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+			if !_B198 {
+				var _T197 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T197 = 1
+				} else {
+					_T197 = -1
+				}
+				_B198 = _T197 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+			}
+			_B199 = _B198
+		}
+		if _B199 {
+			var _T200 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T200 = 1
+			} else {
+				_T200 = -1
+			}
+			outInteger[0] = _T200 * 100
+			outIdx += 1
+		} else {
+			outInteger[0] = 0
+			outIdx += 1
+		}
+		NearPeriodTotalRange2 = candleRange(2, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+		NearPeriodTotalTrailRange2 = candleRange(2, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+		NearPeriodTotalRange3 = NearPeriodTotalRange2
+		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+		i += 1
+		NearTrailingIdx += 1
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	} else {
+		NearPeriodTotal[3] = 0.0
+		NearPeriodTotal[2] = 0.0
+		NearTrailingIdx = startIdx - Near_avgPeriod
+		i = NearTrailingIdx
+		for i < startIdx {
+			NearPeriodTotal[3] = NearPeriodTotal[3] + candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			NearPeriodTotal[2] = NearPeriodTotal[2] + candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			i += 1
+		}
+		i = startIdx
+		outIdx = 0
+		NearPeriodTotalRange3 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+		NearPeriodTotalTrailRange3 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3])
+		for i < endIdx {
+			outIdx += 1
+			NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+			NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+			NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+			NearPeriodTotalRange3 = NearPeriodTotalRange2
+			NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+			i += 1
+			NearTrailingIdx += 1
+		}
+		var _T201 int32
+		if inClose[i-3] >= inOpen[i-3] {
+			_T201 = 1
+		} else {
+			_T201 = -1
+		}
+		var _T202 int32
+		if inClose[i-2] >= inOpen[i-2] {
+			_T202 = 1
+		} else {
+			_T202 = -1
+		}
+		_B205 := _T201 == _T202
+		if _B205 {
+			var _T203 int32
+			if inClose[i-2] >= inOpen[i-2] {
+				_T203 = 1
+			} else {
+				_T203 = -1
+			}
+			var _T204 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T204 = 1
+			} else {
+				_T204 = -1
+			}
+			_B205 = _T203 == _T204
+		}
+		_B208 := _B205
+		if _B208 {
+			var _T206 int32
+			if inClose[i] >= inOpen[i] {
+				_T206 = 1
+			} else {
+				_T206 = -1
+			}
+			var _T207 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T207 = 1
+			} else {
+				_T207 = -1
+			}
+			_B208 = _T206 == -_T207
+		}
+		_B211 := _B208
+		if _B211 {
+			var _T209 float64
+			if Near_avgPeriod != 0 {
+				_T209 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T209 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			var _T210 float64
+			if Near_rangeType == 2 {
+				_T210 = 2.0
+			} else {
+				_T210 = 1.0
+			}
+			_B211 = inOpen[i-2] >= minF(inOpen[i-3], inClose[i-3])-float64(Near_factor*_T209)/_T210
+		}
+		_B214 := _B211
+		if _B214 {
+			var _T212 float64
+			if Near_avgPeriod != 0 {
+				_T212 = NearPeriodTotal[3] / float64(Near_avgPeriod)
+			} else {
+				_T212 = candleRange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3])
+			}
+			var _T213 float64
+			if Near_rangeType == 2 {
+				_T213 = 2.0
+			} else {
+				_T213 = 1.0
+			}
+			_B214 = inOpen[i-2] <= maxF(inOpen[i-3], inClose[i-3])+float64(Near_factor*_T212)/_T213
+		}
+		_B217 := _B214
+		if _B217 {
+			var _T215 float64
+			if Near_avgPeriod != 0 {
+				_T215 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T215 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			var _T216 float64
+			if Near_rangeType == 2 {
+				_T216 = 2.0
+			} else {
+				_T216 = 1.0
+			}
+			_B217 = inOpen[i-1] >= minF(inOpen[i-2], inClose[i-2])-float64(Near_factor*_T215)/_T216
+		}
+		_B220 := _B217
+		if _B220 {
+			var _T218 float64
+			if Near_avgPeriod != 0 {
+				_T218 = NearPeriodTotal[2] / float64(Near_avgPeriod)
+			} else {
+				_T218 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+			}
+			var _T219 float64
+			if Near_rangeType == 2 {
+				_T219 = 2.0
+			} else {
+				_T219 = 1.0
+			}
+			_B220 = inOpen[i-1] <= maxF(inOpen[i-2], inClose[i-2])+float64(Near_factor*_T218)/_T219
+		}
+		_B224 := _B220
+		if _B224 {
+			var _T221 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T221 = 1
+			} else {
+				_T221 = -1
+			}
+			_B223 := _T221 == 1 && inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] && inOpen[i] > inClose[i-1] && inClose[i] < inOpen[i-3]
+			if !_B223 {
+				var _T222 int32
+				if inClose[i-1] >= inOpen[i-1] {
+					_T222 = 1
+				} else {
+					_T222 = -1
+				}
+				_B223 = _T222 == -1 && inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] && inOpen[i] < inClose[i-1] && inClose[i] > inOpen[i-3]
+			}
+			_B224 = _B223
+		}
+		if _B224 {
+			var _T225 int32
+			if inClose[i-1] >= inOpen[i-1] {
+				_T225 = 1
+			} else {
+				_T225 = -1
+			}
+			outInteger[0] = _T225 * 100
+			outIdx += 1
+		} else {
+			outInteger[0] = 0
+			outIdx += 1
+		}
+		NearPeriodTotalRange2 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+		NearPeriodTotalTrailRange2 = candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
+		NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3)
+		NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2)
+		NearPeriodTotalRange3 = NearPeriodTotalRange2
+		NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2
+		i += 1
+		NearTrailingIdx += 1
+		*outNBElement = outIdx
+		*outBegIdx = startIdx
+	}
+	capLag_NearTrailingIdx := i - NearTrailingIdx
+	cap_NearTrailingIdx := capLag_NearTrailingIdx + 3
+	if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen {
+		return InternalError
+	}
+	capRing_NearTrailingIdx_derived := make([]float64, max(cap_NearTrailingIdx, 1))
+	for fillJ := historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ {
+		capRing_NearTrailingIdx_derived[fillJ%cap_NearTrailingIdx] = candleRange(Near_rangeType, inOpen[fillJ], inHigh[fillJ], inLow[fillJ], inClose[fillJ])
+	}
+	sp.NearPeriodTotal = NearPeriodTotal
+	sp.NearPeriodTotalRange3 = NearPeriodTotalRange3
+	sp.NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3
+	sp.lag1_inOpen = inOpen[historyLen-1]
+	sp.lag2_inOpen = inOpen[historyLen-2]
+	sp.lag3_inOpen = inOpen[historyLen-3]
+	sp.lag1_inHigh = inHigh[historyLen-1]
+	sp.lag2_inHigh = inHigh[historyLen-2]
+	sp.lag3_inHigh = inHigh[historyLen-3]
+	sp.lag1_inLow = inLow[historyLen-1]
+	sp.lag2_inLow = inLow[historyLen-2]
+	sp.lag3_inLow = inLow[historyLen-3]
+	sp.lag1_inClose = inClose[historyLen-1]
+	sp.lag2_inClose = inClose[historyLen-2]
+	sp.lag3_inClose = inClose[historyLen-3]
+	sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx
+	sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx
+	sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx
+	sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived
+	sp.cs_Near_rangeType = Near_rangeType
+	sp.cs_Near_avgPeriod = Near_avgPeriod
+	sp.cs_Near_factor = Near_factor
+	sp.cur_outInteger = outInteger[0]
+	return Success
+}
+
 func (c *Core) cdl3linestrikeOpenAndFillInternal(inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32) (*CDL3LINESTRIKEStream, error) {
 	sp := &CDL3LINESTRIKEStream{core: c}
 	if retCode := c.cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1); retCode != Success {
@@ -736,7 +2582,7 @@ func (c *Core) cdl3linestrikeOpenInternal(inOpen, inHigh, inLow, inClose []float
 	sp := &CDL3LINESTRIKEStream{core: c}
 	var outBegIdx, outNBElement int32
 	var sink_outInteger [1]int32
-	if retCode := c.cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, &outBegIdx, &outNBElement, sink_outInteger[:], 0); retCode != Success {
+	if retCode := c.cdl3linestrikeOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, &outBegIdx, &outNBElement, sink_outInteger[:]); retCode != Success {
 		return nil, retCode
 	}
 	sp.outRangeBegIdx = int(outBegIdx)
@@ -751,8 +2597,8 @@ func (c *Core) cdl3linestrikeOpenInternal(inOpen, inHigh, inLow, inClose []float
 // inOpen, inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.CDL3LINESTRIKELookback] bars, and [BadParam] for histories of different
-// lengths.
+// [Core.CDL3LINESTRIKELookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) CDL3LINESTRIKEOpen(inOpen, inHigh, inLow, inClose []float64) (*CDL3LINESTRIKEStream, int32, error) {
 	sp, err := c.cdl3linestrikeOpenInternal(inOpen, inHigh, inLow, inClose, 0)
 	if err != nil {

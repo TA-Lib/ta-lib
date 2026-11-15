@@ -421,7 +421,9 @@ func (c *Core) HT_TRENDLINEDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) HT_TRENDLINE(startIdx, endIdx int, inReal, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -1369,7 +1371,8 @@ func (c *Core) htTrendlineOpenInternal(inReal []float64, startIdx int32) (*HT_TR
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.HT_TRENDLINELookback] bars.
+// [Core.HT_TRENDLINELookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) HT_TRENDLINEOpen(inReal []float64) (*HT_TRENDLINEStream, float64, error) {
 	sp, err := c.htTrendlineOpenInternal(inReal, 0)
 	if err != nil {
@@ -1386,7 +1389,9 @@ func (c *Core) HT_TRENDLINEOpen(inReal []float64) (*HT_TRENDLINEStream, float64,
 // and share no memory with an input or another output.
 //
 // The errors are those of [Core.HT_TRENDLINEOpen], and [BadParam] for an output
-// that is empty, too short or sharing memory.
+// that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) HT_TRENDLINEOpenAndFill(inReal, outReal []float64) (*HT_TRENDLINEStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

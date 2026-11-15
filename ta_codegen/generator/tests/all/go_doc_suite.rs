@@ -118,6 +118,46 @@ fn go_docs_name_only_arguments_that_exist() {
     assert!(common::sweep_filtered() || checked > 2000, "only {checked} declarations");
 }
 
+/// The body of the function declared on the line starting with `decl`.
+fn body_of<'a>(src: &'a str, decl: &str) -> &'a str {
+    let at = src.find(&format!("\n{decl}")).unwrap_or_else(|| panic!("no `{decl}`"));
+    let rest = &src[at..];
+    &rest[..rest.find("\n}\n").expect("a closing brace")]
+}
+
+/// The errors an opener's doc and the sharing check's limit are claimed exactly
+/// where the code returns or runs them.
+#[test]
+fn go_docs_claim_the_checks_the_code_makes() {
+    let lengths = regex::Regex::new(r"len\(in\w+\) != len\(in\w+\)").unwrap();
+    let (mut opens, mut clipped) = (0, 0);
+    for (func, src) in corpus().funcs {
+        let name = &func.name;
+        let flat = |decl: &str| {
+            doc_above(&src, decl).map(|(d, _)| d.join(" ").split_whitespace().collect::<Vec<_>>().join(" ")).unwrap_or_default()
+        };
+        let batch = format!("func (c *Core) {name}(");
+        let claims = flat(&batch).contains("slices.Clip");
+        assert_eq!(claims, body_of(&src, &batch).contains("overlaps"), "{name}: batch doc and sharing check disagree");
+        clipped += usize::from(claims);
+        if !src.contains(&format!("type {name}Stream struct")) {
+            continue;
+        }
+        let open = flat(&format!("func (c *Core) {name}Open("));
+        assert!(
+            open.contains("[OutOfRangeEndIndex] for one longer than [IndexMax]+1") && src.contains("> IndexMax+1 {"),
+            "{name}: the opener's history ceiling is not both documented and checked"
+        );
+        assert_eq!(open.contains("histories of different lengths"), lengths.is_match(&src), "{name}: length check");
+        let fill = format!("func (c *Core) {name}OpenAndFill(");
+        let claims = flat(&fill).contains("slices.Clip");
+        assert_eq!(claims, body_of(&src, &fill).contains("overlaps("), "{name}: OpenAndFill doc and sharing check disagree");
+        clipped += usize::from(claims);
+        opens += 1;
+    }
+    assert!(opens > 200 && clipped > 200, "only {opens} openers, {clipped} sharing claims");
+}
+
 /// A Go doc comment is plain text: Markdown reaches the reader as punctuation.
 #[test]
 fn no_markdown_reaches_the_go_docs() {

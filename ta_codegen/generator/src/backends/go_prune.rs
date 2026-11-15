@@ -4,10 +4,9 @@
 //! Line-based, over the emitter's own layout: one statement per line, tab
 //! indentation, a declaration's scope ending where indentation drops below it.
 //! It only removes, so a name it wrongly kept fails to compile. A dropped write
-//! keeps its value as `_ = <value>` only when the value contains `++`, `--`,
-//! `copy(`, `clear(` or an exported Core call (`c.` then an uppercase letter):
-//! every other call, an unexported `c.<lower>(` included, is assumed to have no
-//! side effect, and dropping one that has compiles.
+//! keeps its value as `_ = <value>` when the value contains `++`, `--`, `copy(`,
+//! `clear(` or a method call on the Core (`c.<name>(`); any other call is
+//! assumed to have no side effect, and dropping one that has compiles.
 
 const ASSIGN_OPS: &[&str] = &["=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="];
 
@@ -65,7 +64,10 @@ fn write_value<'a>(line: &'a str, name: &str) -> Option<&'a str> {
 fn is_pure(value: &str) -> bool {
     !(value.contains("copy(") || value.contains("clear(") || value.contains("++") || value.contains("--") || {
         let b = value.as_bytes();
-        value.match_indices("c.").any(|(i, _)| (i == 0 || !is_ident_char(b[i - 1] as char)) && b.get(i + 2).is_some_and(u8::is_ascii_uppercase))
+        value.match_indices("c.").any(|(i, _)| {
+            let name = value[i + 2..].bytes().take_while(|c| is_ident_char(*c as char)).count();
+            (i == 0 || (!is_ident_char(b[i - 1] as char) && b[i - 1] != b'.')) && name > 0 && b.get(i + 2 + name) == Some(&b'(')
+        })
     })
 }
 
@@ -167,6 +169,12 @@ mod tests {
     fn a_write_with_a_side_effect_keeps_its_value() {
         let src = "func f() {\n\tvar a int32\n\ta = c.X(1)\n}\n";
         assert_eq!(prune(src), "func f() {\n\t_ = c.X(1)\n}\n");
+    }
+
+    #[test]
+    fn every_core_method_call_keeps_its_value_and_a_field_read_goes() {
+        let src = "func f() {\n\tvar a int32\n\ta = c.smaLookback(3)\n\tvar b int32\n\tb = int32(c.unstablePeriod[0])\n}\n";
+        assert_eq!(prune(src), "func f() {\n\t_ = c.smaLookback(3)\n}\n");
     }
 
     #[test]

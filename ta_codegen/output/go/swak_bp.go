@@ -214,7 +214,8 @@ func (c *Core) SWAK_BPDisplayShift(optInTimePeriod int, optInDelta float64, outp
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) SWAK_BP(startIdx, endIdx int, inReal []float64, optInTimePeriod int, optInDelta float64, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -474,7 +475,8 @@ func (c *Core) swakBpOpenInternal(inReal []float64, startIdx, optInTimePeriod in
 // inReal is the history; the parameters are those of [Core.SWAK_BP].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.SWAK_BPLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.SWAK_BPLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) SWAK_BPOpen(inReal []float64, optInTimePeriod int, optInDelta float64) (*SWAK_BPStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -494,7 +496,8 @@ func (c *Core) SWAK_BPOpen(inReal []float64, optInTimePeriod int, optInDelta flo
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.SWAK_BPOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) SWAK_BPOpenAndFill(inReal []float64, optInTimePeriod int, optInDelta float64, outReal []float64) (*SWAK_BPStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

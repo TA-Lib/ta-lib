@@ -210,7 +210,8 @@ func (c *Core) LINEARREG_SLOPEDisplayShift(optInTimePeriod, outputIdx int) (int,
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) LINEARREG_SLOPE(startIdx, endIdx int, inReal []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -576,8 +577,8 @@ func (c *Core) linearregSlopeOpenInternal(inReal []float64, startIdx, optInTimeP
 // inReal is the history; the parameters are those of [Core.LINEARREG_SLOPE].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.LINEARREG_SLOPELookback] bars, and [BadParam] for a parameter out of
-// range.
+// [Core.LINEARREG_SLOPELookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) LINEARREG_SLOPEOpen(inReal []float64, optInTimePeriod int) (*LINEARREG_SLOPEStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -597,7 +598,9 @@ func (c *Core) LINEARREG_SLOPEOpen(inReal []float64, optInTimePeriod int) (*LINE
 // and share no memory with an input or another output.
 //
 // The errors are those of [Core.LINEARREG_SLOPEOpen], and [BadParam] for an
-// output that is empty, too short or sharing memory.
+// output that is empty, too short or sharing memory. A slice whose capacity a
+// three-index expression cut, as slices.Clip does, can escape the sharing
+// check.
 func (c *Core) LINEARREG_SLOPEOpenAndFill(inReal []float64, optInTimePeriod int, outReal []float64) (*LINEARREG_SLOPEStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

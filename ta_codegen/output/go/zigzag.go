@@ -220,7 +220,8 @@ func (c *Core) ZIGZAGDisplayShift(optInSensitivity float64, optInMinTrendLength,
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) ZIGZAG(startIdx, endIdx int, inHigh, inLow []float64, optInSensitivity float64, optInMinTrendLength int, outZigZag []float64, outTrend, outPivotIdx []int32) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -568,8 +569,9 @@ func (c *Core) zigzagOpenInternal(inHigh, inLow []float64, startIdx int32, optIn
 // of [Core.ZIGZAG].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.ZIGZAGLookback] bars, and [BadParam] for a parameter out of range or
-// histories of different lengths.
+// [Core.ZIGZAGLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range or histories
+// of different lengths.
 func (c *Core) ZIGZAGOpen(inHigh, inLow []float64, optInSensitivity float64, optInMinTrendLength int) (*ZIGZAGStream, float64, int32, int32, error) {
 	if !fitsInt32(optInMinTrendLength) {
 		return nil, 0, 0, 0, BadParam
@@ -589,7 +591,8 @@ func (c *Core) ZIGZAGOpen(inHigh, inLow []float64, optInSensitivity float64, opt
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.ZIGZAGOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) ZIGZAGOpenAndFill(inHigh, inLow []float64, optInSensitivity float64, optInMinTrendLength int, outZigZag []float64, outTrend, outPivotIdx []int32) (*ZIGZAGStream, OutRange, error) {
 	if !fitsInt32(optInMinTrendLength) {
 		return nil, OutRange{}, BadParam

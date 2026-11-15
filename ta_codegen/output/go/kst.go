@@ -594,7 +594,8 @@ func (c *Core) KSTDisplayShift(optInROC1Period, optInROC2Period, optInROC3Period
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) KST(startIdx, endIdx int, inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod int, outKST, outKSTSignal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -1606,7 +1607,8 @@ func (c *Core) kstOpenInternal(inReal []float64, startIdx, optInROC1Period, optI
 // inReal is the history; the parameters are those of [Core.KST].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.KSTLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.KSTLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) KSTOpen(inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod int) (*KSTStream, float64, float64, error) {
 	if !fitsInt32(optInROC1Period) {
 		return nil, 0, 0, BadParam
@@ -1650,7 +1652,8 @@ func (c *Core) KSTOpen(inReal []float64, optInROC1Period, optInROC2Period, optIn
 // no memory with an input or another output.
 //
 // The errors are those of [Core.KSTOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) KSTOpenAndFill(inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod int, outKST, outKSTSignal []float64) (*KSTStream, OutRange, error) {
 	if !fitsInt32(optInROC1Period) {
 		return nil, OutRange{}, BadParam

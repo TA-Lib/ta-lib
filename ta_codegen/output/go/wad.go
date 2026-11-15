@@ -135,7 +135,9 @@ func (c *Core) WADDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) WAD(startIdx, endIdx int, inHigh, inLow, inClose, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -358,7 +360,8 @@ func (c *Core) wadOpenInternal(inHigh, inLow, inClose []float64, startIdx int32)
 // inHigh, inLow and inClose are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.WADLookback] bars, and [BadParam] for histories of different lengths.
+// [Core.WADLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) WADOpen(inHigh, inLow, inClose []float64) (*WADStream, float64, error) {
 	sp, err := c.wadOpenInternal(inHigh, inLow, inClose, 0)
 	if err != nil {
@@ -375,7 +378,8 @@ func (c *Core) WADOpen(inHigh, inLow, inClose []float64) (*WADStream, float64, e
 // no memory with an input or another output.
 //
 // The errors are those of [Core.WADOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) WADOpenAndFill(inHigh, inLow, inClose, outReal []float64) (*WADStream, OutRange, error) {
 	if len(inHigh) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

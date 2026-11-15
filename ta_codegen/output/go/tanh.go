@@ -108,7 +108,9 @@ func (c *Core) TANHDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) TANH(startIdx, endIdx int, inReal, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -270,7 +272,8 @@ func (c *Core) tanhOpenInternal(inReal []float64, startIdx int32) (*TANHStream, 
 // inReal is the history.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.TANHLookback] bars.
+// [Core.TANHLookback] bars and [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars.
 func (c *Core) TANHOpen(inReal []float64) (*TANHStream, float64, error) {
 	sp, err := c.tanhOpenInternal(inReal, 0)
 	if err != nil {
@@ -287,7 +290,8 @@ func (c *Core) TANHOpen(inReal []float64) (*TANHStream, float64, error) {
 // no memory with an input or another output.
 //
 // The errors are those of [Core.TANHOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) TANHOpenAndFill(inReal, outReal []float64) (*TANHStream, OutRange, error) {
 	if len(inReal) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

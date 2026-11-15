@@ -120,7 +120,9 @@ func (c *Core) PVTDisplayShift(outputIdx int) (int, error) {
 //
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for an
-// input too short, an output empty or too short or memory shared otherwise.
+// input too short, an output empty or too short or memory shared otherwise. A
+// slice whose capacity a three-index expression cut, as slices.Clip does, can
+// escape the sharing check.
 func (c *Core) PVT(startIdx, endIdx int, inClose, inVolume, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -306,7 +308,8 @@ func (c *Core) pvtOpenInternal(inClose, inVolume []float64, startIdx int32) (*PV
 // inClose and inVolume are the histories, of one length.
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.PVTLookback] bars, and [BadParam] for histories of different lengths.
+// [Core.PVTLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for histories of different lengths.
 func (c *Core) PVTOpen(inClose, inVolume []float64) (*PVTStream, float64, error) {
 	sp, err := c.pvtOpenInternal(inClose, inVolume, 0)
 	if err != nil {
@@ -323,7 +326,8 @@ func (c *Core) PVTOpen(inClose, inVolume []float64) (*PVTStream, float64, error)
 // no memory with an input or another output.
 //
 // The errors are those of [Core.PVTOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) PVTOpenAndFill(inClose, inVolume, outReal []float64) (*PVTStream, OutRange, error) {
 	if len(inClose) > IndexMax+1 {
 		return nil, OutRange{}, OutOfRangeEndIndex

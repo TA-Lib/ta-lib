@@ -154,7 +154,8 @@ func (c *Core) ROCPDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) ROCP(startIdx, endIdx int, inReal []float64, optInTimePeriod int, outReal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -381,7 +382,8 @@ func (c *Core) rocpOpenInternal(inReal []float64, startIdx, optInTimePeriod int3
 // inReal is the history; the parameters are those of [Core.ROCP].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.ROCPLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.ROCPLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) ROCPOpen(inReal []float64, optInTimePeriod int) (*ROCPStream, float64, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, 0, BadParam
@@ -401,7 +403,8 @@ func (c *Core) ROCPOpen(inReal []float64, optInTimePeriod int) (*ROCPStream, flo
 // no memory with an input or another output.
 //
 // The errors are those of [Core.ROCPOpen], and [BadParam] for an output that is
-// empty, too short or sharing memory.
+// empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) ROCPOpenAndFill(inReal []float64, optInTimePeriod int, outReal []float64) (*ROCPStream, OutRange, error) {
 	if !fitsInt32(optInTimePeriod) {
 		return nil, OutRange{}, BadParam

@@ -399,7 +399,8 @@ func (c *Core) KSTEXTDisplayShift(optInROC1Period, optInROC2Period, optInROC3Per
 // The error is [OutOfRangeStartIndex] or [OutOfRangeEndIndex] for a range
 // outside 0 to [IndexMax] or ending before it starts, and [BadParam] for a
 // parameter out of range, an input too short, an output empty or too short or
-// memory shared otherwise.
+// memory shared otherwise. A slice whose capacity a three-index expression cut,
+// as slices.Clip does, can escape the sharing check.
 func (c *Core) KSTEXT(startIdx, endIdx int, inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod int, optInROCMAType, optInSignalMAType MAType, outKST, outKSTSignal []float64) (OutRange, error) {
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutRange{}, OutOfRangeStartIndex
@@ -959,7 +960,8 @@ func (c *Core) kstextOpenInternal(inReal []float64, startIdx, optInROC1Period, o
 // inReal is the history; the parameters are those of [Core.KSTEXT].
 //
 // The error is [InsufficientHistory] for a history of at most
-// [Core.KSTEXTLookback] bars, and [BadParam] for a parameter out of range.
+// [Core.KSTEXTLookback] bars, [OutOfRangeEndIndex] for one longer than
+// [IndexMax]+1 bars, and [BadParam] for a parameter out of range.
 func (c *Core) KSTEXTOpen(inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod int, optInROCMAType, optInSignalMAType MAType) (*KSTEXTStream, float64, float64, error) {
 	if !fitsInt32(optInROC1Period) {
 		return nil, 0, 0, BadParam
@@ -1003,7 +1005,8 @@ func (c *Core) KSTEXTOpen(inReal []float64, optInROC1Period, optInROC2Period, op
 // share no memory with an input or another output.
 //
 // The errors are those of [Core.KSTEXTOpen], and [BadParam] for an output that
-// is empty, too short or sharing memory.
+// is empty, too short or sharing memory. A slice whose capacity a three-index
+// expression cut, as slices.Clip does, can escape the sharing check.
 func (c *Core) KSTEXTOpenAndFill(inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod int, optInROCMAType, optInSignalMAType MAType, outKST, outKSTSignal []float64) (*KSTEXTStream, OutRange, error) {
 	if !fitsInt32(optInROC1Period) {
 		return nil, OutRange{}, BadParam
