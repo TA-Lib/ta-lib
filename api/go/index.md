@@ -20,7 +20,8 @@ The Go module is planned for official release in Q4 2026.
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Errors</a><br></p>
+<a href="#display_shift">3.3 Display Shift</a><br>
+<a href="#retcode">3.4 Errors</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -44,7 +45,7 @@ Every indicator is a method on `Core`: it reads `float64` slices you pass in and
 
 The **Core API** provides:
 
-* The [`Core`](#direct_call) type, made by `NewCore`.
+* The [`Core`](#direct_call) type, made by `NewCore` or used as a zero value: both hold the default settings.
 * The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Several `Core` values can co-exist, say for different settings.
 * Every TA function, each processing a whole slice of data at once.
 
@@ -148,7 +149,17 @@ if first := max(lookback, startIdx); first <= endIdx {
 out := make([]float64, size)
 ```
 
-### 3.3 Errors {#retcode}
+### 3.3 Display Shift {#display_shift}
+
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<NAME>DisplayShift` method gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+
+```go
+shift, err := core.DPODisplayShift(20, 0) // period 20, first output: -11
+```
+
+It returns `talib.BadParam` for a parameter the lookback rejects or an index that names no output. The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+
+### 3.4 Errors {#retcode}
 
 Every TA function returns `(OutRange, error)`. A failed call returns a `RetCode` as its error and writes nothing; test for one with `errors.Is`.
 
@@ -176,7 +187,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The [Abstract API](/api/abstract/), which describes every function at run time and calls it by name, is not available in Go yet.
+The package `ta-lib.github.io/go/metadata` is the [Abstract API](/api/abstract/) in Go: `metadata.Lookup` and `metadata.All` describe every function at run time (group, flags, inputs, parameters with their domains and defaults, outputs), and a `ParamHolder` from `NewCall` binds the arguments of a function chosen by name and calls it through the same method on `talib.Core` a direct call uses. It is a package of its own, so a program that imports only `talib` links none of it.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
