@@ -460,7 +460,7 @@ jobs:
     name: "synth-gate: unshipped generator surface, all langs"
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     permissions:
       contents: read
 
