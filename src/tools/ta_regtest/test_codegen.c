@@ -9114,10 +9114,10 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
             }
 
             /* ---- Same-backend tier agreement (issue #256's L2) ----
-             * `srv` is the reference here: this server's own lookback verdict,
-             * or `gold` for a server without a metadata tier. A backend with
-             * one that validates its own params differently from C is
-             * server_verify()'s explicitly-declined question
+             * `srv` (this server's OWN lookback verdict, just parsed above) is
+             * the reference here, not `gold`. No cross-language comparison in
+             * this half: a backend validating its own params differently from
+             * C is server_verify()'s explicitly-declined question
              * (server_verify.c), not this one. */
             XlangTierResults r;
             xlang_tier_self_check(ctx, funcInfo, vec[k], sv, srv, &r);

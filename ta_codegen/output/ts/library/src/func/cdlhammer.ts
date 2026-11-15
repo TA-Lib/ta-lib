@@ -1266,9 +1266,9 @@ export function cdlhammerOpenAndFillPositional(
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
  *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const stream = cdlhammerOpen({ open, high, low, close });
@@ -1311,9 +1311,9 @@ export function cdlhammerOpen(prices: { open: ArrayLike<number>; high: ArrayLike
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
  *   90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const { stream, begIdx, values } = cdlhammerOpenAndFill({ open, high, low, close });

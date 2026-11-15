@@ -2112,7 +2112,9 @@ fn go_consumer_check(root: &Path, dir: &Path) -> bool {
 /// carry it.
 fn bless_go_examples() -> i32 {
     let root = repo_root();
+    backends::go_examples::ignore_ledger(true);
     generate(None, Some("go"));
+    backends::go_examples::ignore_ledger(false);
     let base = root.join("ta_codegen/input");
     let funcs = load_all_yaml_defs(&base);
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));

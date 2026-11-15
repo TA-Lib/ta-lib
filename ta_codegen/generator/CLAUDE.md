@@ -254,8 +254,8 @@ rustdoc has no lint for documenting a parameter that does not exist.
 
 Every guarded function gets a **generated runnable doctest** (252 bars of
 deterministic synthetic data, defaults everywhere, propagating with `?` and
-asserting a non-empty `OutRange`). Verify with `cargo doc --no-deps` — must be
-warning-free, prose escaping of `[`/`<` is load-bearing — and `cargo test --doc`.
+asserting the count its printed line needs). Verify with `cargo doc --no-deps`, which
+must be warning-free (prose escaping of `[`/`<` is load-bearing), and `cargo test --doc`.
 
 ### Scratch-buffer election
 

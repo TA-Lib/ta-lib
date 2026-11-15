@@ -1136,9 +1136,9 @@ export function adoscOpenAndFillPositional(
  * import { adoscOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -1187,9 +1187,9 @@ export function adoscOpen(prices: { open?: ArrayLike<number> | undefined; high: 
  * import { adoscOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>

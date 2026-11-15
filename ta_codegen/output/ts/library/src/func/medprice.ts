@@ -541,9 +541,9 @@ export function medpriceOpenAndFillPositional(
  * import { medpriceOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const stream = medpriceOpen({ high, low });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -581,9 +581,9 @@ export function medpriceOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * import { medpriceOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const { stream, begIdx, values } = medpriceOpenAndFill({ high, low });
  * // values[k] is the value at bar begIdx + k
  * ```

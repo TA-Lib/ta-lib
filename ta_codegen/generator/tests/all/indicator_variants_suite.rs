@@ -845,6 +845,9 @@ fn metadata_price_setter_validates_before_writing() {
         "ts: the write is not the whole-bundle commit -- an indexed write is the interleaved shape",
     );
     assert!(t_check < t_write, "ts: the bundle is committed before the last component is checked");
+    let t_loop = t_sec.find("for (let k = 0; k < COMPONENTS.length; k++) {").expect("ts: no validating loop");
+    let t_end = t_loop + t_sec[t_loop..].find("\n    }\n").expect("ts: the validating loop does not close");
+    assert!(t_end < t_write, "ts: the write is inside the validating loop");
     assert_eq!(t_sec.matches("this.prices[").count(), 1, "ts: the bundle is written more than once");
 
     // Go: the same shape as TypeScript, the bundle committed whole after the loop.
@@ -855,6 +858,9 @@ fn metadata_price_setter_validates_before_writing() {
         "go: the write is not the whole-bundle commit -- an indexed write is the interleaved shape",
     );
     assert!(g_check < g_write, "go: the bundle is committed before the last component is checked");
+    let g_loop = g_sec.find("for k, s := range given {").expect("go: no validating loop");
+    let g_end = g_loop + g_sec[g_loop..].find("\n\t}\n").expect("go: the validating loop does not close");
+    assert!(g_end < g_write, "go: the write is inside the validating loop");
     assert_eq!(g_sec.matches("h.prices[").count(), 1, "go: the bundle is written more than once");
 }
 

@@ -91,9 +91,9 @@ public static class ExamplesTest
     private static void Ac()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -106,9 +106,9 @@ public static class ExamplesTest
     private static void Accbands()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var upperBand = new double[252];
@@ -142,9 +142,9 @@ public static class ExamplesTest
     private static void Ad()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -176,9 +176,9 @@ public static class ExamplesTest
     private static void Adosc()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -195,9 +195,9 @@ public static class ExamplesTest
     private static void Adr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -210,9 +210,9 @@ public static class ExamplesTest
     private static void Adx()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -227,9 +227,9 @@ public static class ExamplesTest
     private static void Adxr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -244,9 +244,9 @@ public static class ExamplesTest
     private static void Alligator()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var jaw = new double[252];
         var teeth = new double[252];
         var lips = new double[252];
@@ -277,9 +277,9 @@ public static class ExamplesTest
     private static void Ao()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -305,9 +305,9 @@ public static class ExamplesTest
     private static void Aroon()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var aroonDown = new double[252];
         var aroonUp = new double[252];
 
@@ -323,9 +323,9 @@ public static class ExamplesTest
     private static void Aroonosc()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -340,9 +340,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -383,9 +383,9 @@ public static class ExamplesTest
     private static void Atr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -415,9 +415,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -481,9 +481,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -498,9 +498,9 @@ public static class ExamplesTest
     private static void Cci()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -517,9 +517,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -535,9 +535,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -553,9 +553,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -571,9 +571,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -589,9 +589,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -607,9 +607,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -625,9 +625,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -643,9 +643,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -661,9 +661,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -679,9 +679,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -697,9 +697,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -715,9 +715,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -733,9 +733,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -751,9 +751,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -769,9 +769,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -787,9 +787,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -805,9 +805,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -823,9 +823,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -841,9 +841,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -859,9 +859,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -877,9 +877,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -895,9 +895,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -913,9 +913,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -931,9 +931,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -949,9 +949,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -967,9 +967,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -985,9 +985,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1003,9 +1003,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1021,9 +1021,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1039,9 +1039,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1057,9 +1057,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1075,9 +1075,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1093,9 +1093,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1111,9 +1111,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1129,9 +1129,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1147,9 +1147,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1165,9 +1165,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1183,9 +1183,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1201,9 +1201,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1219,9 +1219,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1237,9 +1237,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1255,9 +1255,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1273,9 +1273,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1291,9 +1291,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1309,9 +1309,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1327,9 +1327,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1345,9 +1345,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1363,9 +1363,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1381,9 +1381,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1399,9 +1399,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1417,9 +1417,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1435,9 +1435,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1453,9 +1453,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1471,9 +1471,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1489,9 +1489,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1507,9 +1507,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1525,9 +1525,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1543,9 +1543,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1561,9 +1561,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1579,9 +1579,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1597,9 +1597,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outInteger = new int[252];
@@ -1613,9 +1613,9 @@ public static class ExamplesTest
     private static void Ce()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outLong = new double[252];
@@ -1659,9 +1659,9 @@ public static class ExamplesTest
     private static void Chop()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -1676,9 +1676,9 @@ public static class ExamplesTest
     private static void Choptr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -1693,9 +1693,9 @@ public static class ExamplesTest
     private static void Cksp()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var highStop = new double[252];
@@ -1713,9 +1713,9 @@ public static class ExamplesTest
     private static void Cmf()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -1851,9 +1851,9 @@ public static class ExamplesTest
     private static void Cvi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1894,9 +1894,9 @@ public static class ExamplesTest
     private static void Donchian()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var upperBand = new double[252];
         var middleBand = new double[252];
         var lowerBand = new double[252];
@@ -1940,9 +1940,9 @@ public static class ExamplesTest
     private static void Dx()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -1985,9 +1985,9 @@ public static class ExamplesTest
     private static void Emv()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var volume = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
         var outReal = new double[252];
@@ -2015,9 +2015,9 @@ public static class ExamplesTest
     private static void Eri()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var bullPower = new double[252];
@@ -2048,9 +2048,9 @@ public static class ExamplesTest
     private static void Fisher()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var fisher = new double[252];
         var trigger = new double[252];
 
@@ -2092,9 +2092,9 @@ public static class ExamplesTest
     private static void Fractal()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var swingHigh = new int[252];
         var swingLow = new int[252];
 
@@ -2109,9 +2109,9 @@ public static class ExamplesTest
     private static void Frama()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2124,9 +2124,9 @@ public static class ExamplesTest
     private static void Gator()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var upper = new double[252];
         var lower = new double[252];
 
@@ -2144,9 +2144,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var haOpen = new double[252];
@@ -2264,9 +2264,9 @@ public static class ExamplesTest
     private static void Ibs()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -2281,9 +2281,9 @@ public static class ExamplesTest
     private static void Ichimoku()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var tenkanSen = new double[252];
         var kijunSen = new double[252];
         var senkouSpanA = new double[252];
@@ -2332,9 +2332,9 @@ public static class ExamplesTest
     private static void Kc()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var upperBand = new double[252];
@@ -2355,9 +2355,9 @@ public static class ExamplesTest
     private static void Kdj()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var k = new double[252];
@@ -2425,9 +2425,9 @@ public static class ExamplesTest
     private static void Kvo()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -2593,9 +2593,9 @@ public static class ExamplesTest
     private static void Macdv()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var macdv = new double[252];
@@ -2632,9 +2632,9 @@ public static class ExamplesTest
     private static void Marketfi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var volume = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
         var outReal = new double[252];
@@ -2649,9 +2649,9 @@ public static class ExamplesTest
     private static void Massi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2730,9 +2730,9 @@ public static class ExamplesTest
     private static void Medprice()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2745,9 +2745,9 @@ public static class ExamplesTest
     private static void Mfi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -2777,9 +2777,9 @@ public static class ExamplesTest
     private static void Midprice()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2848,9 +2848,9 @@ public static class ExamplesTest
     private static void MinusDi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -2865,9 +2865,9 @@ public static class ExamplesTest
     private static void MinusDm()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2908,9 +2908,9 @@ public static class ExamplesTest
     private static void Natr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -2994,9 +2994,9 @@ public static class ExamplesTest
     private static void PlusDi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3011,9 +3011,9 @@ public static class ExamplesTest
     private static void PlusDm()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3039,9 +3039,9 @@ public static class ExamplesTest
     private static void Pso()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3181,9 +3181,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3224,9 +3224,9 @@ public static class ExamplesTest
     private static void Rvir()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3252,9 +3252,9 @@ public static class ExamplesTest
     private static void Sar()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3267,9 +3267,9 @@ public static class ExamplesTest
     private static void Sarext()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3298,9 +3298,9 @@ public static class ExamplesTest
         var open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3367,9 +3367,9 @@ public static class ExamplesTest
     private static void Smi()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var smi = new double[252];
@@ -3413,9 +3413,9 @@ public static class ExamplesTest
     private static void Sqzmom()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var momentum = new double[252];
@@ -3460,9 +3460,9 @@ public static class ExamplesTest
     private static void Stoch()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var slowK = new double[252];
@@ -3481,9 +3481,9 @@ public static class ExamplesTest
     private static void Stochf()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var fastK = new double[252];
@@ -3545,9 +3545,9 @@ public static class ExamplesTest
     private static void Supertrend()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var supertrend = new double[252];
@@ -3682,9 +3682,9 @@ public static class ExamplesTest
     private static void Trange()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3751,9 +3751,9 @@ public static class ExamplesTest
     private static void Typprice()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3768,9 +3768,9 @@ public static class ExamplesTest
     private static void Ultosc()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3824,9 +3824,9 @@ public static class ExamplesTest
     private static void Vortex()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var plusVi = new double[252];
@@ -3844,9 +3844,9 @@ public static class ExamplesTest
     private static void Vwap()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var volume = new double[252]; // your data, oldest first
@@ -3878,9 +3878,9 @@ public static class ExamplesTest
     private static void Wad()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3895,9 +3895,9 @@ public static class ExamplesTest
     private static void Wavetrend()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var wt1 = new double[252];
@@ -3915,9 +3915,9 @@ public static class ExamplesTest
     private static void Wclprice()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3932,9 +3932,9 @@ public static class ExamplesTest
     private static void Willr()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         var outReal = new double[252];
@@ -3962,9 +3962,9 @@ public static class ExamplesTest
     private static void Zigzag()
     {
         var high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         var zigZag = new double[252];
         var trend = new int[252];
         var pivotIdx = new int[252];

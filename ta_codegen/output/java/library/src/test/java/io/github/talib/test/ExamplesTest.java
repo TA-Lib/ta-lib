@@ -82,9 +82,9 @@ public class ExamplesTest {
 
     static void ac() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -96,9 +96,9 @@ public class ExamplesTest {
 
     static void accbands() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] upperBand = new double[252];
@@ -130,9 +130,9 @@ public class ExamplesTest {
 
     static void ad() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -162,9 +162,9 @@ public class ExamplesTest {
 
     static void adosc() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -180,9 +180,9 @@ public class ExamplesTest {
 
     static void adr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -194,9 +194,9 @@ public class ExamplesTest {
 
     static void adx() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -210,9 +210,9 @@ public class ExamplesTest {
 
     static void adxr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -226,9 +226,9 @@ public class ExamplesTest {
 
     static void alligator() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] jaw = new double[252];
         double[] teeth = new double[252];
         double[] lips = new double[252];
@@ -257,9 +257,9 @@ public class ExamplesTest {
 
     static void ao() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -283,9 +283,9 @@ public class ExamplesTest {
 
     static void aroon() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] aroonDown = new double[252];
         double[] aroonUp = new double[252];
 
@@ -300,9 +300,9 @@ public class ExamplesTest {
 
     static void aroonosc() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -316,9 +316,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -356,9 +356,9 @@ public class ExamplesTest {
 
     static void atr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -386,9 +386,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -448,9 +448,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -464,9 +464,9 @@ public class ExamplesTest {
 
     static void cci() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -482,9 +482,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -499,9 +499,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -516,9 +516,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -533,9 +533,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -550,9 +550,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -567,9 +567,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -584,9 +584,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -601,9 +601,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -618,9 +618,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -635,9 +635,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -652,9 +652,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -669,9 +669,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -686,9 +686,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -703,9 +703,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -720,9 +720,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -737,9 +737,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -754,9 +754,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -771,9 +771,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -788,9 +788,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -805,9 +805,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -822,9 +822,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -839,9 +839,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -856,9 +856,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -873,9 +873,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -890,9 +890,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -907,9 +907,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -924,9 +924,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -941,9 +941,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -958,9 +958,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -975,9 +975,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -992,9 +992,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1009,9 +1009,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1026,9 +1026,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1043,9 +1043,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1060,9 +1060,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1077,9 +1077,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1094,9 +1094,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1111,9 +1111,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1128,9 +1128,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1145,9 +1145,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1162,9 +1162,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1179,9 +1179,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1196,9 +1196,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1213,9 +1213,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1230,9 +1230,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1247,9 +1247,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1264,9 +1264,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1281,9 +1281,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1298,9 +1298,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1315,9 +1315,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1332,9 +1332,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1349,9 +1349,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1366,9 +1366,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1383,9 +1383,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1400,9 +1400,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1417,9 +1417,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1434,9 +1434,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1451,9 +1451,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1468,9 +1468,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1485,9 +1485,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1502,9 +1502,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         int[] out = new int[252];
@@ -1517,9 +1517,9 @@ public class ExamplesTest {
 
     static void ce() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] outLong = new double[252];
@@ -1560,9 +1560,9 @@ public class ExamplesTest {
 
     static void chop() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -1576,9 +1576,9 @@ public class ExamplesTest {
 
     static void choptr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -1592,9 +1592,9 @@ public class ExamplesTest {
 
     static void cksp() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] highStop = new double[252];
@@ -1611,9 +1611,9 @@ public class ExamplesTest {
 
     static void cmf() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -1739,9 +1739,9 @@ public class ExamplesTest {
 
     static void cvi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1779,9 +1779,9 @@ public class ExamplesTest {
 
     static void donchian() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] upperBand = new double[252];
         double[] middleBand = new double[252];
         double[] lowerBand = new double[252];
@@ -1822,9 +1822,9 @@ public class ExamplesTest {
 
     static void dx() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -1864,9 +1864,9 @@ public class ExamplesTest {
 
     static void emv() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
         double[] out = new double[252];
@@ -1892,9 +1892,9 @@ public class ExamplesTest {
 
     static void eri() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] bullPower = new double[252];
@@ -1923,9 +1923,9 @@ public class ExamplesTest {
 
     static void fisher() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] fisher = new double[252];
         double[] trigger = new double[252];
 
@@ -1964,9 +1964,9 @@ public class ExamplesTest {
 
     static void fractal() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         int[] swingHigh = new int[252];
         int[] swingLow = new int[252];
 
@@ -1980,9 +1980,9 @@ public class ExamplesTest {
 
     static void frama() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1994,9 +1994,9 @@ public class ExamplesTest {
 
     static void gator() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] upper = new double[252];
         double[] lower = new double[252];
 
@@ -2013,9 +2013,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] haOpen = new double[252];
@@ -2125,9 +2125,9 @@ public class ExamplesTest {
 
     static void ibs() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -2141,9 +2141,9 @@ public class ExamplesTest {
 
     static void ichimoku() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] tenkanSen = new double[252];
         double[] kijunSen = new double[252];
         double[] senkouSpanA = new double[252];
@@ -2189,9 +2189,9 @@ public class ExamplesTest {
 
     static void kc() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] upperBand = new double[252];
@@ -2211,9 +2211,9 @@ public class ExamplesTest {
 
     static void kdj() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] k = new double[252];
@@ -2277,9 +2277,9 @@ public class ExamplesTest {
 
     static void kvo() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -2434,9 +2434,9 @@ public class ExamplesTest {
 
     static void macdv() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] macdv = new double[252];
@@ -2471,9 +2471,9 @@ public class ExamplesTest {
 
     static void marketfi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
         double[] out = new double[252];
@@ -2487,9 +2487,9 @@ public class ExamplesTest {
 
     static void massi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2562,9 +2562,9 @@ public class ExamplesTest {
 
     static void medprice() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2576,9 +2576,9 @@ public class ExamplesTest {
 
     static void mfi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -2606,9 +2606,9 @@ public class ExamplesTest {
 
     static void midprice() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2672,9 +2672,9 @@ public class ExamplesTest {
 
     static void minusDi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -2688,9 +2688,9 @@ public class ExamplesTest {
 
     static void minusDm() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2728,9 +2728,9 @@ public class ExamplesTest {
 
     static void natr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -2808,9 +2808,9 @@ public class ExamplesTest {
 
     static void plusDi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -2824,9 +2824,9 @@ public class ExamplesTest {
 
     static void plusDm() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2850,9 +2850,9 @@ public class ExamplesTest {
 
     static void pso() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -2982,9 +2982,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3022,9 +3022,9 @@ public class ExamplesTest {
 
     static void rvir() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3048,9 +3048,9 @@ public class ExamplesTest {
 
     static void sar() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3062,9 +3062,9 @@ public class ExamplesTest {
 
     static void sarext() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3091,9 +3091,9 @@ public class ExamplesTest {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3155,9 +3155,9 @@ public class ExamplesTest {
 
     static void smi() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] smi = new double[252];
@@ -3198,9 +3198,9 @@ public class ExamplesTest {
 
     static void sqzmom() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] momentum = new double[252];
@@ -3242,9 +3242,9 @@ public class ExamplesTest {
 
     static void stoch() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] slowK = new double[252];
@@ -3262,9 +3262,9 @@ public class ExamplesTest {
 
     static void stochf() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] fastK = new double[252];
@@ -3322,9 +3322,9 @@ public class ExamplesTest {
 
     static void supertrend() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] supertrend = new double[252];
@@ -3449,9 +3449,9 @@ public class ExamplesTest {
 
     static void trange() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3513,9 +3513,9 @@ public class ExamplesTest {
 
     static void typprice() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3529,9 +3529,9 @@ public class ExamplesTest {
 
     static void ultosc() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3581,9 +3581,9 @@ public class ExamplesTest {
 
     static void vortex() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] plusVi = new double[252];
@@ -3600,9 +3600,9 @@ public class ExamplesTest {
 
     static void vwap() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] volume = new double[252]; // your data, oldest first
@@ -3632,9 +3632,9 @@ public class ExamplesTest {
 
     static void wad() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3648,9 +3648,9 @@ public class ExamplesTest {
 
     static void wavetrend() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] wt1 = new double[252];
@@ -3667,9 +3667,9 @@ public class ExamplesTest {
 
     static void wclprice() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3683,9 +3683,9 @@ public class ExamplesTest {
 
     static void willr() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] close = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
         double[] out = new double[252];
@@ -3711,9 +3711,9 @@ public class ExamplesTest {
 
     static void zigzag() {
         double[] high = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] low = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        for (int i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
         double[] zigZag = new double[252];
         int[] trend = new int[252];
         int[] pivotIdx = new int[252];

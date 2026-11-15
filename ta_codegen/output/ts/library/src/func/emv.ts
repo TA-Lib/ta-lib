@@ -919,9 +919,9 @@ export function emvOpenAndFillPositional(
  * import { emvOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const stream = emvOpen({ high, low, volume }, {
@@ -968,9 +968,9 @@ export function emvOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * import { emvOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
  * const { stream, begIdx, values } = emvOpenAndFill({ high, low, volume }, {

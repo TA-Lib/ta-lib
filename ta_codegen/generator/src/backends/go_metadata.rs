@@ -413,7 +413,7 @@ func (f FuncInfo) HasFlags(mask FuncFlags) bool { return f.flags&mask == mask }
 // UnstableID returns the function's unstable-period id, and false when it has
 // none. It has one exactly when [FuncUnstablePeriod] is set.
 func (f FuncInfo) UnstableID() (talib.FuncUnstId, bool) {
-	return f.unst, f.unst >= 0
+	return f.unst, f.HasFlags(FuncUnstablePeriod)
 }
 
 // Inputs returns the inputs, in call order. The components of a price input
@@ -917,7 +917,7 @@ func (h *ParamHolder) SetIntOutput(idx int, out []int32) error {
 // error. Inputs and outputs need not be bound.
 func (h *ParamHolder) Lookback() (int, error) {
 	if h.info.lookback == nil {
-		return 0, talib.InvalidHandle
+		return 0, talib.InvalidParamHolder
 	}
 	return h.info.lookback(h.core, h)
 }
@@ -930,7 +930,7 @@ func (h *ParamHolder) Lookback() (int, error) {
 // without [OutDisplayShift]. Inputs and outputs need not be bound.
 func (h *ParamHolder) DisplayShift(outputIdx int) (int, error) {
 	if h.info.displayShift == nil {
-		return 0, talib.InvalidHandle
+		return 0, talib.InvalidParamHolder
 	}
 	return h.info.displayShift(h.core, h, outputIdx)
 }
@@ -941,7 +941,7 @@ func (h *ParamHolder) DisplayShift(outputIdx int) (int, error) {
 // [talib.OutputNotAllInitialize], and the function does not run.
 func (h *ParamHolder) Call(startIdx, endIdx int) (talib.OutRange, error) {
 	if h.info.call == nil {
-		return talib.OutRange{}, talib.InvalidHandle
+		return talib.OutRange{}, talib.InvalidParamHolder
 	}
 	for i, in := range h.info.inputs {
 		bound := true

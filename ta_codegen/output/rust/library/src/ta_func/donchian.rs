@@ -296,11 +296,11 @@ impl Core {
     ///
     /// let high = vec![0.0; 252]; // your data, oldest first
     /// # let high: Vec<f64> = (0..252)
-    /// #     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     /// #     .collect();
     /// let low = vec![0.0; 252]; // your data, oldest first
     /// # let low: Vec<f64> = (0..252)
-    /// #     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    /// #     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     /// #     .collect();
     /// let mut upper_band = vec![0.0; 252];
     /// let mut middle_band = vec![0.0; 252];
@@ -650,10 +650,10 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     /// let high: Vec<f64> = (0..252)
-    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     ///     .collect();
     /// let low: Vec<f64> = (0..252)
-    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     ///     .collect();
     ///
     /// let core = Core::new();
@@ -688,10 +688,10 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     /// let high: Vec<f64> = (0..252)
-    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .map(|i| 92.0 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     ///     .collect();
     /// let low: Vec<f64> = (0..252)
-    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20)) as f64 / 20.0)
+    ///     .map(|i| 88.0 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) as f64 / 20.0)
     ///     .collect();
     ///
     /// let core = Core::new();

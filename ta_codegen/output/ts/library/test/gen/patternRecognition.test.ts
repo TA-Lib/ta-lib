@@ -99,9 +99,9 @@ test('CDL2CROWS: cdl2crows example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -119,9 +119,9 @@ test('CDL2CROWS: cdl2crowsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl2crowsOpen({ open, high, low, close });
@@ -138,9 +138,9 @@ test('CDL2CROWS: cdl2crowsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl2crowsOpenAndFill({ open, high, low, close });
@@ -160,9 +160,9 @@ test('CDL3BLACKCROWS: cdl3blackcrows example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -180,9 +180,9 @@ test('CDL3BLACKCROWS: cdl3blackcrowsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3blackcrowsOpen({ open, high, low, close });
@@ -199,9 +199,9 @@ test('CDL3BLACKCROWS: cdl3blackcrowsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3blackcrowsOpenAndFill({ open, high, low, close });
@@ -221,9 +221,9 @@ test('CDL3INSIDE: cdl3inside example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -241,9 +241,9 @@ test('CDL3INSIDE: cdl3insideOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3insideOpen({ open, high, low, close });
@@ -260,9 +260,9 @@ test('CDL3INSIDE: cdl3insideOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3insideOpenAndFill({ open, high, low, close });
@@ -282,9 +282,9 @@ test('CDL3LINESTRIKE: cdl3linestrike example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -302,9 +302,9 @@ test('CDL3LINESTRIKE: cdl3linestrikeOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3linestrikeOpen({ open, high, low, close });
@@ -321,9 +321,9 @@ test('CDL3LINESTRIKE: cdl3linestrikeOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3linestrikeOpenAndFill({ open, high, low, close });
@@ -343,9 +343,9 @@ test('CDL3OUTSIDE: cdl3outside example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -363,9 +363,9 @@ test('CDL3OUTSIDE: cdl3outsideOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3outsideOpen({ open, high, low, close });
@@ -382,9 +382,9 @@ test('CDL3OUTSIDE: cdl3outsideOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3outsideOpenAndFill({ open, high, low, close });
@@ -404,9 +404,9 @@ test('CDL3STARSINSOUTH: cdl3starsinsouth example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -424,9 +424,9 @@ test('CDL3STARSINSOUTH: cdl3starsinsouthOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3starsinsouthOpen({ open, high, low, close });
@@ -443,9 +443,9 @@ test('CDL3STARSINSOUTH: cdl3starsinsouthOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3starsinsouthOpenAndFill({ open, high, low, close });
@@ -465,9 +465,9 @@ test('CDL3WHITESOLDIERS: cdl3whitesoldiers example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -485,9 +485,9 @@ test('CDL3WHITESOLDIERS: cdl3whitesoldiersOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdl3whitesoldiersOpen({ open, high, low, close });
@@ -504,9 +504,9 @@ test('CDL3WHITESOLDIERS: cdl3whitesoldiersOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdl3whitesoldiersOpenAndFill({ open, high, low, close });
@@ -526,9 +526,9 @@ test('CDLABANDONEDBABY: cdlabandonedbaby example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -548,9 +548,9 @@ test('CDLABANDONEDBABY: cdlabandonedbabyOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlabandonedbabyOpen({ open, high, low, close }, {
@@ -569,9 +569,9 @@ test('CDLABANDONEDBABY: cdlabandonedbabyOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlabandonedbabyOpenAndFill({ open, high, low, close }, {
@@ -595,9 +595,9 @@ test('CDLADVANCEBLOCK: cdladvanceblock example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -615,9 +615,9 @@ test('CDLADVANCEBLOCK: cdladvanceblockOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdladvanceblockOpen({ open, high, low, close });
@@ -634,9 +634,9 @@ test('CDLADVANCEBLOCK: cdladvanceblockOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdladvanceblockOpenAndFill({ open, high, low, close });
@@ -656,9 +656,9 @@ test('CDLBELTHOLD: cdlbelthold example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -676,9 +676,9 @@ test('CDLBELTHOLD: cdlbeltholdOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlbeltholdOpen({ open, high, low, close });
@@ -695,9 +695,9 @@ test('CDLBELTHOLD: cdlbeltholdOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlbeltholdOpenAndFill({ open, high, low, close });
@@ -717,9 +717,9 @@ test('CDLBREAKAWAY: cdlbreakaway example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -737,9 +737,9 @@ test('CDLBREAKAWAY: cdlbreakawayOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlbreakawayOpen({ open, high, low, close });
@@ -756,9 +756,9 @@ test('CDLBREAKAWAY: cdlbreakawayOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlbreakawayOpenAndFill({ open, high, low, close });
@@ -778,9 +778,9 @@ test('CDLCLOSINGMARUBOZU: cdlclosingmarubozu example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -798,9 +798,9 @@ test('CDLCLOSINGMARUBOZU: cdlclosingmarubozuOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlclosingmarubozuOpen({ open, high, low, close });
@@ -817,9 +817,9 @@ test('CDLCLOSINGMARUBOZU: cdlclosingmarubozuOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlclosingmarubozuOpenAndFill({ open, high, low, close });
@@ -839,9 +839,9 @@ test('CDLCONCEALBABYSWALL: cdlconcealbabyswall example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -859,9 +859,9 @@ test('CDLCONCEALBABYSWALL: cdlconcealbabyswallOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlconcealbabyswallOpen({ open, high, low, close });
@@ -878,9 +878,9 @@ test('CDLCONCEALBABYSWALL: cdlconcealbabyswallOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlconcealbabyswallOpenAndFill({ open, high, low, close });
@@ -900,9 +900,9 @@ test('CDLCOUNTERATTACK: cdlcounterattack example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -920,9 +920,9 @@ test('CDLCOUNTERATTACK: cdlcounterattackOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlcounterattackOpen({ open, high, low, close });
@@ -939,9 +939,9 @@ test('CDLCOUNTERATTACK: cdlcounterattackOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlcounterattackOpenAndFill({ open, high, low, close });
@@ -961,9 +961,9 @@ test('CDLDARKCLOUDCOVER: cdldarkcloudcover example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -983,9 +983,9 @@ test('CDLDARKCLOUDCOVER: cdldarkcloudcoverOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdldarkcloudcoverOpen({ open, high, low, close }, {
@@ -1004,9 +1004,9 @@ test('CDLDARKCLOUDCOVER: cdldarkcloudcoverOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdldarkcloudcoverOpenAndFill({ open, high, low, close }, {
@@ -1030,9 +1030,9 @@ test('CDLDOJI: cdldoji example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1050,9 +1050,9 @@ test('CDLDOJI: cdldojiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdldojiOpen({ open, high, low, close });
@@ -1069,9 +1069,9 @@ test('CDLDOJI: cdldojiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdldojiOpenAndFill({ open, high, low, close });
@@ -1091,9 +1091,9 @@ test('CDLDOJISTAR: cdldojistar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1111,9 +1111,9 @@ test('CDLDOJISTAR: cdldojistarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdldojistarOpen({ open, high, low, close });
@@ -1130,9 +1130,9 @@ test('CDLDOJISTAR: cdldojistarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdldojistarOpenAndFill({ open, high, low, close });
@@ -1152,9 +1152,9 @@ test('CDLDRAGONFLYDOJI: cdldragonflydoji example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1172,9 +1172,9 @@ test('CDLDRAGONFLYDOJI: cdldragonflydojiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdldragonflydojiOpen({ open, high, low, close });
@@ -1191,9 +1191,9 @@ test('CDLDRAGONFLYDOJI: cdldragonflydojiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdldragonflydojiOpenAndFill({ open, high, low, close });
@@ -1213,9 +1213,9 @@ test('CDLENGULFING: cdlengulfing example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1233,9 +1233,9 @@ test('CDLENGULFING: cdlengulfingOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlengulfingOpen({ open, high, low, close });
@@ -1252,9 +1252,9 @@ test('CDLENGULFING: cdlengulfingOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlengulfingOpenAndFill({ open, high, low, close });
@@ -1274,9 +1274,9 @@ test('CDLEVENINGDOJISTAR: cdleveningdojistar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1296,9 +1296,9 @@ test('CDLEVENINGDOJISTAR: cdleveningdojistarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdleveningdojistarOpen({ open, high, low, close }, {
@@ -1317,9 +1317,9 @@ test('CDLEVENINGDOJISTAR: cdleveningdojistarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdleveningdojistarOpenAndFill({ open, high, low, close }, {
@@ -1343,9 +1343,9 @@ test('CDLEVENINGSTAR: cdleveningstar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1365,9 +1365,9 @@ test('CDLEVENINGSTAR: cdleveningstarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdleveningstarOpen({ open, high, low, close }, {
@@ -1386,9 +1386,9 @@ test('CDLEVENINGSTAR: cdleveningstarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdleveningstarOpenAndFill({ open, high, low, close }, {
@@ -1410,9 +1410,9 @@ test('CDLGAPSIDESIDEWHITE: cdlgapsidesidewhite example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1430,9 +1430,9 @@ test('CDLGAPSIDESIDEWHITE: cdlgapsidesidewhiteOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlgapsidesidewhiteOpen({ open, high, low, close });
@@ -1449,9 +1449,9 @@ test('CDLGAPSIDESIDEWHITE: cdlgapsidesidewhiteOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlgapsidesidewhiteOpenAndFill({ open, high, low, close });
@@ -1471,9 +1471,9 @@ test('CDLGRAVESTONEDOJI: cdlgravestonedoji example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1491,9 +1491,9 @@ test('CDLGRAVESTONEDOJI: cdlgravestonedojiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlgravestonedojiOpen({ open, high, low, close });
@@ -1510,9 +1510,9 @@ test('CDLGRAVESTONEDOJI: cdlgravestonedojiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlgravestonedojiOpenAndFill({ open, high, low, close });
@@ -1532,9 +1532,9 @@ test('CDLHAMMER: cdlhammer example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1552,9 +1552,9 @@ test('CDLHAMMER: cdlhammerOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhammerOpen({ open, high, low, close });
@@ -1571,9 +1571,9 @@ test('CDLHAMMER: cdlhammerOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhammerOpenAndFill({ open, high, low, close });
@@ -1593,9 +1593,9 @@ test('CDLHANGINGMAN: cdlhangingman example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1613,9 +1613,9 @@ test('CDLHANGINGMAN: cdlhangingmanOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhangingmanOpen({ open, high, low, close });
@@ -1632,9 +1632,9 @@ test('CDLHANGINGMAN: cdlhangingmanOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhangingmanOpenAndFill({ open, high, low, close });
@@ -1654,9 +1654,9 @@ test('CDLHARAMI: cdlharami example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1674,9 +1674,9 @@ test('CDLHARAMI: cdlharamiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlharamiOpen({ open, high, low, close });
@@ -1693,9 +1693,9 @@ test('CDLHARAMI: cdlharamiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlharamiOpenAndFill({ open, high, low, close });
@@ -1715,9 +1715,9 @@ test('CDLHARAMICROSS: cdlharamicross example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1735,9 +1735,9 @@ test('CDLHARAMICROSS: cdlharamicrossOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlharamicrossOpen({ open, high, low, close });
@@ -1754,9 +1754,9 @@ test('CDLHARAMICROSS: cdlharamicrossOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlharamicrossOpenAndFill({ open, high, low, close });
@@ -1776,9 +1776,9 @@ test('CDLHIGHWAVE: cdlhighwave example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1796,9 +1796,9 @@ test('CDLHIGHWAVE: cdlhighwaveOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhighwaveOpen({ open, high, low, close });
@@ -1815,9 +1815,9 @@ test('CDLHIGHWAVE: cdlhighwaveOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhighwaveOpenAndFill({ open, high, low, close });
@@ -1837,9 +1837,9 @@ test('CDLHIKKAKE: cdlhikkake example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1857,9 +1857,9 @@ test('CDLHIKKAKE: cdlhikkakeOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhikkakeOpen({ open, high, low, close });
@@ -1876,9 +1876,9 @@ test('CDLHIKKAKE: cdlhikkakeOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhikkakeOpenAndFill({ open, high, low, close });
@@ -1898,9 +1898,9 @@ test('CDLHIKKAKEMOD: cdlhikkakemod example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1918,9 +1918,9 @@ test('CDLHIKKAKEMOD: cdlhikkakemodOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhikkakemodOpen({ open, high, low, close });
@@ -1937,9 +1937,9 @@ test('CDLHIKKAKEMOD: cdlhikkakemodOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhikkakemodOpenAndFill({ open, high, low, close });
@@ -1959,9 +1959,9 @@ test('CDLHOMINGPIGEON: cdlhomingpigeon example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1979,9 +1979,9 @@ test('CDLHOMINGPIGEON: cdlhomingpigeonOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlhomingpigeonOpen({ open, high, low, close });
@@ -1998,9 +1998,9 @@ test('CDLHOMINGPIGEON: cdlhomingpigeonOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlhomingpigeonOpenAndFill({ open, high, low, close });
@@ -2020,9 +2020,9 @@ test('CDLIDENTICAL3CROWS: cdlidentical3crows example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2040,9 +2040,9 @@ test('CDLIDENTICAL3CROWS: cdlidentical3crowsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlidentical3crowsOpen({ open, high, low, close });
@@ -2059,9 +2059,9 @@ test('CDLIDENTICAL3CROWS: cdlidentical3crowsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlidentical3crowsOpenAndFill({ open, high, low, close });
@@ -2081,9 +2081,9 @@ test('CDLINNECK: cdlinneck example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2101,9 +2101,9 @@ test('CDLINNECK: cdlinneckOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlinneckOpen({ open, high, low, close });
@@ -2120,9 +2120,9 @@ test('CDLINNECK: cdlinneckOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlinneckOpenAndFill({ open, high, low, close });
@@ -2142,9 +2142,9 @@ test('CDLINVERTEDHAMMER: cdlinvertedhammer example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2162,9 +2162,9 @@ test('CDLINVERTEDHAMMER: cdlinvertedhammerOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlinvertedhammerOpen({ open, high, low, close });
@@ -2181,9 +2181,9 @@ test('CDLINVERTEDHAMMER: cdlinvertedhammerOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlinvertedhammerOpenAndFill({ open, high, low, close });
@@ -2203,9 +2203,9 @@ test('CDLKICKING: cdlkicking example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2223,9 +2223,9 @@ test('CDLKICKING: cdlkickingOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlkickingOpen({ open, high, low, close });
@@ -2242,9 +2242,9 @@ test('CDLKICKING: cdlkickingOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlkickingOpenAndFill({ open, high, low, close });
@@ -2264,9 +2264,9 @@ test('CDLKICKINGBYLENGTH: cdlkickingbylength example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2284,9 +2284,9 @@ test('CDLKICKINGBYLENGTH: cdlkickingbylengthOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlkickingbylengthOpen({ open, high, low, close });
@@ -2303,9 +2303,9 @@ test('CDLKICKINGBYLENGTH: cdlkickingbylengthOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlkickingbylengthOpenAndFill({ open, high, low, close });
@@ -2325,9 +2325,9 @@ test('CDLLADDERBOTTOM: cdlladderbottom example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2345,9 +2345,9 @@ test('CDLLADDERBOTTOM: cdlladderbottomOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlladderbottomOpen({ open, high, low, close });
@@ -2364,9 +2364,9 @@ test('CDLLADDERBOTTOM: cdlladderbottomOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlladderbottomOpenAndFill({ open, high, low, close });
@@ -2386,9 +2386,9 @@ test('CDLLONGLEGGEDDOJI: cdllongleggeddoji example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2406,9 +2406,9 @@ test('CDLLONGLEGGEDDOJI: cdllongleggeddojiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdllongleggeddojiOpen({ open, high, low, close });
@@ -2425,9 +2425,9 @@ test('CDLLONGLEGGEDDOJI: cdllongleggeddojiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdllongleggeddojiOpenAndFill({ open, high, low, close });
@@ -2447,9 +2447,9 @@ test('CDLLONGLINE: cdllongline example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2467,9 +2467,9 @@ test('CDLLONGLINE: cdllonglineOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdllonglineOpen({ open, high, low, close });
@@ -2486,9 +2486,9 @@ test('CDLLONGLINE: cdllonglineOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdllonglineOpenAndFill({ open, high, low, close });
@@ -2508,9 +2508,9 @@ test('CDLMARUBOZU: cdlmarubozu example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2528,9 +2528,9 @@ test('CDLMARUBOZU: cdlmarubozuOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlmarubozuOpen({ open, high, low, close });
@@ -2547,9 +2547,9 @@ test('CDLMARUBOZU: cdlmarubozuOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlmarubozuOpenAndFill({ open, high, low, close });
@@ -2569,9 +2569,9 @@ test('CDLMATCHINGLOW: cdlmatchinglow example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2589,9 +2589,9 @@ test('CDLMATCHINGLOW: cdlmatchinglowOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlmatchinglowOpen({ open, high, low, close });
@@ -2608,9 +2608,9 @@ test('CDLMATCHINGLOW: cdlmatchinglowOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlmatchinglowOpenAndFill({ open, high, low, close });
@@ -2630,9 +2630,9 @@ test('CDLMATHOLD: cdlmathold example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2652,9 +2652,9 @@ test('CDLMATHOLD: cdlmatholdOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlmatholdOpen({ open, high, low, close }, { penetration: 0.5 });
@@ -2671,9 +2671,9 @@ test('CDLMATHOLD: cdlmatholdOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlmatholdOpenAndFill({ open, high, low, close }, {
@@ -2695,9 +2695,9 @@ test('CDLMORNINGDOJISTAR: cdlmorningdojistar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2717,9 +2717,9 @@ test('CDLMORNINGDOJISTAR: cdlmorningdojistarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlmorningdojistarOpen({ open, high, low, close }, {
@@ -2738,9 +2738,9 @@ test('CDLMORNINGDOJISTAR: cdlmorningdojistarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlmorningdojistarOpenAndFill({ open, high, low, close }, {
@@ -2764,9 +2764,9 @@ test('CDLMORNINGSTAR: cdlmorningstar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2786,9 +2786,9 @@ test('CDLMORNINGSTAR: cdlmorningstarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlmorningstarOpen({ open, high, low, close }, {
@@ -2807,9 +2807,9 @@ test('CDLMORNINGSTAR: cdlmorningstarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlmorningstarOpenAndFill({ open, high, low, close }, {
@@ -2831,9 +2831,9 @@ test('CDLONNECK: cdlonneck example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2851,9 +2851,9 @@ test('CDLONNECK: cdlonneckOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlonneckOpen({ open, high, low, close });
@@ -2870,9 +2870,9 @@ test('CDLONNECK: cdlonneckOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlonneckOpenAndFill({ open, high, low, close });
@@ -2892,9 +2892,9 @@ test('CDLPIERCING: cdlpiercing example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2912,9 +2912,9 @@ test('CDLPIERCING: cdlpiercingOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlpiercingOpen({ open, high, low, close });
@@ -2931,9 +2931,9 @@ test('CDLPIERCING: cdlpiercingOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlpiercingOpenAndFill({ open, high, low, close });
@@ -2953,9 +2953,9 @@ test('CDLRICKSHAWMAN: cdlrickshawman example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2973,9 +2973,9 @@ test('CDLRICKSHAWMAN: cdlrickshawmanOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlrickshawmanOpen({ open, high, low, close });
@@ -2992,9 +2992,9 @@ test('CDLRICKSHAWMAN: cdlrickshawmanOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlrickshawmanOpenAndFill({ open, high, low, close });
@@ -3014,9 +3014,9 @@ test('CDLRISEFALL3METHODS: cdlrisefall3methods example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3034,9 +3034,9 @@ test('CDLRISEFALL3METHODS: cdlrisefall3methodsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlrisefall3methodsOpen({ open, high, low, close });
@@ -3053,9 +3053,9 @@ test('CDLRISEFALL3METHODS: cdlrisefall3methodsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlrisefall3methodsOpenAndFill({ open, high, low, close });
@@ -3075,9 +3075,9 @@ test('CDLSEPARATINGLINES: cdlseparatinglines example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3095,9 +3095,9 @@ test('CDLSEPARATINGLINES: cdlseparatinglinesOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlseparatinglinesOpen({ open, high, low, close });
@@ -3114,9 +3114,9 @@ test('CDLSEPARATINGLINES: cdlseparatinglinesOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlseparatinglinesOpenAndFill({ open, high, low, close });
@@ -3136,9 +3136,9 @@ test('CDLSHOOTINGSTAR: cdlshootingstar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3156,9 +3156,9 @@ test('CDLSHOOTINGSTAR: cdlshootingstarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlshootingstarOpen({ open, high, low, close });
@@ -3175,9 +3175,9 @@ test('CDLSHOOTINGSTAR: cdlshootingstarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlshootingstarOpenAndFill({ open, high, low, close });
@@ -3197,9 +3197,9 @@ test('CDLSHORTLINE: cdlshortline example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3217,9 +3217,9 @@ test('CDLSHORTLINE: cdlshortlineOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlshortlineOpen({ open, high, low, close });
@@ -3236,9 +3236,9 @@ test('CDLSHORTLINE: cdlshortlineOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlshortlineOpenAndFill({ open, high, low, close });
@@ -3258,9 +3258,9 @@ test('CDLSPINNINGTOP: cdlspinningtop example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3278,9 +3278,9 @@ test('CDLSPINNINGTOP: cdlspinningtopOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlspinningtopOpen({ open, high, low, close });
@@ -3297,9 +3297,9 @@ test('CDLSPINNINGTOP: cdlspinningtopOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlspinningtopOpenAndFill({ open, high, low, close });
@@ -3319,9 +3319,9 @@ test('CDLSTALLEDPATTERN: cdlstalledpattern example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3339,9 +3339,9 @@ test('CDLSTALLEDPATTERN: cdlstalledpatternOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlstalledpatternOpen({ open, high, low, close });
@@ -3358,9 +3358,9 @@ test('CDLSTALLEDPATTERN: cdlstalledpatternOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlstalledpatternOpenAndFill({ open, high, low, close });
@@ -3380,9 +3380,9 @@ test('CDLSTICKSANDWICH: cdlsticksandwich example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3400,9 +3400,9 @@ test('CDLSTICKSANDWICH: cdlsticksandwichOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlsticksandwichOpen({ open, high, low, close });
@@ -3419,9 +3419,9 @@ test('CDLSTICKSANDWICH: cdlsticksandwichOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlsticksandwichOpenAndFill({ open, high, low, close });
@@ -3441,9 +3441,9 @@ test('CDLTAKURI: cdltakuri example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3461,9 +3461,9 @@ test('CDLTAKURI: cdltakuriOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdltakuriOpen({ open, high, low, close });
@@ -3480,9 +3480,9 @@ test('CDLTAKURI: cdltakuriOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdltakuriOpenAndFill({ open, high, low, close });
@@ -3502,9 +3502,9 @@ test('CDLTASUKIGAP: cdltasukigap example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3522,9 +3522,9 @@ test('CDLTASUKIGAP: cdltasukigapOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdltasukigapOpen({ open, high, low, close });
@@ -3541,9 +3541,9 @@ test('CDLTASUKIGAP: cdltasukigapOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdltasukigapOpenAndFill({ open, high, low, close });
@@ -3563,9 +3563,9 @@ test('CDLTHRUSTING: cdlthrusting example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3583,9 +3583,9 @@ test('CDLTHRUSTING: cdlthrustingOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlthrustingOpen({ open, high, low, close });
@@ -3602,9 +3602,9 @@ test('CDLTHRUSTING: cdlthrustingOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlthrustingOpenAndFill({ open, high, low, close });
@@ -3624,9 +3624,9 @@ test('CDLTRISTAR: cdltristar example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3644,9 +3644,9 @@ test('CDLTRISTAR: cdltristarOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdltristarOpen({ open, high, low, close });
@@ -3663,9 +3663,9 @@ test('CDLTRISTAR: cdltristarOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdltristarOpenAndFill({ open, high, low, close });
@@ -3685,9 +3685,9 @@ test('CDLUNIQUE3RIVER: cdlunique3river example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3705,9 +3705,9 @@ test('CDLUNIQUE3RIVER: cdlunique3riverOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlunique3riverOpen({ open, high, low, close });
@@ -3724,9 +3724,9 @@ test('CDLUNIQUE3RIVER: cdlunique3riverOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlunique3riverOpenAndFill({ open, high, low, close });
@@ -3746,9 +3746,9 @@ test('CDLUPSIDEGAP2CROWS: cdlupsidegap2crows example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3766,9 +3766,9 @@ test('CDLUPSIDEGAP2CROWS: cdlupsidegap2crowsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlupsidegap2crowsOpen({ open, high, low, close });
@@ -3785,9 +3785,9 @@ test('CDLUPSIDEGAP2CROWS: cdlupsidegap2crowsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlupsidegap2crowsOpenAndFill({ open, high, low, close });
@@ -3807,9 +3807,9 @@ test('CDLXSIDEGAP3METHODS: cdlxsidegap3methods example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3827,9 +3827,9 @@ test('CDLXSIDEGAP3METHODS: cdlxsidegap3methodsOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cdlxsidegap3methodsOpen({ open, high, low, close });
@@ -3846,9 +3846,9 @@ test('CDLXSIDEGAP3METHODS: cdlxsidegap3methodsOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cdlxsidegap3methodsOpenAndFill({ open, high, low, close });

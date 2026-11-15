@@ -72,9 +72,9 @@ import {
 
 test('AC: ac example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = ac({ high, low }, {
     fastPeriod: 5,
@@ -91,9 +91,9 @@ test('AC: ac example', () => {
 
 test('AC: acOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = acOpen({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -110,9 +110,9 @@ test('AC: acOpen example', () => {
 
 test('AC: acOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, values } = acOpenAndFill({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -136,9 +136,9 @@ test('AC: acOpenAndFill example', () => {
 
 test('ADX: adx example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -153,9 +153,9 @@ test('ADX: adx example', () => {
 
 test('ADX: adxOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = adxOpen({ high, low, close }, { timePeriod: 14 });
@@ -170,9 +170,9 @@ test('ADX: adxOpen example', () => {
 
 test('ADX: adxOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = adxOpenAndFill({ high, low, close }, {
@@ -192,9 +192,9 @@ test('ADX: adxOpenAndFill example', () => {
 
 test('ADXR: adxr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -209,9 +209,9 @@ test('ADXR: adxr example', () => {
 
 test('ADXR: adxrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = adxrOpen({ high, low, close }, { timePeriod: 14 });
@@ -226,9 +226,9 @@ test('ADXR: adxrOpen example', () => {
 
 test('ADXR: adxrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = adxrOpenAndFill({ high, low, close }, {
@@ -248,9 +248,9 @@ test('ADXR: adxrOpenAndFill example', () => {
 
 test('AO: ao example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = ao({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
   console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
@@ -263,9 +263,9 @@ test('AO: ao example', () => {
 
 test('AO: aoOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = aoOpen({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -278,9 +278,9 @@ test('AO: aoOpen example', () => {
 
 test('AO: aoOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, values } = aoOpenAndFill({ high, low }, {
     fastPeriod: 5,
     slowPeriod: 34,
@@ -357,9 +357,9 @@ test('APO: apoOpenAndFill example', () => {
 
 test('AROON: aroon example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
     timePeriod: 14,
@@ -377,9 +377,9 @@ test('AROON: aroon example', () => {
 
 test('AROON: aroonOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = aroonOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -392,9 +392,9 @@ test('AROON: aroonOpen example', () => {
 
 test('AROON: aroonOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const {
     stream,
     begIdx,
@@ -416,9 +416,9 @@ test('AROON: aroonOpenAndFill example', () => {
 
 test('AROONOSC: aroonosc example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = aroonosc({ high, low }, { timePeriod: 14 });
   console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
@@ -431,9 +431,9 @@ test('AROONOSC: aroonosc example', () => {
 
 test('AROONOSC: aroonoscOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = aroonoscOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -446,9 +446,9 @@ test('AROONOSC: aroonoscOpen example', () => {
 
 test('AROONOSC: aroonoscOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, values } = aroonoscOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -468,9 +468,9 @@ test('ASI: asi example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -487,9 +487,9 @@ test('ASI: asiOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = asiOpen({ open, high, low, close }, { limitMove: 3 });
@@ -506,9 +506,9 @@ test('ASI: asiOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = asiOpenAndFill({ open, high, low, close }, {
@@ -530,9 +530,9 @@ test('BOP: bop example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -549,9 +549,9 @@ test('BOP: bopOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = bopOpen({ open, high, low, close });
@@ -568,9 +568,9 @@ test('BOP: bopOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = bopOpenAndFill({ open, high, low, close });
@@ -588,9 +588,9 @@ test('BOP: bopOpenAndFill example', () => {
 
 test('CCI: cci example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -605,9 +605,9 @@ test('CCI: cci example', () => {
 
 test('CCI: cciOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = cciOpen({ high, low, close }, { timePeriod: 14 });
@@ -622,9 +622,9 @@ test('CCI: cciOpen example', () => {
 
 test('CCI: cciOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = cciOpenAndFill({ high, low, close }, {
@@ -686,9 +686,9 @@ test('CG: cgOpenAndFill example', () => {
 
 test('CHOP: chop example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -703,9 +703,9 @@ test('CHOP: chop example', () => {
 
 test('CHOP: chopOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = chopOpen({ high, low, close }, { timePeriod: 14 });
@@ -720,9 +720,9 @@ test('CHOP: chopOpen example', () => {
 
 test('CHOP: chopOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = chopOpenAndFill({ high, low, close }, {
@@ -742,9 +742,9 @@ test('CHOP: chopOpenAndFill example', () => {
 
 test('CHOPTR: choptr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -759,9 +759,9 @@ test('CHOPTR: choptr example', () => {
 
 test('CHOPTR: choptrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = choptrOpen({ high, low, close }, { timePeriod: 14 });
@@ -776,9 +776,9 @@ test('CHOPTR: choptrOpen example', () => {
 
 test('CHOPTR: choptrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = choptrOpenAndFill({ high, low, close }, {
@@ -1140,9 +1140,9 @@ test('DPO: dpoOpenAndFill example', () => {
 
 test('DX: dx example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1157,9 +1157,9 @@ test('DX: dx example', () => {
 
 test('DX: dxOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = dxOpen({ high, low, close }, { timePeriod: 14 });
@@ -1174,9 +1174,9 @@ test('DX: dxOpen example', () => {
 
 test('DX: dxOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = dxOpenAndFill({ high, low, close }, {
@@ -1238,9 +1238,9 @@ test('ER: erOpenAndFill example', () => {
 
 test('ERI: eri example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1260,9 +1260,9 @@ test('ERI: eri example', () => {
 
 test('ERI: eriOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = eriOpen({ high, low, close }, { timePeriod: 13 });
@@ -1277,9 +1277,9 @@ test('ERI: eriOpen example', () => {
 
 test('ERI: eriOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
@@ -1303,9 +1303,9 @@ test('ERI: eriOpenAndFill example', () => {
 
 test('FISHER: fisher example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
     timePeriod: 10,
@@ -1323,9 +1323,9 @@ test('FISHER: fisher example', () => {
 
 test('FISHER: fisherOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = fisherOpen({ high, low }, { timePeriod: 10 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1338,9 +1338,9 @@ test('FISHER: fisherOpen example', () => {
 
 test('FISHER: fisherOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const {
     stream,
     begIdx,
@@ -1404,9 +1404,9 @@ test('FOSC: foscOpenAndFill example', () => {
 
 test('FRACTAL: fractal example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
     leftBars: 2,
@@ -1428,9 +1428,9 @@ test('FRACTAL: fractal example', () => {
 
 test('FRACTAL: fractalOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = fractalOpen({ high, low }, { leftBars: 2, rightBars: 2 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -1443,9 +1443,9 @@ test('FRACTAL: fractalOpen example', () => {
 
 test('FRACTAL: fractalOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const {
     stream,
     begIdx,
@@ -1467,9 +1467,9 @@ test('FRACTAL: fractalOpenAndFill example', () => {
 
 test('GATOR: gator example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, outUpper, outLower } = gator({ high, low }, {
     jawPeriod: 13,
@@ -1492,9 +1492,9 @@ test('GATOR: gator example', () => {
 
 test('GATOR: gatorOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = gatorOpen({ high, low }, {
     jawPeriod: 13,
     jawShift: 8,
@@ -1514,9 +1514,9 @@ test('GATOR: gatorOpen example', () => {
 
 test('GATOR: gatorOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, outUpper, outLower } = gatorOpenAndFill({ high, low }, {
     jawPeriod: 13,
     jawShift: 8,
@@ -1547,9 +1547,9 @@ test('GATOR: gatorOpenAndFill example', () => {
 
 test('IBS: ibs example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1564,9 +1564,9 @@ test('IBS: ibs example', () => {
 
 test('IBS: ibsOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = ibsOpen({ high, low, close });
@@ -1581,9 +1581,9 @@ test('IBS: ibsOpen example', () => {
 
 test('IBS: ibsOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = ibsOpenAndFill({ high, low, close });
@@ -1651,9 +1651,9 @@ test('IMI: imiOpenAndFill example', () => {
 
 test('KDJ: kdj example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -1679,9 +1679,9 @@ test('KDJ: kdj example', () => {
 
 test('KDJ: kdjOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = kdjOpen({ high, low, close }, {
@@ -1703,9 +1703,9 @@ test('KDJ: kdjOpen example', () => {
 
 test('KDJ: kdjOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outK, outD, outJ } = kdjOpenAndFill({ high, low, close }, {
@@ -2146,9 +2146,9 @@ test('MACDFIX: macdfixOpenAndFill example', () => {
 
 test('MACDV: macdv example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2177,9 +2177,9 @@ test('MACDV: macdv example', () => {
 
 test('MACDV: macdvOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = macdvOpen({ high, low, close }, {
@@ -2199,9 +2199,9 @@ test('MACDV: macdvOpen example', () => {
 
 test('MACDV: macdvOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
@@ -2235,9 +2235,9 @@ test('MACDV: macdvOpenAndFill example', () => {
 
 test('MFI: mfi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -2256,9 +2256,9 @@ test('MFI: mfi example', () => {
 
 test('MFI: mfiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -2275,9 +2275,9 @@ test('MFI: mfiOpen example', () => {
 
 test('MFI: mfiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -2299,9 +2299,9 @@ test('MFI: mfiOpenAndFill example', () => {
 
 test('MINUS_DI: minusDi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2316,9 +2316,9 @@ test('MINUS_DI: minusDi example', () => {
 
 test('MINUS_DI: minusDiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = minusDiOpen({ high, low, close }, { timePeriod: 14 });
@@ -2333,9 +2333,9 @@ test('MINUS_DI: minusDiOpen example', () => {
 
 test('MINUS_DI: minusDiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = minusDiOpenAndFill({ high, low, close }, {
@@ -2355,9 +2355,9 @@ test('MINUS_DI: minusDiOpenAndFill example', () => {
 
 test('MINUS_DM: minusDm example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = minusDm({ high, low }, { timePeriod: 14 });
   console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
@@ -2370,9 +2370,9 @@ test('MINUS_DM: minusDm example', () => {
 
 test('MINUS_DM: minusDmOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = minusDmOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -2385,9 +2385,9 @@ test('MINUS_DM: minusDmOpen example', () => {
 
 test('MINUS_DM: minusDmOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, values } = minusDmOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -2447,9 +2447,9 @@ test('MOM: momOpenAndFill example', () => {
 
 test('PLUS_DI: plusDi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2464,9 +2464,9 @@ test('PLUS_DI: plusDi example', () => {
 
 test('PLUS_DI: plusDiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = plusDiOpen({ high, low, close }, { timePeriod: 14 });
@@ -2481,9 +2481,9 @@ test('PLUS_DI: plusDiOpen example', () => {
 
 test('PLUS_DI: plusDiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = plusDiOpenAndFill({ high, low, close }, {
@@ -2503,9 +2503,9 @@ test('PLUS_DI: plusDiOpenAndFill example', () => {
 
 test('PLUS_DM: plusDm example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = plusDm({ high, low }, { timePeriod: 14 });
   console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
@@ -2518,9 +2518,9 @@ test('PLUS_DM: plusDm example', () => {
 
 test('PLUS_DM: plusDmOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const stream = plusDmOpen({ high, low }, { timePeriod: 14 });
   const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
   const updated = stream.update(101.4, 99.1); // the bar closes
@@ -2533,9 +2533,9 @@ test('PLUS_DM: plusDmOpen example', () => {
 
 test('PLUS_DM: plusDmOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const { stream, begIdx, values } = plusDmOpenAndFill({ high, low }, {
     timePeriod: 14,
   });
@@ -2611,9 +2611,9 @@ test('PPO: ppoOpenAndFill example', () => {
 
 test('PSO: pso example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2631,9 +2631,9 @@ test('PSO: pso example', () => {
 
 test('PSO: psoOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = psoOpen({ high, low, close }, { fastKPeriod: 8, emaPeriod: 5 });
@@ -2648,9 +2648,9 @@ test('PSO: psoOpen example', () => {
 
 test('PSO: psoOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = psoOpenAndFill({ high, low, close }, {
@@ -2935,9 +2935,9 @@ test('SI: si example', () => {
   const open = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0;
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -2954,9 +2954,9 @@ test('SI: siOpen example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = siOpen({ open, high, low, close }, { limitMove: 3 });
@@ -2973,9 +2973,9 @@ test('SI: siOpenAndFill example', () => {
   const open = Float64Array.from({ length: 252 }, (_, i) =>
     90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0);
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = siOpenAndFill({ open, high, low, close }, {
@@ -2995,9 +2995,9 @@ test('SI: siOpenAndFill example', () => {
 
 test('SMI: smi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3020,9 +3020,9 @@ test('SMI: smi example', () => {
 
 test('SMI: smiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = smiOpen({ high, low, close }, {
@@ -3042,9 +3042,9 @@ test('SMI: smiOpen example', () => {
 
 test('SMI: smiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
@@ -3078,9 +3078,9 @@ test('SMI: smiOpenAndFill example', () => {
 
 test('SQZMOM: sqzmom example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3107,9 +3107,9 @@ test('SQZMOM: sqzmom example', () => {
 
 test('SQZMOM: sqzmomOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = sqzmomOpen({ high, low, close }, {
@@ -3131,9 +3131,9 @@ test('SQZMOM: sqzmomOpen example', () => {
 
 test('SQZMOM: sqzmomOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
@@ -3225,9 +3225,9 @@ test('STC: stcOpenAndFill example', () => {
 
 test('STOCH: stoch example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3251,9 +3251,9 @@ test('STOCH: stoch example', () => {
 
 test('STOCH: stochOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = stochOpen({ high, low, close }, {
@@ -3274,9 +3274,9 @@ test('STOCH: stochOpen example', () => {
 
 test('STOCH: stochOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outSlowK, outSlowD } = stochOpenAndFill({ high, low, close }, {
@@ -3307,9 +3307,9 @@ test('STOCH: stochOpenAndFill example', () => {
 
 test('STOCHF: stochf example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3331,9 +3331,9 @@ test('STOCHF: stochf example', () => {
 
 test('STOCHF: stochfOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = stochfOpen({ high, low, close }, {
@@ -3352,9 +3352,9 @@ test('STOCHF: stochfOpen example', () => {
 
 test('STOCHF: stochfOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outFastK, outFastD } = stochfOpenAndFill({ high, low, close }, {
@@ -3534,9 +3534,9 @@ test('TSI: tsiOpenAndFill example', () => {
 
 test('ULTOSC: ultosc example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3555,9 +3555,9 @@ test('ULTOSC: ultosc example', () => {
 
 test('ULTOSC: ultoscOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = ultoscOpen({ high, low, close }, {
@@ -3576,9 +3576,9 @@ test('ULTOSC: ultoscOpen example', () => {
 
 test('ULTOSC: ultoscOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = ultoscOpenAndFill({ high, low, close }, {
@@ -3646,9 +3646,9 @@ test('VHF: vhfOpenAndFill example', () => {
 
 test('VORTEX: vortex example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3668,9 +3668,9 @@ test('VORTEX: vortex example', () => {
 
 test('VORTEX: vortexOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = vortexOpen({ high, low, close }, { timePeriod: 14 });
@@ -3685,9 +3685,9 @@ test('VORTEX: vortexOpen example', () => {
 
 test('VORTEX: vortexOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const {
@@ -3711,9 +3711,9 @@ test('VORTEX: vortexOpenAndFill example', () => {
 
 test('WAD: wad example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3728,9 +3728,9 @@ test('WAD: wad example', () => {
 
 test('WAD: wadOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = wadOpen({ high, low, close });
@@ -3745,9 +3745,9 @@ test('WAD: wadOpen example', () => {
 
 test('WAD: wadOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = wadOpenAndFill({ high, low, close });
@@ -3765,9 +3765,9 @@ test('WAD: wadOpenAndFill example', () => {
 
 test('WAVETREND: wavetrend example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3789,9 +3789,9 @@ test('WAVETREND: wavetrend example', () => {
 
 test('WAVETREND: wavetrendOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = wavetrendOpen({ high, low, close }, {
@@ -3810,9 +3810,9 @@ test('WAVETREND: wavetrendOpen example', () => {
 
 test('WAVETREND: wavetrendOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, outWt1, outWt2 } = wavetrendOpenAndFill({ high, low, close }, {
@@ -3839,9 +3839,9 @@ test('WAVETREND: wavetrendOpenAndFill example', () => {
 
 test('WILLR: willr example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
@@ -3856,9 +3856,9 @@ test('WILLR: willr example', () => {
 
 test('WILLR: willrOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const stream = willrOpen({ high, low, close }, { timePeriod: 14 });
@@ -3873,9 +3873,9 @@ test('WILLR: willrOpen example', () => {
 
 test('WILLR: willrOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const { stream, begIdx, values } = willrOpenAndFill({ high, low, close }, {

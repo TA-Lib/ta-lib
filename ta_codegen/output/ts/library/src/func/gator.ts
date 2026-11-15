@@ -1365,9 +1365,9 @@ export function gatorOpenAndFillPositional(
  * import { gatorOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const stream = gatorOpen({ high, low }, {
  *   jawPeriod: 13,
  *   jawShift: 8,
@@ -1419,9 +1419,9 @@ export function gatorOpen(prices: { open?: ArrayLike<number> | undefined; high: 
  * import { gatorOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const { stream, begIdx, outUpper, outLower } = gatorOpenAndFill({ high, low }, {
  *   jawPeriod: 13,
  *   jawShift: 8,

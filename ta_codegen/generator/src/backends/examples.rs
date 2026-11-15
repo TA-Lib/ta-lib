@@ -1,11 +1,11 @@
 //! The batch example behind every function page and every verified sample.
 //!
 //! One shape in every language: the input arrays named and sized, the call with every
-//! parameter at its default, the output range, one printed value. A page shows the
-//! `shown` lines; the copy a language's suite compiles carries the `hidden` lines too,
-//! which fill the arrays with the synthetic series below and assert the result. One
-//! emitter per language renders both from the same [`Snippet`], so a page cannot drift
-//! from what compiled.
+//! parameter at its default, the output range, the first and last value of every output.
+//! A page shows the `shown` lines; the copy a language's suite compiles carries the
+//! `hidden` lines too, which fill the arrays with the synthetic series below and assert
+//! the result. One emitter per language renders both from the same [`Snippet`], so a
+//! page cannot drift from what compiled.
 
 use super::doc_meta;
 use crate::ir::{self, EnumDef, FuncDef, OptInput, ParamType};
@@ -103,12 +103,13 @@ fn integers(terms: Vec<Int>) -> Shape {
 
 /// The series of the input named `input`, or `None` for a shape no example knows.
 ///
-/// `high` and `low` sit 2 either side of the price wave. `open` is the previous bar's
-/// midpoint, at most 1.95 from this one. `close` adds a second, 9-bar wave that keeps
-/// it within 1.6 of the midpoint and never on it: a close on the midpoint leaves the
-/// money-flow multiplier identically zero and the AD/ADOSC/CMF examples unable to
-/// fail (#136). `volume`
-/// rises overall but falls on some bars, or NVI never takes its down-volume branch.
+/// `high` and `low` sit 2 to 3.8 either side of the price wave, the margin a 13-bar
+/// wave, or a range-based function prints a constant. `open` is the previous bar's
+/// midpoint, at most 1.95 from this one. `close` adds a 9-bar wave that keeps it within
+/// 1.6 of the midpoint and never on it: a close on the midpoint leaves the money-flow
+/// multiplier identically zero and the AD/ADOSC/CMF examples unable to fail (#136).
+/// `volume` rises overall but falls on some bars, or NVI never takes its down-volume
+/// branch.
 /// An input declaring a synthetic `series` gets it over its `domain`: the price wave
 /// mapped strictly inside it, so a function undefined at an end never meets that end,
 /// or a ramp from `lo` to `hi`.
@@ -140,8 +141,8 @@ pub fn series(func: &FuncDef, input: &str) -> Option<Series> {
     }
     let (var, shape) = match input {
         "inOpen" => ("open", price(90.0, vec![Int::Wave { coef: 1, period: 40, shift: 39 }])),
-        "inHigh" => ("high", price(92.0, vec![PRICE])),
-        "inLow" => ("low", price(88.0, vec![PRICE])),
+        "inHigh" => ("high", price(92.0, vec![PRICE, Int::Wave { coef: 1, period: 13, shift: 0 }])),
+        "inLow" => ("low", price(88.0, vec![PRICE, Int::Wave { coef: -1, period: 13, shift: 0 }])),
         "inClose" => ("close", price(88.4, vec![PRICE, Int::Wave { coef: 4, period: 9, shift: 0 }])),
         "inVolume" => (
             "volume",
@@ -194,7 +195,8 @@ fn int_sum(terms: &[Int]) -> String {
             Int::Mod(m) => (false, format!("i % {m}")),
             Int::Wave { coef, period, shift } => {
                 let k = wave_k(period, shift);
-                (false, if coef == 1 { format!("{k} * {k}") } else { format!("{coef} * {k} * {k}") })
+                let c = coef.abs();
+                (coef < 0, if c == 1 { format!("{k} * {k}") } else { format!("{c} * {k} * {k}") })
             }
         };
         match (out.is_empty(), negative) {
@@ -430,6 +432,11 @@ mod tests {
         );
         let open = series(&fixture("inOpen", None), "inOpen").unwrap();
         assert_eq!(render(&open, &C_FAMILY), "90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0");
+        let low = series(&fixture("inLow", None), "inLow").unwrap();
+        assert_eq!(
+            render(&low, &C_FAMILY),
+            "88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0"
+        );
         let volume = series(&fixture("inVolume", None), "inVolume").unwrap();
         assert_eq!(render(&volume, &C_FAMILY), "10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10)");
         assert_eq!(render(&volume, &RUST_SYNTAX), "(10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10)) as f64");
@@ -438,12 +445,15 @@ mod tests {
         assert_eq!(render(&periods, &C_FAMILY), "5 + i % 10");
     }
 
-    /// Every bar a valid OHLCV bar, with a close off the midpoint and a falling volume.
+    /// Every bar a valid OHLCV bar, with a close off the midpoint, a range that is not
+    /// constant and a falling volume.
     #[test]
     #[allow(clippy::float_cmp)]
     fn the_price_series_are_valid_bars() {
         let of = |input: &str| values(&series(&fixture(input, None), input).unwrap());
         let (open, high, low, close, volume) = (of("inOpen"), of("inHigh"), of("inLow"), of("inClose"), of("inVolume"));
+        let range: Vec<f64> = (0..LEN).map(|i| high[i] - low[i]).collect();
+        assert!(range.iter().any(|&r| r != range[0]), "the bar range is constant");
         for i in 0..LEN {
             for (what, v) in [("open", open[i]), ("close", close[i])] {
                 assert!(low[i] < v && v < high[i], "bar {i}: {what} {v} outside [{}, {}]", low[i], high[i]);

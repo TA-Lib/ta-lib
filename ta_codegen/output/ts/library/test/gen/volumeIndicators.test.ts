@@ -48,9 +48,9 @@ import {
 
 test('AD: ad example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -67,9 +67,9 @@ test('AD: ad example', () => {
 
 test('AD: adOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -86,9 +86,9 @@ test('AD: adOpen example', () => {
 
 test('AD: adOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -108,9 +108,9 @@ test('AD: adOpenAndFill example', () => {
 
 test('ADOSC: adosc example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -130,9 +130,9 @@ test('ADOSC: adosc example', () => {
 
 test('ADOSC: adoscOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -152,9 +152,9 @@ test('ADOSC: adoscOpen example', () => {
 
 test('ADOSC: adoscOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -180,9 +180,9 @@ test('ADOSC: adoscOpenAndFill example', () => {
 
 test('CMF: cmf example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -201,9 +201,9 @@ test('CMF: cmf example', () => {
 
 test('CMF: cmfOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -220,9 +220,9 @@ test('CMF: cmfOpen example', () => {
 
 test('CMF: cmfOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -294,9 +294,9 @@ test('EFI: efiOpenAndFill example', () => {
 
 test('EMV: emv example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
@@ -314,9 +314,9 @@ test('EMV: emv example', () => {
 
 test('EMV: emvOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
     10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const stream = emvOpen({ high, low, volume }, {
@@ -334,9 +334,9 @@ test('EMV: emvOpen example', () => {
 
 test('EMV: emvOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
     10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const { stream, begIdx, values } = emvOpenAndFill({ high, low, volume }, {
@@ -360,9 +360,9 @@ test('EMV: emvOpenAndFill example', () => {
 
 test('KVO: kvo example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -386,9 +386,9 @@ test('KVO: kvo example', () => {
 
 test('KVO: kvoOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -409,9 +409,9 @@ test('KVO: kvoOpen example', () => {
 
 test('KVO: kvoOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -445,9 +445,9 @@ test('KVO: kvoOpenAndFill example', () => {
 
 test('MARKETFI: marketfi example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
@@ -462,9 +462,9 @@ test('MARKETFI: marketfi example', () => {
 
 test('MARKETFI: marketfiOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
     10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const stream = marketfiOpen({ high, low, volume });
@@ -479,9 +479,9 @@ test('MARKETFI: marketfiOpen example', () => {
 
 test('MARKETFI: marketfiOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
     10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10));
   const { stream, begIdx, values } = marketfiOpenAndFill({ high, low, volume });
@@ -793,9 +793,9 @@ test('RVOL: rvolOpenAndFill example', () => {
 
 test('VWAP: vwap example', () => {
   const high = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const low = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+  for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
   const close = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
   const volume = new Float64Array(252); // your data, oldest first
@@ -812,9 +812,9 @@ test('VWAP: vwap example', () => {
 
 test('VWAP: vwapOpen example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>
@@ -831,9 +831,9 @@ test('VWAP: vwapOpen example', () => {
 
 test('VWAP: vwapOpenAndFill example', () => {
   const high = Float64Array.from({ length: 252 }, (_, i) =>
-    92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const low = Float64Array.from({ length: 252 }, (_, i) =>
-    88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+    88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
   const close = Float64Array.from({ length: 252 }, (_, i) =>
     88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0);
   const volume = Float64Array.from({ length: 252 }, (_, i) =>

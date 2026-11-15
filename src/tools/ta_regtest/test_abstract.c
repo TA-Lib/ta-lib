@@ -2956,16 +2956,6 @@ ErrorNumber test_abstract( void )
                  g_unboundInput, g_unboundOutput );
          return TA_ABSTRACT_CALL_MISMATCH;
       }
-
-      /* The counts behind the floors above, which speak only on failure. */
-      printf( "  abstract counts [%s]: metadata %d function(s), %d opt hint(s), %d range(s)/list(s), "
-              "%d attribute string(s); binder vectors %lld (non-default %lld, sentinel %lld, "
-              "out-of-range %lld, ordering %lld), unbound input %lld / output %lld; display shift "
-              "%lld compared with the server, held under a moved lookback %lld / %lld\n",
-              g_abstractLang ? g_abstractLang : "?", g_metaParityChecked, g_optHintCompared,
-              g_optExtendedCompared, g_attrNonEmptyCompared, g_d2Vectors, g_d2NonDefault,
-              g_d2Sentinel, g_d2Reject, g_d2Ordering, g_unboundInput, g_unboundOutput,
-              g_dsServer, g_dsSrvSettingLive[0], g_dsSrvSettingLive[1] );
    }
 
    return TA_TEST_PASS; /* Succcess. */

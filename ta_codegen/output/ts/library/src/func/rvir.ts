@@ -753,9 +753,9 @@ export function rvirOpenAndFillPositional(
  * import { rvirOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const stream = rvirOpen({ high, low }, { timePeriod: 14, stdDevPeriod: 10 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
@@ -796,9 +796,9 @@ export function rvirOpen(prices: { open?: ArrayLike<number> | undefined; high: A
  * import { rvirOpenAndFill } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   92 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   88 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+ *   88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0);
  * const { stream, begIdx, values } = rvirOpenAndFill({ high, low }, {
  *   timePeriod: 14,
  *   stdDevPeriod: 10,

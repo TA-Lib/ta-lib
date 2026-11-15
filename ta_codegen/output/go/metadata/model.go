@@ -78,7 +78,7 @@ func (f FuncInfo) HasFlags(mask FuncFlags) bool { return f.flags&mask == mask }
 // UnstableID returns the function's unstable-period id, and false when it has
 // none. It has one exactly when [FuncUnstablePeriod] is set.
 func (f FuncInfo) UnstableID() (talib.FuncUnstId, bool) {
-	return f.unst, f.unst >= 0
+	return f.unst, f.HasFlags(FuncUnstablePeriod)
 }
 
 // Inputs returns the inputs, in call order. The components of a price input

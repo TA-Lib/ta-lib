@@ -105,8 +105,12 @@ func TestRegistry(t *testing.T) {
 		}
 	}
 	for _, name := range []string{"", "NOPE", "SMA ", "ſma"} {
-		if _, ok := Lookup(name); ok {
+		f, ok := Lookup(name)
+		if ok {
 			t.Errorf("Lookup(%q) found a function", name)
+		}
+		if _, ok := f.UnstableID(); ok {
+			t.Errorf("Lookup(%q): the zero FuncInfo has an unstable-period id", name)
 		}
 	}
 }
@@ -282,7 +286,11 @@ func TestRejections(t *testing.T) {
 	}
 	var zero ParamHolder
 	_, err = zero.Call(0, 1)
-	check("zero holder", err, talib.InvalidHandle)
+	check("zero holder", err, talib.InvalidParamHolder)
+	_, err = zero.Lookback()
+	check("zero holder lookback", err, talib.InvalidParamHolder)
+	_, err = zero.DisplayShift(0)
+	check("zero holder display shift", err, talib.InvalidParamHolder)
 }
 
 func TestDisplayShift(t *testing.T) {

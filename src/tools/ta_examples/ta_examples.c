@@ -81,8 +81,8 @@ static int example_AC( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -102,8 +102,8 @@ static int example_ACCBANDS( void )
    double close[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -147,8 +147,8 @@ static int example_AD( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -191,8 +191,8 @@ static int example_ADOSC( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -213,8 +213,8 @@ static int example_ADR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -234,8 +234,8 @@ static int example_ADX( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -256,8 +256,8 @@ static int example_ADXR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -277,8 +277,8 @@ static int example_ALLIGATOR( void )
    double low[252]; /* your data, oldest first */
    double jaw[252], teeth[252], lips[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -318,8 +318,8 @@ static int example_AO( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -356,8 +356,8 @@ static int example_AROON( void )
    double low[252]; /* your data, oldest first */
    double aroonDown[252], aroonUp[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -378,8 +378,8 @@ static int example_AROONOSC( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -401,8 +401,8 @@ static int example_ASI( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -459,8 +459,8 @@ static int example_ATR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -501,8 +501,8 @@ static int example_AVGPRICE( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -585,8 +585,8 @@ static int example_BOP( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -607,8 +607,8 @@ static int example_CCI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -631,8 +631,8 @@ static int example_CDL2CROWS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -654,8 +654,8 @@ static int example_CDL3BLACKCROWS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -677,8 +677,8 @@ static int example_CDL3INSIDE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -700,8 +700,8 @@ static int example_CDL3LINESTRIKE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -723,8 +723,8 @@ static int example_CDL3OUTSIDE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -746,8 +746,8 @@ static int example_CDL3STARSINSOUTH( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -769,8 +769,8 @@ static int example_CDL3WHITESOLDIERS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -792,8 +792,8 @@ static int example_CDLABANDONEDBABY( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -815,8 +815,8 @@ static int example_CDLADVANCEBLOCK( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -838,8 +838,8 @@ static int example_CDLBELTHOLD( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -861,8 +861,8 @@ static int example_CDLBREAKAWAY( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -884,8 +884,8 @@ static int example_CDLCLOSINGMARUBOZU( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -907,8 +907,8 @@ static int example_CDLCONCEALBABYSWALL( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -930,8 +930,8 @@ static int example_CDLCOUNTERATTACK( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -953,8 +953,8 @@ static int example_CDLDARKCLOUDCOVER( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -976,8 +976,8 @@ static int example_CDLDOJI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -999,8 +999,8 @@ static int example_CDLDOJISTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1022,8 +1022,8 @@ static int example_CDLDRAGONFLYDOJI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1045,8 +1045,8 @@ static int example_CDLENGULFING( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1068,8 +1068,8 @@ static int example_CDLEVENINGDOJISTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1091,8 +1091,8 @@ static int example_CDLEVENINGSTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1114,8 +1114,8 @@ static int example_CDLGAPSIDESIDEWHITE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1137,8 +1137,8 @@ static int example_CDLGRAVESTONEDOJI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1160,8 +1160,8 @@ static int example_CDLHAMMER( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1183,8 +1183,8 @@ static int example_CDLHANGINGMAN( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1206,8 +1206,8 @@ static int example_CDLHARAMI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1229,8 +1229,8 @@ static int example_CDLHARAMICROSS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1252,8 +1252,8 @@ static int example_CDLHIGHWAVE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1275,8 +1275,8 @@ static int example_CDLHIKKAKE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1298,8 +1298,8 @@ static int example_CDLHIKKAKEMOD( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1321,8 +1321,8 @@ static int example_CDLHOMINGPIGEON( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1344,8 +1344,8 @@ static int example_CDLIDENTICAL3CROWS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1367,8 +1367,8 @@ static int example_CDLINNECK( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1390,8 +1390,8 @@ static int example_CDLINVERTEDHAMMER( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1413,8 +1413,8 @@ static int example_CDLKICKING( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1436,8 +1436,8 @@ static int example_CDLKICKINGBYLENGTH( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1459,8 +1459,8 @@ static int example_CDLLADDERBOTTOM( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1482,8 +1482,8 @@ static int example_CDLLONGLEGGEDDOJI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1505,8 +1505,8 @@ static int example_CDLLONGLINE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1528,8 +1528,8 @@ static int example_CDLMARUBOZU( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1551,8 +1551,8 @@ static int example_CDLMATCHINGLOW( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1574,8 +1574,8 @@ static int example_CDLMATHOLD( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1597,8 +1597,8 @@ static int example_CDLMORNINGDOJISTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1620,8 +1620,8 @@ static int example_CDLMORNINGSTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1643,8 +1643,8 @@ static int example_CDLONNECK( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1666,8 +1666,8 @@ static int example_CDLPIERCING( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1689,8 +1689,8 @@ static int example_CDLRICKSHAWMAN( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1712,8 +1712,8 @@ static int example_CDLRISEFALL3METHODS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1735,8 +1735,8 @@ static int example_CDLSEPARATINGLINES( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1758,8 +1758,8 @@ static int example_CDLSHOOTINGSTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1781,8 +1781,8 @@ static int example_CDLSHORTLINE( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1804,8 +1804,8 @@ static int example_CDLSPINNINGTOP( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1827,8 +1827,8 @@ static int example_CDLSTALLEDPATTERN( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1850,8 +1850,8 @@ static int example_CDLSTICKSANDWICH( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1873,8 +1873,8 @@ static int example_CDLTAKURI( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1896,8 +1896,8 @@ static int example_CDLTASUKIGAP( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1919,8 +1919,8 @@ static int example_CDLTHRUSTING( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1942,8 +1942,8 @@ static int example_CDLTRISTAR( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1965,8 +1965,8 @@ static int example_CDLUNIQUE3RIVER( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -1988,8 +1988,8 @@ static int example_CDLUPSIDEGAP2CROWS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2011,8 +2011,8 @@ static int example_CDLXSIDEGAP3METHODS( void )
    int out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2032,8 +2032,8 @@ static int example_CE( void )
    double close[252]; /* your data, oldest first */
    double outLong[252], outShort[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2092,8 +2092,8 @@ static int example_CHOP( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2114,8 +2114,8 @@ static int example_CHOPTR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2136,8 +2136,8 @@ static int example_CKSP( void )
    double close[252]; /* your data, oldest first */
    double highStop[252], lowStop[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2161,8 +2161,8 @@ static int example_CMF( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -2347,8 +2347,8 @@ static int example_CVI( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2405,8 +2405,8 @@ static int example_DONCHIAN( void )
    double low[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2465,8 +2465,8 @@ static int example_DX( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2525,8 +2525,8 @@ static int example_EMV( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2565,8 +2565,8 @@ static int example_ERI( void )
    double close[252]; /* your data, oldest first */
    double bullPower[252], bearPower[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2606,8 +2606,8 @@ static int example_FISHER( void )
    double low[252]; /* your data, oldest first */
    double fisher[252], trigger[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2664,8 +2664,8 @@ static int example_FRACTAL( void )
    double low[252]; /* your data, oldest first */
    int swingHigh[252], swingLow[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2685,8 +2685,8 @@ static int example_FRAMA( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2705,8 +2705,8 @@ static int example_GATOR( void )
    double low[252]; /* your data, oldest first */
    double upper[252], lower[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2730,8 +2730,8 @@ static int example_HA( void )
    double haOpen[252], haHigh[252], haLow[252], haClose[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2886,8 +2886,8 @@ static int example_IBS( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2907,8 +2907,8 @@ static int example_ICHIMOKU( void )
    double low[252]; /* your data, oldest first */
    double tenkanSen[252], kijunSen[252], senkouSpanA[252], senkouSpanB[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2971,8 +2971,8 @@ static int example_KC( void )
    double close[252]; /* your data, oldest first */
    double upperBand[252], middleBand[252], lowerBand[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -2997,8 +2997,8 @@ static int example_KDJ( void )
    double close[252]; /* your data, oldest first */
    double k[252], d[252], j[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3084,8 +3084,8 @@ static int example_KVO( void )
    double volume[252]; /* your data, oldest first */
    double kvo[252], kvoSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -3299,8 +3299,8 @@ static int example_MACDV( void )
    double close[252]; /* your data, oldest first */
    double macdv[252], macdvSignal[252], macdvHist[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3345,8 +3345,8 @@ static int example_MARKETFI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3366,8 +3366,8 @@ static int example_MASSI( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3477,8 +3477,8 @@ static int example_MEDPRICE( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3499,8 +3499,8 @@ static int example_MFI( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -3539,8 +3539,8 @@ static int example_MIDPRICE( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3634,8 +3634,8 @@ static int example_MINUS_DI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3655,8 +3655,8 @@ static int example_MINUS_DM( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3714,8 +3714,8 @@ static int example_NATR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3830,8 +3830,8 @@ static int example_PLUS_DI( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -3851,8 +3851,8 @@ static int example_PLUS_DM( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3890,8 +3890,8 @@ static int example_PSO( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4082,8 +4082,8 @@ static int example_ROGERSSATCHELL( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4139,8 +4139,8 @@ static int example_RVIR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4177,8 +4177,8 @@ static int example_SAR( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4197,8 +4197,8 @@ static int example_SAREXT( void )
    double low[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4239,8 +4239,8 @@ static int example_SI( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) open[i] = 90 + ((i + 39) % 40 - 20) * ((i + 39) % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4333,8 +4333,8 @@ static int example_SMI( void )
    double close[252]; /* your data, oldest first */
    double smi[252], smiSignal[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4394,8 +4394,8 @@ static int example_SQZMOM( void )
    double momentum[252];
    int squeeze[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4455,8 +4455,8 @@ static int example_STOCH( void )
    double close[252]; /* your data, oldest first */
    double slowK[252], slowD[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4480,8 +4480,8 @@ static int example_STOCHF( void )
    double close[252]; /* your data, oldest first */
    double fastK[252], fastD[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4564,8 +4564,8 @@ static int example_SUPERTREND( void )
    double supertrend[252];
    int trend[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4750,8 +4750,8 @@ static int example_TRANGE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4844,8 +4844,8 @@ static int example_TYPPRICE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4866,8 +4866,8 @@ static int example_ULTOSC( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4942,8 +4942,8 @@ static int example_VORTEX( void )
    double close[252]; /* your data, oldest first */
    double plusVi[252], minusVi[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -4967,8 +4967,8 @@ static int example_VWAP( void )
    double volume[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10); }
    outBegIdx = -1; outNBElement = 0;
@@ -5010,8 +5010,8 @@ static int example_WAD( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -5032,8 +5032,8 @@ static int example_WAVETREND( void )
    double close[252]; /* your data, oldest first */
    double wt1[252], wt2[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -5056,8 +5056,8 @@ static int example_WCLPRICE( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -5078,8 +5078,8 @@ static int example_WILLR( void )
    double close[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    { int i; for( i = 0; i < n; i++ ) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
@@ -5118,8 +5118,8 @@ static int example_ZIGZAG( void )
    double zigZag[252];
    int trend[252], pivotIdx[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
-   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) high[i] = 92 + ((i % 40 - 20) * (i % 40 - 20) + (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();

@@ -128,7 +128,7 @@ What a function or an output supports.
 
 ### Price components {#flags-price}
 
-The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
+The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` and Go a `SetPriceInputComponent` that bind one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
 
 | Flag | Meaning |
 |---|---|

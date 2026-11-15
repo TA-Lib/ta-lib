@@ -269,16 +269,23 @@ func TestZeroCoreIsNewCore(t *testing.T) {
 		}
 		return out
 	}
-	var zero, restoredAll, restoredOne Core
-	for _, c := range []*Core{&restoredAll, &restoredOne} {
+	var zero, restoredAll, restoredOne, custom Core
+	for _, c := range []*Core{&restoredAll, &restoredOne, &custom} {
 		if err := c.SetCandleSetting(CandleSettingTypeBodyShort, RangeTypeHighLow, 3, 0.5); err != nil {
 			t.Fatal(err)
 		}
 	}
 	restoredAll.RestoreCandleDefault(CandleSettingTypeAllCandleSettings)
 	restoredOne.RestoreCandleDefault(CandleSettingTypeBodyShort)
+	moved := 0
 	for _, f := range cdls {
 		want := run(NewCore(), f)
+		for i, v := range run(&custom, f) {
+			if v != want[i] {
+				moved++
+				break
+			}
+		}
 		hits := 0
 		for _, v := range want {
 			if v != 0 {
@@ -296,6 +303,9 @@ func TestZeroCoreIsNewCore(t *testing.T) {
 				}
 			}
 		}
+	}
+	if moved == 0 {
+		t.Fatal("a changed candle setting moves no result: the settings are not read")
 	}
 	if s, err := zero.CandleSetting(CandleSettingTypeEqual); err != nil || s != defaultCandleSettings[CandleSettingTypeEqual] {
 		t.Errorf("a zero Core's Equal setting: %+v, %v", s, err)

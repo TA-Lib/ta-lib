@@ -19,7 +19,7 @@ fn yaml(input: &str) -> String {
 }
 
 /// The Math Transform group rides a ramp over each function's domain; the Math
-/// Operators add a sine on the price scale to a ramp through it. Everything else,
+/// Operators pair a `sine` series over (-10, 10) with a ramp. Everything else,
 /// the rolling and statistic functions included, keeps the price series.
 #[test]
 fn the_math_groups_declare_synthetic_series() {

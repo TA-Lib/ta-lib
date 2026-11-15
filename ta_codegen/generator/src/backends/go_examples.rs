@@ -15,6 +15,7 @@ use crate::ir::{EnumDef, FuncDef, ParamType};
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::RwLock;
 
 /// The recorded output of every example, relative to the repository root.
@@ -41,6 +42,8 @@ pub type Ledger = BTreeMap<String, Recorded>;
 
 static SEEDED: RwLock<Option<Ledger>> = RwLock::new(None);
 
+static IGNORED: AtomicBool = AtomicBool::new(false);
+
 /// Reads the ledger under `root`; a missing file is an empty ledger.
 ///
 /// # Panics
@@ -57,7 +60,14 @@ pub fn load(root: &Path) -> Ledger {
 /// Makes `root`'s ledger the one every sample reads. Unseeded, a sample reads
 /// the generator crate's own tree.
 pub fn seed(root: &Path) {
-    *SEEDED.write().expect("ledger") = Some(load(root));
+    let ledger = if IGNORED.load(Ordering::Relaxed) { Ledger::new() } else { load(root) };
+    *SEEDED.write().expect("ledger") = Some(ledger);
+}
+
+/// While on, [`seed`] neither reads nor checks the ledger, and every function
+/// reads as unrecorded: `bless-go-examples` replaces a ledger whatever it holds.
+pub fn ignore_ledger(on: bool) {
+    IGNORED.store(on, Ordering::Relaxed);
 }
 
 fn recorded(name: &str) -> Option<Recorded> {
@@ -104,7 +114,7 @@ fn int_term(t: Int) -> GExpr {
             let at = if shift == 0 { i() } else { GExpr::bin(i(), GOp::Add, int(shift)).paren() };
             let k = || GExpr::bin(GExpr::bin(at.clone(), GOp::Rem, int(period)), GOp::Sub, int(period / 2));
             let square = GExpr::bin(k(), GOp::Mul, k());
-            if coef == 1 { square } else { GExpr::bin(GExpr::bin(int(coef), GOp::Mul, k()), GOp::Mul, k()) }
+            if coef.abs() == 1 { square } else { GExpr::bin(GExpr::bin(int(coef.abs()), GOp::Mul, k()), GOp::Mul, k()) }
         }
     }
 }
@@ -124,7 +134,7 @@ fn series_expr(s: &examples::Series) -> String {
         Shape::Waves { offset, scale, terms, div } => {
             let mut sum: Option<GExpr> = None;
             for t in terms {
-                let negative = matches!(t, Int::Const(c) if *c < 0);
+                let negative = matches!(t, Int::Const(c) if *c < 0) || matches!(t, Int::Wave { coef, .. } if *coef < 0);
                 sum = Some(match sum {
                     None if negative => GExpr::unary("-", int_term(*t)),
                     None => int_term(*t),
@@ -409,7 +419,7 @@ pub fn render_ledger(ledger: &Ledger) -> String {
 pub fn write(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, path: &Path) {
     let missing: Vec<&str> =
         sorted(funcs).iter().filter(|f| recorded(&f.name).is_none()).map(|f| f.name.as_str()).collect();
-    if !missing.is_empty() {
+    if !missing.is_empty() && !IGNORED.load(Ordering::Relaxed) {
         println!(
             "  WARNING: no recorded Go example output for {}; run `ta_codegen bless-go-examples`",
             missing.join(", ")
