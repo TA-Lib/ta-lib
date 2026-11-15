@@ -2,8 +2,8 @@
 url: 'https://ta-lib.org/index.md'
 description: >-
   Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI),
-  candlestick patterns, batch and streaming. Native C/C++, Java, C#, Rust and
-  TypeScript, plus Python and R wrappers.
+  candlestick patterns, batch and streaming. Native C/C++, Java, C#, Rust,
+  TypeScript and Go, plus Python and R wrappers.
 ---
 # TA-Lib
 
@@ -27,8 +27,8 @@ TA-Lib implements the standard technical analysis algorithms used across the ind
 <p>Compute a whole array, or update one bar at a time without recomputing the history. <a href="/api/stream/">Streaming API</a>.</p>
 </div>
 <div class="home-card">
-<h4>Native in five languages</h4>
-<p><a href="/api/">C/C++</a>, <a href="/api/java/">Java</a>, <a href="/api/csharp/">C#</a>, <a href="/api/rust/">Rust</a> and <a href="/api/typescript/">TypeScript</a>. Wrappers for Python, R, and <a href="/install/#wrappers">more</a>.</p>
+<h4>Native in six languages</h4>
+<p><a href="/api/">C/C++</a>, <a href="/api/java/">Java</a>, <a href="/api/csharp/">C#</a>, <a href="/api/rust/">Rust</a>, <a href="/api/typescript/">TypeScript</a> and <a href="/api/go/">Go</a>. Wrappers for Python, R, and <a href="/install/#wrappers">more</a>.</p>
 </div>
 <div class="home-card">
 <h4>Made for integration</h4>
@@ -137,6 +137,25 @@ const p = s.peek(formingClose);      // bar still forming; state unchanged
 ```
 
 [API](/api/typescript/) · [Streaming](/api/typescript/stream/)
+
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Batch: out[0] is the value at bar r.BegIdx.
+out := make([]float64, len(close))
+r, err := core.SMA(0, len(close)-1, close, 30, out)
+
+// Streaming: open on history, then one call per bar.
+s, last, err := core.SMAOpen(close, 30)
+v, err := s.Update(newClose)         // a bar closed
+p, err := s.Peek(formingClose)       // bar still forming; state unchanged
+```
+
+[API](/api/go/) · [Streaming](/api/go/stream/)
 
 :::
 

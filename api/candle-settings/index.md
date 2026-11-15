@@ -3,7 +3,7 @@ url: 'https://ta-lib.org/api/candle-settings/index.md'
 description: >-
   Tune the thresholds the CDL* pattern functions judge candles against: body
   length, shadows, near-equal candles. Defaults, and how to set them in C, Rust,
-  Java, C# and TypeScript.
+  Java, C#, TypeScript and Go.
 ---
 # Candlestick Settings
 
@@ -103,17 +103,35 @@ const restored = core.toBuilder()
   .build();
 ```
 
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Treat a "long body" as 1.2x the average real body of the last 10 candles:
+if err := core.SetCandleSetting(talib.CandleSettingTypeBodyLong, talib.RangeTypeRealBody, 10, 1.2); err != nil {
+	log.Fatal(err)
+}
+
+// ...restore one setting, or every one with CandleSettingTypeAllCandleSettings:
+core.RestoreCandleDefault(talib.CandleSettingTypeBodyLong)
+```
+
 :::
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
-([specification](/spec/settings-threads/#idle-settings)).
+([specification](/spec/settings-threads/#idle-settings)). In Go, call a `Core`'s
+setters only while no other goroutine uses it and no stream opened on it is in use.
 
 ## Setting types and defaults
 
 The setting types, with the defaults every binding starts from. C spells them
 `TA_BodyLong`; Rust `CandleSettingType::BodyLong`; C# `CandleSettingType.BodyLong`;
-Java and TypeScript take constant case, `CandleSettingType.BODY_LONG`.
+Go `talib.CandleSettingTypeBodyLong`; Java and TypeScript take constant case,
+`CandleSettingType.BODY_LONG`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|
@@ -134,6 +152,6 @@ restore call.
 
 ## See also
 
-* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/)
+* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/), [Go](/api/go/)
 * [Unstable Period](/api/unstable-period/)
 * The candlestick pattern functions in the [function reference](/functions/) (the `Pattern Recognition` group).

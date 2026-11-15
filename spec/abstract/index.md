@@ -70,7 +70,7 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
-<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
+<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language but Go, which has none.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
 
@@ -95,13 +95,15 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`. It reports state and promises no output value and no speed.
 
-Every key is answered in every language, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
+A common key is answered in every language, and the answer can differ with the language and the platform. A language may also answer a key of its own, for something only that language has, and every other language treats that key as unknown. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 
 | Key | Meaning |
 |---|---|
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
 | `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C# and TypeScript. |
 | `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C# and TypeScript. |
+| `wasm.engine` | TypeScript only. Where the batch calls of the package's default entry, `ta-lib`, run now: 1 its WebAssembly engine, 0 TypeScript. Asking loads nothing. |
+| `wasm.reason` | TypeScript only. Why `wasm.engine` is 0: 0 while it is 1, 1 the engine is not loaded yet, 2 the module holding its bytes could not be imported, 3 the runtime refused to compile it, 4 it compiled but could not be instantiated, 5 the runtime does not fuse the multiply-add the engine relies on, 6 calls failed in it too many times and it was given up. |
 
 ## Attributes {#attributes}
 

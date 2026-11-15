@@ -6,7 +6,7 @@ description: >-
 ---
 # Wrappers
 
-TA-Lib reaches a wider ecosystem through these community-maintained wrappers:
+TA-Lib reaches a wider ecosystem through these community-maintained wrappers. Go also has a [native library](/api/go/).
 
 
 

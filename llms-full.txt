@@ -1,25 +1,25 @@
 # TA-Lib.org
 
-> Open-source technical analysis library: indicators and candlestick patterns, batch and streaming, native in C/C++, Rust, Java, C# and TypeScript, with Python and other wrappers
+> Open-source technical analysis library: indicators and candlestick patterns, batch and streaming, native in C/C++, Rust, Java, C#, TypeScript and Go, with Python and other wrappers
 
 ## Key facts
 
-TA-Lib computes technical-analysis indicators and recognizes candlestick patterns over price series. One definition per function generates the C library and native Rust, Java, C# and TypeScript libraries with the same functions and parameters; Python and other languages call the C library through wrappers.
+TA-Lib computes technical-analysis indicators and recognizes candlestick patterns over price series. One definition per function generates the C library and native Rust, Java, C#, TypeScript and Go libraries with the same functions and parameters; Python and other languages call the C library through wrappers.
 
 This documentation is built from the main branch and can be ahead of the newest release, so any installed version, the newest included, can lack what is described here or compute different values. The [changelog](https://github.com/TA-Lib/ta-lib/blob/main/CHANGELOG.md) records each release's changes, and its "Not Released Yet" section lists changes no release has yet. [Pin the exact version](https://ta-lib.org/spec/versions/index.md#pin) when results must reproduce.
 
 ### Built for integration
 
-- **Five native libraries, one definition.** C is the reference. Rust, Java, C# and TypeScript are ports, not bindings, and do not need TA-Lib's C library (no FFI, JNI, P/Invoke, WASM or native addon). All five are generated from [one definition per function](https://ta-lib.org/contribute/index.md), so names convert by a [fixed rule](https://ta-lib.org/spec/index.md#names) and a batch call takes its arguments in [the same order](https://ta-lib.org/spec/inputs-outputs/index.md#rp5) in every language. Open source under the BSD license, in use since 2001. Each API page, [Rust](https://ta-lib.org/api/rust/index.md), [Java](https://ta-lib.org/api/java/index.md), [C#](https://ta-lib.org/api/csharp/index.md) and [TypeScript](https://ta-lib.org/api/typescript/index.md), says whether its package is published and how to add it; for C, the [C install page](https://ta-lib.org/install/c/index.md).
-- **The same values in every language.** On one machine, the same call gives bit-identical results in C, Rust, Java, C# and TypeScript, except where it evaluates a transcendental function such as `exp` or `log`: there TA-Lib targets a difference below 1e-9 ([determinism](https://ta-lib.org/spec/versions/index.md#determinism)). Across machines, [compare with a tolerance](https://ta-lib.org/spec/versions/index.md#tolerance).
+- **Six native libraries, one definition.** C is the reference. Rust, Java, C#, TypeScript and Go are ports, not bindings, and do not need TA-Lib's C library (no FFI, JNI, P/Invoke or native addon). The TypeScript package is WebAssembly-accelerated, with automatic TypeScript fallback: its engine is built from the Rust port and gives the same results, loads by itself in Node.js, Bun and Deno and after `await ready()` in a browser, and is never loaded by the `ta-lib/js` entry ([TypeScript](https://ta-lib.org/api/typescript/index.md#wasm)). All six are generated from [one definition per function](https://ta-lib.org/contribute/index.md), so names convert by a [fixed rule](https://ta-lib.org/spec/index.md#names) and a batch call takes its arguments in [the same order](https://ta-lib.org/spec/inputs-outputs/index.md#rp5) in every language. Open source under the BSD license, in use since 2001. Each API page, [Rust](https://ta-lib.org/api/rust/index.md), [Java](https://ta-lib.org/api/java/index.md), [C#](https://ta-lib.org/api/csharp/index.md), [TypeScript](https://ta-lib.org/api/typescript/index.md) and [Go](https://ta-lib.org/api/go/index.md), says whether its package is published and how to add it; for C, the [C install page](https://ta-lib.org/install/c/index.md).
+- **The same values in every language.** On one machine, the same call gives bit-identical results in C, Rust, Java, C#, TypeScript and Go, except where it evaluates a transcendental function such as `exp` or `log`: there TA-Lib targets a difference below 1e-9 ([determinism](https://ta-lib.org/spec/versions/index.md#determinism)). Across machines, [compare with a tolerance](https://ta-lib.org/spec/versions/index.md#tolerance).
 - **A page per function.** `https://ta-lib.org/functions/<name>.md`, with the name in lowercase (e.g. [RSI](https://ta-lib.org/functions/rsi.md)), gives its inputs, outputs, parameters (type, default, accepted values), numerical stability and flags; the [function index](https://ta-lib.org/functions/index.md) groups them.
 - **Fast batch calls.** A batch call runs tight loops over the series: on modern AMD, Intel and Apple processors, most functions take under 10 nanoseconds per bar at their default parameters, in each of C, Rust, Java and C#, and the slowest, such as HT_SINE, a few hundred.
-- **Batch: defined values only.** A call computes the inclusive, zero-based `startIdx` to `endIdx` range and writes only the bars where the function is defined, from the start of the output buffer: `out[0]` is input bar `outBegIdx`, and `outNBElement` values follow in [C](https://ta-lib.org/api/index.md); Rust, Java and C# return the same pair as an `OutRange`, and TypeScript returns `begIdx` with the values. Too little data is a success with an empty range ([batch rules](https://ta-lib.org/spec/inputs-outputs/index.md)).
+- **Batch: defined values only.** A call computes the inclusive, zero-based `startIdx` to `endIdx` range and writes only the bars where the function is defined, from the start of the output buffer: `out[0]` is input bar `outBegIdx`, and `outNBElement` values follow in [C](https://ta-lib.org/api/index.md); Rust, Java, C# and Go return the same pair as an `OutRange`, and TypeScript returns `begIdx` with the values. Too little data is a success with an empty range ([batch rules](https://ta-lib.org/spec/inputs-outputs/index.md)).
 - **Lookback before any data.** `TA_<NAME>_Lookback(params)`, and its equivalent in each port, is the number of bars a function consumes before its first output. It depends only on the parameters and the settings in effect, never on the data, so it [validates parameters](https://ta-lib.org/spec/lookback/index.md#rl3) and [sizes outputs](https://ta-lib.org/spec/inputs-outputs/index.md#rw1) before any series exists. Ask it; never derive it from a formula ([lookback](https://ta-lib.org/spec/lookback/index.md)). No value is ever moved to another bar: where a chart draws an output elsewhere, as with ICHIMOKU's cloud, `TA_<NAME>_DisplayShift(params, outputIdx)` gives the offset.
-- **Every function streams.** Open on history, update once per closed bar without recomputing the history, and peek at the forming bar without changing state. A stream gives the batch call's values over the same bars, bit for bit outside [stated exceptions](https://ta-lib.org/spec/streaming/index.md), so a live feed reproduces a backtest. A rejected bar changes nothing, and a handle clones to fork. Each language's page: [C](https://ta-lib.org/api/stream/index.md), [Rust](https://ta-lib.org/api/rust/stream/index.md), [Java](https://ta-lib.org/api/java/stream/index.md), [C#](https://ta-lib.org/api/csharp/stream/index.md), [TypeScript](https://ta-lib.org/api/typescript/stream/index.md).
+- **Every function streams.** Open on history, update once per closed bar without recomputing the history, and peek at the forming bar without changing state. A stream gives the batch call's values over the same bars, bit for bit outside [stated exceptions](https://ta-lib.org/spec/streaming/index.md), so a live feed reproduces a backtest. A rejected bar changes nothing, and a handle clones to fork. Each language's page: [C](https://ta-lib.org/api/stream/index.md), [Rust](https://ta-lib.org/api/rust/stream/index.md), [Java](https://ta-lib.org/api/java/stream/index.md), [C#](https://ta-lib.org/api/csharp/stream/index.md), [TypeScript](https://ta-lib.org/api/typescript/stream/index.md), [Go](https://ta-lib.org/api/go/stream/index.md).
 - **Warm-up, discarded on request.** A recursive function such as EMA, RSI or ADX seeds its state from its first bars, so its early values depend on where the series starts; that is inherent to the algorithm. By default every computable value is returned. One [Auto-Stabilization](https://ta-lib.org/api/unstable-period/index.md) setting makes each such function discard the leading bars needed to reach a target number of significant digits, sized from the call's parameters ([counts and known exceptions](https://ta-lib.org/spec/auto-stabilization/index.md)); the lookback includes them.
-- **Metadata and calls by name.** Every function [describes itself at run time](https://ta-lib.org/api/abstract/index.md) in every native library and can be called by name, so a program can list the functions, build their parameter dialogs and call any of them with no code written per function; the catalog also comes as one XML document. [Flags](https://ta-lib.org/spec/abstract/index.md#flags) state what would otherwise be hard-coded per function: whether it can output NaN or ±Inf, whether its input must be positive, how a chart draws each output, which values a pattern output writes. A release may add functions and flags: [enumerate the functions, and ignore a flag you do not know](https://ta-lib.org/spec/versions/index.md#enumerate).
-- **No global settings in Rust, Java, C# and TypeScript.** Settings live in an immutable `Core` made by a builder, so differently configured cores coexist in one process, and in Rust, Java and C# one is shared by any number of threads with no synchronization ([settings and threads](https://ta-lib.org/spec/settings-threads/index.md)).
+- **Metadata and calls by name.** Every function [describes itself at run time](https://ta-lib.org/api/abstract/index.md) in C, Rust, Java, C# and TypeScript and can be called by name, so a program can list the functions, build their parameter dialogs and call any of them with no code written per function; the catalog also comes as one XML document. [Flags](https://ta-lib.org/spec/abstract/index.md#flags) state what would otherwise be hard-coded per function: whether it can output NaN or ±Inf, whether its input must be positive, how a chart draws each output, which values a pattern output writes. A release may add functions and flags: [enumerate the functions, and ignore a flag you do not know](https://ta-lib.org/spec/versions/index.md#enumerate).
+- **No global settings outside C.** Settings live in a `Core`, so differently configured cores coexist in one process. In Rust, Java, C# and TypeScript a `Core` is immutable and made by a builder, and in Rust, Java and C# one is shared by any number of threads with no synchronization; in Go, `NewCore` and its setters configure one, which any number of goroutines then share ([settings and threads](https://ta-lib.org/spec/settings-threads/index.md)).
 - **One code per fault.** A rejected batch or stream call reports one code and writes no output, the same code in every language that can detect the fault ([failures per language](https://ta-lib.org/spec/index.md#failures)).
 - **A tested contract.** The [specification](https://ta-lib.org/spec/index.md) states the calling contract rule by rule, and the test suite checks every rule.
 - **Candlestick patterns.** A `CDL*` output is 0 for no pattern, otherwise a signed level whose meaning its flags state ([Candlestick Outputs](https://ta-lib.org/api/candlestick-outputs/index.md)); the thresholds the patterns judge candles against are [tunable](https://ta-lib.org/api/candle-settings/index.md).
@@ -30,7 +30,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - **No padding.** Unlike the native APIs, ta-lib-python returns arrays as long as the input, with NaN over the warm-up, and 0 on an integer output, which on a `CDL*` output looks the same as no pattern. Code ported from Python re-aligns outputs by the begin index.
 - **NaN in the input is not detected.** A NaN or ±Inf inside a batch series, or in the history a stream opens on, leaves the output undefined, and some functions carry it into every later value: clean or split the series first ([finite inputs](https://ta-lib.org/spec/inputs-outputs/index.md#finite-inputs)). A stream's update and peek reject such a bar.
 - **Never compare values from [different starts](https://ta-lib.org/spec/lookback/index.md#start) bit for bit.** A [path-dependent](https://ta-lib.org/functions/stability.md) function, such as AD, OBV or SAR, may never converge. Metadata flags mark a function unstable in its own right, not one unstable only through a callee, such as DEMA or MACD through EMA ([stability from metadata](https://ta-lib.org/spec/lookback/index.md#metadata)).
-- **One writer per stream handle.** No other call on a handle may run while an update or an advance runs on it. A parameter holder of the Abstract API stays on one thread, as do a Java or C# builder and the output object a Java multi-output stream writes into ([threads](https://ta-lib.org/spec/settings-threads/index.md)).
+- **One writer per stream handle.** No other call on a handle may run while an update or an advance runs on it. A parameter holder of the Abstract API stays on one thread, as do a Java or C# builder and the output object a Java multi-output stream writes into. A Go stream stays on one goroutine ([threads](https://ta-lib.org/spec/settings-threads/index.md)).
 - **In C**, call `TA_Initialize` once per process before any other TA call ([initialize](https://ta-lib.org/spec/settings-threads/index.md#initialize)), and change the unstable period or the candle settings, which are process-wide, only while [no TA function runs and no stream is open](https://ta-lib.org/spec/settings-threads/index.md#idle-settings); between changes, any number of threads may call. C checks no buffer length: size every buffer yourself ([input length](https://ta-lib.org/spec/inputs-outputs/index.md#input-length), [output size](https://ta-lib.org/spec/inputs-outputs/index.md#output-size)).
 
 ---
@@ -1584,20 +1584,24 @@ This is deliberate rather than an oversight, and the same is true of the other l
 ---
 url: 'https://ta-lib.org/api/typescript/index.md'
 description: >-
-  ta-lib for TypeScript and JavaScript: a pure TypeScript port compiled to
-  standard ES modules, with no WASM and no native addon, indicators as functions
-  over typed arrays, bit-identical to the reference C library apart from
-  last-bit rounding in the math library.
+  ta-lib for TypeScript and JavaScript: a native port compiled to standard ES
+  modules, with no native addon, indicators as functions over typed arrays,
+  bit-identical to the reference C library apart from last-bit rounding in the
+  math library. WebAssembly-accelerated, with automatic TypeScript fallback.
 ---
 # TypeScript Core API
 
 ::: warning Not yet released
-The TypeScript library is not on npm yet. Until it is, build it from source ([2.0](#build)).
+The TypeScript library is planned for official release in Q4 2026. Until then it is not on npm: [build it from source](#build).
 :::
 
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>
+
+<blockquote>
+<p><a href="#wasm">2.1 WebAssembly</a></p>
+</blockquote>
 
 <p><a href="#ta_func">3.0 Calling into TA-Lib</a></p>
 
@@ -1623,7 +1627,7 @@ The TypeScript library is not on npm yet. Until it is, build it from source ([2.
 
 ## 1.0 Introduction {#intro}
 
-The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The TypeScript library is a native port of TA-Lib: TypeScript compiled to standard ES modules, with no native addon and no dependencies. WebAssembly-accelerated, with automatic TypeScript fallback ([2.1](#wasm)). Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -1638,12 +1642,14 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 
 ## 2.0 Add it to your project {#build}
 
-The package is not on npm yet. Until it is, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib):
+Until the package is on npm, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib), with Rust installed for the WebAssembly engine:
 
 ```bash
+scripts/build.py wasm
 cd ta_codegen/output/ts
 npm ci
 node_modules/.bin/tsc -p library
+node ../../../scripts/ts_wasm_bytes.mjs library
 ```
 
 Then depend on the built directory from your project's `package.json`:
@@ -1655,6 +1661,22 @@ Then depend on the built directory from your project's `package.json`:
 ```
 
 The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
+
+### 2.1 WebAssembly {#wasm}
+
+WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` entry runs each batch call in its WebAssembly engine or in TypeScript, choosing by function and series length, and the results are the same either way: bit for bit on finite inputs, with the exception in [1.0](#intro) unchanged.
+
+There is nothing to configure. In Node.js, Bun and Deno the engine loads on the first call that uses it. In a browser it loads once you call `ready()`, and calls made before that run in TypeScript:
+
+```ts
+import { ready } from 'ta-lib';
+
+const { engine, reason } = await ready();   // 'wasm', or 'js' and the reason
+```
+
+Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+
+Streaming calls run in TypeScript today.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
@@ -1839,7 +1861,7 @@ description: >-
 # TypeScript Streaming API
 
 ::: warning Not yet released
-The TypeScript library is not on npm yet. Until it is, [build it from source](/api/typescript/#build).
+The TypeScript library is planned for official release in Q4 2026. Until then it is not on npm: [build it from source](/api/typescript/#build).
 :::
 
 The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
@@ -1959,6 +1981,367 @@ Every rejection is a `TALibError`; branch on its `code`.
 ## Discovering streamable functions
 
 When driving TA-Lib through the [Abstract API](/api/typescript/#abstract), streamable functions carry the `FuncFlags.STREAMING` bit in `FuncInfo.flags`.
+
+---
+
+---
+url: 'https://ta-lib.org/api/go/index.md'
+description: >-
+  The official TA-Lib in pure Go: every technical analysis function as a method
+  on Core over float64 slices, batch and streaming, with no C library to
+  install.
+---
+# Go Core API
+
+::: warning Not yet released
+The Go module is planned for official release in Q4 2026.
+:::
+
+<p><a href="#intro">1.0 Introduction</a></p>
+
+<p><a href="#build">2.0 Add it to your project</a></p>
+
+<p><a href="#ta_func">3.0 Calling into TA-Lib</a></p>
+
+<blockquote>
+<p><a href="#direct_call">3.1 Batch Processing</a><br>
+<a href="#output_size">3.2 Output Size and Lookback</a><br>
+<a href="#retcode">3.3 Errors</a><br></p>
+</blockquote>
+
+<p><a href="#advanced">4.0 Advanced Features</a></p>
+
+<blockquote>
+<p><a href="#abstract">4.1 Abstract API</a><br>
+<a href="#numerical_stability">4.2 Numerical Stability</a><br>
+<a href="#candle_settings">4.3 Candlestick Settings</a><br>
+<a href="#input_type">4.4 Input and Output Slices</a><br>
+<a href="#index_range">4.5 Index Range</a><br>
+<a href="#goroutines">4.6 Goroutines</a></p>
+</blockquote>
+
+<p><a href="#docs">5.0 Documentation</a></p>
+
+## 1.0 Introduction {#intro}
+
+The official TA-Lib in pure Go: every technical analysis function, batch and streaming. No C library to install.
+
+Every indicator is a method on `Core`: it reads `float64` slices you pass in and writes its results into slices you allocate. The module has no dependencies.
+
+The **Core API** provides:
+
+* The [`Core`](#direct_call) type, made by `NewCore`.
+* The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Several `Core` values can co-exist, say for different settings.
+* Every TA function, each processing a whole slice of data at once.
+
+To process a live feed one bar at a time instead, see the companion [Go Streaming API](/api/go/stream/).
+
+There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, Go has `talib.NewCore()`, and an unreferenced `Core` is garbage-collected.
+
+## 2.0 Add it to your project {#build}
+
+```go
+import talib "ta-lib.github.io/go"
+```
+
+It needs Go 1.22 or later.
+
+## 3.0 Calling into TA-Lib {#ta_func}
+
+### 3.1 Batch Processing {#direct_call}
+
+Every function follows the same simple pattern: it reads its inputs from slices you pass in, writes its results into slices you allocate, and returns where the values landed.
+
+As an example, let's walk through `MA`, a method to calculate a moving average.
+
+<pre>func (c *Core) MA( <span class="ta-arg-range">startIdx, endIdx int,</span>
+                   <span class="ta-arg-in">inReal []float64,</span>
+                   <span class="ta-arg-opt">optInTimePeriod int,</span>
+                   <span class="ta-arg-opt">optInMAType MAType,</span>
+                   <span class="ta-arg-out">outReal []float64</span> ) (OutRange, error)
+</pre>
+
+All TA functions use the same calling pattern, divided into four groups:
+
+<ul>
+<li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input slices. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
+<li><span class="ta-arg-in">One or more input slices come next, oldest bar first. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
+<li><span class="ta-arg-opt">Zero or more optional parameters follow. They give finer control specific to each function. To take a parameter's documented default, pass <code>talib.IntegerDefault</code>, <code>talib.RealDefault</code> or <code>talib.MATypeDEFAULT</code>, depending on its type.</span></li>
+<li><span class="ta-arg-out">One or more output slices come last. In this example there is only one output (outReal). Where the values landed is the return value: on success you get an <code>OutRange</code>.</span></li>
+</ul>
+
+For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:
+
+```go
+core := talib.NewCore()
+
+closes := make([]float64, 400) // ...your closing prices, oldest first...
+out := make([]float64, len(closes))
+
+r, err := core.MA(0, 399, closes, 30, talib.MATypeSMA, out)
+if err != nil {
+	log.Fatal(err)
+}
+
+// out[i] is the SMA at input bar r.BegIdx+i.
+for i := 0; i < r.NBElement; i++ {
+	fmt.Printf("Day %d = %f\n", r.BegIdx+i, out[i])
+}
+```
+
+After the call, read `r` to learn what was produced. Even though we requested the whole range (0 to 399), a 30-day average is not defined until the 30th day. Consequently, `r.BegIdx` will be 29 (zero-based) and `r.NBElement` will be 400-29 = 371. Only the first 371 elements of `out` are written, and they correspond to input elements 29 through 399. Nothing is padded.
+
+If you had requested only the range 125 to 225, `r.BegIdx` would be 125 and `r.NBElement` 101 (`endIdx` is inclusive). The 125 closing prices before the range provide the history the average needs.
+
+If you do not provide enough data to calculate even one value, the call still succeeds and `r.NBElement` is 0.
+
+A function with several outputs takes one slice per output, in the order of its Outputs list, and reports one range for all of them:
+
+```go
+macd := make([]float64, len(closes))
+signal := make([]float64, len(closes))
+hist := make([]float64, len(closes))
+
+r, err := core.MACD(0, len(closes)-1, closes, 12, 26, 9, macd, signal, hist)
+```
+
+`Core` is cheap to create and holds only the library's settings; create one and reuse it.
+
+### 3.2 Output Size and Lookback {#output_size}
+
+An output slice must hold the values the call writes, and at least one element: a short or empty one is `talib.BadParam`, never a write past the end. The input length always suffices, and the lookback gives the exact count (see the [three sizing methods](/api/#output_size)).
+
+Each TA function has a matching `<NAME>Lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `SMALookback`.
+
+```go
+lookback, err := core.SMALookback(30) // 29 for a 30-period SMA
+```
+
+The lookback is the number of input elements consumed before the first output. A parameter out of range returns `talib.BadParam`, the same error the function itself would return for it.
+
+Putting it together, the exact allocation for any TA function:
+
+```go
+lookback, err := core.SMALookback(30)
+if err != nil {
+	log.Fatal(err)
+}
+
+size := 1
+if first := max(lookback, startIdx); first <= endIdx {
+	size = endIdx - first + 1
+}
+out := make([]float64, size)
+```
+
+### 3.3 Errors {#retcode}
+
+Every TA function returns `(OutRange, error)`. A failed call returns a `RetCode` as its error and writes nothing; test for one with `errors.Is`.
+
+| Error | Mistake |
+|------|---------|
+| `talib.OutOfRangeStartIndex` | `startIdx` negative or above `talib.IndexMax` |
+| `talib.OutOfRangeEndIndex` | `endIdx` negative, above `talib.IndexMax`, or below `startIdx` |
+| `talib.BadParam` | A parameter outside its documented range |
+| `talib.BadParam` | An input too short for the range requested, or an output too short for the values written |
+| `talib.BadParam` | An empty input or output |
+| `talib.BadParam` | An output sharing memory with an input or another output, other than in place, unless a three-index slice hides it ([4.4](#input_type)) |
+
+```go
+_, err := core.SMA(0, len(closes)-1, closes, 0, out)
+if errors.Is(err, talib.BadParam) {
+	// a period of 0 is out of range
+}
+```
+
+A `RetCode`'s `Error()` is C's name for it, such as `TA_BAD_PARAM`. `talib.InternalError` is a bug in TA-Lib to report ([rB8](/spec/errors/#rb8)).
+
+A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
+
+## 4.0 Advanced Features {#advanced}
+
+### 4.1 Abstract API {#abstract}
+
+The [Abstract API](/api/abstract/), which describes every function at run time and calls it by name, is not available in Go yet.
+
+### 4.2 Numerical Stability {#numerical_stability}
+
+Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
+
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`talib.IndexMax`](#index_range).
+
+Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
+
+### 4.3 Candlestick Settings {#candle_settings}
+
+The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults. Set them on the `Core` you call with:
+
+```go
+core := talib.NewCore()
+if err := core.SetCandleSetting(talib.CandleSettingTypeBodyDoji, talib.RangeTypeHighLow, 10, 0.1); err != nil {
+	log.Fatal(err)
+}
+
+out := make([]int32, len(close))
+r, err := core.CDLDOJI(0, len(close)-1, open, high, low, close, out)
+```
+
+A setter returns `talib.BadParam` for an argument out of range and changes nothing.
+
+### 4.4 Input and Output Slices {#input_type}
+
+An input is a `[]float64`. An output is a `[]float64`, or an `[]int32` for an integer output such as a candlestick pattern, and is written from index 0.
+
+You can pass the same slice, with the same start and length, as an input and as an output to compute in place. An output may not otherwise share memory with an input or with another output: the call returns `talib.BadParam`. A slice whose capacity a three-index expression cut (`s[i:j:k]`, as `slices.Clip` makes) escapes the check: such a call can succeed with wrong values.
+
+### 4.5 Index Range {#index_range}
+
+`talib.IndexMax` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+
+### 4.6 Goroutines {#goroutines}
+
+A `Core` is safe to share between goroutines once configured: call its setters only while no other goroutine uses it and no stream opened on it is in use. For different settings, use another `Core`. A [stream](/api/go/stream/#rules) belongs to one goroutine.
+
+## 5.0 Documentation {#docs}
+
+Every exported name carries a doc comment, and every function a runnable example. Read them with `go doc`.
+
+---
+
+---
+url: 'https://ta-lib.org/api/go/stream/index.md'
+description: >-
+  Go streaming API for live feeds: a stream carries indicator state from bar to
+  bar, so an update never recomputes the history; its values are bit-identical
+  to the batch calls outside a few stated exceptions.
+---
+# Go Streaming API
+
+::: warning Not yet released
+The Go module is planned for official release in Q4 2026.
+:::
+
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch method](/api/go/) would return by recomputing over the whole slice (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
+
+Each function adds two opening methods on `Core` and a stream type, e.g. `SMAStream`, with a handful of methods:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<NAME>Open(history, params)` | once | validate params, consume warm-up history, return the stream and its value at the last history bar |
+| `s.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `s.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+
+One more call, `<NAME>OpenAndFill`, also writes slice output: see [Array-Fill Open](#array-fill-open) below.
+
+Additional [utility functions](#utility-calls) are available.
+
+There is no `Close`: an unreferenced stream is garbage-collected.
+
+## Example (SMA)
+
+```go
+core := talib.NewCore()
+
+// Seed with warm-up history (at least SMALookback(period) + 1 bars).
+history := make([]float64, 100) // ...your closing prices, oldest first...
+s, last, err := core.SMAOpen(history, 30) // stream + value at the last history bar
+if err != nil {
+	log.Fatal(err)
+}
+
+// Each time a bar closes:
+v, err := s.Update(newClose) // BadParam on a non-finite bar
+if err != nil {
+	log.Fatal(err)
+}
+
+// Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
+p, err := s.Peek(formingClose) // state left unchanged
+```
+
+`Open` returns an error: `talib.InsufficientHistory` if there is too little history (another bar might fix it, so this is the one worth retrying), `talib.BadParam` if a parameter is out of range. `Update` and `Peek` return an error too, and after a successful `Open` what they reject is invalid input such as NaN or ±Inf, as `talib.BadParam`. `Update` also rejects a bar past `talib.IndexMax`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range.
+
+## Rules
+
+* **Warm-up.** `Open` succeeds only if `len(history) >= <NAME>Lookback(params) + 1`: with fewer bars there is no defined value yet. After `Open`, the history can be discarded: the stream keeps everything it needs.
+* **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing: call it as often as the forming bar ticks.
+* **The unstable period is resolved once, at `Open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `Open` needs that many bars plus one.
+* **Parameters are fixed at `Open`.** Changing a parameter means a new stream. The [unstable period](/api/go/#numerical_stability) and [candle settings](/api/go/#candle_settings) are those of the `Core` the stream is opened on: configure it first, and do not call its setters while a stream opened on it is in use.
+* **Goroutines.** A stream belongs to one goroutine: no call on it may run while another runs. `Clone` forks an independent stream another goroutine can drive.
+
+## Multi-input / multi-output
+
+Inputs and outputs mirror the batch method. A multi-output function returns its outputs positionally, in batch output order; a candlestick pattern returns an `int32`:
+
+```go
+// MACD: one input, three outputs
+m, macd, signal, hist, err := core.MACDOpen(history, 12, 26, 9)
+if err != nil {
+	log.Fatal(err)
+}
+macd, signal, hist, err = m.Update(newClose)
+
+// A candlestick pattern returns an int32
+c, _, err := core.CDLDOJIOpen(open, high, low, close)
+if err != nil {
+	log.Fatal(err)
+}
+pattern, err := c.Update(o, h, l, cl)
+```
+
+## Array-Fill Open
+
+`Open` and `Update` each return single values. One more call writes a full slice instead, the same shape the [batch method](/api/go/) would produce, while still opening the stream:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<NAME>OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning the stream and an `OutRange` |
+
+```go
+warmup := make([]float64, len(history))
+
+s, filled, err := core.SMAOpenAndFill(history, 30, warmup)
+if err != nil {
+	log.Fatal(err)
+}
+
+// warmup[:filled.NBElement] is the SMA from history bar filled.BegIdx; then stream on:
+v, err := s.Update(newClose)
+```
+
+`OpenAndFill` takes the [batch method](/api/go/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. An output must not share memory with the input or with another output: that is `talib.BadParam`, but a slice whose capacity a three-index expression cut (`s[i:j:k]`, as `slices.Clip` makes) escapes the check unless both start at one element. `OpenAndFill` checks its outputs before the warm-up, so an empty output is `talib.BadParam` even when the history is too short.
+
+## Utility Calls
+
+| Call | When | Does |
+|------|------|------|
+| `s.Value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
+| `s.Clone()` | any time | an independent fork of the stream, at the same bar |
+| `s.OutRange()` | any time | the bars the stream has an output for: the batch range over the same bars |
+| `s.Advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
+
+```go
+v := s.Value()    // the value at the last bar s counted
+fork := s.Clone() // independent from here on
+r := s.OutRange() // the bars s has an output for
+if err := s.Advance(); err != nil { // a bar you skipped, counted
+	log.Fatal(err)
+}
+```
+
+The first three return no error: they read what the stream already holds, so there is nothing to reject. `Advance()` returns one: it moves the range, and the range cannot pass `talib.IndexMax`.
+
+## Error model
+
+Every error is a `RetCode`; test for one with `errors.Is`.
+
+| Call | Behaviour |
+|------|-----------|
+| `<NAME>Open` / `<NAME>OpenAndFill` | Too little history, an empty one included, returns `talib.InsufficientHistory`: accumulate more bars and retry. An out-of-range parameter returns `talib.BadParam`, and so do histories of different lengths and an `OpenAndFill` output that is empty, too short or shares memory; `OpenAndFill` checks its outputs before the warm-up, so an empty output is `talib.BadParam` even when the history is too short. A history longer than `talib.IndexMax + 1` bars returns `talib.OutOfRangeEndIndex`. |
+| `Update` / `Peek` | <ul><li>`talib.BadParam` on invalid input such as NaN or ±Inf</li><li>`talib.OutOfRangeEndIndex` from `Update` (never `Peek`) once the range has reached bar `talib.IndexMax`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
+| `Advance` | `talib.OutOfRangeEndIndex` once the range has reached bar `talib.IndexMax`. |
 
 ---
 
@@ -2197,7 +2580,7 @@ url: 'https://ta-lib.org/api/unstable-period/index.md'
 description: >-
   Why recursive indicators such as EMA, RSI and ADX start out unstable, and how
   TA-Lib discards those bars for you: Auto-Stabilization for every function, or
-  a setting per function, in C, Rust, Java, C#, TypeScript and Python.
+  a setting per function, in C, Rust, Java, C#, TypeScript, Go and Python.
 ---
 # Unstable Period
 
@@ -2323,6 +2706,17 @@ const core = new CoreBuilder()
   .build();
 ```
 
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+if err := core.SetUnstablePeriod(talib.FuncUnstIdALL, talib.UnstableAutoPrec4); err != nil {
+	log.Fatal(err)
+}
+```
+
 @tab Python
 
 ```python
@@ -2334,7 +2728,7 @@ talib.set_unstable_period('ALL', talib.UNSTABLE_AUTO_PREC_4)
 
 :::
 
-In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object. In TypeScript, pass it as the `core` option of each call.
+In C and Python the setting is process-wide. In Rust, Java, C# and Go it belongs to `core`: make your calls on that object. In TypeScript, pass it as the `core` option of each call.
 
 The number of bars comes from the parameters of each call: a 200-bar EMA drops more than a 30-bar one. Indicators built on another, such as MACD on EMA, follow along.
 
@@ -2443,6 +2837,22 @@ const core = new CoreBuilder()
 const v = core.unstablePeriod(FuncUnstId.RSI);   // Core.UNSTABLE_AUTO_PREC_8
 ```
 
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Every affected function on Auto, to 4 significant digits;
+// then one exception at a stricter level, and one at a fixed 30 bars:
+core.SetUnstablePeriod(talib.FuncUnstIdALL, talib.UnstableAutoPrec4)
+core.SetUnstablePeriod(talib.FuncUnstIdRSI, talib.UnstableAutoPrec8)
+core.SetUnstablePeriod(talib.FuncUnstIdEMA, 30)
+
+v, err := core.UnstablePeriod(talib.FuncUnstIdRSI) // talib.UnstableAutoPrec8
+```
+
 @tab Python
 
 ```python
@@ -2462,7 +2872,7 @@ v = talib.get_unstable_period('RSI')   # talib.UNSTABLE_AUTO_PREC_8
 The value is one of:
 
 * **An Auto level**, `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` (a constant
-  on `Core` in Rust, Java, C# and TypeScript, and on `talib` in Python): the function works out the number of bars from the
+  on `Core` in Rust, Java, C# and TypeScript, and on `talib` in Go and Python): the function works out the number of bars from the
   call's parameters. `PREC_8` targets eight significant digits and needs more bars
   (EMA(30): 314 instead of 179); some outputs cannot show that many, so start with `PREC_4`.
 * **A count**, from `0` to `TA_INDEX_MAX`: a fixed number of bars that is yours to choose.
@@ -2483,7 +2893,8 @@ number of bars than EMA.
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
 ([specification](/spec/settings-threads/#idle-settings)). Python raises
-`RuntimeError` on a change while a call runs or a stream object is alive.
+`RuntimeError` on a change while a call runs or a stream object is alive. In Go,
+call a `Core`'s setters only while no other goroutine uses it and no stream opened on it is in use.
 
 ### Functions with an unstable period
 
@@ -2500,6 +2911,7 @@ only while no TA function is running and no stream is open
 | Java | `FuncUnstId.<NAME>` | [FuncUnstId.java](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/src/main/java/io/github/talib/FuncUnstId.java) |
 | C# | `FuncUnstId.<NAME>` | [FuncUnstId.cs](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/FuncUnstId.cs) |
 | TypeScript | `FuncUnstId.<NAME>` | [enums.ts](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/enums.ts) |
+| Go | `talib.FuncUnstId<NAME>` | [enums.go](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/enums.go) |
 | Python | `'<NAME>'` | [\_common.pxi](https://github.com/TA-Lib/ta-lib-python/blob/master/talib/_common.pxi) |
 
 `<NAME>` may also be `ALL`, which selects every function above at once.
@@ -2507,7 +2919,7 @@ only while no TA function is running and no stream is open
 ## See also
 
 * [Specification](/spec/auto-stabilization/): the count behind each function, and the known exceptions
-* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/)
+* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/), [Go](/api/go/)
 * [Candlestick Settings](/api/candle-settings/)
 
 ---
@@ -2573,7 +2985,7 @@ url: 'https://ta-lib.org/api/candle-settings/index.md'
 description: >-
   Tune the thresholds the CDL* pattern functions judge candles against: body
   length, shadows, near-equal candles. Defaults, and how to set them in C, Rust,
-  Java, C# and TypeScript.
+  Java, C#, TypeScript and Go.
 ---
 # Candlestick Settings
 
@@ -2673,17 +3085,35 @@ const restored = core.toBuilder()
   .build();
 ```
 
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Treat a "long body" as 1.2x the average real body of the last 10 candles:
+if err := core.SetCandleSetting(talib.CandleSettingTypeBodyLong, talib.RangeTypeRealBody, 10, 1.2); err != nil {
+	log.Fatal(err)
+}
+
+// ...restore one setting, or every one with CandleSettingTypeAllCandleSettings:
+core.RestoreCandleDefault(talib.CandleSettingTypeBodyLong)
+```
+
 :::
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
-([specification](/spec/settings-threads/#idle-settings)).
+([specification](/spec/settings-threads/#idle-settings)). In Go, call a `Core`'s
+setters only while no other goroutine uses it and no stream opened on it is in use.
 
 ## Setting types and defaults
 
 The setting types, with the defaults every binding starts from. C spells them
 `TA_BodyLong`; Rust `CandleSettingType::BodyLong`; C# `CandleSettingType.BodyLong`;
-Java and TypeScript take constant case, `CandleSettingType.BODY_LONG`.
+Go `talib.CandleSettingTypeBodyLong`; Java and TypeScript take constant case,
+`CandleSettingType.BODY_LONG`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|
@@ -2704,7 +3134,7 @@ restore call.
 
 ## See also
 
-* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/)
+* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/), [Go](/api/go/)
 * [Unstable Period](/api/unstable-period/)
 * The candlestick pattern functions in the [function reference](/functions/) (the `Pattern Recognition` group).
 
@@ -2765,26 +3195,26 @@ A pattern counts as rare when Bulkowski ranks either of its forms 78th to 103rd,
 ---
 url: 'https://ta-lib.org/spec/index.md'
 description: >-
-  TA-Lib's calling contract in C, Rust, Java, C# and TypeScript, for
+  TA-Lib's calling contract in C, Rust, Java, C#, TypeScript and Go, for
   AI-agent-driven integration: what your code can rely on, in rules the test
   suite checks; what it must ensure; and how names and failures map across the
-  five languages.
+  six languages.
 ---
 # Specification
 
 **TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks every rule, so your code can rely on them.**
 
-Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/) or [TypeScript](/api/typescript/).
+Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/) or [Go](/api/go/).
 
 An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and, as the [release rules](/spec/versions/#releases) define, across releases.
 
-The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C# and TypeScript code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5); TypeScript Caveat: [rJ2](/spec/#rj2)).
+The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C#, TypeScript and Go code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5); TypeScript Caveat: [rJ2](/spec/#rj2)).
 
 ## Scope {#scope}
 
-* The native APIs (C, Rust, Java, C#, TypeScript).
+* The native APIs (C, Rust, Java, C#, TypeScript, Go).
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
-* Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/) and [TypeScript](/api/typescript/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
+* Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) and [Go](/api/go/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
 * The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
@@ -2822,39 +3252,39 @@ A function's canonical name is its name on [/functions/](/functions/). Every spe
 | UpperCamel | lower case, upper-case the first letter of each `_`-separated part, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`). TypeScript Caveat: [rJ1](/spec/#rj1).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule); Go keeps the canonical name, suffixed for the other calls and the handle type (`HT_TRENDLINELookback`, `HT_TRENDLINEOpen`, `HT_TRENDLINEStream`). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`). TypeScript Caveat: [rJ1](/spec/#rj1).
 
-In Rust, Java and C#, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as the optional `core` key of its options:
+In Rust, Java, C# and Go, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as the optional `core` key of its options:
 
-| Surface | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` |
-| lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` |
-| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` |
-| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` |
-| handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
-| handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
-| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | returned `MacdOut`: the sink passed, or a new one |
+| Surface | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` | `SMA` returns `(OutRange, error)` |
+| lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` | `SMALookback` returns `(int, error)` |
+| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` | none |
+| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` | `SMAOpen`, `SMAOpenAndFill` |
+| handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` | `*SMAStream` |
+| handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Value`, `OutRange`, `Advance`, `Clone` |
+| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | returned `MacdOut`: the sink passed, or a new one | three returned `float64` |
 
-| Type | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` | package `ta-lib` |
-| settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` |
-| output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` |
+| Type | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` | package `ta-lib` | module `ta-lib.github.io/go`, package `talib` |
+| settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` | `NewCore()`, then its setters |
+| output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange{BegIdx, NBElement}` |
 
 Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
 
 Enum types drop C's `TA_`. Members:
 
-| Enum | C | Rust, C# | Java, TypeScript |
-|---|---|---|---|
-| `RetCode` | `TA_BAD_PARAM` | `BadParam` | `BAD_PARAM` |
-| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` |
-| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` |
-| `MAType` | `TA_MAType_SMA` | `SMA` | `SMA` |
-| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` | `HT_DCPERIOD` |
+| Enum | C | Rust, C# | Java, TypeScript | Go |
+|---|---|---|---|---|
+| `RetCode` | `TA_BAD_PARAM` | `BadParam` | `BAD_PARAM` | `BadParam` |
+| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `CandleSettingTypeBodyLong` |
+| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RangeTypeRealBody` |
+| `MAType` | `TA_MAType_SMA` | `SMA` | `SMA` | `MATypeSMA` |
+| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` | `HT_DCPERIOD` | `FuncUnstIdHT_DCPERIOD` |
 
-Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold them on `Core`, C# in UpperCamel (`Core.IndexMax`).
+Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold them on `Core`, C# in UpperCamel (`Core.IndexMax`); Go in the package, in UpperCamel (`talib.IndexMax`).
 
 | Constant | Value |
 |---|---|
@@ -2879,37 +3309,37 @@ Members are upper case in Rust, Java and TypeScript and UpperCamel in C#, and ca
 
 ## How a failure reaches the caller {#failures}
 
-| Success | C, returning `TA_SUCCESS` | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `{ begIdx, values }`, or one array per output |
-| open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle | handle |
-| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | `{ stream, begIdx, values }`; range also from `outRange()` |
-| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or the outputs in the sink passed or a new one |
+| Success | C, returning `TA_SUCCESS` | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `{ begIdx, values }`, or one array per output | `OutRange`, nil error |
+| open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle | handle | handle, value(s), nil error |
+| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | `{ stream, begIdx, values }`; range also from `outRange()` | handle, `OutRange`, nil error |
+| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or the outputs in the sink passed or a new one | value(s), nil error |
 
-| Failure | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) |
-| C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` |
-| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) |
-| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) |
+| Failure | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) | a returned `error` that is a `RetCode`; `errors.Is(err, talib.BadParam)` |
+| C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` | `int` conversion of the `RetCode` |
+| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) | `talib.BadParam` |
+| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) | no display-shift call |
 
 One row per [code a function call can report](/spec/errors/#return-codes). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works. TypeScript throws `TALibError : Error` for every code, its `code` being the code's C name.
 
-| Code | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|
-| `TA_BAD_PARAM` | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` | `'TA_BAD_PARAM'` |
-| `TA_OUT_OF_RANGE_START_INDEX` | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` | `'TA_OUT_OF_RANGE_START_INDEX'` |
-| `TA_OUT_OF_RANGE_END_INDEX` | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) | `'TA_OUT_OF_RANGE_END_INDEX'` |
-| `TA_INSUFFICIENT_HISTORY` | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` | `'TA_INSUFFICIENT_HISTORY'` |
-| `TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` | `'TA_INTERNAL_ERROR'` |
-| `TA_ALLOC_ERR` | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown | never thrown |
+| Code | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|
+| `TA_BAD_PARAM` | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` | `'TA_BAD_PARAM'` | `BadParam` |
+| `TA_OUT_OF_RANGE_START_INDEX` | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` | `'TA_OUT_OF_RANGE_START_INDEX'` | `OutOfRangeStartIndex` |
+| `TA_OUT_OF_RANGE_END_INDEX` | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) | `'TA_OUT_OF_RANGE_END_INDEX'` | `OutOfRangeEndIndex` |
+| `TA_INSUFFICIENT_HISTORY` | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` | `'TA_INSUFFICIENT_HISTORY'` | `InsufficientHistory` |
+| `TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` | `'TA_INTERNAL_ERROR'` | `InternalError` |
+| `TA_ALLOC_ERR` | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown | never thrown | `AllocErr`, never returned |
 
 Failed settings:
 
-| Failure | C | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code | throws `TALibError` `'TA_BAD_PARAM'` |
-| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter | as the setter |
+| Failure | C | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code | throws `TALibError` `'TA_BAD_PARAM'` | returns `talib.BadParam` |
+| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter | as the setter | as the setter |
 
 ## TypeScript Caveats {#typescript}
 
@@ -2929,11 +3359,11 @@ Where the TypeScript API departs from a rule. Each amended rule links here.
 ---
 url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
-  One batch calling pattern for every function in C, Rust, Java, C# and
-  TypeScript (with its caveats): the same argument order, a sentinel that
-  selects any parameter's default, outputs holding only defined values from
-  index 0 and how to size them, pattern outputs, computing in place, and what
-  the caller must pass.
+  One batch calling pattern for every function in C, Rust, Java, C#, TypeScript
+  (with its caveats) and Go: the same argument order, a sentinel that selects
+  any parameter's default, outputs holding only defined values from index 0 and
+  how to size them, pattern outputs, computing in place, and what the caller
+  must pass.
 ---
 # Batch Inputs and Outputs
 
@@ -2954,15 +3384,15 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 
 ## What a call takes
 
-<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. In TypeScript both are optional: `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
+<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed and in Go the slice passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. In TypeScript both are optional: `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
 <a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an omitted or `undefined` parameter selects the default; otherwise an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
-An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`, in TypeScript the values of `MAType`.
+An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`, in TypeScript the values of `MAType`, in Go the range `MATypeMin` to `MATypeMax`.
 
 <a id="rp3"></a>**rP3** A default sentinel selects the function's documented default: `TA_INTEGER_DEFAULT` for an integer parameter, `TA_REAL_DEFAULT` for a real one, the `DEFAULT` member for an MA type (in C, `TA_INTEGER_DEFAULT` works there too). The call is then bit-identical to one passing the default explicitly. A default MA type is not always SMA.
 
-<a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, and a `Float32Array` input in TypeScript widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust has no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
+<a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, and a `Float32Array` input in TypeScript widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust and Go have no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
 
 <a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them. TypeScript Caveat: [rJ2](/spec/#rj2).
 
@@ -2984,7 +3414,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Computing in place {#aliasing}
 
-<a id="rw6"></a>**rW6** In a batch call, an output may be the same buffer as an input of the same element type: in C the same pointer, in Java the same array, in C# a span of the same start and length, in TypeScript a `Float64Array` of the same buffer, start and length. Rust's safe code cannot express it. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
+<a id="rw6"></a>**rW6** In a batch call, an output may be the same buffer as an input of the same element type: in C the same pointer, in Java the same array, in C# a span and in Go a slice of the same start and length, in TypeScript a `Float64Array` of the same buffer, start and length. Rust's safe code cannot express it. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
 
 ## Pattern outputs {#patterns}
 
@@ -3064,7 +3494,7 @@ Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an i
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
+Every function has a display-shift call, except in Go, which has none. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
 
 | Rule | Statement |
 |---|---|
@@ -3176,10 +3606,10 @@ Outside the cases below, a level is expected to meet its [target](/spec/auto-sta
 ---
 url: 'https://ta-lib.org/spec/streaming/index.md'
 description: >-
-  Every function streams in C, Rust, Java, C# and TypeScript, bit for bit with
-  the batch call outside stated exceptions: open on history, update per closed
-  bar, peek at a forming bar without changing state, count a skipped bar, clone
-  to fork, and release a handle; a rejected bar changes nothing.
+  Every function streams in C, Rust, Java, C#, TypeScript and Go, bit for bit
+  with the batch call outside stated exceptions: open on history, update per
+  closed bar, peek at a forming bar without changing state, count a skipped bar,
+  clone to fork, and release a handle; a rejected bar changes nothing.
 ---
 # Streaming
 
@@ -3187,7 +3617,7 @@ description: >-
 
 A stream is defined as the batch call over every bar fed to it, bit for bit outside the exceptions in [rH1](/spec/streaming/#rh1), so a live feed reproduces a backtest over the same bars.
 
-Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` once, then `Update` per closed bar and `Peek` per forming bar; `Value`, `OutRange`, `Advance` and `Clone` at any time; `Close` in C only. Calls, examples and per-language shapes: [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/). Rules use C's verbs ([names](/spec/#names)) and codes ([failures](/spec/#failures)).
+Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` once, then `Update` per closed bar and `Peek` per forming bar; `Value`, `OutRange`, `Advance` and `Clone` at any time; `Close` in C only. Calls, examples and per-language shapes: [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/), [Go](/api/go/stream/). Rules use C's verbs ([names](/spec/#names)) and codes ([failures](/spec/#failures)).
 
 ## The caller must {#caller}
 
@@ -3205,7 +3635,7 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 
 ## Opening
 
-For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `historyLen` their count: a C argument, and in Rust, Java, C# and TypeScript the length of the first declared input.
+For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `historyLen` their count: a C argument, and in Rust, Java, C#, TypeScript and Go the length of the first declared input.
 
 | Rule | Condition | Code | Not checked in |
 |---|---|---|---|
@@ -3213,7 +3643,7 @@ For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `
 | <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) or [rB9](/spec/errors/#rb9) | `TA_BAD_PARAM` | |
 | <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is [rS7](/spec/streaming/#rs7) | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([rB5](/spec/errors/#rb5)) |
-| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other | `TA_BAD_PARAM` | Rust: cannot alias |
+| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other; in Go, a slice that starts where the other does, or overlaps it with neither capacity cut by a three-index expression | `TA_BAD_PARAM` | Rust: cannot alias |
 | <a id="rs7"></a>**rS7** | The history holds fewer than [lookback](/spec/lookback/#rl1) `+ 1` bars, an empty history included | `TA_INSUFFICIENT_HISTORY` | |
 
 <a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes ([rW1](/spec/inputs-outputs/#rw1)), compared as in [rH1](/spec/streaming/#rh1), and reports the same range. The handle it returns then updates as the one `Open` returns on the same history.
@@ -3224,8 +3654,8 @@ A bar is counted when it enters the range, by an accepted `Update` or by `Advanc
 
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
-| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript: value returned |
+| <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent; Go: not checked |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript, Go: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `OutRange`'s `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 
@@ -3326,7 +3756,7 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
-<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
+<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language but Go, which has none.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
 
@@ -3351,13 +3781,15 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`. It reports state and promises no output value and no speed.
 
-Every key is answered in every language, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
+A common key is answered in every language, and the answer can differ with the language and the platform. A language may also answer a key of its own, for something only that language has, and every other language treats that key as unknown. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 
 | Key | Meaning |
 |---|---|
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
 | `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C# and TypeScript. |
 | `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C# and TypeScript. |
+| `wasm.engine` | TypeScript only. Where the batch calls of the package's default entry, `ta-lib`, run now: 1 its WebAssembly engine, 0 TypeScript. Asking loads nothing. |
+| `wasm.reason` | TypeScript only. Why `wasm.engine` is 0: 0 while it is 1, 1 the engine is not loaded yet, 2 the module holding its bytes could not be imported, 3 the runtime refused to compile it, 4 it compiled but could not be instantiated, 5 the runtime does not fuse the multiply-add the engine relies on, 6 calls failed in it too many times and it was given up. |
 
 ## Attributes {#attributes}
 
@@ -3452,21 +3884,23 @@ How a chart or a settings dialog should present a function, an output or an opti
 url: 'https://ta-lib.org/spec/settings-threads/index.md'
 description: >-
   Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across
-  threads with no synchronization in Rust, Java and C#, C's initialization and
-  process-wide settings and when they may change, setting validation, and the
-  caller's rules across threads.
+  threads with no synchronization in Rust, Java and C#, or in a Go Core
+  configured before goroutines share it, C's initialization and process-wide
+  settings and when they may change, setting validation, and the caller's rules
+  across threads.
 ---
 # Settings and Threads
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
-* <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java, C# and TypeScript have no lifecycle call: a `Core` is ready when constructed.
+* <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java, C#, TypeScript and Go have no lifecycle call: a `Core` is ready when constructed.
 * <a id="idle-settings"></a>**In C, change a setting only while no TA function is running and no stream is open.** A change is a call to `TA_SetUnstablePeriod`, `TA_SetCandleSettings`, `TA_RestoreCandleDefaultSettings` or `TA_Shutdown`. Between changes, any number of threads may call the library ([rT11](/spec/settings-threads/#rt11)); it assumes the `malloc` and `free` it allocates with are thread-safe.
-* <a id="one-writer"></a>**Run a writer alone on its stream handle.** The writers are `Update`, `Advance` and C's `Close`; not even `Peek` or `Value` may run alongside one. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`.
+* <a id="one-writer"></a>**Run a writer alone on its stream handle.** The writers are `Update`, `Advance` and C's `Close`; not even `Peek` or `Value` may run alongside one. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`. A Go stream belongs to one goroutine: no call on it may run alongside another.
+* <a id="go-settings"></a>**In Go, configure a `Core` before sharing it.** Call its setters only while no other goroutine uses it and no stream opened on it is in use. Between changes, any number of goroutines may call through it.
 * <a id="confine"></a>**Confine holders, builders and sinks to one thread.** A [parameter holder](/spec/abstract/#provides) is not thread-safe in C, Java and C#; neither is a Java or C# `CoreBuilder` nor the sink a Java multi-output stream writes into ([names](/spec/#names)). In C, the `const` in `TA_CallFunc`'s signature does not make a holder shareable: the call writes the output buffers bound to it.
 
 ## `Core` in Rust, Java, C# and TypeScript
@@ -3479,7 +3913,7 @@ The rows hold for every setter and getter in every language, except where a note
 
 | Rule | Condition | Language notes |
 |---|---|---|
-| <a id="rt2"></a>**rT2** | A setter fails on a target outside its enum. `TA_SetCandleSettings` and the builders' candle setter also fail on `TA_AllCandleSettings`. | In Rust and Java only the wildcard fails. |
+| <a id="rt2"></a>**rT2** | A setter fails on a target outside its enum. `TA_SetCandleSettings`, the builders' candle setter and Go's `SetCandleSetting` also fail on `TA_AllCandleSettings`. | In Rust and Java only the wildcard fails. |
 | <a id="rt3"></a>**rT3** | An unstable period is a count in `[0, TA_INDEX_MAX]` or an Auto level: `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` ([constants](/spec/#names)). | C takes an `unsigned int`, so a negative value arrives above every level and fails. Rust's `u32` cannot hold one. |
 | <a id="rt4"></a>**rT4** | Reading a setting for the set-all wildcard fails. | For the wildcard or an out-of-range id, C's `TA_GetUnstablePeriod` returns 0, which is also a legal period. |
 | <a id="rt5"></a>**rT5** | A candle setting's range type is a `TA_RangeType` member. | |
@@ -3487,13 +3921,13 @@ The rows hold for every setter and getter in every language, except where a note
 | <a id="rt7"></a>**rT7** | A candle setting's `factor` is finite and not negative. | |
 | <a id="rt8"></a>**rT8** | A failed call leaves every setting as it was, a wildcard call included. | Rust's `build()` returns the first failure, even after a later valid setter or `restore_candle_default`. |
 
-<a id="rt9"></a>**rT9** Two wildcards act on every member at once: `TA_FUNC_UNST_ALL` sets every unstable period, and `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings` and the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`).
+<a id="rt9"></a>**rT9** Two wildcards act on every member at once: `TA_FUNC_UNST_ALL` sets every unstable period, and `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings`, the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`) and Go's `RestoreCandleDefault`.
 
 <a id="rt12"></a>**rT12** A getter returns the value the setter stored. For an unstable period on an Auto level that is the level's constant, not the number of bars it adds ([rL6](/spec/lookback/#rl6)).
 
 ## Initial state
 
-<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default.
+<a id="rt10"></a>**rT10** In C, `TA_Initialize` leaves every unstable period at 0 and every candle setting at its default, and so does Go's `NewCore`.
 
 ## Threads in C
 
@@ -3506,14 +3940,14 @@ url: 'https://ta-lib.org/spec/errors/index.md'
 description: >-
   A rejected batch or stream call reports one code and writes no output, the
   same code in every language that can detect the fault: the codes a function
-  call can return and the batch call's conditions, in C, Rust, Java, C# and
-  TypeScript.
+  call can return and the batch call's conditions, in C, Rust, Java, C#,
+  TypeScript and Go.
 ---
 # Errors
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java, C# or TypeScript caller is on the [hub](/spec/#failures).
+The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java, C#, TypeScript or Go caller is on the [hub](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -3559,22 +3993,22 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
 | <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
-| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C# |
+| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C#; in Go, all but an integer optional parameter outside the `int32` range |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), an empty slice in Go, `nil` included, and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
-**rB7.** Rust, Java, C# and TypeScript allocate through their runtime.
+**rB7.** Rust, Java, C#, TypeScript and Go allocate through their runtime.
 
-**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java, C# and TypeScript report `TA_INTERNAL_ERROR` without an id.
+**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java, C#, TypeScript and Go report `TA_INTERNAL_ERROR` without an id.
 
 ---
 
 ---
 url: 'https://ta-lib.org/spec/versions/index.md'
 description: >-
-  On one machine the same call gives bit-identical results in C, Rust, Java, C#
-  and TypeScript, except where it evaluates a transcendental math function: the
-  equivalent calls, the flags a C build from source must keep, and what a
+  On one machine the same call gives bit-identical results in C, Rust, Java, C#,
+  TypeScript and Go, except where it evaluates a transcendental math function:
+  the equivalent calls, the flags a C build from source must keep, and what a
   release keeps and may add.
 ---
 # Versions and Determinism
@@ -3596,13 +4030,13 @@ The rules for when [the same call](/spec/versions/#determinism) gives the same b
 
   rD1 is not promised for C built with MSVC or clang-cl.
 * <a id="enumerate"></a>**Enumerate, never hard-code a list.** A release may add what [rV3](/spec/versions/#rv3) lists. Enumerate functions through the [Abstract API](/spec/abstract/#provides), check a raw MA-type integer ([rP2](/spec/inputs-outputs/#rp2)), give every `switch` or `match` over a TA-Lib enum a default branch, and ignore an [unknown metadata flag](/spec/abstract/#unknown-flag).
-* <a id="pin"></a>**Validate against the release you ship.** No rule covers output values from one release to the next, nor API compatibility of the Rust, Java, C# and TypeScript packages between releases beyond rV2 and rV3. Which versions and packages exist: [Install](/install/).
+* <a id="pin"></a>**Validate against the release you ship.** No rule covers output values from one release to the next, nor API compatibility of the Rust, Java, C#, TypeScript and Go packages between releases beyond rV2 and rV3. Which versions and packages exist: [Install](/install/).
 
 ## Determinism {#determinism}
 
 In this spec, **bit-identical** means the same return code, the same output range, and every output element with the same bits, a NaN matching any NaN. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
-<a id="rd1"></a>**rD1** On one machine, the same call gives bit-identical results in C, Rust, Java, C# and TypeScript. The exception is a call that evaluates a [transcendental function](/spec/versions/#transcendental).
+<a id="rd1"></a>**rD1** On one machine, the same call gives bit-identical results in C, Rust, Java, C#, TypeScript and Go. The exception is a call that evaluates a [transcendental function](/spec/versions/#transcendental).
 
 <a id="rd2"></a>**rD2** Where rD1 or [rH1](/spec/streaming/#rh1) lets two results differ, TA-Lib targets a difference below 1e-9, and 1e-11 between TypeScript and C: absolute for a value below 1 in magnitude, relative above it. CI verifies it across a wide range of series. It is not a promise for every input: a degenerate one, such as a flat series, can exceed it.
 
@@ -3610,7 +4044,7 @@ In this spec, **bit-identical** means the same return code, the same output rang
 
 ### Transcendental functions {#transcendental}
 
-A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, TypeScript from the JavaScript engine's `Math` object, and none of them is required to round it correctly. TypeScript's result can also change with the engine and its version. A platform can also provide two routines for one function, one for a single value and one for several values at a time, and the two need not round alike: where a batch call takes the vectorized routine (the run-time key [`vmath.transcendental`](/spec/abstract/#runtime-info) tells whether one is in use), its result can differ from a stream's, which evaluates one value at a time, and from another language's. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do carry the [metadata flag](/spec/abstract/#flags-numerical) `TA_FUNC_FLG_USES_TRANSCENDENTAL`, and the averages that do are `MAMA` and `ALMA`. A transcendental call's difference starts in the last bits of one math-library result and can grow through the function's arithmetic; the HT\_\* outputs that round a computed period to whole bars can differ outright on some inputs. `HT_DCPHASE` and `HT_SINE` have no bound on an input that stays flat for a whole dominant cycle: their phase then comes from cancellation noise, so a one-bit difference in a sine or cosine can move it by hundreds of degrees, in every language.
+A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, TypeScript from the JavaScript engine's `Math` object, Go from its `math` package, and none of them is required to round it correctly. TypeScript's result can also change with the engine and its version. A platform can also provide two routines for one function, one for a single value and one for several values at a time, and the two need not round alike: where a batch call takes the vectorized routine (the run-time key [`vmath.transcendental`](/spec/abstract/#runtime-info) tells whether one is in use), its result can differ from a stream's, which evaluates one value at a time, and from another language's. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do carry the [metadata flag](/spec/abstract/#flags-numerical) `TA_FUNC_FLG_USES_TRANSCENDENTAL`, and the averages that do are `MAMA` and `ALMA`. A transcendental call's difference starts in the last bits of one math-library result and can grow through the function's arithmetic; the HT\_\* outputs that round a computed period to whole bars can differ outright on some inputs. `HT_DCPHASE` and `HT_SINE` have no bound on an input that stays flat for a whole dominant cycle: their phase then comes from cancellation noise, so a one-bit difference in a sine or cosine can move it by hundreds of degrees, in every language.
 
 ### Across machines {#machines}
 
@@ -3640,7 +4074,7 @@ Each release is checked on every supported platform against the regression suite
 | macOS | install name `libta-lib.N.dylib` | links and runs against a later one without rebuilding |
 | Windows | none: the DLL's name carries no N (`ta-lib.dll` under MSVC) | gets no signal at link or load time when N changes; rebuild against the headers of the DLL you ship |
 
-<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java, C# or TypeScript enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, valid while the enum lists every member in order; C# an `(int)` cast; in TypeScript the member is the number.
+<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java, C#, TypeScript or Go enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, valid while the enum lists every member in order; C# an `(int)` cast; in TypeScript the member is the number; Go an `int` conversion.
 
 <a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings, return codes, [metadata flags](/spec/abstract/#flags) and [run-time information keys](/spec/abstract/#runtime-info). `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`.
 
@@ -3654,7 +4088,7 @@ description: >-
 ---
 # Functions
 
-All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript source.
+All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript / Go source.
 
 ## Cycle Indicators
 
@@ -3936,8 +4370,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 url: 'https://ta-lib.org/index.md'
 description: >-
   Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI),
-  candlestick patterns, batch and streaming. Native C/C++, Java, C#, Rust and
-  TypeScript, plus Python and R wrappers.
+  candlestick patterns, batch and streaming. Native C/C++, Java, C#, Rust,
+  TypeScript and Go, plus Python and R wrappers.
 ---
 # TA-Lib
 
@@ -3961,8 +4395,8 @@ TA-Lib implements the standard technical analysis algorithms used across the ind
 <p>Compute a whole array, or update one bar at a time without recomputing the history. <a href="/api/stream/">Streaming API</a>.</p>
 </div>
 <div class="home-card">
-<h4>Native in five languages</h4>
-<p><a href="/api/">C/C++</a>, <a href="/api/java/">Java</a>, <a href="/api/csharp/">C#</a>, <a href="/api/rust/">Rust</a> and <a href="/api/typescript/">TypeScript</a>. Wrappers for Python, R, and <a href="/install/#wrappers">more</a>.</p>
+<h4>Native in six languages</h4>
+<p><a href="/api/">C/C++</a>, <a href="/api/java/">Java</a>, <a href="/api/csharp/">C#</a>, <a href="/api/rust/">Rust</a>, <a href="/api/typescript/">TypeScript</a> and <a href="/api/go/">Go</a>. Wrappers for Python, R, and <a href="/install/#wrappers">more</a>.</p>
 </div>
 <div class="home-card">
 <h4>Made for integration</h4>
@@ -4071,6 +4505,25 @@ const p = s.peek(formingClose);      // bar still forming; state unchanged
 ```
 
 [API](/api/typescript/) · [Streaming](/api/typescript/stream/)
+
+@tab Go
+
+```go
+import talib "ta-lib.github.io/go"
+
+core := talib.NewCore()
+
+// Batch: out[0] is the value at bar r.BegIdx.
+out := make([]float64, len(close))
+r, err := core.SMA(0, len(close)-1, close, 30, out)
+
+// Streaming: open on history, then one call per bar.
+s, last, err := core.SMAOpen(close, 30)
+v, err := s.Update(newClose)         // a bar closed
+p, err := s.Peek(formingClose)       // bar still forming; state unchanged
+```
+
+[API](/api/go/) · [Streaming](/api/go/stream/)
 
 :::
 
@@ -4228,7 +4681,7 @@ TA-Lib generates all of its per-function code from a single source of truth. One
 | `<name>.c` | The algorithm: a `<name>_lookback()` and a `<name>()` batch function, in plain portable C. Optionally a `<name>_display_shift()`, for an output a chart draws at another bar. |
 | `<name>.md` | Documentation: summary, the formula in its original algebraic form, references. |
 
-From these three files, the `ta_codegen` generator produces everything the project ships: the C library, native Rust, Java, .NET and TypeScript implementations, streaming variants, the test servers, benchmarks, and this website's function page. You never write Rust, Java, C# or TypeScript by hand, and you never edit generated files.
+From these three files, the `ta_codegen` generator produces everything the project ships: the C library, native Rust, Java, .NET, TypeScript and Go implementations, streaming variants, the test servers, benchmarks, and this website's function page. You never write Rust, Java, C#, TypeScript or Go by hand, and you never edit generated files.
 
 Every backend is then verified by `ta_regtest`, which drives all languages through JSON-RPC servers and cross-checks their outputs against the C reference, bit-for-bit in the strictest gates.
 
@@ -4238,7 +4691,7 @@ Any of Linux, macOS, Windows or WSL2. You need:
 
 * git, a C compiler (gcc/clang/MSVC), CMake ≥ 3.18
 * The Rust toolchain via [rustup](https://rustup.rs) (the generator is written in Rust)
-* Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band, and Node.js 22.18 or later with npm; `scripts/build.py libraries`, which builds the publishable Java, C# and TypeScript packages, also needs `unzip` for the committed Maven wrapper. Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
+* Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band, Node.js 22.18 or later with npm, and Go 1.22 or later (the build scripts fetch a pinned Go when none is installed); `scripts/build.py libraries`, which builds the publishable Java, C#, TypeScript and Go packages, also needs `unzip` for the committed Maven wrapper. Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
 
 ```bash
 git clone https://github.com/TA-Lib/ta-lib.git
@@ -4278,7 +4731,7 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 **Invariants.** Violating any of these fails review:
 
 * No logic in YAML, ever. No metadata in the `.c` file.
-* Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and the per-function sources under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate. Not all of `output/` is generated — the hand-written scaffolding, the build files (`pom.xml`, `TALib.csproj`, the TypeScript tooling `package.json`), the TypeScript runtime (`library/src/runtime/`) and the Java, C# and TypeScript test suites (TypeScript's outside `library/test/gen/`) live there too, and `generate` preserves them; treat those as harness, per the rule above. **A banner is proof that a file is generated; its absence is not proof of the opposite.** Around thirty committed files are emitted without one — `src/ta_abstract/ta_abstract.c` among them, written by `backends/ta_abstract_c.rs`. Before editing anything under `src/` or `output/`, grep the generator for the file name; `generate` reverts an edit it owns without a word.
+* Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and the per-function sources under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate. Not all of `output/` is generated: the hand-written scaffolding, the build files (`pom.xml`, `TALib.csproj`, the TypeScript tooling `package.json`), the TypeScript runtime (`library/src/runtime/`), the Go package's `core.go`, `doc.go`, `retcode.go`, `runtime.go` and `README.md`, and the Java, C#, TypeScript and Go test suites (TypeScript's outside `library/test/gen/`; Go's `talib_test.go`) live there too, and `generate` preserves them; treat those as harness, per the rule above. **A banner is proof that a file is generated; its absence is not proof of the opposite.** Around thirty committed files are emitted without one, `src/ta_abstract/ta_abstract.c` among them, written by `backends/ta_abstract_c.rs`. Before editing anything under `src/` or `output/`, grep the generator for the file name; `generate` reverts an edit it owns without a word.
 * `<name>.md` documents the original algebra of the indicator, never implementation artifacts: no zero-guards, epsilon comparisons or `period == 1` special cases in the formula. State the value returned where the algebra is undefined only when a reader would otherwise wonder, as RVI's `or 50 when Up + Down = 0` does; a guard that merely avoids a divide by zero is noise.
 * In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
 * Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
@@ -4310,18 +4763,18 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 url: 'https://ta-lib.org/faq/index.md'
 description: >-
   Whether TA-Lib is still maintained (yes, actively again since 2025), whether
-  it works on a live feed, whether the Rust, Java, C# and TypeScript libraries
-  need the C library, and where to get support.
+  it works on a live feed, whether the Rust, Java, C#, TypeScript and Go
+  libraries need the C library, and where to get support.
 ---
 # FAQ
 
 ## Is TA-Lib maintained?
 
-Yes, and more actively than in years. Development resumed in 2025 after a quiet decade (2014 to 2024), adding automated releases, a streaming API, and native Rust, Java, C# and TypeScript libraries. The classic C library stays as reliable as ever.
+Yes, and more actively than in years. Development resumed in 2025 after a quiet decade (2014 to 2024), adding automated releases, a streaming API, and native Rust, Java, C#, TypeScript and Go libraries. The classic C library stays as reliable as ever.
 
 ## Does TA-Lib work on a live feed?
 
-Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/) or [TypeScript](/api/typescript/stream/).
+Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) or [Go](/api/go/stream/).
 
 ## Can the same code serve a backtest and live trading?
 
@@ -4335,7 +4788,7 @@ Yes. A stream fed bar by bar returns the values the batch function returns over 
 
 Many patterns are rare; see [How often patterns fire](/api/candlestick-outputs/#how-often-patterns-fire).
 
-## Do the Rust, Java, C# and TypeScript libraries need the C library?
+## Do the Rust, Java, C#, TypeScript and Go libraries need the C library?
 
 No. Each is a native implementation in its own language, with no binding to C.
 
@@ -4354,8 +4807,8 @@ Various ways:
 url: 'https://ta-lib.org/install/index.md'
 description: >-
   Install TA-Lib: a dozen languages, natively or through a wrapper. Native
-  C/C++, Java, C#, Rust and TypeScript, plus community wrappers for Python, R,
-  Go, Ruby, PHP, Zig and more.
+  C/C++, Java, C#, Rust, TypeScript and Go, plus community wrappers for Python,
+  R, Ruby, PHP, Zig and more.
 ---
 # Install
 
@@ -4365,6 +4818,7 @@ TA-Lib reaches a dozen languages: natively, or through a wrapper.
 
 * [C/C++](/install/c/)
 * [C#](/api/csharp/)
+* [Go](/api/go/)
 * [Java](/api/java/)
 * [Rust](/api/rust/)
 * [TypeScript](/api/typescript/)
@@ -4633,7 +5087,7 @@ description: >-
 ---
 # Wrappers
 
-TA-Lib reaches a wider ecosystem through these community-maintained wrappers:
+TA-Lib reaches a wider ecosystem through these community-maintained wrappers. Go also has a [native library](/api/go/).
 
 
 

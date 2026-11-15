@@ -6,7 +6,7 @@ description: >-
 ---
 # Functions
 
-All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript source.
+All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript / Go source.
 
 ## Cycle Indicators
 
