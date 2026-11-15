@@ -544,7 +544,7 @@ impl Core {
                 outIdx += 1;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * fmadd!(I2, prevI2, Q2 * prevQ2));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -925,7 +925,7 @@ impl Core {
         *outFAMA = sp.fama;
         *outMAMA = sp.mama;
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -1112,7 +1112,7 @@ impl Core {
         *outFAMA = sp.fama;
         *outMAMA = sp.mama;
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -1508,7 +1508,7 @@ impl Core {
                 outMAMA[{ let _v = outIdx; outIdx += 1; _v } * outStride] = mama;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * fmadd!(I2, prevI2, Q2 * prevQ2));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;

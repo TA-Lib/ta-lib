@@ -15,6 +15,10 @@ const ASSIGN_OPS: &[&str] = &["=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=
 /// Marks a line [`tidy_params`] removed, for its caller to drop.
 const DROPPED: &str = "\u{0}";
 
+/// The generated macros whose every fragment is `$x:expr`, so parentheses
+/// inside their arguments group exactly as they would in a call.
+const EXPR_MACROS: &[&str] = &["c_color_max", "c_color_min", "fmadd"];
+
 /// Methods a generated body calls on a local that leave it unchanged.
 const READ_ONLY_METHODS: &[&str] = &[
     "abs", "as_ptr", "ceil", "clone", "contains", "copied", "floor", "get", "is_empty", "is_finite",
@@ -798,13 +802,21 @@ fn drop_parens(line: &str) -> String {
     let mut cur = line.to_string();
     loop {
         let m = masked(&cur);
-        // A macro's arguments are tokens whose grouping its rules may match.
+        // A macro's arguments are tokens whose grouping its rules may match,
+        // except in the generated macros that take only `$x:expr` fragments.
         let mut in_macro = vec![false; m.len()];
         let mut stack: Vec<bool> = Vec::new();
+        let opaque_macro = |k: usize| {
+            if k < 2 || m[k - 1] != b'!' {
+                return false;
+            }
+            let start = m[..k - 1].iter().rposition(|c| !(c.is_ascii_alphanumeric() || *c == b'_')).map_or(0, |p| p + 1);
+            start < k - 1 && !EXPR_MACROS.contains(&std::str::from_utf8(&m[start..k - 1]).unwrap_or(""))
+        };
         for k in 0..m.len() {
             in_macro[k] = stack.iter().any(|&f| f);
             match m[k] {
-                b'(' | b'[' | b'{' => stack.push(k >= 2 && m[k - 1] == b'!' && (m[k - 2].is_ascii_alphanumeric() || m[k - 2] == b'_')),
+                b'(' | b'[' | b'{' => stack.push(opaque_macro(k)),
                 b')' | b']' | b'}' => {
                     stack.pop();
                 }
@@ -1278,6 +1290,7 @@ mod tests {
             ("        y = (2.0).max(x);", "        y = (2.0).max(x);"),
             ("        y = f((a, b));", "        y = f((a, b));"),
             ("        y = c_max!((a), (b[0]));", "        y = c_max!((a), (b[0]));"),
+            ("        y = c_color_max!((a), (b[0] + 1.0));", "        y = c_color_max!(a, b[0] + 1.0);"),
             ("        d!(s, f, g, (x));", "        d!(s, f, g, (x));"),
             ("        s = \"(x)\";", "        s = \"(x)\";"),
             ("        y = -(a[i]) + !(b);", "        y = -a[i] + !b;"),

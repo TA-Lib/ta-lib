@@ -199,7 +199,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) + // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -211,7 +211,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -219,7 +219,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -231,7 +231,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -242,7 +242,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -254,7 +254,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -313,7 +313,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) + // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -325,7 +325,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -333,7 +333,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -345,7 +345,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -356,7 +356,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -368,7 +368,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -427,7 +427,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) + // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -439,7 +439,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -447,7 +447,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -459,7 +459,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -470,7 +470,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -482,7 +482,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -541,7 +541,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) + // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -553,7 +553,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -561,7 +561,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -573,7 +573,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -584,7 +584,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -596,7 +596,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -976,7 +976,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -985,7 +985,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -994,7 +994,7 @@ impl Core {
             if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                 u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                 u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                     (!(inClose[i] >= inOpen[i])) & // 3rd: black
                     (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                     (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1006,7 +1006,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+            BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
             i += 1;
             BodyLongTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1023,7 +1023,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1092,7 +1092,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1101,7 +1101,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1110,7 +1110,7 @@ impl Core {
             if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                 u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                 u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                     (!(inClose[i] >= inOpen[i])) & // 3rd: black
                     (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                     (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1122,7 +1122,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+            BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
             i += 1;
             BodyLongTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1139,7 +1139,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1208,7 +1208,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1217,7 +1217,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1226,7 +1226,7 @@ impl Core {
             if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                 u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                 u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                     (!(inClose[i] >= inOpen[i])) & // 3rd: black
                     (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                     (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1238,7 +1238,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+            BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
             i += 1;
             BodyLongTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1255,7 +1255,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1324,7 +1324,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1333,7 +1333,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1342,7 +1342,7 @@ impl Core {
             if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                 u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                 u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                     (!(inClose[i] >= inOpen[i])) & // 3rd: black
                     (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                     (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1354,7 +1354,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+            BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
             i += 1;
             BodyLongTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1371,7 +1371,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1472,7 +1472,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) +           // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1484,7 +1484,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1493,7 +1493,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1505,7 +1505,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1516,7 +1516,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1528,7 +1528,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1548,7 +1548,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1617,7 +1617,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) +           // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1629,7 +1629,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1638,7 +1638,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1650,7 +1650,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1661,7 +1661,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1673,7 +1673,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1693,7 +1693,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1762,7 +1762,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) +           // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1774,7 +1774,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1783,7 +1783,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1795,7 +1795,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1806,7 +1806,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1818,7 +1818,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1838,7 +1838,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1907,7 +1907,7 @@ impl Core {
                         if ((u32::from(_w1[_wk] >= _w7[_wk]) +           // 1st: white
                             u32::from(!(_w1[_wk + 1] >= _w7[_wk + 1])) + // 2nd: black
                             u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1919,7 +1919,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                     }
@@ -1928,7 +1928,7 @@ impl Core {
                         if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) + // 1st: white
                             u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                             u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                            outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                                 (!(inClose[i] >= inOpen[i])) & // 3rd: black
                                 (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                                 (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1940,7 +1940,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                        BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                         i += 1;
                         BodyLongTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1951,7 +1951,7 @@ impl Core {
                     if ((u32::from(inClose[i - 2] >= inOpen[i - 2]) +   // 1st: white
                         u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 2nd: black
                         u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) == 3) { // gapping up
-                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
+                        outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > (BodyLong_factor * (if BodyLong_avgPeriod != 0 { BodyLongPeriodTotal / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if BodyLong_rangeType == 2 { 0.5 } else { 1.0 }))) & // long
                             (!(inClose[i] >= inOpen[i])) & // 3rd: black
                             (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // opening within 2nd rb
                             (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])), // closing within 1st rb
@@ -1963,7 +1963,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx]))) + (c_color_min!((inClose[BodyLongTrailingIdx]), (inOpen[BodyLongTrailingIdx])) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
+                    BodyLongPeriodTotal += match BodyLong_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[BodyLongTrailingIdx] - c_color_max!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx])) + (c_color_min!(inClose[BodyLongTrailingIdx], inOpen[BodyLongTrailingIdx]) - inLow[BodyLongTrailingIdx])), _ => 0.0 };
                     i += 1;
                     BodyLongTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1983,7 +1983,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx as usize)] = match BodyLong_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }

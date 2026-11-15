@@ -269,7 +269,7 @@ impl Core {
                     ema1 = sum1 / (optInFastPeriod as f64);
                 }
             } else {
-                ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
+                ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -283,7 +283,7 @@ impl Core {
                         ema2 = sum2 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
+                    ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -319,8 +319,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
-            ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
+            ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
+            ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -514,8 +514,8 @@ impl Core {
         let mut ratio: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         hl = inHigh - inLow;
-        sp.ema1 = fmadd!(sp.emaBeta, sp.ema1, ((sp.optInK_1) as f64) * hl);
-        sp.ema2 = fmadd!(sp.emaBeta, sp.ema2, ((sp.optInK_1) as f64) * sp.ema1);
+        sp.ema1 = fmadd!(sp.emaBeta, sp.ema1, (sp.optInK_1 as f64) * hl);
+        sp.ema2 = fmadd!(sp.emaBeta, sp.ema2, (sp.optInK_1 as f64) * sp.ema1);
         if sp.ema2 == 0.0 {
             ratio = 1.0;
         } else {
@@ -649,7 +649,7 @@ impl Core {
                     ema1 = sum1 / (optInFastPeriod as f64);
                 }
             } else {
-                ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
+                ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -663,7 +663,7 @@ impl Core {
                         ema2 = sum2 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
+                    ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -699,8 +699,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
-            ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
+            ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
+            ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -914,8 +914,8 @@ impl MassiStream {
             let mut ema2 = sp.ema2;
             let mut total = sp.total;
             hl = inHigh - inLow;
-            ema1 = fmadd!(sp.emaBeta, ema1, ((sp.optInK_1) as f64) * hl);
-            ema2 = fmadd!(sp.emaBeta, ema2, ((sp.optInK_1) as f64) * ema1);
+            ema1 = fmadd!(sp.emaBeta, ema1, (sp.optInK_1 as f64) * hl);
+            ema2 = fmadd!(sp.emaBeta, ema2, (sp.optInK_1 as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {

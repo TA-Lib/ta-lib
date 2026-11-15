@@ -227,8 +227,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -236,7 +236,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -245,8 +245,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) + // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -254,7 +254,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -266,8 +266,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -275,7 +275,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -362,8 +362,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -371,7 +371,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -380,8 +380,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) + // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -389,7 +389,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -401,8 +401,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -410,7 +410,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -497,8 +497,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -506,7 +506,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -515,8 +515,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) + // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -524,7 +524,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -536,8 +536,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -545,7 +545,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -632,8 +632,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -641,7 +641,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                     }
                 } else {
@@ -650,8 +650,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) + // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -659,7 +659,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -671,8 +671,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -680,7 +680,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1065,7 +1065,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1074,7 +1074,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1084,8 +1084,8 @@ impl Core {
                 u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                 u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                 outInteger[0] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                 outIdx += 1;
             } else {
                 outInteger[0] = 0;
@@ -1093,7 +1093,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+            EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
             i += 1;
             EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1111,7 +1111,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1208,7 +1208,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1217,7 +1217,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1227,8 +1227,8 @@ impl Core {
                 u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                 u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                 outInteger[0] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                 outIdx += 1;
             } else {
                 outInteger[0] = 0;
@@ -1236,7 +1236,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+            EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
             i += 1;
             EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1254,7 +1254,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1351,7 +1351,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1360,7 +1360,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1370,8 +1370,8 @@ impl Core {
                 u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                 u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                 outInteger[0] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                 outIdx += 1;
             } else {
                 outInteger[0] = 0;
@@ -1379,7 +1379,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+            EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
             i += 1;
             EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1397,7 +1397,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1494,7 +1494,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1503,7 +1503,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1513,8 +1513,8 @@ impl Core {
                 u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                 u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                 outInteger[0] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                    (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                 outIdx += 1;
             } else {
                 outInteger[0] = 0;
@@ -1522,7 +1522,7 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+            EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
             i += 1;
             EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
@@ -1540,7 +1540,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1670,8 +1670,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -1679,7 +1679,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1689,8 +1689,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -1698,7 +1698,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1710,8 +1710,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -1719,7 +1719,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1740,7 +1740,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1838,8 +1838,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -1847,7 +1847,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -1857,8 +1857,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -1866,7 +1866,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1878,8 +1878,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -1887,7 +1887,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -1908,7 +1908,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2006,8 +2006,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -2015,7 +2015,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -2025,8 +2025,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -2034,7 +2034,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -2046,8 +2046,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -2055,7 +2055,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -2076,7 +2076,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2174,8 +2174,8 @@ impl Core {
                             u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // second white
                             u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -2183,7 +2183,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!(_w1[_wk], _w7[_wk])) + (c_color_min!(_w1[_wk], _w7[_wk]) - _w5[_wk])) - ((_w2[_wk] - c_color_max!(_w0[_wk], _w6[_wk])) + (c_color_min!(_w0[_wk], _w6[_wk]) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                     }
@@ -2193,8 +2193,8 @@ impl Core {
                             u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // second white
                             u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // third black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                                (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                                (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                             outIdx += 1;
                         } else {
                             outInteger[outIdx] = 0;
@@ -2202,7 +2202,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                        EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                         i += 1;
                         EqualTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -2214,8 +2214,8 @@ impl Core {
                         u32::from(inClose[i - 1] >= inOpen[i - 1]) +     // second white
                         u32::from(!(inClose[i] >= inOpen[i]))) == 3) {   // third black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inLow[i - 1] > inClose[i - 2]) & // 2nd low > prior close
-                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
-                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                            (inClose[i] <= inClose[i - 2] + (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 }))) & // 1st and 3rd same close
+                            (inClose[i] >= inClose[i - 2] - (Equal_factor * (if Equal_avgPeriod != 0 { EqualPeriodTotal / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]), _ => 0.0 } }) * (if Equal_rangeType == 2 { 0.5 } else { 1.0 })))), 100, 0);
                         outIdx += 1;
                     } else {
                         outInteger[outIdx] = 0;
@@ -2223,7 +2223,7 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2]))) + (c_color_min!((inClose[EqualTrailingIdx - 2]), (inOpen[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
+                    EqualPeriodTotal += match Equal_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!(inClose[i - 2], inOpen[i - 2])) + (c_color_min!(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - c_color_max!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2])) + (c_color_min!(inClose[EqualTrailingIdx - 2], inOpen[EqualTrailingIdx - 2]) - inLow[EqualTrailingIdx - 2])), _ => 0.0 };
                     i += 1;
                     EqualTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
@@ -2244,7 +2244,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = match Equal_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!(inClose[fillJ], inOpen[fillJ])) + (c_color_min!(inClose[fillJ], inOpen[fillJ]) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }

@@ -261,7 +261,7 @@ impl Core {
         if emaRing_Idx >= emaRing.len() { emaRing_Idx = 0; }
         while today < startIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, (optInK_1 as f64) * tempReal);
             today += 1;
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
@@ -272,7 +272,7 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, (optInK_1 as f64) * tempReal);
             today += 1;
             laggedEMA = emaRing[emaRing_Idx];
             emaRing[emaRing_Idx] = prevEMA;
@@ -463,7 +463,7 @@ impl Core {
         let mut laggedEMA: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inHigh - inLow;
-        sp.prevEMA = fmadd!(sp.emaBeta, sp.prevEMA, ((sp.optInK_1) as f64) * tempReal);
+        sp.prevEMA = fmadd!(sp.emaBeta, sp.prevEMA, (sp.optInK_1 as f64) * tempReal);
         laggedEMA = sp.cb_emaRing[sp.emaRing_Idx];
         sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA;
         sp.emaRing_Idx = sp.emaRing_Idx + 1;
@@ -584,7 +584,7 @@ impl Core {
         if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
         while today < startIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, (optInK_1 as f64) * tempReal);
             today += 1;
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
@@ -595,7 +595,7 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, (optInK_1 as f64) * tempReal);
             today += 1;
             laggedEMA = emaRing[emaRing_Idx];
             emaRing[emaRing_Idx] = prevEMA;
@@ -802,7 +802,7 @@ impl CviStream {
             let emaRing_Idx = sp.emaRing_Idx;
             let mut prevEMA = sp.prevEMA;
             tempReal = inHigh - inLow;
-            prevEMA = fmadd!(sp.emaBeta, prevEMA, ((sp.optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(sp.emaBeta, prevEMA, (sp.optInK_1 as f64) * tempReal);
             laggedEMA = sp.cb_emaRing[emaRing_Idx];
             if laggedEMA != 0.0 {
                 *outReal = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);

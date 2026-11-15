@@ -237,12 +237,12 @@ impl Core {
         }
         prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
-            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
             outReal[outIdx] = prevMA;
             outIdx += 1;
         }
@@ -391,7 +391,7 @@ impl Core {
             sp.cur_outReal = *outReal;
             return;
         }
-        sp.prevMA = fmadd!(sp.emaBeta, sp.prevMA, ((sp.optInK_1) as f64) * inReal);
+        sp.prevMA = fmadd!(sp.emaBeta, sp.prevMA, (sp.optInK_1 as f64) * inReal);
         *outReal = sp.prevMA;
         sp.cur_outReal = *outReal;
     }
@@ -509,12 +509,12 @@ impl Core {
         }
         prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
-            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
             outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevMA;
         }
         *outNBElement = outIdx;
@@ -696,7 +696,7 @@ impl EmaStream {
                 *outReal = inReal;
                 return Ok(*outReal);
             }
-            prevMA = fmadd!(sp.emaBeta, prevMA, ((sp.optInK_1) as f64) * inReal);
+            prevMA = fmadd!(sp.emaBeta, prevMA, (sp.optInK_1 as f64) * inReal);
             *outReal = prevMA;
         }
         Ok(outReal)
