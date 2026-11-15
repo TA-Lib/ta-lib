@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib_0.8.4_amd64.deb",
-    "sources_digest": "4e5d47bb629baab8f0d059547d9bdb4f",
+    "sources_digest": "4f2fa1fc56bc4897bcc3194bac165b72",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "16600db6b564f1e429639325a64cd2abf854883402ee06d12d04c8de2428587d",
+    "package_sha256": "e4b128e1cb70e9101620a8270982aadda1fcc62c978a0bf670dae09f4b49c0af",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
