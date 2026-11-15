@@ -85,7 +85,7 @@ fn go_public_entry_documents_exactly_its_parameters() {
         assert!(!expected.is_empty(), "{}: parsed no parameters", func.name);
         checked += 1;
     }
-    assert!(checked > 200, "only {checked} functions");
+    assert!(common::sweep_filtered() || checked > 200, "only {checked} functions");
 }
 
 /// Every other generated doc names only arguments its declaration has, or the
@@ -115,7 +115,7 @@ fn go_docs_name_only_arguments_that_exist() {
             checked += 1;
         }
     }
-    assert!(checked > 2000, "only {checked} declarations");
+    assert!(common::sweep_filtered() || checked > 2000, "only {checked} declarations");
 }
 
 /// A Go doc comment is plain text: Markdown reaches the reader as punctuation.
@@ -130,7 +130,7 @@ fn no_markdown_reaches_the_go_docs() {
             checked += 1;
         }
     }
-    assert!(checked > 5000, "only {checked} doc lines");
+    assert!(common::sweep_filtered() || checked > 5000, "only {checked} doc lines");
 }
 
 /// A link to another function's page becomes a doc link to its method, and the

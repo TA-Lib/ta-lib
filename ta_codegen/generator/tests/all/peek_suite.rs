@@ -32,21 +32,6 @@ fn input_dir() -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../input")
 }
 
-/// Every indicator directory in the input tree.
-fn indicators() -> Vec<String> {
-    let mut v: Vec<String> = std::fs::read_dir(input_dir())
-        .expect("input dir")
-        .filter_map(Result::ok)
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            e.path().join(format!("{name}.yaml")).exists().then_some(name)
-        })
-        .collect();
-    v.sort();
-    v
-}
-
 fn load(name: &str) -> Option<(ir::FuncDef, HashMap<String, ir::EnumDef>)> {
     let base = input_dir();
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));
@@ -212,7 +197,7 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
     let (mut tape_peeks, mut tape_sites) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -253,28 +238,34 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
         }
     }
 
-    assert!(peek_frames >= 200, "only {peek_frames} peek entry points swept");
-    let registry = common::make_registry();
-    let tape_set = indicators().iter().filter(|n| registry.in_tape_set(n)).count();
     assert!(
-        tape_set > 0 && tape_peeks == tape_set,
+        common::sweep_filtered() || peek_frames >= 200,
+        "only {peek_frames} peek entry points swept"
+    );
+    let registry = common::make_registry();
+    let tape_set = common::discover_indicators().iter().filter(|n| registry.in_tape_set(n)).count();
+    assert!(
+        (common::sweep_filtered() || tape_set > 0) && tape_peeks == tape_set,
         "{tape_peeks} tape peek(s) swept for a tape set of {tape_set}"
     );
-    assert!(tape_sites > 0, "the tape peeks index no handle buffer, so the sweep saw nothing");
     assert!(
-        buffers_seen > 150,
+        common::sweep_filtered() || tape_sites > 0,
+        "the tape peeks index no handle buffer, so the sweep saw nothing"
+    );
+    assert!(
+        common::sweep_filtered() || buffers_seen > 150,
         "only {buffers_seen} handle buffer(s) found across the corpus, so the store scan \
          is looking for something that is not there"
     );
     assert!(
-        update_stores > 200,
+        common::sweep_filtered() || update_stores > 200,
         "the update frames carry only {update_stores} buffer stores, so the peek sweep \
          proves nothing"
     );
     // The floors above measure the update side and the handle. This one is the
     // only thing that says the PEEK scan looked at a subscript at all.
     assert!(
-        peek_sites > 150,
+        common::sweep_filtered() || peek_sites > 150,
         "the peek frames offered only {peek_sites} buffer subscript(s) to inspect, so \
          the store scan is reading past them"
     );
@@ -295,7 +286,7 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
 fn no_peek_entry_point_commits_a_sub_stream() {
     let mut with_subs = 0usize;
     let mut offenders: Vec<String> = Vec::new();
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -310,7 +301,7 @@ fn no_peek_entry_point_commits_a_sub_stream() {
         }
     }
     assert!(
-        with_subs >= 12,
+        common::sweep_filtered() || with_subs >= 12,
         "only {with_subs} peek entry point(s) drive a sub-stream, so this gate is not \
          watching the tiers it exists for"
     );
@@ -332,7 +323,7 @@ fn every_return_in_a_peek_answers_a_code() {
     let mut early_exits = 0usize;
     let mut with_short_circuit = 0usize;
     let mut offenders: Vec<String> = Vec::new();
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -352,7 +343,7 @@ fn every_return_in_a_peek_answers_a_code() {
         }
     }
     assert!(
-        early_exits > 150 && with_short_circuit >= 5,
+        common::sweep_filtered() || (early_exits > 150 && with_short_circuit >= 5),
         "{early_exits} answered exit(s) over {with_short_circuit} function(s) with an \
          early exit — too few for this to be checking the shape the defect lived in"
     );
@@ -369,7 +360,7 @@ fn every_return_in_a_peek_answers_a_code() {
 fn a_peek_frame_drops_the_rare_branch_hint() {
     let mut hinted_steps = 0usize;
     let mut offenders: Vec<String> = Vec::new();
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -383,7 +374,7 @@ fn a_peek_frame_drops_the_rare_branch_hint() {
         }
     }
     assert!(
-        hinted_steps >= 5,
+        common::sweep_filtered() || hinted_steps >= 5,
         "only {hinted_steps} update step(s) keep a hint, so this gate is not watching \
          the frames it exists for"
     );
@@ -710,7 +701,7 @@ fn no_c_peek_copies_the_handle() {
     let mut stateless = 0usize;
     let (mut fixtures, mut bounded) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -778,16 +769,20 @@ fn no_c_peek_copies_the_handle() {
             }
         }
     }
-    assert!(swept >= 200, "only {swept} peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek(s) swept");
     assert_eq!(
         frames + dispatchers + stateless,
         swept,
         "{frames} frame(s) + {dispatchers} dispatcher(s) + {stateless} stateless do not account \
          for {swept} peek(s)"
     );
-    assert_eq!(dispatchers, 2, "{dispatchers} peek(s) delegate — MA and MAVP are the two");
+    let delegating = ["ma", "mavp"].iter().filter(|n| common::swept(n)).count();
+    assert_eq!(
+        dispatchers, delegating,
+        "{dispatchers} peek(s) delegate — MA and MAVP are the two"
+    );
     assert!(
-        stateless > 0,
+        common::sweep_filtered() || stateless > 0,
         "no peek computes from its bars alone — the arm that must NOT bind `sp` is unreachable \
          and this sweep no longer says the binding follows the frame's actual reads"
     );
@@ -824,7 +819,7 @@ fn no_c_peek_copies_the_handle() {
 fn no_peek_frame_reads_a_field_it_has_bound() {
     let (mut swept, mut binds, mut reads) = (0usize, 0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -883,9 +878,9 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
             reads += l.matches("sp->").count();
         }
     }
-    assert!(swept >= 200, "only {swept} peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek(s) swept");
     assert!(
-        reads > 700 && binds > 400,
+        common::sweep_filtered() || (reads > 700 && binds > 400),
         "{reads} `sp->` read(s) over {binds} that name a bound local — too few for this \
          to be measuring anything"
     );
@@ -910,7 +905,7 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
         src[..line].ends_with("TA_FMA_MULTIVERSION\n")
     };
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -976,12 +971,30 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
     }
 
     assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused tiers: {drifted:?}");
-    assert!(opens >= 150, "only {opens} `_OpenImpl` rendered -- the signature moved");
-    assert!(fused_opens > 0, "no `_OpenImpl` fuses, so this sweep proved nothing about the open tier");
-    assert!(peeks >= 200, "only {peeks} peek frame(s) rendered -- the signature moved");
-    assert!(steps >= 200, "only {steps} step(s) paired with an Update -- a signature moved");
-    assert!(fused_peeks > 0, "no peek fuses, so this sweep proved nothing about Peek");
-    assert!(fused_steps > 0, "no step fuses, so this sweep proved nothing about Update");
+    assert!(
+        common::sweep_filtered() || opens >= 150,
+        "only {opens} `_OpenImpl` rendered -- the signature moved"
+    );
+    assert!(
+        common::sweep_filtered() || fused_opens > 0,
+        "no `_OpenImpl` fuses, so this sweep proved nothing about the open tier"
+    );
+    assert!(
+        common::sweep_filtered() || peeks >= 200,
+        "only {peeks} peek frame(s) rendered -- the signature moved"
+    );
+    assert!(
+        common::sweep_filtered() || steps >= 200,
+        "only {steps} step(s) paired with an Update -- a signature moved"
+    );
+    assert!(
+        common::sweep_filtered() || fused_peeks > 0,
+        "no peek fuses, so this sweep proved nothing about Peek"
+    );
+    assert!(
+        common::sweep_filtered() || fused_steps > 0,
+        "no step fuses, so this sweep proved nothing about Update"
+    );
 }
 
 /// Peek renders every multiply-add it still EVALUATES exactly as update renders
@@ -1023,7 +1036,7 @@ fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
     let mut refused: Vec<String> = Vec::new();
     let mut mismatches: Vec<String> = Vec::new();
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -1100,24 +1113,25 @@ fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
 
     assert!(refused.is_empty(), "a shape this gate cannot anchor:\n{}", refused.join("\n"));
     assert!(
-        pairs >= 170 && fusing >= 25 && sites >= 110 && anchors >= 80 && unanchored >= 4,
+        common::sweep_filtered()
+            || (pairs >= 170 && fusing >= 25 && sites >= 110 && anchors >= 80 && unanchored >= 4),
         "{pairs} frame pair(s), {fusing} fusing, {sites} update site(s) over {anchors} \
          target(s), {unanchored} unanchored — too few for this to be measuring anything"
     );
     assert!(
-        aligned >= 140 && collapsed >= 170,
+        common::sweep_filtered() || (aligned >= 140 && collapsed >= 170),
         "{aligned} peek statement(s) aligned on a fused target and {collapsed} select(s) \
          collapsed — each leg needs its own floor, or one can go dead while the other \
          reads green"
     );
     assert!(
-        unqualified_step >= 900 && unqualified_peek >= 700,
+        common::sweep_filtered() || (unqualified_step >= 900 && unqualified_peek >= 700),
         "{unqualified_step} update and {unqualified_peek} peek line(s) still read state \
          through `sp->` after their binds were dropped — a frame that read none would \
          make the comparisons above trivially equal"
     );
     assert!(
-        binds_step >= 40 && binds_peek >= 200,
+        common::sweep_filtered() || (binds_step >= 40 && binds_peek >= 200),
         "{binds_step} update and {binds_peek} peek bind(s) dropped — the frames carry one \
          per elected and per localized scalar, and dropping none would mean the \
          unqualification above never fired"
@@ -1137,7 +1151,7 @@ fn no_tier_carries_a_peek_mirror_or_a_routing_flag() {
     // A pure-absence sweep reads the same whether it examined 176 functions or
     // none, which is why every test here counts what it looked at.
     let mut swept = 0usize;
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         swept += 1;
         let src = stream_c(&func, &enums);
@@ -1154,7 +1168,7 @@ fn no_tier_carries_a_peek_mirror_or_a_routing_flag() {
             func.name
         );
     }
-    assert!(swept >= 200, "only {swept} function(s) examined");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} function(s) examined");
 }
 
 /// SMA is the whole mechanism in one function: the degenerate `cap == 0` store
@@ -1290,7 +1304,7 @@ fn a_peek_frame_deletes_every_accumulator_store() {
     let mut unhandled: Vec<String> = Vec::new();
     let mut kept: Vec<String> = Vec::new();
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -1322,19 +1336,19 @@ fn a_peek_frame_deletes_every_accumulator_store() {
 
     assert!(unhandled.is_empty(), "unswept handle(s):\n{}", unhandled.join("\n"));
     assert!(
-        with_accumulators >= 21,
+        common::sweep_filtered() || with_accumulators >= 21,
         "only {with_accumulators} function(s) store into a fixed-size accumulator, so this \
          sweep is looking for something that is not there"
     );
     assert!(
-        step_stores >= 60,
+        common::sweep_filtered() || step_stores >= 60,
         "the update frames carry only {step_stores} accumulator store(s), so the peek \
          sweep proves nothing"
     );
     // As above: the floors either side of this one measure the update frame, not
     // whether the peek scan reached an accumulator subscript.
     assert!(
-        peek_sites >= 90,
+        common::sweep_filtered() || peek_sites >= 90,
         "the peek frames offered only {peek_sites} accumulator subscript(s) to inspect"
     );
     assert!(
@@ -1386,7 +1400,7 @@ fn a_peek_frame_stops_at_its_last_output_store() {
     let mut swept = 0usize;
     let mut phasor_seen = false;
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -1422,11 +1436,14 @@ fn a_peek_frame_stops_at_its_last_output_store() {
     }
 
     assert!(offenders.is_empty(), "{}", offenders.join("\n"));
-    assert!(swept >= 200, "only {swept} peek frame(s) examined");
-    assert!(phasor_seen, "HT_PHASOR was not swept, so its pin did not run");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek frame(s) examined");
+    assert!(
+        common::sweep_filtered() || phasor_seen,
+        "HT_PHASOR was not swept, so its pin did not run"
+    );
     for (k, (mark, floor)) in tail_marks.iter().enumerate() {
         assert!(
-            in_step[k] >= *floor,
+            common::sweep_filtered() || in_step[k] >= *floor,
             "only {} update frame(s) carry `{mark}...=`, so the absence above is not \
              evidence of anything",
             in_step[k]
@@ -1498,7 +1515,7 @@ fn no_peek_frame_declares_a_local_nothing_reads() {
     let (mut swept, mut locals, mut seeded) = (0usize, 0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -1516,7 +1533,7 @@ fn no_peek_frame_declares_a_local_nothing_reads() {
     }
 
     assert!(
-        swept > 170 && locals > 350 && seeded > 250,
+        common::sweep_filtered() || (swept > 170 && locals > 350 && seeded > 250),
         "{swept} peek frame(s) over {locals} local(s), {seeded} of them a localized field — \
          too few for this to be measuring anything"
     );
@@ -1540,7 +1557,7 @@ fn every_handle_buffer_is_duplicated_by_clone() {
     let (mut swept, mut buffers_checked) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
 
-    for name in indicators() {
+    for name in common::discover_indicators() {
         let Some((func, enums)) = load(&name) else { continue };
         let src = stream_c(&func, &enums);
         let upper = func.name.to_uppercase();
@@ -1575,7 +1592,7 @@ fn every_handle_buffer_is_duplicated_by_clone() {
     }
 
     assert!(
-        swept > 100 && buffers_checked > 150,
+        common::sweep_filtered() || (swept > 100 && buffers_checked > 150),
         "{swept} buffer-owning handle(s) over {buffers_checked} buffer(s) -- too few for this \
          to be measuring anything"
     );

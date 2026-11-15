@@ -26,23 +26,17 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 
 /// Every directory under `input/` that declares a stream.
 fn streaming_funcs() -> Vec<String> {
-    let mut out = Vec::new();
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let entry = entry.expect("dir entry");
-        if !entry.path().is_dir() {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        if !entry.path().join(format!("{name}.yaml")).is_file() {
-            continue;
-        }
-        let func = parser::yaml::parse_yaml(&entry.path().join(format!("{name}.yaml")));
-        if func.streaming {
-            out.push(name);
-        }
-    }
-    out.sort();
-    assert!(out.len() >= 200, "the corpus sweep found only {} functions", out.len());
+    let out: Vec<String> = common::discover_indicators()
+        .into_iter()
+        .filter(|name| {
+            parser::yaml::parse_yaml(&input_dir().join(name).join(format!("{name}.yaml"))).streaming
+        })
+        .collect();
+    assert!(
+        common::sweep_filtered() || out.len() >= 200,
+        "the corpus sweep found only {} functions",
+        out.len()
+    );
     out
 }
 
@@ -148,8 +142,11 @@ fn no_managed_peek_seeds_a_dead_output_local() {
         // Non-vacuity floors: the sweep must have found the corpus AND the
         // subject. A needle that stops matching peeks would zero `swept`; an
         // emitter that re-grew every seed would zero `seedless`.
-        assert!(swept >= 200, "{lang}: swept only {swept} peek frames");
-        assert!(seedless >= 200, "{lang}: only {seedless} seed-free frames");
+        assert!(common::sweep_filtered() || swept >= 200, "{lang}: swept only {swept} peek frames");
+        assert!(
+            common::sweep_filtered() || seedless >= 200,
+            "{lang}: only {seedless} seed-free frames"
+        );
         assert!(
             seeded.is_empty(),
             "{lang}: peek frames seeding an output local from the handle: {seeded:?}"
@@ -270,6 +267,7 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
             ["alligator", "bbands", "gator", "ichimoku", "kc", "kdj", "kstext", "macdext",
              "sqzmom", "stoch", "stochf", "stochrsi"]
                 .into_iter()
+                .filter(|n| common::swept(n))
                 .collect();
         assert_eq!(
             shipped, expected,
@@ -364,7 +362,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         .into_iter()
         .filter(|n| registry.in_tape_set(n))
         .collect();
-    assert!(!members.is_empty(), "the tape set is empty");
+    assert!(common::sweep_filtered() || !members.is_empty(), "the tape set is empty");
     let mut offenders = Vec::new();
     for lang in ["java", "csharp", "ts", "go"] {
         let def_kw = match lang {

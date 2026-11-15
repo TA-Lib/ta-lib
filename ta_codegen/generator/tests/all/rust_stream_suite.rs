@@ -29,21 +29,12 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 
 /// Every indicator directory whose YAML declares a stream.
 fn streaming_indicators() -> Vec<String> {
-    let mut v: Vec<String> = std::fs::read_dir(input_dir())
-        .expect("input dir")
-        .filter_map(Result::ok)
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            let yaml = e.path().join(format!("{name}.yaml"));
-            yaml.exists()
-                .then(|| parser::yaml::parse_yaml(&yaml))
-                .filter(|f| f.streaming)
-                .map(|_| name)
+    common::discover_indicators()
+        .into_iter()
+        .filter(|name| {
+            parser::yaml::parse_yaml(&input_dir().join(name).join(format!("{name}.yaml"))).streaming
         })
-        .collect();
-    v.sort();
-    v
+        .collect()
 }
 
 fn rust_stream_section(name: &str) -> String {
@@ -252,24 +243,13 @@ fn test_rust_stream_doctest_witness_present() {
 fn every_streamable_func_emits_rust_stream() {
     let dir = input_dir();
     let registry = Registry::from_dir(&dir);
-    let mut funcs: Vec<ir::FuncDef> = Vec::new();
-    for entry in std::fs::read_dir(&dir).expect("input dir") {
-        let entry = entry.expect("entry");
-        if !entry.path().is_dir() {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        let yaml = entry.path().join(format!("{name}.yaml"));
-        let csrc = entry.path().join(format!("{name}.c"));
-        if !yaml.exists() || !csrc.exists() {
-            continue;
-        }
-        let mut func = parser::yaml::parse_yaml(&yaml);
-        let parsed = parser::c_source::parse_c_source(&csrc);
-        parser::c_source::wire_parsed_source(&mut func, &parsed);
-        funcs.push(func);
-    }
-    assert!(funcs.len() >= 200, "discovery floor: found {}", funcs.len());
+    let funcs: Vec<ir::FuncDef> =
+        common::discover_indicators().iter().map(|n| common::load_indicator(n).0).collect();
+    assert!(
+        common::sweep_filtered() || funcs.len() >= 200,
+        "discovery floor: found {}",
+        funcs.len()
+    );
     let mut checked = 0;
     for f in &funcs {
         if !f.streaming {
@@ -282,7 +262,7 @@ fn every_streamable_func_emits_rust_stream() {
             f.name
         );
     }
-    assert!(checked >= 200, "streamable floor: checked {checked}");
+    assert!(common::sweep_filtered() || checked >= 200, "streamable floor: checked {checked}");
 }
 
 // ---------------------------------------------------------------------------
@@ -411,6 +391,9 @@ fn stores_in_a_loop(code: &str) -> usize {
 
 #[test]
 fn a_candlestick_open_branches_to_one_frame_per_stride() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut single) = (0usize, 0usize);
     for (name, s) in candlestick_sections() {
         let sink = format!("fn {name}_open_sink_frame(");
@@ -459,6 +442,9 @@ fn a_candlestick_open_branches_to_one_frame_per_stride() {
 /// The fill frame's loops are the batch body's: windowed where batch's are.
 #[test]
 fn a_fill_frame_windows_its_loops_where_batch_does() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut windows) = (0usize, 0usize);
     let mut drifted = Vec::new();
     for (name, s) in candlestick_sections() {
@@ -483,6 +469,9 @@ fn a_fill_frame_windows_its_loops_where_batch_does() {
 
 #[test]
 fn a_sink_frame_decides_only_the_last_bar() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut loops, mut windowed) = (0usize, 0usize, 0usize);
     for (name, s) in candlestick_sections() {
         if !s.contains(&format!("fn {name}_open_sink_frame(")) {
@@ -885,7 +874,7 @@ fn no_rust_peek_copies_the_handle() {
             fully_shadowed.insert(name.clone());
         }
     }
-    assert!(swept >= 200, "only {swept} peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek(s) swept");
     assert_eq!(
         frames + stateless,
         swept,
@@ -898,7 +887,7 @@ fn no_rust_peek_copies_the_handle() {
          unreachable and this sweep no longer says the binding follows the frame's reads"
     );
     assert!(
-        fully_shadowed.len() >= 21,
+        common::sweep_filtered() || fully_shadowed.len() >= 21,
         "only {} handle(s) have a peek frame that reads an accumulator — the sweep \
          is looking for something that is not there",
         fully_shadowed.len()
@@ -908,7 +897,7 @@ fn no_rust_peek_copies_the_handle() {
     // 29 at issue #353 time — most cur_ declarations live in update frames,
     // which this sweep does not enter.
     assert!(
-        cur_readers > 20,
+        common::sweep_filtered() || cur_readers > 20,
         "only {cur_readers} peek frame(s) read the cur_ local they declare — the \
          dead-local arm has nothing to discriminate against"
     );
@@ -994,8 +983,14 @@ fn a_transcribed_open_selects_where_its_batch_body_does() {
         selecting += usize::from(opens[0].0.contains(picks));
     }
     assert!(drifted.is_empty(), "open and batch decide differently:\n{}", drifted.join("\n"));
-    assert!(transcribed >= 150, "only {transcribed} transcribed opens: the plan match moved");
-    assert!(selecting > 0, "no transcribed open selects, so this proved nothing");
+    assert!(
+        common::sweep_filtered() || transcribed >= 150,
+        "only {transcribed} transcribed opens: the plan match moved"
+    );
+    assert!(
+        common::sweep_filtered() || selecting > 0,
+        "no transcribed open selects, so this proved nothing"
+    );
 }
 
 /// The stream tier's FMA dispatch is attached by a TEXT pass
@@ -1068,11 +1063,32 @@ fn a_fused_stream_update_is_fma_dispatched() {
         declined += usize::from(!pays && step.contains("fmadd!("));
     }
     assert!(drifted.is_empty(), "stream FMA dispatch drifted:\n{}", drifted.join("\n"));
-    assert!(opens >= 150, "only {opens} `open_impl` rendered: the signature moved");
-    assert!(fused_opens > 0, "no `open_impl` fuses, so this proved nothing about the open tier");
-    assert!(fused_frames >= 8, "only {fused_frames} fused opener frames: a split opener's fused frames went undispatched");
-    assert!(one_path_maps > 0, "no fused stateless map keeps one path: that exemption admits nothing");
-    assert!(one_path_named > 0, "no fused open keeps one path by name: that exemption admits nothing");
-    assert!(dispatched > 0, "no update dispatched: the rule admits nothing");
-    assert!(declined > 0, "every fused step dispatched: the rule declines nothing");
+    assert!(
+        common::sweep_filtered() || opens >= 150,
+        "only {opens} `open_impl` rendered: the signature moved"
+    );
+    assert!(
+        common::sweep_filtered() || fused_opens > 0,
+        "no `open_impl` fuses, so this proved nothing about the open tier"
+    );
+    assert!(
+        common::sweep_filtered() || fused_frames >= 8,
+        "only {fused_frames} fused opener frames: a split opener's fused frames went undispatched"
+    );
+    assert!(
+        common::sweep_filtered() || one_path_maps > 0,
+        "no fused stateless map keeps one path: that exemption admits nothing"
+    );
+    assert!(
+        common::sweep_filtered() || one_path_named > 0,
+        "no fused open keeps one path by name: that exemption admits nothing"
+    );
+    assert!(
+        common::sweep_filtered() || dispatched > 0,
+        "no update dispatched: the rule admits nothing"
+    );
+    assert!(
+        common::sweep_filtered() || declined > 0,
+        "every fused step dispatched: the rule declines nothing"
+    );
 }

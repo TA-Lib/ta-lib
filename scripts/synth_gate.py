@@ -128,13 +128,13 @@ def find_repo_root():
     sys.exit("synth_gate: cannot locate repo root (ta_codegen/input marker)")
 
 
-def run(cmd, cwd, capture=False):
+def run(cmd, cwd, capture=False, env=None):
     """Run a command, streaming output; optionally also return it."""
     print(f"+ {' '.join(cmd)}  (cwd={cwd})", flush=True)
     if not capture:
-        return subprocess.run(cmd, cwd=cwd).returncode, ""
+        return subprocess.run(cmd, cwd=cwd, env=env).returncode, ""
     proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True)
+                            stderr=subprocess.STDOUT, text=True, env=env)
     lines = []
     for line in proc.stdout:
         sys.stdout.write(line)
@@ -227,10 +227,14 @@ def main():
         # correctly). They ran only against the shipped corpus until #327, so
         # every sweep claiming to hold "over the whole corpus" had never seen a
         # fixture.
+        #
+        # TA_SWEEP_FUNCS narrows the corpus sweeps to the fixtures: the PR gate
+        # already sweeps the shipped corpus with the same tests.
         rc, out0 = run(["cargo", "test", "--no-fail-fast",
                         "--manifest-path",
                         os.path.join(wt, "ta_codegen", "generator", "Cargo.toml")],
-                       cwd=wt, capture=True)
+                       cwd=wt, capture=True,
+                       env={**os.environ, "TA_SWEEP_FUNCS": "synth"})
         if rc != 0:
             sys.exit(f"synth_gate: FAIL — the generator's test suite exited {rc} "
                      f"on the injected tree")

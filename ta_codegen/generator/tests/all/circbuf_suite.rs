@@ -4,7 +4,6 @@
 use crate::common;
 
 use common::{discover_indicators, extract_section, generate_all, load_indicator, make_helpers, make_registry, try_load_indicator};
-use std::path::Path;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::ir;
 
@@ -140,7 +139,10 @@ fn rust_circbuf_batch_is_hybrid_and_stream_stays_vec() {
     for expected in [
         "cci", "cmf", "mfi", "ultosc", "hma", "ht_dcphase", "ht_sine", "ht_trendmode",
         "min", "max", "minmax", "midpoint", "midprice", "willr",
-    ] {
+    ]
+    .into_iter()
+    .filter(|n| common::swept(n))
+    {
         assert!(
             names.contains(&expected),
             "CIRCBUF sweep missed {expected}; swept {names:?}"
@@ -150,7 +152,7 @@ fn rust_circbuf_batch_is_hybrid_and_stream_stays_vec() {
     // pin the functions whose stream genuinely carries one — otherwise a bug
     // that emptied every stream body would turn that half into a silent skip.
     let streamed: Vec<&str> = stream_checked.iter().map(String::as_str).collect();
-    for expected in ["cci", "cmf", "mfi", "ultosc"] {
+    for expected in ["cci", "cmf", "mfi", "ultosc"].into_iter().filter(|n| common::swept(n)) {
         assert!(
             streamed.contains(&expected),
             "CIRCBUF stream half never ran for {expected}; ran for {streamed:?}"
@@ -341,21 +343,15 @@ fn ta_index_max_agrees_across_every_surface() {
 /// function is covered the day it lands.
 #[test]
 fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let mut names: Vec<String> = std::fs::read_dir(&base)
-        .expect("input dir")
-        .filter_map(|e| {
-            let path = e.ok()?.path();
-            let name = path.file_name()?.to_str()?.to_string();
-            (path.join(format!("{name}.yaml")).is_file() && path.join(format!("{name}.c")).is_file())
-                .then_some(name)
-        })
-        .collect();
-    names.sort();
-    assert!(names.len() >= 200, "expected the full indicator set, got {}", names.len());
+    let names = discover_indicators();
+    assert!(
+        common::sweep_filtered() || names.len() >= 200,
+        "expected the full indicator set, got {}",
+        names.len()
+    );
 
     let mut multi_circbuf_functions = 0usize;
     for name in &names {
@@ -426,7 +422,7 @@ fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
     // Guard the gate itself: if the cascade never had a case to cover, the
     // sweep above would pass vacuously.
     assert!(
-        multi_circbuf_functions >= 12,
+        common::sweep_filtered() || multi_circbuf_functions >= 12,
         "expected the rolling-extremum family's multi-CIRCBUF failure paths to be \
          swept, saw only {multi_circbuf_functions}"
     );

@@ -219,20 +219,9 @@ fn bbands_composed_rejected() {
 /// (The same check `generate` enforces; here it runs in `cargo test`.)
 #[test]
 fn all_declared_functions_are_streamable() {
-    let base = input_dir();
     let lk = lookup();
     let mut checked = 0;
-    for entry in std::fs::read_dir(&base).expect("input dir") {
-        let dir = entry.expect("entry").path();
-        if !dir.is_dir() {
-            continue;
-        }
-        let name = dir.file_name().unwrap().to_string_lossy().to_string();
-        let yaml = dir.join(format!("{name}.yaml"));
-        let c = dir.join(format!("{name}.c"));
-        if !yaml.exists() || !c.exists() {
-            continue;
-        }
+    for name in crate::common::discover_indicators() {
         let func = load(&name);
         if func.streaming {
             // Per language: a `PRAGMA TA_ALT={STREAM,<lang>}` claim can hand one
@@ -245,7 +234,10 @@ fn all_declared_functions_are_streamable() {
             checked += 1;
         }
     }
-    assert!(checked >= 200, "expected the whole declared corpus, saw {checked}");
+    assert!(
+        crate::common::sweep_filtered() || checked >= 200,
+        "expected the whole declared corpus, saw {checked}"
+    );
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
@@ -2712,15 +2704,7 @@ fn sqzmom_offset_read_variants_classify_by_their_delays() {
 fn composed_sub_call_destination_funcs() {
     let lk = lookup();
     let mut found: Vec<String> = Vec::new();
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let path = entry.expect("dir entry").path();
-        if !path.is_dir() {
-            continue;
-        }
-        let name = path.file_name().unwrap().to_str().unwrap().to_string();
-        if !path.join(format!("{name}.yaml")).exists() || !path.join(format!("{name}.c")).exists() {
-            continue;
-        }
+    for name in crate::common::discover_indicators() {
         let f = load(&name);
         if !f.streaming {
             continue;
@@ -2805,7 +2789,11 @@ fn composed_sub_call_destination_funcs() {
                  callee's count comes out at N_STOCHRSI"),
     ];
     found.sort();
-    let want: Vec<String> = expected.iter().map(|(n, _)| (*n).to_string()).collect();
+    let want: Vec<String> = expected
+        .iter()
+        .map(|(n, _)| (*n).to_string())
+        .filter(|n| crate::common::swept(n))
+        .collect();
     let why: String = expected
         .iter()
         .map(|(n, r)| format!("\n  {n}: {r}"))
@@ -3184,7 +3172,8 @@ fn composed_edge_classes_are_pinned() {
         let got = streaming::analyze_composed(&f, lookup()).map(|cp| non_zero_edges(&cp));
         check(synth.to_uppercase(), "base", got.map_err(|e| e.to_string()));
     }
-    let pinned: std::collections::BTreeSet<String> = want.keys().map(|n| (*n).to_string()).collect();
+    let pinned: std::collections::BTreeSet<String> =
+        want.keys().filter(|n| crate::common::swept(n)).map(|n| (*n).to_string()).collect();
     assert_eq!(seen, pinned, "a pinned function no longer composes");
 }
 

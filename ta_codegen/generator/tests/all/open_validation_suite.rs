@@ -219,7 +219,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         }
         checked += 1;
     }
-    assert!(checked >= 200, "only {checked} public fills inspected");
+    assert!(common::sweep_filtered() || checked >= 200, "only {checked} public fills inspected");
 }
 
 /// Rule rS2, then rS4 and rS5, on EVERY C# public opener — corpus-wide, for the
@@ -341,7 +341,7 @@ fn csharp_public_openers_leave_an_empty_history_to_the_core() {
             checked += 1;
         }
     }
-    assert!(checked >= 352, "only {checked} public openers inspected");
+    assert!(common::sweep_filtered() || checked >= 352, "only {checked} public openers inspected");
 }
 
 /// Rule rS4, then the history bounds, on EVERY Java public opener — corpus-wide, because a
@@ -459,7 +459,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             checked += 1;
         }
     }
-    assert!(checked >= 352, "only {checked} public openers inspected");
+    assert!(common::sweep_filtered() || checked >= 352, "only {checked} public openers inspected");
 }
 
 /// The TypeScript public openers, corpus-wide: every optional parameter's type
@@ -587,10 +587,14 @@ fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
             checked += 1;
         }
     }
-    assert!(checked >= 400, "only {checked} public openers inspected");
-    assert!(guarded >= 200, "only {guarded} public fills guard their outputs");
+    assert!(common::sweep_filtered() || checked >= 400, "only {checked} public openers inspected");
+    assert!(
+        common::sweep_filtered() || guarded >= 200,
+        "only {guarded} public fills guard their outputs"
+    );
     assert_eq!(guarded * 2, checked, "a fill was skipped by the guard check");
-    assert_eq!(exempt_fills, 2, "MA and MAVP are the exempt tiers");
+    let exempt = ["ma", "mavp"].iter().filter(|n| common::swept(n)).count();
+    assert_eq!(exempt_fills, exempt, "MA and MAVP are the exempt tiers");
 }
 
 /// No opener answers the code its sub-call handed back.
@@ -614,6 +618,9 @@ fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
 /// `ir_cleanup`'s own tests.
 #[test]
 fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
+    if common::sweep_filtered() {
+        return;
+    }
     let registry = make_registry();
     let helpers = common::make_helpers();
     let enums = load_enums();
@@ -917,12 +924,15 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     // backend, not silently skip on a signature marker that stopped matching.
     for (b, n) in per_backend.iter().enumerate() {
         assert!(
-            *n > 150,
+            common::sweep_filtered() || *n > 150,
             "{}: only {n} _OpenImpl bodies seen — the signature marker has drifted",
             specs[b].0
         );
     }
-    assert!(checked > 900, "only {checked} bodies checked across six backends");
+    assert!(
+        common::sweep_filtered() || checked > 900,
+        "only {checked} bodies checked across six backends"
+    );
     assert!(
         per_backend.iter().all(|n| *n == per_backend[0]),
         "the backends disagree on how many _OpenImpl bodies exist: {per_backend:?}"
@@ -977,7 +987,7 @@ fn csharp_openers_test_a_partial_overlap_after_the_history() {
         );
         openers += 1;
     }
-    assert!(openers >= 200, "only {openers} openers checked");
+    assert!(common::sweep_filtered() || openers >= 200, "only {openers} openers checked");
 }
 
 /// C#'s batch entries refuse an empty output, and only
@@ -1008,7 +1018,10 @@ fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
             outputs_pinned += 1;
         }
     }
-    assert!(outputs_pinned >= 200, "only {outputs_pinned} outputs pinned");
+    assert!(
+        common::sweep_filtered() || outputs_pinned >= 200,
+        "only {outputs_pinned} outputs pinned"
+    );
 }
 
 /// The body of one TS entry point, `export function <sym>(`.
@@ -1142,8 +1155,11 @@ fn every_declared_input_is_checked_in_every_backend() {
         "every discovered indicator is swept or counted ({scanned} + {no_inputs})"
     );
     // Literal floors: a derived one moves with whatever the scan happens to find.
-    assert!(scanned >= 200, "only {scanned} indicators scanned");
-    assert!(legs_checked >= 380, "only {legs_checked} declared input legs checked");
+    assert!(common::sweep_filtered() || scanned >= 200, "only {scanned} indicators scanned");
+    assert!(
+        common::sweep_filtered() || legs_checked >= 380,
+        "only {legs_checked} declared input legs checked"
+    );
 
     // ---- part two: the seven legs the exemption used to drop ----
     let unread: [(&str, &[&str]); 4] = [
@@ -1616,17 +1632,20 @@ fn no_csharp_peek_copies_the_handle() {
         }
     }
 
-    assert!(swept >= 200, "only {swept} Peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} Peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} Peek(s) run a frame");
     assert!(
-        fully_shadowed.len() >= 21,
+        common::sweep_filtered() || fully_shadowed.len() >= 21,
         "only {} handle(s) have a Peek frame that reads an accumulator — the sweep \
          is looking for something that is not there",
         fully_shadowed.len()
     );
-    assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(
-        with_subs >= 14,
+        common::sweep_filtered() || writes >= 500,
+        "only {writes} local writes seen — the store sweep found nothing"
+    );
+    assert!(
+        common::sweep_filtered() || with_subs >= 14,
         "only {with_subs} Peek(s) drive a sub-stream, so the commit arm is not watching \
          the tiers it exists for"
     );
@@ -1658,7 +1677,11 @@ fn rust_category_index_lists_every_function_once() {
         .iter()
         .map(|name| load_indicator(name).0)
         .collect();
-    assert!(funcs.len() >= 200, "only {} indicators in the corpus", funcs.len());
+    assert!(
+        common::sweep_filtered() || funcs.len() >= 200,
+        "only {} indicators in the corpus",
+        funcs.len()
+    );
 
     let index = backends::rust_doc::category_index(&funcs);
 
@@ -1763,7 +1786,10 @@ fn the_csharp_float_overload_guards_its_real_output_against_its_real_inputs() {
         }
     }
 
-    assert!(pairs >= 200, "only {pairs} real output/input pair(s) swept — too few to measure");
+    assert!(
+        common::sweep_filtered() || pairs >= 200,
+        "only {pairs} real output/input pair(s) swept — too few to measure"
+    );
     assert!(
         offenders.is_empty(),
         "a real output can share memory with a real input in the float overload \

@@ -260,7 +260,10 @@ fn ts_resolves_exactly_the_all_languages_alternates() {
         }
     }
     assert!(stream_all > 0, "no {{STREAM,ALL_LANGUAGES}} alternate reached TS");
-    assert!(other_lang > 0, "no Java- or C#-only alternate was there to refuse");
+    assert!(
+        common::sweep_filtered() || other_lang > 0,
+        "no Java- or C#-only alternate was there to refuse"
+    );
 
     let (alma, enums) = common::load_indicator("alma");
     assert_eq!(alma.resolve_alt(Tier::Batch, Lang::Ts).map(|a| a.name.as_str()), Some("alma_ALT1"));

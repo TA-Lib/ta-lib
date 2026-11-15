@@ -37,26 +37,6 @@ fn load_func_full(name: &str) -> ir::FuncDef {
     func_def
 }
 
-/// Discover every indicator directory under `ta_codegen/input/` (a subdir that
-/// contains `<name>/<name>.c` and `<name>/<name>.yaml`; skips `helpers/`, etc.).
-fn all_function_names() -> Vec<String> {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    let mut names = Vec::new();
-    for entry in std::fs::read_dir(&base).expect("input dir") {
-        let entry = entry.expect("dir entry");
-        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        let dir = entry.path();
-        if dir.join(format!("{name}.c")).is_file() && dir.join(format!("{name}.yaml")).is_file() {
-            names.push(name);
-        }
-    }
-    names.sort();
-    names
-}
-
 /// Walk every `a*b+c` site in `body` and, under two FMA contexts, tally how many
 /// fuse under each and how many disagree. Returns `(fused_a, fused_b, disagreements)`.
 fn compare_fusion(body: &[Statement], a: &fma::FmaCtx, b: &fma::FmaCtx) -> (usize, usize, usize) {
@@ -108,7 +88,7 @@ fn fused_count(body: &[Statement], ctx: &fma::FmaCtx) -> usize {
 #[test]
 fn fma_fusion_is_seed_invariant_across_all_functions() {
     let mut checked = 0usize;
-    for name in all_function_names() {
+    for name in crate::common::discover_indicators() {
         let f = load_func_full(&name);
         for body in [&f.body, &f.private_body] {
             let g = fma::build_fma_var_sets(body, &f.outputs, &fma::GUARDED_INDEX_SEEDS);
@@ -123,7 +103,10 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
         }
         checked += 1;
     }
-    assert!(checked >= 200, "expected the whole corpus, only checked {checked}");
+    assert!(
+        crate::common::sweep_filtered() || checked >= 200,
+        "expected the whole corpus, only checked {checked}"
+    );
 }
 
 /// The known fusion-candidate functions must actually fuse at least one site

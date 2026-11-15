@@ -136,6 +136,9 @@ fn candlestick_sections() -> Vec<(String, String)> {
 
 #[test]
 fn a_csharp_candlestick_open_internal_calls_its_sink_frame() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut single) = (0usize, 0usize);
     for (base, s) in candlestick_sections() {
         let open = common::strip_block_comments(&body_of(&s, &format!("private RetCode {base}OpenImpl(")));
@@ -177,6 +180,9 @@ fn a_csharp_candlestick_open_internal_calls_its_sink_frame() {
 /// into slot 0, and runs the same carried statements.
 #[test]
 fn a_csharp_sink_frame_decides_only_the_last_bar() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
     for (base, s) in candlestick_sections() {
         let sink = format!("private RetCode {base}OpenSinkFrame(");

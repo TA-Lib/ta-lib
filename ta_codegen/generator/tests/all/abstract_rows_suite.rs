@@ -5,7 +5,10 @@
 
 use crate::common;
 
-use common::{all_abstract_rows, check_rust_cast_parens, generate_all, load_indicator_with_source};
+use common::{
+    abstract_rows_of, all_indicators, check_rust_cast_parens, generate_all,
+    load_indicator_with_source,
+};
 use std::collections::HashMap;
 use ta_codegen_lib::{backends, ir};
 
@@ -72,7 +75,7 @@ fn abstract_rows_unstable_period_set_is_exactly_the_declared_ids() {
         ("SWAK_BP", 35), ("FISHER", 36),
     ];
 
-    let rows = all_abstract_rows();
+    let rows = abstract_rows_of(&all_indicators());
     let mut got: Vec<(String, i32)> = rows
         .iter()
         .filter_map(|r| r.unst.as_ref().map(|u| (r.name.clone(), u.value)))
@@ -107,7 +110,7 @@ fn abstract_rows_group_strings_round_trip() {
     for g in Group::ALL {
         assert_eq!(Group::parse(g.as_str()), *g, "group round-trip for {}", g.as_str());
     }
-    let rows = all_abstract_rows();
+    let rows = abstract_rows_of(&all_indicators());
     for g in Group::ALL {
         // Not an emptiness check: every declared group must actually be used,
         // so a retired group cannot linger in the closed set unnoticed.
@@ -125,7 +128,7 @@ fn abstract_rows_group_strings_round_trip() {
 #[test]
 fn abstract_rows_unreachable_domains_stay_unreachable() {
     use ta_codegen_lib::backends::abstract_rows::{InputKind, OptDomain};
-    for r in all_abstract_rows() {
+    for r in abstract_rows_of(&all_indicators()) {
         for o in &r.opt_inputs {
             assert!(
                 !matches!(o.domain, OptDomain::RealList { .. }),
@@ -154,7 +157,7 @@ fn abstract_rows_unreachable_domains_stay_unreachable() {
 fn abstract_rows_price_bundle_is_one_parameter() {
     use ta_codegen_lib::backends::abstract_rows::InputKind;
     const HLC: u32 = 0x0000_0002 | 0x0000_0004 | 0x0000_0008;
-    let rows = all_abstract_rows();
+    let rows = abstract_rows_of(&all_indicators());
     let adx = rows.iter().find(|r| r.name == "ADX").expect("ADX row");
     assert_eq!(adx.inputs.len(), 1, "ADX must present one bundled price input");
     assert_eq!(adx.inputs[0].kind, InputKind::Price);

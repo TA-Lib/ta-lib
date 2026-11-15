@@ -94,7 +94,9 @@ fn the_corpus_renders_one_string_per_function() {
         assert_eq!(xml.contains(&element), c != "{}", "{}: {element}", f.name);
         non_empty += usize::from(c != "{}");
     }
-    assert_eq!(rows["RSI"], r#"{"outputs":{"outReal":{"levels":[30,70]}}}"#);
+    if !common::sweep_filtered() {
+        assert_eq!(rows["RSI"], r#"{"outputs":{"outReal":{"levels":[30,70]}}}"#);
+    }
     assert_eq!(xml.matches("<Attributes>").count(), non_empty);
 }
 

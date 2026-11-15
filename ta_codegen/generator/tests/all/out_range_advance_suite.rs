@@ -48,23 +48,17 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 }
 
 fn streaming_funcs() -> Vec<String> {
-    let mut out = Vec::new();
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let entry = entry.expect("dir entry");
-        if !entry.path().is_dir() {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        if !entry.path().join(format!("{name}.yaml")).is_file() {
-            continue;
-        }
-        let func = parser::yaml::parse_yaml(&entry.path().join(format!("{name}.yaml")));
-        if func.streaming {
-            out.push(name);
-        }
-    }
-    out.sort();
-    assert!(out.len() >= 200, "the corpus sweep found only {} functions", out.len());
+    let out: Vec<String> = common::discover_indicators()
+        .into_iter()
+        .filter(|name| {
+            parser::yaml::parse_yaml(&input_dir().join(name).join(format!("{name}.yaml"))).streaming
+        })
+        .collect();
+    assert!(
+        common::sweep_filtered() || out.len() >= 200,
+        "the corpus sweep found only {} functions",
+        out.len()
+    );
     out
 }
 
@@ -443,13 +437,25 @@ fn only_an_accepted_bar_advances_the_range() {
     );
     // Own counters: a refactor that stops reaching these entry points has to
     // fail here rather than pass by checking nothing.
-    assert!(updates >= 700, "only {updates} Update reject sites were checked");
-    assert!(peeks >= 700, "only {peeks} Peek bodies were checked");
-    assert!(guards >= 700, "only {guards} non-advancing guard checks were made");
+    assert!(
+        common::sweep_filtered() || updates >= 700,
+        "only {updates} Update reject sites were checked"
+    );
+    assert!(common::sweep_filtered() || peeks >= 700, "only {peeks} Peek bodies were checked");
+    assert!(
+        common::sweep_filtered() || guards >= 700,
+        "only {guards} non-advancing guard checks were made"
+    );
     // Its own counter, not a share of the others: a sweep that stopped reaching
     // `advance` would still saturate the Update and Peek ones.
-    assert!(advancers >= 800, "only {advancers} advance() bodies were checked");
-    assert!(ceilings >= 1600, "only {ceilings} rule-U4 guards were checked");
+    assert!(
+        common::sweep_filtered() || advancers >= 800,
+        "only {advancers} advance() bodies were checked"
+    );
+    assert!(
+        common::sweep_filtered() || ceilings >= 1600,
+        "only {ceilings} rule-U4 guards were checked"
+    );
     println!(
         "checked {updates} Update reject sites, {peeks} peeks, {guards} guards, \
          {advancers} advance() bodies, {ceilings} rU4 ceilings across {} backends",
@@ -503,6 +509,9 @@ fn every_c_handle_answers_its_own_range() {
     }
     // Its own counter, not a share of the sweep's: that one saturates on the
     // three backends this test cannot see.
-    assert!(readers >= 200, "only {readers} C range accessor pairs were checked");
+    assert!(
+        common::sweep_filtered() || readers >= 200,
+        "only {readers} C range accessor pairs were checked"
+    );
     println!("checked {readers} C OutRange/Advance pairs");
 }

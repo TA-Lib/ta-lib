@@ -333,30 +333,9 @@ fn test_sma_from_c_has_logic_function() {
 // All indicators: all backends produce non-empty output (auto-discovered)
 // ---------------------------------------------------------------------------
 
-/// Discover all indicator names from ta_codegen/input/ that have both .yaml and .c files.
-fn discover_indicators() -> Vec<String> {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    let mut indicators = Vec::new();
-    for entry in std::fs::read_dir(&base).expect("Cannot read ta_codegen/input directory") {
-        let entry = entry.expect("Cannot read directory entry");
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        let name = path.file_name().unwrap().to_str().unwrap().to_string();
-        let yaml_path = path.join(format!("{}.yaml", name));
-        let c_path = path.join(format!("{}.c", name));
-        if yaml_path.exists() && c_path.exists() {
-            indicators.push(name);
-        }
-    }
-    indicators.sort();
-    indicators
-}
-
 #[test]
 fn test_all_backends_produce_nonempty_output() {
-    let indicators = discover_indicators();
+    let indicators = crate::common::discover_indicators();
     assert!(!indicators.is_empty(), "No indicators discovered");
 
     let enums = load_enums();

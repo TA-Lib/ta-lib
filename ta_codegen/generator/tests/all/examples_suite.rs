@@ -73,7 +73,7 @@ fn the_rust_tab_is_the_doctests_shown_lines() {
         assert_eq!(doctest_shown_lines(&module), tab(&tabs, "Rust"), "{}: Rust tab vs doctest", func.name);
         checked += 1;
     }
-    assert!(checked > 200, "only {checked} functions");
+    assert!(common::sweep_filtered() || checked > 200, "only {checked} functions");
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn the_typescript_tab_is_the_batch_example_and_the_test_runs_it() {
         assert!(example.body.iter().any(|l| !l.shown), "{}: no hidden fill", func.name);
         checked += 1;
     }
-    assert!(checked > 200, "only {checked} functions");
+    assert!(common::sweep_filtered() || checked > 200, "only {checked} functions");
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn the_java_csharp_and_c_tabs_are_compiled_verbatim_by_their_suites() {
         }
         checked += 1;
     }
-    assert!(checked > 200, "only {checked} functions");
+    assert!(common::sweep_filtered() || checked > 200, "only {checked} functions");
 }
 
 /// The Go tab is the example's shown lines, and `example_test.go` holds the whole
@@ -158,7 +158,7 @@ fn the_go_tab_is_an_example_go_test_runs() {
         assert!(snippet.body.iter().any(|l| !l.shown), "{}: no hidden fill", func.name);
         checked += 1;
     }
-    assert!(checked > 200, "only {checked} functions");
+    assert!(common::sweep_filtered() || checked > 200, "only {checked} functions");
 }
 
 /// One shape in every language: the arrays named after the inputs, every parameter at
@@ -219,7 +219,7 @@ fn every_tab_names_the_inputs_and_prints_the_last_value() {
             }
         }
     }
-    assert!(cdl > 50, "only {cdl} candlestick functions");
+    assert!(common::sweep_filtered() || cdl > 50, "only {cdl} candlestick functions");
 }
 
 /// Enum parameters print the named constant, spelled as each language spells it.

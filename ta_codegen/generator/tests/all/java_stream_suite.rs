@@ -30,21 +30,12 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 
 /// Every indicator directory whose YAML declares a stream.
 fn streaming_indicators() -> Vec<String> {
-    let mut v: Vec<String> = std::fs::read_dir(input_dir())
-        .expect("input dir")
-        .filter_map(Result::ok)
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            let yaml = e.path().join(format!("{name}.yaml"));
-            yaml.exists()
-                .then(|| parser::yaml::parse_yaml(&yaml))
-                .filter(|f| f.streaming)
-                .map(|_| name)
+    common::discover_indicators()
+        .into_iter()
+        .filter(|name| {
+            parser::yaml::parse_yaml(&input_dir().join(name).join(format!("{name}.yaml"))).streaming
         })
-        .collect();
-    v.sort();
-    v
+        .collect()
 }
 
 fn java_stream_section(name: &str) -> String {
@@ -496,19 +487,9 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     let helpers = common::make_helpers();
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
     let mut retained = 0usize;
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let dir = entry.expect("entry").path();
-        let Some(name) = dir.file_name().map(|n| n.to_string_lossy().to_string()) else {
-            continue;
-        };
-        let yaml = dir.join(format!("{name}.yaml"));
-        if !dir.is_dir() || !yaml.exists() {
-            continue;
-        }
-        let mut func = parser::yaml::parse_yaml(&yaml);
-        if !func.streaming {
-            continue;
-        }
+    for name in streaming_indicators() {
+        let dir = input_dir().join(&name);
+        let mut func = parser::yaml::parse_yaml(&dir.join(format!("{name}.yaml")));
         let parsed = parser::c_source::parse_c_source(&dir.join(format!("{name}.c")));
         parser::c_source::wire_parsed_source(&mut func, &parsed);
         let out = backends::java::generate(&func, &enums, registry, helpers);
@@ -528,7 +509,7 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
             .count();
     }
     assert!(
-        retained >= 5,
+        common::sweep_filtered() || retained >= 5,
         "the genuine sub-range copies vanished ({retained} left), or the copy is no longer \
          rendered as `copyOfRange(x, 0, (e) + 1)` — in which case the whole-array assertion \
          above is matching nothing and must be respelled"
@@ -581,7 +562,10 @@ fn test_java_stream_emit_ratchet() {
     }
 
     let declared = stream_flagged_yaml_count();
-    assert!(declared >= 200, "only {declared} stream-flagged yaml(s) — the corpus shrank");
+    assert!(
+        common::sweep_filtered() || declared >= 200,
+        "only {declared} stream-flagged yaml(s) — the corpus shrank"
+    );
     assert_eq!(
         total, declared,
         "sweep saw {total} stream-flagged function(s), the yaml declares {declared} — the \
@@ -596,15 +580,9 @@ fn test_java_stream_emit_ratchet() {
 /// this suite on an indicator's authoring STYLE.
 fn stream_flagged_yaml_count() -> usize {
     let mut n = 0usize;
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let dir = entry.expect("entry").path();
-        if !dir.is_dir() {
-            continue;
-        }
-        let name = dir.file_name().unwrap().to_string_lossy().to_string();
-        let Ok(text) = std::fs::read_to_string(dir.join(format!("{name}.yaml"))) else {
-            continue;
-        };
+    for name in common::discover_indicators() {
+        let dir = input_dir().join(&name);
+        let text = std::fs::read_to_string(dir.join(format!("{name}.yaml"))).expect("yaml");
         let doc: serde_yaml::Value = serde_yaml::from_str(&text)
             .unwrap_or_else(|e| panic!("{}: {e}", dir.display()));
         let flags = &doc["flags"];
@@ -735,6 +713,9 @@ fn is_loop_head(line: &str) -> bool {
 
 #[test]
 fn a_java_candlestick_open_internal_calls_its_sink_frame() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut single) = (0usize, 0usize);
     for (base, s) in candlestick_sections() {
         let open = body_of(&s, &format!("private RetCode {base}OpenImpl("));
@@ -774,6 +755,9 @@ fn a_java_candlestick_open_internal_calls_its_sink_frame() {
 /// into slot 0, and runs the same carried statements.
 #[test]
 fn a_java_sink_frame_decides_only_the_last_bar() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
     for (base, s) in candlestick_sections() {
         let sink = format!("private RetCode {base}OpenSinkFrame(");
@@ -1191,11 +1175,14 @@ fn no_java_peek_copies_the_handle() {
             fully_shadowed.insert(name.clone());
         }
     }
-    assert!(swept >= 200, "only {swept} peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
-    assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(
-        fully_shadowed.len() >= 21,
+        common::sweep_filtered() || writes >= 500,
+        "only {writes} local writes seen — the store sweep found nothing"
+    );
+    assert!(
+        common::sweep_filtered() || fully_shadowed.len() >= 21,
         "only {} handle(s) have a peek frame that reads an accumulator — the sweep \
          is looking for something that is not there",
         fully_shadowed.len()
@@ -1221,8 +1208,11 @@ fn no_java_peek_copies_the_handle() {
     // the analysis and the only fix (inlining the sub-frame). A fourth site
     // means a new composed multi-output peek nobody costed; losing one means
     // #325 landed and this bound should tighten with it.
-    let expected: BTreeSet<String> =
-        ["kdj", "ma", "stochrsi"].iter().map(|s| (*s).to_string()).collect();
+    let expected: BTreeSet<String> = ["kdj", "ma", "stochrsi"]
+        .iter()
+        .filter(|s| common::swept(s))
+        .map(|s| (*s).to_string())
+        .collect();
     assert_eq!(
         sink_sites, expected,
         "the set of composed peeks allocating a sub-handle sink moved"
@@ -1262,8 +1252,12 @@ fn the_composed_sub_handle_sinks_are_exactly_the_costed_sites() {
         ("stochrsi".to_string(), 2usize),
     ]
     .into_iter()
+    .filter(|(n, _)| common::swept(n))
     .collect();
-    assert!(!sites.is_empty(), "the sweep found no sink allocation at all");
+    assert!(
+        common::sweep_filtered() || !sites.is_empty(),
+        "the sweep found no sink allocation at all"
+    );
     assert_eq!(
         sites, expected,
         "the composed sub-handle sink sites moved (one per verb on each of the three \

@@ -332,7 +332,7 @@ fn transcendental_functions() -> std::collections::BTreeSet<String> {
     use ta_codegen_lib::backends::builtins::MathFn;
     use ta_codegen_lib::ir::Expr;
 
-    let names = crate::common::discover_indicators();
+    let names = crate::common::all_indicators();
     let known: BTreeSet<String> = names.iter().map(|n| n.to_uppercase()).collect();
     let mut direct: BTreeSet<String> = BTreeSet::new();
     let mut calls: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
@@ -396,7 +396,7 @@ fn transcendental_functions() -> std::collections::BTreeSet<String> {
 #[test]
 fn the_transcendental_flag_is_what_the_sources_call() {
     let derived = transcendental_functions();
-    let flagged: std::collections::BTreeSet<String> = crate::common::discover_indicators()
+    let flagged: std::collections::BTreeSet<String> = crate::common::all_indicators()
         .iter()
         .map(|name| crate::common::load_indicator(name).0)
         .filter(|f| f.flags.iter().any(|x| x == "uses_transcendental"))

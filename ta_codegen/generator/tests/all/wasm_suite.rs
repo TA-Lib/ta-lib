@@ -2,7 +2,9 @@
 //! wrong argument order answers through the TypeScript fallback or with
 //! swapped parameters, and no value gate there sees which.
 
-use crate::common::{discover_indicators, load_enums, load_indicator, make_helpers, make_registry};
+use crate::common::{
+    all_indicators, discover_indicators, load_enums, load_indicator, make_helpers, make_registry,
+};
 use std::collections::{BTreeMap, BTreeSet};
 use ta_codegen_lib::backends::{self, wasm};
 use ta_codegen_lib::ir::{FuncDef, Statement};
@@ -55,7 +57,12 @@ fn wasm_exports_exactly_the_functions_no_call_of_which_is_transcendental() {
     let want: BTreeSet<String> =
         plain.iter().map(|f| format!("{}_batch", backends::common::snake_words(&f.name))).collect();
 
-    assert!(!plain.is_empty() && !flagged.is_empty(), "{} exported, {} withheld", plain.len(), flagged.len());
+    assert!(
+        crate::common::sweep_filtered() || (!plain.is_empty() && !flagged.is_empty()),
+        "{} exported, {} withheld",
+        plain.len(),
+        flagged.len()
+    );
     assert_eq!(plain.len() + flagged.len(), funcs.len());
     assert_eq!(exported, want, "lib.rs exports");
 }
@@ -136,7 +143,7 @@ fn enum_dispatch_arms(stmts: &[Statement], out: &mut Vec<(String, BTreeSet<Strin
 /// TypeScript in the last bit, which the default entry compares nowhere.
 #[test]
 fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendental_function() {
-    let funcs = corpus();
+    let funcs: Vec<FuncDef> = all_indicators().iter().map(|n| load_indicator(n).0).collect();
     let enums = load_enums();
     let flagged: BTreeSet<String> = funcs
         .iter()
@@ -190,6 +197,9 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
 /// must route in table mode.
 #[test]
 fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
+    if crate::common::sweep_filtered() {
+        return;
+    }
     let funcs = corpus();
     let enums = load_enums();
     let sma = funcs.iter().find(|f| f.name == "SMA").unwrap();

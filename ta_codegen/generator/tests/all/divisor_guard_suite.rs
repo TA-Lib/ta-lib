@@ -30,31 +30,14 @@
 //! which is the cheap half.
 
 use std::collections::HashSet;
-use std::path::Path;
 
-use ta_codegen_lib::{
-    ir::{BinOp, Expr, FuncDef, Statement, VarType},
-    parser,
-};
+use ta_codegen_lib::ir::{BinOp, Expr, FuncDef, Statement, VarType};
 
 fn load() -> Vec<FuncDef> {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../input");
-    let mut funcs = Vec::new();
-    for e in std::fs::read_dir(&base).expect("read input dir").filter_map(Result::ok) {
-        let dir = e.path();
-        if !dir.is_dir() {
-            continue;
-        }
-        let n = e.file_name().to_string_lossy().to_string();
-        let (yaml, csrc) = (dir.join(format!("{n}.yaml")), dir.join(format!("{n}.c")));
-        if !yaml.exists() || !csrc.exists() {
-            continue;
-        }
-        let mut f = parser::yaml::parse_yaml(&yaml);
-        let parsed = parser::c_source::parse_c_source(&csrc);
-        parser::c_source::wire_parsed_source(&mut f, &parsed);
-        funcs.push(f);
-    }
+    let funcs: Vec<FuncDef> = crate::common::all_indicators()
+        .iter()
+        .map(|n| crate::common::load_indicator(n).0)
+        .collect();
     assert!(funcs.len() >= 200, "expected the whole input tree, got {}", funcs.len());
     funcs
 }

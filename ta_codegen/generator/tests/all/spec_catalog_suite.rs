@@ -9,7 +9,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use crate::common::all_abstract_rows;
+use crate::common::{abstract_rows_of, all_indicators};
 
 const PAGE: &str = "website/src/spec/abstract/README.md";
 const NAMES_PAGE: &str = "website/src/spec/README.md";
@@ -73,7 +73,7 @@ struct Family {
 
 #[test]
 fn the_spec_flag_catalog_is_complete() {
-    let rows = all_abstract_rows();
+    let rows = abstract_rows_of(&all_indicators());
     let or = |f: &dyn Fn(&ta_codegen_lib::backends::abstract_rows::FuncRow) -> u32| rows.iter().fold(0, |a, r| a | f(r));
     let families = [
         Family {

@@ -275,6 +275,9 @@ fn sweep_metadata(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, s
 
 #[test]
 fn every_public_ts_declaration_carries_a_tsdoc_block() {
+    if common::sweep_filtered() {
+        return;
+    }
     let sweep = sweep_all();
     assert!(
         sweep.failures.is_empty(),
@@ -331,6 +334,9 @@ fn the_tsdoc_sweep_sees_each_defect() {
 /// it streams; each lands in exactly one generated test.
 #[test]
 fn every_function_has_its_examples_in_the_generated_tests() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (funcs, enums) = shipped();
     let files = backends::ts_doc::render_example_tests(&funcs, &enums);
     let all: String = files.values().cloned().collect();
@@ -356,6 +362,9 @@ fn every_function_has_its_examples_in_the_generated_tests() {
 /// by its own name and never reach into `src/`.
 #[test]
 fn the_example_tests_import_the_package_by_name() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (funcs, enums) = shipped();
     let files = backends::ts_doc::render_example_tests(&funcs, &enums);
     assert!(files.len() > 1, "{} test files", files.len());
@@ -373,6 +382,9 @@ fn the_example_tests_import_the_package_by_name() {
 /// check nothing past `count > 0`.
 #[test]
 fn every_integer_output_carries_a_ts_example_claim() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (funcs, enums) = shipped();
     let mut checked = 0;
     for func in &funcs {
@@ -395,6 +407,9 @@ fn every_integer_output_carries_a_ts_example_claim() {
 /// enough to open, and only against a converted input.
 #[test]
 fn the_fill_throws_names_the_overlap_checks_the_public_frame_emits() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (funcs, enums) = shipped();
     let registry = common::make_registry();
     let helpers = common::make_helpers();
@@ -425,6 +440,9 @@ fn the_fill_throws_names_the_overlap_checks_the_public_frame_emits() {
 /// outputs at one address.
 #[test]
 fn the_batch_throws_names_the_overlap_checks_the_public_tier_emits() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (funcs, enums) = shipped();
     let registry = common::make_registry();
     let helpers = common::make_helpers();

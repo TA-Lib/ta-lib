@@ -27,23 +27,6 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     (func, enums)
 }
 
-/// Every indicator directory: a `<name>.yaml` next to a `<name>.c`.
-fn indicators() -> Vec<String> {
-    let mut v: Vec<String> = std::fs::read_dir(input_dir())
-        .expect("input dir")
-        .filter_map(Result::ok)
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            let dir = e.path();
-            (dir.join(format!("{name}.yaml")).exists() && dir.join(format!("{name}.c")).exists())
-                .then_some(name)
-        })
-        .collect();
-    v.sort();
-    v
-}
-
 fn rust_source(name: &str) -> (ir::FuncDef, String) {
     let (func, enums) = load_indicator(name);
     let registry = common::make_registry();
@@ -109,8 +92,12 @@ fn expected(func: &ir::FuncDef) -> BTreeSet<String> {
 
 #[test]
 fn every_rust_function_names_exactly_its_own_c_symbols() {
-    let names = indicators();
-    assert!(names.len() >= 200, "expected the whole input tree, got {}", names.len());
+    let names = common::discover_indicators();
+    assert!(
+        common::sweep_filtered() || names.len() >= 200,
+        "expected the whole input tree, got {}",
+        names.len()
+    );
 
     let (mut streamed, mut total) = (0usize, 0usize);
     for name in &names {
@@ -133,13 +120,19 @@ fn every_rust_function_names_exactly_its_own_c_symbols() {
 
     // Floors, so an emitter that stopped writing aliases altogether cannot make
     // this pass by making every expected set empty.
-    assert!(streamed >= 200, "expected a streaming tier on nearly every function, got {streamed}");
-    assert!(total > 1700, "too few C-symbol aliases across the corpus: {total}");
+    assert!(
+        common::sweep_filtered() || streamed >= 200,
+        "expected a streaming tier on nearly every function, got {streamed}"
+    );
+    assert!(
+        common::sweep_filtered() || total > 1700,
+        "too few C-symbol aliases across the corpus: {total}"
+    );
 }
 
 #[test]
 fn the_batch_and_lookback_aliases_sit_on_the_functions_they_name() {
-    for name in &indicators() {
+    for name in &common::discover_indicators() {
         let (func, src) = rust_source(name);
         let n = &func.name;
         let fold = backends::common::snake_words(n);

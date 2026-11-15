@@ -26,7 +26,11 @@ fn streaming_funcs() -> Vec<String> {
         .filter(|n| load(n).0.streaming)
         .collect();
     out.sort();
-    assert!(out.len() >= 200, "the corpus sweep found only {} functions", out.len());
+    assert!(
+        common::sweep_filtered() || out.len() >= 200,
+        "the corpus sweep found only {} functions",
+        out.len()
+    );
     out
 }
 
@@ -81,7 +85,7 @@ fn every_stream_flagged_function_emits_a_ts_stream() {
         assert!(section_of(&full).is_some(), "{name}: declared streamable but no TS stream section");
         n += 1;
     }
-    assert!(n >= 200, "only {n} streams swept");
+    assert!(common::sweep_filtered() || n >= 200, "only {n} streams swept");
 }
 
 #[test]
@@ -147,6 +151,9 @@ fn opens_a_loop(line: &str) -> bool {
 
 #[test]
 fn a_ts_candlestick_open_internal_calls_its_sink_frame() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut single) = (0usize, 0usize);
     for (name, s) in candlestick_sections() {
         let sink = format!("\nfunction {name}OpenSinkFrame(");
@@ -193,6 +200,9 @@ fn a_ts_candlestick_open_internal_calls_its_sink_frame() {
 /// into slot 0, and runs the same carried statements.
 #[test]
 fn a_ts_sink_frame_decides_only_the_last_bar() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
     for (name, s) in candlestick_sections() {
         let head = format!("\nfunction {name}OpenSinkFrame(");
@@ -296,7 +306,7 @@ fn every_handle_field_is_public_and_internal() {
             }
         }
     }
-    assert!(fields >= 2000, "only {fields} handle fields seen");
+    assert!(common::sweep_filtered() || fields >= 2000, "only {fields} handle fields seen");
 }
 
 /// `clone()` copies every typed-array field and clones every sub-stream; a
@@ -328,8 +338,8 @@ fn clone_deep_copies_every_buffer_and_sub_stream() {
             }
         }
     }
-    assert!(arrays >= 300, "only {arrays} array fields seen");
-    assert!(subs >= 30, "only {subs} sub-stream fields seen");
+    assert!(common::sweep_filtered() || arrays >= 300, "only {arrays} array fields seen");
+    assert!(common::sweep_filtered() || subs >= 30, "only {subs} sub-stream fields seen");
 }
 
 /// The stream fuses `a*b+c` exactly where Java's does (H9, H10): the same
@@ -398,8 +408,8 @@ fn the_stream_fuses_where_java_s_does() {
         assert_eq!(t, j, "{name}: the TS stream fuses {t} sites, Java's {j}");
         fusing += usize::from(t > 0);
     }
-    assert!(fusing >= 30, "only {fusing} streams fuse at all");
-    assert!(sinks_fusing > 0, "no sink frame fuses");
+    assert!(common::sweep_filtered() || fusing >= 30, "only {fusing} streams fuse at all");
+    assert!(common::sweep_filtered() || sinks_fusing > 0, "no sink frame fuses");
 }
 
 /// No per-bar allocation in a committing or peeking frame: a multi-output
@@ -437,9 +447,15 @@ fn no_step_or_peek_frame_allocates_a_sink() {
             scratch.insert(name);
         }
     }
-    assert!(frames >= 400, "only {frames} frames checked");
-    assert!(!scratch.is_empty(), "no frame drives a multi-output sub-stream, so the sweep checks nothing");
-    assert!(omitted_sinks >= 20, "only {omitted_sinks} multi-output peeks allocate an omitted sink");
+    assert!(common::sweep_filtered() || frames >= 400, "only {frames} frames checked");
+    assert!(
+        common::sweep_filtered() || !scratch.is_empty(),
+        "no frame drives a multi-output sub-stream, so the sweep checks nothing"
+    );
+    assert!(
+        common::sweep_filtered() || omitted_sinks >= 20,
+        "only {omitted_sinks} multi-output peeks allocate an omitted sink"
+    );
 }
 
 /// Issue #205's fill-mode scratch aliases the caller's array, so no copy-back
@@ -587,18 +603,21 @@ fn no_ts_peek_copies_the_handle() {
             fully_shadowed.insert(name.clone());
         }
     }
-    assert!(swept >= 200, "only {swept} peek(s) swept");
+    assert!(common::sweep_filtered() || swept >= 200, "only {swept} peek(s) swept");
     assert_eq!(frames + handle_free, swept, "{frames} of {swept} peek(s) run a frame against the handle, {handle_free} never touch it");
-    assert!(frames >= 200, "only {frames} peek(s) run a frame");
-    assert!(tapes >= 15, "only {tapes} tape peek(s) swept");
+    assert!(common::sweep_filtered() || frames >= 200, "only {frames} peek(s) run a frame");
+    assert!(common::sweep_filtered() || tapes >= 15, "only {tapes} tape peek(s) swept");
     assert!(
-        fully_shadowed.len() >= 21,
+        common::sweep_filtered() || fully_shadowed.len() >= 21,
         "only {} handle(s) have a peek frame that reads an accumulator — the sweep is looking \
          for something that is not there",
         fully_shadowed.len()
     );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
-    assert!(omitted_sinks >= 20, "only {omitted_sinks} multi-output peeks allocate an omitted sink");
+    assert!(
+        common::sweep_filtered() || omitted_sinks >= 20,
+        "only {omitted_sinks} multi-output peeks allocate an omitted sink"
+    );
     // On the shipped corpus the exemption is reached by nothing; when the
     // fixtures are in the tree it must be, or the branch is dead.
     if fixtures > 0 {
@@ -610,7 +629,11 @@ fn no_ts_peek_copies_the_handle() {
     }
     // EXACTLY these three, as in Java: the composed peeks over a multi-output
     // callee. A fourth is a new one nobody costed.
-    let expected: BTreeSet<String> = ["kdj", "ma", "stochrsi"].iter().map(|s| (*s).to_string()).collect();
+    let expected: BTreeSet<String> = ["kdj", "ma", "stochrsi"]
+        .iter()
+        .filter(|s| common::swept(s))
+        .map(|s| (*s).to_string())
+        .collect();
     assert_eq!(sink_sites, expected, "the set of composed peeks allocating a sub-stream sink moved");
 }
 
@@ -647,5 +670,5 @@ fn public_update_and_peek_name_the_bar_as_the_positional_tier_does() {
             methods += 1;
         }
     }
-    assert!(methods >= 400, "swept {methods} public methods");
+    assert!(common::sweep_filtered() || methods >= 400, "swept {methods} public methods");
 }

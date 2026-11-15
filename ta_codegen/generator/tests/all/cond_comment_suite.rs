@@ -123,16 +123,8 @@ fn every_candlestick_condition_comment_trails_its_own_operand() {
     let mut placed = 0usize;
     let mut functions = 0usize;
 
-    let mut dirs: Vec<PathBuf> = std::fs::read_dir(&input_dir)
-        .expect("ta_codegen/input is readable")
-        .flatten()
-        .map(|e| e.path())
-        .filter(|p| p.is_dir() && p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("cdl")))
-        .collect();
-    dirs.sort();
-
-    for dir in dirs {
-        let name = dir.file_name().unwrap().to_string_lossy().to_string();
+    for name in common::all_indicators().into_iter().filter(|n| n.starts_with("cdl")) {
+        let dir = input_dir.join(&name);
         let inputs = input_comments(&dir.join(format!("{name}.c")));
         if inputs.is_empty() {
             continue;

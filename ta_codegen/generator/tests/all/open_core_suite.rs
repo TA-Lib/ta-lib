@@ -87,23 +87,7 @@ fn strip_comments(s: &str) -> String {
 
 /// Every function in the corpus that streams (the emitters' own gate decides).
 fn streaming_funcs() -> Vec<String> {
-    let mut names = Vec::new();
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let path = entry.expect("dir entry").path();
-        if !path.is_dir() {
-            continue;
-        }
-        let name = path.file_name().unwrap().to_str().unwrap().to_string();
-        if !path.join(format!("{name}.yaml")).exists() || !path.join(format!("{name}.c")).exists() {
-            continue;
-        }
-        let (func, _) = load(&name);
-        if func.streaming {
-            names.push(name);
-        }
-    }
-    names.sort();
-    names
+    common::discover_indicators().into_iter().filter(|name| load(name).0.streaming).collect()
 }
 
 // ---------------------------------------------------------------------------

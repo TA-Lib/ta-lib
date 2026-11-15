@@ -51,7 +51,10 @@ fn the_math_groups_declare_synthetic_series() {
         assert!(!synthetic || math, "{name}: a synthetic series outside the math groups");
         on_prices += usize::from(!synthetic);
     }
-    assert!(on_prices > 150, "{on_prices} functions on the price series");
+    assert!(
+        common::sweep_filtered() || on_prices > 150,
+        "{on_prices} functions on the price series"
+    );
 }
 
 #[test]

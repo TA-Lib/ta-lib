@@ -29,7 +29,11 @@ fn version() -> String {
 #[test]
 fn the_ledger_covers_every_corpus_function_once() {
     let corpus: HashSet<String> = common::discover_indicators().iter().map(|n| n.to_uppercase()).collect();
-    assert!(corpus.len() > 200, "corpus discovery found {}", corpus.len());
+    assert!(
+        common::sweep_filtered() || corpus.len() > 200,
+        "corpus discovery found {}",
+        corpus.len()
+    );
     let ledger = ledger();
     let mut seen: HashMap<&str, &str> = HashMap::new();
     for (release, names) in &ledger {
@@ -37,7 +41,10 @@ fn the_ledger_covers_every_corpus_function_once() {
             if let Some(other) = seen.insert(name, release) {
                 panic!("{name} is in both {other} and {release}");
             }
-            assert!(corpus.contains(name), "{name} ({release}) is not in ta_codegen/input");
+            assert!(
+                !common::swept(name) || corpus.contains(name),
+                "{name} ({release}) is not in ta_codegen/input"
+            );
         }
     }
     let listed: HashSet<String> = seen.keys().map(|n| (*n).to_string()).collect();
@@ -58,7 +65,7 @@ fn every_corpus_function_passes_the_generate_gate() {
         groups.insert(func.group.clone());
         releases.check(&func).unwrap_or_else(|e| panic!("{e}"));
     }
-    assert!(groups.len() >= 10, "groups seen: {groups:?}");
+    assert!(common::sweep_filtered() || groups.len() >= 10, "groups seen: {groups:?}");
     let mut unknown = parser::yaml::parse_yaml(&root.join("ta_codegen/input/sma/sma.yaml"));
     unknown.group = "Nonesuch".to_string();
     let err = releases.check(&unknown).unwrap_err();

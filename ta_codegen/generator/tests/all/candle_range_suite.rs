@@ -193,15 +193,11 @@ fn no_candlestick_carries_the_divergent_shadows_spelling() {
     // Corpus sweep. The inline arms are reached wherever the helper call sits in
     // a condition, which is every candlestick, at whatever bar index that
     // pattern happens to read -- `i - 3` and `sp.lag2_inClose` included.
+    if common::sweep_filtered() {
+        return;
+    }
     let mut checked = 0usize;
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let dir = entry.expect("dir entry").path();
-        let Some(name) = dir.file_name().map(|n| n.to_string_lossy().to_string()) else {
-            continue;
-        };
-        if !name.starts_with("cdl") || !dir.join(format!("{name}.yaml")).exists() {
-            continue;
-        }
+    for name in common::discover_indicators().into_iter().filter(|n| n.starts_with("cdl")) {
         let s = rust_source(&name);
         for block in range_type_matches(&s) {
             let (shadows, default) = shadows_and_default(&block);
@@ -309,14 +305,12 @@ fn colour_helper_calls(s: &str) -> usize {
 /// and the stream step keeps the `if` form.
 #[test]
 fn no_rust_batch_or_open_candle_body_branches_on_the_colour() {
+    if common::sweep_filtered() {
+        return;
+    }
     let (mut bodies, mut calls, mut steps, mut step_ifs) = (0usize, 0usize, 0usize, 0usize);
     let mut scalars = 0usize;
-    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
-        let dir = entry.expect("dir entry").path();
-        let name = dir.file_name().expect("name").to_string_lossy().to_string();
-        if !name.starts_with("cdl") || !dir.join(format!("{name}.yaml")).exists() {
-            continue;
-        }
+    for name in common::discover_indicators().into_iter().filter(|n| n.starts_with("cdl")) {
         let s = rust_source(&name);
         let framed = s.contains(&format!("fn {name}_open_sink_frame("));
         let mut tiers = vec![format!("{name}_impl")];

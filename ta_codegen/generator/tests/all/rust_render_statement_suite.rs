@@ -4,11 +4,10 @@
 use crate::common;
 
 use common::{
-    extract_section, generate_all, load_indicator, load_synth, make_registry,
+    discover_indicators, extract_section, generate_all, load_indicator, load_synth, make_registry,
     make_synth_registry, make_helpers,
 };
 use std::collections::HashMap;
-use std::path::Path;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
@@ -1010,18 +1009,8 @@ fn rust_public_entry_documents_exactly_its_parameters() {
     // wrapper. Sweep every indicator and require the two to agree, in order.
     let registry = make_registry();
     let helpers = make_helpers();
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let mut checked = 0usize;
-    for entry in std::fs::read_dir(&base).expect("input dir") {
-        let entry = entry.expect("dir entry");
-        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        let dir = entry.path();
-        if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
-            continue;
-        }
+    for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
         let out = backends::rust_lang::generate(&func, &enums, registry, helpers);
 
@@ -1063,7 +1052,10 @@ fn rust_public_entry_documents_exactly_its_parameters() {
         assert!(!params.is_empty(), "{name}: parsed no parameters -- the test would be vacuous");
         checked += 1;
     }
-    assert!(checked >= 200, "expected the whole corpus, checked only {checked}");
+    assert!(
+        common::sweep_filtered() || checked >= 200,
+        "expected the whole corpus, checked only {checked}"
+    );
 }
 
 /// `word` appearing in `hay` with no identifier character on either side.
@@ -1087,20 +1079,13 @@ fn every_integer_output_carries_an_example_claim() {
     // domain instead: a pattern output's from its flags, any other's from
     // `rust_doc::integer_claim`. This is the gate that a function arriving
     // with an integer output gets a claim rather than none.
+    if common::sweep_filtered() {
+        return;
+    }
     let registry = make_registry();
     let helpers = make_helpers();
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let mut checked = 0usize;
-    for entry in std::fs::read_dir(&base).expect("input dir") {
-        let entry = entry.expect("dir entry");
-        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().to_string();
-        let dir = entry.path();
-        if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
-            continue;
-        }
+    for name in discover_indicators() {
         // Shipped functions only. `scripts/synth_gate.py` copies its fixtures
         // into input/, and this claim is a curated per-function table feeding
         // the rustdoc EXAMPLE -- documentation for the published crate, which a
@@ -2753,15 +2738,13 @@ fn rust_macd_output_loops_run_as_counted_windows() {
 /// stays as written.
 #[test]
 fn rust_candle_loops_read_their_inputs_through_windows() {
+    if common::sweep_filtered() {
+        return;
+    }
     let registry = make_registry();
     let helpers = make_helpers();
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let mut seen = 0usize;
-    for entry in std::fs::read_dir(&base).expect("input dir") {
-        let name = entry.expect("dir entry").file_name().to_string_lossy().to_string();
-        if !name.starts_with("cdl") {
-            continue;
-        }
+    for name in discover_indicators().into_iter().filter(|n| n.starts_with("cdl")) {
         let (func, enums) = load_indicator(&name);
         let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
         let batch = &rust[..rust.find("_step_impl(").unwrap_or(rust.len())];

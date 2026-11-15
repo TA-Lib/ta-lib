@@ -41,17 +41,8 @@ type DeclaredOpt = (String, String, ParamType, Option<(f64, f64, f64)>);
 /// The declared metadata for every function: name -> (opt name, type, suggested).
 fn declared() -> Vec<(String, Vec<DeclaredOpt>)> {
     let mut out = Vec::new();
-    for e in std::fs::read_dir(input_dir()).expect("read input dir").filter_map(Result::ok) {
-        let dir = e.path();
-        if !dir.is_dir() {
-            continue;
-        }
-        let n = e.file_name().to_string_lossy().to_string();
-        let yaml = dir.join(format!("{n}.yaml"));
-        if !yaml.exists() {
-            continue;
-        }
-        let f = parser::yaml::parse_yaml(&yaml);
+    for n in crate::common::discover_indicators() {
+        let f = parser::yaml::parse_yaml(&input_dir().join(&n).join(format!("{n}.yaml")));
         let opts = f
             .optional_inputs
             .iter()
@@ -64,7 +55,11 @@ fn declared() -> Vec<(String, Vec<DeclaredOpt>)> {
             .collect();
         out.push((f.name.clone(), opts));
     }
-    assert!(out.len() >= 200, "expected the whole input tree, got {}", out.len());
+    assert!(
+        crate::common::sweep_filtered() || out.len() >= 200,
+        "expected the whole input tree, got {}",
+        out.len()
+    );
     out
 }
 
@@ -180,12 +175,12 @@ fn xml_suggested_matches_the_declaration() {
     }
 
     assert!(
-        checked_int > 50,
+        crate::common::sweep_filtered() || checked_int > 50,
         "only {checked_int} integer parameters compared -- this gate exists for the \
          integer path (#207), so a run that barely reaches it is not testing it"
     );
     assert!(
-        checked_real > 0,
+        crate::common::sweep_filtered() || checked_real > 0,
         "no real parameters compared; the real path should still be sampled"
     );
     assert!(

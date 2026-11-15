@@ -2454,7 +2454,8 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
         }
     }
     fired.sort();
-    assert_eq!(fired, scans.map(|s| s.0), "the functions rendered with a keyed twin");
+    let keyed: Vec<&str> = scans.map(|s| s.0).into_iter().filter(|n| common::swept(n)).collect();
+    assert_eq!(fired, keyed, "the functions rendered with a keyed twin");
 
     for (name, selects, arrays, scanned, args) in scans {
         let (func, enums) = common::load_indicator(name);

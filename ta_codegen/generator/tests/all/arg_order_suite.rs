@@ -105,5 +105,8 @@ fn every_batch_call_takes_the_yaml_argument_order_in_every_language() {
             }
         }
     }
-    assert!(checked >= 9 * 150, "only {checked} batch declarations checked");
+    assert!(
+        common::sweep_filtered() || checked >= 9 * 150,
+        "only {checked} batch declarations checked"
+    );
 }

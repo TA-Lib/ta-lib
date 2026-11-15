@@ -34,21 +34,10 @@ fn input_dir() -> PathBuf {
 /// Every indicator directory that carries a canonical doc file. A function
 /// without one contributes no prose, so it cannot carry this defect.
 fn documented_indicators() -> Vec<String> {
-    let mut v: Vec<String> = std::fs::read_dir(input_dir())
-        .expect("input dir")
-        .filter_map(Result::ok)
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            let dir = e.path();
-            (dir.join(format!("{name}.yaml")).exists()
-                && dir.join(format!("{name}.c")).exists()
-                && dir.join(format!("{name}.md")).exists())
-            .then_some(name)
-        })
-        .collect();
-    v.sort();
-    v
+    common::discover_indicators()
+        .into_iter()
+        .filter(|name| input_dir().join(name).join(format!("{name}.md")).exists())
+        .collect()
 }
 
 fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {

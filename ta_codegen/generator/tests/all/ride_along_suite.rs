@@ -8,18 +8,23 @@
 //! pinned here, on emitted text, where a missing emitter is loud.
 
 use crate::common;
-use common::{discover_indicators, first_line_a_ref_serve_build_compiles, load_indicator};
+use common::{
+    discover_indicators_with_callees, first_line_a_ref_serve_build_compiles, load_indicator,
+};
+use std::collections::HashMap;
 use std::path::Path;
+use std::sync::OnceLock;
 use ta_codegen_lib::{ir, parser};
 
-fn corpus() -> (Vec<ir::FuncDef>, std::collections::HashMap<String, ir::EnumDef>) {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
-    let funcs: Vec<ir::FuncDef> = discover_indicators()
-        .iter()
-        .map(|n| load_indicator(n).0)
-        .collect();
-    (funcs, enums)
+fn corpus() -> &'static (Vec<ir::FuncDef>, HashMap<String, ir::EnumDef>) {
+    static CORPUS: OnceLock<(Vec<ir::FuncDef>, HashMap<String, ir::EnumDef>)> = OnceLock::new();
+    CORPUS.get_or_init(|| {
+        let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+        let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+        let funcs: Vec<ir::FuncDef> =
+            discover_indicators_with_callees().iter().map(|n| load_indicator(n).0).collect();
+        (funcs, enums)
+    })
 }
 
 /// Per backend: the needle that counts a ride comparison, and the one that
@@ -34,18 +39,26 @@ const COMPARE_NEEDLE: [(&str, &str, &str, &str); 6] = [
     ("go", "svXtierNe(rb", "!= rib", "(core *talib.Core, p params, endIdx int"),
 ];
 
-fn servers(
-    funcs: &[ir::FuncDef],
-    enums: &std::collections::HashMap<String, ir::EnumDef>,
-) -> Vec<(&'static str, String)> {
-    vec![
-        ("c", ta_codegen_lib::server_gen::generate_c_server(funcs, enums)),
-        ("rust", ta_codegen_lib::server_gen::generate_rust_server(funcs, enums)),
-        ("java", ta_codegen_lib::server_gen::generate_java_server(funcs, enums)),
-        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(funcs, enums)),
-        ("ts", ta_codegen_lib::server_gen::generate_ts_server(funcs, enums)),
-        ("go", ta_codegen_lib::server_gen::generate_go_server(funcs, enums)),
-    ]
+fn servers() -> impl Iterator<Item = (&'static str, &'static str)> {
+    static SERVERS: OnceLock<Vec<(&'static str, String)>> = OnceLock::new();
+    SERVERS
+        .get_or_init(|| {
+            let (funcs, enums) = corpus();
+            vec![
+                ("c", ta_codegen_lib::server_gen::generate_c_server(funcs, enums)),
+                ("rust", ta_codegen_lib::server_gen::generate_rust_server(funcs, enums)),
+                ("java", ta_codegen_lib::server_gen::generate_java_server(funcs, enums)),
+                ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(funcs, enums)),
+                ("ts", ta_codegen_lib::server_gen::generate_ts_server(funcs, enums)),
+                ("go", ta_codegen_lib::server_gen::generate_go_server(funcs, enums)),
+            ]
+        })
+        .iter()
+        .map(|(lang, src)| (*lang, src.as_str()))
+}
+
+fn server(lang: &str) -> &'static str {
+    servers().find(|(l, _)| *l == lang).expect("a generated server").1
 }
 
 /// Every streaming function rides in every backend, and every one of its real
@@ -54,7 +67,7 @@ fn servers(
 /// a new indicator instead of dating the day it was written.
 #[test]
 fn every_backend_compares_every_ride_output() {
-    let (funcs, enums) = corpus();
+    let (funcs, _) = corpus();
     let streaming: Vec<&ir::FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
     let want_fns = streaming.len();
     let count_outputs = |want_int: bool| -> usize {
@@ -78,7 +91,7 @@ fn every_backend_compares_every_ride_output() {
         "corpus has no integer output: the integer floor below would be vacuous"
     );
 
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, cmp_needle, int_needle, fn_needle) = COMPARE_NEEDLE
             .iter()
             .find(|(l, _, _, _)| *l == lang)
@@ -112,7 +125,6 @@ fn every_backend_compares_every_ride_output() {
 /// differently reads as "not offered" and goes dark silently.
 #[test]
 fn every_backend_emits_the_same_ride_field_set() {
-    let (funcs, enums) = corpus();
     const FIELDS: [&str; 12] = [
         "ride_ok",
         "ride_skip",
@@ -134,7 +146,7 @@ fn every_backend_emits_the_same_ride_field_set() {
         "ride_batch",
         "ride_stream",
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         for f in FIELDS.iter().chain(DIAG.iter()) {
             assert!(
                 src.contains(f),
@@ -152,7 +164,7 @@ fn every_backend_emits_the_same_ride_field_set() {
 /// 201 functions in Rust and 35 in Java and C# never rode at all.
 #[test]
 fn every_backend_keys_the_dedup_cache_by_function_identity() {
-    let (funcs, enums) = corpus();
+    let (funcs, _) = corpus();
     let streaming: Vec<&ir::FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
     // (backend, the key line around the function's own name)
     let key_form: [(&str, &str, &str); 6] = [
@@ -163,7 +175,7 @@ fn every_backend_keys_the_dedup_cache_by_function_identity() {
         ("ts", "hash = rideMixStr(hash, 'TA_", "');"),
         ("go", "key = rideMixStr(key, \"TA_", "\")"),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, pre, post) = key_form
             .iter()
             .find(|(l, _, _)| *l == lang)
@@ -197,7 +209,6 @@ fn every_backend_keys_the_dedup_cache_by_function_identity() {
 /// same way.
 #[test]
 fn every_ambient_mutation_invalidates_the_ride_cache() {
-    let (funcs, enums) = corpus();
     const MUTATORS: [&str; 3] = [
         "set_unstable_period",
         "set_candle_settings",
@@ -213,7 +224,7 @@ fn every_ambient_mutation_invalidates_the_ride_cache() {
         ("ts", "rideGen++"),
         ("go", "rideGen++"),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, needle) = bump
             .iter()
             .find(|(l, _)| *l == lang)
@@ -260,7 +271,6 @@ fn every_ambient_mutation_invalidates_the_ride_cache() {
 /// own timer breaks that at exactly the offset it moved to.
 #[test]
 fn the_ride_along_is_emitted_after_the_timed_region() {
-    let (funcs, enums) = corpus();
     // (backend, the statement that closes the measurement, ride-call line prefix,
     //  the argument text every ride call carries)
     let probes = [
@@ -272,7 +282,7 @@ fn the_ride_along_is_emitted_after_the_timed_region() {
         // One timed loop, in the shared `batch`, which every handler calls.
         ("go", "elapsed := time.Since(t0)", "rideFields = ride(c)", "ride(c)", "rideBody"),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, timer, call_prefix, call_args, inner) = probes
             .iter()
             .find(|(l, _, _, _, _)| *l == lang)
@@ -318,9 +328,8 @@ fn the_ride_along_is_emitted_after_the_timed_region() {
 /// green while adding BSS to the oracle every benchmark ratio divides by.
 #[test]
 fn the_c_ride_along_is_entirely_inside_the_ref_serve_guard() {
-    let (funcs, enums) = corpus();
-    let src = ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums);
-    let leaked = first_line_a_ref_serve_build_compiles(&src, &["sr_", "SR_", "g_sr", "RIDE_"]);
+    let src = server("c");
+    let leaked = first_line_a_ref_serve_build_compiles(src, &["sr_", "SR_", "g_sr", "RIDE_"]);
     assert!(
         leaked.is_none(),
         "a ride-along symbol is emitted outside `#ifndef TA_REF_SERVE`: {leaked:?}"
@@ -337,7 +346,7 @@ fn the_c_ride_along_is_entirely_inside_the_ref_serve_guard() {
 /// comparison is a rejection nobody read.
 #[test]
 fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
-    let (funcs, enums) = corpus();
+    let (funcs, _) = corpus();
     let want_fns = funcs.iter().filter(|f| f.streaming).count();
     // (backend, the reject-leg Open call, its OpenAndFill, the two comparisons)
     let probes: [(&str, &str, &str, &str, &str); 6] = [
@@ -384,7 +393,7 @@ fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
             "cmp = r.rcFill == r.rcBatch",
         ),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, open_call, fill_call, open_cmp, fill_cmp) = probes
             .iter()
             .find(|(l, _, _, _, _)| *l == lang)
@@ -453,7 +462,7 @@ fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
 /// its `code`, and a throw that is not a `TALibError` names itself instead.
 #[test]
 fn every_throwing_backend_compares_what_its_caller_catches() {
-    let (funcs, enums) = corpus();
+    let (funcs, _) = corpus();
     let want_fns = funcs.iter().filter(|f| f.streaming).count();
     // (backend, the three captures -- one per entry point, the two comparisons)
     let probes: [(&str, [&str; 3], &str, &str); 3] = [
@@ -488,7 +497,7 @@ fn every_throwing_backend_compares_what_its_caller_catches() {
             "&& codeF === codeB;",
         ),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let Some((_, captures, open_cmp, fill_cmp)) =
             probes.iter().find(|(l, _, _, _)| *l == lang).copied()
         else {
@@ -524,7 +533,7 @@ fn every_throwing_backend_compares_what_its_caller_catches() {
 /// parameter one and every rejection reads as a divergence.
 #[test]
 fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
-    let (funcs, enums) = corpus();
+    let (funcs, _) = corpus();
     let want_fns = funcs.iter().filter(|f| f.streaming).count();
     // (backend, the two reject-leg lines, the range every one must carry). Java
     // and C# put the call and its catch on one line, so the assignment anchors
@@ -545,7 +554,7 @@ fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
         ("ts", ["r.rcOpen = rideCode(", "r.rcFill = rideCode("], ".slice(0, m)"),
         ("go", ["r.rcOpen = rideCode(", "r.rcFill = rideCode("], "[:m]"),
     ];
-    for (lang, src) in servers(&funcs, &enums) {
+    for (lang, src) in servers() {
         let (_, anchor, range) = probes
             .iter()
             .find(|(l, _, _)| *l == lang)
@@ -578,8 +587,8 @@ fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
 #[test]
 fn the_ts_server_legs_call_the_public_tier() {
     use ta_codegen_lib::backends::{common::pascal_words, ts::ts_names, ts_stream::emits_stream};
-    let (funcs, enums) = corpus();
-    let src = ta_codegen_lib::server_gen::generate_ts_server(&funcs, &enums);
+    let (funcs, _) = corpus();
+    let src = server("ts");
     let body = |head: &str| -> &str {
         let at = src.find(head).unwrap_or_else(|| panic!("ts: no `{head}`"));
         &src[at..at + src[at..].find("\n}\n").expect("the function ends")]
@@ -589,9 +598,9 @@ fn the_ts_server_legs_call_the_public_tier() {
         hay.match_indices(&needle)
             .any(|(i, _)| !hay[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_'))
     };
-    let lookup = ta_codegen_lib::streaming::FuncsLookup(&funcs);
+    let lookup = ta_codegen_lib::streaming::FuncsLookup(funcs);
     let (mut sv_seen, mut ride_seen) = (0usize, 0usize);
-    for f in &funcs {
+    for f in funcs {
         let n = ts_names(&f.name);
         let ns = f.name.as_str();
         let mut legs: Vec<(String, Vec<&str>)> = Vec::new();

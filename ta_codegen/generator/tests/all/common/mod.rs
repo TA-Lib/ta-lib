@@ -13,8 +13,29 @@ use ta_codegen_lib::registry::Registry;
 // Test infrastructure
 // ---------------------------------------------------------------------------
 
-/// Discover all indicator names from ta_codegen/input/ that have both .yaml and .c files.
-pub fn discover_indicators() -> Vec<String> {
+/// The case-insensitive name prefix in `TA_SWEEP_FUNCS`, lowercased. Set, it
+/// narrows every corpus sweep to the functions it names.
+fn sweep_prefix() -> Option<String> {
+    std::env::var("TA_SWEEP_FUNCS").ok().filter(|p| !p.is_empty()).map(|p| p.to_ascii_lowercase())
+}
+
+/// Whether `TA_SWEEP_FUNCS` lets the sweeps see `name`: what narrows a table
+/// of expected names to the functions a filtered sweep reaches.
+pub fn swept(name: &str) -> bool {
+    sweep_prefix().is_none_or(|p| name.to_ascii_lowercase().starts_with(&p))
+}
+
+/// Whether `TA_SWEEP_FUNCS` narrows the sweeps. A count floor, or an assertion
+/// naming shipped functions, holds only without it; under it,
+/// [`discover_indicators`]' own non-empty check is the sweep's floor.
+pub fn sweep_filtered() -> bool {
+    sweep_prefix().is_some()
+}
+
+/// Every function directory under `ta_codegen/input/` (a `<name>.yaml` beside a
+/// `<name>.c`), ignoring `TA_SWEEP_FUNCS`: for an assertion over the whole corpus
+/// (an exact set, a call graph), which a narrowed list would let pass silently.
+pub fn all_indicators() -> Vec<String> {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let mut indicators = Vec::new();
     for entry in std::fs::read_dir(&base).expect("Cannot read ta_codegen/input directory") {
@@ -32,6 +53,59 @@ pub fn discover_indicators() -> Vec<String> {
     }
     indicators.sort();
     indicators
+}
+
+/// [`all_indicators`] narrowed by `TA_SWEEP_FUNCS`: the list a sweep that
+/// generates code iterates.
+pub fn discover_indicators() -> Vec<String> {
+    let indicators: Vec<String> = all_indicators().into_iter().filter(|n| swept(n)).collect();
+    if let Some(p) = sweep_prefix() {
+        assert!(
+            !indicators.is_empty(),
+            "TA_SWEEP_FUNCS={p} matches no function in ta_codegen/input/"
+        );
+    }
+    indicators
+}
+
+/// [`discover_indicators`] and every function they call, transitively: the set a
+/// whole-corpus emitter (a server) needs to resolve each
+/// cross-call. Unfiltered it is the corpus.
+pub fn discover_indicators_with_callees() -> Vec<String> {
+    let mut names = discover_indicators();
+    if !sweep_filtered() {
+        return names;
+    }
+    let all = all_indicators();
+    let mut next = 0;
+    while next < names.len() {
+        let f = load_indicator(&names[next]).0;
+        next += 1;
+        let lookback = match &f.lookback {
+            Some(ir::LookbackExpr::Code(stmts)) => stmts.as_slice(),
+            _ => &[],
+        };
+        let alternates = f.alternates.iter().flat_map(|a| a.body.iter());
+        let mut targets = Vec::new();
+        for stmt in f.body.iter().chain(&f.private_body).chain(lookback).chain(alternates) {
+            ta_codegen_lib::streaming::walk_stmt_exprs(stmt, &mut |e| {
+                ta_codegen_lib::streaming::walk_expr(e, &mut |e| {
+                    if let ir::Expr::FuncCall(callee, _) = e {
+                        let lower = callee.to_ascii_lowercase();
+                        let stem = lower.trim_start_matches("ta_");
+                        targets.push(stem.strip_suffix("_lookback").unwrap_or(stem).to_string());
+                    }
+                });
+            });
+        }
+        for target in targets {
+            if all.contains(&target) && !names.contains(&target) {
+                names.push(target);
+            }
+        }
+    }
+    names.sort();
+    names
 }
 
 /// Load a function definition from its .yaml + .c files.
@@ -171,11 +245,14 @@ pub fn generate_all(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) ->
     }
 }
 
-/// Load every shipped definition once, as the abstract rows.
 pub fn all_abstract_rows() -> Vec<ta_codegen_lib::backends::abstract_rows::FuncRow> {
+    abstract_rows_of(&discover_indicators())
+}
+
+pub fn abstract_rows_of(names: &[String]) -> Vec<ta_codegen_lib::backends::abstract_rows::FuncRow> {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));
-    let funcs: Vec<ir::FuncDef> = discover_indicators()
+    let funcs: Vec<ir::FuncDef> = names
         .iter()
         .map(|n| parser::yaml::parse_yaml(&base.join(format!("{n}/{n}.yaml"))))
         .collect();
