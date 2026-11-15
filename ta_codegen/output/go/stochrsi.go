@@ -304,12 +304,23 @@ func (sp *STOCHRSIStream) Update(inReal float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	if err := stochrsiStepImpl(sp, inReal); err != nil {
-		return 0, 0, err
+	var cur_tempRSIBuffer float64
+	var cur_outFastK float64
+	var cur_outFastD float64
+	var subErr error
+	cur_tempRSIBuffer, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, 0, subErr
 	}
+	cur_outFastK, cur_outFastD, subErr = sp.sub1.Update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	sp.cur_outFastK = cur_outFastK
+	sp.cur_outFastD = cur_outFastD
 	sp.outRangeCount++
 	return sp.cur_outFastK, sp.cur_outFastD, nil
 }
@@ -317,7 +328,7 @@ func (sp *STOCHRSIStream) Update(inReal float64) (float64, float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *STOCHRSIStream) Peek(inReal float64) (float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
 	var cur_tempRSIBuffer float64
@@ -348,24 +359,6 @@ func (sp *STOCHRSIStream) Clone() *STOCHRSIStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func stochrsiStepImpl(sp *STOCHRSIStream, inReal float64) error {
-	var cur_tempRSIBuffer float64
-	var cur_outFastK float64
-	var cur_outFastD float64
-	var subErr error
-	cur_tempRSIBuffer, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outFastK, cur_outFastD, subErr = sp.sub1.Update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	sp.cur_outFastK = cur_outFastK
-	sp.cur_outFastD = cur_outFastD
-	return nil
 }
 
 func (c *Core) stochrsiOpenImpl(sp *STOCHRSIStream, inReal []float64, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType int32, outBegIdx, outNBElement *int32, outFastK, outFastD []float64, outStride int32) RetCode {

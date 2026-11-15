@@ -193,18 +193,24 @@ func (sp *PVTStream) Update(inClose, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	pvtStepImpl(sp, inClose, inVolume)
 	sp.outRangeCount++
+	var tempClose float64
+	tempClose = inClose
+	if sp.prevClose != 0.0 {
+		sp.prevPVT += float64((tempClose - sp.prevClose) / sp.prevClose * inVolume)
+	}
+	sp.cur_outReal = sp.prevPVT
+	sp.prevClose = tempClose
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inClose and inVolume),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *PVTStream) Peek(inClose, inVolume float64) (float64, error) {
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var tempClose float64
@@ -228,16 +234,6 @@ func (sp *PVTStream) Value() float64 {
 func (sp *PVTStream) Clone() *PVTStream {
 	cl := *sp
 	return &cl
-}
-
-func pvtStepImpl(sp *PVTStream, inClose, inVolume float64) {
-	var tempClose float64
-	tempClose = inClose
-	if sp.prevClose != 0.0 {
-		sp.prevPVT += float64((tempClose - sp.prevClose) / sp.prevClose * inVolume)
-	}
-	sp.cur_outReal = sp.prevPVT
-	sp.prevClose = tempClose
 }
 
 func (c *Core) pvtOpenImpl(sp *PVTStream, inClose, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

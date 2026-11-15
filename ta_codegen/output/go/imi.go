@@ -242,18 +242,65 @@ func (sp *IMIStream) Update(inOpen, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	imiStepImpl(sp, inOpen, inClose)
 	sp.outRangeCount++
+	var upsum float64
+	var downsum float64
+	var i int32
+	var diff float64
+	var up float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inClose []float64
+	var win_i_inOpen []float64
+	sp.win_i_inOpen[sp.winPos_i] = inOpen
+	sp.win_i_inClose[sp.winPos_i] = inClose
+	upsum = 0.0
+	downsum = 0.0
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inClose = sp.win_i_inClose
+	win_i_inOpen = sp.win_i_inOpen
+	for i = optInTimePeriod - 1; i >= 0; i -= 1 {
+		var _T7 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T7 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T7 = winPos_i + winCap_i - i
+		}
+		var _T8 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T8 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T8 = winPos_i + winCap_i - i
+		}
+		diff = win_i_inClose[_T7] - win_i_inOpen[_T8]
+		up = float64((diff + math.Abs(diff)) * 0.5)
+		upsum += up
+		downsum += up - diff
+	}
+	var _T9 float64
+	if upsum+downsum == 0.0 {
+		_T9 = 50.0
+	} else {
+		_T9 = float64(100.0 * (upsum / (upsum + downsum)))
+	}
+	sp.cur_outReal = _T9
+	sp.winPos_i = sp.winPos_i + 1
+	if sp.winPos_i >= sp.winCap_i {
+		sp.winPos_i = 0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inOpen and inClose),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *IMIStream) Peek(inOpen, inClose float64) (float64, error) {
-	if !isFinite(inOpen) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var upsum float64
@@ -261,6 +308,11 @@ func (sp *IMIStream) Peek(inOpen, inClose float64) (float64, error) {
 	var i int32
 	var diff float64
 	var up float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inClose []float64
+	var win_i_inOpen []float64
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
@@ -272,40 +324,45 @@ func (sp *IMIStream) Peek(inOpen, inClose float64) (float64, error) {
 	pkVal1 = inClose
 	upsum = 0.0
 	downsum = 0.0
-	for i = sp.optInTimePeriod - 1; i >= 0; i -= 1 {
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inClose = sp.win_i_inClose
+	win_i_inOpen = sp.win_i_inOpen
+	for i = optInTimePeriod - 1; i >= 0; i -= 1 {
 		var _T0 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T0 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T0 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T0 = sp.winPos_i + sp.winCap_i - i
+			_T0 = winPos_i + winCap_i - i
 		}
 		var _T2 float64
 		if _T0 != pkSlot1 {
 			var _T1 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T1 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T1 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T1 = sp.winPos_i + sp.winCap_i - i
+				_T1 = winPos_i + winCap_i - i
 			}
-			_T2 = sp.win_i_inClose[_T1]
+			_T2 = win_i_inClose[_T1]
 		} else {
 			_T2 = pkVal1
 		}
 		var _T3 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T3 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T3 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T3 = sp.winPos_i + sp.winCap_i - i
+			_T3 = winPos_i + winCap_i - i
 		}
 		var _T5 float64
 		if _T3 != pkSlot0 {
 			var _T4 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T4 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T4 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T4 = sp.winPos_i + sp.winCap_i - i
+				_T4 = winPos_i + winCap_i - i
 			}
-			_T5 = sp.win_i_inOpen[_T4]
+			_T5 = win_i_inOpen[_T4]
 		} else {
 			_T5 = pkVal0
 		}
@@ -336,47 +393,6 @@ func (sp *IMIStream) Clone() *IMIStream {
 	cl.win_i_inOpen = append(sp.win_i_inOpen[:0:0], sp.win_i_inOpen...)
 	cl.win_i_inClose = append(sp.win_i_inClose[:0:0], sp.win_i_inClose...)
 	return &cl
-}
-
-func imiStepImpl(sp *IMIStream, inOpen, inClose float64) {
-	var upsum float64
-	var downsum float64
-	var i int32
-	var diff float64
-	var up float64
-	sp.win_i_inOpen[sp.winPos_i] = inOpen
-	sp.win_i_inClose[sp.winPos_i] = inClose
-	upsum = 0.0
-	downsum = 0.0
-	for i = sp.optInTimePeriod - 1; i >= 0; i -= 1 {
-		var _T7 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T7 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T7 = sp.winPos_i + sp.winCap_i - i
-		}
-		var _T8 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T8 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T8 = sp.winPos_i + sp.winCap_i - i
-		}
-		diff = sp.win_i_inClose[_T7] - sp.win_i_inOpen[_T8]
-		up = float64((diff + math.Abs(diff)) * 0.5)
-		upsum += up
-		downsum += up - diff
-	}
-	var _T9 float64
-	if upsum+downsum == 0.0 {
-		_T9 = 50.0
-	} else {
-		_T9 = float64(100.0 * (upsum / (upsum + downsum)))
-	}
-	sp.cur_outReal = _T9
-	sp.winPos_i = sp.winPos_i + 1
-	if sp.winPos_i >= sp.winCap_i {
-		sp.winPos_i = 0
-	}
 }
 
 func (c *Core) imiOpenImpl(sp *IMIStream, inOpen, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

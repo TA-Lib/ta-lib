@@ -488,12 +488,123 @@ func (sp *GATORStream) Update(inHigh, inLow float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, BadParam
 	}
-	if err := gatorStepImpl(sp, inHigh, inLow); err != nil {
-		return 0, 0, err
+	var cur_tempMP float64
+	var cur_tempA float64
+	var cur_tempB float64
+	var cur_outUpper float64
+	var cur_outLower float64
+	var lagIn0 float64
+	var lagTap0_0 float64
+	var lagIn1 float64
+	var lagTap1_0 float64
+	var lagIn2 float64
+	var lagTap2_0 float64
+	var lagIn3 float64
+	var lagTap3_0 float64
+	var lagCapL0 int32
+	var lagPosL0 int32
+	var lagCapL1 int32
+	var lagPosL1 int32
+	var lagCapL2 int32
+	var lagPosL2 int32
+	var lagCapL3 int32
+	var lagPosL3 int32
+	var subErr error
+	cur_tempMP, subErr = sp.sub0.Update(inHigh, inLow)
+	if subErr != nil {
+		return 0, 0, subErr
 	}
+	cur_tempA, subErr = sp.sub1.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	lagIn0 = cur_tempA
+	cur_tempB, subErr = sp.sub2.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	lagIn1 = cur_tempB
+	lagTap0_0 = sp.lagBuf0[sp.lagPos0]
+	var _T4 float64
+	if sp.lagCap0 == 0 {
+		_T4 = lagIn0
+	} else {
+		_T4 = lagTap0_0
+	}
+	lagTap0_0 = _T4
+	lagTap1_0 = sp.lagBuf1[sp.lagPos1]
+	var _T5 float64
+	if sp.lagCap1 == 0 {
+		_T5 = lagIn1
+	} else {
+		_T5 = lagTap1_0
+	}
+	lagTap1_0 = _T5
+	cur_outUpper = math.Abs(lagTap0_0 - lagTap1_0)
+	cur_tempA, subErr = sp.sub3.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	lagIn2 = cur_tempA
+	cur_tempB, subErr = sp.sub4.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	lagIn3 = cur_tempB
+	lagTap2_0 = sp.lagBuf2[sp.lagPos2]
+	var _T6 float64
+	if sp.lagCap2 == 0 {
+		_T6 = lagIn2
+	} else {
+		_T6 = lagTap2_0
+	}
+	lagTap2_0 = _T6
+	lagTap3_0 = sp.lagBuf3[sp.lagPos3]
+	var _T7 float64
+	if sp.lagCap3 == 0 {
+		_T7 = lagIn3
+	} else {
+		_T7 = lagTap3_0
+	}
+	lagTap3_0 = _T7
+	cur_outLower = selF(lagTap2_0 < lagTap3_0, lagTap2_0-lagTap3_0, lagTap3_0-lagTap2_0)
+	lagCapL0 = sp.lagCap0
+	lagPosL0 = sp.lagPos0
+	sp.lagBuf0[lagPosL0] = lagIn0
+	lagPosL0 = lagPosL0 + 1
+	if lagPosL0 >= lagCapL0 {
+		lagPosL0 = 0
+	}
+	sp.lagPos0 = lagPosL0
+	lagCapL1 = sp.lagCap1
+	lagPosL1 = sp.lagPos1
+	sp.lagBuf1[lagPosL1] = lagIn1
+	lagPosL1 = lagPosL1 + 1
+	if lagPosL1 >= lagCapL1 {
+		lagPosL1 = 0
+	}
+	sp.lagPos1 = lagPosL1
+	lagCapL2 = sp.lagCap2
+	lagPosL2 = sp.lagPos2
+	sp.lagBuf2[lagPosL2] = lagIn2
+	lagPosL2 = lagPosL2 + 1
+	if lagPosL2 >= lagCapL2 {
+		lagPosL2 = 0
+	}
+	sp.lagPos2 = lagPosL2
+	lagCapL3 = sp.lagCap3
+	lagPosL3 = sp.lagPos3
+	sp.lagBuf3[lagPosL3] = lagIn3
+	lagPosL3 = lagPosL3 + 1
+	if lagPosL3 >= lagCapL3 {
+		lagPosL3 = 0
+	}
+	sp.lagPos3 = lagPosL3
+	sp.cur_outUpper = cur_outUpper
+	sp.cur_outLower = cur_outLower
 	sp.outRangeCount++
 	return sp.cur_outUpper, sp.cur_outLower, nil
 }
@@ -501,7 +612,7 @@ func (sp *GATORStream) Update(inHigh, inLow float64) (float64, float64, error) {
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *GATORStream) Peek(inHigh, inLow float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, BadParam
 	}
 	var cur_tempMP float64
@@ -575,13 +686,7 @@ func (sp *GATORStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 		_T3 = lagTap3_0
 	}
 	lagTap3_0 = _T3
-	var _T4 float64
-	if lagTap2_0 < lagTap3_0 {
-		_T4 = lagTap2_0 - lagTap3_0
-	} else {
-		_T4 = lagTap3_0 - lagTap2_0
-	}
-	cur_outLower = _T4
+	cur_outLower = selF(lagTap2_0 < lagTap3_0, lagTap2_0-lagTap3_0, lagTap3_0-lagTap2_0)
 	return cur_outUpper, cur_outLower, nil
 }
 
@@ -605,130 +710,6 @@ func (sp *GATORStream) Clone() *GATORStream {
 	cl.sub3 = sp.sub3.Clone()
 	cl.sub4 = sp.sub4.Clone()
 	return &cl
-}
-
-func gatorStepImpl(sp *GATORStream, inHigh, inLow float64) error {
-	var cur_tempMP float64
-	var cur_tempA float64
-	var cur_tempB float64
-	var cur_outUpper float64
-	var cur_outLower float64
-	var lagIn0 float64
-	var lagTap0_0 float64
-	var lagIn1 float64
-	var lagTap1_0 float64
-	var lagIn2 float64
-	var lagTap2_0 float64
-	var lagIn3 float64
-	var lagTap3_0 float64
-	var lagCapL0 int32
-	var lagPosL0 int32
-	var lagCapL1 int32
-	var lagPosL1 int32
-	var lagCapL2 int32
-	var lagPosL2 int32
-	var lagCapL3 int32
-	var lagPosL3 int32
-	var subErr error
-	cur_tempMP, subErr = sp.sub0.Update(inHigh, inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempA, subErr = sp.sub1.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	lagIn0 = cur_tempA
-	cur_tempB, subErr = sp.sub2.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	lagIn1 = cur_tempB
-	lagTap0_0 = sp.lagBuf0[sp.lagPos0]
-	var _T5 float64
-	if sp.lagCap0 == 0 {
-		_T5 = lagIn0
-	} else {
-		_T5 = lagTap0_0
-	}
-	lagTap0_0 = _T5
-	lagTap1_0 = sp.lagBuf1[sp.lagPos1]
-	var _T6 float64
-	if sp.lagCap1 == 0 {
-		_T6 = lagIn1
-	} else {
-		_T6 = lagTap1_0
-	}
-	lagTap1_0 = _T6
-	cur_outUpper = math.Abs(lagTap0_0 - lagTap1_0)
-	cur_tempA, subErr = sp.sub3.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	lagIn2 = cur_tempA
-	cur_tempB, subErr = sp.sub4.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	lagIn3 = cur_tempB
-	lagTap2_0 = sp.lagBuf2[sp.lagPos2]
-	var _T7 float64
-	if sp.lagCap2 == 0 {
-		_T7 = lagIn2
-	} else {
-		_T7 = lagTap2_0
-	}
-	lagTap2_0 = _T7
-	lagTap3_0 = sp.lagBuf3[sp.lagPos3]
-	var _T8 float64
-	if sp.lagCap3 == 0 {
-		_T8 = lagIn3
-	} else {
-		_T8 = lagTap3_0
-	}
-	lagTap3_0 = _T8
-	var _T9 float64
-	if lagTap2_0 < lagTap3_0 {
-		_T9 = lagTap2_0 - lagTap3_0
-	} else {
-		_T9 = lagTap3_0 - lagTap2_0
-	}
-	cur_outLower = _T9
-	lagCapL0 = sp.lagCap0
-	lagPosL0 = sp.lagPos0
-	sp.lagBuf0[lagPosL0] = lagIn0
-	lagPosL0 = lagPosL0 + 1
-	if lagPosL0 >= lagCapL0 {
-		lagPosL0 = 0
-	}
-	sp.lagPos0 = lagPosL0
-	lagCapL1 = sp.lagCap1
-	lagPosL1 = sp.lagPos1
-	sp.lagBuf1[lagPosL1] = lagIn1
-	lagPosL1 = lagPosL1 + 1
-	if lagPosL1 >= lagCapL1 {
-		lagPosL1 = 0
-	}
-	sp.lagPos1 = lagPosL1
-	lagCapL2 = sp.lagCap2
-	lagPosL2 = sp.lagPos2
-	sp.lagBuf2[lagPosL2] = lagIn2
-	lagPosL2 = lagPosL2 + 1
-	if lagPosL2 >= lagCapL2 {
-		lagPosL2 = 0
-	}
-	sp.lagPos2 = lagPosL2
-	lagCapL3 = sp.lagCap3
-	lagPosL3 = sp.lagPos3
-	sp.lagBuf3[lagPosL3] = lagIn3
-	lagPosL3 = lagPosL3 + 1
-	if lagPosL3 >= lagCapL3 {
-		lagPosL3 = 0
-	}
-	sp.lagPos3 = lagPosL3
-	sp.cur_outUpper = cur_outUpper
-	sp.cur_outLower = cur_outLower
-	return nil
 }
 
 func (c *Core) gatorOpenImpl(sp *GATORStream, inHigh, inLow []float64, startIdx, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift int32, outBegIdx, outNBElement *int32, outUpper, outLower []float64, outStride int32) RetCode {
@@ -860,18 +841,18 @@ func (c *Core) gatorOpenImpl(sp *GATORStream, inHigh, inLow []float64, startIdx,
 	tempMP = make([]float64, endIdx-mpStartIdx+1)
 	tempA = make([]float64, nbElement+maxBack)
 	tempB = make([]float64, nbElement+maxBack)
-	sub0, _E10 := c.medpriceOpenAndFillInternal(inHigh, inLow, mpStartIdx, &tempBegIdx, &tempNbElement, tempMP)
-	if _E10 != nil {
-		return _E10.(RetCode)
+	sub0, _E8 := c.medpriceOpenAndFillInternal(inHigh, inLow, mpStartIdx, &tempBegIdx, &tempNbElement, tempMP)
+	if _E8 != nil {
+		return _E8.(RetCode)
 	}
-	sub1, _E11 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backJaw, optInJawPeriod, &tempBegIdx, &tempNbElement, tempA)
-	if _E11 != nil {
-		return _E11.(RetCode)
+	sub1, _E9 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backJaw, optInJawPeriod, &tempBegIdx, &tempNbElement, tempA)
+	if _E9 != nil {
+		return _E9.(RetCode)
 	}
 	lagNb0 = tempNbElement
-	sub2, _E12 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backTeethUpper, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempB)
-	if _E12 != nil {
-		return _E12.(RetCode)
+	sub2, _E10 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backTeethUpper, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempB)
+	if _E10 != nil {
+		return _E10.(RetCode)
 	}
 	lagNb1 = tempNbElement
 	if nbElement < 1 {
@@ -896,14 +877,14 @@ func (c *Core) gatorOpenImpl(sp *GATORStream, inHigh, inLow []float64, startIdx,
 	for i = 0; i < nbElement; i += 1 {
 		sc_outUpper[i] = math.Abs(tempA[i] - tempB[i])
 	}
-	sub3, _E13 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backTeethLower, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempA)
-	if _E13 != nil {
-		return _E13.(RetCode)
+	sub3, _E11 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backTeethLower, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempA)
+	if _E11 != nil {
+		return _E11.(RetCode)
 	}
 	lagNb2 = tempNbElement
-	sub4, _E14 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backLips, optInLipsPeriod, &tempBegIdx, &tempNbElement, tempB)
-	if _E14 != nil {
-		return _E14.(RetCode)
+	sub4, _E12 := c.rmaOpenAndFillInternal(tempMP[:localEnd+1], localStart-backLips, optInLipsPeriod, &tempBegIdx, &tempNbElement, tempB)
+	if _E12 != nil {
+		return _E12.(RetCode)
 	}
 	lagNb3 = tempNbElement
 	if nbElement < 1 {
@@ -926,13 +907,13 @@ func (c *Core) gatorOpenImpl(sp *GATORStream, inHigh, inLow []float64, startIdx,
 	copy(lagBuf3, tempB[lagNb3-lagCap3:lagNb3])
 	lagPos3 = 0
 	for i = 0; i < nbElement; i += 1 {
-		var _T15 float64
+		var _T13 float64
 		if tempA[i] < tempB[i] {
-			_T15 = tempA[i] - tempB[i]
+			_T13 = tempA[i] - tempB[i]
 		} else {
-			_T15 = tempB[i] - tempA[i]
+			_T13 = tempB[i] - tempA[i]
 		}
-		sc_outLower[i] = _T15
+		sc_outLower[i] = _T13
 	}
 	*outBegIdx = startIdx
 	*outNBElement = nbElement

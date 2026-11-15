@@ -251,12 +251,22 @@ func (sp *RVIRStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	if err := rvirStepImpl(sp, inHigh, inLow); err != nil {
-		return 0, err
+	var cur_tempHigh float64
+	var cur_outReal float64
+	var subErr error
+	cur_tempHigh, subErr = sp.sub0.Update(inHigh)
+	if subErr != nil {
+		return 0, subErr
 	}
+	cur_outReal, subErr = sp.sub1.Update(inLow)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_outReal = float64(0.5 * (cur_tempHigh + cur_outReal))
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -264,7 +274,7 @@ func (sp *RVIRStream) Update(inHigh, inLow float64) (float64, error) {
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *RVIRStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var cur_tempHigh float64
@@ -294,23 +304,6 @@ func (sp *RVIRStream) Clone() *RVIRStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func rvirStepImpl(sp *RVIRStream, inHigh, inLow float64) error {
-	var cur_tempHigh float64
-	var cur_outReal float64
-	var subErr error
-	cur_tempHigh, subErr = sp.sub0.Update(inHigh)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal, subErr = sp.sub1.Update(inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal = float64(0.5 * (cur_tempHigh + cur_outReal))
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) rvirOpenImpl(sp *RVIRStream, inHigh, inLow []float64, startIdx, optInTimePeriod, optInStdDevPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

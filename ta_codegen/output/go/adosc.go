@@ -320,11 +320,24 @@ func (sp *ADOSCStream) Update(inHigh, inLow, inClose, inVolume float64) (float64
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	adoscStepImpl(sp, inHigh, inLow, inClose, inVolume)
 	sp.outRangeCount++
+	var high float64
+	var low float64
+	var close_ float64
+	var tmp float64
+	high = inHigh
+	low = inLow
+	tmp = high - low
+	close_ = inClose
+	if tmp > 0.0 {
+		sp.ad += float64((close_ - low - (high - close_)) / tmp * inVolume)
+	}
+	sp.fastEMA = math.FMA(sp.one_minus_fastk, sp.fastEMA, float64(sp.fastk*sp.ad))
+	sp.slowEMA = math.FMA(sp.one_minus_slowk, sp.slowEMA, float64(sp.slowk*sp.ad))
+	sp.cur_outReal = sp.fastEMA - sp.slowEMA
 	return sp.cur_outReal, nil
 }
 
@@ -332,7 +345,7 @@ func (sp *ADOSCStream) Update(inHigh, inLow, inClose, inVolume float64) (float64
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *ADOSCStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var high float64
@@ -366,23 +379,6 @@ func (sp *ADOSCStream) Value() float64 {
 func (sp *ADOSCStream) Clone() *ADOSCStream {
 	cl := *sp
 	return &cl
-}
-
-func adoscStepImpl(sp *ADOSCStream, inHigh, inLow, inClose, inVolume float64) {
-	var high float64
-	var low float64
-	var close_ float64
-	var tmp float64
-	high = inHigh
-	low = inLow
-	tmp = high - low
-	close_ = inClose
-	if tmp > 0.0 {
-		sp.ad += float64((close_ - low - (high - close_)) / tmp * inVolume)
-	}
-	sp.fastEMA = math.FMA(sp.one_minus_fastk, sp.fastEMA, float64(sp.fastk*sp.ad))
-	sp.slowEMA = math.FMA(sp.one_minus_slowk, sp.slowEMA, float64(sp.slowk*sp.ad))
-	sp.cur_outReal = sp.fastEMA - sp.slowEMA
 }
 
 func (c *Core) adoscOpenImpl(sp *ADOSCStream, inHigh, inLow, inClose, inVolume []float64, startIdx, optInFastPeriod, optInSlowPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

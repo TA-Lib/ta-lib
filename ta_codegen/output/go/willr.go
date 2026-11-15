@@ -359,11 +359,95 @@ func (sp *WILLRStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	willrStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tmp float64
+	var tempReal float64
+	var i int32
+	var lowest float64
+	var lowestIdx int32
+	var today int32
+	var xMask int32
+	var x_inLow []float64
+	var highest float64
+	var highestIdx int32
+	var x_inHigh []float64
+	sp.x_inHigh[sp.today&sp.xMask] = inHigh
+	sp.x_inLow[sp.today&sp.xMask] = inLow
+	sp.x_inClose[sp.today&sp.xMask] = inClose
+	tmp = sp.x_inLow[sp.today&sp.xMask]
+	if sp.lowestIdx < sp.trailingIdx {
+		sp.lowestIdx = sp.trailingIdx
+		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
+		sp.i = sp.lowestIdx
+		i = sp.i
+		lowest = sp.lowest
+		lowestIdx = sp.lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmp = x_inLow[i&xMask]
+			if tmp < lowest {
+				lowestIdx = i
+				lowest = tmp
+			}
+		}
+		sp.i = i
+		sp.lowest = lowest
+		sp.lowestIdx = lowestIdx
+	} else if tmp <= sp.lowest {
+		sp.lowestIdx = sp.today
+		sp.lowest = tmp
+	}
+	tmp = sp.x_inHigh[sp.today&sp.xMask]
+	if sp.highestIdx < sp.trailingIdx {
+		sp.highestIdx = sp.trailingIdx
+		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
+		sp.i = sp.highestIdx
+		highest = sp.highest
+		highestIdx = sp.highestIdx
+		i = sp.i
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmp = x_inHigh[i&xMask]
+			if tmp > highest {
+				highestIdx = i
+				highest = tmp
+			}
+		}
+		sp.highest = highest
+		sp.highestIdx = highestIdx
+		sp.i = i
+	} else if tmp >= sp.highest {
+		sp.highestIdx = sp.today
+		sp.highest = tmp
+	}
+	if !isZeroScaled(sp.highest-sp.lowest, math.Abs(sp.highest)+math.Abs(sp.lowest)) {
+		tempReal = float64((sp.highest - sp.x_inClose[sp.today&sp.xMask]) / (sp.highest - sp.lowest) * -100.0)
+		if tempReal > 0.0 {
+			tempReal = 0.0
+		} else if tempReal < -100.0 {
+			tempReal = -100.0
+		}
+		sp.cur_outReal = tempReal
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	sp.trailingIdx += 1
+	sp.today += 1
 	return sp.cur_outReal, nil
 }
 
@@ -371,11 +455,15 @@ func (sp *WILLRStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *WILLRStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var tmp float64
 	var tempReal float64
+	var today int32
+	var xMask int32
+	var x_inLow []float64
+	var x_inHigh []float64
 	var cur_outReal float64
 	highest := sp.highest
 	highestIdx := sp.highestIdx
@@ -411,14 +499,17 @@ func (sp *WILLRStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 		}
 		lowest = _T1
 		i = lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T2 float64
-			if i&sp.xMask != pkSlot1 {
-				_T2 = sp.x_inLow[i&sp.xMask]
+			if i&xMask != pkSlot1 {
+				_T2 = x_inLow[i&xMask]
 			} else {
 				_T2 = pkVal1
 			}
@@ -449,14 +540,17 @@ func (sp *WILLRStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 		}
 		highest = _T4
 		i = highestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T5 float64
-			if i&sp.xMask != pkSlot0 {
-				_T5 = sp.x_inHigh[i&sp.xMask]
+			if i&xMask != pkSlot0 {
+				_T5 = x_inHigh[i&xMask]
 			} else {
 				_T5 = pkVal0
 			}
@@ -503,67 +597,6 @@ func (sp *WILLRStream) Clone() *WILLRStream {
 	cl.x_inLow = append(sp.x_inLow[:0:0], sp.x_inLow...)
 	cl.x_inClose = append(sp.x_inClose[:0:0], sp.x_inClose...)
 	return &cl
-}
-
-func willrStepImpl(sp *WILLRStream, inHigh, inLow, inClose float64) {
-	var tmp float64
-	var tempReal float64
-	sp.x_inHigh[sp.today&sp.xMask] = inHigh
-	sp.x_inLow[sp.today&sp.xMask] = inLow
-	sp.x_inClose[sp.today&sp.xMask] = inClose
-	tmp = sp.x_inLow[sp.today&sp.xMask]
-	if sp.lowestIdx < sp.trailingIdx {
-		sp.lowestIdx = sp.trailingIdx
-		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
-		sp.i = sp.lowestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmp = sp.x_inLow[sp.i&sp.xMask]
-			if tmp < sp.lowest {
-				sp.lowestIdx = sp.i
-				sp.lowest = tmp
-			}
-		}
-	} else if tmp <= sp.lowest {
-		sp.lowestIdx = sp.today
-		sp.lowest = tmp
-	}
-	tmp = sp.x_inHigh[sp.today&sp.xMask]
-	if sp.highestIdx < sp.trailingIdx {
-		sp.highestIdx = sp.trailingIdx
-		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
-		sp.i = sp.highestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmp = sp.x_inHigh[sp.i&sp.xMask]
-			if tmp > sp.highest {
-				sp.highestIdx = sp.i
-				sp.highest = tmp
-			}
-		}
-	} else if tmp >= sp.highest {
-		sp.highestIdx = sp.today
-		sp.highest = tmp
-	}
-	if !isZeroScaled(sp.highest-sp.lowest, math.Abs(sp.highest)+math.Abs(sp.lowest)) {
-		tempReal = float64((sp.highest - sp.x_inClose[sp.today&sp.xMask]) / (sp.highest - sp.lowest) * -100.0)
-		if tempReal > 0.0 {
-			tempReal = 0.0
-		} else if tempReal < -100.0 {
-			tempReal = -100.0
-		}
-		sp.cur_outReal = tempReal
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	sp.trailingIdx += 1
-	sp.today += 1
 }
 
 func (c *Core) willrOpenImpl(sp *WILLRStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

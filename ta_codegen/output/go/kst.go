@@ -738,18 +738,144 @@ func (sp *KSTStream) Update(inReal float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	kstStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var prior float64
+	var roc float64
+	var kst float64
+	var sig float64
+	var rcma1 float64
+	var rcma2 float64
+	var rcma3 float64
+	var rcma4 float64
+	var ringPosL_den1 int32
+	var ringPosL_den2 int32
+	var ringPosL_den3 int32
+	var ringPosL_den4 int32
+	if sp.ringCap_den1 == 0 {
+		sp.ring_den1_inReal[0] = inReal
+	}
+	if sp.ringCap_den2 == 0 {
+		sp.ring_den2_inReal[0] = inReal
+	}
+	if sp.ringCap_den3 == 0 {
+		sp.ring_den3_inReal[0] = inReal
+	}
+	if sp.ringCap_den4 == 0 {
+		sp.ring_den4_inReal[0] = inReal
+	}
+	prior = sp.ring_den1_inReal[sp.ringPos_den1]
+	var _T13 float64
+	if prior != 0.0 {
+		_T13 = float64((inReal/prior - 1.0) * 100.0)
+	} else {
+		_T13 = 0.0
+	}
+	roc = _T13
+	sp.total1 += roc
+	rcma1 = sp.total1 / float64(sp.optInSMA1Period)
+	sp.cb_ring1[sp.ring1_Idx] = roc
+	sp.ring1_Idx = sp.ring1_Idx + 1
+	if sp.ring1_Idx > sp.maxIdx_ring1 {
+		sp.ring1_Idx = 0
+	}
+	sp.total1 -= sp.cb_ring1[sp.ring1_Idx]
+	prior = sp.ring_den2_inReal[sp.ringPos_den2]
+	var _T14 float64
+	if prior != 0.0 {
+		_T14 = float64((inReal/prior - 1.0) * 100.0)
+	} else {
+		_T14 = 0.0
+	}
+	roc = _T14
+	sp.total2 += roc
+	rcma2 = sp.total2 / float64(sp.optInSMA2Period)
+	sp.cb_ring2[sp.ring2_Idx] = roc
+	sp.ring2_Idx = sp.ring2_Idx + 1
+	if sp.ring2_Idx > sp.maxIdx_ring2 {
+		sp.ring2_Idx = 0
+	}
+	sp.total2 -= sp.cb_ring2[sp.ring2_Idx]
+	prior = sp.ring_den3_inReal[sp.ringPos_den3]
+	var _T15 float64
+	if prior != 0.0 {
+		_T15 = float64((inReal/prior - 1.0) * 100.0)
+	} else {
+		_T15 = 0.0
+	}
+	roc = _T15
+	sp.total3 += roc
+	rcma3 = sp.total3 / float64(sp.optInSMA3Period)
+	sp.cb_ring3[sp.ring3_Idx] = roc
+	sp.ring3_Idx = sp.ring3_Idx + 1
+	if sp.ring3_Idx > sp.maxIdx_ring3 {
+		sp.ring3_Idx = 0
+	}
+	sp.total3 -= sp.cb_ring3[sp.ring3_Idx]
+	prior = sp.ring_den4_inReal[sp.ringPos_den4]
+	var _T16 float64
+	if prior != 0.0 {
+		_T16 = float64((inReal/prior - 1.0) * 100.0)
+	} else {
+		_T16 = 0.0
+	}
+	roc = _T16
+	sp.total4 += roc
+	rcma4 = sp.total4 / float64(sp.optInSMA4Period)
+	sp.cb_ring4[sp.ring4_Idx] = roc
+	sp.ring4_Idx = sp.ring4_Idx + 1
+	if sp.ring4_Idx > sp.maxIdx_ring4 {
+		sp.ring4_Idx = 0
+	}
+	sp.total4 -= sp.cb_ring4[sp.ring4_Idx]
+	kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+	sp.sigTotal += kst
+	sig = sp.sigTotal / float64(sp.optInSignalPeriod)
+	sp.cb_sigRing[sp.sigRing_Idx] = kst
+	sp.sigRing_Idx = sp.sigRing_Idx + 1
+	if sp.sigRing_Idx > sp.maxIdx_sigRing {
+		sp.sigRing_Idx = 0
+	}
+	sp.sigTotal -= sp.cb_sigRing[sp.sigRing_Idx]
+	sp.cur_outKST = kst
+	sp.cur_outKSTSignal = sig
+	ringPosL_den1 = sp.ringPos_den1
+	sp.ring_den1_inReal[ringPosL_den1] = inReal
+	ringPosL_den1 = ringPosL_den1 + 1
+	if ringPosL_den1 >= sp.ringCap_den1 {
+		ringPosL_den1 = 0
+	}
+	sp.ringPos_den1 = ringPosL_den1
+	ringPosL_den2 = sp.ringPos_den2
+	sp.ring_den2_inReal[ringPosL_den2] = inReal
+	ringPosL_den2 = ringPosL_den2 + 1
+	if ringPosL_den2 >= sp.ringCap_den2 {
+		ringPosL_den2 = 0
+	}
+	sp.ringPos_den2 = ringPosL_den2
+	ringPosL_den3 = sp.ringPos_den3
+	sp.ring_den3_inReal[ringPosL_den3] = inReal
+	ringPosL_den3 = ringPosL_den3 + 1
+	if ringPosL_den3 >= sp.ringCap_den3 {
+		ringPosL_den3 = 0
+	}
+	sp.ringPos_den3 = ringPosL_den3
+	ringPosL_den4 = sp.ringPos_den4
+	sp.ring_den4_inReal[ringPosL_den4] = inReal
+	ringPosL_den4 = ringPosL_den4 + 1
+	if ringPosL_den4 >= sp.ringCap_den4 {
+		ringPosL_den4 = 0
+	}
+	sp.ringPos_den4 = ringPosL_den4
 	return sp.cur_outKST, sp.cur_outKSTSignal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *KSTStream) Peek(inReal float64) (float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
 	var prior float64
@@ -963,136 +1089,6 @@ func (sp *KSTStream) Clone() *KSTStream {
 	cl.cb_ring4 = append(sp.cb_ring4[:0:0], sp.cb_ring4...)
 	cl.cb_sigRing = append(sp.cb_sigRing[:0:0], sp.cb_sigRing...)
 	return &cl
-}
-
-func kstStepImpl(sp *KSTStream, inReal float64) {
-	var prior float64
-	var roc float64
-	var kst float64
-	var sig float64
-	var rcma1 float64
-	var rcma2 float64
-	var rcma3 float64
-	var rcma4 float64
-	var ringPosL_den1 int32
-	var ringPosL_den2 int32
-	var ringPosL_den3 int32
-	var ringPosL_den4 int32
-	if sp.ringCap_den1 == 0 {
-		sp.ring_den1_inReal[0] = inReal
-	}
-	if sp.ringCap_den2 == 0 {
-		sp.ring_den2_inReal[0] = inReal
-	}
-	if sp.ringCap_den3 == 0 {
-		sp.ring_den3_inReal[0] = inReal
-	}
-	if sp.ringCap_den4 == 0 {
-		sp.ring_den4_inReal[0] = inReal
-	}
-	prior = sp.ring_den1_inReal[sp.ringPos_den1]
-	var _T13 float64
-	if prior != 0.0 {
-		_T13 = float64((inReal/prior - 1.0) * 100.0)
-	} else {
-		_T13 = 0.0
-	}
-	roc = _T13
-	sp.total1 += roc
-	rcma1 = sp.total1 / float64(sp.optInSMA1Period)
-	sp.cb_ring1[sp.ring1_Idx] = roc
-	sp.ring1_Idx = sp.ring1_Idx + 1
-	if sp.ring1_Idx > sp.maxIdx_ring1 {
-		sp.ring1_Idx = 0
-	}
-	sp.total1 -= sp.cb_ring1[sp.ring1_Idx]
-	prior = sp.ring_den2_inReal[sp.ringPos_den2]
-	var _T14 float64
-	if prior != 0.0 {
-		_T14 = float64((inReal/prior - 1.0) * 100.0)
-	} else {
-		_T14 = 0.0
-	}
-	roc = _T14
-	sp.total2 += roc
-	rcma2 = sp.total2 / float64(sp.optInSMA2Period)
-	sp.cb_ring2[sp.ring2_Idx] = roc
-	sp.ring2_Idx = sp.ring2_Idx + 1
-	if sp.ring2_Idx > sp.maxIdx_ring2 {
-		sp.ring2_Idx = 0
-	}
-	sp.total2 -= sp.cb_ring2[sp.ring2_Idx]
-	prior = sp.ring_den3_inReal[sp.ringPos_den3]
-	var _T15 float64
-	if prior != 0.0 {
-		_T15 = float64((inReal/prior - 1.0) * 100.0)
-	} else {
-		_T15 = 0.0
-	}
-	roc = _T15
-	sp.total3 += roc
-	rcma3 = sp.total3 / float64(sp.optInSMA3Period)
-	sp.cb_ring3[sp.ring3_Idx] = roc
-	sp.ring3_Idx = sp.ring3_Idx + 1
-	if sp.ring3_Idx > sp.maxIdx_ring3 {
-		sp.ring3_Idx = 0
-	}
-	sp.total3 -= sp.cb_ring3[sp.ring3_Idx]
-	prior = sp.ring_den4_inReal[sp.ringPos_den4]
-	var _T16 float64
-	if prior != 0.0 {
-		_T16 = float64((inReal/prior - 1.0) * 100.0)
-	} else {
-		_T16 = 0.0
-	}
-	roc = _T16
-	sp.total4 += roc
-	rcma4 = sp.total4 / float64(sp.optInSMA4Period)
-	sp.cb_ring4[sp.ring4_Idx] = roc
-	sp.ring4_Idx = sp.ring4_Idx + 1
-	if sp.ring4_Idx > sp.maxIdx_ring4 {
-		sp.ring4_Idx = 0
-	}
-	sp.total4 -= sp.cb_ring4[sp.ring4_Idx]
-	kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
-	sp.sigTotal += kst
-	sig = sp.sigTotal / float64(sp.optInSignalPeriod)
-	sp.cb_sigRing[sp.sigRing_Idx] = kst
-	sp.sigRing_Idx = sp.sigRing_Idx + 1
-	if sp.sigRing_Idx > sp.maxIdx_sigRing {
-		sp.sigRing_Idx = 0
-	}
-	sp.sigTotal -= sp.cb_sigRing[sp.sigRing_Idx]
-	sp.cur_outKST = kst
-	sp.cur_outKSTSignal = sig
-	ringPosL_den1 = sp.ringPos_den1
-	sp.ring_den1_inReal[ringPosL_den1] = inReal
-	ringPosL_den1 = ringPosL_den1 + 1
-	if ringPosL_den1 >= sp.ringCap_den1 {
-		ringPosL_den1 = 0
-	}
-	sp.ringPos_den1 = ringPosL_den1
-	ringPosL_den2 = sp.ringPos_den2
-	sp.ring_den2_inReal[ringPosL_den2] = inReal
-	ringPosL_den2 = ringPosL_den2 + 1
-	if ringPosL_den2 >= sp.ringCap_den2 {
-		ringPosL_den2 = 0
-	}
-	sp.ringPos_den2 = ringPosL_den2
-	ringPosL_den3 = sp.ringPos_den3
-	sp.ring_den3_inReal[ringPosL_den3] = inReal
-	ringPosL_den3 = ringPosL_den3 + 1
-	if ringPosL_den3 >= sp.ringCap_den3 {
-		ringPosL_den3 = 0
-	}
-	sp.ringPos_den3 = ringPosL_den3
-	ringPosL_den4 = sp.ringPos_den4
-	sp.ring_den4_inReal[ringPosL_den4] = inReal
-	ringPosL_den4 = ringPosL_den4 + 1
-	if ringPosL_den4 >= sp.ringCap_den4 {
-		ringPosL_den4 = 0
-	}
-	sp.ringPos_den4 = ringPosL_den4
 }
 
 func (c *Core) kstOpenImpl(sp *KSTStream, inReal []float64, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outKST, outKSTSignal []float64, outStride int32) RetCode {

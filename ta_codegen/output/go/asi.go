@@ -263,11 +263,46 @@ func (sp *ASIStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, er
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	asiStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tempOpen float64
+	var tempHigh float64
+	var tempLow float64
+	var tempClose float64
+	var body float64
+	var n float64
+	var up float64
+	var dn float64
+	var rg float64
+	var k float64
+	var r float64
+	var swing float64
+	tempOpen = inOpen
+	tempHigh = inHigh
+	tempLow = inLow
+	tempClose = inClose
+	body = tempClose - tempOpen
+	n = tempClose - sp.prevClose
+	n += float64(0.5 * body)
+	n += float64(0.25 * sp.prevBody)
+	up = math.Abs(tempHigh - sp.prevClose)
+	dn = math.Abs(tempLow - sp.prevClose)
+	rg = math.Abs(tempHigh - tempLow)
+	k = selF(up > dn, up, dn)
+	r = selF(up-float64(0.5*dn) > dn-float64(0.5*up), up-float64(0.5*dn), dn-float64(0.5*up))
+	r = selF(r > rg, r, rg)
+	r += float64(0.25 * math.Abs(sp.prevBody))
+	if r == 0.0 {
+		swing = 0.0
+	} else {
+		swing = float64(float64(50.0*(n/r)) * (k / sp.optInLimitMove))
+	}
+	sp.sum += swing
+	sp.cur_outReal = sp.sum
+	sp.prevClose = tempClose
+	sp.prevBody = body
 	return sp.cur_outReal, nil
 }
 
@@ -275,7 +310,7 @@ func (sp *ASIStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, er
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *ASIStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var tempOpen float64
@@ -303,9 +338,9 @@ func (sp *ASIStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, erro
 	up = math.Abs(tempHigh - sp.prevClose)
 	dn = math.Abs(tempLow - sp.prevClose)
 	rg = math.Abs(tempHigh - tempLow)
-	k = maxF(up, dn)
-	r = maxF(up-float64(0.5*dn), dn-float64(0.5*up))
-	r = maxF(r, rg)
+	k = selF(up > dn, up, dn)
+	r = selF(up-float64(0.5*dn) > dn-float64(0.5*up), up-float64(0.5*dn), dn-float64(0.5*up))
+	r = selF(r > rg, r, rg)
 	r += float64(0.25 * math.Abs(sp.prevBody))
 	if r == 0.0 {
 		swing = 0.0
@@ -327,45 +362,6 @@ func (sp *ASIStream) Value() float64 {
 func (sp *ASIStream) Clone() *ASIStream {
 	cl := *sp
 	return &cl
-}
-
-func asiStepImpl(sp *ASIStream, inOpen, inHigh, inLow, inClose float64) {
-	var tempOpen float64
-	var tempHigh float64
-	var tempLow float64
-	var tempClose float64
-	var body float64
-	var n float64
-	var up float64
-	var dn float64
-	var rg float64
-	var k float64
-	var r float64
-	var swing float64
-	tempOpen = inOpen
-	tempHigh = inHigh
-	tempLow = inLow
-	tempClose = inClose
-	body = tempClose - tempOpen
-	n = tempClose - sp.prevClose
-	n += float64(0.5 * body)
-	n += float64(0.25 * sp.prevBody)
-	up = math.Abs(tempHigh - sp.prevClose)
-	dn = math.Abs(tempLow - sp.prevClose)
-	rg = math.Abs(tempHigh - tempLow)
-	k = maxF(up, dn)
-	r = maxF(up-float64(0.5*dn), dn-float64(0.5*up))
-	r = maxF(r, rg)
-	r += float64(0.25 * math.Abs(sp.prevBody))
-	if r == 0.0 {
-		swing = 0.0
-	} else {
-		swing = float64(float64(50.0*(n/r)) * (k / sp.optInLimitMove))
-	}
-	sp.sum += swing
-	sp.cur_outReal = sp.sum
-	sp.prevClose = tempClose
-	sp.prevBody = body
 }
 
 func (c *Core) asiOpenImpl(sp *ASIStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, optInLimitMove float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -264,18 +264,22 @@ func (sp *SWAK_GAUSSStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	swakGaussStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var y float64
+	y = math.FMA(sp.a1, sp.y1, math.FMA(sp.a2, sp.y2, float64(sp.c0*inReal)))
+	sp.y2 = sp.y1
+	sp.y1 = y
+	sp.cur_outReal = y
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *SWAK_GAUSSStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var y float64
@@ -299,14 +303,6 @@ func (sp *SWAK_GAUSSStream) Value() float64 {
 func (sp *SWAK_GAUSSStream) Clone() *SWAK_GAUSSStream {
 	cl := *sp
 	return &cl
-}
-
-func swakGaussStepImpl(sp *SWAK_GAUSSStream, inReal float64) {
-	var y float64
-	y = math.FMA(sp.a1, sp.y1, math.FMA(sp.a2, sp.y2, float64(sp.c0*inReal)))
-	sp.y2 = sp.y1
-	sp.y1 = y
-	sp.cur_outReal = y
 }
 
 func (c *Core) swakGaussOpenImpl(sp *SWAK_GAUSSStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

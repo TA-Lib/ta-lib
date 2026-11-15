@@ -253,43 +253,10 @@ func (sp *RVOLStream) Update(inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inVolume) {
+	if inVolume-inVolume != 0 {
 		return 0, BadParam
 	}
-	rvolStepImpl(sp, inVolume)
 	sp.outRangeCount++
-	return sp.cur_outReal, nil
-}
-
-// Peek returns what Update would return for the bar inVolume, changing nothing.
-// It returns [BadParam] for a bar value that is not finite.
-func (sp *RVOLStream) Peek(inVolume float64) (float64, error) {
-	if !isFinite(inVolume) {
-		return 0, BadParam
-	}
-	var baseline float64
-	var todayVolume float64
-	var cur_outReal float64
-	baseline = sp.periodTotal / float64(sp.optInTimePeriod)
-	todayVolume = inVolume
-	cur_outReal = todayVolume / baseline
-	return cur_outReal, nil
-}
-
-// Value returns the value at the last bar of OutRange; Peek does not change it.
-func (sp *RVOLStream) Value() float64 {
-	return sp.cur_outReal
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *RVOLStream) Clone() *RVOLStream {
-	cl := *sp
-	cl.ring_trailingIdx_inVolume = append(sp.ring_trailingIdx_inVolume[:0:0], sp.ring_trailingIdx_inVolume...)
-	return &cl
-}
-
-func rvolStepImpl(sp *RVOLStream, inVolume float64) {
 	var baseline float64
 	var todayVolume float64
 	var trailingVolume float64
@@ -315,6 +282,35 @@ func rvolStepImpl(sp *RVOLStream, inVolume float64) {
 		ringPosL_trailingIdx = 0
 	}
 	sp.ringPos_trailingIdx = ringPosL_trailingIdx
+	return sp.cur_outReal, nil
+}
+
+// Peek returns what Update would return for the bar inVolume, changing nothing.
+// It returns [BadParam] for a bar value that is not finite.
+func (sp *RVOLStream) Peek(inVolume float64) (float64, error) {
+	if inVolume-inVolume != 0 {
+		return 0, BadParam
+	}
+	var baseline float64
+	var todayVolume float64
+	var cur_outReal float64
+	baseline = sp.periodTotal / float64(sp.optInTimePeriod)
+	todayVolume = inVolume
+	cur_outReal = todayVolume / baseline
+	return cur_outReal, nil
+}
+
+// Value returns the value at the last bar of OutRange; Peek does not change it.
+func (sp *RVOLStream) Value() float64 {
+	return sp.cur_outReal
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *RVOLStream) Clone() *RVOLStream {
+	cl := *sp
+	cl.ring_trailingIdx_inVolume = append(sp.ring_trailingIdx_inVolume[:0:0], sp.ring_trailingIdx_inVolume...)
+	return &cl
 }
 
 func (c *Core) rvolOpenImpl(sp *RVOLStream, inVolume []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -461,18 +461,102 @@ func (sp *SAREXTStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	sarextStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var prevHigh float64
+	var prevLow float64
+	prevLow = sp.newLow
+	prevHigh = sp.newHigh
+	sp.newLow = inLow
+	sp.newHigh = inHigh
+	if sp.isLong == 1 {
+		if sp.newLow <= sp.sar {
+			sp.isLong = 0
+			sp.sar = sp.ep
+			if sp.sar < prevHigh {
+				sp.sar = prevHigh
+			}
+			if sp.sar < sp.newHigh {
+				sp.sar = sp.newHigh
+			}
+			if sp.optInOffsetOnReverse != 0.0 {
+				sp.sar += float64(sp.sar * sp.optInOffsetOnReverse)
+			}
+			sp.cur_outReal = -sp.sar
+			sp.afShort = sp.optInAccelerationInitShort
+			sp.ep = sp.newLow
+			sp.sar = math.FMA(sp.afShort, sp.ep-sp.sar, sp.sar)
+			if sp.sar < prevHigh {
+				sp.sar = prevHigh
+			}
+			if sp.sar < sp.newHigh {
+				sp.sar = sp.newHigh
+			}
+		} else {
+			sp.cur_outReal = sp.sar
+			if sp.newHigh > sp.ep {
+				sp.ep = sp.newHigh
+				sp.afLong += sp.optInAccelerationLong
+				if sp.afLong > sp.optInAccelerationMaxLong {
+					sp.afLong = sp.optInAccelerationMaxLong
+				}
+			}
+			sp.sar = math.FMA(sp.afLong, sp.ep-sp.sar, sp.sar)
+			if sp.sar > prevLow {
+				sp.sar = prevLow
+			}
+			if sp.sar > sp.newLow {
+				sp.sar = sp.newLow
+			}
+		}
+	} else if sp.newHigh >= sp.sar {
+		sp.isLong = 1
+		sp.sar = sp.ep
+		if sp.sar > prevLow {
+			sp.sar = prevLow
+		}
+		if sp.sar > sp.newLow {
+			sp.sar = sp.newLow
+		}
+		if sp.optInOffsetOnReverse != 0.0 {
+			sp.sar -= float64(sp.sar * sp.optInOffsetOnReverse)
+		}
+		sp.cur_outReal = sp.sar
+		sp.afLong = sp.optInAccelerationInitLong
+		sp.ep = sp.newHigh
+		sp.sar = math.FMA(sp.afLong, sp.ep-sp.sar, sp.sar)
+		if sp.sar > prevLow {
+			sp.sar = prevLow
+		}
+		if sp.sar > sp.newLow {
+			sp.sar = sp.newLow
+		}
+	} else {
+		sp.cur_outReal = -sp.sar
+		if sp.newLow < sp.ep {
+			sp.ep = sp.newLow
+			sp.afShort += sp.optInAccelerationShort
+			if sp.afShort > sp.optInAccelerationMaxShort {
+				sp.afShort = sp.optInAccelerationMaxShort
+			}
+		}
+		sp.sar = math.FMA(sp.afShort, sp.ep-sp.sar, sp.sar)
+		if sp.sar < prevHigh {
+			sp.sar = prevHigh
+		}
+		if sp.sar < sp.newHigh {
+			sp.sar = sp.newHigh
+		}
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *SAREXTStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var prevHigh float64
@@ -581,94 +665,6 @@ func (sp *SAREXTStream) Value() float64 {
 func (sp *SAREXTStream) Clone() *SAREXTStream {
 	cl := *sp
 	return &cl
-}
-
-func sarextStepImpl(sp *SAREXTStream, inHigh, inLow float64) {
-	var prevHigh float64
-	var prevLow float64
-	prevLow = sp.newLow
-	prevHigh = sp.newHigh
-	sp.newLow = inLow
-	sp.newHigh = inHigh
-	if sp.isLong == 1 {
-		if sp.newLow <= sp.sar {
-			sp.isLong = 0
-			sp.sar = sp.ep
-			if sp.sar < prevHigh {
-				sp.sar = prevHigh
-			}
-			if sp.sar < sp.newHigh {
-				sp.sar = sp.newHigh
-			}
-			if sp.optInOffsetOnReverse != 0.0 {
-				sp.sar += float64(sp.sar * sp.optInOffsetOnReverse)
-			}
-			sp.cur_outReal = -sp.sar
-			sp.afShort = sp.optInAccelerationInitShort
-			sp.ep = sp.newLow
-			sp.sar = math.FMA(sp.afShort, sp.ep-sp.sar, sp.sar)
-			if sp.sar < prevHigh {
-				sp.sar = prevHigh
-			}
-			if sp.sar < sp.newHigh {
-				sp.sar = sp.newHigh
-			}
-		} else {
-			sp.cur_outReal = sp.sar
-			if sp.newHigh > sp.ep {
-				sp.ep = sp.newHigh
-				sp.afLong += sp.optInAccelerationLong
-				if sp.afLong > sp.optInAccelerationMaxLong {
-					sp.afLong = sp.optInAccelerationMaxLong
-				}
-			}
-			sp.sar = math.FMA(sp.afLong, sp.ep-sp.sar, sp.sar)
-			if sp.sar > prevLow {
-				sp.sar = prevLow
-			}
-			if sp.sar > sp.newLow {
-				sp.sar = sp.newLow
-			}
-		}
-	} else if sp.newHigh >= sp.sar {
-		sp.isLong = 1
-		sp.sar = sp.ep
-		if sp.sar > prevLow {
-			sp.sar = prevLow
-		}
-		if sp.sar > sp.newLow {
-			sp.sar = sp.newLow
-		}
-		if sp.optInOffsetOnReverse != 0.0 {
-			sp.sar -= float64(sp.sar * sp.optInOffsetOnReverse)
-		}
-		sp.cur_outReal = sp.sar
-		sp.afLong = sp.optInAccelerationInitLong
-		sp.ep = sp.newHigh
-		sp.sar = math.FMA(sp.afLong, sp.ep-sp.sar, sp.sar)
-		if sp.sar > prevLow {
-			sp.sar = prevLow
-		}
-		if sp.sar > sp.newLow {
-			sp.sar = sp.newLow
-		}
-	} else {
-		sp.cur_outReal = -sp.sar
-		if sp.newLow < sp.ep {
-			sp.ep = sp.newLow
-			sp.afShort += sp.optInAccelerationShort
-			if sp.afShort > sp.optInAccelerationMaxShort {
-				sp.afShort = sp.optInAccelerationMaxShort
-			}
-		}
-		sp.sar = math.FMA(sp.afShort, sp.ep-sp.sar, sp.sar)
-		if sp.sar < prevHigh {
-			sp.sar = prevHigh
-		}
-		if sp.sar < sp.newHigh {
-			sp.sar = sp.newHigh
-		}
-	}
 }
 
 func (c *Core) sarextOpenImpl(sp *SAREXTStream, inHigh, inLow []float64, startIdx int32, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

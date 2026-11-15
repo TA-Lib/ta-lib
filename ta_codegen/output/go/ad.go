@@ -207,11 +207,22 @@ func (sp *ADStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, e
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	adStepImpl(sp, inHigh, inLow, inClose, inVolume)
 	sp.outRangeCount++
+	var high float64
+	var low float64
+	var close_ float64
+	var tmp float64
+	high = inHigh
+	low = inLow
+	tmp = high - low
+	close_ = inClose
+	if tmp > 0.0 {
+		sp.ad += float64((close_ - low - (high - close_)) / tmp * inVolume)
+	}
+	sp.cur_outReal = sp.ad
 	return sp.cur_outReal, nil
 }
 
@@ -219,7 +230,7 @@ func (sp *ADStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, e
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *ADStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var high float64
@@ -249,21 +260,6 @@ func (sp *ADStream) Value() float64 {
 func (sp *ADStream) Clone() *ADStream {
 	cl := *sp
 	return &cl
-}
-
-func adStepImpl(sp *ADStream, inHigh, inLow, inClose, inVolume float64) {
-	var high float64
-	var low float64
-	var close_ float64
-	var tmp float64
-	high = inHigh
-	low = inLow
-	tmp = high - low
-	close_ = inClose
-	if tmp > 0.0 {
-		sp.ad += float64((close_ - low - (high - close_)) / tmp * inVolume)
-	}
-	sp.cur_outReal = sp.ad
 }
 
 func (c *Core) adOpenImpl(sp *ADStream, inHigh, inLow, inClose, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

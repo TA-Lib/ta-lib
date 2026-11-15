@@ -374,7 +374,7 @@ func (sp *MAVPStream) Update(inReal, inPeriods float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) || !isFinite(inPeriods) {
+	if (inReal-inReal)+(inPeriods-inPeriods) != 0 {
 		return 0, BadParam
 	}
 	if err := mavpStepImpl(sp, inReal, inPeriods); err != nil {
@@ -387,7 +387,7 @@ func (sp *MAVPStream) Update(inReal, inPeriods float64) (float64, error) {
 // Peek returns what Update would return for the bar (inReal and inPeriods),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *MAVPStream) Peek(inReal, inPeriods float64) (float64, error) {
-	if !isFinite(inReal) || !isFinite(inPeriods) {
+	if (inReal-inReal)+(inPeriods-inPeriods) != 0 {
 		return 0, BadParam
 	}
 	cp := sp.optInMinPeriod

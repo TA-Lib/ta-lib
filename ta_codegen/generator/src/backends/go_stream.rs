@@ -441,6 +441,12 @@ impl<'a> Em<'a> {
         ret: Ret,
     ) -> Ctx<'a> {
         let mut ctx = self.ctx(body, ret);
+        ctx.colour_selects.set(true);
+        ctx.float_selects.set(true);
+        // The outputs are read back only by `Value`, never by the next bar.
+        ctx.carried.borrow_mut().extend(
+            fields.iter().filter(|f| !f.name.starts_with("cur_")).flat_map(|f| [format!("sp.{}", f.name), f.name.clone()]),
+        );
         for f in fields {
             ctx.env.declare(&format!("sp.{}", f.name), f.ty);
             ctx.env.declare(&f.name, f.ty);
@@ -575,8 +581,11 @@ fn emit_loop_shape(o: &mut String, em: &Em, model: &StreamModel, body: &[Stateme
     let step_settings = detect_candle_settings(&model.steady_stmts);
     let fields = state_fields(em.func, model, &step_settings);
     let frame = peek_frame(em, model, &GoNames, &fields, &step_settings, &BTreeSet::new()).map(PeekFrame::falls_through);
-    emit_handle(o, em, &fields, &Members::default(), frame.as_ref(), false);
-    emit_step(o, em, model, &fields, &step_settings);
+    let step = with_core(step_body(em, model, &fields, &step_settings, None));
+    emit_handle(o, em, &fields, &Members::default(), frame.as_ref(), Step::Inline(&step));
+    if step_called_by_tape(em, &[model]) {
+        o.push_str(&go::func_text(&step_sig(em, false), &step));
+    }
     emit_open_body(o, em, model, body, &fields, &step_settings);
     let sink = sink_frame_body(em, model, body);
     if let Some(sink) = &sink {
@@ -620,8 +629,19 @@ fn struct_lines(fields: &[(String, String)]) -> Vec<String> {
     fields.iter().map(|(n, t)| format!("{n}{} {t}", " ".repeat(w - n.len()))).collect()
 }
 
-#[allow(clippy::too_many_lines)]
-fn emit_handle(o: &mut String, em: &Em, fields: &[Field], members: &Members, frame: Option<&PeekFrame>, fallible: bool) {
+/// How `Update` runs the transition. The body goes inline because Go inlines
+/// few steps and keeps no register alive across a call; only a step another
+/// frame calls stays behind its `StepImpl`.
+#[derive(Clone, Copy)]
+enum Step<'a> {
+    Inline(&'a [String]),
+    /// A fallible body inline: its error exits answer the error and count
+    /// nothing, so a rejected bar still changes no count.
+    InlineFallible(&'a [String]),
+    Fallible,
+}
+
+fn emit_handle(o: &mut String, em: &Em, fields: &[Field], members: &Members, frame: Option<&PeekFrame>, step: Step) {
     let func = em.func;
     let st = &em.names.stream;
     let mut decl: Vec<(String, String)> = vec![("core".to_string(), "*Core".to_string())];
@@ -651,7 +671,7 @@ fn emit_handle(o: &mut String, em: &Em, fields: &[Field], members: &Members, fra
         &go_doc::stream_method_docs(func, StreamMethod::Advance),
         &format!("func (sp *{st}) Advance() error"), &b.lines);
 
-    emit_update_method(o, em, fallible);
+    emit_update_method(o, em, step);
     emit_peek_method(o, em, frame);
 
     doc_fn(
@@ -676,28 +696,90 @@ fn emit_handle(o: &mut String, em: &Em, fields: &[Field], members: &Members, fra
 
 /// Every bar input finite, before anything is written: a handle keeps its
 /// state, so one non-finite bar would poison every later value.
+///
+/// `x-x` is +0 for every finite `x` and NaN otherwise, so the sum of the
+/// differences is zero exactly when every input is finite: one compare where
+/// an `isFinite` per input costs a NaN and an infinity branch each. Summing
+/// the inputs themselves instead would overflow on large finite bars.
 fn finite_check(b: &mut B, func: &FuncDef) {
-    let conds: Vec<String> = bars(func).iter().map(|x| format!("!isFinite({})", go_ident(x))).collect();
-    if conds.is_empty() {
-        return;
-    }
-    b.guard(conds.join(" || "), fail_return(func, "BadParam"));
+    let terms: Vec<String> = bars(func)
+        .iter()
+        .map(|x| {
+            let x = go_ident(x);
+            format!("{x}-{x}")
+        })
+        .collect();
+    let sum = match terms.as_slice() {
+        [] => return,
+        [one] => one.clone(),
+        many => many.iter().map(|t| format!("({t})")).collect::<Vec<_>>().join("+"),
+    };
+    b.guard(format!("{sum} != 0"), fail_return(func, "BadParam"));
 }
 
-fn emit_update_method(o: &mut String, em: &Em, fallible: bool) {
+fn emit_update_method(o: &mut String, em: &Em, step: Step) {
     let func = em.func;
     let mut b = B::default();
     b.guard("sp.outRangeBegIdx+sp.outRangeCount > IndexMax", fail_return(func, "OutOfRangeEndIndex"));
     finite_check(&mut b, func);
-    let sep = if bars(func).is_empty() { "" } else { ", " };
-    let call = format!("{}(sp{sep}{})", em.names.step_impl, bar_args(func));
-    if fallible {
-        b.guard(format!("err := {call}; err != nil"), fail_return(func, "err"));
-    } else {
-        b.line(call);
+    let done = format!("return {}, nil", cur_list(func, "sp."));
+    match step {
+        // The count moves ahead of the body, which never reads it, so the
+        // body's early exits can return directly.
+        Step::Inline(lines) => {
+            b.line("sp.outRangeCount++");
+            let body: Vec<String> = lines
+                .iter()
+                .map(|l| {
+                    let code = l.trim_start();
+                    if code == "return" { format!("{}{done}", &l[..l.len() - code.len()]) } else { l.clone() }
+                })
+                .collect();
+            let bar_names: Vec<String> = bars(func).iter().map(|x| go_ident(x)).collect();
+            if bar_names.iter().any(|n| declares_local(&body, n)) {
+                b.open("{");
+                b.extend(body);
+                b.close("}");
+            } else {
+                b.extend(body);
+            }
+        }
+        Step::InlineFallible(lines) => {
+            let mut lines = lines.to_vec();
+            if lines.last().is_some_and(|l| l == "return nil") {
+                lines.pop();
+            }
+            let mut body = Vec::new();
+            for l in &lines {
+                let code = l.trim_start();
+                let indent = &l[..l.len() - code.len()];
+                match code.strip_prefix("return ") {
+                    Some("nil") => {
+                        body.push(format!("{indent}sp.outRangeCount++"));
+                        body.push(format!("{indent}{done}"));
+                    }
+                    Some(err) => body.push(format!("{indent}{}", fail_return(func, err))),
+                    None => body.push(l.clone()),
+                }
+            }
+            let bar_names: Vec<String> = bars(func).iter().map(|x| go_ident(x)).collect();
+            if bar_names.iter().any(|n| declares_local(&body, n)) {
+                b.open("{");
+                b.extend(body);
+                b.close("}");
+            } else {
+                b.extend(body);
+            }
+            b.line("sp.outRangeCount++");
+        }
+        Step::Fallible => {
+            let comma = if bars(func).is_empty() { "" } else { ", " };
+            let call = format!("{}(sp{comma}{})", em.names.step_impl, bar_args(func));
+            b.guard(format!("err := {call}; err != nil"), fail_return(func, "err"));
+            b.line("sp.outRangeCount++");
+        }
     }
-    b.line("sp.outRangeCount++");
-    b.line(format!("return {}, nil", cur_list(func, "sp.")));
+    b.line(done);
     doc_fn(
         o,
         &go_doc::stream_method_docs(func, StreamMethod::Update),
@@ -781,10 +863,15 @@ fn peek_frame_with(
         other => Some(other),
     });
     let types: HashMap<&str, &Field> = fields.iter().map(|f| (f.name.as_str(), f)).collect();
+    // The fields a peek only reads, lifted around its loops as the step's are.
+    let (lifted, body_ir) = localize_step(func, &body_ir, fields).unwrap_or((Vec::new(), body_ir));
 
     let mut out = Vec::new();
     for (name, ty) in &streaming::temps_used(&model.temps, &body_ir) {
         out.push(local_decl(name, ty));
+    }
+    for name in &lifted {
+        out.push(format!("var {} {}", go_ident(name), types.get(name.as_str()).copied()?.go_ty));
     }
     let dead_seeds: BTreeSet<String> = func
         .outputs
@@ -886,11 +973,6 @@ fn with_core(lines: Vec<String>) -> Vec<String> {
     }
 }
 
-fn emit_step(o: &mut String, em: &Em, model: &StreamModel, fields: &[Field], step_settings: &BTreeSet<String>) {
-    let lines = step_body(em, model, fields, step_settings, None);
-    o.push_str(&go::func_text(&step_sig(em, false), &with_core(lines)));
-}
-
 fn step_body(
     em: &Em,
     model: &StreamModel,
@@ -910,9 +992,174 @@ fn step_body(
     };
     let transition = streaming::build_transition(model, names).unwrap_or_else(|e| panic!("streaming transition: {e}"));
     assert!(tape.is_none() || !has_return(&transition), "{}: a tape step cannot render an early exit", model.func.name);
+    let (locals, transition) = match localize_step(em.func, &transition, fields) {
+        Some((locals, body)) => (locals, body),
+        None => (Vec::new(), transition),
+    };
+    let types: HashMap<&str, &Field> = fields.iter().map(|f| (f.name.as_str(), f)).collect();
+    for name in &locals {
+        out.push(format!("var {} {}", go_ident(name), types[name.as_str()].go_ty));
+    }
     let ctx = em.frame_ctx(&transition, fields, Some(model), step_settings, tape.is_some(), Ret::Code);
     out.extend(render(&ctx, &transition));
     out
+}
+
+/// The step with each loop on locals: every field a loop mentions is loaded
+/// into a local of its own name ahead of it and, when the loop writes it,
+/// stored back after it. Go hoists no load out of a loop and reloads a field
+/// after any store that may alias it (a ring element), so a loop over fields
+/// otherwise goes to memory on every pass; outside loops a field is touched a
+/// few times at most and stays on the handle. A fixed-size array field stays
+/// on the handle too, its local being a copy, and so does a loop with an exit
+/// that would skip the store.
+fn localize_step(func: &FuncDef, transition: &[Statement], fields: &[Field]) -> Option<(Vec<String>, Vec<Statement>)> {
+    let arrays: Vec<(String, bool)> = fields.iter().filter(|f| f.array).map(|f| (format!("sp.{}", f.name), false)).collect();
+    let by_name: HashMap<&str, &Field> = fields.iter().map(|f| (f.name.as_str(), f)).collect();
+    let taken: BTreeSet<String> = streaming::input_array_names(func).into_iter().chain(bars(func)).collect();
+    let declared = std::cell::RefCell::new(Vec::<String>::new());
+    let failed = Cell::new(false);
+    let lift = |st: Statement| -> Option<Statement> {
+        let is_loop = matches!(
+            st,
+            Statement::While { .. } | Statement::DoWhile { .. } | Statement::For { .. } | Statement::ForC { .. }
+        );
+        if !is_loop || has_return(std::slice::from_ref(&st)) || reaches_handle(&st, &by_name) {
+            return Some(st);
+        }
+        let mut mentioned = BTreeSet::new();
+        streaming::walk_stmt_exprs(&st, &mut |top| {
+            streaming::walk_expr(top, &mut |e| {
+                if let Expr::Var(v) | Expr::ArrayAccess(v, _) = e {
+                    if let Some(bare) = v.strip_prefix("sp.") {
+                        mentioned.insert(bare.to_string());
+                    }
+                }
+            });
+        });
+        let Some((written, _)) = localize_state_writes(func, std::slice::from_ref(&st), &[], &arrays) else {
+            failed.set(true);
+            return Some(st);
+        };
+        let names: Vec<String> = mentioned
+            .into_iter()
+            .filter(|n| by_name.get(n.as_str()).is_some_and(|f| !f.array) && !taken.contains(n))
+            .collect();
+        if names.is_empty() {
+            return Some(st);
+        }
+        let bare: HashMap<String, String> = names.iter().map(|n| (format!("sp.{n}"), n.clone())).collect();
+        let renamed = streaming::rewrite_stmts(
+            std::slice::from_ref(&st),
+            &|e| match e {
+                Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+                Expr::ArrayAccess(ref v, ref i) => match bare.get(v) {
+                    Some(b) => Expr::ArrayAccess(b.clone(), i.clone()),
+                    None => e,
+                },
+                other => other,
+            },
+            &|x| Some(x),
+        );
+        let mut body: Vec<Statement> = names
+            .iter()
+            .map(|n| Statement::Assign { target: Expr::Var(n.clone()), value: Expr::Var(format!("sp.{n}")), compound: false })
+            .collect();
+        body.extend(renamed);
+        body.extend(names.iter().filter(|n| written.contains(*n) && !by_name[n.as_str()].owned_slice()).map(|n| {
+            Statement::Assign { target: Expr::Var(format!("sp.{n}")), value: Expr::Var(n.clone()), compound: false }
+        }));
+        let mut d = declared.borrow_mut();
+        for n in names {
+            if !d.contains(&n) {
+                d.push(n);
+            }
+        }
+        Some(Statement::Block { body })
+    };
+    let body = lift_outer_loops(transition, &lift);
+    let locals = declared.into_inner();
+    if failed.get() || locals.is_empty() {
+        return None;
+    }
+    Some((locals, body))
+}
+
+/// Whether a loop could see the handle other than through the fields it
+/// names: a call handed `sp`, a field that is not a plain value or an owned
+/// slice (a sub-stream, the `Core`), or a field the handle does not declare;
+/// a method call on any of them; or an assignment of a whole slice field,
+/// whose new header the store-back would drop. Lifting such a loop would hand
+/// the callee stale fields or overwrite its writes.
+fn reaches_handle(st: &Statement, fields: &HashMap<&str, &Field>) -> bool {
+    let opaque = |v: &str| -> bool {
+        if v == "sp" {
+            return true;
+        }
+        let Some(rest) = v.strip_prefix("sp.") else { return false };
+        let name = rest.split('.').next().unwrap_or(rest);
+        rest.contains('.') || fields.get(name).is_none_or(|f| f.ty.is_pointer() && !f.owned_slice())
+    };
+    let mut hit = false;
+    streaming::walk_stmt_exprs(st, &mut |top| {
+        streaming::walk_expr(top, &mut |e| {
+            if let Expr::FuncCall(name, args) = e {
+                if opaque(name) || name.starts_with("sp.") {
+                    hit = true;
+                }
+                for a in args {
+                    streaming::walk_expr(a, &mut |x| {
+                        if let Expr::Var(v) | Expr::ArrayAccess(v, _) | Expr::PointerDeref(v) = x {
+                            if opaque(v) {
+                                hit = true;
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    });
+    hit || slice_reassigned(std::slice::from_ref(st), fields)
+}
+
+/// Whether `list` assigns a whole owned-slice field.
+fn slice_reassigned(list: &[Statement], fields: &HashMap<&str, &Field>) -> bool {
+    list.iter().any(|st| match st {
+        Statement::Assign { target: Expr::Var(v), .. } => {
+            v.strip_prefix("sp.").and_then(|n| fields.get(n)).is_some_and(|f| f.owned_slice())
+        }
+        Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } | Statement::Block { body } => {
+            slice_reassigned(body, fields)
+        }
+        Statement::ForC { init, update, body, .. } => {
+            slice_reassigned(std::slice::from_ref(init.as_ref()), fields)
+                || slice_reassigned(std::slice::from_ref(update.as_ref()), fields)
+                || slice_reassigned(body, fields)
+        }
+        Statement::If { then_body, else_body, .. } => slice_reassigned(then_body, fields) || slice_reassigned(else_body, fields),
+        Statement::Switch { cases, default, .. } => {
+            cases.iter().any(|(_, b)| slice_reassigned(b, fields)) || slice_reassigned(default, fields)
+        }
+        _ => false,
+    })
+}
+
+/// `stmts` with `lift_loop` applied to each outermost loop: a nested loop is
+/// inside the lifted one already.
+fn lift_outer_loops(stmts: &[Statement], lift_loop: &dyn Fn(Statement) -> Option<Statement>) -> Vec<Statement> {
+    stmts
+        .iter()
+        .map(|st| match st {
+            Statement::If { condition, then_body, else_body, cond_comments } => Statement::If {
+                condition: condition.clone(),
+                then_body: lift_outer_loops(then_body, lift_loop),
+                else_body: lift_outer_loops(else_body, lift_loop),
+                cond_comments: cond_comments.clone(),
+            },
+            Statement::Block { body } => Statement::Block { body: lift_outer_loops(body, lift_loop) },
+            other => lift_loop(other.clone()).unwrap_or_else(|| other.clone()),
+        })
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -939,15 +1186,11 @@ fn tape_names(em: &Em) -> (String, String, String) {
     (format!("{}StepTape", em.camel), format!("{}PeekTape", em.camel), format!("{}TapeDetach", em.camel))
 }
 
-#[allow(clippy::too_many_lines)]
-fn emit_tape_entries(o: &mut String, em: &Em, tier: &TapeTier) {
-    let func = em.func;
-    let st = &em.names.stream;
+/// The ring and window buffers a tape covers, which its entries detach.
+fn tape_detach(func: &FuncDef, models: &[&StreamModel]) -> Vec<(String, String, bool)> {
     let input = tape_input(func);
-    let tape = streaming::TapeNames::new(&input);
-    let (step_tape, peek_tape, detach_fn) = tape_names(em);
     let mut detach: Vec<(String, String, bool)> = Vec::new();
-    for m in tier.models {
+    for m in models {
         streaming::check_tape_eligible(m, &input).unwrap_or_else(|e| panic!("{e}"));
         let n = &GoNames;
         for r in streaming::tape_covered_rings(m, &input) {
@@ -959,6 +1202,23 @@ fn emit_tape_entries(o: &mut String, em: &Em, tier: &TapeTier) {
     }
     let mut seen = BTreeSet::new();
     detach.retain(|d| seen.insert(d.clone()));
+    detach
+}
+
+/// Whether anything but `Update` calls the step: only a tape entry over a
+/// tape that covers no buffer.
+fn step_called_by_tape(em: &Em, models: &[&StreamModel]) -> bool {
+    em.svc.registry.in_tape_set(&em.func.name.to_lowercase()) && tape_detach(em.func, models).is_empty()
+}
+
+#[allow(clippy::too_many_lines)]
+fn emit_tape_entries(o: &mut String, em: &Em, tier: &TapeTier) {
+    let func = em.func;
+    let st = &em.names.stream;
+    let input = tape_input(func);
+    let tape = streaming::TapeNames::new(&input);
+    let (step_tape, peek_tape, detach_fn) = tape_names(em);
+    let detach = tape_detach(func, tier.models);
     let pred = tier.dual.map(|d| {
         let p = params_on_state(func, &d.predicate);
         let ctx = em.frame_ctx(&[], tier.fields, None, tier.step_settings, false, Ret::Code);
@@ -1096,7 +1356,45 @@ fn sink_frame_body(em: &Em, model: &StreamModel, body: &[Statement]) -> Option<V
     let fill = cleanup_open_body(&unstrided, em);
     let helpers = em.svc.helpers;
     let pure = |n: &str| super::open_frames::is_pure_call(n, helpers);
-    super::open_frames::sink_body(&fill, outputs, &pure)
+    super::open_frames::sink_body(&fill, outputs, &pure).map(|b| close_counting_loops(&b))
+}
+
+/// A sink frame's history loop left with only counters to advance
+/// (`for i < endIdx { outIdx += 1; i += 1 }`) in closed form: Go does not
+/// fold an induction loop, so the open walked every bar for nothing. int32
+/// arithmetic wraps alike either way, so the counts come out the same.
+fn close_counting_loops(body: &[Statement]) -> Vec<Statement> {
+    let step = |st: &Statement| -> Option<(String, i64)> {
+        let Statement::Assign { target: Expr::Var(v), value: Expr::BinOp(l, BinOp::Add, r), .. } = st else { return None };
+        match (l.as_ref(), r.as_ref()) {
+            (Expr::Var(lv), Expr::IntLiteral(k)) if lv == v => Some((v.clone(), *k)),
+            _ => None,
+        }
+    };
+    body.iter()
+        .map(|st| {
+            let Statement::While { condition: Expr::BinOp(i, BinOp::Less, bound), body: inner } = st else { return st.clone() };
+            let (Expr::Var(iv), Expr::Var(bv)) = (i.as_ref(), bound.as_ref()) else { return st.clone() };
+            let Some(steps) = inner.iter().filter(|s| !matches!(s, Statement::Comment(_))).map(step).collect::<Option<Vec<_>>>() else {
+                return st.clone();
+            };
+            let mut seen = BTreeSet::new();
+            if !steps.iter().all(|(v, _)| seen.insert(v.clone()) && v != bv) || !steps.iter().any(|(v, k)| v == iv && *k == 1) {
+                return st.clone();
+            }
+            let span = Expr::BinOp(bound.clone(), BinOp::Sub, i.clone());
+            let mut then_body: Vec<Statement> = steps
+                .iter()
+                .filter(|(v, _)| v != iv)
+                .map(|(v, k)| {
+                    let add = if *k == 1 { span.clone() } else { Expr::BinOp(Box::new(span.clone()), BinOp::Mul, Box::new(Expr::IntLiteral(*k))) };
+                    Statement::Assign { target: Expr::Var(v.clone()), value: Expr::BinOp(Box::new(Expr::Var(v.clone())), BinOp::Add, Box::new(add)), compound: false }
+                })
+                .collect();
+            then_body.push(Statement::Assign { target: Expr::Var(iv.clone()), value: Expr::Var(bv.clone()), compound: false });
+            Statement::If { condition: Expr::BinOp(i.clone(), BinOp::Less, bound.clone()), then_body, else_body: Vec::new(), cond_comments: Vec::new() }
+        })
+        .collect()
 }
 
 /// `<n>OpenSinkFrame`: `OpenInternal`'s opener, `OpenImpl`'s checks then a pass
@@ -1797,8 +2095,6 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
             b.close("}");
             PeekFrame::falls_through(b.lines)
         });
-    emit_handle(o, em, &fields, &Members::default(), dual_frame.as_ref(), false);
-
     let mut b = B::default();
     {
         let ctx = em.frame_ctx(&[], &fields, Some(ma), &step_settings, false, Ret::Code);
@@ -1812,7 +2108,11 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
     b.mid("} else {");
     b.extend(step_body(em, mb, &fields, &step_settings, None));
     b.close("}");
-    o.push_str(&go::func_text(&step_sig(em, false), &with_core(b.lines)));
+    let step = with_core(b.lines);
+    emit_handle(o, em, &fields, &Members::default(), dual_frame.as_ref(), Step::Inline(&step));
+    if step_called_by_tape(em, &[ma, mb]) {
+        o.push_str(&go::func_text(&step_sig(em, false), &step));
+    }
 
     let mut b = B::default();
     emit_open_head(&mut b, em);
@@ -1939,8 +2239,8 @@ fn emit_dispatch(o: &mut String, em: &Em, dp: &streaming::DispatchPlan) {
     let members = Members { decls: vec![("sub".to_string(), "any".to_string()), ("arm".to_string(), "int32".to_string())], copy };
 
     let frame = dispatch_peek_frame(em, dp, &arms, &classes);
-    emit_handle(o, em, &fields, &members, Some(&frame), true);
-    emit_dispatch_step(o, em, dp, &arms, &classes);
+    let step = dispatch_step_lines(em, dp, &arms, &classes);
+    emit_handle(o, em, &fields, &members, Some(&frame), Step::InlineFallible(&step));
     for mode in [OutMode::Scalar, OutMode::Fill, OutMode::FillInternal] {
         emit_dispatch_open(o, em, dp, mode, &ctx);
     }
@@ -2002,7 +2302,7 @@ fn dispatch_peek_frame(em: &Em, dp: &streaming::DispatchPlan, arms: &[&streaming
     PeekFrame { lines: b.lines, terminal }
 }
 
-fn emit_dispatch_step(o: &mut String, em: &Em, dp: &streaming::DispatchPlan, arms: &[&streaming::DispatchArm], classes: &[String]) {
+fn dispatch_step_lines(em: &Em, dp: &streaming::DispatchPlan, arms: &[&streaming::DispatchArm], classes: &[String]) -> Vec<String> {
     let func = em.func;
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let args = bar_args(func);
@@ -2029,7 +2329,7 @@ fn emit_dispatch_step(o: &mut String, em: &Em, dp: &streaming::DispatchPlan, arm
     }
     b.line("}");
     b.line("return nil");
-    o.push_str(&go::func_text(&step_sig(em, true), &b.lines));
+    b.lines
 }
 
 #[allow(clippy::too_many_lines)]
@@ -2378,7 +2678,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     } else {
         tape_peek(&mut peek);
     }
-    emit_handle(o, em, &fields, &members, Some(&PeekFrame::falls_through(peek.lines)), true);
+    emit_handle(o, em, &fields, &members, Some(&PeekFrame::falls_through(peek.lines)), Step::Fallible);
 
     let mut b = B::default();
     if windowed {
@@ -2977,10 +3277,38 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
         members.copy.push(format!("cl.sub{si} = sp.sub{si}.Clone()"));
     }
     let frame = composed_step(em, cp, &step_settings, &outputs, &fields, true).map(PeekFrame::falls_through);
-    emit_handle(o, em, &fields, &members, frame.as_ref(), true);
-    let step = composed_step(em, cp, &step_settings, &outputs, &fields, false).expect("a composed step always renders");
-    o.push_str(&go::func_text(&step_sig(em, true), &with_core(step)));
+    let step = with_core(composed_step(em, cp, &step_settings, &outputs, &fields, false).expect("a composed step always renders"));
+    emit_handle(o, em, &fields, &members, frame.as_ref(), Step::InlineFallible(&step));
     emit_composed_open(o, em, cp, &step_settings, &outputs);
     emit_open_and_fill_internal_wrapper(o, em, true);
     emit_open_wrappers(o, em, true, false, false);
+}
+
+#[cfg(test)]
+mod lift_tests {
+    use super::{field, reaches_handle, CType, Expr, Field, HashMap, Statement};
+
+    fn loop_of(body: Vec<Statement>) -> Statement {
+        Statement::While { condition: Expr::Var("go".into()), body }
+    }
+
+    fn call(name: &str, args: Vec<Expr>) -> Statement {
+        Statement::Expr(Expr::FuncCall(name.into(), args))
+    }
+
+    /// The refusals: the handle itself, a member that is not a field, a method
+    /// on a member, and a whole slice field reassigned. The control, a pure
+    /// call over a field's element, is lifted.
+    #[test]
+    fn a_loop_that_can_reach_the_handle_is_not_lifted() {
+        let fs = [field("total", CType::Real, "0"), field("ring", CType::RealPtr, "nil")];
+        let by: HashMap<&str, &Field> = fs.iter().map(|f| (f.name.as_str(), f)).collect();
+        let elem = Expr::ArrayAccess("sp.ring".into(), Box::new(Expr::Var("i".into())));
+        assert!(!reaches_handle(&loop_of(vec![call("fabs", vec![elem])]), &by));
+        assert!(reaches_handle(&loop_of(vec![call("helper", vec![Expr::Var("sp".into())])]), &by));
+        assert!(reaches_handle(&loop_of(vec![call("step", vec![Expr::Var("sp.sub0".into())])]), &by));
+        assert!(reaches_handle(&loop_of(vec![call("sp.sub0.Update", vec![Expr::Var("x".into())])]), &by));
+        let reassign = Statement::Assign { target: Expr::Var("sp.ring".into()), value: Expr::Var("other".into()), compound: false };
+        assert!(reaches_handle(&loop_of(vec![reassign]), &by));
+    }
 }

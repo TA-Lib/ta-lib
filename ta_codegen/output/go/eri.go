@@ -291,11 +291,28 @@ func (sp *ERIStream) Update(inHigh, inLow, inClose float64) (float64, float64, e
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
-	eriStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	if sp.optInTimePeriod == 1 {
+		var tempReal float64
+		var tempHT float64
+		var tempLT float64
+		tempHT = inHigh
+		tempLT = inLow
+		tempReal = inClose
+		sp.cur_outBullPower = tempHT - tempReal
+		sp.cur_outBearPower = tempLT - tempReal
+	} else {
+		var tempHT float64
+		var tempLT float64
+		sp.prevMA = math.FMA(sp.beta, sp.prevMA, float64(sp.k*inClose))
+		tempHT = inHigh
+		tempLT = inLow
+		sp.cur_outBullPower = tempHT - sp.prevMA
+		sp.cur_outBearPower = tempLT - sp.prevMA
+	}
 	return sp.cur_outBullPower, sp.cur_outBearPower, nil
 }
 
@@ -303,7 +320,7 @@ func (sp *ERIStream) Update(inHigh, inLow, inClose float64) (float64, float64, e
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *ERIStream) Peek(inHigh, inLow, inClose float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
 	var cur_outBullPower float64
@@ -341,27 +358,6 @@ func (sp *ERIStream) Value() (float64, float64) {
 func (sp *ERIStream) Clone() *ERIStream {
 	cl := *sp
 	return &cl
-}
-
-func eriStepImpl(sp *ERIStream, inHigh, inLow, inClose float64) {
-	if sp.optInTimePeriod == 1 {
-		var tempReal float64
-		var tempHT float64
-		var tempLT float64
-		tempHT = inHigh
-		tempLT = inLow
-		tempReal = inClose
-		sp.cur_outBullPower = tempHT - tempReal
-		sp.cur_outBearPower = tempLT - tempReal
-	} else {
-		var tempHT float64
-		var tempLT float64
-		sp.prevMA = math.FMA(sp.beta, sp.prevMA, float64(sp.k*inClose))
-		tempHT = inHigh
-		tempLT = inLow
-		sp.cur_outBullPower = tempHT - sp.prevMA
-		sp.cur_outBearPower = tempLT - sp.prevMA
-	}
 }
 
 func (c *Core) eriOpenImpl(sp *ERIStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outBullPower, outBearPower []float64, outStride int32) RetCode {

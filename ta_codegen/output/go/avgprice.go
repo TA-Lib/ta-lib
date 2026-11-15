@@ -189,11 +189,11 @@ func (sp *AVGPRICEStream) Update(inOpen, inHigh, inLow, inClose float64) (float6
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	avgpriceStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4.0
 	return sp.cur_outReal, nil
 }
 
@@ -201,7 +201,7 @@ func (sp *AVGPRICEStream) Update(inOpen, inHigh, inLow, inClose float64) (float6
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *AVGPRICEStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -219,10 +219,6 @@ func (sp *AVGPRICEStream) Value() float64 {
 func (sp *AVGPRICEStream) Clone() *AVGPRICEStream {
 	cl := *sp
 	return &cl
-}
-
-func avgpriceStepImpl(sp *AVGPRICEStream, inOpen, inHigh, inLow, inClose float64) {
-	sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4.0
 }
 
 func (c *Core) avgpriceOpenImpl(sp *AVGPRICEStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

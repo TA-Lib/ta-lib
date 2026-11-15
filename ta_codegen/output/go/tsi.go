@@ -341,18 +341,33 @@ func (sp *TSIStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	tsiStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var mom float64
+	var absMom float64
+	var tsiValue float64
+	mom = inReal - sp.prevClose
+	sp.prevClose = inReal
+	absMom = math.Abs(mom)
+	sp.emaFirstNum = math.FMA(sp.betaFirst, sp.emaFirstNum, float64(sp.kFirst*mom))
+	sp.emaFirstDen = math.FMA(sp.betaFirst, sp.emaFirstDen, float64(sp.kFirst*absMom))
+	sp.emaSecondNum = math.FMA(sp.betaSecond, sp.emaSecondNum, float64(sp.kSecond*sp.emaFirstNum))
+	sp.emaSecondDen = math.FMA(sp.betaSecond, sp.emaSecondDen, float64(sp.kSecond*sp.emaFirstDen))
+	if sp.emaSecondDen > 0.0 {
+		tsiValue = float64(100.0*sp.emaSecondNum) / sp.emaSecondDen
+	} else {
+		tsiValue = 0.0
+	}
+	sp.cur_outReal = tsiValue
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *TSIStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var mom float64
@@ -390,25 +405,6 @@ func (sp *TSIStream) Value() float64 {
 func (sp *TSIStream) Clone() *TSIStream {
 	cl := *sp
 	return &cl
-}
-
-func tsiStepImpl(sp *TSIStream, inReal float64) {
-	var mom float64
-	var absMom float64
-	var tsiValue float64
-	mom = inReal - sp.prevClose
-	sp.prevClose = inReal
-	absMom = math.Abs(mom)
-	sp.emaFirstNum = math.FMA(sp.betaFirst, sp.emaFirstNum, float64(sp.kFirst*mom))
-	sp.emaFirstDen = math.FMA(sp.betaFirst, sp.emaFirstDen, float64(sp.kFirst*absMom))
-	sp.emaSecondNum = math.FMA(sp.betaSecond, sp.emaSecondNum, float64(sp.kSecond*sp.emaFirstNum))
-	sp.emaSecondDen = math.FMA(sp.betaSecond, sp.emaSecondDen, float64(sp.kSecond*sp.emaFirstDen))
-	if sp.emaSecondDen > 0.0 {
-		tsiValue = float64(100.0*sp.emaSecondNum) / sp.emaSecondDen
-	} else {
-		tsiValue = 0.0
-	}
-	sp.cur_outReal = tsiValue
 }
 
 func (c *Core) tsiOpenImpl(sp *TSIStream, inReal []float64, startIdx, optInFirstPeriod, optInSecondPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

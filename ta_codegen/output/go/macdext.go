@@ -376,12 +376,31 @@ func (sp *MACDEXTStream) Update(inReal float64) (float64, float64, float64, erro
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
-	if err := macdextStepImpl(sp, inReal); err != nil {
-		return 0, 0, 0, err
+	var cur_slowMABuffer float64
+	var cur_fastMABuffer float64
+	var cur_outMACDSignal float64
+	var cur_outMACDHist float64
+	var subErr error
+	cur_slowMABuffer, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, 0, 0, subErr
 	}
+	cur_fastMABuffer, subErr = sp.sub1.Update(inReal)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer
+	cur_outMACDSignal, subErr = sp.sub2.Update(cur_fastMABuffer)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal
+	sp.cur_outMACD = cur_fastMABuffer
+	sp.cur_outMACDSignal = cur_outMACDSignal
+	sp.cur_outMACDHist = cur_outMACDHist
 	sp.outRangeCount++
 	return sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist, nil
 }
@@ -389,7 +408,7 @@ func (sp *MACDEXTStream) Update(inReal float64) (float64, float64, float64, erro
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MACDEXTStream) Peek(inReal float64) (float64, float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var cur_slowMABuffer float64
@@ -430,32 +449,6 @@ func (sp *MACDEXTStream) Clone() *MACDEXTStream {
 	cl.sub1 = sp.sub1.Clone()
 	cl.sub2 = sp.sub2.Clone()
 	return &cl
-}
-
-func macdextStepImpl(sp *MACDEXTStream, inReal float64) error {
-	var cur_slowMABuffer float64
-	var cur_fastMABuffer float64
-	var cur_outMACDSignal float64
-	var cur_outMACDHist float64
-	var subErr error
-	cur_slowMABuffer, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_fastMABuffer, subErr = sp.sub1.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer
-	cur_outMACDSignal, subErr = sp.sub2.Update(cur_fastMABuffer)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal
-	sp.cur_outMACD = cur_fastMABuffer
-	sp.cur_outMACDSignal = cur_outMACDSignal
-	sp.cur_outMACDHist = cur_outMACDHist
-	return nil
 }
 
 func (c *Core) macdextOpenImpl(sp *MACDEXTStream, inReal []float64, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType int32, outBegIdx, outNBElement *int32, outMACD, outMACDSignal, outMACDHist []float64, outStride int32) RetCode {

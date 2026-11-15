@@ -73,7 +73,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1]))
 			i += 1
 		}
 		i = startIdx
@@ -106,7 +106,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					if Near_avgPeriod != 0 {
 						_T4 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T4 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T4 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 					}
 					_B5 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T4)
 				}
@@ -151,7 +151,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 						if Near_avgPeriod != 0 {
 							_T11 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T11 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T11 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 						}
 						_B12 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T11)
 					}
@@ -173,7 +173,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(0, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1])) - (math.Abs(inClose[NearTrailingIdx-1] - inOpen[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -188,7 +188,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1])
 			i += 1
 		}
 		i = startIdx
@@ -221,7 +221,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					if Near_avgPeriod != 0 {
 						_T18 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T18 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T18 = (inHigh[i-1] - inLow[i-1])
 					}
 					_B19 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T18)
 				}
@@ -266,7 +266,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 						if Near_avgPeriod != 0 {
 							_T25 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T25 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T25 = (inHigh[i-1] - inLow[i-1])
 						}
 						_B26 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T25)
 					}
@@ -288,7 +288,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(1, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -303,7 +303,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 			i += 1
 		}
 		i = startIdx
@@ -336,7 +336,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					if Near_avgPeriod != 0 {
 						_T32 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T32 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T32 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 					}
 					_B33 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T32)/2.0
 				}
@@ -381,7 +381,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 						if Near_avgPeriod != 0 {
 							_T39 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T39 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T39 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 						}
 						_B40 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T39)/2.0
 					}
@@ -403,7 +403,7 @@ func (c *Core) cdltasukigapImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, i
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(2, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1])) - ((inHigh[NearTrailingIdx-1] - selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1], inOpen[NearTrailingIdx-1])) + (selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1]) - inLow[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -685,11 +685,156 @@ func (sp *CDLTASUKIGAPStream) Update(inOpen, inHigh, inLow, inClose float64) (in
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdltasukigapStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var ringPosL_NearTrailingIdx int32
+	Near_rangeType := sp.cs_Near_rangeType
+	Near_avgPeriod := sp.cs_Near_avgPeriod
+	Near_factor := sp.cs_Near_factor
+	var _R18 float64
+	switch Near_rangeType {
+	case 0:
+		_R18 = math.Abs(inClose - inOpen)
+	case 1:
+		_R18 = inHigh - inLow
+	case 2:
+		_R18 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+	}
+	sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = _R18
+	_B20 := selF(sp.lag1_inOpen < sp.lag1_inClose, sp.lag1_inOpen, sp.lag1_inClose) > selF(sp.lag2_inOpen > sp.lag2_inClose, sp.lag2_inOpen, sp.lag2_inClose)
+	if _B20 {
+		var _T19 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T19 = 1
+		} else {
+			_T19 = -1
+		}
+		_B20 = _T19 == 1
+	}
+	_B22 := _B20
+	if _B22 {
+		var _T21 int32
+		if inClose >= inOpen {
+			_T21 = 1
+		} else {
+			_T21 = -1
+		}
+		_B22 = _T21 == -1
+	}
+	if _B22 {
+		_B26 := inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > selF(sp.lag2_inClose > sp.lag2_inOpen, sp.lag2_inClose, sp.lag2_inOpen)
+		if _B26 {
+			var _T24 float64
+			if Near_avgPeriod != 0 {
+				_T24 = sp.NearPeriodTotal / float64(Near_avgPeriod)
+			} else {
+				var _R23 float64
+				switch Near_rangeType {
+				case 0:
+					_R23 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+				case 1:
+					_R23 = sp.lag1_inHigh - sp.lag1_inLow
+				case 2:
+					_R23 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+				}
+				_T24 = _R23
+			}
+			var _T25 float64
+			if Near_rangeType == 2 {
+				_T25 = 2.0
+			} else {
+				_T25 = 1.0
+			}
+			_B26 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T24)/_T25
+		}
+		if _B26 {
+			var _T27 int32
+			if sp.lag1_inClose >= sp.lag1_inOpen {
+				_T27 = 1
+			} else {
+				_T27 = -1
+			}
+			sp.cur_outInteger = _T27 * 100
+		} else {
+			sp.cur_outInteger = 0
+		}
+	} else {
+		_B29 := selF(sp.lag1_inOpen > sp.lag1_inClose, sp.lag1_inOpen, sp.lag1_inClose) < selF(sp.lag2_inOpen < sp.lag2_inClose, sp.lag2_inOpen, sp.lag2_inClose)
+		if _B29 {
+			var _T28 int32
+			if sp.lag1_inClose >= sp.lag1_inOpen {
+				_T28 = 1
+			} else {
+				_T28 = -1
+			}
+			_B29 = _T28 == -1
+		}
+		_B31 := _B29
+		if _B31 {
+			var _T30 int32
+			if inClose >= inOpen {
+				_T30 = 1
+			} else {
+				_T30 = -1
+			}
+			_B31 = _T30 == 1
+		}
+		if _B31 {
+			_B35 := inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < selF(sp.lag2_inClose < sp.lag2_inOpen, sp.lag2_inClose, sp.lag2_inOpen)
+			if _B35 {
+				var _T33 float64
+				if Near_avgPeriod != 0 {
+					_T33 = sp.NearPeriodTotal / float64(Near_avgPeriod)
+				} else {
+					var _R32 float64
+					switch Near_rangeType {
+					case 0:
+						_R32 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+					case 1:
+						_R32 = sp.lag1_inHigh - sp.lag1_inLow
+					case 2:
+						_R32 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+					}
+					_T33 = _R32
+				}
+				var _T34 float64
+				if Near_rangeType == 2 {
+					_T34 = 2.0
+				} else {
+					_T34 = 1.0
+				}
+				_B35 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T33)/_T34
+			}
+			if _B35 {
+				var _T36 int32
+				if sp.lag1_inClose >= sp.lag1_inOpen {
+					_T36 = 1
+				} else {
+					_T36 = -1
+				}
+				sp.cur_outInteger = _T36 * 100
+			} else {
+				sp.cur_outInteger = 0
+			}
+		} else {
+			sp.cur_outInteger = 0
+		}
+	}
+	sp.NearPeriodTotal += candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose) - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx+sp.ringCap_NearTrailingIdx-sp.ringLag_NearTrailingIdx-1)%sp.ringCap_NearTrailingIdx]
+	sp.lag2_inOpen = sp.lag1_inOpen
+	sp.lag1_inOpen = inOpen
+	sp.lag1_inHigh = inHigh
+	sp.lag1_inLow = inLow
+	sp.lag2_inClose = sp.lag1_inClose
+	sp.lag1_inClose = inClose
+	ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx
+	ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1
+	if ringPosL_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
+		ringPosL_NearTrailingIdx = 0
+	}
+	sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx
 	return sp.cur_outInteger, nil
 }
 
@@ -697,14 +842,14 @@ func (sp *CDLTASUKIGAPStream) Update(inOpen, inHigh, inLow, inClose float64) (in
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDLTASUKIGAPStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outInteger int32
 	Near_rangeType := sp.cs_Near_rangeType
 	Near_avgPeriod := sp.cs_Near_avgPeriod
 	Near_factor := sp.cs_Near_factor
-	_B1 := minF(sp.lag1_inOpen, sp.lag1_inClose) > maxF(sp.lag2_inOpen, sp.lag2_inClose)
+	_B1 := selF(sp.lag1_inOpen < sp.lag1_inClose, sp.lag1_inOpen, sp.lag1_inClose) > selF(sp.lag2_inOpen > sp.lag2_inClose, sp.lag2_inOpen, sp.lag2_inClose)
 	if _B1 {
 		var _T0 int32
 		if sp.lag1_inClose >= sp.lag1_inOpen {
@@ -725,79 +870,97 @@ func (sp *CDLTASUKIGAPStream) Peek(inOpen, inHigh, inLow, inClose float64) (int3
 		_B3 = _T2 == -1
 	}
 	if _B3 {
-		_B6 := inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > maxF(sp.lag2_inClose, sp.lag2_inOpen)
-		if _B6 {
-			var _T4 float64
-			if Near_avgPeriod != 0 {
-				_T4 = sp.NearPeriodTotal / float64(Near_avgPeriod)
-			} else {
-				_T4 = candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-			}
+		_B7 := inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > selF(sp.lag2_inClose > sp.lag2_inOpen, sp.lag2_inClose, sp.lag2_inOpen)
+		if _B7 {
 			var _T5 float64
+			if Near_avgPeriod != 0 {
+				_T5 = sp.NearPeriodTotal / float64(Near_avgPeriod)
+			} else {
+				var _R4 float64
+				switch Near_rangeType {
+				case 0:
+					_R4 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+				case 1:
+					_R4 = sp.lag1_inHigh - sp.lag1_inLow
+				case 2:
+					_R4 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+				}
+				_T5 = _R4
+			}
+			var _T6 float64
 			if Near_rangeType == 2 {
-				_T5 = 2.0
+				_T6 = 2.0
 			} else {
-				_T5 = 1.0
+				_T6 = 1.0
 			}
-			_B6 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T4)/_T5
+			_B7 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T5)/_T6
 		}
-		if _B6 {
-			var _T7 int32
-			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T7 = 1
-			} else {
-				_T7 = -1
-			}
-			cur_outInteger = _T7 * 100
-		} else {
-			cur_outInteger = 0
-		}
-	} else {
-		_B9 := maxF(sp.lag1_inOpen, sp.lag1_inClose) < minF(sp.lag2_inOpen, sp.lag2_inClose)
-		if _B9 {
+		if _B7 {
 			var _T8 int32
 			if sp.lag1_inClose >= sp.lag1_inOpen {
 				_T8 = 1
 			} else {
 				_T8 = -1
 			}
-			_B9 = _T8 == -1
+			cur_outInteger = _T8 * 100
+		} else {
+			cur_outInteger = 0
 		}
-		_B11 := _B9
-		if _B11 {
-			var _T10 int32
-			if inClose >= inOpen {
-				_T10 = 1
+	} else {
+		_B10 := selF(sp.lag1_inOpen > sp.lag1_inClose, sp.lag1_inOpen, sp.lag1_inClose) < selF(sp.lag2_inOpen < sp.lag2_inClose, sp.lag2_inOpen, sp.lag2_inClose)
+		if _B10 {
+			var _T9 int32
+			if sp.lag1_inClose >= sp.lag1_inOpen {
+				_T9 = 1
 			} else {
-				_T10 = -1
+				_T9 = -1
 			}
-			_B11 = _T10 == 1
+			_B10 = _T9 == -1
 		}
-		if _B11 {
-			_B14 := inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < minF(sp.lag2_inClose, sp.lag2_inOpen)
-			if _B14 {
-				var _T12 float64
-				if Near_avgPeriod != 0 {
-					_T12 = sp.NearPeriodTotal / float64(Near_avgPeriod)
-				} else {
-					_T12 = candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-				}
-				var _T13 float64
-				if Near_rangeType == 2 {
-					_T13 = 2.0
-				} else {
-					_T13 = 1.0
-				}
-				_B14 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T12)/_T13
+		_B12 := _B10
+		if _B12 {
+			var _T11 int32
+			if inClose >= inOpen {
+				_T11 = 1
+			} else {
+				_T11 = -1
 			}
-			if _B14 {
-				var _T15 int32
-				if sp.lag1_inClose >= sp.lag1_inOpen {
-					_T15 = 1
+			_B12 = _T11 == 1
+		}
+		if _B12 {
+			_B16 := inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < selF(sp.lag2_inClose < sp.lag2_inOpen, sp.lag2_inClose, sp.lag2_inOpen)
+			if _B16 {
+				var _T14 float64
+				if Near_avgPeriod != 0 {
+					_T14 = sp.NearPeriodTotal / float64(Near_avgPeriod)
 				} else {
-					_T15 = -1
+					var _R13 float64
+					switch Near_rangeType {
+					case 0:
+						_R13 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+					case 1:
+						_R13 = sp.lag1_inHigh - sp.lag1_inLow
+					case 2:
+						_R13 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+					}
+					_T14 = _R13
 				}
-				cur_outInteger = _T15 * 100
+				var _T15 float64
+				if Near_rangeType == 2 {
+					_T15 = 2.0
+				} else {
+					_T15 = 1.0
+				}
+				_B16 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T14)/_T15
+			}
+			if _B16 {
+				var _T17 int32
+				if sp.lag1_inClose >= sp.lag1_inOpen {
+					_T17 = 1
+				} else {
+					_T17 = -1
+				}
+				cur_outInteger = _T17 * 100
 			} else {
 				cur_outInteger = 0
 			}
@@ -819,128 +982,6 @@ func (sp *CDLTASUKIGAPStream) Clone() *CDLTASUKIGAPStream {
 	cl := *sp
 	cl.ring_NearTrailingIdx_derived = append(sp.ring_NearTrailingIdx_derived[:0:0], sp.ring_NearTrailingIdx_derived...)
 	return &cl
-}
-
-func cdltasukigapStepImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLow, inClose float64) {
-	var ringPosL_NearTrailingIdx int32
-	Near_rangeType := sp.cs_Near_rangeType
-	Near_avgPeriod := sp.cs_Near_avgPeriod
-	Near_factor := sp.cs_Near_factor
-	sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = candleRange(Near_rangeType, inOpen, inHigh, inLow, inClose)
-	_B17 := minF(sp.lag1_inOpen, sp.lag1_inClose) > maxF(sp.lag2_inOpen, sp.lag2_inClose)
-	if _B17 {
-		var _T16 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T16 = 1
-		} else {
-			_T16 = -1
-		}
-		_B17 = _T16 == 1
-	}
-	_B19 := _B17
-	if _B19 {
-		var _T18 int32
-		if inClose >= inOpen {
-			_T18 = 1
-		} else {
-			_T18 = -1
-		}
-		_B19 = _T18 == -1
-	}
-	if _B19 {
-		_B22 := inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > maxF(sp.lag2_inClose, sp.lag2_inOpen)
-		if _B22 {
-			var _T20 float64
-			if Near_avgPeriod != 0 {
-				_T20 = sp.NearPeriodTotal / float64(Near_avgPeriod)
-			} else {
-				_T20 = candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-			}
-			var _T21 float64
-			if Near_rangeType == 2 {
-				_T21 = 2.0
-			} else {
-				_T21 = 1.0
-			}
-			_B22 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T20)/_T21
-		}
-		if _B22 {
-			var _T23 int32
-			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T23 = 1
-			} else {
-				_T23 = -1
-			}
-			sp.cur_outInteger = _T23 * 100
-		} else {
-			sp.cur_outInteger = 0
-		}
-	} else {
-		_B25 := maxF(sp.lag1_inOpen, sp.lag1_inClose) < minF(sp.lag2_inOpen, sp.lag2_inClose)
-		if _B25 {
-			var _T24 int32
-			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T24 = 1
-			} else {
-				_T24 = -1
-			}
-			_B25 = _T24 == -1
-		}
-		_B27 := _B25
-		if _B27 {
-			var _T26 int32
-			if inClose >= inOpen {
-				_T26 = 1
-			} else {
-				_T26 = -1
-			}
-			_B27 = _T26 == 1
-		}
-		if _B27 {
-			_B30 := inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < minF(sp.lag2_inClose, sp.lag2_inOpen)
-			if _B30 {
-				var _T28 float64
-				if Near_avgPeriod != 0 {
-					_T28 = sp.NearPeriodTotal / float64(Near_avgPeriod)
-				} else {
-					_T28 = candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-				}
-				var _T29 float64
-				if Near_rangeType == 2 {
-					_T29 = 2.0
-				} else {
-					_T29 = 1.0
-				}
-				_B30 = math.Abs(math.Abs(sp.lag1_inClose-sp.lag1_inOpen)-math.Abs(inClose-inOpen)) < float64(Near_factor*_T28)/_T29
-			}
-			if _B30 {
-				var _T31 int32
-				if sp.lag1_inClose >= sp.lag1_inOpen {
-					_T31 = 1
-				} else {
-					_T31 = -1
-				}
-				sp.cur_outInteger = _T31 * 100
-			} else {
-				sp.cur_outInteger = 0
-			}
-		} else {
-			sp.cur_outInteger = 0
-		}
-	}
-	sp.NearPeriodTotal += candleRange(Near_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose) - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx+sp.ringCap_NearTrailingIdx-sp.ringLag_NearTrailingIdx-1)%sp.ringCap_NearTrailingIdx]
-	sp.lag2_inOpen = sp.lag1_inOpen
-	sp.lag1_inOpen = inOpen
-	sp.lag1_inHigh = inHigh
-	sp.lag1_inLow = inLow
-	sp.lag2_inClose = sp.lag1_inClose
-	sp.lag1_inClose = inClose
-	ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx
-	ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1
-	if ringPosL_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-		ringPosL_NearTrailingIdx = 0
-	}
-	sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx
 }
 
 func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {
@@ -980,96 +1021,96 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B33 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-			if _B33 {
-				var _T32 int32
+			_B38 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+			if _B38 {
+				var _T37 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T32 = 1
+					_T37 = 1
 				} else {
-					_T32 = -1
+					_T37 = -1
 				}
-				_B33 = _T32 == 1
+				_B38 = _T37 == 1
 			}
-			_B35 := _B33
-			if _B35 {
-				var _T34 int32
+			_B40 := _B38
+			if _B40 {
+				var _T39 int32
 				if inClose[i] >= inOpen[i] {
-					_T34 = 1
+					_T39 = 1
 				} else {
-					_T34 = -1
+					_T39 = -1
 				}
-				_B35 = _T34 == -1
+				_B40 = _T39 == -1
 			}
-			if _B35 {
-				_B37 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-				if _B37 {
-					var _T36 float64
+			if _B40 {
+				_B42 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+				if _B42 {
+					var _T41 float64
 					if Near_avgPeriod != 0 {
-						_T36 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T41 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T36 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T41 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 					}
-					_B37 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T36)
+					_B42 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T41)
 				}
-				if _B37 {
-					var _T38 int32
+				if _B42 {
+					var _T43 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T38 = 1
+						_T43 = 1
 					} else {
-						_T38 = -1
+						_T43 = -1
 					}
-					outInteger[outIdx*outStride] = _T38 * 100
+					outInteger[outIdx*outStride] = _T43 * 100
 					outIdx++
 				} else {
 					outInteger[outIdx*outStride] = 0
 					outIdx++
 				}
 			} else {
-				_B40 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-				if _B40 {
-					var _T39 int32
+				_B45 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+				if _B45 {
+					var _T44 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T39 = 1
+						_T44 = 1
 					} else {
-						_T39 = -1
+						_T44 = -1
 					}
-					_B40 = _T39 == -1
+					_B45 = _T44 == -1
 				}
-				_B42 := _B40
-				if _B42 {
-					var _T41 int32
+				_B47 := _B45
+				if _B47 {
+					var _T46 int32
 					if inClose[i] >= inOpen[i] {
-						_T41 = 1
+						_T46 = 1
 					} else {
-						_T41 = -1
+						_T46 = -1
 					}
-					_B42 = _T41 == 1
+					_B47 = _T46 == 1
 				}
-				if _B42 {
-					_B44 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-					if _B44 {
-						var _T43 float64
+				if _B47 {
+					_B49 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+					if _B49 {
+						var _T48 float64
 						if Near_avgPeriod != 0 {
-							_T43 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T48 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T43 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T48 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 						}
-						_B44 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T43)
+						_B49 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T48)
 					}
-					if _B44 {
-						var _T45 int32
+					if _B49 {
+						var _T50 int32
 						if inClose[i-1] >= inOpen[i-1] {
-							_T45 = 1
+							_T50 = 1
 						} else {
-							_T45 = -1
+							_T50 = -1
 						}
-						outInteger[outIdx*outStride] = _T45 * 100
+						outInteger[outIdx*outStride] = _T50 * 100
 						outIdx++
 					} else {
 						outInteger[outIdx*outStride] = 0
@@ -1080,7 +1121,7 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(0, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1])) - (math.Abs(inClose[NearTrailingIdx-1] - inOpen[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -1094,96 +1135,96 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1])
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B47 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-			if _B47 {
-				var _T46 int32
+			_B52 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+			if _B52 {
+				var _T51 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T46 = 1
+					_T51 = 1
 				} else {
-					_T46 = -1
+					_T51 = -1
 				}
-				_B47 = _T46 == 1
+				_B52 = _T51 == 1
 			}
-			_B49 := _B47
-			if _B49 {
-				var _T48 int32
+			_B54 := _B52
+			if _B54 {
+				var _T53 int32
 				if inClose[i] >= inOpen[i] {
-					_T48 = 1
+					_T53 = 1
 				} else {
-					_T48 = -1
+					_T53 = -1
 				}
-				_B49 = _T48 == -1
+				_B54 = _T53 == -1
 			}
-			if _B49 {
-				_B51 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-				if _B51 {
-					var _T50 float64
+			if _B54 {
+				_B56 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+				if _B56 {
+					var _T55 float64
 					if Near_avgPeriod != 0 {
-						_T50 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T55 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T50 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T55 = (inHigh[i-1] - inLow[i-1])
 					}
-					_B51 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T50)
+					_B56 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T55)
 				}
-				if _B51 {
-					var _T52 int32
+				if _B56 {
+					var _T57 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T52 = 1
+						_T57 = 1
 					} else {
-						_T52 = -1
+						_T57 = -1
 					}
-					outInteger[outIdx*outStride] = _T52 * 100
+					outInteger[outIdx*outStride] = _T57 * 100
 					outIdx++
 				} else {
 					outInteger[outIdx*outStride] = 0
 					outIdx++
 				}
 			} else {
-				_B54 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-				if _B54 {
-					var _T53 int32
+				_B59 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+				if _B59 {
+					var _T58 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T53 = 1
+						_T58 = 1
 					} else {
-						_T53 = -1
+						_T58 = -1
 					}
-					_B54 = _T53 == -1
+					_B59 = _T58 == -1
 				}
-				_B56 := _B54
-				if _B56 {
-					var _T55 int32
+				_B61 := _B59
+				if _B61 {
+					var _T60 int32
 					if inClose[i] >= inOpen[i] {
-						_T55 = 1
+						_T60 = 1
 					} else {
-						_T55 = -1
+						_T60 = -1
 					}
-					_B56 = _T55 == 1
+					_B61 = _T60 == 1
 				}
-				if _B56 {
-					_B58 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-					if _B58 {
-						var _T57 float64
+				if _B61 {
+					_B63 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+					if _B63 {
+						var _T62 float64
 						if Near_avgPeriod != 0 {
-							_T57 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T62 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T57 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T62 = (inHigh[i-1] - inLow[i-1])
 						}
-						_B58 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T57)
+						_B63 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T62)
 					}
-					if _B58 {
-						var _T59 int32
+					if _B63 {
+						var _T64 int32
 						if inClose[i-1] >= inOpen[i-1] {
-							_T59 = 1
+							_T64 = 1
 						} else {
-							_T59 = -1
+							_T64 = -1
 						}
-						outInteger[outIdx*outStride] = _T59 * 100
+						outInteger[outIdx*outStride] = _T64 * 100
 						outIdx++
 					} else {
 						outInteger[outIdx*outStride] = 0
@@ -1194,7 +1235,7 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(1, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -1208,96 +1249,96 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B61 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-			if _B61 {
-				var _T60 int32
+			_B66 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+			if _B66 {
+				var _T65 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T60 = 1
+					_T65 = 1
 				} else {
-					_T60 = -1
+					_T65 = -1
 				}
-				_B61 = _T60 == 1
+				_B66 = _T65 == 1
 			}
-			_B63 := _B61
-			if _B63 {
-				var _T62 int32
+			_B68 := _B66
+			if _B68 {
+				var _T67 int32
 				if inClose[i] >= inOpen[i] {
-					_T62 = 1
+					_T67 = 1
 				} else {
-					_T62 = -1
+					_T67 = -1
 				}
-				_B63 = _T62 == -1
+				_B68 = _T67 == -1
 			}
-			if _B63 {
-				_B65 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-				if _B65 {
-					var _T64 float64
+			if _B68 {
+				_B70 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+				if _B70 {
+					var _T69 float64
 					if Near_avgPeriod != 0 {
-						_T64 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T69 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T64 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T69 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 					}
-					_B65 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T64)/2.0
+					_B70 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T69)/2.0
 				}
-				if _B65 {
-					var _T66 int32
+				if _B70 {
+					var _T71 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T66 = 1
+						_T71 = 1
 					} else {
-						_T66 = -1
+						_T71 = -1
 					}
-					outInteger[outIdx*outStride] = _T66 * 100
+					outInteger[outIdx*outStride] = _T71 * 100
 					outIdx++
 				} else {
 					outInteger[outIdx*outStride] = 0
 					outIdx++
 				}
 			} else {
-				_B68 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-				if _B68 {
-					var _T67 int32
+				_B73 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+				if _B73 {
+					var _T72 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T67 = 1
+						_T72 = 1
 					} else {
-						_T67 = -1
+						_T72 = -1
 					}
-					_B68 = _T67 == -1
+					_B73 = _T72 == -1
 				}
-				_B70 := _B68
-				if _B70 {
-					var _T69 int32
+				_B75 := _B73
+				if _B75 {
+					var _T74 int32
 					if inClose[i] >= inOpen[i] {
-						_T69 = 1
+						_T74 = 1
 					} else {
-						_T69 = -1
+						_T74 = -1
 					}
-					_B70 = _T69 == 1
+					_B75 = _T74 == 1
 				}
-				if _B70 {
-					_B72 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-					if _B72 {
-						var _T71 float64
+				if _B75 {
+					_B77 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+					if _B77 {
+						var _T76 float64
 						if Near_avgPeriod != 0 {
-							_T71 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T76 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T71 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T76 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 						}
-						_B72 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T71)/2.0
+						_B77 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T76)/2.0
 					}
-					if _B72 {
-						var _T73 int32
+					if _B77 {
+						var _T78 int32
 						if inClose[i-1] >= inOpen[i-1] {
-							_T73 = 1
+							_T78 = 1
 						} else {
-							_T73 = -1
+							_T78 = -1
 						}
-						outInteger[outIdx*outStride] = _T73 * 100
+						outInteger[outIdx*outStride] = _T78 * 100
 						outIdx++
 					} else {
 						outInteger[outIdx*outStride] = 0
@@ -1308,7 +1349,7 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 					outIdx++
 				}
 			}
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(2, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1])) - ((inHigh[NearTrailingIdx-1] - selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1], inOpen[NearTrailingIdx-1])) + (selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1]) - inLow[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -1328,102 +1369,102 @@ func (c *Core) cdltasukigapOpenImpl(sp *CDLTASUKIGAPStream, inOpen, inHigh, inLo
 		i = startIdx
 		outIdx = 0
 		for {
-			_B75 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-			if _B75 {
-				var _T74 int32
+			_B80 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+			if _B80 {
+				var _T79 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T74 = 1
+					_T79 = 1
 				} else {
-					_T74 = -1
+					_T79 = -1
 				}
-				_B75 = _T74 == 1
+				_B80 = _T79 == 1
 			}
-			_B77 := _B75
-			if _B77 {
-				var _T76 int32
+			_B82 := _B80
+			if _B82 {
+				var _T81 int32
 				if inClose[i] >= inOpen[i] {
-					_T76 = 1
+					_T81 = 1
 				} else {
-					_T76 = -1
+					_T81 = -1
 				}
-				_B77 = _T76 == -1
+				_B82 = _T81 == -1
 			}
-			if _B77 {
-				_B80 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-				if _B80 {
-					var _T78 float64
+			if _B82 {
+				_B85 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+				if _B85 {
+					var _T83 float64
 					if Near_avgPeriod != 0 {
-						_T78 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T83 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T78 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T83 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 					}
-					var _T79 float64
+					var _T84 float64
 					if Near_rangeType == 2 {
-						_T79 = 2.0
+						_T84 = 2.0
 					} else {
-						_T79 = 1.0
+						_T84 = 1.0
 					}
-					_B80 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T78)/_T79
+					_B85 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T83)/_T84
 				}
-				if _B80 {
-					var _T81 int32
+				if _B85 {
+					var _T86 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T81 = 1
+						_T86 = 1
 					} else {
-						_T81 = -1
+						_T86 = -1
 					}
-					outInteger[outIdx*outStride] = _T81 * 100
+					outInteger[outIdx*outStride] = _T86 * 100
 					outIdx++
 				} else {
 					outInteger[outIdx*outStride] = 0
 					outIdx++
 				}
 			} else {
-				_B83 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-				if _B83 {
-					var _T82 int32
+				_B88 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+				if _B88 {
+					var _T87 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T82 = 1
+						_T87 = 1
 					} else {
-						_T82 = -1
+						_T87 = -1
 					}
-					_B83 = _T82 == -1
+					_B88 = _T87 == -1
 				}
-				_B85 := _B83
-				if _B85 {
-					var _T84 int32
+				_B90 := _B88
+				if _B90 {
+					var _T89 int32
 					if inClose[i] >= inOpen[i] {
-						_T84 = 1
+						_T89 = 1
 					} else {
-						_T84 = -1
+						_T89 = -1
 					}
-					_B85 = _T84 == 1
+					_B90 = _T89 == 1
 				}
-				if _B85 {
-					_B88 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-					if _B88 {
-						var _T86 float64
+				if _B90 {
+					_B93 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+					if _B93 {
+						var _T91 float64
 						if Near_avgPeriod != 0 {
-							_T86 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T91 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T86 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+							_T91 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 						}
-						var _T87 float64
+						var _T92 float64
 						if Near_rangeType == 2 {
-							_T87 = 2.0
+							_T92 = 2.0
 						} else {
-							_T87 = 1.0
+							_T92 = 1.0
 						}
-						_B88 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T86)/_T87
+						_B93 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T91)/_T92
 					}
-					if _B88 {
-						var _T89 int32
+					if _B93 {
+						var _T94 int32
 						if inClose[i-1] >= inOpen[i-1] {
-							_T89 = 1
+							_T94 = 1
 						} else {
-							_T89 = -1
+							_T94 = -1
 						}
-						outInteger[outIdx*outStride] = _T89 * 100
+						outInteger[outIdx*outStride] = _T94 * 100
 						outIdx++
 					} else {
 						outInteger[outIdx*outStride] = 0
@@ -1508,101 +1549,101 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(0, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1])) - (math.Abs(inClose[NearTrailingIdx-1] - inOpen[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 		}
-		_B91 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-		if _B91 {
-			var _T90 int32
+		_B96 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+		if _B96 {
+			var _T95 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T90 = 1
+				_T95 = 1
 			} else {
-				_T90 = -1
+				_T95 = -1
 			}
-			_B91 = _T90 == 1
+			_B96 = _T95 == 1
 		}
-		_B93 := _B91
-		if _B93 {
-			var _T92 int32
+		_B98 := _B96
+		if _B98 {
+			var _T97 int32
 			if inClose[i] >= inOpen[i] {
-				_T92 = 1
+				_T97 = 1
 			} else {
-				_T92 = -1
+				_T97 = -1
 			}
-			_B93 = _T92 == -1
+			_B98 = _T97 == -1
 		}
-		if _B93 {
-			_B95 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-			if _B95 {
-				var _T94 float64
+		if _B98 {
+			_B100 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+			if _B100 {
+				var _T99 float64
 				if Near_avgPeriod != 0 {
-					_T94 = NearPeriodTotal / float64(Near_avgPeriod)
+					_T99 = NearPeriodTotal / float64(Near_avgPeriod)
 				} else {
-					_T94 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T99 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 				}
-				_B95 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T94)
+				_B100 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T99)
 			}
-			if _B95 {
-				var _T96 int32
+			if _B100 {
+				var _T101 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T96 = 1
+					_T101 = 1
 				} else {
-					_T96 = -1
+					_T101 = -1
 				}
-				outInteger[0] = _T96 * 100
+				outInteger[0] = _T101 * 100
 				outIdx += 1
 			} else {
 				outInteger[0] = 0
 				outIdx += 1
 			}
 		} else {
-			_B98 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-			if _B98 {
-				var _T97 int32
+			_B103 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+			if _B103 {
+				var _T102 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T97 = 1
+					_T102 = 1
 				} else {
-					_T97 = -1
+					_T102 = -1
 				}
-				_B98 = _T97 == -1
+				_B103 = _T102 == -1
 			}
-			_B100 := _B98
-			if _B100 {
-				var _T99 int32
+			_B105 := _B103
+			if _B105 {
+				var _T104 int32
 				if inClose[i] >= inOpen[i] {
-					_T99 = 1
+					_T104 = 1
 				} else {
-					_T99 = -1
+					_T104 = -1
 				}
-				_B100 = _T99 == 1
+				_B105 = _T104 == 1
 			}
-			if _B100 {
-				_B102 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-				if _B102 {
-					var _T101 float64
+			if _B105 {
+				_B107 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+				if _B107 {
+					var _T106 float64
 					if Near_avgPeriod != 0 {
-						_T101 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T106 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T101 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T106 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 					}
-					_B102 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T101)
+					_B107 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T106)
 				}
-				if _B102 {
-					var _T103 int32
+				if _B107 {
+					var _T108 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T103 = 1
+						_T108 = 1
 					} else {
-						_T103 = -1
+						_T108 = -1
 					}
-					outInteger[0] = _T103 * 100
+					outInteger[0] = _T108 * 100
 					outIdx += 1
 				} else {
 					outInteger[0] = 0
@@ -1613,7 +1654,7 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 				outIdx += 1
 			}
 		}
-		NearPeriodTotal += candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(0, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+		NearPeriodTotal += (math.Abs(inClose[i-1] - inOpen[i-1])) - (math.Abs(inClose[NearTrailingIdx-1] - inOpen[NearTrailingIdx-1]))
 		i += 1
 		NearTrailingIdx += 1
 		*outNBElement = outIdx
@@ -1623,101 +1664,101 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1])
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(1, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 		}
-		_B105 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-		if _B105 {
-			var _T104 int32
+		_B110 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+		if _B110 {
+			var _T109 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T104 = 1
+				_T109 = 1
 			} else {
-				_T104 = -1
+				_T109 = -1
 			}
-			_B105 = _T104 == 1
+			_B110 = _T109 == 1
 		}
-		_B107 := _B105
-		if _B107 {
-			var _T106 int32
+		_B112 := _B110
+		if _B112 {
+			var _T111 int32
 			if inClose[i] >= inOpen[i] {
-				_T106 = 1
+				_T111 = 1
 			} else {
-				_T106 = -1
+				_T111 = -1
 			}
-			_B107 = _T106 == -1
+			_B112 = _T111 == -1
 		}
-		if _B107 {
-			_B109 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-			if _B109 {
-				var _T108 float64
+		if _B112 {
+			_B114 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+			if _B114 {
+				var _T113 float64
 				if Near_avgPeriod != 0 {
-					_T108 = NearPeriodTotal / float64(Near_avgPeriod)
+					_T113 = NearPeriodTotal / float64(Near_avgPeriod)
 				} else {
-					_T108 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T113 = (inHigh[i-1] - inLow[i-1])
 				}
-				_B109 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T108)
+				_B114 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T113)
 			}
-			if _B109 {
-				var _T110 int32
+			if _B114 {
+				var _T115 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T110 = 1
+					_T115 = 1
 				} else {
-					_T110 = -1
+					_T115 = -1
 				}
-				outInteger[0] = _T110 * 100
+				outInteger[0] = _T115 * 100
 				outIdx += 1
 			} else {
 				outInteger[0] = 0
 				outIdx += 1
 			}
 		} else {
-			_B112 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-			if _B112 {
-				var _T111 int32
+			_B117 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+			if _B117 {
+				var _T116 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T111 = 1
+					_T116 = 1
 				} else {
-					_T111 = -1
+					_T116 = -1
 				}
-				_B112 = _T111 == -1
+				_B117 = _T116 == -1
 			}
-			_B114 := _B112
-			if _B114 {
-				var _T113 int32
+			_B119 := _B117
+			if _B119 {
+				var _T118 int32
 				if inClose[i] >= inOpen[i] {
-					_T113 = 1
+					_T118 = 1
 				} else {
-					_T113 = -1
+					_T118 = -1
 				}
-				_B114 = _T113 == 1
+				_B119 = _T118 == 1
 			}
-			if _B114 {
-				_B116 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-				if _B116 {
-					var _T115 float64
+			if _B119 {
+				_B121 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+				if _B121 {
+					var _T120 float64
 					if Near_avgPeriod != 0 {
-						_T115 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T120 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T115 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T120 = (inHigh[i-1] - inLow[i-1])
 					}
-					_B116 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T115)
+					_B121 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T120)
 				}
-				if _B116 {
-					var _T117 int32
+				if _B121 {
+					var _T122 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T117 = 1
+						_T122 = 1
 					} else {
-						_T117 = -1
+						_T122 = -1
 					}
-					outInteger[0] = _T117 * 100
+					outInteger[0] = _T122 * 100
 					outIdx += 1
 				} else {
 					outInteger[0] = 0
@@ -1728,7 +1769,7 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 				outIdx += 1
 			}
 		}
-		NearPeriodTotal += candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(1, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+		NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
 		i += 1
 		NearTrailingIdx += 1
 		*outNBElement = outIdx
@@ -1738,101 +1779,101 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 		NearTrailingIdx = startIdx - Near_avgPeriod
 		i = NearTrailingIdx
 		for i < startIdx {
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(2, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+			NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1])) - ((inHigh[NearTrailingIdx-1] - selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1], inOpen[NearTrailingIdx-1])) + (selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1]) - inLow[NearTrailingIdx-1]))
 			i += 1
 			NearTrailingIdx += 1
 		}
-		_B119 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-		if _B119 {
-			var _T118 int32
+		_B124 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+		if _B124 {
+			var _T123 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T118 = 1
+				_T123 = 1
 			} else {
-				_T118 = -1
+				_T123 = -1
 			}
-			_B119 = _T118 == 1
+			_B124 = _T123 == 1
 		}
-		_B121 := _B119
-		if _B121 {
-			var _T120 int32
+		_B126 := _B124
+		if _B126 {
+			var _T125 int32
 			if inClose[i] >= inOpen[i] {
-				_T120 = 1
+				_T125 = 1
 			} else {
-				_T120 = -1
+				_T125 = -1
 			}
-			_B121 = _T120 == -1
+			_B126 = _T125 == -1
 		}
-		if _B121 {
-			_B123 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-			if _B123 {
-				var _T122 float64
+		if _B126 {
+			_B128 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+			if _B128 {
+				var _T127 float64
 				if Near_avgPeriod != 0 {
-					_T122 = NearPeriodTotal / float64(Near_avgPeriod)
+					_T127 = NearPeriodTotal / float64(Near_avgPeriod)
 				} else {
-					_T122 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T127 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 				}
-				_B123 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T122)/2.0
+				_B128 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T127)/2.0
 			}
-			if _B123 {
-				var _T124 int32
+			if _B128 {
+				var _T129 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T124 = 1
+					_T129 = 1
 				} else {
-					_T124 = -1
+					_T129 = -1
 				}
-				outInteger[0] = _T124 * 100
+				outInteger[0] = _T129 * 100
 				outIdx += 1
 			} else {
 				outInteger[0] = 0
 				outIdx += 1
 			}
 		} else {
-			_B126 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-			if _B126 {
-				var _T125 int32
+			_B131 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+			if _B131 {
+				var _T130 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T125 = 1
+					_T130 = 1
 				} else {
-					_T125 = -1
+					_T130 = -1
 				}
-				_B126 = _T125 == -1
+				_B131 = _T130 == -1
 			}
-			_B128 := _B126
-			if _B128 {
-				var _T127 int32
+			_B133 := _B131
+			if _B133 {
+				var _T132 int32
 				if inClose[i] >= inOpen[i] {
-					_T127 = 1
+					_T132 = 1
 				} else {
-					_T127 = -1
+					_T132 = -1
 				}
-				_B128 = _T127 == 1
+				_B133 = _T132 == 1
 			}
-			if _B128 {
-				_B130 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-				if _B130 {
-					var _T129 float64
+			if _B133 {
+				_B135 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+				if _B135 {
+					var _T134 float64
 					if Near_avgPeriod != 0 {
-						_T129 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T134 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T129 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T134 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 					}
-					_B130 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T129)/2.0
+					_B135 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T134)/2.0
 				}
-				if _B130 {
-					var _T131 int32
+				if _B135 {
+					var _T136 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T131 = 1
+						_T136 = 1
 					} else {
-						_T131 = -1
+						_T136 = -1
 					}
-					outInteger[0] = _T131 * 100
+					outInteger[0] = _T136 * 100
 					outIdx += 1
 				} else {
 					outInteger[0] = 0
@@ -1843,7 +1884,7 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 				outIdx += 1
 			}
 		}
-		NearPeriodTotal += candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - candleRange(2, inOpen[NearTrailingIdx-1], inHigh[NearTrailingIdx-1], inLow[NearTrailingIdx-1], inClose[NearTrailingIdx-1])
+		NearPeriodTotal += ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1])) - ((inHigh[NearTrailingIdx-1] - selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1], inOpen[NearTrailingIdx-1])) + (selF(inClose[NearTrailingIdx-1] >= inOpen[NearTrailingIdx-1], inOpen[NearTrailingIdx-1], inClose[NearTrailingIdx-1]) - inLow[NearTrailingIdx-1]))
 		i += 1
 		NearTrailingIdx += 1
 		*outNBElement = outIdx
@@ -1864,102 +1905,102 @@ func (c *Core) cdltasukigapOpenSinkFrame(sp *CDLTASUKIGAPStream, inOpen, inHigh,
 			i += 1
 			NearTrailingIdx += 1
 		}
-		_B133 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
-		if _B133 {
-			var _T132 int32
+		_B138 := minF(inOpen[i-1], inClose[i-1]) > maxF(inOpen[i-2], inClose[i-2])
+		if _B138 {
+			var _T137 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T132 = 1
+				_T137 = 1
 			} else {
-				_T132 = -1
+				_T137 = -1
 			}
-			_B133 = _T132 == 1
+			_B138 = _T137 == 1
 		}
-		_B135 := _B133
-		if _B135 {
-			var _T134 int32
+		_B140 := _B138
+		if _B140 {
+			var _T139 int32
 			if inClose[i] >= inOpen[i] {
-				_T134 = 1
+				_T139 = 1
 			} else {
-				_T134 = -1
+				_T139 = -1
 			}
-			_B135 = _T134 == -1
+			_B140 = _T139 == -1
 		}
-		if _B135 {
-			_B138 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
-			if _B138 {
-				var _T136 float64
+		if _B140 {
+			_B143 := inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] && inClose[i] < inOpen[i-1] && inClose[i] > maxF(inClose[i-2], inOpen[i-2])
+			if _B143 {
+				var _T141 float64
 				if Near_avgPeriod != 0 {
-					_T136 = NearPeriodTotal / float64(Near_avgPeriod)
+					_T141 = NearPeriodTotal / float64(Near_avgPeriod)
 				} else {
-					_T136 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T141 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 				}
-				var _T137 float64
+				var _T142 float64
 				if Near_rangeType == 2 {
-					_T137 = 2.0
+					_T142 = 2.0
 				} else {
-					_T137 = 1.0
+					_T142 = 1.0
 				}
-				_B138 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T136)/_T137
+				_B143 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T141)/_T142
 			}
-			if _B138 {
-				var _T139 int32
+			if _B143 {
+				var _T144 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T139 = 1
+					_T144 = 1
 				} else {
-					_T139 = -1
+					_T144 = -1
 				}
-				outInteger[0] = _T139 * 100
+				outInteger[0] = _T144 * 100
 				outIdx += 1
 			} else {
 				outInteger[0] = 0
 				outIdx += 1
 			}
 		} else {
-			_B141 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
-			if _B141 {
-				var _T140 int32
+			_B146 := maxF(inOpen[i-1], inClose[i-1]) < minF(inOpen[i-2], inClose[i-2])
+			if _B146 {
+				var _T145 int32
 				if inClose[i-1] >= inOpen[i-1] {
-					_T140 = 1
+					_T145 = 1
 				} else {
-					_T140 = -1
+					_T145 = -1
 				}
-				_B141 = _T140 == -1
+				_B146 = _T145 == -1
 			}
-			_B143 := _B141
-			if _B143 {
-				var _T142 int32
+			_B148 := _B146
+			if _B148 {
+				var _T147 int32
 				if inClose[i] >= inOpen[i] {
-					_T142 = 1
+					_T147 = 1
 				} else {
-					_T142 = -1
+					_T147 = -1
 				}
-				_B143 = _T142 == 1
+				_B148 = _T147 == 1
 			}
-			if _B143 {
-				_B146 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
-				if _B146 {
-					var _T144 float64
+			if _B148 {
+				_B151 := inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] && inClose[i] > inOpen[i-1] && inClose[i] < minF(inClose[i-2], inOpen[i-2])
+				if _B151 {
+					var _T149 float64
 					if Near_avgPeriod != 0 {
-						_T144 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T149 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T144 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+						_T149 = candleRange(Near_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 					}
-					var _T145 float64
+					var _T150 float64
 					if Near_rangeType == 2 {
-						_T145 = 2.0
+						_T150 = 2.0
 					} else {
-						_T145 = 1.0
+						_T150 = 1.0
 					}
-					_B146 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T144)/_T145
+					_B151 = math.Abs(math.Abs(inClose[i-1]-inOpen[i-1])-math.Abs(inClose[i]-inOpen[i])) < float64(Near_factor*_T149)/_T150
 				}
-				if _B146 {
-					var _T147 int32
+				if _B151 {
+					var _T152 int32
 					if inClose[i-1] >= inOpen[i-1] {
-						_T147 = 1
+						_T152 = 1
 					} else {
-						_T147 = -1
+						_T152 = -1
 					}
-					outInteger[0] = _T147 * 100
+					outInteger[0] = _T152 * 100
 					outIdx += 1
 				} else {
 					outInteger[0] = 0

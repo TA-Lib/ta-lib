@@ -433,12 +433,33 @@ func (sp *ALLIGATORStream) Update(inHigh, inLow float64) (float64, float64, floa
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	if err := alligatorStepImpl(sp, inHigh, inLow); err != nil {
-		return 0, 0, 0, err
+	var cur_tempMP float64
+	var cur_outJaw float64
+	var cur_outTeeth float64
+	var cur_outLips float64
+	var subErr error
+	cur_tempMP, subErr = sp.sub0.Update(inHigh, inLow)
+	if subErr != nil {
+		return 0, 0, 0, subErr
 	}
+	cur_outJaw, subErr = sp.sub1.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	cur_outTeeth, subErr = sp.sub2.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	cur_outLips, subErr = sp.sub3.Update(cur_tempMP)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	sp.cur_outJaw = cur_outJaw
+	sp.cur_outTeeth = cur_outTeeth
+	sp.cur_outLips = cur_outLips
 	sp.outRangeCount++
 	return sp.cur_outJaw, sp.cur_outTeeth, sp.cur_outLips, nil
 }
@@ -446,7 +467,7 @@ func (sp *ALLIGATORStream) Update(inHigh, inLow float64) (float64, float64, floa
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *ALLIGATORStream) Peek(inHigh, inLow float64) (float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var cur_tempMP float64
@@ -488,34 +509,6 @@ func (sp *ALLIGATORStream) Clone() *ALLIGATORStream {
 	cl.sub2 = sp.sub2.Clone()
 	cl.sub3 = sp.sub3.Clone()
 	return &cl
-}
-
-func alligatorStepImpl(sp *ALLIGATORStream, inHigh, inLow float64) error {
-	var cur_tempMP float64
-	var cur_outJaw float64
-	var cur_outTeeth float64
-	var cur_outLips float64
-	var subErr error
-	cur_tempMP, subErr = sp.sub0.Update(inHigh, inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outJaw, subErr = sp.sub1.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outTeeth, subErr = sp.sub2.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outLips, subErr = sp.sub3.Update(cur_tempMP)
-	if subErr != nil {
-		return subErr
-	}
-	sp.cur_outJaw = cur_outJaw
-	sp.cur_outTeeth = cur_outTeeth
-	sp.cur_outLips = cur_outLips
-	return nil
 }
 
 func (c *Core) alligatorOpenImpl(sp *ALLIGATORStream, inHigh, inLow []float64, startIdx, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift int32, outBegIdx, outNBElement *int32, outJaw, outTeeth, outLips []float64, outStride int32) RetCode {

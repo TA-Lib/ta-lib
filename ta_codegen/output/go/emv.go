@@ -299,11 +299,34 @@ func (sp *EMVStream) Update(inHigh, inLow, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	emvStepImpl(sp, inHigh, inLow, inVolume)
 	sp.outRangeCount++
+	var mid float64
+	var range_ float64
+	var boxRatio float64
+	var raw float64
+	var tempReal float64
+	mid = (inHigh + inLow) / 2.0
+	range_ = inHigh - inLow
+	raw = 0.0
+	if range_ != 0.0 {
+		boxRatio = inVolume / sp.optInVolumeDivisor / range_
+		if boxRatio != 0.0 {
+			raw = (mid - sp.prevMid) / boxRatio
+		}
+	}
+	sp.prevMid = mid
+	sp.cb_rawBuffer[sp.rawBuffer_Idx] = raw
+	sp.periodTotal += raw
+	tempReal = sp.periodTotal
+	sp.rawBuffer_Idx = sp.rawBuffer_Idx + 1
+	if sp.rawBuffer_Idx > sp.maxIdx_rawBuffer {
+		sp.rawBuffer_Idx = 0
+	}
+	sp.periodTotal -= sp.cb_rawBuffer[sp.rawBuffer_Idx]
+	sp.cur_outReal = tempReal / float64(sp.optInTimePeriod)
 	return sp.cur_outReal, nil
 }
 
@@ -311,7 +334,7 @@ func (sp *EMVStream) Update(inHigh, inLow, inVolume float64) (float64, error) {
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *EMVStream) Peek(inHigh, inLow, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var mid float64
@@ -365,33 +388,6 @@ func (sp *EMVStream) Clone() *EMVStream {
 	cl := *sp
 	cl.cb_rawBuffer = append(sp.cb_rawBuffer[:0:0], sp.cb_rawBuffer...)
 	return &cl
-}
-
-func emvStepImpl(sp *EMVStream, inHigh, inLow, inVolume float64) {
-	var mid float64
-	var range_ float64
-	var boxRatio float64
-	var raw float64
-	var tempReal float64
-	mid = (inHigh + inLow) / 2.0
-	range_ = inHigh - inLow
-	raw = 0.0
-	if range_ != 0.0 {
-		boxRatio = inVolume / sp.optInVolumeDivisor / range_
-		if boxRatio != 0.0 {
-			raw = (mid - sp.prevMid) / boxRatio
-		}
-	}
-	sp.prevMid = mid
-	sp.cb_rawBuffer[sp.rawBuffer_Idx] = raw
-	sp.periodTotal += raw
-	tempReal = sp.periodTotal
-	sp.rawBuffer_Idx = sp.rawBuffer_Idx + 1
-	if sp.rawBuffer_Idx > sp.maxIdx_rawBuffer {
-		sp.rawBuffer_Idx = 0
-	}
-	sp.periodTotal -= sp.cb_rawBuffer[sp.rawBuffer_Idx]
-	sp.cur_outReal = tempReal / float64(sp.optInTimePeriod)
 }
 
 func (c *Core) emvOpenImpl(sp *EMVStream, inHigh, inLow, inVolume []float64, startIdx, optInTimePeriod int32, optInVolumeDivisor float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

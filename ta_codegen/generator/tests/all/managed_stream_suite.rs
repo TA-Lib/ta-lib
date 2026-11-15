@@ -223,6 +223,9 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
             let s = section(&name, lang);
             let def = match lang {
                 "ts" => format!("function {base}StepImpl("),
+                // Go runs an infallible step inside `Update`, which then holds
+                // the cur_* writes.
+                "go" if !s.contains(&format!("func {base}StepImpl(")) => format!("func (sp *{upper}Stream) Update("),
                 "go" => format!("func {base}StepImpl("),
                 _ => format!("void {base}StepImpl("),
             };

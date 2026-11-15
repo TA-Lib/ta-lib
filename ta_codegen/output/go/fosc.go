@@ -311,18 +311,75 @@ func (sp *FOSCStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	foscStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var m float64
+	var b float64
+	var closeValue float64
+	var windowStart int32
+	var tempValue1 float64
+	var tempValue2 float64
+	var weightedTrailing float64
+	var SumXY float64
+	var SumY float64
+	var j int32
+	var sumAbs float64
+	var today int32
+	var xMask int32
+	var x_inReal []float64
+	sp.x_inReal[sp.today&sp.xMask] = inReal
+	weightedTrailing = float64(float64(sp.optInTimePeriod) * sp.trailingValue)
+	sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing
+	sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[(sp.today-1)&sp.xMask]
+	sp.sumAbs = sp.sumAbs - math.Abs(sp.trailingValue) + math.Abs(sp.x_inReal[(sp.today-1)&sp.xMask])
+	sp.barsSinceReseed -= 1
+	if sp.barsSinceReseed <= 0 || math.Abs(weightedTrailing) > float64(100.0*sp.sumAbs) {
+		sp.barsSinceReseed = 32 * sp.optInTimePeriod
+		windowStart = sp.today - sp.lookbackTotal
+		sp.SumY = 0.0
+		sp.SumXY = 0.0
+		sp.sumAbs = 0.0
+		tempValue2 = float64(sp.optInTimePeriod - 1)
+		SumXY = sp.SumXY
+		SumY = sp.SumY
+		j = sp.j
+		sumAbs = sp.sumAbs
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j < today; j += 1 {
+			tempValue1 = x_inReal[j&xMask]
+			SumY += tempValue1
+			SumXY += float64(tempValue2 * tempValue1)
+			sumAbs += math.Abs(tempValue1)
+			tempValue2 -= 1.0
+		}
+		sp.SumXY = SumXY
+		sp.SumY = SumY
+		sp.j = j
+		sp.sumAbs = sumAbs
+	}
+	m = (float64(float64(sp.optInTimePeriod)*sp.SumXY) - float64(sp.SumX*sp.SumY)) / sp.Divisor
+	b = (sp.SumY - float64(m*sp.SumX)) / float64(sp.optInTimePeriod)
+	sp.trailingValue = sp.x_inReal[sp.trailingIdx&sp.xMask]
+	sp.trailingIdx += 1
+	closeValue = sp.x_inReal[sp.today&sp.xMask]
+	if closeValue != 0.0 {
+		sp.cur_outReal = float64(100.0*(closeValue-math.FMA(m, float64(sp.optInTimePeriod), b))) / closeValue
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	sp.today += 1
+	sp.lag1_inReal = inReal
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *FOSCStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var m float64
@@ -332,6 +389,9 @@ func (sp *FOSCStream) Peek(inReal float64) (float64, error) {
 	var tempValue1 float64
 	var tempValue2 float64
 	var weightedTrailing float64
+	var today int32
+	var xMask int32
+	var x_inReal []float64
 	SumXY := sp.SumXY
 	SumY := sp.SumY
 	barsSinceReseed := sp.barsSinceReseed
@@ -368,10 +428,13 @@ func (sp *FOSCStream) Peek(inReal float64) (float64, error) {
 		SumXY = 0.0
 		sumAbs = 0.0
 		tempValue2 = float64(sp.optInTimePeriod - 1)
-		for j = windowStart; j < sp.today; j += 1 {
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j < today; j += 1 {
 			var _T2 float64
-			if j&sp.xMask != pkSlot0 {
-				_T2 = sp.x_inReal[j&sp.xMask]
+			if j&xMask != pkSlot0 {
+				_T2 = x_inReal[j&xMask]
 			} else {
 				_T2 = pkVal0
 			}
@@ -418,49 +481,6 @@ func (sp *FOSCStream) Clone() *FOSCStream {
 	cl := *sp
 	cl.x_inReal = append(sp.x_inReal[:0:0], sp.x_inReal...)
 	return &cl
-}
-
-func foscStepImpl(sp *FOSCStream, inReal float64) {
-	var m float64
-	var b float64
-	var closeValue float64
-	var windowStart int32
-	var tempValue1 float64
-	var tempValue2 float64
-	var weightedTrailing float64
-	sp.x_inReal[sp.today&sp.xMask] = inReal
-	weightedTrailing = float64(float64(sp.optInTimePeriod) * sp.trailingValue)
-	sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing
-	sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[(sp.today-1)&sp.xMask]
-	sp.sumAbs = sp.sumAbs - math.Abs(sp.trailingValue) + math.Abs(sp.x_inReal[(sp.today-1)&sp.xMask])
-	sp.barsSinceReseed -= 1
-	if sp.barsSinceReseed <= 0 || math.Abs(weightedTrailing) > float64(100.0*sp.sumAbs) {
-		sp.barsSinceReseed = 32 * sp.optInTimePeriod
-		windowStart = sp.today - sp.lookbackTotal
-		sp.SumY = 0.0
-		sp.SumXY = 0.0
-		sp.sumAbs = 0.0
-		tempValue2 = float64(sp.optInTimePeriod - 1)
-		for sp.j = windowStart; sp.j < sp.today; sp.j += 1 {
-			tempValue1 = sp.x_inReal[sp.j&sp.xMask]
-			sp.SumY += tempValue1
-			sp.SumXY += float64(tempValue2 * tempValue1)
-			sp.sumAbs += math.Abs(tempValue1)
-			tempValue2 -= 1.0
-		}
-	}
-	m = (float64(float64(sp.optInTimePeriod)*sp.SumXY) - float64(sp.SumX*sp.SumY)) / sp.Divisor
-	b = (sp.SumY - float64(m*sp.SumX)) / float64(sp.optInTimePeriod)
-	sp.trailingValue = sp.x_inReal[sp.trailingIdx&sp.xMask]
-	sp.trailingIdx += 1
-	closeValue = sp.x_inReal[sp.today&sp.xMask]
-	if closeValue != 0.0 {
-		sp.cur_outReal = float64(100.0*(closeValue-math.FMA(m, float64(sp.optInTimePeriod), b))) / closeValue
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	sp.today += 1
-	sp.lag1_inReal = inReal
 }
 
 func (c *Core) foscOpenImpl(sp *FOSCStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

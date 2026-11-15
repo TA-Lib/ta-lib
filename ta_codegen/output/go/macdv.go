@@ -565,11 +565,51 @@ func (sp *MACDVStream) Update(inHigh, inLow, inClose float64) (float64, float64,
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	macdvStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var lineValue float64
+	var tempReal float64
+	var val2 float64
+	var val3 float64
+	var greatest float64
+	var spread float64
+	var bandScale float64
+	var tempCY float64
+	var tempLT float64
+	var tempHT float64
+	tempLT = inLow
+	tempHT = inHigh
+	tempCY = sp.lag1_inClose
+	tempReal = inClose
+	greatest = tempHT - tempLT
+	val2 = math.Abs(tempCY - tempHT)
+	greatest = selF(val2 > greatest, val2, greatest)
+	val3 = math.Abs(tempCY - tempLT)
+	greatest = selF(val3 > greatest, val3, greatest)
+	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
+	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
+	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
+	spread = sp.prevFast - sp.prevSlow
+	bandScale = math.Abs(sp.prevFast)
+	if math.Abs(sp.prevSlow) > bandScale {
+		bandScale = math.Abs(sp.prevSlow)
+	}
+	bandScale = float64(bandScale * sp.periodScale)
+	lineValue = 0.0
+	if !isZeroScaled(spread, bandScale) && !isZeroScaled(sp.prevATR, bandScale) && sp.prevATR >= 2.2250738585072014e-308 {
+		lineValue = float64(spread / sp.prevATR * 100.0)
+	}
+	if sp.optInSignalPeriod == 1 {
+		sp.prevSignal = lineValue
+	} else {
+		sp.prevSignal = math.FMA(sp.signalBeta, sp.prevSignal, float64(sp.signalK*lineValue))
+	}
+	sp.cur_outMACDV = lineValue
+	sp.cur_outMACDVSignal = sp.prevSignal
+	sp.cur_outMACDVHist = lineValue - sp.prevSignal
+	sp.lag1_inClose = inClose
 	return sp.cur_outMACDV, sp.cur_outMACDVSignal, sp.cur_outMACDVHist, nil
 }
 
@@ -577,7 +617,7 @@ func (sp *MACDVStream) Update(inHigh, inLow, inClose float64) (float64, float64,
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *MACDVStream) Peek(inHigh, inLow, inClose float64) (float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var lineValue float64
@@ -603,13 +643,9 @@ func (sp *MACDVStream) Peek(inHigh, inLow, inClose float64) (float64, float64, f
 	tempReal = inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
+	greatest = selF(val2 > greatest, val2, greatest)
 	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
+	greatest = selF(val3 > greatest, val3, greatest)
 	prevATR = math.FMA(sp.wBeta, prevATR, float64(sp.wAlpha*greatest))
 	prevFast = math.FMA(sp.fastBeta, prevFast, float64(sp.fastK*tempReal))
 	prevSlow = math.FMA(sp.slowBeta, prevSlow, float64(sp.slowK*tempReal))
@@ -645,54 +681,6 @@ func (sp *MACDVStream) Value() (float64, float64, float64) {
 func (sp *MACDVStream) Clone() *MACDVStream {
 	cl := *sp
 	return &cl
-}
-
-func macdvStepImpl(sp *MACDVStream, inHigh, inLow, inClose float64) {
-	var lineValue float64
-	var tempReal float64
-	var val2 float64
-	var val3 float64
-	var greatest float64
-	var spread float64
-	var bandScale float64
-	var tempCY float64
-	var tempLT float64
-	var tempHT float64
-	tempLT = inLow
-	tempHT = inHigh
-	tempCY = sp.lag1_inClose
-	tempReal = inClose
-	greatest = tempHT - tempLT
-	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
-	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
-	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
-	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
-	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
-	spread = sp.prevFast - sp.prevSlow
-	bandScale = math.Abs(sp.prevFast)
-	if math.Abs(sp.prevSlow) > bandScale {
-		bandScale = math.Abs(sp.prevSlow)
-	}
-	bandScale = float64(bandScale * sp.periodScale)
-	lineValue = 0.0
-	if !isZeroScaled(spread, bandScale) && !isZeroScaled(sp.prevATR, bandScale) && sp.prevATR >= 2.2250738585072014e-308 {
-		lineValue = float64(spread / sp.prevATR * 100.0)
-	}
-	if sp.optInSignalPeriod == 1 {
-		sp.prevSignal = lineValue
-	} else {
-		sp.prevSignal = math.FMA(sp.signalBeta, sp.prevSignal, float64(sp.signalK*lineValue))
-	}
-	sp.cur_outMACDV = lineValue
-	sp.cur_outMACDVSignal = sp.prevSignal
-	sp.cur_outMACDVHist = lineValue - sp.prevSignal
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) macdvOpenImpl(sp *MACDVStream, inHigh, inLow, inClose []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outMACDV, outMACDVSignal, outMACDVHist []float64, outStride int32) RetCode {

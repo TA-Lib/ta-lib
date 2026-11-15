@@ -392,12 +392,22 @@ func (sp *APOStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	if err := apoStepImpl(sp, inReal); err != nil {
-		return 0, err
+	var cur_tempBuffer float64
+	var cur_outReal float64
+	var subErr error
+	cur_tempBuffer, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
 	}
+	cur_outReal, subErr = sp.sub1.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_outReal = cur_tempBuffer - cur_outReal
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -405,7 +415,7 @@ func (sp *APOStream) Update(inReal float64) (float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *APOStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_tempBuffer float64
@@ -435,23 +445,6 @@ func (sp *APOStream) Clone() *APOStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func apoStepImpl(sp *APOStream, inReal float64) error {
-	var cur_tempBuffer float64
-	var cur_outReal float64
-	var subErr error
-	cur_tempBuffer, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal, subErr = sp.sub1.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal = cur_tempBuffer - cur_outReal
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) apoOpenImpl(sp *APOStream, inReal []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -244,18 +244,33 @@ func (sp *ADRStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	adrStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var tempReal float64
+	var ringPosL_trailingIdx int32
+	if sp.ringCap_trailingIdx == 0 {
+		sp.ring_trailingIdx_derived[0] = inHigh - inLow
+	}
+	sp.periodTotal += inHigh - inLow
+	tempReal = sp.periodTotal
+	sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx]
+	sp.cur_outReal = tempReal / float64(sp.optInTimePeriod)
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_derived[ringPosL_trailingIdx] = inHigh - inLow
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *ADRStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -291,25 +306,6 @@ func (sp *ADRStream) Clone() *ADRStream {
 	cl := *sp
 	cl.ring_trailingIdx_derived = append(sp.ring_trailingIdx_derived[:0:0], sp.ring_trailingIdx_derived...)
 	return &cl
-}
-
-func adrStepImpl(sp *ADRStream, inHigh, inLow float64) {
-	var tempReal float64
-	var ringPosL_trailingIdx int32
-	if sp.ringCap_trailingIdx == 0 {
-		sp.ring_trailingIdx_derived[0] = inHigh - inLow
-	}
-	sp.periodTotal += inHigh - inLow
-	tempReal = sp.periodTotal
-	sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx]
-	sp.cur_outReal = tempReal / float64(sp.optInTimePeriod)
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_derived[ringPosL_trailingIdx] = inHigh - inLow
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) adrOpenImpl(sp *ADRStream, inHigh, inLow []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

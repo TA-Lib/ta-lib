@@ -211,11 +211,24 @@ func (sp *WADStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	wadStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var close_ float64
+	var trueExtreme float64
+	close_ = inClose
+	if close_ > sp.prevClose {
+		trueExtreme = inLow
+		trueExtreme = selF(sp.prevClose < trueExtreme, sp.prevClose, trueExtreme)
+		sp.sum += close_ - trueExtreme
+	} else if close_ < sp.prevClose {
+		trueExtreme = inHigh
+		trueExtreme = selF(sp.prevClose > trueExtreme, sp.prevClose, trueExtreme)
+		sp.sum += close_ - trueExtreme
+	}
+	sp.cur_outReal = sp.sum
+	sp.prevClose = close_
 	return sp.cur_outReal, nil
 }
 
@@ -223,7 +236,7 @@ func (sp *WADStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *WADStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var close_ float64
@@ -233,15 +246,11 @@ func (sp *WADStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 	close_ = inClose
 	if close_ > sp.prevClose {
 		trueExtreme = inLow
-		if sp.prevClose < trueExtreme {
-			trueExtreme = sp.prevClose
-		}
+		trueExtreme = selF(sp.prevClose < trueExtreme, sp.prevClose, trueExtreme)
 		sum += close_ - trueExtreme
 	} else if close_ < sp.prevClose {
 		trueExtreme = inHigh
-		if sp.prevClose > trueExtreme {
-			trueExtreme = sp.prevClose
-		}
+		trueExtreme = selF(sp.prevClose > trueExtreme, sp.prevClose, trueExtreme)
 		sum += close_ - trueExtreme
 	}
 	cur_outReal = sum
@@ -258,27 +267,6 @@ func (sp *WADStream) Value() float64 {
 func (sp *WADStream) Clone() *WADStream {
 	cl := *sp
 	return &cl
-}
-
-func wadStepImpl(sp *WADStream, inHigh, inLow, inClose float64) {
-	var close_ float64
-	var trueExtreme float64
-	close_ = inClose
-	if close_ > sp.prevClose {
-		trueExtreme = inLow
-		if sp.prevClose < trueExtreme {
-			trueExtreme = sp.prevClose
-		}
-		sp.sum += close_ - trueExtreme
-	} else if close_ < sp.prevClose {
-		trueExtreme = inHigh
-		if sp.prevClose > trueExtreme {
-			trueExtreme = sp.prevClose
-		}
-		sp.sum += close_ - trueExtreme
-	}
-	sp.cur_outReal = sp.sum
-	sp.prevClose = close_
 }
 
 func (c *Core) wadOpenImpl(sp *WADStream, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

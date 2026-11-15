@@ -263,18 +263,24 @@ func (sp *SWAK_HPStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	swakHpStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var x0 float64
+	var y float64
+	x0 = inReal
+	y = math.FMA(sp.a1, sp.y1, float64(sp.c0*(x0-sp.x1)))
+	sp.x1 = x0
+	sp.y1 = y
+	sp.cur_outReal = y
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *SWAK_HPStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var x0 float64
@@ -300,16 +306,6 @@ func (sp *SWAK_HPStream) Value() float64 {
 func (sp *SWAK_HPStream) Clone() *SWAK_HPStream {
 	cl := *sp
 	return &cl
-}
-
-func swakHpStepImpl(sp *SWAK_HPStream, inReal float64) {
-	var x0 float64
-	var y float64
-	x0 = inReal
-	y = math.FMA(sp.a1, sp.y1, float64(sp.c0*(x0-sp.x1)))
-	sp.x1 = x0
-	sp.y1 = y
-	sp.cur_outReal = y
 }
 
 func (c *Core) swakHpOpenImpl(sp *SWAK_HPStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

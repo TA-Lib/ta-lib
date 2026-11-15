@@ -477,11 +477,58 @@ func (sp *DXStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	dxStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tempReal float64
+	var diffP float64
+	var diffM float64
+	var minusSel float64
+	var plusSel float64
+	var minusDM1 float64
+	var plusDM1 float64
+	var minusDI float64
+	var plusDI float64
+	tempReal = inHigh
+	diffP = tempReal - sp.prevHigh
+	sp.prevHigh = tempReal
+	tempReal = inLow
+	diffM = sp.prevLow - tempReal
+	sp.prevLow = tempReal
+	sp.prevMinusDM -= float64(sp.prevMinusDM * sp.invPeriod)
+	sp.prevPlusDM -= float64(sp.prevPlusDM * sp.invPeriod)
+	minusSel = selF(diffM-diffP > 0.0, diffM, 0.0)
+	plusSel = selF(diffP-diffM > 0.0, diffP, 0.0)
+	minusDM1 = selF(diffM > 0.0, minusSel, 0.0)
+	plusDM1 = selF(diffP > 0.0, plusSel, 0.0)
+	sp.prevMinusDM += minusDM1
+	sp.prevPlusDM += plusDM1
+	var _true_range_1 float64
+	var range_1 float64
+	range_1 = sp.prevHigh - sp.prevLow
+	var tmp_1 float64
+	tmp_1 = math.Abs(sp.prevHigh - sp.prevClose)
+	range_1 = selF(tmp_1 > range_1, tmp_1, range_1)
+	tmp_1 = math.Abs(sp.prevLow - sp.prevClose)
+	range_1 = selF(tmp_1 > range_1, tmp_1, range_1)
+	_true_range_1 = range_1
+	tempReal = _true_range_1
+	sp.prevTR = sp.prevTR - float64(sp.prevTR*sp.invPeriod) + tempReal
+	sp.prevClose = inClose
+	if sp.prevTR > 0.0 {
+		minusDI = float64(100.0 * (sp.prevMinusDM / sp.prevTR))
+		plusDI = float64(100.0 * (sp.prevPlusDM / sp.prevTR))
+		tempReal = minusDI + plusDI
+		if !isZero(tempReal) {
+			sp.cur_outReal = float64(100.0 * (math.Abs(minusDI-plusDI) / tempReal))
+		} else {
+			sp.cur_outReal = sp.lastOut_outReal
+		}
+	} else {
+		sp.cur_outReal = sp.lastOut_outReal
+	}
+	sp.lastOut_outReal = sp.cur_outReal
 	return sp.cur_outReal, nil
 }
 
@@ -489,7 +536,7 @@ func (sp *DXStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *DXStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -516,50 +563,22 @@ func (sp *DXStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 	prevLow = tempReal
 	prevMinusDM -= float64(prevMinusDM * sp.invPeriod)
 	prevPlusDM -= float64(prevPlusDM * sp.invPeriod)
-	var _T0 float64
-	if diffM-diffP > 0.0 {
-		_T0 = diffM
-	} else {
-		_T0 = 0.0
-	}
-	minusSel = _T0
-	var _T1 float64
-	if diffP-diffM > 0.0 {
-		_T1 = diffP
-	} else {
-		_T1 = 0.0
-	}
-	plusSel = _T1
-	var _T2 float64
-	if diffM > 0.0 {
-		_T2 = minusSel
-	} else {
-		_T2 = 0.0
-	}
-	minusDM1 = _T2
-	var _T3 float64
-	if diffP > 0.0 {
-		_T3 = plusSel
-	} else {
-		_T3 = 0.0
-	}
-	plusDM1 = _T3
+	minusSel = selF(diffM-diffP > 0.0, diffM, 0.0)
+	plusSel = selF(diffP-diffM > 0.0, diffP, 0.0)
+	minusDM1 = selF(diffM > 0.0, minusSel, 0.0)
+	plusDM1 = selF(diffP > 0.0, plusSel, 0.0)
 	prevMinusDM += minusDM1
 	prevPlusDM += plusDM1
-	var _true_range_4 float64
-	var range_4 float64
-	range_4 = prevHigh - prevLow
-	var tmp_4 float64
-	tmp_4 = math.Abs(prevHigh - prevClose)
-	if tmp_4 > range_4 {
-		range_4 = tmp_4
-	}
-	tmp_4 = math.Abs(prevLow - prevClose)
-	if tmp_4 > range_4 {
-		range_4 = tmp_4
-	}
-	_true_range_4 = range_4
-	tempReal = _true_range_4
+	var _true_range_0 float64
+	var range_0 float64
+	range_0 = prevHigh - prevLow
+	var tmp_0 float64
+	tmp_0 = math.Abs(prevHigh - prevClose)
+	range_0 = selF(tmp_0 > range_0, tmp_0, range_0)
+	tmp_0 = math.Abs(prevLow - prevClose)
+	range_0 = selF(tmp_0 > range_0, tmp_0, range_0)
+	_true_range_0 = range_0
+	tempReal = _true_range_0
 	prevTR = prevTR - float64(prevTR*sp.invPeriod) + tempReal
 	prevClose = inClose
 	if prevTR > 0.0 {
@@ -587,85 +606,6 @@ func (sp *DXStream) Value() float64 {
 func (sp *DXStream) Clone() *DXStream {
 	cl := *sp
 	return &cl
-}
-
-func dxStepImpl(sp *DXStream, inHigh, inLow, inClose float64) {
-	var tempReal float64
-	var diffP float64
-	var diffM float64
-	var minusSel float64
-	var plusSel float64
-	var minusDM1 float64
-	var plusDM1 float64
-	var minusDI float64
-	var plusDI float64
-	tempReal = inHigh
-	diffP = tempReal - sp.prevHigh
-	sp.prevHigh = tempReal
-	tempReal = inLow
-	diffM = sp.prevLow - tempReal
-	sp.prevLow = tempReal
-	sp.prevMinusDM -= float64(sp.prevMinusDM * sp.invPeriod)
-	sp.prevPlusDM -= float64(sp.prevPlusDM * sp.invPeriod)
-	var _T5 float64
-	if diffM-diffP > 0.0 {
-		_T5 = diffM
-	} else {
-		_T5 = 0.0
-	}
-	minusSel = _T5
-	var _T6 float64
-	if diffP-diffM > 0.0 {
-		_T6 = diffP
-	} else {
-		_T6 = 0.0
-	}
-	plusSel = _T6
-	var _T7 float64
-	if diffM > 0.0 {
-		_T7 = minusSel
-	} else {
-		_T7 = 0.0
-	}
-	minusDM1 = _T7
-	var _T8 float64
-	if diffP > 0.0 {
-		_T8 = plusSel
-	} else {
-		_T8 = 0.0
-	}
-	plusDM1 = _T8
-	sp.prevMinusDM += minusDM1
-	sp.prevPlusDM += plusDM1
-	var _true_range_9 float64
-	var range_9 float64
-	range_9 = sp.prevHigh - sp.prevLow
-	var tmp_9 float64
-	tmp_9 = math.Abs(sp.prevHigh - sp.prevClose)
-	if tmp_9 > range_9 {
-		range_9 = tmp_9
-	}
-	tmp_9 = math.Abs(sp.prevLow - sp.prevClose)
-	if tmp_9 > range_9 {
-		range_9 = tmp_9
-	}
-	_true_range_9 = range_9
-	tempReal = _true_range_9
-	sp.prevTR = sp.prevTR - float64(sp.prevTR*sp.invPeriod) + tempReal
-	sp.prevClose = inClose
-	if sp.prevTR > 0.0 {
-		minusDI = float64(100.0 * (sp.prevMinusDM / sp.prevTR))
-		plusDI = float64(100.0 * (sp.prevPlusDM / sp.prevTR))
-		tempReal = minusDI + plusDI
-		if !isZero(tempReal) {
-			sp.cur_outReal = float64(100.0 * (math.Abs(minusDI-plusDI) / tempReal))
-		} else {
-			sp.cur_outReal = sp.lastOut_outReal
-		}
-	} else {
-		sp.cur_outReal = sp.lastOut_outReal
-	}
-	sp.lastOut_outReal = sp.cur_outReal
 }
 
 func (c *Core) dxOpenImpl(sp *DXStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -729,9 +669,9 @@ func (c *Core) dxOpenImpl(sp *DXStream, inHigh, inLow, inClose []float64, startI
 	prevClose = inClose[today]
 	i = optInTimePeriod - 1
 	for {
-		_C15 := i > 0
+		_C7 := i > 0
 		i--
-		if !_C15 {
+		if !_C7 {
 			break
 		}
 		today += 1
@@ -741,50 +681,50 @@ func (c *Core) dxOpenImpl(sp *DXStream, inHigh, inLow, inClose []float64, startI
 		tempReal = inLow[today]
 		diffM = prevLow - tempReal
 		prevLow = tempReal
-		var _T10 float64
+		var _T2 float64
 		if diffM-diffP > 0.0 {
-			_T10 = diffM
+			_T2 = diffM
 		} else {
-			_T10 = 0.0
+			_T2 = 0.0
 		}
-		minusSel = _T10
-		var _T11 float64
+		minusSel = _T2
+		var _T3 float64
 		if diffP-diffM > 0.0 {
-			_T11 = diffP
+			_T3 = diffP
 		} else {
-			_T11 = 0.0
+			_T3 = 0.0
 		}
-		plusSel = _T11
-		var _T12 float64
+		plusSel = _T3
+		var _T4 float64
 		if diffM > 0.0 {
-			_T12 = minusSel
+			_T4 = minusSel
 		} else {
-			_T12 = 0.0
+			_T4 = 0.0
 		}
-		minusDM1 = _T12
-		var _T13 float64
+		minusDM1 = _T4
+		var _T5 float64
 		if diffP > 0.0 {
-			_T13 = plusSel
+			_T5 = plusSel
 		} else {
-			_T13 = 0.0
+			_T5 = 0.0
 		}
-		plusDM1 = _T13
+		plusDM1 = _T5
 		prevMinusDM += minusDM1
 		prevPlusDM += plusDM1
-		var _true_range_14 float64
-		var range_14 float64
-		range_14 = prevHigh - prevLow
-		var tmp_14 float64
-		tmp_14 = math.Abs(prevHigh - prevClose)
-		if tmp_14 > range_14 {
-			range_14 = tmp_14
+		var _true_range_6 float64
+		var range_6 float64
+		range_6 = prevHigh - prevLow
+		var tmp_6 float64
+		tmp_6 = math.Abs(prevHigh - prevClose)
+		if tmp_6 > range_6 {
+			range_6 = tmp_6
 		}
-		tmp_14 = math.Abs(prevLow - prevClose)
-		if tmp_14 > range_14 {
-			range_14 = tmp_14
+		tmp_6 = math.Abs(prevLow - prevClose)
+		if tmp_6 > range_6 {
+			range_6 = tmp_6
 		}
-		_true_range_14 = range_14
-		tempReal = _true_range_14
+		_true_range_6 = range_6
+		tempReal = _true_range_6
 		prevTR += tempReal
 		prevClose = inClose[today]
 	}
@@ -798,50 +738,50 @@ func (c *Core) dxOpenImpl(sp *DXStream, inHigh, inLow, inClose []float64, startI
 		prevLow = tempReal
 		prevMinusDM -= float64(prevMinusDM * invPeriod)
 		prevPlusDM -= float64(prevPlusDM * invPeriod)
-		var _T16 float64
+		var _T8 float64
 		if diffM-diffP > 0.0 {
-			_T16 = diffM
+			_T8 = diffM
 		} else {
-			_T16 = 0.0
+			_T8 = 0.0
 		}
-		minusSel = _T16
-		var _T17 float64
+		minusSel = _T8
+		var _T9 float64
 		if diffP-diffM > 0.0 {
-			_T17 = diffP
+			_T9 = diffP
 		} else {
-			_T17 = 0.0
+			_T9 = 0.0
 		}
-		plusSel = _T17
-		var _T18 float64
+		plusSel = _T9
+		var _T10 float64
 		if diffM > 0.0 {
-			_T18 = minusSel
+			_T10 = minusSel
 		} else {
-			_T18 = 0.0
+			_T10 = 0.0
 		}
-		minusDM1 = _T18
-		var _T19 float64
+		minusDM1 = _T10
+		var _T11 float64
 		if diffP > 0.0 {
-			_T19 = plusSel
+			_T11 = plusSel
 		} else {
-			_T19 = 0.0
+			_T11 = 0.0
 		}
-		plusDM1 = _T19
+		plusDM1 = _T11
 		prevMinusDM += minusDM1
 		prevPlusDM += plusDM1
-		var _true_range_20 float64
-		var range_20 float64
-		range_20 = prevHigh - prevLow
-		var tmp_20 float64
-		tmp_20 = math.Abs(prevHigh - prevClose)
-		if tmp_20 > range_20 {
-			range_20 = tmp_20
+		var _true_range_12 float64
+		var range_12 float64
+		range_12 = prevHigh - prevLow
+		var tmp_12 float64
+		tmp_12 = math.Abs(prevHigh - prevClose)
+		if tmp_12 > range_12 {
+			range_12 = tmp_12
 		}
-		tmp_20 = math.Abs(prevLow - prevClose)
-		if tmp_20 > range_20 {
-			range_20 = tmp_20
+		tmp_12 = math.Abs(prevLow - prevClose)
+		if tmp_12 > range_12 {
+			range_12 = tmp_12
 		}
-		_true_range_20 = range_20
-		tempReal = _true_range_20
+		_true_range_12 = range_12
+		tempReal = _true_range_12
 		prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
 		prevClose = inClose[today]
 	}
@@ -868,50 +808,50 @@ func (c *Core) dxOpenImpl(sp *DXStream, inHigh, inLow, inClose []float64, startI
 		prevLow = tempReal
 		prevMinusDM -= float64(prevMinusDM * invPeriod)
 		prevPlusDM -= float64(prevPlusDM * invPeriod)
-		var _T21 float64
+		var _T13 float64
 		if diffM-diffP > 0.0 {
-			_T21 = diffM
+			_T13 = diffM
 		} else {
-			_T21 = 0.0
+			_T13 = 0.0
 		}
-		minusSel = _T21
-		var _T22 float64
+		minusSel = _T13
+		var _T14 float64
 		if diffP-diffM > 0.0 {
-			_T22 = diffP
+			_T14 = diffP
 		} else {
-			_T22 = 0.0
+			_T14 = 0.0
 		}
-		plusSel = _T22
-		var _T23 float64
+		plusSel = _T14
+		var _T15 float64
 		if diffM > 0.0 {
-			_T23 = minusSel
+			_T15 = minusSel
 		} else {
-			_T23 = 0.0
+			_T15 = 0.0
 		}
-		minusDM1 = _T23
-		var _T24 float64
+		minusDM1 = _T15
+		var _T16 float64
 		if diffP > 0.0 {
-			_T24 = plusSel
+			_T16 = plusSel
 		} else {
-			_T24 = 0.0
+			_T16 = 0.0
 		}
-		plusDM1 = _T24
+		plusDM1 = _T16
 		prevMinusDM += minusDM1
 		prevPlusDM += plusDM1
-		var _true_range_25 float64
-		var range_25 float64
-		range_25 = prevHigh - prevLow
-		var tmp_25 float64
-		tmp_25 = math.Abs(prevHigh - prevClose)
-		if tmp_25 > range_25 {
-			range_25 = tmp_25
+		var _true_range_17 float64
+		var range_17 float64
+		range_17 = prevHigh - prevLow
+		var tmp_17 float64
+		tmp_17 = math.Abs(prevHigh - prevClose)
+		if tmp_17 > range_17 {
+			range_17 = tmp_17
 		}
-		tmp_25 = math.Abs(prevLow - prevClose)
-		if tmp_25 > range_25 {
-			range_25 = tmp_25
+		tmp_17 = math.Abs(prevLow - prevClose)
+		if tmp_17 > range_17 {
+			range_17 = tmp_17
 		}
-		_true_range_25 = range_25
-		tempReal = _true_range_25
+		_true_range_17 = range_17
+		tempReal = _true_range_17
 		prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
 		prevClose = inClose[today]
 		if prevTR > 0.0 {

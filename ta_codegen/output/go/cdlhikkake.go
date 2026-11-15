@@ -265,11 +265,41 @@ func (sp *CDLHIKKAKEStream) Update(inOpen, inHigh, inLow, inClose float64) (int3
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdlhikkakeStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	if sp.lag1_inHigh < sp.lag2_inHigh && sp.lag1_inLow > sp.lag2_inLow && (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) {
+		var _T2 int32
+		if inHigh < sp.lag1_inHigh {
+			_T2 = 1
+		} else {
+			_T2 = -1
+		}
+		sp.patternResult = 100 * _T2
+		sp.savedHigh = sp.lag1_inHigh
+		sp.savedLow = sp.lag1_inLow
+		sp.cd = 4
+		sp.cur_outInteger = sp.patternResult
+	} else if sp.cd > 0 && (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) {
+		var _T3 int32
+		if sp.patternResult > 0 {
+			_T3 = 1
+		} else {
+			_T3 = -1
+		}
+		sp.cur_outInteger = sp.patternResult + 100*_T3
+		sp.cd = 0
+	} else {
+		sp.cur_outInteger = 0
+	}
+	if sp.cd > 0 {
+		sp.cd -= 1
+	}
+	sp.lag2_inHigh = sp.lag1_inHigh
+	sp.lag1_inHigh = inHigh
+	sp.lag2_inLow = sp.lag1_inLow
+	sp.lag1_inLow = inLow
 	return sp.cur_outInteger, nil
 }
 
@@ -277,7 +307,7 @@ func (sp *CDLHIKKAKEStream) Update(inOpen, inHigh, inLow, inClose float64) (int3
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDLHIKKAKEStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	cd := sp.cd
@@ -322,40 +352,6 @@ func (sp *CDLHIKKAKEStream) Value() int32 {
 func (sp *CDLHIKKAKEStream) Clone() *CDLHIKKAKEStream {
 	cl := *sp
 	return &cl
-}
-
-func cdlhikkakeStepImpl(sp *CDLHIKKAKEStream, inOpen, inHigh, inLow, inClose float64) {
-	if sp.lag1_inHigh < sp.lag2_inHigh && sp.lag1_inLow > sp.lag2_inLow && (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) {
-		var _T2 int32
-		if inHigh < sp.lag1_inHigh {
-			_T2 = 1
-		} else {
-			_T2 = -1
-		}
-		sp.patternResult = 100 * _T2
-		sp.savedHigh = sp.lag1_inHigh
-		sp.savedLow = sp.lag1_inLow
-		sp.cd = 4
-		sp.cur_outInteger = sp.patternResult
-	} else if sp.cd > 0 && (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) {
-		var _T3 int32
-		if sp.patternResult > 0 {
-			_T3 = 1
-		} else {
-			_T3 = -1
-		}
-		sp.cur_outInteger = sp.patternResult + 100*_T3
-		sp.cd = 0
-	} else {
-		sp.cur_outInteger = 0
-	}
-	if sp.cd > 0 {
-		sp.cd -= 1
-	}
-	sp.lag2_inHigh = sp.lag1_inHigh
-	sp.lag1_inHigh = inHigh
-	sp.lag2_inLow = sp.lag1_inLow
-	sp.lag1_inLow = inLow
 }
 
 func (c *Core) cdlhikkakeOpenImpl(sp *CDLHIKKAKEStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {

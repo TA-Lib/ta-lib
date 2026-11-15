@@ -185,11 +185,11 @@ func (sp *TYPPRICEStream) Update(inHigh, inLow, inClose float64) (float64, error
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	typpriceStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	sp.cur_outReal = (inHigh + inLow + inClose) / 3.0
 	return sp.cur_outReal, nil
 }
 
@@ -197,7 +197,7 @@ func (sp *TYPPRICEStream) Update(inHigh, inLow, inClose float64) (float64, error
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *TYPPRICEStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -215,10 +215,6 @@ func (sp *TYPPRICEStream) Value() float64 {
 func (sp *TYPPRICEStream) Clone() *TYPPRICEStream {
 	cl := *sp
 	return &cl
-}
-
-func typpriceStepImpl(sp *TYPPRICEStream, inHigh, inLow, inClose float64) {
-	sp.cur_outReal = (inHigh + inLow + inClose) / 3.0
 }
 
 func (c *Core) typpriceOpenImpl(sp *TYPPRICEStream, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -276,11 +276,87 @@ func (sp *CHOPStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	chopStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var i int32
+	var highest float64
+	var lowest float64
+	var sumTR float64
+	var tempHT float64
+	var tempLT float64
+	var prevClose float64
+	var trueHigh float64
+	var trueLow float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inClose []float64
+	var win_i_inHigh []float64
+	var win_i_inLow []float64
+	sp.win_i_inHigh[sp.winPos_i] = inHigh
+	sp.win_i_inLow[sp.winPos_i] = inLow
+	sp.win_i_inClose[sp.winPos_i] = inClose
+	highest = inHigh
+	lowest = inLow
+	sumTR = 0.0
+	prevClose = 0.0
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inClose = sp.win_i_inClose
+	win_i_inHigh = sp.win_i_inHigh
+	win_i_inLow = sp.win_i_inLow
+	for i = optInTimePeriod; i >= 0; i -= 1 {
+		if i < optInTimePeriod {
+			var _T9 int32
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T9 = winPos_i + winCap_i - i - winCap_i
+			} else {
+				_T9 = winPos_i + winCap_i - i
+			}
+			tempHT = win_i_inHigh[_T9]
+			var _T10 int32
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T10 = winPos_i + winCap_i - i - winCap_i
+			} else {
+				_T10 = winPos_i + winCap_i - i
+			}
+			tempLT = win_i_inLow[_T10]
+			trueHigh = tempHT
+			if prevClose > trueHigh {
+				trueHigh = prevClose
+			}
+			trueLow = tempLT
+			if prevClose < trueLow {
+				trueLow = prevClose
+			}
+			sumTR += trueHigh - trueLow
+			if tempHT > highest {
+				highest = tempHT
+			}
+			if tempLT < lowest {
+				lowest = tempLT
+			}
+		}
+		var _T11 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T11 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T11 = winPos_i + winCap_i - i
+		}
+		prevClose = win_i_inClose[_T11]
+	}
+	if highest-lowest <= 0.0 || sumTR <= 0.0 {
+		sp.cur_outReal = 100.0
+	} else {
+		sp.cur_outReal = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / sp.logPeriod))
+	}
+	sp.winPos_i = sp.winPos_i + 1
+	if sp.winPos_i >= sp.winCap_i {
+		sp.winPos_i = 0
+	}
 	return sp.cur_outReal, nil
 }
 
@@ -288,7 +364,7 @@ func (sp *CHOPStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CHOPStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var i int32
@@ -300,6 +376,12 @@ func (sp *CHOPStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 	var prevClose float64
 	var trueHigh float64
 	var trueLow float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inClose []float64
+	var win_i_inHigh []float64
+	var win_i_inLow []float64
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
@@ -317,42 +399,48 @@ func (sp *CHOPStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 	lowest = inLow
 	sumTR = 0.0
 	prevClose = 0.0
-	for i = sp.optInTimePeriod; i >= 0; i -= 1 {
-		if i < sp.optInTimePeriod {
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inClose = sp.win_i_inClose
+	win_i_inHigh = sp.win_i_inHigh
+	win_i_inLow = sp.win_i_inLow
+	for i = optInTimePeriod; i >= 0; i -= 1 {
+		if i < optInTimePeriod {
 			var _T0 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T0 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T0 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T0 = sp.winPos_i + sp.winCap_i - i
+				_T0 = winPos_i + winCap_i - i
 			}
 			var _T2 float64
 			if _T0 != pkSlot0 {
 				var _T1 int32
-				if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-					_T1 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+				if winPos_i+winCap_i-i >= winCap_i {
+					_T1 = winPos_i + winCap_i - i - winCap_i
 				} else {
-					_T1 = sp.winPos_i + sp.winCap_i - i
+					_T1 = winPos_i + winCap_i - i
 				}
-				_T2 = sp.win_i_inHigh[_T1]
+				_T2 = win_i_inHigh[_T1]
 			} else {
 				_T2 = pkVal0
 			}
 			tempHT = _T2
 			var _T3 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T3 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T3 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T3 = sp.winPos_i + sp.winCap_i - i
+				_T3 = winPos_i + winCap_i - i
 			}
 			var _T5 float64
 			if _T3 != pkSlot1 {
 				var _T4 int32
-				if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-					_T4 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+				if winPos_i+winCap_i-i >= winCap_i {
+					_T4 = winPos_i + winCap_i - i - winCap_i
 				} else {
-					_T4 = sp.winPos_i + sp.winCap_i - i
+					_T4 = winPos_i + winCap_i - i
 				}
-				_T5 = sp.win_i_inLow[_T4]
+				_T5 = win_i_inLow[_T4]
 			} else {
 				_T5 = pkVal1
 			}
@@ -374,20 +462,20 @@ func (sp *CHOPStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 			}
 		}
 		var _T6 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T6 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T6 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T6 = sp.winPos_i + sp.winCap_i - i
+			_T6 = winPos_i + winCap_i - i
 		}
 		var _T8 float64
 		if _T6 != pkSlot2 {
 			var _T7 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T7 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T7 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T7 = sp.winPos_i + sp.winCap_i - i
+				_T7 = winPos_i + winCap_i - i
 			}
-			_T8 = sp.win_i_inClose[_T7]
+			_T8 = win_i_inClose[_T7]
 		} else {
 			_T8 = pkVal2
 		}
@@ -414,74 +502,6 @@ func (sp *CHOPStream) Clone() *CHOPStream {
 	cl.win_i_inLow = append(sp.win_i_inLow[:0:0], sp.win_i_inLow...)
 	cl.win_i_inClose = append(sp.win_i_inClose[:0:0], sp.win_i_inClose...)
 	return &cl
-}
-
-func chopStepImpl(sp *CHOPStream, inHigh, inLow, inClose float64) {
-	var i int32
-	var highest float64
-	var lowest float64
-	var sumTR float64
-	var tempHT float64
-	var tempLT float64
-	var prevClose float64
-	var trueHigh float64
-	var trueLow float64
-	sp.win_i_inHigh[sp.winPos_i] = inHigh
-	sp.win_i_inLow[sp.winPos_i] = inLow
-	sp.win_i_inClose[sp.winPos_i] = inClose
-	highest = inHigh
-	lowest = inLow
-	sumTR = 0.0
-	prevClose = 0.0
-	for i = sp.optInTimePeriod; i >= 0; i -= 1 {
-		if i < sp.optInTimePeriod {
-			var _T9 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T9 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-			} else {
-				_T9 = sp.winPos_i + sp.winCap_i - i
-			}
-			tempHT = sp.win_i_inHigh[_T9]
-			var _T10 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T10 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-			} else {
-				_T10 = sp.winPos_i + sp.winCap_i - i
-			}
-			tempLT = sp.win_i_inLow[_T10]
-			trueHigh = tempHT
-			if prevClose > trueHigh {
-				trueHigh = prevClose
-			}
-			trueLow = tempLT
-			if prevClose < trueLow {
-				trueLow = prevClose
-			}
-			sumTR += trueHigh - trueLow
-			if tempHT > highest {
-				highest = tempHT
-			}
-			if tempLT < lowest {
-				lowest = tempLT
-			}
-		}
-		var _T11 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T11 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T11 = sp.winPos_i + sp.winCap_i - i
-		}
-		prevClose = sp.win_i_inClose[_T11]
-	}
-	if highest-lowest <= 0.0 || sumTR <= 0.0 {
-		sp.cur_outReal = 100.0
-	} else {
-		sp.cur_outReal = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / sp.logPeriod))
-	}
-	sp.winPos_i = sp.winPos_i + 1
-	if sp.winPos_i >= sp.winCap_i {
-		sp.winPos_i = 0
-	}
 }
 
 func (c *Core) chopOpenImpl(sp *CHOPStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

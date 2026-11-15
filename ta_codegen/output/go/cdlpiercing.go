@@ -75,8 +75,8 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (math.Abs(inClose[i-1] - inOpen[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		i = startIdx
@@ -104,7 +104,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T3 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T3 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T3 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 				}
 				_B4 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T3)
 			}
@@ -114,7 +114,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T5 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T5 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T5 = (math.Abs(inClose[i] - inOpen[i]))
 				}
 				_B6 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T5)
 			}
@@ -126,7 +126,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(0, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(0, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((math.Abs(inClose[i-totIdx] - inOpen[i-totIdx])) - (math.Abs(inClose[BodyLongTrailingIdx-totIdx] - inOpen[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -143,8 +143,8 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (inHigh[i-1] - inLow[i-1])
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (inHigh[i] - inLow[i])
 			i += 1
 		}
 		i = startIdx
@@ -172,7 +172,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T10 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T10 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T10 = (inHigh[i-1] - inLow[i-1])
 				}
 				_B11 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T10)
 			}
@@ -182,7 +182,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T12 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T12 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T12 = (inHigh[i] - inLow[i])
 				}
 				_B13 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T12)
 			}
@@ -194,7 +194,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(1, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(1, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((inHigh[i-totIdx] - inLow[i-totIdx]) - (inHigh[BodyLongTrailingIdx-totIdx] - inLow[BodyLongTrailingIdx-totIdx]))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -211,8 +211,8 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		i = startIdx
@@ -240,7 +240,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T17 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T17 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T17 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 				}
 				_B18 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T17)/2.0
 			}
@@ -250,7 +250,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				if BodyLong_avgPeriod != 0 {
 					_T19 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T19 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T19 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 				}
 				_B20 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T19)/2.0
 			}
@@ -262,7 +262,7 @@ func (c *Core) cdlpiercingImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(2, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(2, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((inHigh[i-totIdx] - selF(inClose[i-totIdx] >= inOpen[i-totIdx], inClose[i-totIdx], inOpen[i-totIdx])) + (selF(inClose[i-totIdx] >= inOpen[i-totIdx], inOpen[i-totIdx], inClose[i-totIdx]) - inLow[i-totIdx])) - ((inHigh[BodyLongTrailingIdx-totIdx] - selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx])) + (selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]) - inLow[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -495,11 +495,123 @@ func (sp *CDLPIERCINGStream) Update(inOpen, inHigh, inLow, inClose float64) (int
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdlpiercingStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var totIdx int32
+	var ringPosL_BodyLongTrailingIdx int32
+	BodyLong_rangeType := sp.cs_BodyLong_rangeType
+	BodyLong_avgPeriod := sp.cs_BodyLong_avgPeriod
+	BodyLong_factor := sp.cs_BodyLong_factor
+	var ringCap_BodyLongTrailingIdx int32
+	var ringLag_BodyLongTrailingIdx int32
+	var ringPos_BodyLongTrailingIdx int32
+	var ring_BodyLongTrailingIdx_derived []float64
+	var _R11 float64
+	switch BodyLong_rangeType {
+	case 0:
+		_R11 = math.Abs(inClose - inOpen)
+	case 1:
+		_R11 = inHigh - inLow
+	case 2:
+		_R11 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+	}
+	sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = _R11
+	var _T12 int32
+	if sp.lag1_inClose >= sp.lag1_inOpen {
+		_T12 = 1
+	} else {
+		_T12 = -1
+	}
+	_B14 := _T12 == -1
+	if _B14 {
+		var _T13 int32
+		if inClose >= inOpen {
+			_T13 = 1
+		} else {
+			_T13 = -1
+		}
+		_B14 = _T13 == 1
+	}
+	_B18 := _B14 && inOpen < sp.lag1_inLow
+	if _B18 {
+		var _T16 float64
+		if BodyLong_avgPeriod != 0 {
+			_T16 = sp.BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+		} else {
+			var _R15 float64
+			switch BodyLong_rangeType {
+			case 0:
+				_R15 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+			case 1:
+				_R15 = sp.lag1_inHigh - sp.lag1_inLow
+			case 2:
+				_R15 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+			}
+			_T16 = _R15
+		}
+		var _T17 float64
+		if BodyLong_rangeType == 2 {
+			_T17 = 2.0
+		} else {
+			_T17 = 1.0
+		}
+		_B18 = math.Abs(sp.lag1_inClose-sp.lag1_inOpen) > float64(BodyLong_factor*_T16)/_T17
+	}
+	_B22 := _B18
+	if _B22 {
+		var _T20 float64
+		if BodyLong_avgPeriod != 0 {
+			_T20 = sp.BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+		} else {
+			var _R19 float64
+			switch BodyLong_rangeType {
+			case 0:
+				_R19 = math.Abs(inClose - inOpen)
+			case 1:
+				_R19 = inHigh - inLow
+			case 2:
+				_R19 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+			}
+			_T20 = _R19
+		}
+		var _T21 float64
+		if BodyLong_rangeType == 2 {
+			_T21 = 2.0
+		} else {
+			_T21 = 1.0
+		}
+		_B22 = math.Abs(inClose-inOpen) > float64(BodyLong_factor*_T20)/_T21
+	}
+	if _B22 && inClose < sp.lag1_inOpen && inClose > math.FMA(math.Abs(sp.lag1_inClose-sp.lag1_inOpen), 0.5, sp.lag1_inClose) {
+		sp.cur_outInteger = 100
+	} else {
+		sp.cur_outInteger = 0
+	}
+	ringCap_BodyLongTrailingIdx = sp.ringCap_BodyLongTrailingIdx
+	ringLag_BodyLongTrailingIdx = sp.ringLag_BodyLongTrailingIdx
+	ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx
+	ring_BodyLongTrailingIdx_derived = sp.ring_BodyLongTrailingIdx_derived
+	for totIdx = 1; totIdx >= 0; totIdx -= 1 {
+		var _T23 int32
+		if ringPos_BodyLongTrailingIdx+ringCap_BodyLongTrailingIdx-totIdx >= ringCap_BodyLongTrailingIdx {
+			_T23 = ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - totIdx - ringCap_BodyLongTrailingIdx
+		} else {
+			_T23 = ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - totIdx
+		}
+		sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (ring_BodyLongTrailingIdx_derived[_T23] - ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx+ringCap_BodyLongTrailingIdx-ringLag_BodyLongTrailingIdx-totIdx)%ringCap_BodyLongTrailingIdx])
+	}
+	sp.lag1_inOpen = inOpen
+	sp.lag1_inHigh = inHigh
+	sp.lag1_inLow = inLow
+	sp.lag1_inClose = inClose
+	ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx
+	ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1
+	if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+		ringPosL_BodyLongTrailingIdx = 0
+	}
+	sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx
 	return sp.cur_outInteger, nil
 }
 
@@ -507,7 +619,7 @@ func (sp *CDLPIERCINGStream) Update(inOpen, inHigh, inLow, inClose float64) (int
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDLPIERCINGStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outInteger int32
@@ -530,39 +642,57 @@ func (sp *CDLPIERCINGStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32
 		}
 		_B2 = _T1 == 1
 	}
-	_B5 := _B2 && inOpen < sp.lag1_inLow
-	if _B5 {
-		var _T3 float64
-		if BodyLong_avgPeriod != 0 {
-			_T3 = sp.BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
-		} else {
-			_T3 = candleRange(BodyLong_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-		}
+	_B6 := _B2 && inOpen < sp.lag1_inLow
+	if _B6 {
 		var _T4 float64
-		if BodyLong_rangeType == 2 {
-			_T4 = 2.0
-		} else {
-			_T4 = 1.0
-		}
-		_B5 = math.Abs(sp.lag1_inClose-sp.lag1_inOpen) > float64(BodyLong_factor*_T3)/_T4
-	}
-	_B8 := _B5
-	if _B8 {
-		var _T6 float64
 		if BodyLong_avgPeriod != 0 {
-			_T6 = sp.BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+			_T4 = sp.BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 		} else {
-			_T6 = candleRange(BodyLong_rangeType, inOpen, inHigh, inLow, inClose)
+			var _R3 float64
+			switch BodyLong_rangeType {
+			case 0:
+				_R3 = math.Abs(sp.lag1_inClose - sp.lag1_inOpen)
+			case 1:
+				_R3 = sp.lag1_inHigh - sp.lag1_inLow
+			case 2:
+				_R3 = (sp.lag1_inHigh - selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inClose, sp.lag1_inOpen)) + (selF(sp.lag1_inClose >= sp.lag1_inOpen, sp.lag1_inOpen, sp.lag1_inClose) - sp.lag1_inLow)
+			}
+			_T4 = _R3
 		}
-		var _T7 float64
+		var _T5 float64
 		if BodyLong_rangeType == 2 {
-			_T7 = 2.0
+			_T5 = 2.0
 		} else {
-			_T7 = 1.0
+			_T5 = 1.0
 		}
-		_B8 = math.Abs(inClose-inOpen) > float64(BodyLong_factor*_T6)/_T7
+		_B6 = math.Abs(sp.lag1_inClose-sp.lag1_inOpen) > float64(BodyLong_factor*_T4)/_T5
 	}
-	if _B8 && inClose < sp.lag1_inOpen && inClose > math.FMA(math.Abs(sp.lag1_inClose-sp.lag1_inOpen), 0.5, sp.lag1_inClose) {
+	_B10 := _B6
+	if _B10 {
+		var _T8 float64
+		if BodyLong_avgPeriod != 0 {
+			_T8 = sp.BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+		} else {
+			var _R7 float64
+			switch BodyLong_rangeType {
+			case 0:
+				_R7 = math.Abs(inClose - inOpen)
+			case 1:
+				_R7 = inHigh - inLow
+			case 2:
+				_R7 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+			}
+			_T8 = _R7
+		}
+		var _T9 float64
+		if BodyLong_rangeType == 2 {
+			_T9 = 2.0
+		} else {
+			_T9 = 1.0
+		}
+		_B10 = math.Abs(inClose-inOpen) > float64(BodyLong_factor*_T8)/_T9
+	}
+	if _B10 && inClose < sp.lag1_inOpen && inClose > math.FMA(math.Abs(sp.lag1_inClose-sp.lag1_inOpen), 0.5, sp.lag1_inClose) {
 		cur_outInteger = 100
 	} else {
 		cur_outInteger = 0
@@ -581,87 +711,6 @@ func (sp *CDLPIERCINGStream) Clone() *CDLPIERCINGStream {
 	cl := *sp
 	cl.ring_BodyLongTrailingIdx_derived = append(sp.ring_BodyLongTrailingIdx_derived[:0:0], sp.ring_BodyLongTrailingIdx_derived...)
 	return &cl
-}
-
-func cdlpiercingStepImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow, inClose float64) {
-	var totIdx int32
-	var ringPosL_BodyLongTrailingIdx int32
-	BodyLong_rangeType := sp.cs_BodyLong_rangeType
-	BodyLong_avgPeriod := sp.cs_BodyLong_avgPeriod
-	BodyLong_factor := sp.cs_BodyLong_factor
-	sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = candleRange(BodyLong_rangeType, inOpen, inHigh, inLow, inClose)
-	var _T9 int32
-	if sp.lag1_inClose >= sp.lag1_inOpen {
-		_T9 = 1
-	} else {
-		_T9 = -1
-	}
-	_B11 := _T9 == -1
-	if _B11 {
-		var _T10 int32
-		if inClose >= inOpen {
-			_T10 = 1
-		} else {
-			_T10 = -1
-		}
-		_B11 = _T10 == 1
-	}
-	_B14 := _B11 && inOpen < sp.lag1_inLow
-	if _B14 {
-		var _T12 float64
-		if BodyLong_avgPeriod != 0 {
-			_T12 = sp.BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
-		} else {
-			_T12 = candleRange(BodyLong_rangeType, sp.lag1_inOpen, sp.lag1_inHigh, sp.lag1_inLow, sp.lag1_inClose)
-		}
-		var _T13 float64
-		if BodyLong_rangeType == 2 {
-			_T13 = 2.0
-		} else {
-			_T13 = 1.0
-		}
-		_B14 = math.Abs(sp.lag1_inClose-sp.lag1_inOpen) > float64(BodyLong_factor*_T12)/_T13
-	}
-	_B17 := _B14
-	if _B17 {
-		var _T15 float64
-		if BodyLong_avgPeriod != 0 {
-			_T15 = sp.BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
-		} else {
-			_T15 = candleRange(BodyLong_rangeType, inOpen, inHigh, inLow, inClose)
-		}
-		var _T16 float64
-		if BodyLong_rangeType == 2 {
-			_T16 = 2.0
-		} else {
-			_T16 = 1.0
-		}
-		_B17 = math.Abs(inClose-inOpen) > float64(BodyLong_factor*_T15)/_T16
-	}
-	if _B17 && inClose < sp.lag1_inOpen && inClose > math.FMA(math.Abs(sp.lag1_inClose-sp.lag1_inOpen), 0.5, sp.lag1_inClose) {
-		sp.cur_outInteger = 100
-	} else {
-		sp.cur_outInteger = 0
-	}
-	for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-		var _T18 int32
-		if sp.ringPos_BodyLongTrailingIdx+sp.ringCap_BodyLongTrailingIdx-totIdx >= sp.ringCap_BodyLongTrailingIdx {
-			_T18 = sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx
-		} else {
-			_T18 = sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx
-		}
-		sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[_T18] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx+sp.ringCap_BodyLongTrailingIdx-sp.ringLag_BodyLongTrailingIdx-totIdx)%sp.ringCap_BodyLongTrailingIdx])
-	}
-	sp.lag1_inOpen = inOpen
-	sp.lag1_inHigh = inHigh
-	sp.lag1_inLow = inLow
-	sp.lag1_inClose = inClose
-	ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx
-	ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1
-	if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-		ringPosL_BodyLongTrailingIdx = 0
-	}
-	sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx
 }
 
 func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {
@@ -703,50 +752,50 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (math.Abs(inClose[i-1] - inOpen[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			var _T19 int32
+			var _T24 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T19 = 1
+				_T24 = 1
 			} else {
-				_T19 = -1
+				_T24 = -1
 			}
-			_B21 := _T19 == -1
-			if _B21 {
-				var _T20 int32
+			_B26 := _T24 == -1
+			if _B26 {
+				var _T25 int32
 				if inClose[i] >= inOpen[i] {
-					_T20 = 1
+					_T25 = 1
 				} else {
-					_T20 = -1
+					_T25 = -1
 				}
-				_B21 = _T20 == 1
+				_B26 = _T25 == 1
 			}
-			_B23 := _B21 && inOpen[i] < inLow[i-1]
-			if _B23 {
-				var _T22 float64
+			_B28 := _B26 && inOpen[i] < inLow[i-1]
+			if _B28 {
+				var _T27 float64
 				if BodyLong_avgPeriod != 0 {
-					_T22 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+					_T27 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T22 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T27 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 				}
-				_B23 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T22)
+				_B28 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T27)
 			}
-			_B25 := _B23
-			if _B25 {
-				var _T24 float64
+			_B30 := _B28
+			if _B30 {
+				var _T29 float64
 				if BodyLong_avgPeriod != 0 {
-					_T24 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+					_T29 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T24 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T29 = (math.Abs(inClose[i] - inOpen[i]))
 				}
-				_B25 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T24)
+				_B30 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T29)
 			}
-			if _B25 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+			if _B30 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 				outInteger[outIdx*outStride] = 100
 				outIdx++
 			} else {
@@ -754,7 +803,7 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(0, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(0, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((math.Abs(inClose[i-totIdx] - inOpen[i-totIdx])) - (math.Abs(inClose[BodyLongTrailingIdx-totIdx] - inOpen[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -770,50 +819,50 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (inHigh[i-1] - inLow[i-1])
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (inHigh[i] - inLow[i])
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			var _T26 int32
+			var _T31 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T26 = 1
+				_T31 = 1
 			} else {
-				_T26 = -1
+				_T31 = -1
 			}
-			_B28 := _T26 == -1
-			if _B28 {
-				var _T27 int32
+			_B33 := _T31 == -1
+			if _B33 {
+				var _T32 int32
 				if inClose[i] >= inOpen[i] {
-					_T27 = 1
+					_T32 = 1
 				} else {
-					_T27 = -1
+					_T32 = -1
 				}
-				_B28 = _T27 == 1
+				_B33 = _T32 == 1
 			}
-			_B30 := _B28 && inOpen[i] < inLow[i-1]
-			if _B30 {
-				var _T29 float64
+			_B35 := _B33 && inOpen[i] < inLow[i-1]
+			if _B35 {
+				var _T34 float64
 				if BodyLong_avgPeriod != 0 {
-					_T29 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+					_T34 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T29 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T34 = (inHigh[i-1] - inLow[i-1])
 				}
-				_B30 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T29)
+				_B35 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T34)
 			}
-			_B32 := _B30
-			if _B32 {
-				var _T31 float64
+			_B37 := _B35
+			if _B37 {
+				var _T36 float64
 				if BodyLong_avgPeriod != 0 {
-					_T31 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+					_T36 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T31 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T36 = (inHigh[i] - inLow[i])
 				}
-				_B32 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T31)
+				_B37 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T36)
 			}
-			if _B32 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+			if _B37 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 				outInteger[outIdx*outStride] = 100
 				outIdx++
 			} else {
@@ -821,7 +870,7 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(1, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(1, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((inHigh[i-totIdx] - inLow[i-totIdx]) - (inHigh[BodyLongTrailingIdx-totIdx] - inLow[BodyLongTrailingIdx-totIdx]))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -837,50 +886,50 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			var _T33 int32
+			var _T38 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T33 = 1
+				_T38 = 1
 			} else {
-				_T33 = -1
+				_T38 = -1
 			}
-			_B35 := _T33 == -1
-			if _B35 {
-				var _T34 int32
+			_B40 := _T38 == -1
+			if _B40 {
+				var _T39 int32
 				if inClose[i] >= inOpen[i] {
-					_T34 = 1
+					_T39 = 1
 				} else {
-					_T34 = -1
+					_T39 = -1
 				}
-				_B35 = _T34 == 1
+				_B40 = _T39 == 1
 			}
-			_B37 := _B35 && inOpen[i] < inLow[i-1]
-			if _B37 {
-				var _T36 float64
+			_B42 := _B40 && inOpen[i] < inLow[i-1]
+			if _B42 {
+				var _T41 float64
 				if BodyLong_avgPeriod != 0 {
-					_T36 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+					_T41 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T36 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T41 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 				}
-				_B37 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T36)/2.0
+				_B42 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T41)/2.0
 			}
-			_B39 := _B37
-			if _B39 {
-				var _T38 float64
+			_B44 := _B42
+			if _B44 {
+				var _T43 float64
 				if BodyLong_avgPeriod != 0 {
-					_T38 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+					_T43 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T38 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T43 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 				}
-				_B39 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T38)/2.0
+				_B44 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T43)/2.0
 			}
-			if _B39 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+			if _B44 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 				outInteger[outIdx*outStride] = 100
 				outIdx++
 			} else {
@@ -888,7 +937,7 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 				outIdx++
 			}
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(2, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(2, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((inHigh[i-totIdx] - selF(inClose[i-totIdx] >= inOpen[i-totIdx], inClose[i-totIdx], inOpen[i-totIdx])) + (selF(inClose[i-totIdx] >= inOpen[i-totIdx], inOpen[i-totIdx], inClose[i-totIdx]) - inLow[i-totIdx])) - ((inHigh[BodyLongTrailingIdx-totIdx] - selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx])) + (selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]) - inLow[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
@@ -911,55 +960,55 @@ func (c *Core) cdlpiercingOpenImpl(sp *CDLPIERCINGStream, inOpen, inHigh, inLow,
 		i = startIdx
 		outIdx = 0
 		for {
-			var _T40 int32
+			var _T45 int32
 			if inClose[i-1] >= inOpen[i-1] {
-				_T40 = 1
+				_T45 = 1
 			} else {
-				_T40 = -1
+				_T45 = -1
 			}
-			_B42 := _T40 == -1
-			if _B42 {
-				var _T41 int32
+			_B47 := _T45 == -1
+			if _B47 {
+				var _T46 int32
 				if inClose[i] >= inOpen[i] {
-					_T41 = 1
+					_T46 = 1
 				} else {
-					_T41 = -1
+					_T46 = -1
 				}
-				_B42 = _T41 == 1
+				_B47 = _T46 == 1
 			}
-			_B45 := _B42 && inOpen[i] < inLow[i-1]
-			if _B45 {
-				var _T43 float64
+			_B50 := _B47 && inOpen[i] < inLow[i-1]
+			if _B50 {
+				var _T48 float64
 				if BodyLong_avgPeriod != 0 {
-					_T43 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+					_T48 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 				} else {
-					_T43 = candleRange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+					_T48 = candleRange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 				}
-				var _T44 float64
+				var _T49 float64
 				if BodyLong_rangeType == 2 {
-					_T44 = 2.0
+					_T49 = 2.0
 				} else {
-					_T44 = 1.0
+					_T49 = 1.0
 				}
-				_B45 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T43)/_T44
+				_B50 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T48)/_T49
 			}
-			_B48 := _B45
-			if _B48 {
-				var _T46 float64
+			_B53 := _B50
+			if _B53 {
+				var _T51 float64
 				if BodyLong_avgPeriod != 0 {
-					_T46 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+					_T51 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 				} else {
-					_T46 = candleRange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T51 = candleRange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
 				}
-				var _T47 float64
+				var _T52 float64
 				if BodyLong_rangeType == 2 {
-					_T47 = 2.0
+					_T52 = 2.0
 				} else {
-					_T47 = 1.0
+					_T52 = 1.0
 				}
-				_B48 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T46)/_T47
+				_B53 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T51)/_T52
 			}
-			if _B48 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+			if _B53 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 				outInteger[outIdx*outStride] = 100
 				outIdx++
 			} else {
@@ -1042,8 +1091,8 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (math.Abs(inClose[i-1] - inOpen[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		i = startIdx
@@ -1051,48 +1100,48 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		for i < endIdx {
 			outIdx += 1
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(0, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(0, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((math.Abs(inClose[i-totIdx] - inOpen[i-totIdx])) - (math.Abs(inClose[BodyLongTrailingIdx-totIdx] - inOpen[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
 		}
-		var _T49 int32
+		var _T54 int32
 		if inClose[i-1] >= inOpen[i-1] {
-			_T49 = 1
+			_T54 = 1
 		} else {
-			_T49 = -1
+			_T54 = -1
 		}
-		_B51 := _T49 == -1
-		if _B51 {
-			var _T50 int32
+		_B56 := _T54 == -1
+		if _B56 {
+			var _T55 int32
 			if inClose[i] >= inOpen[i] {
-				_T50 = 1
+				_T55 = 1
 			} else {
-				_T50 = -1
+				_T55 = -1
 			}
-			_B51 = _T50 == 1
+			_B56 = _T55 == 1
 		}
-		_B53 := _B51 && inOpen[i] < inLow[i-1]
-		if _B53 {
-			var _T52 float64
+		_B58 := _B56 && inOpen[i] < inLow[i-1]
+		if _B58 {
+			var _T57 float64
 			if BodyLong_avgPeriod != 0 {
-				_T52 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+				_T57 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 			} else {
-				_T52 = candleRange(0, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+				_T57 = (math.Abs(inClose[i-1] - inOpen[i-1]))
 			}
-			_B53 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T52)
+			_B58 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T57)
 		}
-		_B55 := _B53
-		if _B55 {
-			var _T54 float64
+		_B60 := _B58
+		if _B60 {
+			var _T59 float64
 			if BodyLong_avgPeriod != 0 {
-				_T54 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+				_T59 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 			} else {
-				_T54 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T59 = (math.Abs(inClose[i] - inOpen[i]))
 			}
-			_B55 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T54)
+			_B60 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T59)
 		}
-		if _B55 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+		if _B60 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 			outInteger[0] = 100
 			outIdx += 1
 		} else {
@@ -1100,7 +1149,7 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 			outIdx += 1
 		}
 		for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(0, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(0, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((math.Abs(inClose[i-totIdx] - inOpen[i-totIdx])) - (math.Abs(inClose[BodyLongTrailingIdx-totIdx] - inOpen[BodyLongTrailingIdx-totIdx])))
 		}
 		i += 1
 		BodyLongTrailingIdx += 1
@@ -1112,8 +1161,8 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (inHigh[i-1] - inLow[i-1])
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (inHigh[i] - inLow[i])
 			i += 1
 		}
 		i = startIdx
@@ -1121,48 +1170,48 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		for i < endIdx {
 			outIdx += 1
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(1, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(1, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((inHigh[i-totIdx] - inLow[i-totIdx]) - (inHigh[BodyLongTrailingIdx-totIdx] - inLow[BodyLongTrailingIdx-totIdx]))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
 		}
-		var _T56 int32
+		var _T61 int32
 		if inClose[i-1] >= inOpen[i-1] {
-			_T56 = 1
+			_T61 = 1
 		} else {
-			_T56 = -1
+			_T61 = -1
 		}
-		_B58 := _T56 == -1
-		if _B58 {
-			var _T57 int32
+		_B63 := _T61 == -1
+		if _B63 {
+			var _T62 int32
 			if inClose[i] >= inOpen[i] {
-				_T57 = 1
+				_T62 = 1
 			} else {
-				_T57 = -1
+				_T62 = -1
 			}
-			_B58 = _T57 == 1
+			_B63 = _T62 == 1
 		}
-		_B60 := _B58 && inOpen[i] < inLow[i-1]
-		if _B60 {
-			var _T59 float64
+		_B65 := _B63 && inOpen[i] < inLow[i-1]
+		if _B65 {
+			var _T64 float64
 			if BodyLong_avgPeriod != 0 {
-				_T59 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+				_T64 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 			} else {
-				_T59 = candleRange(1, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+				_T64 = (inHigh[i-1] - inLow[i-1])
 			}
-			_B60 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T59)
+			_B65 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T64)
 		}
-		_B62 := _B60
-		if _B62 {
-			var _T61 float64
+		_B67 := _B65
+		if _B67 {
+			var _T66 float64
 			if BodyLong_avgPeriod != 0 {
-				_T61 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+				_T66 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 			} else {
-				_T61 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T66 = (inHigh[i] - inLow[i])
 			}
-			_B62 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T61)
+			_B67 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T66)
 		}
-		if _B62 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+		if _B67 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 			outInteger[0] = 100
 			outIdx += 1
 		} else {
@@ -1170,7 +1219,7 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 			outIdx += 1
 		}
 		for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(1, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(1, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + ((inHigh[i-totIdx] - inLow[i-totIdx]) - (inHigh[BodyLongTrailingIdx-totIdx] - inLow[BodyLongTrailingIdx-totIdx]))
 		}
 		i += 1
 		BodyLongTrailingIdx += 1
@@ -1182,8 +1231,8 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod
 		i = BodyLongTrailingIdx
 		for i < startIdx {
-			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
+			BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		i = startIdx
@@ -1191,48 +1240,48 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 		for i < endIdx {
 			outIdx += 1
 			for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(2, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(2, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+				BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((inHigh[i-totIdx] - selF(inClose[i-totIdx] >= inOpen[i-totIdx], inClose[i-totIdx], inOpen[i-totIdx])) + (selF(inClose[i-totIdx] >= inOpen[i-totIdx], inOpen[i-totIdx], inClose[i-totIdx]) - inLow[i-totIdx])) - ((inHigh[BodyLongTrailingIdx-totIdx] - selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx])) + (selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]) - inLow[BodyLongTrailingIdx-totIdx])))
 			}
 			i += 1
 			BodyLongTrailingIdx += 1
 		}
-		var _T63 int32
+		var _T68 int32
 		if inClose[i-1] >= inOpen[i-1] {
-			_T63 = 1
+			_T68 = 1
 		} else {
-			_T63 = -1
+			_T68 = -1
 		}
-		_B65 := _T63 == -1
-		if _B65 {
-			var _T64 int32
+		_B70 := _T68 == -1
+		if _B70 {
+			var _T69 int32
 			if inClose[i] >= inOpen[i] {
-				_T64 = 1
+				_T69 = 1
 			} else {
-				_T64 = -1
+				_T69 = -1
 			}
-			_B65 = _T64 == 1
+			_B70 = _T69 == 1
 		}
-		_B67 := _B65 && inOpen[i] < inLow[i-1]
-		if _B67 {
-			var _T66 float64
+		_B72 := _B70 && inOpen[i] < inLow[i-1]
+		if _B72 {
+			var _T71 float64
 			if BodyLong_avgPeriod != 0 {
-				_T66 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+				_T71 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 			} else {
-				_T66 = candleRange(2, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+				_T71 = ((inHigh[i-1] - selF(inClose[i-1] >= inOpen[i-1], inClose[i-1], inOpen[i-1])) + (selF(inClose[i-1] >= inOpen[i-1], inOpen[i-1], inClose[i-1]) - inLow[i-1]))
 			}
-			_B67 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T66)/2.0
+			_B72 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T71)/2.0
 		}
-		_B69 := _B67
-		if _B69 {
-			var _T68 float64
+		_B74 := _B72
+		if _B74 {
+			var _T73 float64
 			if BodyLong_avgPeriod != 0 {
-				_T68 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+				_T73 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 			} else {
-				_T68 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T73 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			}
-			_B69 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T68)/2.0
+			_B74 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T73)/2.0
 		}
-		if _B69 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+		if _B74 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 			outInteger[0] = 100
 			outIdx += 1
 		} else {
@@ -1240,7 +1289,7 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 			outIdx += 1
 		}
 		for totIdx = 1; totIdx >= 0; totIdx -= 1 {
-			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (candleRange(2, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx]) - candleRange(2, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]))
+			BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((inHigh[i-totIdx] - selF(inClose[i-totIdx] >= inOpen[i-totIdx], inClose[i-totIdx], inOpen[i-totIdx])) + (selF(inClose[i-totIdx] >= inOpen[i-totIdx], inOpen[i-totIdx], inClose[i-totIdx]) - inLow[i-totIdx])) - ((inHigh[BodyLongTrailingIdx-totIdx] - selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx])) + (selF(inClose[BodyLongTrailingIdx-totIdx] >= inOpen[BodyLongTrailingIdx-totIdx], inOpen[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]) - inLow[BodyLongTrailingIdx-totIdx])))
 		}
 		i += 1
 		BodyLongTrailingIdx += 1
@@ -1266,55 +1315,55 @@ func (c *Core) cdlpiercingOpenSinkFrame(sp *CDLPIERCINGStream, inOpen, inHigh, i
 			i += 1
 			BodyLongTrailingIdx += 1
 		}
-		var _T70 int32
+		var _T75 int32
 		if inClose[i-1] >= inOpen[i-1] {
-			_T70 = 1
+			_T75 = 1
 		} else {
-			_T70 = -1
+			_T75 = -1
 		}
-		_B72 := _T70 == -1
-		if _B72 {
-			var _T71 int32
+		_B77 := _T75 == -1
+		if _B77 {
+			var _T76 int32
 			if inClose[i] >= inOpen[i] {
-				_T71 = 1
+				_T76 = 1
 			} else {
-				_T71 = -1
+				_T76 = -1
 			}
-			_B72 = _T71 == 1
+			_B77 = _T76 == 1
 		}
-		_B75 := _B72 && inOpen[i] < inLow[i-1]
-		if _B75 {
-			var _T73 float64
+		_B80 := _B77 && inOpen[i] < inLow[i-1]
+		if _B80 {
+			var _T78 float64
 			if BodyLong_avgPeriod != 0 {
-				_T73 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
+				_T78 = BodyLongPeriodTotal[1] / float64(BodyLong_avgPeriod)
 			} else {
-				_T73 = candleRange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+				_T78 = candleRange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
 			}
-			var _T74 float64
+			var _T79 float64
 			if BodyLong_rangeType == 2 {
-				_T74 = 2.0
+				_T79 = 2.0
 			} else {
-				_T74 = 1.0
+				_T79 = 1.0
 			}
-			_B75 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T73)/_T74
+			_B80 = math.Abs(inClose[i-1]-inOpen[i-1]) > float64(BodyLong_factor*_T78)/_T79
 		}
-		_B78 := _B75
-		if _B78 {
-			var _T76 float64
+		_B83 := _B80
+		if _B83 {
+			var _T81 float64
 			if BodyLong_avgPeriod != 0 {
-				_T76 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
+				_T81 = BodyLongPeriodTotal[0] / float64(BodyLong_avgPeriod)
 			} else {
-				_T76 = candleRange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T81 = candleRange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
 			}
-			var _T77 float64
+			var _T82 float64
 			if BodyLong_rangeType == 2 {
-				_T77 = 2.0
+				_T82 = 2.0
 			} else {
-				_T77 = 1.0
+				_T82 = 1.0
 			}
-			_B78 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T76)/_T77
+			_B83 = math.Abs(inClose[i]-inOpen[i]) > float64(BodyLong_factor*_T81)/_T82
 		}
-		if _B78 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
+		if _B83 && inClose[i] < inOpen[i-1] && inClose[i] > math.FMA(math.Abs(inClose[i-1]-inOpen[i-1]), 0.5, inClose[i-1]) {
 			outInteger[0] = 100
 			outIdx += 1
 		} else {

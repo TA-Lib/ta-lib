@@ -231,12 +231,21 @@ func (sp *STDDEVStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	if err := stddevStepImpl(sp, inReal); err != nil {
-		return 0, err
+	var cur_outReal float64
+	var subErr error
+	cur_outReal, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
 	}
+	if sp.optInNbDev != 1.0 {
+		cur_outReal = float64(math.Sqrt(cur_outReal) * sp.optInNbDev)
+	} else {
+		cur_outReal = math.Sqrt(cur_outReal)
+	}
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -244,7 +253,7 @@ func (sp *STDDEVStream) Update(inReal float64) (float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *STDDEVStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -272,22 +281,6 @@ func (sp *STDDEVStream) Clone() *STDDEVStream {
 	cl := *sp
 	cl.sub0 = sp.sub0.Clone()
 	return &cl
-}
-
-func stddevStepImpl(sp *STDDEVStream, inReal float64) error {
-	var cur_outReal float64
-	var subErr error
-	cur_outReal, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	if sp.optInNbDev != 1.0 {
-		cur_outReal = float64(math.Sqrt(cur_outReal) * sp.optInNbDev)
-	} else {
-		cur_outReal = math.Sqrt(cur_outReal)
-	}
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) stddevOpenImpl(sp *STDDEVStream, inReal []float64, startIdx, optInTimePeriod int32, optInNbDev float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

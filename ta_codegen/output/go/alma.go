@@ -326,23 +326,62 @@ func (sp *ALMAStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	almaStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var sum float64
+	var j int32
+	var w int32
+	var cb_weights []float64
+	var lookbackTotal int32
+	var winCap_j int32
+	var winPos_j int32
+	var win_j_inReal []float64
+	if sp.optInTimePeriod == 1 {
+		sp.cur_outReal = inReal
+		return sp.cur_outReal, nil
+	}
+	sp.win_j_inReal[sp.winPos_j] = inReal
+	sum = 0.0
+	w = 0
+	cb_weights = sp.cb_weights
+	lookbackTotal = sp.lookbackTotal
+	winCap_j = sp.winCap_j
+	winPos_j = sp.winPos_j
+	win_j_inReal = sp.win_j_inReal
+	for j = lookbackTotal; j >= 0; j -= 1 {
+		var _T3 int32
+		if winPos_j+winCap_j-j >= winCap_j {
+			_T3 = winPos_j + winCap_j - j - winCap_j
+		} else {
+			_T3 = winPos_j + winCap_j - j
+		}
+		sum += float64(cb_weights[w] * win_j_inReal[_T3])
+		w += 1
+	}
+	sp.cur_outReal = sum
+	sp.winPos_j = sp.winPos_j + 1
+	if sp.winPos_j >= sp.winCap_j {
+		sp.winPos_j = 0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *ALMAStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var sum float64
 	var j int32
 	var w int32
+	var cb_weights []float64
+	var lookbackTotal int32
+	var winCap_j int32
+	var winPos_j int32
+	var win_j_inReal []float64
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
@@ -354,26 +393,31 @@ func (sp *ALMAStream) Peek(inReal float64) (float64, error) {
 	pkVal0 = inReal
 	sum = 0.0
 	w = 0
-	for j = sp.lookbackTotal; j >= 0; j -= 1 {
+	cb_weights = sp.cb_weights
+	lookbackTotal = sp.lookbackTotal
+	winCap_j = sp.winCap_j
+	winPos_j = sp.winPos_j
+	win_j_inReal = sp.win_j_inReal
+	for j = lookbackTotal; j >= 0; j -= 1 {
 		var _T0 int32
-		if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-			_T0 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+		if winPos_j+winCap_j-j >= winCap_j {
+			_T0 = winPos_j + winCap_j - j - winCap_j
 		} else {
-			_T0 = sp.winPos_j + sp.winCap_j - j
+			_T0 = winPos_j + winCap_j - j
 		}
 		var _T2 float64
 		if _T0 != pkSlot0 {
 			var _T1 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T1 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T1 = winPos_j + winCap_j - j - winCap_j
 			} else {
-				_T1 = sp.winPos_j + sp.winCap_j - j
+				_T1 = winPos_j + winCap_j - j
 			}
-			_T2 = sp.win_j_inReal[_T1]
+			_T2 = win_j_inReal[_T1]
 		} else {
 			_T2 = pkVal0
 		}
-		sum += float64(sp.cb_weights[w] * _T2)
+		sum += float64(cb_weights[w] * _T2)
 		w += 1
 	}
 	cur_outReal = sum
@@ -392,34 +436,6 @@ func (sp *ALMAStream) Clone() *ALMAStream {
 	cl.win_j_inReal = append(sp.win_j_inReal[:0:0], sp.win_j_inReal...)
 	cl.cb_weights = append(sp.cb_weights[:0:0], sp.cb_weights...)
 	return &cl
-}
-
-func almaStepImpl(sp *ALMAStream, inReal float64) {
-	var sum float64
-	var j int32
-	var w int32
-	if sp.optInTimePeriod == 1 {
-		sp.cur_outReal = inReal
-		return
-	}
-	sp.win_j_inReal[sp.winPos_j] = inReal
-	sum = 0.0
-	w = 0
-	for j = sp.lookbackTotal; j >= 0; j -= 1 {
-		var _T3 int32
-		if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-			_T3 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-		} else {
-			_T3 = sp.winPos_j + sp.winCap_j - j
-		}
-		sum += float64(sp.cb_weights[w] * sp.win_j_inReal[_T3])
-		w += 1
-	}
-	sp.cur_outReal = sum
-	sp.winPos_j = sp.winPos_j + 1
-	if sp.winPos_j >= sp.winCap_j {
-		sp.winPos_j = 0
-	}
 }
 
 func (c *Core) almaOpenImpl(sp *ALMAStream, inReal []float64, startIdx, optInTimePeriod int32, optInSigma, optInOffset float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -646,10 +662,14 @@ func almaStepTape(sp *ALMAStream, tape []float64, tapeBase, tapeMask int32, inRe
 	var sum float64
 	var j int32
 	var w int32
+	var cb_weights []float64
+	var lookbackTotal int32
 	sum = 0.0
 	w = 0
-	for j = sp.lookbackTotal; j >= 0; j -= 1 {
-		sum += float64(sp.cb_weights[w] * tape[(tapeBase-j)&tapeMask])
+	cb_weights = sp.cb_weights
+	lookbackTotal = sp.lookbackTotal
+	for j = lookbackTotal; j >= 0; j -= 1 {
+		sum += float64(cb_weights[w] * tape[(tapeBase-j)&tapeMask])
 		w += 1
 	}
 	sp.cur_outReal = sum
@@ -661,6 +681,8 @@ func almaPeekTape(sp *ALMAStream, tape []float64, tapeBase, tapeMask int32, inRe
 	var sum float64
 	var j int32
 	var w int32
+	var cb_weights []float64
+	var lookbackTotal int32
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
@@ -668,14 +690,16 @@ func almaPeekTape(sp *ALMAStream, tape []float64, tapeBase, tapeMask int32, inRe
 	pkVal0 = inReal
 	sum = 0.0
 	w = 0
-	for j = sp.lookbackTotal; j >= 0; j -= 1 {
+	cb_weights = sp.cb_weights
+	lookbackTotal = sp.lookbackTotal
+	for j = lookbackTotal; j >= 0; j -= 1 {
 		var _T4 float64
 		if (tapeBase-j)&tapeMask != pkSlot0 {
 			_T4 = tape[(tapeBase-j)&tapeMask]
 		} else {
 			_T4 = pkVal0
 		}
-		sum += float64(sp.cb_weights[w] * _T4)
+		sum += float64(cb_weights[w] * _T4)
 		w += 1
 	}
 	cur_outReal = sum

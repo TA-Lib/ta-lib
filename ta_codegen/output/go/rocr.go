@@ -227,18 +227,34 @@ func (sp *ROCRStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	rocrStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempReal float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
+	if tempReal != 0.0 {
+		sp.cur_outReal = inReal / tempReal
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *ROCRStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -263,26 +279,6 @@ func (sp *ROCRStream) Clone() *ROCRStream {
 	cl := *sp
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	return &cl
-}
-
-func rocrStepImpl(sp *ROCRStream, inReal float64) {
-	var tempReal float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
-	if tempReal != 0.0 {
-		sp.cur_outReal = inReal / tempReal
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) rocrOpenImpl(sp *ROCRStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

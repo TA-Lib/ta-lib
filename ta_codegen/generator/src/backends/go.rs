@@ -238,6 +238,20 @@ pub(super) struct Ctx<'a> {
     pub(super) ret: Ret,
     /// A batch or open body, whose candle colour bounds take no branch.
     pub(super) colour_selects: Cell<bool>,
+    /// A stream frame: a real pick outside a loop may take no branch (`selF`),
+    /// by the rule in [`super::go_select`]. Inside a loop it stays a branch,
+    /// which a reduction predicts and a select would put on its chain.
+    pub(super) float_selects: Cell<bool>,
+    loop_depth: Cell<usize>,
+    /// The handle's fields, by both spellings.
+    pub(super) carried: std::cell::RefCell<HashSet<String>>,
+    /// The variable the statement being rendered assigns.
+    store_target: std::cell::RefCell<Option<String>>,
+    /// The frame body's picks, scanned as its rendering starts, and the
+    /// address of the statement being rendered, which keys them.
+    scan: std::cell::RefCell<super::go_select::FrameScan>,
+    stmt_depth: Cell<usize>,
+    cur_stmt: Cell<usize>,
 }
 
 const RETCODE_NAMES: &[(&str, &str)] = &[
@@ -370,6 +384,13 @@ impl<'a> Ctx<'a> {
             codes,
             ret,
             colour_selects: Cell::new(false),
+            float_selects: Cell::new(false),
+            loop_depth: Cell::new(0),
+            carried: std::cell::RefCell::new(HashSet::new()),
+            store_target: std::cell::RefCell::new(None),
+            scan: std::cell::RefCell::default(),
+            stmt_depth: Cell::new(0),
+            cur_stmt: Cell::new(0),
         }
     }
 
@@ -400,6 +421,13 @@ impl<'a> Ctx<'a> {
             codes,
             ret,
             colour_selects: Cell::new(false),
+            float_selects: Cell::new(false),
+            loop_depth: Cell::new(0),
+            carried: std::cell::RefCell::new(HashSet::new()),
+            store_target: std::cell::RefCell::new(None),
+            scan: std::cell::RefCell::default(),
+            stmt_depth: Cell::new(0),
+            cur_stmt: Cell::new(0),
         }
     }
 
@@ -763,6 +791,10 @@ impl<'a> Ctx<'a> {
         };
         let tg = if ty.is_pointer() { tg } else { self.conv(tg, tt, ty) };
         let fg = if ty.is_pointer() { fg } else { self.conv(fg, ft, ty) };
+        let target = self.store_target.borrow().clone();
+        if ty == CType::Real && ts.is_empty() && fs.is_empty() && select_arm(t) && select_arm(f) && self.pick_free(c, t, f, target.as_deref()) {
+            return (GExpr::call("selF", vec![strip_paren(cg), tg, fg]), ty);
+        }
         let tmp = self.temp("T");
         sc.pre.push(format!("var {tmp} {}", go_type(ty)));
         sc.pre.push(format!("if {} {{", strip_paren(cg).render()));
@@ -795,9 +827,56 @@ impl<'a> Ctx<'a> {
         match fname {
             "ta_candlerange" if args.len() == 5 => {
                 let mut a = vec![self.lower_as(&args[0], CType::Int32, sc)];
-                for x in &args[1..] {
-                    a.push(self.lower_as(x, CType::Real, sc));
+                let mut ps = Scope::default();
+                let prices: Vec<GExpr> = args[1..].iter().map(|x| self.lower_as(x, CType::Real, &mut ps)).collect();
+                // A known range type renders as its own case of `candleRange`:
+                // Go inlines nothing costing over 20 into a function as large as
+                // a candlestick's open, and the call there costs more than the
+                // range. Shadows pick the colour bounds by bits, as the batch does.
+                if let (Expr::IntLiteral(kind @ 0..=2), true, [o, h, l, c]) = (&args[0], ps.is_empty(), prices.as_slice()) {
+                    let g = match kind {
+                        0 => GExpr::call("math.Abs", vec![GExpr::bin(c.clone(), GOp::Sub, o.clone())]),
+                        1 => GExpr::bin(h.clone(), GOp::Sub, l.clone()),
+                        _ => {
+                            let white = GExpr::bin(c.clone(), GOp::Ge, o.clone());
+                            let upper = GExpr::call("selF", vec![white.clone(), c.clone(), o.clone()]);
+                            let lower = GExpr::call("selF", vec![white, o.clone(), c.clone()]);
+                            GExpr::bin(
+                                GExpr::bin(h.clone(), GOp::Sub, upper).paren(),
+                                GOp::Add,
+                                GExpr::bin(lower, GOp::Sub, l.clone()).paren(),
+                            )
+                        }
+                    };
+                    return (g.paren(), CType::Real);
                 }
+                // In a stream frame a setting's range type is a constant of the
+                // handle, so a switch on it is predicted; its Shadows case still
+                // picks the colour bounds by bits.
+                if self.select_free() && ps.is_empty() {
+                    if let [o, h, l, c] = prices.as_slice() {
+                        let tmp = self.temp("R");
+                        let white = GExpr::bin(c.clone(), GOp::Ge, o.clone());
+                        let shadows = GExpr::bin(
+                            GExpr::bin(h.clone(), GOp::Sub, GExpr::call("selF", vec![white.clone(), c.clone(), o.clone()])).paren(),
+                            GOp::Add,
+                            GExpr::bin(GExpr::call("selF", vec![white, o.clone(), c.clone()]), GOp::Sub, l.clone()).paren(),
+                        );
+                        sc.pre.push(format!("var {tmp} float64"));
+                        sc.pre.push(format!("switch {} {{", a[0].render()));
+                        sc.pre.push("case 0:".to_string());
+                        sc.pre.push(format!("\t{tmp} = {}", GExpr::call("math.Abs", vec![GExpr::bin(c.clone(), GOp::Sub, o.clone())]).render()));
+                        sc.pre.push("case 1:".to_string());
+                        sc.pre.push(format!("\t{tmp} = {}", GExpr::bin(h.clone(), GOp::Sub, l.clone()).render()));
+                        sc.pre.push("case 2:".to_string());
+                        sc.pre.push(format!("\t{tmp} = {}", shadows.render()));
+                        sc.pre.push("}".to_string());
+                        return (GExpr::name(tmp), CType::Real);
+                    }
+                }
+                sc.pre.extend(ps.pre);
+                sc.post.extend(ps.post);
+                a.extend(prices);
                 return (GExpr::call("candleRange", a), CType::Real);
             }
             "ta_candleaverage" if args.len() == 8 => {
@@ -850,9 +929,25 @@ impl<'a> Ctx<'a> {
             return match mf {
                 MathFn::Max | MathFn::Min => {
                     let [a, b] = args else { self.fail("max/min takes two arguments") };
-                    let (ag, at) = self.lower(a, sc);
-                    let (bg, bt) = self.lower(b, sc);
+                    let mut ms = Scope::default();
+                    let (ag, at) = self.lower(a, &mut ms);
+                    let (bg, bt) = self.lower(b, &mut ms);
                     let t = arith(at, bt);
+                    // The helper's own compare as a select: both operands are
+                    // computed either way, and a float helper compiles to a jump.
+                    let free = t == CType::Real && ms.is_empty() && self.float_selects.get() && {
+                        let op = if matches!(mf, MathFn::Max) { BinOp::Greater } else { BinOp::Less };
+                        let c = Expr::BinOp(Box::new(a.clone()), op, Box::new(b.clone()));
+                        let target = self.store_target.borrow().clone();
+                        self.pick_free(&c, a, b, target.as_deref())
+                    };
+                    if free {
+                        let (ag, bg) = (self.conv(ag, at, t), self.conv(bg, bt, t));
+                        let op = if matches!(mf, MathFn::Max) { GOp::Gt } else { GOp::Lt };
+                        return (GExpr::call("selF", vec![GExpr::bin(ag.clone(), op, bg.clone()), ag, bg]), t);
+                    }
+                    sc.pre.extend(ms.pre);
+                    sc.post.extend(ms.post);
                     let f = match (mf, t) {
                         (MathFn::Max, CType::Real) => "maxF",
                         (MathFn::Min, CType::Real) => "minF",
@@ -983,8 +1078,16 @@ impl<'a> Ctx<'a> {
     // ---- statements --------------------------------------------------------
 
     pub(super) fn stmts(&self, body: &[Statement], out: &mut Vec<String>) {
+        if self.float_selects.get() && self.stmt_depth.get() == 0 {
+            *self.scan.borrow_mut() = super::go_select::scan(body);
+        }
+        self.stmt_depth.set(self.stmt_depth.get() + 1);
         for s in body {
             self.stmt(s, out);
+        }
+        self.stmt_depth.set(self.stmt_depth.get() - 1);
+        if self.stmt_depth.get() == 0 {
+            self.scan.take();
         }
     }
 
@@ -994,8 +1097,42 @@ impl<'a> Ctx<'a> {
         v
     }
 
-    #[allow(clippy::too_many_lines)]
     pub(super) fn stmt(&self, s: &Statement, out: &mut Vec<String>) {
+        let in_loop = matches!(
+            s,
+            Statement::While { .. } | Statement::DoWhile { .. } | Statement::For { .. } | Statement::ForC { .. }
+        );
+        if in_loop {
+            self.loop_depth.set(self.loop_depth.get() + 1);
+        }
+        let outer = self.cur_stmt.replace(super::go_select::addr(s));
+        self.stmt_inner(s, out);
+        self.cur_stmt.set(outer);
+        if in_loop {
+            self.loop_depth.set(self.loop_depth.get() - 1);
+        }
+    }
+
+    /// A stream frame outside a loop, storing to no handle field.
+    fn select_free(&self) -> bool {
+        self.float_selects.get() && self.loop_depth.get() == 0 && !self.store_target.borrow().as_ref().is_some_and(|v| self.carried.borrow().contains(v))
+    }
+
+    /// Whether the real pick `cond ? t : f`, stored to `target`, renders
+    /// through `selF`, by the rule in [`super::go_select`].
+    fn pick_free(&self, cond: &Expr, t: &Expr, f: &Expr, target: Option<&str>) -> bool {
+        if !self.float_selects.get() || self.loop_depth.get() > 0 || !super::go_select::data_driven(cond) {
+            return false;
+        }
+        let scan = self.scan.borrow();
+        if target.is_some_and(|v| self.carried.borrow().contains(v) && scan.chains.get(v) != Some(&1)) {
+            return false;
+        }
+        !scan.around.get(&self.cur_stmt.get()).is_some_and(|a| a.guard(cond, t, f, target) || a.retest(cond))
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn stmt_inner(&self, s: &Statement, out: &mut Vec<String>) {
         match s {
             Statement::VarDecl { var_type, name, init } => {
                 out.push(format!("var {} {}", go_ident(name), var_go_type(var_type)));
@@ -1007,7 +1144,9 @@ impl<'a> Ctx<'a> {
                     let (init, hoisted) = self.hoist(init);
                     self.render_hoisted(&hoisted, out);
                     let mut sc = Scope::default();
+                    *self.store_target.borrow_mut() = Some(name.clone());
                     let v = self.store_value(&Expr::Var(name.clone()), CType::of_var_type(var_type), &init, &mut sc);
+                    *self.store_target.borrow_mut() = None;
                     out.extend(sc.pre);
                     out.push(format!("{} = {}", go_ident(name), v.render()));
                     out.extend(sc.post);
@@ -1190,6 +1329,9 @@ impl<'a> Ctx<'a> {
         }
         let (condition, _) = super::builtins::strip_unlikely(condition);
         self.check_steps(&[condition]);
+        if self.if_as_select(condition, then_body, else_body, out) {
+            return;
+        }
         let (condition, hoisted) = self.hoist(condition);
         self.render_hoisted(&hoisted, out);
         let mut sc = Scope::default();
@@ -1225,6 +1367,53 @@ impl<'a> Ctx<'a> {
         out.push("} else {".to_string());
         out.extend(indented(&self.block(else_body)));
         out.push("}".to_string());
+    }
+
+    /// `if c { v = a } [else { v = b }]` over a real local or field `v`, as
+    /// `v = selF(c, a, b-or-v)`, when both values are [`select_arm`]s.
+    fn if_as_select(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], out: &mut Vec<String>) -> bool {
+        let one = |body: &[Statement]| -> Option<(String, Expr)> {
+            let code: Vec<&Statement> = body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+            match code.as_slice() {
+                [Statement::Assign { target: Expr::Var(v), value, compound: false }] if select_arm(value) => Some((v.clone(), value.clone())),
+                _ => None,
+            }
+        };
+        let Some((var, then_value)) = one(then_body) else { return false };
+        let else_value = if else_body.is_empty() {
+            Expr::Var(var.clone())
+        } else {
+            match one(else_body) {
+                Some((v, e)) if v == var => e,
+                _ => return false,
+            }
+        };
+        if !self.pick_free(condition, &then_value, &else_value, Some(&var)) {
+            return false;
+        }
+        let (condition, hoisted) = self.hoist(condition);
+        if !hoisted.is_empty() {
+            return false;
+        }
+        let target = Expr::Var(var);
+        let mut sc = Scope::default();
+        let (t, tt) = self.target(&target, &mut sc);
+        if tt != CType::Real || !sc.is_empty() {
+            return false;
+        }
+        let c = self.cond(&condition, &mut sc);
+        if !sc.post.is_empty() {
+            return false;
+        }
+        let mut vs = Scope::default();
+        let a = self.store_value(&target, tt, &then_value, &mut vs);
+        let b = self.store_value(&target, tt, &else_value, &mut vs);
+        if !vs.is_empty() {
+            return false;
+        }
+        out.extend(sc.pre);
+        out.push(format!("{} = {}", t.render(), GExpr::call("selF", vec![strip_paren(c), a, b]).render()));
+        true
     }
 
     fn return_stmt(&self, value: Option<&Expr>, out: &mut Vec<String>) {
@@ -1308,10 +1497,15 @@ impl<'a> Ctx<'a> {
         let value = if fma::EMIT_FMA { fma::canonicalize_accumulator_add(target, &value) } else { value };
         self.render_hoisted(&hoisted, out);
         let mut sc = Scope::default();
+        *self.store_target.borrow_mut() = match target {
+            Expr::Var(v) => Some(v.clone()),
+            _ => None,
+        };
         if compound {
             if let (Expr::Var(tname), Expr::BinOp(left, op, right)) = (target, &value) {
                 if matches!(left.as_ref(), Expr::Var(l) if l == tname) {
                     if let Some(line) = self.compound(target, op, right, &mut sc) {
+                        *self.store_target.borrow_mut() = None;
                         out.extend(sc.pre);
                         out.push(line);
                         out.extend(sc.post);
@@ -1322,6 +1516,7 @@ impl<'a> Ctx<'a> {
         }
         let (t, tt) = self.target(target, &mut sc);
         let v = self.store_value(target, tt, &value, &mut sc);
+        *self.store_target.borrow_mut() = None;
         out.extend(sc.pre);
         out.push(format!("{} = {}", t.render(), v.render()));
         out.extend(sc.post);
@@ -1783,6 +1978,17 @@ pub(super) fn emit_candle_unpacking(settings: &BTreeSet<String>) -> Vec<String> 
         out.push(format!("{s}_factor := {at}.Factor"));
     }
     out
+}
+
+/// A value both arms of a branch-free select may compute unconditionally:
+/// nothing that can panic, divide, call, or fuse into a multiply-add.
+fn select_arm(e: &Expr) -> bool {
+    let leaf = |e: &Expr| matches!(e, Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_));
+    match e {
+        Expr::Neg(x) => leaf(x),
+        Expr::BinOp(l, BinOp::Add | BinOp::Sub, r) => leaf(l) && leaf(r),
+        other => leaf(other),
+    }
 }
 
 pub(super) fn func_text(sig: &str, lines: &[String]) -> String {

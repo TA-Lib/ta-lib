@@ -678,18 +678,130 @@ func (sp *STCStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	stcStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempReal float64
+	var lineValue float64
+	var lowest float64
+	var highest float64
+	var range_ float64
+	var sufHi float64
+	var sufLo float64
+	var i int32
+	var cb_lineRing []float64
+	var cb_lineSufHi []float64
+	var cb_lineSufLo []float64
+	var cb_pfRing []float64
+	var cb_pfSufHi []float64
+	var cb_pfSufLo []float64
+	tempReal = inReal
+	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
+	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
+	lineValue = sp.prevFast - sp.prevSlow
+	sp.cb_lineRing[sp.lineRing_Idx] = lineValue
+	if sp.lineRing_Idx == 0 {
+		sp.lineHi = lineValue
+		sp.lineLo = lineValue
+	} else {
+		sp.lineHi = selF(lineValue > sp.lineHi, lineValue, sp.lineHi)
+		sp.lineLo = selF(lineValue < sp.lineLo, lineValue, sp.lineLo)
+	}
+	highest = sp.lineHi
+	lowest = sp.lineLo
+	if sp.lineRing_Idx < sp.lastIdx {
+		tempReal = sp.cb_lineSufHi[sp.lineRing_Idx+1]
+		highest = selF(tempReal > highest, tempReal, highest)
+		tempReal = sp.cb_lineSufLo[sp.lineRing_Idx+1]
+		lowest = selF(tempReal < lowest, tempReal, lowest)
+	}
+	sp.lineRing_Idx = sp.lineRing_Idx + 1
+	if sp.lineRing_Idx > sp.maxIdx_lineRing {
+		sp.lineRing_Idx = 0
+	}
+	if sp.lineRing_Idx == 0 {
+		sufHi = sp.cb_lineRing[sp.lastIdx]
+		sufLo = sufHi
+		sp.cb_lineSufHi[sp.lastIdx] = sufHi
+		sp.cb_lineSufLo[sp.lastIdx] = sufLo
+		i = sp.lastIdx
+		cb_lineRing = sp.cb_lineRing
+		cb_lineSufHi = sp.cb_lineSufHi
+		cb_lineSufLo = sp.cb_lineSufLo
+		for i > 0 {
+			i -= 1
+			tempReal = cb_lineRing[i]
+			if tempReal > sufHi {
+				sufHi = tempReal
+			}
+			if tempReal < sufLo {
+				sufLo = tempReal
+			}
+			cb_lineSufHi[i] = sufHi
+			cb_lineSufLo[i] = sufLo
+		}
+	}
+	range_ = highest - lowest
+	if range_ > 0.0 {
+		sp.frac1 = float64((lineValue - lowest) / range_ * 100.0)
+	}
+	sp.pf = math.FMA(0.5, sp.frac1-sp.pf, sp.pf)
+	sp.cb_pfRing[sp.pfRing_Idx] = sp.pf
+	if sp.pfRing_Idx == 0 {
+		sp.pfHi = sp.pf
+		sp.pfLo = sp.pf
+	} else {
+		sp.pfHi = selF(sp.pf > sp.pfHi, sp.pf, sp.pfHi)
+		sp.pfLo = selF(sp.pf < sp.pfLo, sp.pf, sp.pfLo)
+	}
+	highest = sp.pfHi
+	lowest = sp.pfLo
+	if sp.pfRing_Idx < sp.lastIdx {
+		tempReal = sp.cb_pfSufHi[sp.pfRing_Idx+1]
+		highest = selF(tempReal > highest, tempReal, highest)
+		tempReal = sp.cb_pfSufLo[sp.pfRing_Idx+1]
+		lowest = selF(tempReal < lowest, tempReal, lowest)
+	}
+	sp.pfRing_Idx = sp.pfRing_Idx + 1
+	if sp.pfRing_Idx > sp.maxIdx_pfRing {
+		sp.pfRing_Idx = 0
+	}
+	if sp.pfRing_Idx == 0 {
+		sufHi = sp.cb_pfRing[sp.lastIdx]
+		sufLo = sufHi
+		sp.cb_pfSufHi[sp.lastIdx] = sufHi
+		sp.cb_pfSufLo[sp.lastIdx] = sufLo
+		i = sp.lastIdx
+		cb_pfRing = sp.cb_pfRing
+		cb_pfSufHi = sp.cb_pfSufHi
+		cb_pfSufLo = sp.cb_pfSufLo
+		for i > 0 {
+			i -= 1
+			tempReal = cb_pfRing[i]
+			if tempReal > sufHi {
+				sufHi = tempReal
+			}
+			if tempReal < sufLo {
+				sufLo = tempReal
+			}
+			cb_pfSufHi[i] = sufHi
+			cb_pfSufLo[i] = sufLo
+		}
+	}
+	range_ = highest - lowest
+	if range_ > 0.0 {
+		sp.frac2 = float64((sp.pf - lowest) / range_ * 100.0)
+	}
+	sp.pff = math.FMA(0.5, sp.frac2-sp.pff, sp.pff)
+	sp.cur_outReal = sp.pff
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *STCStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -700,6 +812,8 @@ func (sp *STCStream) Peek(inReal float64) (float64, error) {
 	var sufHi float64
 	var sufLo float64
 	var i int32
+	var cb_lineRing []float64
+	var cb_pfRing []float64
 	var cur_outReal float64
 	frac1 := sp.frac1
 	frac2 := sp.frac2
@@ -727,24 +841,16 @@ func (sp *STCStream) Peek(inReal float64) (float64, error) {
 		lineHi = lineValue
 		lineLo = lineValue
 	} else {
-		if lineValue > lineHi {
-			lineHi = lineValue
-		}
-		if lineValue < lineLo {
-			lineLo = lineValue
-		}
+		lineHi = selF(lineValue > lineHi, lineValue, lineHi)
+		lineLo = selF(lineValue < lineLo, lineValue, lineLo)
 	}
 	highest = lineHi
 	lowest = lineLo
 	if lineRing_Idx < sp.lastIdx {
 		tempReal = sp.cb_lineSufHi[lineRing_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
+		highest = selF(tempReal > highest, tempReal, highest)
 		tempReal = sp.cb_lineSufLo[lineRing_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
+		lowest = selF(tempReal < lowest, tempReal, lowest)
 	}
 	lineRing_Idx = lineRing_Idx + 1
 	if lineRing_Idx > sp.maxIdx_lineRing {
@@ -760,11 +866,12 @@ func (sp *STCStream) Peek(inReal float64) (float64, error) {
 		sufHi = _T0
 		sufLo = sufHi
 		i = sp.lastIdx
+		cb_lineRing = sp.cb_lineRing
 		for i > 0 {
 			i -= 1
 			var _T1 float64
 			if i != pkSlot0 {
-				_T1 = sp.cb_lineRing[i]
+				_T1 = cb_lineRing[i]
 			} else {
 				_T1 = pkVal0
 			}
@@ -788,24 +895,16 @@ func (sp *STCStream) Peek(inReal float64) (float64, error) {
 		pfHi = pf
 		pfLo = pf
 	} else {
-		if pf > pfHi {
-			pfHi = pf
-		}
-		if pf < pfLo {
-			pfLo = pf
-		}
+		pfHi = selF(pf > pfHi, pf, pfHi)
+		pfLo = selF(pf < pfLo, pf, pfLo)
 	}
 	highest = pfHi
 	lowest = pfLo
 	if pfRing_Idx < sp.lastIdx {
 		tempReal = sp.cb_pfSufHi[pfRing_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
+		highest = selF(tempReal > highest, tempReal, highest)
 		tempReal = sp.cb_pfSufLo[pfRing_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
+		lowest = selF(tempReal < lowest, tempReal, lowest)
 	}
 	pfRing_Idx = pfRing_Idx + 1
 	if pfRing_Idx > sp.maxIdx_pfRing {
@@ -821,11 +920,12 @@ func (sp *STCStream) Peek(inReal float64) (float64, error) {
 		sufHi = _T2
 		sufLo = sufHi
 		i = sp.lastIdx
+		cb_pfRing = sp.cb_pfRing
 		for i > 0 {
 			i -= 1
 			var _T3 float64
 			if i != pkSlot1 {
-				_T3 = sp.cb_pfRing[i]
+				_T3 = cb_pfRing[i]
 			} else {
 				_T3 = pkVal1
 			}
@@ -863,126 +963,6 @@ func (sp *STCStream) Clone() *STCStream {
 	cl.cb_pfSufHi = append(sp.cb_pfSufHi[:0:0], sp.cb_pfSufHi...)
 	cl.cb_pfSufLo = append(sp.cb_pfSufLo[:0:0], sp.cb_pfSufLo...)
 	return &cl
-}
-
-func stcStepImpl(sp *STCStream, inReal float64) {
-	var tempReal float64
-	var lineValue float64
-	var lowest float64
-	var highest float64
-	var range_ float64
-	var sufHi float64
-	var sufLo float64
-	var i int32
-	tempReal = inReal
-	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
-	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
-	lineValue = sp.prevFast - sp.prevSlow
-	sp.cb_lineRing[sp.lineRing_Idx] = lineValue
-	if sp.lineRing_Idx == 0 {
-		sp.lineHi = lineValue
-		sp.lineLo = lineValue
-	} else {
-		if lineValue > sp.lineHi {
-			sp.lineHi = lineValue
-		}
-		if lineValue < sp.lineLo {
-			sp.lineLo = lineValue
-		}
-	}
-	highest = sp.lineHi
-	lowest = sp.lineLo
-	if sp.lineRing_Idx < sp.lastIdx {
-		tempReal = sp.cb_lineSufHi[sp.lineRing_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
-		tempReal = sp.cb_lineSufLo[sp.lineRing_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
-	}
-	sp.lineRing_Idx = sp.lineRing_Idx + 1
-	if sp.lineRing_Idx > sp.maxIdx_lineRing {
-		sp.lineRing_Idx = 0
-	}
-	if sp.lineRing_Idx == 0 {
-		sufHi = sp.cb_lineRing[sp.lastIdx]
-		sufLo = sufHi
-		sp.cb_lineSufHi[sp.lastIdx] = sufHi
-		sp.cb_lineSufLo[sp.lastIdx] = sufLo
-		i = sp.lastIdx
-		for i > 0 {
-			i -= 1
-			tempReal = sp.cb_lineRing[i]
-			if tempReal > sufHi {
-				sufHi = tempReal
-			}
-			if tempReal < sufLo {
-				sufLo = tempReal
-			}
-			sp.cb_lineSufHi[i] = sufHi
-			sp.cb_lineSufLo[i] = sufLo
-		}
-	}
-	range_ = highest - lowest
-	if range_ > 0.0 {
-		sp.frac1 = float64((lineValue - lowest) / range_ * 100.0)
-	}
-	sp.pf = math.FMA(0.5, sp.frac1-sp.pf, sp.pf)
-	sp.cb_pfRing[sp.pfRing_Idx] = sp.pf
-	if sp.pfRing_Idx == 0 {
-		sp.pfHi = sp.pf
-		sp.pfLo = sp.pf
-	} else {
-		if sp.pf > sp.pfHi {
-			sp.pfHi = sp.pf
-		}
-		if sp.pf < sp.pfLo {
-			sp.pfLo = sp.pf
-		}
-	}
-	highest = sp.pfHi
-	lowest = sp.pfLo
-	if sp.pfRing_Idx < sp.lastIdx {
-		tempReal = sp.cb_pfSufHi[sp.pfRing_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
-		tempReal = sp.cb_pfSufLo[sp.pfRing_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
-	}
-	sp.pfRing_Idx = sp.pfRing_Idx + 1
-	if sp.pfRing_Idx > sp.maxIdx_pfRing {
-		sp.pfRing_Idx = 0
-	}
-	if sp.pfRing_Idx == 0 {
-		sufHi = sp.cb_pfRing[sp.lastIdx]
-		sufLo = sufHi
-		sp.cb_pfSufHi[sp.lastIdx] = sufHi
-		sp.cb_pfSufLo[sp.lastIdx] = sufLo
-		i = sp.lastIdx
-		for i > 0 {
-			i -= 1
-			tempReal = sp.cb_pfRing[i]
-			if tempReal > sufHi {
-				sufHi = tempReal
-			}
-			if tempReal < sufLo {
-				sufLo = tempReal
-			}
-			sp.cb_pfSufHi[i] = sufHi
-			sp.cb_pfSufLo[i] = sufLo
-		}
-	}
-	range_ = highest - lowest
-	if range_ > 0.0 {
-		sp.frac2 = float64((sp.pf - lowest) / range_ * 100.0)
-	}
-	sp.pff = math.FMA(0.5, sp.frac2-sp.pff, sp.pff)
-	sp.cur_outReal = sp.pff
 }
 
 func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

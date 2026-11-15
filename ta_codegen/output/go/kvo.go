@@ -445,11 +445,41 @@ func (sp *KVOStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, 
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, 0, BadParam
 	}
-	kvoStepImpl(sp, inHigh, inLow, inClose, inVolume)
 	sp.outRangeCount++
+	var hlc float64
+	var dmToday float64
+	var vf float64
+	var trend float64
+	var kvoValue float64
+	hlc = inHigh + inLow + inClose
+	dmToday = inHigh - inLow
+	if hlc > sp.prevHlc {
+		trend = 1.0
+	} else {
+		trend = selF(hlc < sp.prevHlc, -1.0, sp.prevTrend)
+	}
+	if trend != sp.prevTrend {
+		sp.cm = sp.prevDm + dmToday
+	} else {
+		sp.cm = sp.cm + dmToday
+	}
+	if sp.cm == 0.0 {
+		vf = 0.0
+	} else {
+		vf = float64(float64(float64(inVolume*math.Abs(float64(2.0*(dmToday/sp.cm))-1.0))*100.0) * trend)
+	}
+	sp.emaFast = math.FMA(sp.betaFast, sp.emaFast, float64(sp.kFast*vf))
+	sp.emaSlow = math.FMA(sp.betaSlow, sp.emaSlow, float64(sp.kSlow*vf))
+	kvoValue = sp.emaFast - sp.emaSlow
+	sp.signalValue = math.FMA(sp.betaSignal, sp.signalValue, float64(sp.kSignal*kvoValue))
+	sp.cur_outKVO = kvoValue
+	sp.cur_outKVOSignal = sp.signalValue
+	sp.prevHlc = hlc
+	sp.prevDm = dmToday
+	sp.prevTrend = trend
 	return sp.cur_outKVO, sp.cur_outKVOSignal, nil
 }
 
@@ -457,7 +487,7 @@ func (sp *KVOStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, 
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *KVOStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, 0, BadParam
 	}
 	var hlc float64
@@ -475,10 +505,8 @@ func (sp *KVOStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, fl
 	dmToday = inHigh - inLow
 	if hlc > sp.prevHlc {
 		trend = 1.0
-	} else if hlc < sp.prevHlc {
-		trend = -1.0
 	} else {
-		trend = sp.prevTrend
+		trend = selF(hlc < sp.prevHlc, -1.0, sp.prevTrend)
 	}
 	if trend != sp.prevTrend {
 		cm = sp.prevDm + dmToday
@@ -510,42 +538,6 @@ func (sp *KVOStream) Value() (float64, float64) {
 func (sp *KVOStream) Clone() *KVOStream {
 	cl := *sp
 	return &cl
-}
-
-func kvoStepImpl(sp *KVOStream, inHigh, inLow, inClose, inVolume float64) {
-	var hlc float64
-	var dmToday float64
-	var vf float64
-	var trend float64
-	var kvoValue float64
-	hlc = inHigh + inLow + inClose
-	dmToday = inHigh - inLow
-	if hlc > sp.prevHlc {
-		trend = 1.0
-	} else if hlc < sp.prevHlc {
-		trend = -1.0
-	} else {
-		trend = sp.prevTrend
-	}
-	if trend != sp.prevTrend {
-		sp.cm = sp.prevDm + dmToday
-	} else {
-		sp.cm = sp.cm + dmToday
-	}
-	if sp.cm == 0.0 {
-		vf = 0.0
-	} else {
-		vf = float64(float64(float64(inVolume*math.Abs(float64(2.0*(dmToday/sp.cm))-1.0))*100.0) * trend)
-	}
-	sp.emaFast = math.FMA(sp.betaFast, sp.emaFast, float64(sp.kFast*vf))
-	sp.emaSlow = math.FMA(sp.betaSlow, sp.emaSlow, float64(sp.kSlow*vf))
-	kvoValue = sp.emaFast - sp.emaSlow
-	sp.signalValue = math.FMA(sp.betaSignal, sp.signalValue, float64(sp.kSignal*kvoValue))
-	sp.cur_outKVO = kvoValue
-	sp.cur_outKVOSignal = sp.signalValue
-	sp.prevHlc = hlc
-	sp.prevDm = dmToday
-	sp.prevTrend = trend
 }
 
 func (c *Core) kvoOpenImpl(sp *KVOStream, inHigh, inLow, inClose, inVolume []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outKVO, outKVOSignal []float64, outStride int32) RetCode {

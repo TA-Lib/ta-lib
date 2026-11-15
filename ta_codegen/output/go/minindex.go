@@ -246,21 +246,63 @@ func (sp *MININDEXStream) Update(inReal float64) (int32, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	minindexStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tmp float64
+	var i int32
+	var lowest float64
+	var lowestIdx int32
+	var today int32
+	var xMask int32
+	var x_inReal []float64
+	sp.x_inReal[sp.today&sp.xMask] = inReal
+	tmp = sp.x_inReal[sp.today&sp.xMask]
+	if sp.lowestIdx < sp.trailingIdx {
+		sp.lowestIdx = sp.trailingIdx
+		sp.lowest = sp.x_inReal[sp.lowestIdx&sp.xMask]
+		sp.i = sp.lowestIdx
+		i = sp.i
+		lowest = sp.lowest
+		lowestIdx = sp.lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmp = x_inReal[i&xMask]
+			if tmp <= lowest {
+				lowestIdx = i
+				lowest = tmp
+			}
+		}
+		sp.i = i
+		sp.lowest = lowest
+		sp.lowestIdx = lowestIdx
+	} else if tmp <= sp.lowest {
+		sp.lowestIdx = sp.today
+		sp.lowest = tmp
+	}
+	sp.cur_outInteger = sp.lowestIdx
+	sp.trailingIdx += 1
+	sp.today += 1
 	return sp.cur_outInteger, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MININDEXStream) Peek(inReal float64) (int32, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tmp float64
+	var today int32
+	var xMask int32
+	var x_inReal []float64
 	var cur_outInteger int32
 	i := sp.i
 	lowest := sp.lowest
@@ -286,14 +328,17 @@ func (sp *MININDEXStream) Peek(inReal float64) (int32, error) {
 		}
 		lowest = _T1
 		i = lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T2 float64
-			if i&sp.xMask != pkSlot0 {
-				_T2 = sp.x_inReal[i&sp.xMask]
+			if i&xMask != pkSlot0 {
+				_T2 = x_inReal[i&xMask]
 			} else {
 				_T2 = pkVal0
 			}
@@ -322,34 +367,6 @@ func (sp *MININDEXStream) Clone() *MININDEXStream {
 	cl := *sp
 	cl.x_inReal = append(sp.x_inReal[:0:0], sp.x_inReal...)
 	return &cl
-}
-
-func minindexStepImpl(sp *MININDEXStream, inReal float64) {
-	var tmp float64
-	sp.x_inReal[sp.today&sp.xMask] = inReal
-	tmp = sp.x_inReal[sp.today&sp.xMask]
-	if sp.lowestIdx < sp.trailingIdx {
-		sp.lowestIdx = sp.trailingIdx
-		sp.lowest = sp.x_inReal[sp.lowestIdx&sp.xMask]
-		sp.i = sp.lowestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmp = sp.x_inReal[sp.i&sp.xMask]
-			if tmp <= sp.lowest {
-				sp.lowestIdx = sp.i
-				sp.lowest = tmp
-			}
-		}
-	} else if tmp <= sp.lowest {
-		sp.lowestIdx = sp.today
-		sp.lowest = tmp
-	}
-	sp.cur_outInteger = sp.lowestIdx
-	sp.trailingIdx += 1
-	sp.today += 1
 }
 
 func (c *Core) minindexOpenImpl(sp *MININDEXStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {

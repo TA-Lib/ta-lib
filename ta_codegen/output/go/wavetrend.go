@@ -436,11 +436,41 @@ func (sp *WAVETRENDStream) Update(inHigh, inLow, inClose float64) (float64, floa
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
-	wavetrendStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var ap float64
+	var dev float64
+	var ci float64
+	var num float64
+	var scaledDev float64
+	ap = (inHigh + inLow + inClose) / 3.0
+	sp.esa = math.FMA(sp.beta1, sp.esa, float64(sp.k1*ap))
+	num = ap - sp.esa
+	if ap == sp.prevAp && sp.esa == sp.prevEsa {
+		num = 0.0
+	}
+	dev = math.Abs(num)
+	sp.d = math.FMA(sp.beta1, sp.d, float64(sp.k1*dev))
+	scaledDev = float64(0.015 * sp.d)
+	if scaledDev > 0.0 {
+		ci = num / scaledDev
+	} else {
+		ci = 0.0
+	}
+	sp.wt1 = math.FMA(sp.beta2, sp.wt1, float64(sp.k2*ci))
+	sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1
+	sp.sumSignal = sp.sumSignal + sp.wt1
+	sp.cur_outWT1 = sp.wt1
+	sp.cur_outWT2 = sp.sumSignal / float64(sp.optInSignalPeriod)
+	sp.wtBuffer_Idx = sp.wtBuffer_Idx + 1
+	if sp.wtBuffer_Idx > sp.maxIdx_wtBuffer {
+		sp.wtBuffer_Idx = 0
+	}
+	sp.sumSignal = sp.sumSignal - sp.cb_wtBuffer[sp.wtBuffer_Idx]
+	sp.prevAp = ap
+	sp.prevEsa = sp.esa
 	return sp.cur_outWT1, sp.cur_outWT2, nil
 }
 
@@ -448,7 +478,7 @@ func (sp *WAVETRENDStream) Update(inHigh, inLow, inClose float64) (float64, floa
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *WAVETRENDStream) Peek(inHigh, inLow, inClose float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
 	var ap float64
@@ -495,40 +525,6 @@ func (sp *WAVETRENDStream) Clone() *WAVETRENDStream {
 	cl := *sp
 	cl.cb_wtBuffer = append(sp.cb_wtBuffer[:0:0], sp.cb_wtBuffer...)
 	return &cl
-}
-
-func wavetrendStepImpl(sp *WAVETRENDStream, inHigh, inLow, inClose float64) {
-	var ap float64
-	var dev float64
-	var ci float64
-	var num float64
-	var scaledDev float64
-	ap = (inHigh + inLow + inClose) / 3.0
-	sp.esa = math.FMA(sp.beta1, sp.esa, float64(sp.k1*ap))
-	num = ap - sp.esa
-	if ap == sp.prevAp && sp.esa == sp.prevEsa {
-		num = 0.0
-	}
-	dev = math.Abs(num)
-	sp.d = math.FMA(sp.beta1, sp.d, float64(sp.k1*dev))
-	scaledDev = float64(0.015 * sp.d)
-	if scaledDev > 0.0 {
-		ci = num / scaledDev
-	} else {
-		ci = 0.0
-	}
-	sp.wt1 = math.FMA(sp.beta2, sp.wt1, float64(sp.k2*ci))
-	sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1
-	sp.sumSignal = sp.sumSignal + sp.wt1
-	sp.cur_outWT1 = sp.wt1
-	sp.cur_outWT2 = sp.sumSignal / float64(sp.optInSignalPeriod)
-	sp.wtBuffer_Idx = sp.wtBuffer_Idx + 1
-	if sp.wtBuffer_Idx > sp.maxIdx_wtBuffer {
-		sp.wtBuffer_Idx = 0
-	}
-	sp.sumSignal = sp.sumSignal - sp.cb_wtBuffer[sp.wtBuffer_Idx]
-	sp.prevAp = ap
-	sp.prevEsa = sp.esa
 }
 
 func (c *Core) wavetrendOpenImpl(sp *WAVETRENDStream, inHigh, inLow, inClose []float64, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outWT1, outWT2 []float64, outStride int32) RetCode {

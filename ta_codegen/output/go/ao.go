@@ -276,50 +276,10 @@ func (sp *AOStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	aoStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
-	return sp.cur_outReal, nil
-}
-
-// Peek returns what Update would return for the bar (inHigh and inLow),
-// changing nothing. It returns [BadParam] for a bar value that is not finite.
-func (sp *AOStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
-		return 0, BadParam
-	}
-	var medianPrice float64
-	var tempReal float64
-	var cur_outReal float64
-	sumFast := sp.sumFast
-	sumSlow := sp.sumSlow
-	medianPrice = (inHigh + inLow) / 2.0
-	sumFast += medianPrice
-	sumSlow += medianPrice
-	tempReal = sumFast/float64(sp.optInFastPeriod) - sumSlow/float64(sp.optInSlowPeriod)
-	sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx]
-	sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx]
-	cur_outReal = tempReal
-	return cur_outReal, nil
-}
-
-// Value returns the value at the last bar of OutRange; Peek does not change it.
-func (sp *AOStream) Value() float64 {
-	return sp.cur_outReal
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *AOStream) Clone() *AOStream {
-	cl := *sp
-	cl.ring_trailingFastIdx_derived = append(sp.ring_trailingFastIdx_derived[:0:0], sp.ring_trailingFastIdx_derived...)
-	cl.ring_trailingSlowIdx_derived = append(sp.ring_trailingSlowIdx_derived[:0:0], sp.ring_trailingSlowIdx_derived...)
-	return &cl
-}
-
-func aoStepImpl(sp *AOStream, inHigh, inLow float64) {
 	var medianPrice float64
 	var tempReal float64
 	var ringPosL_trailingFastIdx int32
@@ -349,6 +309,42 @@ func aoStepImpl(sp *AOStream, inHigh, inLow float64) {
 		ringPosL_trailingSlowIdx = 0
 	}
 	sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx
+	return sp.cur_outReal, nil
+}
+
+// Peek returns what Update would return for the bar (inHigh and inLow),
+// changing nothing. It returns [BadParam] for a bar value that is not finite.
+func (sp *AOStream) Peek(inHigh, inLow float64) (float64, error) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
+		return 0, BadParam
+	}
+	var medianPrice float64
+	var tempReal float64
+	var cur_outReal float64
+	sumFast := sp.sumFast
+	sumSlow := sp.sumSlow
+	medianPrice = (inHigh + inLow) / 2.0
+	sumFast += medianPrice
+	sumSlow += medianPrice
+	tempReal = sumFast/float64(sp.optInFastPeriod) - sumSlow/float64(sp.optInSlowPeriod)
+	sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx]
+	sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx]
+	cur_outReal = tempReal
+	return cur_outReal, nil
+}
+
+// Value returns the value at the last bar of OutRange; Peek does not change it.
+func (sp *AOStream) Value() float64 {
+	return sp.cur_outReal
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *AOStream) Clone() *AOStream {
+	cl := *sp
+	cl.ring_trailingFastIdx_derived = append(sp.ring_trailingFastIdx_derived[:0:0], sp.ring_trailingFastIdx_derived...)
+	cl.ring_trailingSlowIdx_derived = append(sp.ring_trailingSlowIdx_derived[:0:0], sp.ring_trailingSlowIdx_derived...)
+	return &cl
 }
 
 func (c *Core) aoOpenImpl(sp *AOStream, inHigh, inLow []float64, startIdx, optInFastPeriod, optInSlowPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

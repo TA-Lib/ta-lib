@@ -300,11 +300,52 @@ func (sp *ACCBANDSStream) Update(inHigh, inLow, inClose float64) (float64, float
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	accbandsStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tempUpper float64
+	var tempMiddle float64
+	var tempLower float64
+	var tempReal float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	tempReal = inHigh + inLow
+	if !isZeroScaled(tempReal, math.Abs(inHigh)+math.Abs(inLow)) {
+		tempReal = float64(4.0*(inHigh-inLow)) / tempReal
+		sp.periodTotalUpper += float64(inHigh * (1.0 + tempReal))
+		sp.periodTotalLower += float64(inLow * (1.0 - tempReal))
+	} else {
+		sp.periodTotalUpper += inHigh
+		sp.periodTotalLower += inLow
+	}
+	sp.periodTotalMiddle += inClose
+	tempUpper = sp.periodTotalUpper
+	tempMiddle = sp.periodTotalMiddle
+	tempLower = sp.periodTotalLower
+	tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]
+	if !isZeroScaled(tempReal, math.Abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx])+math.Abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx])) {
+		tempReal = float64(4.0*(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]-sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx])) / tempReal
+		sp.periodTotalUpper -= float64(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1.0 + tempReal))
+		sp.periodTotalLower -= float64(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1.0 - tempReal))
+	} else {
+		sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]
+		sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]
+	}
+	sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx]
+	sp.cur_outRealUpperBand = tempUpper / float64(sp.optInTimePeriod)
+	sp.cur_outRealMiddleBand = tempMiddle / float64(sp.optInTimePeriod)
+	sp.cur_outRealLowerBand = tempLower / float64(sp.optInTimePeriod)
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh
+	sp.ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow
+	sp.ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand, nil
 }
 
@@ -312,7 +353,7 @@ func (sp *ACCBANDSStream) Update(inHigh, inLow, inClose float64) (float64, float
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *ACCBANDSStream) Peek(inHigh, inLow, inClose float64) (float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var tempUpper float64
@@ -368,51 +409,6 @@ func (sp *ACCBANDSStream) Clone() *ACCBANDSStream {
 	cl.ring_trailingIdx_inLow = append(sp.ring_trailingIdx_inLow[:0:0], sp.ring_trailingIdx_inLow...)
 	cl.ring_trailingIdx_inClose = append(sp.ring_trailingIdx_inClose[:0:0], sp.ring_trailingIdx_inClose...)
 	return &cl
-}
-
-func accbandsStepImpl(sp *ACCBANDSStream, inHigh, inLow, inClose float64) {
-	var tempUpper float64
-	var tempMiddle float64
-	var tempLower float64
-	var tempReal float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	tempReal = inHigh + inLow
-	if !isZeroScaled(tempReal, math.Abs(inHigh)+math.Abs(inLow)) {
-		tempReal = float64(4.0*(inHigh-inLow)) / tempReal
-		sp.periodTotalUpper += float64(inHigh * (1.0 + tempReal))
-		sp.periodTotalLower += float64(inLow * (1.0 - tempReal))
-	} else {
-		sp.periodTotalUpper += inHigh
-		sp.periodTotalLower += inLow
-	}
-	sp.periodTotalMiddle += inClose
-	tempUpper = sp.periodTotalUpper
-	tempMiddle = sp.periodTotalMiddle
-	tempLower = sp.periodTotalLower
-	tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]
-	if !isZeroScaled(tempReal, math.Abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx])+math.Abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx])) {
-		tempReal = float64(4.0*(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]-sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx])) / tempReal
-		sp.periodTotalUpper -= float64(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1.0 + tempReal))
-		sp.periodTotalLower -= float64(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1.0 - tempReal))
-	} else {
-		sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]
-		sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]
-	}
-	sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx]
-	sp.cur_outRealUpperBand = tempUpper / float64(sp.optInTimePeriod)
-	sp.cur_outRealMiddleBand = tempMiddle / float64(sp.optInTimePeriod)
-	sp.cur_outRealLowerBand = tempLower / float64(sp.optInTimePeriod)
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh
-	sp.ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow
-	sp.ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) accbandsOpenImpl(sp *ACCBANDSStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outRealUpperBand, outRealMiddleBand, outRealLowerBand []float64, outStride int32) RetCode {

@@ -220,6 +220,16 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
 /// exactly as the emitter joins them, so an anchor here cannot drift off a
 /// renamed or re-ordered condition and start matching nothing.
 fn finite_test(lang: &str, bars: &[String]) -> String {
+    if lang == "go" {
+        let terms: Vec<String> = bars.iter().map(|b| {
+            let x = backends::go::go_ident(b);
+            format!("{x}-{x}")
+        }).collect();
+        return match terms.as_slice() {
+            [one] => format!("{one} != 0"),
+            many => format!("{} != 0", many.iter().map(|t| format!("({t})")).collect::<Vec<_>>().join("+")),
+        };
+    }
     let terms: Vec<String> = bars
         .iter()
         .map(|b| match lang {
@@ -228,7 +238,6 @@ fn finite_test(lang: &str, bars: &[String]) -> String {
             "java" => format!("!Double.isFinite({b})"),
             "csharp" => format!("!double.IsFinite({b})"),
             "ts" => format!("!Number.isFinite({})", backends::ts::input_param_name(b)),
-            "go" => format!("!isFinite({})", backends::go::go_ident(b)),
             other => panic!("unknown backend {other}"),
         })
         .collect();

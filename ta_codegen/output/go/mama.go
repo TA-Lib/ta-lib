@@ -595,150 +595,10 @@ func (sp *MAMAStream) Update(inReal float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	mamaStepImpl(sp, inReal)
 	sp.outRangeCount++
-	return sp.cur_outMAMA, sp.cur_outFAMA, nil
-}
-
-// Peek returns what Update would return for the bar inReal, changing nothing.
-// It returns [BadParam] for a bar value that is not finite.
-func (sp *MAMAStream) Peek(inReal float64) (float64, float64, error) {
-	if !isFinite(inReal) {
-		return 0, 0, BadParam
-	}
-	var tempReal float64
-	var tempReal2 float64
-	var adjustedPrevPeriod float64
-	var smoothedValue float64
-	var hilbertTempReal float64
-	var detrender float64
-	var Q1 float64
-	var todayValue float64
-	I1ForEvenPrev2 := sp.I1ForEvenPrev2
-	I1ForEvenPrev3 := sp.I1ForEvenPrev3
-	I1ForOddPrev2 := sp.I1ForOddPrev2
-	I1ForOddPrev3 := sp.I1ForOddPrev3
-	var cur_outFAMA float64
-	var cur_outMAMA float64
-	fama := sp.fama
-	hilbertIdx := sp.hilbertIdx
-	mama := sp.mama
-	periodWMASub := sp.periodWMASub
-	periodWMASum := sp.periodWMASum
-	prevPhase := sp.prevPhase
-	prev_Q1_Even := sp.prev_Q1_Even
-	prev_Q1_Odd := sp.prev_Q1_Odd
-	prev_Q1_input_Even := sp.prev_Q1_input_Even
-	prev_Q1_input_Odd := sp.prev_Q1_input_Odd
-	prev_detrender_Even := sp.prev_detrender_Even
-	prev_detrender_Odd := sp.prev_detrender_Odd
-	prev_detrender_input_Even := sp.prev_detrender_input_Even
-	prev_detrender_input_Odd := sp.prev_detrender_input_Odd
-	trailingWMAValue := sp.trailingWMAValue
-	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
-	todayValue = inReal
-	periodWMASub += todayValue
-	periodWMASub -= trailingWMAValue
-	periodWMASum += float64(todayValue * 4.0)
-	trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
-	smoothedValue = float64(periodWMASum * 0.1)
-	periodWMASum -= periodWMASub
-	if sp.streamParity == 0 {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Even[hilbertIdx]
-		detrender += hilbertTempReal
-		detrender -= prev_detrender_Even
-		prev_detrender_Even = float64(sp.b * prev_detrender_input_Even)
-		detrender += prev_detrender_Even
-		prev_detrender_input_Even = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Even[hilbertIdx]
-		Q1 += hilbertTempReal
-		Q1 -= prev_Q1_Even
-		prev_Q1_Even = float64(sp.b * prev_Q1_input_Even)
-		Q1 += prev_Q1_Even
-		prev_Q1_input_Even = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * I1ForEvenPrev3)
-		hilbertTempReal = float64(sp.a * Q1)
-		hilbertIdx++
-		if hilbertIdx == 3 {
-			hilbertIdx = 0
-		}
-		I1ForOddPrev3 = I1ForOddPrev2
-		I1ForOddPrev2 = detrender
-		if I1ForEvenPrev3 != 0.0 {
-			tempReal2 = float64(math.Atan(Q1/I1ForEvenPrev3) * sp.rad2Deg)
-		} else {
-			tempReal2 = 0.0
-		}
-	} else {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Odd[hilbertIdx]
-		detrender += hilbertTempReal
-		detrender -= prev_detrender_Odd
-		prev_detrender_Odd = float64(sp.b * prev_detrender_input_Odd)
-		detrender += prev_detrender_Odd
-		prev_detrender_input_Odd = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Odd[hilbertIdx]
-		Q1 += hilbertTempReal
-		Q1 -= prev_Q1_Odd
-		prev_Q1_Odd = float64(sp.b * prev_Q1_input_Odd)
-		Q1 += prev_Q1_Odd
-		prev_Q1_input_Odd = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * I1ForOddPrev3)
-		hilbertTempReal = float64(sp.a * Q1)
-		I1ForEvenPrev3 = I1ForEvenPrev2
-		I1ForEvenPrev2 = detrender
-		if I1ForOddPrev3 != 0.0 {
-			tempReal2 = float64(math.Atan(Q1/I1ForOddPrev3) * sp.rad2Deg)
-		} else {
-			tempReal2 = 0.0
-		}
-	}
-	tempReal = prevPhase - tempReal2
-	prevPhase = tempReal2
-	if tempReal < 1.0 {
-		tempReal = 1.0
-	}
-	if tempReal > 1.0 {
-		tempReal = sp.optInFastLimit / tempReal
-		if tempReal < sp.optInSlowLimit {
-			tempReal = sp.optInSlowLimit
-		}
-	} else {
-		tempReal = sp.optInFastLimit
-	}
-	mama = math.FMA(1.0-tempReal, mama, float64(tempReal*todayValue))
-	tempReal = float64(tempReal * 0.5)
-	fama = math.FMA(1.0-tempReal, fama, float64(tempReal*mama))
-	cur_outFAMA = fama
-	cur_outMAMA = mama
-	return cur_outMAMA, cur_outFAMA, nil
-}
-
-// Value returns the outputs at the last bar of OutRange, in Update's order;
-// Peek does not change them.
-func (sp *MAMAStream) Value() (float64, float64) {
-	return sp.cur_outMAMA, sp.cur_outFAMA
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *MAMAStream) Clone() *MAMAStream {
-	cl := *sp
-	cl.ring_trailingWMAIdx_inReal = append(sp.ring_trailingWMAIdx_inReal[:0:0], sp.ring_trailingWMAIdx_inReal...)
-	return &cl
-}
-
-func mamaStepImpl(sp *MAMAStream, inReal float64) {
 	var tempReal float64
 	var tempReal2 float64
 	var adjustedPrevPeriod float64
@@ -907,6 +767,142 @@ func mamaStepImpl(sp *MAMAStream, inReal float64) {
 	}
 	sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx
 	sp.streamParity = 1 - sp.streamParity
+	return sp.cur_outMAMA, sp.cur_outFAMA, nil
+}
+
+// Peek returns what Update would return for the bar inReal, changing nothing.
+// It returns [BadParam] for a bar value that is not finite.
+func (sp *MAMAStream) Peek(inReal float64) (float64, float64, error) {
+	if inReal-inReal != 0 {
+		return 0, 0, BadParam
+	}
+	var tempReal float64
+	var tempReal2 float64
+	var adjustedPrevPeriod float64
+	var smoothedValue float64
+	var hilbertTempReal float64
+	var detrender float64
+	var Q1 float64
+	var todayValue float64
+	I1ForEvenPrev2 := sp.I1ForEvenPrev2
+	I1ForEvenPrev3 := sp.I1ForEvenPrev3
+	I1ForOddPrev2 := sp.I1ForOddPrev2
+	I1ForOddPrev3 := sp.I1ForOddPrev3
+	var cur_outFAMA float64
+	var cur_outMAMA float64
+	fama := sp.fama
+	hilbertIdx := sp.hilbertIdx
+	mama := sp.mama
+	periodWMASub := sp.periodWMASub
+	periodWMASum := sp.periodWMASum
+	prevPhase := sp.prevPhase
+	prev_Q1_Even := sp.prev_Q1_Even
+	prev_Q1_Odd := sp.prev_Q1_Odd
+	prev_Q1_input_Even := sp.prev_Q1_input_Even
+	prev_Q1_input_Odd := sp.prev_Q1_input_Odd
+	prev_detrender_Even := sp.prev_detrender_Even
+	prev_detrender_Odd := sp.prev_detrender_Odd
+	prev_detrender_input_Even := sp.prev_detrender_input_Even
+	prev_detrender_input_Odd := sp.prev_detrender_input_Odd
+	trailingWMAValue := sp.trailingWMAValue
+	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
+	todayValue = inReal
+	periodWMASub += todayValue
+	periodWMASub -= trailingWMAValue
+	periodWMASum += float64(todayValue * 4.0)
+	trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
+	smoothedValue = float64(periodWMASum * 0.1)
+	periodWMASum -= periodWMASub
+	if sp.streamParity == 0 {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Even[hilbertIdx]
+		detrender += hilbertTempReal
+		detrender -= prev_detrender_Even
+		prev_detrender_Even = float64(sp.b * prev_detrender_input_Even)
+		detrender += prev_detrender_Even
+		prev_detrender_input_Even = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Even[hilbertIdx]
+		Q1 += hilbertTempReal
+		Q1 -= prev_Q1_Even
+		prev_Q1_Even = float64(sp.b * prev_Q1_input_Even)
+		Q1 += prev_Q1_Even
+		prev_Q1_input_Even = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * I1ForEvenPrev3)
+		hilbertTempReal = float64(sp.a * Q1)
+		hilbertIdx++
+		if hilbertIdx == 3 {
+			hilbertIdx = 0
+		}
+		I1ForOddPrev3 = I1ForOddPrev2
+		I1ForOddPrev2 = detrender
+		if I1ForEvenPrev3 != 0.0 {
+			tempReal2 = float64(math.Atan(Q1/I1ForEvenPrev3) * sp.rad2Deg)
+		} else {
+			tempReal2 = 0.0
+		}
+	} else {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Odd[hilbertIdx]
+		detrender += hilbertTempReal
+		detrender -= prev_detrender_Odd
+		prev_detrender_Odd = float64(sp.b * prev_detrender_input_Odd)
+		detrender += prev_detrender_Odd
+		prev_detrender_input_Odd = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Odd[hilbertIdx]
+		Q1 += hilbertTempReal
+		Q1 -= prev_Q1_Odd
+		prev_Q1_Odd = float64(sp.b * prev_Q1_input_Odd)
+		Q1 += prev_Q1_Odd
+		prev_Q1_input_Odd = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * I1ForOddPrev3)
+		hilbertTempReal = float64(sp.a * Q1)
+		I1ForEvenPrev3 = I1ForEvenPrev2
+		I1ForEvenPrev2 = detrender
+		if I1ForOddPrev3 != 0.0 {
+			tempReal2 = float64(math.Atan(Q1/I1ForOddPrev3) * sp.rad2Deg)
+		} else {
+			tempReal2 = 0.0
+		}
+	}
+	tempReal = prevPhase - tempReal2
+	prevPhase = tempReal2
+	if tempReal < 1.0 {
+		tempReal = 1.0
+	}
+	if tempReal > 1.0 {
+		tempReal = sp.optInFastLimit / tempReal
+		if tempReal < sp.optInSlowLimit {
+			tempReal = sp.optInSlowLimit
+		}
+	} else {
+		tempReal = sp.optInFastLimit
+	}
+	mama = math.FMA(1.0-tempReal, mama, float64(tempReal*todayValue))
+	tempReal = float64(tempReal * 0.5)
+	fama = math.FMA(1.0-tempReal, fama, float64(tempReal*mama))
+	cur_outFAMA = fama
+	cur_outMAMA = mama
+	return cur_outMAMA, cur_outFAMA, nil
+}
+
+// Value returns the outputs at the last bar of OutRange, in Update's order;
+// Peek does not change them.
+func (sp *MAMAStream) Value() (float64, float64) {
+	return sp.cur_outMAMA, sp.cur_outFAMA
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *MAMAStream) Clone() *MAMAStream {
+	cl := *sp
+	cl.ring_trailingWMAIdx_inReal = append(sp.ring_trailingWMAIdx_inReal[:0:0], sp.ring_trailingWMAIdx_inReal...)
+	return &cl
 }
 
 func (c *Core) mamaOpenImpl(sp *MAMAStream, inReal []float64, startIdx int32, optInFastLimit, optInSlowLimit float64, outBegIdx, outNBElement *int32, outMAMA, outFAMA []float64, outStride int32) RetCode {

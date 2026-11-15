@@ -434,11 +434,80 @@ func (sp *CEStream) Update(inHigh, inLow, inClose float64) (float64, float64, er
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
-	ceStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var ip int32
+	var val2 float64
+	var val3 float64
+	var greatest float64
+	var tempCY float64
+	var tempLT float64
+	var tempHT float64
+	var tempReal float64
+	var sufHi float64
+	var sufLo float64
+	var highest float64
+	var lowest float64
+	var band float64
+	var cb_hhBuf []float64
+	var cb_llBuf []float64
+	tempLT = inLow
+	tempHT = inHigh
+	tempCY = sp.lag1_inClose
+	greatest = tempHT - tempLT
+	val2 = math.Abs(tempCY - tempHT)
+	greatest = selF(val2 > greatest, val2, greatest)
+	val3 = math.Abs(tempCY - tempLT)
+	greatest = selF(val3 > greatest, val3, greatest)
+	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
+	highest = sp.hhPre
+	lowest = sp.llPre
+	highest = selF(tempHT > highest, tempHT, highest)
+	lowest = selF(tempLT < lowest, tempLT, lowest)
+	if sp.hhBuf_Idx == 0 {
+		highest = tempHT
+		lowest = tempLT
+	}
+	sp.hhPre = highest
+	sp.llPre = lowest
+	if sp.hhBuf_Idx < sp.lastP {
+		tempReal = sp.cb_hhBuf[sp.hhBuf_Idx+1]
+		highest = selF(tempReal > highest, tempReal, highest)
+		tempReal = sp.cb_llBuf[sp.hhBuf_Idx+1]
+		lowest = selF(tempReal < lowest, tempReal, lowest)
+	}
+	sp.cb_hhBuf[sp.hhBuf_Idx] = tempHT
+	sp.cb_llBuf[sp.hhBuf_Idx] = tempLT
+	sp.hhBuf_Idx = sp.hhBuf_Idx + 1
+	if sp.hhBuf_Idx > sp.maxIdx_hhBuf {
+		sp.hhBuf_Idx = 0
+	}
+	band = float64(sp.optInMultiplier * sp.prevATR)
+	sp.cur_outRealLong = highest - band
+	sp.cur_outRealShort = lowest + band
+	if sp.hhBuf_Idx == 0 {
+		sufHi = sp.cb_hhBuf[sp.lastP]
+		sufLo = sp.cb_llBuf[sp.lastP]
+		ip = sp.lastP
+		cb_hhBuf = sp.cb_hhBuf
+		cb_llBuf = sp.cb_llBuf
+		for ip > 1 {
+			ip -= 1
+			tempReal = cb_hhBuf[ip]
+			if tempReal > sufHi {
+				sufHi = tempReal
+			}
+			cb_hhBuf[ip] = sufHi
+			tempReal = cb_llBuf[ip]
+			if tempReal < sufLo {
+				sufLo = tempReal
+			}
+			cb_llBuf[ip] = sufLo
+		}
+	}
+	sp.lag1_inClose = inClose
 	return sp.cur_outRealLong, sp.cur_outRealShort, nil
 }
 
@@ -446,7 +515,7 @@ func (sp *CEStream) Update(inHigh, inLow, inClose float64) (float64, float64, er
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CEStream) Peek(inHigh, inLow, inClose float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
 	var val2 float64
@@ -470,22 +539,14 @@ func (sp *CEStream) Peek(inHigh, inLow, inClose float64) (float64, float64, erro
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
+	greatest = selF(val2 > greatest, val2, greatest)
 	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
+	greatest = selF(val3 > greatest, val3, greatest)
 	prevATR = math.FMA(sp.wBeta, prevATR, float64(sp.wAlpha*greatest))
 	highest = hhPre
 	lowest = llPre
-	if tempHT > highest {
-		highest = tempHT
-	}
-	if tempLT < lowest {
-		lowest = tempLT
-	}
+	highest = selF(tempHT > highest, tempHT, highest)
+	lowest = selF(tempLT < lowest, tempLT, lowest)
 	if hhBuf_Idx == 0 {
 		highest = tempHT
 		lowest = tempLT
@@ -494,13 +555,9 @@ func (sp *CEStream) Peek(inHigh, inLow, inClose float64) (float64, float64, erro
 	llPre = lowest
 	if hhBuf_Idx < sp.lastP {
 		tempReal = sp.cb_hhBuf[hhBuf_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
+		highest = selF(tempReal > highest, tempReal, highest)
 		tempReal = sp.cb_llBuf[hhBuf_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
+		lowest = selF(tempReal < lowest, tempReal, lowest)
 	}
 	hhBuf_Idx = hhBuf_Idx + 1
 	if hhBuf_Idx > sp.maxIdx_hhBuf {
@@ -525,87 +582,6 @@ func (sp *CEStream) Clone() *CEStream {
 	cl.cb_hhBuf = append(sp.cb_hhBuf[:0:0], sp.cb_hhBuf...)
 	cl.cb_llBuf = append(sp.cb_llBuf[:0:0], sp.cb_llBuf...)
 	return &cl
-}
-
-func ceStepImpl(sp *CEStream, inHigh, inLow, inClose float64) {
-	var ip int32
-	var val2 float64
-	var val3 float64
-	var greatest float64
-	var tempCY float64
-	var tempLT float64
-	var tempHT float64
-	var tempReal float64
-	var sufHi float64
-	var sufLo float64
-	var highest float64
-	var lowest float64
-	var band float64
-	tempLT = inLow
-	tempHT = inHigh
-	tempCY = sp.lag1_inClose
-	greatest = tempHT - tempLT
-	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
-	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
-	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
-	highest = sp.hhPre
-	lowest = sp.llPre
-	if tempHT > highest {
-		highest = tempHT
-	}
-	if tempLT < lowest {
-		lowest = tempLT
-	}
-	if sp.hhBuf_Idx == 0 {
-		highest = tempHT
-		lowest = tempLT
-	}
-	sp.hhPre = highest
-	sp.llPre = lowest
-	if sp.hhBuf_Idx < sp.lastP {
-		tempReal = sp.cb_hhBuf[sp.hhBuf_Idx+1]
-		if tempReal > highest {
-			highest = tempReal
-		}
-		tempReal = sp.cb_llBuf[sp.hhBuf_Idx+1]
-		if tempReal < lowest {
-			lowest = tempReal
-		}
-	}
-	sp.cb_hhBuf[sp.hhBuf_Idx] = tempHT
-	sp.cb_llBuf[sp.hhBuf_Idx] = tempLT
-	sp.hhBuf_Idx = sp.hhBuf_Idx + 1
-	if sp.hhBuf_Idx > sp.maxIdx_hhBuf {
-		sp.hhBuf_Idx = 0
-	}
-	band = float64(sp.optInMultiplier * sp.prevATR)
-	sp.cur_outRealLong = highest - band
-	sp.cur_outRealShort = lowest + band
-	if sp.hhBuf_Idx == 0 {
-		sufHi = sp.cb_hhBuf[sp.lastP]
-		sufLo = sp.cb_llBuf[sp.lastP]
-		ip = sp.lastP
-		for ip > 1 {
-			ip -= 1
-			tempReal = sp.cb_hhBuf[ip]
-			if tempReal > sufHi {
-				sufHi = tempReal
-			}
-			sp.cb_hhBuf[ip] = sufHi
-			tempReal = sp.cb_llBuf[ip]
-			if tempReal < sufLo {
-				sufLo = tempReal
-			}
-			sp.cb_llBuf[ip] = sufLo
-		}
-	}
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) ceOpenImpl(sp *CEStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, optInMultiplier float64, outBegIdx, outNBElement *int32, outRealLong, outRealShort []float64, outStride int32) RetCode {

@@ -277,18 +277,34 @@ func (sp *ZLEMAStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	zlemaStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var ringPosL_trailingIdx int32
+	if sp.optInTimePeriod == 1 {
+		sp.cur_outReal = inReal
+		return sp.cur_outReal, nil
+	}
+	if sp.ringCap_trailingIdx == 0 {
+		sp.ring_trailingIdx_inReal[0] = inReal
+	}
+	sp.prevMA = math.FMA(sp.emaBeta, sp.prevMA, float64(sp.optInK_1*(float64(2.0*inReal)-sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx])))
+	sp.cur_outReal = sp.prevMA
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *ZLEMAStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -325,26 +341,6 @@ func (sp *ZLEMAStream) Clone() *ZLEMAStream {
 	cl := *sp
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	return &cl
-}
-
-func zlemaStepImpl(sp *ZLEMAStream, inReal float64) {
-	var ringPosL_trailingIdx int32
-	if sp.optInTimePeriod == 1 {
-		sp.cur_outReal = inReal
-		return
-	}
-	if sp.ringCap_trailingIdx == 0 {
-		sp.ring_trailingIdx_inReal[0] = inReal
-	}
-	sp.prevMA = math.FMA(sp.emaBeta, sp.prevMA, float64(sp.optInK_1*(float64(2.0*inReal)-sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx])))
-	sp.cur_outReal = sp.prevMA
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) zlemaOpenImpl(sp *ZLEMAStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

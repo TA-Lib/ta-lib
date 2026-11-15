@@ -100,22 +100,23 @@ fn a_go_candlestick_open_internal_calls_its_sink_frame() {
 /// branch. A range type is folded where C folds it.
 #[test]
 fn go_candle_bodies_fold_the_range_type_and_take_no_colour_branch() {
-    let branchy = regex::Regex::new(r"var _T\d+ float64\n\s*if inClose\[[^\]]+\] >= inOpen\[").unwrap();
+    let branchy = regex::Regex::new(r"var _T\d+ float64\n\s*if inClose(\[[^\]]+\])? >= inOpen").unwrap();
     let arm = regex::Regex::new(r"(?m)^\tif \w+_rangeType == \d").unwrap();
-    let (mut bodies, mut selects, mut folded, mut steps) = (0usize, 0usize, 0usize, 0usize);
+    let (mut bodies, mut selects, mut folded, mut frames) = (0usize, 0usize, 0usize, 0usize);
     for (name, src) in candlestick_sources() {
+        let upper = name.to_uppercase();
         let mut tiers = vec![format!("func (c *Core) {name}Impl("), format!("func (c *Core) {name}OpenImpl(")];
         if src.contains(&format!("func (c *Core) {name}OpenSinkFrame(")) {
             tiers.push(format!("func (c *Core) {name}OpenSinkFrame("));
         }
-        for tier in &tiers {
+        let stream = [format!("func (sp *{upper}Stream) Update("), format!("func (sp *{upper}Stream) Peek(")];
+        for tier in tiers.iter().chain(&stream) {
             let body = go_body(&src, tier);
             assert!(!branchy.is_match(body), "{tier} branches on the colour:\n{body}");
             selects += body.matches("selF(").count();
             bodies += 1;
         }
-        let step = go_body(&src, &format!("func {name}StepImpl("));
-        steps += usize::from(!step.contains("selF(") && step.contains(">= inOpen {"));
+        frames += stream.iter().filter(|t| go_body(&src, t).contains("selF(")).count();
         let c = std::fs::read_to_string(format!("{}/../../src/ta_func/ta_{}.c", env!("CARGO_MANIFEST_DIR"), name.to_uppercase())).unwrap();
         let c_batch = &c[c.find("TA_LIB_API TA_RetCode TA_").expect("C batch")..];
         let c_folds = c_batch[..c_batch.find("\n}\n").expect("C batch closes")].contains("_rangeType == TA_RangeType_");
@@ -123,5 +124,5 @@ fn go_candle_bodies_fold_the_range_type_and_take_no_colour_branch() {
         assert_eq!(go_folds, c_folds, "{name}: Go and C disagree on folding the range type");
         folded += usize::from(go_folds);
     }
-    assert!(bodies >= 150 && selects >= 100 && folded >= 40 && steps >= 20, "{bodies} bodies, {selects} selects, {folded} folded, {steps} branchy steps");
+    assert!(bodies >= 270 && selects >= 150 && folded >= 40 && frames >= 40, "{bodies} bodies, {selects} selects, {folded} folded, {frames} stream frames selecting");
 }

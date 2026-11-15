@@ -283,18 +283,56 @@ func (sp *VWMAStream) Update(inReal, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) || !isFinite(inVolume) {
+	if (inReal-inReal)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	vwmaStepImpl(sp, inReal, inVolume)
 	sp.outRangeCount++
+	var tempPV float64
+	var tempV float64
+	var tempReal float64
+	var trailingVolume float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	if sp.optInTimePeriod == 1 {
+		sp.cur_outReal = inReal
+		return sp.cur_outReal, nil
+	}
+	tempReal = float64(inReal * inVolume)
+	sp.sumPV += tempReal
+	sp.sumV += inVolume
+	sp.zeroCount += b2i(math.Abs(inVolume) <= 0.0)
+	trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx]
+	tempReal = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume)
+	if sp.zeroCount >= sp.optInTimePeriod {
+		tempPV = 0.0
+		tempV = 0.0
+		sp.sumPV = 0.0 - tempReal
+		sp.sumV = 0.0 - trailingVolume
+		sp.cur_outReal = tempPV / float64(sp.optInTimePeriod) / (tempV / float64(sp.optInTimePeriod))
+	} else {
+		tempPV = sp.sumPV
+		tempV = sp.sumV
+		sp.sumPV -= tempReal
+		sp.sumV -= trailingVolume
+		sp.cur_outReal = tempPV / float64(sp.optInTimePeriod) / (tempV / float64(sp.optInTimePeriod))
+	}
+	sp.zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inReal and inVolume),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *VWMAStream) Peek(inReal, inVolume float64) (float64, error) {
-	if !isFinite(inReal) || !isFinite(inVolume) {
+	if (inReal-inReal)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var tempPV float64
@@ -343,48 +381,6 @@ func (sp *VWMAStream) Clone() *VWMAStream {
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	cl.ring_trailingIdx_inVolume = append(sp.ring_trailingIdx_inVolume[:0:0], sp.ring_trailingIdx_inVolume...)
 	return &cl
-}
-
-func vwmaStepImpl(sp *VWMAStream, inReal, inVolume float64) {
-	var tempPV float64
-	var tempV float64
-	var tempReal float64
-	var trailingVolume float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	if sp.optInTimePeriod == 1 {
-		sp.cur_outReal = inReal
-		return
-	}
-	tempReal = float64(inReal * inVolume)
-	sp.sumPV += tempReal
-	sp.sumV += inVolume
-	sp.zeroCount += b2i(math.Abs(inVolume) <= 0.0)
-	trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx]
-	tempReal = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume)
-	if sp.zeroCount >= sp.optInTimePeriod {
-		tempPV = 0.0
-		tempV = 0.0
-		sp.sumPV = 0.0 - tempReal
-		sp.sumV = 0.0 - trailingVolume
-		sp.cur_outReal = tempPV / float64(sp.optInTimePeriod) / (tempV / float64(sp.optInTimePeriod))
-	} else {
-		tempPV = sp.sumPV
-		tempV = sp.sumV
-		sp.sumPV -= tempReal
-		sp.sumV -= trailingVolume
-		sp.cur_outReal = tempPV / float64(sp.optInTimePeriod) / (tempV / float64(sp.optInTimePeriod))
-	}
-	sp.zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) vwmaOpenImpl(sp *VWMAStream, inReal, inVolume []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

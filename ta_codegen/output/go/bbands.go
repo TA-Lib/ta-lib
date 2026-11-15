@@ -473,12 +473,37 @@ func (sp *BBANDSStream) Update(inReal float64) (float64, float64, float64, error
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
-	if err := bbandsStepImpl(sp, inReal); err != nil {
-		return 0, 0, 0, err
+	var tempReal float64
+	var tempReal2 float64
+	var cur_tempBuffer1 float64
+	var cur_tempBuffer2 float64
+	var cur_outRealUpperBand float64
+	var cur_outRealLowerBand float64
+	var subErr error
+	cur_tempBuffer1, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, 0, 0, subErr
 	}
+	cur_tempBuffer2, subErr = sp.sub1.Update(inReal)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	if sp.optInNbDevUp == sp.optInNbDevDn {
+		tempReal = float64(cur_tempBuffer2 * sp.optInNbDevUp)
+		tempReal2 = cur_tempBuffer1
+		cur_outRealUpperBand = tempReal2 + tempReal
+		cur_outRealLowerBand = tempReal2 - tempReal
+	} else {
+		tempReal2 = cur_tempBuffer1
+		cur_outRealUpperBand = math.FMA(cur_tempBuffer2, sp.optInNbDevUp, tempReal2)
+		cur_outRealLowerBand = tempReal2 - float64(cur_tempBuffer2*sp.optInNbDevDn)
+	}
+	sp.cur_outRealUpperBand = cur_outRealUpperBand
+	sp.cur_outRealMiddleBand = cur_tempBuffer1
+	sp.cur_outRealLowerBand = cur_outRealLowerBand
 	sp.outRangeCount++
 	return sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand, nil
 }
@@ -486,7 +511,7 @@ func (sp *BBANDSStream) Update(inReal float64) (float64, float64, float64, error
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *BBANDSStream) Peek(inReal float64) (float64, float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var tempReal float64
@@ -532,38 +557,6 @@ func (sp *BBANDSStream) Clone() *BBANDSStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func bbandsStepImpl(sp *BBANDSStream, inReal float64) error {
-	var tempReal float64
-	var tempReal2 float64
-	var cur_tempBuffer1 float64
-	var cur_tempBuffer2 float64
-	var cur_outRealUpperBand float64
-	var cur_outRealLowerBand float64
-	var subErr error
-	cur_tempBuffer1, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempBuffer2, subErr = sp.sub1.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	if sp.optInNbDevUp == sp.optInNbDevDn {
-		tempReal = float64(cur_tempBuffer2 * sp.optInNbDevUp)
-		tempReal2 = cur_tempBuffer1
-		cur_outRealUpperBand = tempReal2 + tempReal
-		cur_outRealLowerBand = tempReal2 - tempReal
-	} else {
-		tempReal2 = cur_tempBuffer1
-		cur_outRealUpperBand = math.FMA(cur_tempBuffer2, sp.optInNbDevUp, tempReal2)
-		cur_outRealLowerBand = tempReal2 - float64(cur_tempBuffer2*sp.optInNbDevDn)
-	}
-	sp.cur_outRealUpperBand = cur_outRealUpperBand
-	sp.cur_outRealMiddleBand = cur_tempBuffer1
-	sp.cur_outRealLowerBand = cur_outRealLowerBand
-	return nil
 }
 
 func (c *Core) bbandsOpenImpl(sp *BBANDSStream, inReal []float64, startIdx, optInTimePeriod int32, optInNbDevUp, optInNbDevDn float64, optInMAType int32, outBegIdx, outNBElement *int32, outRealUpperBand, outRealMiddleBand, outRealLowerBand []float64, outStride int32) RetCode {

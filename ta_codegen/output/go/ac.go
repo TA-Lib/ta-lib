@@ -343,18 +343,55 @@ func (sp *ACStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	acStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var medianPrice float64
+	var osc float64
+	var tempReal float64
+	var ringPosL_trailingFastIdx int32
+	var ringPosL_trailingSlowIdx int32
+	var ringCapL_trailingFastIdx int32
+	var ringCapL_trailingSlowIdx int32
+	medianPrice = (inHigh + inLow) / 2.0
+	sp.sumFast += medianPrice
+	sp.sumSlow += medianPrice
+	osc = sp.sumFast/float64(sp.optInFastPeriod) - sp.sumSlow/float64(sp.optInSlowPeriod)
+	sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx]
+	sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx]
+	sp.cb_oscBuffer[sp.oscBuffer_Idx] = osc
+	sp.sumSignal += osc
+	tempReal = osc - sp.sumSignal/float64(sp.optInSignalPeriod)
+	sp.oscBuffer_Idx = sp.oscBuffer_Idx + 1
+	if sp.oscBuffer_Idx > sp.maxIdx_oscBuffer {
+		sp.oscBuffer_Idx = 0
+	}
+	sp.sumSignal -= sp.cb_oscBuffer[sp.oscBuffer_Idx]
+	sp.cur_outReal = tempReal
+	ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx
+	ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx
+	sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice
+	ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1
+	if ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx {
+		ringPosL_trailingFastIdx = 0
+	}
+	sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx
+	ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx
+	ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx
+	sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice
+	ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1
+	if ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx {
+		ringPosL_trailingSlowIdx = 0
+	}
+	sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *ACStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var medianPrice float64
@@ -405,47 +442,6 @@ func (sp *ACStream) Clone() *ACStream {
 	cl.ring_trailingSlowIdx_derived = append(sp.ring_trailingSlowIdx_derived[:0:0], sp.ring_trailingSlowIdx_derived...)
 	cl.cb_oscBuffer = append(sp.cb_oscBuffer[:0:0], sp.cb_oscBuffer...)
 	return &cl
-}
-
-func acStepImpl(sp *ACStream, inHigh, inLow float64) {
-	var medianPrice float64
-	var osc float64
-	var tempReal float64
-	var ringPosL_trailingFastIdx int32
-	var ringPosL_trailingSlowIdx int32
-	var ringCapL_trailingFastIdx int32
-	var ringCapL_trailingSlowIdx int32
-	medianPrice = (inHigh + inLow) / 2.0
-	sp.sumFast += medianPrice
-	sp.sumSlow += medianPrice
-	osc = sp.sumFast/float64(sp.optInFastPeriod) - sp.sumSlow/float64(sp.optInSlowPeriod)
-	sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx]
-	sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx]
-	sp.cb_oscBuffer[sp.oscBuffer_Idx] = osc
-	sp.sumSignal += osc
-	tempReal = osc - sp.sumSignal/float64(sp.optInSignalPeriod)
-	sp.oscBuffer_Idx = sp.oscBuffer_Idx + 1
-	if sp.oscBuffer_Idx > sp.maxIdx_oscBuffer {
-		sp.oscBuffer_Idx = 0
-	}
-	sp.sumSignal -= sp.cb_oscBuffer[sp.oscBuffer_Idx]
-	sp.cur_outReal = tempReal
-	ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx
-	ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx
-	sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice
-	ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1
-	if ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx {
-		ringPosL_trailingFastIdx = 0
-	}
-	sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx
-	ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx
-	ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx
-	sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice
-	ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1
-	if ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx {
-		ringPosL_trailingSlowIdx = 0
-	}
-	sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx
 }
 
 func (c *Core) acOpenImpl(sp *ACStream, inHigh, inLow []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

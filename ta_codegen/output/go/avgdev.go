@@ -233,71 +233,123 @@ func (sp *AVGDEVStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	avgdevStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var todaySum float64
+	var todayDev float64
+	var i int32
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inReal []float64
+	sp.win_i_inReal[sp.winPos_i] = inReal
+	todaySum = 0.0
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = 0; i < optInTimePeriod; i += 1 {
+		var _T6 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T6 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T6 = winPos_i + winCap_i - i
+		}
+		todaySum += win_i_inReal[_T6]
+	}
+	todayDev = 0.0
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = 0; i < optInTimePeriod; i += 1 {
+		var _T7 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T7 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T7 = winPos_i + winCap_i - i
+		}
+		todayDev += math.Abs(win_i_inReal[_T7] - todaySum/float64(optInTimePeriod))
+	}
+	sp.cur_outReal = todayDev / float64(sp.optInTimePeriod)
+	sp.winPos_i = sp.winPos_i + 1
+	if sp.winPos_i >= sp.winCap_i {
+		sp.winPos_i = 0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *AVGDEVStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var todaySum float64
 	var todayDev float64
 	var i int32
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inReal []float64
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
 	pkSlot0 = sp.winPos_i
 	pkVal0 = inReal
 	todaySum = 0.0
-	for i = 0; i < sp.optInTimePeriod; i += 1 {
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = 0; i < optInTimePeriod; i += 1 {
 		var _T0 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T0 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T0 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T0 = sp.winPos_i + sp.winCap_i - i
+			_T0 = winPos_i + winCap_i - i
 		}
 		var _T2 float64
 		if _T0 != pkSlot0 {
 			var _T1 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T1 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T1 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T1 = sp.winPos_i + sp.winCap_i - i
+				_T1 = winPos_i + winCap_i - i
 			}
-			_T2 = sp.win_i_inReal[_T1]
+			_T2 = win_i_inReal[_T1]
 		} else {
 			_T2 = pkVal0
 		}
 		todaySum += _T2
 	}
 	todayDev = 0.0
-	for i = 0; i < sp.optInTimePeriod; i += 1 {
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = 0; i < optInTimePeriod; i += 1 {
 		var _T3 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T3 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T3 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T3 = sp.winPos_i + sp.winCap_i - i
+			_T3 = winPos_i + winCap_i - i
 		}
 		var _T5 float64
 		if _T3 != pkSlot0 {
 			var _T4 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T4 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T4 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T4 = sp.winPos_i + sp.winCap_i - i
+				_T4 = winPos_i + winCap_i - i
 			}
-			_T5 = sp.win_i_inReal[_T4]
+			_T5 = win_i_inReal[_T4]
 		} else {
 			_T5 = pkVal0
 		}
-		todayDev += math.Abs(_T5 - todaySum/float64(sp.optInTimePeriod))
+		todayDev += math.Abs(_T5 - todaySum/float64(optInTimePeriod))
 	}
 	cur_outReal = todayDev / float64(sp.optInTimePeriod)
 	return cur_outReal, nil
@@ -314,38 +366,6 @@ func (sp *AVGDEVStream) Clone() *AVGDEVStream {
 	cl := *sp
 	cl.win_i_inReal = append(sp.win_i_inReal[:0:0], sp.win_i_inReal...)
 	return &cl
-}
-
-func avgdevStepImpl(sp *AVGDEVStream, inReal float64) {
-	var todaySum float64
-	var todayDev float64
-	var i int32
-	sp.win_i_inReal[sp.winPos_i] = inReal
-	todaySum = 0.0
-	for i = 0; i < sp.optInTimePeriod; i += 1 {
-		var _T6 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T6 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T6 = sp.winPos_i + sp.winCap_i - i
-		}
-		todaySum += sp.win_i_inReal[_T6]
-	}
-	todayDev = 0.0
-	for i = 0; i < sp.optInTimePeriod; i += 1 {
-		var _T7 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T7 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T7 = sp.winPos_i + sp.winCap_i - i
-		}
-		todayDev += math.Abs(sp.win_i_inReal[_T7] - todaySum/float64(sp.optInTimePeriod))
-	}
-	sp.cur_outReal = todayDev / float64(sp.optInTimePeriod)
-	sp.winPos_i = sp.winPos_i + 1
-	if sp.winPos_i >= sp.winCap_i {
-		sp.winPos_i = 0
-	}
 }
 
 func (c *Core) avgdevOpenImpl(sp *AVGDEVStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

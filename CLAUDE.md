@@ -135,7 +135,9 @@ rather than mirroring C: Rust `<n>_open_impl`, Java, TypeScript and Go
 camelCase, `<N>` = PascalCase, the acronym single-capitalized — `Sma`, not
 `SMA`). Neither tier is public anywhere, so no runtime gate can see the spelling:
 `the_transition_tier_is_step_impl_in_every_backend` pins the *shape* — one word
-per concept, in that backend's casing — not one literal string.
+per concept, in that backend's casing — not one literal string. Go alone runs the
+step inside `Update` and keeps `<n>StepImpl` only where another frame calls it
+(a tape entry, MAVP's fill).
 
 **The `_Open*` family is five methods, symmetric, two hops deep** (C's spelling;
 the other backends carry the same five hops in their own casing):

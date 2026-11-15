@@ -279,18 +279,29 @@ func (sp *EFIStream) Update(inClose, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	efiStepImpl(sp, inClose, inVolume)
 	sp.outRangeCount++
+	if sp.optInTimePeriod == 1 {
+		var force float64
+		force = float64((inClose - sp.prevClose) * inVolume)
+		sp.prevClose = inClose
+		sp.cur_outReal = force
+	} else {
+		var force float64
+		force = float64((inClose - sp.prevClose) * inVolume)
+		sp.prevClose = inClose
+		sp.prevMA = math.FMA(sp.emaBeta, sp.prevMA, float64(sp.optInK_1*force))
+		sp.cur_outReal = sp.prevMA
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inClose and inVolume),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *EFIStream) Peek(inClose, inVolume float64) (float64, error) {
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -322,21 +333,6 @@ func (sp *EFIStream) Value() float64 {
 func (sp *EFIStream) Clone() *EFIStream {
 	cl := *sp
 	return &cl
-}
-
-func efiStepImpl(sp *EFIStream, inClose, inVolume float64) {
-	if sp.optInTimePeriod == 1 {
-		var force float64
-		force = float64((inClose - sp.prevClose) * inVolume)
-		sp.prevClose = inClose
-		sp.cur_outReal = force
-	} else {
-		var force float64
-		force = float64((inClose - sp.prevClose) * inVolume)
-		sp.prevClose = inClose
-		sp.prevMA = math.FMA(sp.emaBeta, sp.prevMA, float64(sp.optInK_1*force))
-		sp.cur_outReal = sp.prevMA
-	}
 }
 
 func (c *Core) efiOpenImpl(sp *EFIStream, inClose, inVolume []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

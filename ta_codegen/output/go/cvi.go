@@ -310,18 +310,32 @@ func (sp *CVIStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	cviStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var laggedEMA float64
+	var tempReal float64
+	tempReal = inHigh - inLow
+	sp.prevEMA = math.FMA(sp.emaBeta, sp.prevEMA, float64(sp.optInK_1*tempReal))
+	laggedEMA = sp.cb_emaRing[sp.emaRing_Idx]
+	sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA
+	sp.emaRing_Idx = sp.emaRing_Idx + 1
+	if sp.emaRing_Idx > sp.maxIdx_emaRing {
+		sp.emaRing_Idx = 0
+	}
+	if laggedEMA != 0.0 {
+		sp.cur_outReal = float64(100.0 * ((sp.prevEMA - laggedEMA) / laggedEMA))
+	} else {
+		sp.cur_outReal = 0.0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *CVIStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var laggedEMA float64
@@ -355,24 +369,6 @@ func (sp *CVIStream) Clone() *CVIStream {
 	cl := *sp
 	cl.cb_emaRing = append(sp.cb_emaRing[:0:0], sp.cb_emaRing...)
 	return &cl
-}
-
-func cviStepImpl(sp *CVIStream, inHigh, inLow float64) {
-	var laggedEMA float64
-	var tempReal float64
-	tempReal = inHigh - inLow
-	sp.prevEMA = math.FMA(sp.emaBeta, sp.prevEMA, float64(sp.optInK_1*tempReal))
-	laggedEMA = sp.cb_emaRing[sp.emaRing_Idx]
-	sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA
-	sp.emaRing_Idx = sp.emaRing_Idx + 1
-	if sp.emaRing_Idx > sp.maxIdx_emaRing {
-		sp.emaRing_Idx = 0
-	}
-	if laggedEMA != 0.0 {
-		sp.cur_outReal = float64(100.0 * ((sp.prevEMA - laggedEMA) / laggedEMA))
-	} else {
-		sp.cur_outReal = 0.0
-	}
 }
 
 func (c *Core) cviOpenImpl(sp *CVIStream, inHigh, inLow []float64, startIdx, optInTimePeriod, optInROCPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

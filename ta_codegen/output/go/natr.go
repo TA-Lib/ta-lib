@@ -344,11 +344,37 @@ func (sp *NATRStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	natrStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tempValue float64
+	var val2 float64
+	var val3 float64
+	var greatest float64
+	var tempCY float64
+	var tempLT float64
+	var tempHT float64
+	tempLT = inLow
+	tempHT = inHigh
+	tempCY = sp.lag1_inClose
+	greatest = tempHT - tempLT
+	val2 = math.Abs(tempCY - tempHT)
+	greatest = selF(val2 > greatest, val2, greatest)
+	val3 = math.Abs(tempCY - tempLT)
+	greatest = selF(val3 > greatest, val3, greatest)
+	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
+	if sp.optInTimePeriod <= 1 {
+		sp.cur_outReal = sp.prevATR
+	} else {
+		tempValue = inClose
+		if tempValue != 0.0 {
+			sp.cur_outReal = float64(sp.prevATR / tempValue * 100.0)
+		} else {
+			sp.cur_outReal = 0.0
+		}
+	}
+	sp.lag1_inClose = inClose
 	return sp.cur_outReal, nil
 }
 
@@ -356,7 +382,7 @@ func (sp *NATRStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *NATRStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var tempValue float64
@@ -373,13 +399,9 @@ func (sp *NATRStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
+	greatest = selF(val2 > greatest, val2, greatest)
 	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
+	greatest = selF(val3 > greatest, val3, greatest)
 	prevATR = math.FMA(sp.wBeta, prevATR, float64(sp.wAlpha*greatest))
 	if sp.optInTimePeriod <= 1 {
 		cur_outReal = prevATR
@@ -404,40 +426,6 @@ func (sp *NATRStream) Value() float64 {
 func (sp *NATRStream) Clone() *NATRStream {
 	cl := *sp
 	return &cl
-}
-
-func natrStepImpl(sp *NATRStream, inHigh, inLow, inClose float64) {
-	var tempValue float64
-	var val2 float64
-	var val3 float64
-	var greatest float64
-	var tempCY float64
-	var tempLT float64
-	var tempHT float64
-	tempLT = inLow
-	tempHT = inHigh
-	tempCY = sp.lag1_inClose
-	greatest = tempHT - tempLT
-	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
-	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
-	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
-	if sp.optInTimePeriod <= 1 {
-		sp.cur_outReal = sp.prevATR
-	} else {
-		tempValue = inClose
-		if tempValue != 0.0 {
-			sp.cur_outReal = float64(sp.prevATR / tempValue * 100.0)
-		} else {
-			sp.cur_outReal = 0.0
-		}
-	}
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) natrOpenImpl(sp *NATRStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

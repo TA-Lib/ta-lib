@@ -193,18 +193,26 @@ func (sp *OBVStream) Update(inReal, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) || !isFinite(inVolume) {
+	if (inReal-inReal)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	obvStepImpl(sp, inReal, inVolume)
 	sp.outRangeCount++
+	var tempReal float64
+	tempReal = inReal
+	if tempReal > sp.prevReal {
+		sp.prevOBV += inVolume
+	} else if tempReal < sp.prevReal {
+		sp.prevOBV -= inVolume
+	}
+	sp.cur_outReal = sp.prevOBV
+	sp.prevReal = tempReal
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inReal and inVolume),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *OBVStream) Peek(inReal, inVolume float64) (float64, error) {
-	if !isFinite(inReal) || !isFinite(inVolume) {
+	if (inReal-inReal)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -230,18 +238,6 @@ func (sp *OBVStream) Value() float64 {
 func (sp *OBVStream) Clone() *OBVStream {
 	cl := *sp
 	return &cl
-}
-
-func obvStepImpl(sp *OBVStream, inReal, inVolume float64) {
-	var tempReal float64
-	tempReal = inReal
-	if tempReal > sp.prevReal {
-		sp.prevOBV += inVolume
-	} else if tempReal < sp.prevReal {
-		sp.prevOBV -= inVolume
-	}
-	sp.cur_outReal = sp.prevOBV
-	sp.prevReal = tempReal
 }
 
 func (c *Core) obvOpenImpl(sp *OBVStream, inReal, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

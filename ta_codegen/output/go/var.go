@@ -327,23 +327,118 @@ func (sp *VARStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	varStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempReal float64
+	var meanValue1 float64
+	var variance float64
+	var i int32
+	var j int32
+	var windowStart int32
+	var xMask int32
+	var x_inReal []float64
+	var periodTotal1 float64
+	var periodTotal2 float64
+	var shift float64
+	sp.x_inReal[sp.i&sp.xMask] = inReal
+	tempReal = sp.x_inReal[sp.i&sp.xMask] - sp.shift
+	sp.periodTotal1 += tempReal
+	tempReal = float64(tempReal * tempReal)
+	sp.periodTotal2 += tempReal
+	sp.peakTotal2 = selF(sp.periodTotal2 > sp.peakTotal2, sp.periodTotal2, sp.peakTotal2)
+	meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
+	variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
+	tempReal = sp.x_inReal[sp.trailingIdx&sp.xMask] - sp.shift
+	sp.periodTotal1 -= tempReal
+	tempReal = float64(tempReal * tempReal)
+	sp.periodTotal2 -= tempReal
+	sp.trailingIdx += 1
+	sp.barsSinceReseed -= 1
+	if variance < float64(1e-6*float64(sp.peakTotal2*sp.invPeriod)) || sp.barsSinceReseed <= 0 {
+		sp.barsSinceReseed = 32 * sp.optInTimePeriod
+		sp.windowStart = sp.i - sp.nbInitialElementNeeded
+		tempReal = 0.0
+		i = sp.i
+		j = sp.j
+		windowStart = sp.windowStart
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= i; j += 1 {
+			tempReal += x_inReal[j&xMask]
+		}
+		sp.j = j
+		sp.shift = float64(tempReal * sp.invPeriod)
+		sp.periodTotal1 = 0.0
+		sp.periodTotal2 = 0.0
+		i = sp.i
+		j = sp.j
+		periodTotal1 = sp.periodTotal1
+		periodTotal2 = sp.periodTotal2
+		shift = sp.shift
+		windowStart = sp.windowStart
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= i; j += 1 {
+			tempReal = x_inReal[j&xMask] - shift
+			periodTotal1 += tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 += tempReal
+		}
+		sp.j = j
+		sp.periodTotal1 = periodTotal1
+		sp.periodTotal2 = periodTotal2
+		meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
+		variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
+		if variance < float64(1e-6*float64(sp.periodTotal2*sp.invPeriod)) {
+			sp.shift = sp.x_inReal[sp.i&sp.xMask]
+			sp.periodTotal1 = 0.0
+			sp.periodTotal2 = 0.0
+			i = sp.i
+			j = sp.j
+			periodTotal1 = sp.periodTotal1
+			periodTotal2 = sp.periodTotal2
+			shift = sp.shift
+			windowStart = sp.windowStart
+			xMask = sp.xMask
+			x_inReal = sp.x_inReal
+			for j = windowStart; j <= i; j += 1 {
+				tempReal = x_inReal[j&xMask] - shift
+				periodTotal1 += tempReal
+				tempReal = float64(tempReal * tempReal)
+				periodTotal2 += tempReal
+			}
+			sp.j = j
+			sp.periodTotal1 = periodTotal1
+			sp.periodTotal2 = periodTotal2
+			meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
+			variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
+		}
+		sp.peakTotal2 = sp.periodTotal2
+		variance = selF(variance < float64(1e-12*float64(sp.periodTotal2*sp.invPeriod)), 0.0, variance)
+		tempReal = sp.x_inReal[sp.windowStart&sp.xMask] - sp.shift
+		sp.periodTotal1 -= tempReal
+		tempReal = float64(tempReal * tempReal)
+		sp.periodTotal2 -= tempReal
+	}
+	sp.cur_outReal = variance
+	sp.i += 1
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *VARStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
 	var meanValue1 float64
 	var variance float64
+	var i int32
+	var xMask int32
+	var x_inReal []float64
 	barsSinceReseed := sp.barsSinceReseed
 	var cur_outReal float64
 	j := sp.j
@@ -367,22 +462,16 @@ func (sp *VARStream) Peek(inReal float64) (float64, error) {
 	periodTotal1 += tempReal
 	tempReal = float64(tempReal * tempReal)
 	periodTotal2 += tempReal
-	var _T1 float64
-	if periodTotal2 > peakTotal2 {
-		_T1 = periodTotal2
-	} else {
-		_T1 = peakTotal2
-	}
-	peakTotal2 = _T1
+	peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 	meanValue1 = float64(periodTotal1 * sp.invPeriod)
 	variance = float64(periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
-	var _T2 float64
+	var _T1 float64
 	if trailingIdx&sp.xMask != pkSlot0 {
-		_T2 = sp.x_inReal[trailingIdx&sp.xMask]
+		_T1 = sp.x_inReal[trailingIdx&sp.xMask]
 	} else {
-		_T2 = pkVal0
+		_T1 = pkVal0
 	}
-	tempReal = _T2 - shift
+	tempReal = _T1 - shift
 	periodTotal1 -= tempReal
 	tempReal = float64(tempReal * tempReal)
 	periodTotal2 -= tempReal
@@ -392,26 +481,32 @@ func (sp *VARStream) Peek(inReal float64) (float64, error) {
 		barsSinceReseed = 32 * sp.optInTimePeriod
 		windowStart = sp.i - sp.nbInitialElementNeeded
 		tempReal = 0.0
-		for j = windowStart; j <= sp.i; j += 1 {
-			var _T3 float64
-			if j&sp.xMask != pkSlot0 {
-				_T3 = sp.x_inReal[j&sp.xMask]
+		i = sp.i
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= i; j += 1 {
+			var _T2 float64
+			if j&xMask != pkSlot0 {
+				_T2 = x_inReal[j&xMask]
 			} else {
-				_T3 = pkVal0
+				_T2 = pkVal0
 			}
-			tempReal += _T3
+			tempReal += _T2
 		}
 		shift = float64(tempReal * sp.invPeriod)
 		periodTotal1 = 0.0
 		periodTotal2 = 0.0
-		for j = windowStart; j <= sp.i; j += 1 {
-			var _T4 float64
-			if j&sp.xMask != pkSlot0 {
-				_T4 = sp.x_inReal[j&sp.xMask]
+		i = sp.i
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= i; j += 1 {
+			var _T3 float64
+			if j&xMask != pkSlot0 {
+				_T3 = x_inReal[j&xMask]
 			} else {
-				_T4 = pkVal0
+				_T3 = pkVal0
 			}
-			tempReal = _T4 - shift
+			tempReal = _T3 - shift
 			periodTotal1 += tempReal
 			tempReal = float64(tempReal * tempReal)
 			periodTotal2 += tempReal
@@ -419,23 +514,26 @@ func (sp *VARStream) Peek(inReal float64) (float64, error) {
 		meanValue1 = float64(periodTotal1 * sp.invPeriod)
 		variance = float64(periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
 		if variance < float64(1e-6*float64(periodTotal2*sp.invPeriod)) {
-			var _T5 float64
+			var _T4 float64
 			if sp.i&sp.xMask != pkSlot0 {
-				_T5 = sp.x_inReal[sp.i&sp.xMask]
+				_T4 = sp.x_inReal[sp.i&sp.xMask]
 			} else {
-				_T5 = pkVal0
+				_T4 = pkVal0
 			}
-			shift = _T5
+			shift = _T4
 			periodTotal1 = 0.0
 			periodTotal2 = 0.0
-			for j = windowStart; j <= sp.i; j += 1 {
-				var _T6 float64
-				if j&sp.xMask != pkSlot0 {
-					_T6 = sp.x_inReal[j&sp.xMask]
+			i = sp.i
+			xMask = sp.xMask
+			x_inReal = sp.x_inReal
+			for j = windowStart; j <= i; j += 1 {
+				var _T5 float64
+				if j&xMask != pkSlot0 {
+					_T5 = x_inReal[j&xMask]
 				} else {
-					_T6 = pkVal0
+					_T5 = pkVal0
 				}
-				tempReal = _T6 - shift
+				tempReal = _T5 - shift
 				periodTotal1 += tempReal
 				tempReal = float64(tempReal * tempReal)
 				periodTotal2 += tempReal
@@ -444,16 +542,14 @@ func (sp *VARStream) Peek(inReal float64) (float64, error) {
 			variance = float64(periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
 		}
 		peakTotal2 = periodTotal2
-		if variance < float64(1e-12*float64(periodTotal2*sp.invPeriod)) {
-			variance = 0.0
-		}
-		var _T7 float64
+		variance = selF(variance < float64(1e-12*float64(periodTotal2*sp.invPeriod)), 0.0, variance)
+		var _T6 float64
 		if windowStart&sp.xMask != pkSlot0 {
-			_T7 = sp.x_inReal[windowStart&sp.xMask]
+			_T6 = sp.x_inReal[windowStart&sp.xMask]
 		} else {
-			_T7 = pkVal0
+			_T6 = pkVal0
 		}
-		tempReal = _T7 - shift
+		tempReal = _T6 - shift
 		periodTotal1 -= tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 -= tempReal
@@ -473,74 +569,6 @@ func (sp *VARStream) Clone() *VARStream {
 	cl := *sp
 	cl.x_inReal = append(sp.x_inReal[:0:0], sp.x_inReal...)
 	return &cl
-}
-
-func varStepImpl(sp *VARStream, inReal float64) {
-	var tempReal float64
-	var meanValue1 float64
-	var variance float64
-	sp.x_inReal[sp.i&sp.xMask] = inReal
-	tempReal = sp.x_inReal[sp.i&sp.xMask] - sp.shift
-	sp.periodTotal1 += tempReal
-	tempReal = float64(tempReal * tempReal)
-	sp.periodTotal2 += tempReal
-	var _T8 float64
-	if sp.periodTotal2 > sp.peakTotal2 {
-		_T8 = sp.periodTotal2
-	} else {
-		_T8 = sp.peakTotal2
-	}
-	sp.peakTotal2 = _T8
-	meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
-	variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
-	tempReal = sp.x_inReal[sp.trailingIdx&sp.xMask] - sp.shift
-	sp.periodTotal1 -= tempReal
-	tempReal = float64(tempReal * tempReal)
-	sp.periodTotal2 -= tempReal
-	sp.trailingIdx += 1
-	sp.barsSinceReseed -= 1
-	if variance < float64(1e-6*float64(sp.peakTotal2*sp.invPeriod)) || sp.barsSinceReseed <= 0 {
-		sp.barsSinceReseed = 32 * sp.optInTimePeriod
-		sp.windowStart = sp.i - sp.nbInitialElementNeeded
-		tempReal = 0.0
-		for sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 {
-			tempReal += sp.x_inReal[sp.j&sp.xMask]
-		}
-		sp.shift = float64(tempReal * sp.invPeriod)
-		sp.periodTotal1 = 0.0
-		sp.periodTotal2 = 0.0
-		for sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 {
-			tempReal = sp.x_inReal[sp.j&sp.xMask] - sp.shift
-			sp.periodTotal1 += tempReal
-			tempReal = float64(tempReal * tempReal)
-			sp.periodTotal2 += tempReal
-		}
-		meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
-		variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
-		if variance < float64(1e-6*float64(sp.periodTotal2*sp.invPeriod)) {
-			sp.shift = sp.x_inReal[sp.i&sp.xMask]
-			sp.periodTotal1 = 0.0
-			sp.periodTotal2 = 0.0
-			for sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 {
-				tempReal = sp.x_inReal[sp.j&sp.xMask] - sp.shift
-				sp.periodTotal1 += tempReal
-				tempReal = float64(tempReal * tempReal)
-				sp.periodTotal2 += tempReal
-			}
-			meanValue1 = float64(sp.periodTotal1 * sp.invPeriod)
-			variance = float64(sp.periodTotal2*sp.invPeriod) - float64(meanValue1*meanValue1)
-		}
-		sp.peakTotal2 = sp.periodTotal2
-		if variance < float64(1e-12*float64(sp.periodTotal2*sp.invPeriod)) {
-			variance = 0.0
-		}
-		tempReal = sp.x_inReal[sp.windowStart&sp.xMask] - sp.shift
-		sp.periodTotal1 -= tempReal
-		tempReal = float64(tempReal * tempReal)
-		sp.periodTotal2 -= tempReal
-	}
-	sp.cur_outReal = variance
-	sp.i += 1
 }
 
 func (c *Core) varOpenImpl(sp *VARStream, inReal []float64, startIdx, optInTimePeriod int32, optInNbDev float64, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -608,13 +636,13 @@ func (c *Core) varOpenImpl(sp *VARStream, inReal []float64, startIdx, optInTimeP
 		periodTotal1 += tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 += tempReal
-		var _T9 float64
+		var _T7 float64
 		if periodTotal2 > peakTotal2 {
-			_T9 = periodTotal2
+			_T7 = periodTotal2
 		} else {
-			_T9 = peakTotal2
+			_T7 = peakTotal2
 		}
-		peakTotal2 = _T9
+		peakTotal2 = _T7
 		meanValue1 = float64(periodTotal1 * invPeriod)
 		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 		tempReal = inReal[trailingIdx] - shift

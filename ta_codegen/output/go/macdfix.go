@@ -347,18 +347,31 @@ func (sp *MACDFIXStream) Update(inReal float64) (float64, float64, float64, erro
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
-	macdfixStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var macdValue float64
+	var tempReal float64
+	tempReal = inReal
+	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
+	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
+	macdValue = sp.prevFast - sp.prevSlow
+	if sp.optInSignalPeriod == 1 {
+		sp.prevSignal = macdValue
+	} else {
+		sp.prevSignal = math.FMA(sp.signalBeta, sp.prevSignal, float64(sp.signalK*macdValue))
+	}
+	sp.cur_outMACD = macdValue
+	sp.cur_outMACDSignal = sp.prevSignal
+	sp.cur_outMACDHist = macdValue - sp.prevSignal
 	return sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MACDFIXStream) Peek(inReal float64) (float64, float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var macdValue float64
@@ -395,23 +408,6 @@ func (sp *MACDFIXStream) Value() (float64, float64, float64) {
 func (sp *MACDFIXStream) Clone() *MACDFIXStream {
 	cl := *sp
 	return &cl
-}
-
-func macdfixStepImpl(sp *MACDFIXStream, inReal float64) {
-	var macdValue float64
-	var tempReal float64
-	tempReal = inReal
-	sp.prevFast = math.FMA(sp.fastBeta, sp.prevFast, float64(sp.fastK*tempReal))
-	sp.prevSlow = math.FMA(sp.slowBeta, sp.prevSlow, float64(sp.slowK*tempReal))
-	macdValue = sp.prevFast - sp.prevSlow
-	if sp.optInSignalPeriod == 1 {
-		sp.prevSignal = macdValue
-	} else {
-		sp.prevSignal = math.FMA(sp.signalBeta, sp.prevSignal, float64(sp.signalK*macdValue))
-	}
-	sp.cur_outMACD = macdValue
-	sp.cur_outMACDSignal = sp.prevSignal
-	sp.cur_outMACDHist = macdValue - sp.prevSignal
 }
 
 func (c *Core) macdfixOpenImpl(sp *MACDFIXStream, inReal []float64, startIdx, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outMACD, outMACDSignal, outMACDHist []float64, outStride int32) RetCode {

@@ -363,18 +363,28 @@ func (sp *T3Stream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	t3StepImpl(sp, inReal)
 	sp.outRangeCount++
+	if sp.optInTimePeriod == 1 {
+		sp.cur_outReal = inReal
+		return sp.cur_outReal, nil
+	}
+	sp.e1 = math.FMA(sp.one_minus_k, sp.e1, float64(sp.k*inReal))
+	sp.e2 = math.FMA(sp.one_minus_k, sp.e2, float64(sp.k*sp.e1))
+	sp.e3 = math.FMA(sp.one_minus_k, sp.e3, float64(sp.k*sp.e2))
+	sp.e4 = math.FMA(sp.one_minus_k, sp.e4, float64(sp.k*sp.e3))
+	sp.e5 = math.FMA(sp.one_minus_k, sp.e5, float64(sp.k*sp.e4))
+	sp.e6 = math.FMA(sp.one_minus_k, sp.e6, float64(sp.k*sp.e5))
+	sp.cur_outReal = math.FMA(sp.c4, sp.e3, math.FMA(sp.c3, sp.e4, math.FMA(sp.c1, sp.e6, float64(sp.c2*sp.e5))))
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *T3Stream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64

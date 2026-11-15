@@ -330,22 +330,99 @@ func (sp *MIDPRICEStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	midpriceStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var tmpLow float64
+	var tmpHigh float64
+	var highest float64
+	var highestIdx int32
+	var i int32
+	var today int32
+	var xMask int32
+	var x_inHigh []float64
+	var lowest float64
+	var lowestIdx int32
+	var x_inLow []float64
+	sp.x_inHigh[sp.today&sp.xMask] = inHigh
+	sp.x_inLow[sp.today&sp.xMask] = inLow
+	tmpHigh = sp.x_inHigh[sp.today&sp.xMask]
+	tmpLow = sp.x_inLow[sp.today&sp.xMask]
+	if sp.highestIdx < sp.trailingIdx {
+		sp.highestIdx = sp.trailingIdx
+		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
+		sp.i = sp.highestIdx
+		highest = sp.highest
+		highestIdx = sp.highestIdx
+		i = sp.i
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmpHigh = x_inHigh[i&xMask]
+			if tmpHigh > highest {
+				highestIdx = i
+				highest = tmpHigh
+			}
+		}
+		sp.highest = highest
+		sp.highestIdx = highestIdx
+		sp.i = i
+	} else if tmpHigh >= sp.highest {
+		sp.highestIdx = sp.today
+		sp.highest = tmpHigh
+	}
+	if sp.lowestIdx < sp.trailingIdx {
+		sp.lowestIdx = sp.trailingIdx
+		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
+		sp.i = sp.lowestIdx
+		i = sp.i
+		lowest = sp.lowest
+		lowestIdx = sp.lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmpLow = x_inLow[i&xMask]
+			if tmpLow < lowest {
+				lowestIdx = i
+				lowest = tmpLow
+			}
+		}
+		sp.i = i
+		sp.lowest = lowest
+		sp.lowestIdx = lowestIdx
+	} else if tmpLow <= sp.lowest {
+		sp.lowestIdx = sp.today
+		sp.lowest = tmpLow
+	}
+	sp.cur_outReal = (sp.highest + sp.lowest) / 2.0
+	sp.trailingIdx += 1
+	sp.today += 1
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var tmpLow float64
 	var tmpHigh float64
+	var today int32
+	var xMask int32
+	var x_inHigh []float64
+	var x_inLow []float64
 	var cur_outReal float64
 	highest := sp.highest
 	highestIdx := sp.highestIdx
@@ -384,14 +461,17 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 		}
 		highest = _T2
 		i = highestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T3 float64
-			if i&sp.xMask != pkSlot0 {
-				_T3 = sp.x_inHigh[i&sp.xMask]
+			if i&xMask != pkSlot0 {
+				_T3 = x_inHigh[i&xMask]
 			} else {
 				_T3 = pkVal0
 			}
@@ -415,14 +495,17 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 		}
 		lowest = _T4
 		i = lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T5 float64
-			if i&sp.xMask != pkSlot1 {
-				_T5 = sp.x_inLow[i&sp.xMask]
+			if i&xMask != pkSlot1 {
+				_T5 = x_inLow[i&xMask]
 			} else {
 				_T5 = pkVal1
 			}
@@ -452,56 +535,6 @@ func (sp *MIDPRICEStream) Clone() *MIDPRICEStream {
 	cl.x_inHigh = append(sp.x_inHigh[:0:0], sp.x_inHigh...)
 	cl.x_inLow = append(sp.x_inLow[:0:0], sp.x_inLow...)
 	return &cl
-}
-
-func midpriceStepImpl(sp *MIDPRICEStream, inHigh, inLow float64) {
-	var tmpLow float64
-	var tmpHigh float64
-	sp.x_inHigh[sp.today&sp.xMask] = inHigh
-	sp.x_inLow[sp.today&sp.xMask] = inLow
-	tmpHigh = sp.x_inHigh[sp.today&sp.xMask]
-	tmpLow = sp.x_inLow[sp.today&sp.xMask]
-	if sp.highestIdx < sp.trailingIdx {
-		sp.highestIdx = sp.trailingIdx
-		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
-		sp.i = sp.highestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmpHigh = sp.x_inHigh[sp.i&sp.xMask]
-			if tmpHigh > sp.highest {
-				sp.highestIdx = sp.i
-				sp.highest = tmpHigh
-			}
-		}
-	} else if tmpHigh >= sp.highest {
-		sp.highestIdx = sp.today
-		sp.highest = tmpHigh
-	}
-	if sp.lowestIdx < sp.trailingIdx {
-		sp.lowestIdx = sp.trailingIdx
-		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
-		sp.i = sp.lowestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmpLow = sp.x_inLow[sp.i&sp.xMask]
-			if tmpLow < sp.lowest {
-				sp.lowestIdx = sp.i
-				sp.lowest = tmpLow
-			}
-		}
-	} else if tmpLow <= sp.lowest {
-		sp.lowestIdx = sp.today
-		sp.lowest = tmpLow
-	}
-	sp.cur_outReal = (sp.highest + sp.lowest) / 2.0
-	sp.trailingIdx += 1
-	sp.today += 1
 }
 
 func (c *Core) midpriceOpenImpl(sp *MIDPRICEStream, inHigh, inLow []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

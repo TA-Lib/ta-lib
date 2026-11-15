@@ -507,18 +507,159 @@ func (sp *HT_DCPERIODStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	htDcperiodStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempReal float64
+	var tempReal2 float64
+	var adjustedPrevPeriod float64
+	var smoothedValue float64
+	var hilbertTempReal float64
+	var detrender float64
+	var Q1 float64
+	var jI float64
+	var jQ float64
+	var Q2 float64
+	var I2 float64
+	var todayValue float64
+	var ringPosL_trailingWMAIdx int32
+	var ringCapL_trailingWMAIdx int32
+	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
+	todayValue = inReal
+	sp.periodWMASub += todayValue
+	sp.periodWMASub -= sp.trailingWMAValue
+	sp.periodWMASum += float64(todayValue * 4.0)
+	sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
+	smoothedValue = float64(sp.periodWMASum * 0.1)
+	sp.periodWMASum -= sp.periodWMASub
+	if sp.streamParity == 0 {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Even[sp.hilbertIdx]
+		sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal
+		detrender += hilbertTempReal
+		detrender -= sp.prev_detrender_Even
+		sp.prev_detrender_Even = float64(sp.b * sp.prev_detrender_input_Even)
+		detrender += sp.prev_detrender_Even
+		sp.prev_detrender_input_Even = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Even[sp.hilbertIdx]
+		sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal
+		Q1 += hilbertTempReal
+		Q1 -= sp.prev_Q1_Even
+		sp.prev_Q1_Even = float64(sp.b * sp.prev_Q1_input_Even)
+		Q1 += sp.prev_Q1_Even
+		sp.prev_Q1_input_Even = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * sp.I1ForEvenPrev3)
+		jI = -sp.jI_Even[sp.hilbertIdx]
+		sp.jI_Even[sp.hilbertIdx] = hilbertTempReal
+		jI += hilbertTempReal
+		jI -= sp.prev_jI_Even
+		sp.prev_jI_Even = float64(sp.b * sp.prev_jI_input_Even)
+		jI += sp.prev_jI_Even
+		sp.prev_jI_input_Even = sp.I1ForEvenPrev3
+		jI = float64(jI * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * Q1)
+		jQ = -sp.jQ_Even[sp.hilbertIdx]
+		sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal
+		jQ += hilbertTempReal
+		jQ -= sp.prev_jQ_Even
+		sp.prev_jQ_Even = float64(sp.b * sp.prev_jQ_input_Even)
+		jQ += sp.prev_jQ_Even
+		sp.prev_jQ_input_Even = Q1
+		jQ = float64(jQ * adjustedPrevPeriod)
+		sp.hilbertIdx++
+		if sp.hilbertIdx == 3 {
+			sp.hilbertIdx = 0
+		}
+		Q2 = math.FMA(0.2, Q1+jI, float64(0.8*sp.prevQ2))
+		I2 = math.FMA(0.2, sp.I1ForEvenPrev3-jQ, float64(0.8*sp.prevI2))
+		sp.I1ForOddPrev3 = sp.I1ForOddPrev2
+		sp.I1ForOddPrev2 = detrender
+	} else {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Odd[sp.hilbertIdx]
+		sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal
+		detrender += hilbertTempReal
+		detrender -= sp.prev_detrender_Odd
+		sp.prev_detrender_Odd = float64(sp.b * sp.prev_detrender_input_Odd)
+		detrender += sp.prev_detrender_Odd
+		sp.prev_detrender_input_Odd = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Odd[sp.hilbertIdx]
+		sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal
+		Q1 += hilbertTempReal
+		Q1 -= sp.prev_Q1_Odd
+		sp.prev_Q1_Odd = float64(sp.b * sp.prev_Q1_input_Odd)
+		Q1 += sp.prev_Q1_Odd
+		sp.prev_Q1_input_Odd = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * sp.I1ForOddPrev3)
+		jI = -sp.jI_Odd[sp.hilbertIdx]
+		sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal
+		jI += hilbertTempReal
+		jI -= sp.prev_jI_Odd
+		sp.prev_jI_Odd = float64(sp.b * sp.prev_jI_input_Odd)
+		jI += sp.prev_jI_Odd
+		sp.prev_jI_input_Odd = sp.I1ForOddPrev3
+		jI = float64(jI * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * Q1)
+		jQ = -sp.jQ_Odd[sp.hilbertIdx]
+		sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal
+		jQ += hilbertTempReal
+		jQ -= sp.prev_jQ_Odd
+		sp.prev_jQ_Odd = float64(sp.b * sp.prev_jQ_input_Odd)
+		jQ += sp.prev_jQ_Odd
+		sp.prev_jQ_input_Odd = Q1
+		jQ = float64(jQ * adjustedPrevPeriod)
+		Q2 = math.FMA(0.2, Q1+jI, float64(0.8*sp.prevQ2))
+		I2 = math.FMA(0.2, sp.I1ForOddPrev3-jQ, float64(0.8*sp.prevI2))
+		sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2
+		sp.I1ForEvenPrev2 = detrender
+	}
+	sp.Re = math.FMA(0.8, sp.Re, float64(0.2*math.FMA(I2, sp.prevI2, float64(Q2*sp.prevQ2))))
+	sp.Im = math.FMA(0.8, sp.Im, float64(0.2*(float64(I2*sp.prevQ2)-float64(Q2*sp.prevI2))))
+	sp.prevQ2 = Q2
+	sp.prevI2 = I2
+	tempReal = sp.period
+	if sp.Im != 0.0 && sp.Re != 0.0 {
+		sp.period = 360.0 / float64(math.Atan(sp.Im/sp.Re)*sp.rad2Deg)
+	}
+	tempReal2 = float64(1.5 * tempReal)
+	if sp.period > tempReal2 {
+		sp.period = tempReal2
+	}
+	tempReal2 = float64(0.67 * tempReal)
+	if sp.period < tempReal2 {
+		sp.period = tempReal2
+	}
+	if sp.period < 6.0 {
+		sp.period = 6.0
+	} else if sp.period > 50.0 {
+		sp.period = 50.0
+	}
+	sp.period = math.FMA(0.2, sp.period, float64(0.8*tempReal))
+	sp.smoothPeriod = math.FMA(0.67, sp.smoothPeriod, float64(0.33*sp.period))
+	sp.cur_outReal = sp.smoothPeriod
+	ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx
+	ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx
+	sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal
+	ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1
+	if ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx {
+		ringPosL_trailingWMAIdx = 0
+	}
+	sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx
+	sp.streamParity = 1 - sp.streamParity
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *HT_DCPERIODStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -689,151 +830,6 @@ func (sp *HT_DCPERIODStream) Clone() *HT_DCPERIODStream {
 	cl := *sp
 	cl.ring_trailingWMAIdx_inReal = append(sp.ring_trailingWMAIdx_inReal[:0:0], sp.ring_trailingWMAIdx_inReal...)
 	return &cl
-}
-
-func htDcperiodStepImpl(sp *HT_DCPERIODStream, inReal float64) {
-	var tempReal float64
-	var tempReal2 float64
-	var adjustedPrevPeriod float64
-	var smoothedValue float64
-	var hilbertTempReal float64
-	var detrender float64
-	var Q1 float64
-	var jI float64
-	var jQ float64
-	var Q2 float64
-	var I2 float64
-	var todayValue float64
-	var ringPosL_trailingWMAIdx int32
-	var ringCapL_trailingWMAIdx int32
-	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
-	todayValue = inReal
-	sp.periodWMASub += todayValue
-	sp.periodWMASub -= sp.trailingWMAValue
-	sp.periodWMASum += float64(todayValue * 4.0)
-	sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
-	smoothedValue = float64(sp.periodWMASum * 0.1)
-	sp.periodWMASum -= sp.periodWMASub
-	if sp.streamParity == 0 {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Even[sp.hilbertIdx]
-		sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal
-		detrender += hilbertTempReal
-		detrender -= sp.prev_detrender_Even
-		sp.prev_detrender_Even = float64(sp.b * sp.prev_detrender_input_Even)
-		detrender += sp.prev_detrender_Even
-		sp.prev_detrender_input_Even = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Even[sp.hilbertIdx]
-		sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal
-		Q1 += hilbertTempReal
-		Q1 -= sp.prev_Q1_Even
-		sp.prev_Q1_Even = float64(sp.b * sp.prev_Q1_input_Even)
-		Q1 += sp.prev_Q1_Even
-		sp.prev_Q1_input_Even = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * sp.I1ForEvenPrev3)
-		jI = -sp.jI_Even[sp.hilbertIdx]
-		sp.jI_Even[sp.hilbertIdx] = hilbertTempReal
-		jI += hilbertTempReal
-		jI -= sp.prev_jI_Even
-		sp.prev_jI_Even = float64(sp.b * sp.prev_jI_input_Even)
-		jI += sp.prev_jI_Even
-		sp.prev_jI_input_Even = sp.I1ForEvenPrev3
-		jI = float64(jI * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * Q1)
-		jQ = -sp.jQ_Even[sp.hilbertIdx]
-		sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal
-		jQ += hilbertTempReal
-		jQ -= sp.prev_jQ_Even
-		sp.prev_jQ_Even = float64(sp.b * sp.prev_jQ_input_Even)
-		jQ += sp.prev_jQ_Even
-		sp.prev_jQ_input_Even = Q1
-		jQ = float64(jQ * adjustedPrevPeriod)
-		sp.hilbertIdx++
-		if sp.hilbertIdx == 3 {
-			sp.hilbertIdx = 0
-		}
-		Q2 = math.FMA(0.2, Q1+jI, float64(0.8*sp.prevQ2))
-		I2 = math.FMA(0.2, sp.I1ForEvenPrev3-jQ, float64(0.8*sp.prevI2))
-		sp.I1ForOddPrev3 = sp.I1ForOddPrev2
-		sp.I1ForOddPrev2 = detrender
-	} else {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Odd[sp.hilbertIdx]
-		sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal
-		detrender += hilbertTempReal
-		detrender -= sp.prev_detrender_Odd
-		sp.prev_detrender_Odd = float64(sp.b * sp.prev_detrender_input_Odd)
-		detrender += sp.prev_detrender_Odd
-		sp.prev_detrender_input_Odd = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Odd[sp.hilbertIdx]
-		sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal
-		Q1 += hilbertTempReal
-		Q1 -= sp.prev_Q1_Odd
-		sp.prev_Q1_Odd = float64(sp.b * sp.prev_Q1_input_Odd)
-		Q1 += sp.prev_Q1_Odd
-		sp.prev_Q1_input_Odd = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * sp.I1ForOddPrev3)
-		jI = -sp.jI_Odd[sp.hilbertIdx]
-		sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal
-		jI += hilbertTempReal
-		jI -= sp.prev_jI_Odd
-		sp.prev_jI_Odd = float64(sp.b * sp.prev_jI_input_Odd)
-		jI += sp.prev_jI_Odd
-		sp.prev_jI_input_Odd = sp.I1ForOddPrev3
-		jI = float64(jI * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * Q1)
-		jQ = -sp.jQ_Odd[sp.hilbertIdx]
-		sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal
-		jQ += hilbertTempReal
-		jQ -= sp.prev_jQ_Odd
-		sp.prev_jQ_Odd = float64(sp.b * sp.prev_jQ_input_Odd)
-		jQ += sp.prev_jQ_Odd
-		sp.prev_jQ_input_Odd = Q1
-		jQ = float64(jQ * adjustedPrevPeriod)
-		Q2 = math.FMA(0.2, Q1+jI, float64(0.8*sp.prevQ2))
-		I2 = math.FMA(0.2, sp.I1ForOddPrev3-jQ, float64(0.8*sp.prevI2))
-		sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2
-		sp.I1ForEvenPrev2 = detrender
-	}
-	sp.Re = math.FMA(0.8, sp.Re, float64(0.2*math.FMA(I2, sp.prevI2, float64(Q2*sp.prevQ2))))
-	sp.Im = math.FMA(0.8, sp.Im, float64(0.2*(float64(I2*sp.prevQ2)-float64(Q2*sp.prevI2))))
-	sp.prevQ2 = Q2
-	sp.prevI2 = I2
-	tempReal = sp.period
-	if sp.Im != 0.0 && sp.Re != 0.0 {
-		sp.period = 360.0 / float64(math.Atan(sp.Im/sp.Re)*sp.rad2Deg)
-	}
-	tempReal2 = float64(1.5 * tempReal)
-	if sp.period > tempReal2 {
-		sp.period = tempReal2
-	}
-	tempReal2 = float64(0.67 * tempReal)
-	if sp.period < tempReal2 {
-		sp.period = tempReal2
-	}
-	if sp.period < 6.0 {
-		sp.period = 6.0
-	} else if sp.period > 50.0 {
-		sp.period = 50.0
-	}
-	sp.period = math.FMA(0.2, sp.period, float64(0.8*tempReal))
-	sp.smoothPeriod = math.FMA(0.67, sp.smoothPeriod, float64(0.33*sp.period))
-	sp.cur_outReal = sp.smoothPeriod
-	ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx
-	ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx
-	sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal
-	ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1
-	if ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx {
-		ringPosL_trailingWMAIdx = 0
-	}
-	sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx
-	sp.streamParity = 1 - sp.streamParity
 }
 
 func (c *Core) htDcperiodOpenImpl(sp *HT_DCPERIODStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

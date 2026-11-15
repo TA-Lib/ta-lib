@@ -311,18 +311,42 @@ func (sp *ZIGZAGStream) Update(inHigh, inLow float64) (float64, int32, int32, er
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	zigzagStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var isExt int32
+	sp.barsSincePivot = sp.barsSincePivot + 1
+	sp.barIdx = sp.barIdx + 1
+	if sp.trend == -1 {
+		if inHigh >= float64(sp.pivot*sp.up) && sp.barsSincePivot >= sp.optInMinTrendLength {
+			sp.trend = 1
+			sp.pivot = inHigh
+			sp.barsSincePivot = 0
+		} else {
+			isExt = b2i(inLow <= sp.pivot)
+			sp.pivot = selF(sp.pivot < inLow, sp.pivot, inLow)
+			sp.barsSincePivot = sp.barsSincePivot - isExt*sp.barsSincePivot
+		}
+	} else if inLow <= float64(sp.pivot*sp.dn) && sp.barsSincePivot >= sp.optInMinTrendLength {
+		sp.trend = -1
+		sp.pivot = inLow
+		sp.barsSincePivot = 0
+	} else {
+		isExt = b2i(inHigh >= sp.pivot)
+		sp.pivot = selF(sp.pivot > inHigh, sp.pivot, inHigh)
+		sp.barsSincePivot = sp.barsSincePivot - isExt*sp.barsSincePivot
+	}
+	sp.cur_outZigZag = sp.pivot
+	sp.cur_outTrend = sp.trend
+	sp.cur_outPivotIdx = sp.barIdx - sp.barsSincePivot
 	return sp.cur_outZigZag, sp.cur_outTrend, sp.cur_outPivotIdx, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *ZIGZAGStream) Peek(inHigh, inLow float64) (float64, int32, int32, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var isExt int32
@@ -342,13 +366,7 @@ func (sp *ZIGZAGStream) Peek(inHigh, inLow float64) (float64, int32, int32, erro
 			barsSincePivot = 0
 		} else {
 			isExt = b2i(inLow <= pivot)
-			var _T0 float64
-			if pivot < inLow {
-				_T0 = pivot
-			} else {
-				_T0 = inLow
-			}
-			pivot = _T0
+			pivot = selF(pivot < inLow, pivot, inLow)
 			barsSincePivot = barsSincePivot - isExt*barsSincePivot
 		}
 	} else if inLow <= float64(pivot*sp.dn) && barsSincePivot >= sp.optInMinTrendLength {
@@ -357,13 +375,7 @@ func (sp *ZIGZAGStream) Peek(inHigh, inLow float64) (float64, int32, int32, erro
 		barsSincePivot = 0
 	} else {
 		isExt = b2i(inHigh >= pivot)
-		var _T1 float64
-		if pivot > inHigh {
-			_T1 = pivot
-		} else {
-			_T1 = inHigh
-		}
-		pivot = _T1
+		pivot = selF(pivot > inHigh, pivot, inHigh)
 		barsSincePivot = barsSincePivot - isExt*barsSincePivot
 	}
 	cur_outZigZag = pivot
@@ -383,46 +395,6 @@ func (sp *ZIGZAGStream) Value() (float64, int32, int32) {
 func (sp *ZIGZAGStream) Clone() *ZIGZAGStream {
 	cl := *sp
 	return &cl
-}
-
-func zigzagStepImpl(sp *ZIGZAGStream, inHigh, inLow float64) {
-	var isExt int32
-	sp.barsSincePivot = sp.barsSincePivot + 1
-	sp.barIdx = sp.barIdx + 1
-	if sp.trend == -1 {
-		if inHigh >= float64(sp.pivot*sp.up) && sp.barsSincePivot >= sp.optInMinTrendLength {
-			sp.trend = 1
-			sp.pivot = inHigh
-			sp.barsSincePivot = 0
-		} else {
-			isExt = b2i(inLow <= sp.pivot)
-			var _T2 float64
-			if sp.pivot < inLow {
-				_T2 = sp.pivot
-			} else {
-				_T2 = inLow
-			}
-			sp.pivot = _T2
-			sp.barsSincePivot = sp.barsSincePivot - isExt*sp.barsSincePivot
-		}
-	} else if inLow <= float64(sp.pivot*sp.dn) && sp.barsSincePivot >= sp.optInMinTrendLength {
-		sp.trend = -1
-		sp.pivot = inLow
-		sp.barsSincePivot = 0
-	} else {
-		isExt = b2i(inHigh >= sp.pivot)
-		var _T3 float64
-		if sp.pivot > inHigh {
-			_T3 = sp.pivot
-		} else {
-			_T3 = inHigh
-		}
-		sp.pivot = _T3
-		sp.barsSincePivot = sp.barsSincePivot - isExt*sp.barsSincePivot
-	}
-	sp.cur_outZigZag = sp.pivot
-	sp.cur_outTrend = sp.trend
-	sp.cur_outPivotIdx = sp.barIdx - sp.barsSincePivot
 }
 
 func (c *Core) zigzagOpenImpl(sp *ZIGZAGStream, inHigh, inLow []float64, startIdx int32, optInSensitivity float64, optInMinTrendLength int32, outBegIdx, outNBElement *int32, outZigZag []float64, outTrend, outPivotIdx []int32, outStride int32) RetCode {
@@ -489,13 +461,13 @@ func (c *Core) zigzagOpenImpl(sp *ZIGZAGStream, inHigh, inLow []float64, startId
 				barsSincePivot = 0
 			} else {
 				isExt = b2i(inLow[today] <= pivot)
-				var _T4 float64
+				var _T0 float64
 				if pivot < inLow[today] {
-					_T4 = pivot
+					_T0 = pivot
 				} else {
-					_T4 = inLow[today]
+					_T0 = inLow[today]
 				}
-				pivot = _T4
+				pivot = _T0
 				barsSincePivot = barsSincePivot - isExt*barsSincePivot
 			}
 		} else if inLow[today] <= float64(pivot*dn) && barsSincePivot >= optInMinTrendLength {
@@ -504,13 +476,13 @@ func (c *Core) zigzagOpenImpl(sp *ZIGZAGStream, inHigh, inLow []float64, startId
 			barsSincePivot = 0
 		} else {
 			isExt = b2i(inHigh[today] >= pivot)
-			var _T5 float64
+			var _T1 float64
 			if pivot > inHigh[today] {
-				_T5 = pivot
+				_T1 = pivot
 			} else {
-				_T5 = inHigh[today]
+				_T1 = inHigh[today]
 			}
-			pivot = _T5
+			pivot = _T1
 			barsSincePivot = barsSincePivot - isExt*barsSincePivot
 		}
 		if today >= startIdx {

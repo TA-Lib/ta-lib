@@ -312,18 +312,32 @@ func (sp *CMOStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	cmoStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var gainDelta float64
+	var tempValue1 float64
+	var tempValue2 float64
+	tempValue1 = inReal
+	tempValue2 = tempValue1 - sp.prevValue
+	sp.prevValue = tempValue1
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+	sp.prevGain += float64(gainDelta*sp.invPeriod) - float64(sp.prevGain*sp.invPeriod)
+	sp.prevLoss += float64((gainDelta-tempValue2)*sp.invPeriod) - float64(sp.prevLoss*sp.invPeriod)
+	tempValue1 = sp.prevGain + sp.prevLoss
+	if tempValue1 > 0.0 {
+		sp.cur_outReal = float64(100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1))
+	} else {
+		sp.cur_outReal = 0.0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CMOStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var gainDelta float64
@@ -336,13 +350,7 @@ func (sp *CMOStream) Peek(inReal float64) (float64, error) {
 	tempValue1 = inReal
 	tempValue2 = tempValue1 - prevValue
 	prevValue = tempValue1
-	var _T0 float64
-	if tempValue2 > 0.0 {
-		_T0 = tempValue2
-	} else {
-		_T0 = 0.0
-	}
-	gainDelta = _T0
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	prevGain += float64(gainDelta*sp.invPeriod) - float64(prevGain*sp.invPeriod)
 	prevLoss += float64((gainDelta-tempValue2)*sp.invPeriod) - float64(prevLoss*sp.invPeriod)
 	tempValue1 = prevGain + prevLoss
@@ -364,30 +372,6 @@ func (sp *CMOStream) Value() float64 {
 func (sp *CMOStream) Clone() *CMOStream {
 	cl := *sp
 	return &cl
-}
-
-func cmoStepImpl(sp *CMOStream, inReal float64) {
-	var gainDelta float64
-	var tempValue1 float64
-	var tempValue2 float64
-	tempValue1 = inReal
-	tempValue2 = tempValue1 - sp.prevValue
-	sp.prevValue = tempValue1
-	var _T1 float64
-	if tempValue2 > 0.0 {
-		_T1 = tempValue2
-	} else {
-		_T1 = 0.0
-	}
-	gainDelta = _T1
-	sp.prevGain += float64(gainDelta*sp.invPeriod) - float64(sp.prevGain*sp.invPeriod)
-	sp.prevLoss += float64((gainDelta-tempValue2)*sp.invPeriod) - float64(sp.prevLoss*sp.invPeriod)
-	tempValue1 = sp.prevGain + sp.prevLoss
-	if tempValue1 > 0.0 {
-		sp.cur_outReal = float64(100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1))
-	} else {
-		sp.cur_outReal = 0.0
-	}
 }
 
 func (c *Core) cmoOpenImpl(sp *CMOStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -438,13 +422,13 @@ func (c *Core) cmoOpenImpl(sp *CMOStream, inReal []float64, startIdx, optInTimeP
 		today++
 		tempValue2 = tempValue1 - prevValue
 		prevValue = tempValue1
-		var _T2 float64
+		var _T0 float64
 		if tempValue2 > 0.0 {
-			_T2 = tempValue2
+			_T0 = tempValue2
 		} else {
-			_T2 = 0.0
+			_T0 = 0.0
 		}
-		gainDelta = _T2
+		gainDelta = _T0
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 	}
@@ -464,13 +448,13 @@ func (c *Core) cmoOpenImpl(sp *CMOStream, inReal []float64, startIdx, optInTimeP
 			tempValue1 = inReal[today]
 			tempValue2 = tempValue1 - prevValue
 			prevValue = tempValue1
-			var _T3 float64
+			var _T1 float64
 			if tempValue2 > 0.0 {
-				_T3 = tempValue2
+				_T1 = tempValue2
 			} else {
-				_T3 = 0.0
+				_T1 = 0.0
 			}
-			gainDelta = _T3
+			gainDelta = _T1
 			prevGain += float64(gainDelta*invPeriod) - float64(prevGain*invPeriod)
 			prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
 			today += 1
@@ -481,13 +465,13 @@ func (c *Core) cmoOpenImpl(sp *CMOStream, inReal []float64, startIdx, optInTimeP
 		today++
 		tempValue2 = tempValue1 - prevValue
 		prevValue = tempValue1
-		var _T4 float64
+		var _T2 float64
 		if tempValue2 > 0.0 {
-			_T4 = tempValue2
+			_T2 = tempValue2
 		} else {
-			_T4 = 0.0
+			_T2 = 0.0
 		}
-		gainDelta = _T4
+		gainDelta = _T2
 		prevGain += float64(gainDelta*invPeriod) - float64(prevGain*invPeriod)
 		prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
 		tempValue1 = prevGain + prevLoss

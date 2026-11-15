@@ -329,12 +329,43 @@ func (sp *CRSIStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	if err := crsiStepImpl(sp, inReal); err != nil {
-		return 0, err
+	var close_ float64
+	var cur_tempStreak float64
+	var cur_tempStreakRSI float64
+	var cur_tempRSI float64
+	var cur_outReal float64
+	var subErr error
+	close_ = inReal
+	if close_ > sp.prevClose {
+		sp.streak = selF(sp.streak > 0.0, sp.streak+1.0, 1.0)
+	} else if close_ < sp.prevClose {
+		sp.streak = selF(sp.streak < 0.0, sp.streak-1.0, -1.0)
+	} else {
+		sp.streak = 0.0
 	}
+	cur_tempStreak = sp.streak
+	sp.prevClose = close_
+	cur_tempStreakRSI, subErr = sp.sub0.Update(cur_tempStreak)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_tempRSI, subErr = sp.sub1.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_tempStreak, subErr = sp.sub2.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_outReal, subErr = sp.sub3.Update(cur_tempStreak)
+	if subErr != nil {
+		return 0, subErr
+	}
+	cur_outReal = (cur_tempRSI + cur_tempStreakRSI + cur_outReal) / 3.0
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -342,7 +373,7 @@ func (sp *CRSIStream) Update(inReal float64) (float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CRSIStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_tempStreak float64
@@ -354,21 +385,9 @@ func (sp *CRSIStream) Peek(inReal float64) (float64, error) {
 	streak := sp.streak
 	close_ = inReal
 	if close_ > sp.prevClose {
-		var _T0 float64
-		if streak > 0.0 {
-			_T0 = streak + 1.0
-		} else {
-			_T0 = 1.0
-		}
-		streak = _T0
+		streak = selF(streak > 0.0, streak+1.0, 1.0)
 	} else if close_ < sp.prevClose {
-		var _T1 float64
-		if streak < 0.0 {
-			_T1 = streak - 1.0
-		} else {
-			_T1 = -1.0
-		}
-		streak = _T1
+		streak = selF(streak < 0.0, streak-1.0, -1.0)
 	} else {
 		streak = 0.0
 	}
@@ -407,56 +426,6 @@ func (sp *CRSIStream) Clone() *CRSIStream {
 	cl.sub2 = sp.sub2.Clone()
 	cl.sub3 = sp.sub3.Clone()
 	return &cl
-}
-
-func crsiStepImpl(sp *CRSIStream, inReal float64) error {
-	var close_ float64
-	var cur_tempStreak float64
-	var cur_tempStreakRSI float64
-	var cur_tempRSI float64
-	var cur_outReal float64
-	var subErr error
-	close_ = inReal
-	if close_ > sp.prevClose {
-		var _T2 float64
-		if sp.streak > 0.0 {
-			_T2 = sp.streak + 1.0
-		} else {
-			_T2 = 1.0
-		}
-		sp.streak = _T2
-	} else if close_ < sp.prevClose {
-		var _T3 float64
-		if sp.streak < 0.0 {
-			_T3 = sp.streak - 1.0
-		} else {
-			_T3 = -1.0
-		}
-		sp.streak = _T3
-	} else {
-		sp.streak = 0.0
-	}
-	cur_tempStreak = sp.streak
-	sp.prevClose = close_
-	cur_tempStreakRSI, subErr = sp.sub0.Update(cur_tempStreak)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempRSI, subErr = sp.sub1.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempStreak, subErr = sp.sub2.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal, subErr = sp.sub3.Update(cur_tempStreak)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal = (cur_tempRSI + cur_tempStreakRSI + cur_outReal) / 3.0
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) crsiOpenImpl(sp *CRSIStream, inReal []float64, startIdx, optInTimePeriod, optInStreakPeriod, optInRankPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -531,21 +500,21 @@ func (c *Core) crsiOpenImpl(sp *CRSIStream, inReal []float64, startIdx, optInTim
 	for today <= endIdx {
 		close_ = inReal[today]
 		if close_ > prevClose {
-			var _T8 float64
+			var _T4 float64
 			if streak > 0.0 {
-				_T8 = streak + 1.0
+				_T4 = streak + 1.0
 			} else {
-				_T8 = 1.0
+				_T4 = 1.0
 			}
-			streak = _T8
+			streak = _T4
 		} else if close_ < prevClose {
-			var _T9 float64
+			var _T5 float64
 			if streak < 0.0 {
-				_T9 = streak - 1.0
+				_T5 = streak - 1.0
 			} else {
-				_T9 = -1.0
+				_T5 = -1.0
 			}
-			streak = _T9
+			streak = _T5
 		} else {
 			streak = 0.0
 		}
@@ -554,21 +523,21 @@ func (c *Core) crsiOpenImpl(sp *CRSIStream, inReal []float64, startIdx, optInTim
 		prevClose = close_
 		today += 1
 	}
-	sub0, _E4 := c.rsiOpenAndFillInternal(tempStreak[:outIdx-1+1], 0, optInStreakPeriod, &tempBegIdx, &streakNb, tempStreakRSI)
-	if _E4 != nil {
-		return _E4.(RetCode)
+	sub0, _E0 := c.rsiOpenAndFillInternal(tempStreak[:outIdx-1+1], 0, optInStreakPeriod, &tempBegIdx, &streakNb, tempStreakRSI)
+	if _E0 != nil {
+		return _E0.(RetCode)
 	}
-	sub1, _E5 := c.rsiOpenAndFillInternal(inReal, anchorIdx+c.rsiLookback(optInTimePeriod), optInTimePeriod, &tempBegIdx, &rsiNb, tempRSI)
-	if _E5 != nil {
-		return _E5.(RetCode)
+	sub1, _E1 := c.rsiOpenAndFillInternal(inReal, anchorIdx+c.rsiLookback(optInTimePeriod), optInTimePeriod, &tempBegIdx, &rsiNb, tempRSI)
+	if _E1 != nil {
+		return _E1.(RetCode)
 	}
-	sub2, _E6 := c.rocpOpenAndFillInternal(inReal, startIdx-optInRankPeriod, 1, &tempBegIdx, &rocNb, tempStreak)
-	if _E6 != nil {
-		return _E6.(RetCode)
+	sub2, _E2 := c.rocpOpenAndFillInternal(inReal, startIdx-optInRankPeriod, 1, &tempBegIdx, &rocNb, tempStreak)
+	if _E2 != nil {
+		return _E2.(RetCode)
 	}
-	sub3, _E7 := c.percentrankOpenAndFillInternal(tempStreak[:rocNb-1+1], 0, optInRankPeriod, outBegIdx, outNBElement, sc_outReal)
-	if _E7 != nil {
-		return _E7.(RetCode)
+	sub3, _E3 := c.percentrankOpenAndFillInternal(tempStreak[:rocNb-1+1], 0, optInRankPeriod, outBegIdx, outNBElement, sc_outReal)
+	if _E3 != nil {
+		return _E3.(RetCode)
 	}
 	offsetRSI = rsiNb - *outNBElement
 	offsetStreak = streakNb - *outNBElement

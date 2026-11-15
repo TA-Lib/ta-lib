@@ -246,18 +246,64 @@ func (sp *VHFStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	vhfStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var i int32
+	var highest float64
+	var lowest float64
+	var sumChange float64
+	var prev float64
+	var tempReal float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inReal []float64
+	sp.win_i_inReal[sp.winPos_i] = inReal
+	highest = inReal
+	lowest = highest
+	prev = highest
+	sumChange = 0.0
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = optInTimePeriod; i >= 0; i -= 1 {
+		var _T3 int32
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T3 = winPos_i + winCap_i - i - winCap_i
+		} else {
+			_T3 = winPos_i + winCap_i - i
+		}
+		tempReal = win_i_inReal[_T3]
+		if i < optInTimePeriod {
+			sumChange += math.Abs(tempReal - prev)
+			if tempReal > highest {
+				highest = tempReal
+			}
+			if tempReal < lowest {
+				lowest = tempReal
+			}
+		}
+		prev = tempReal
+	}
+	if sumChange > 0.0 {
+		sp.cur_outReal = (highest - lowest) / sumChange
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	sp.winPos_i = sp.winPos_i + 1
+	if sp.winPos_i >= sp.winCap_i {
+		sp.winPos_i = 0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *VHFStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var i int32
@@ -266,6 +312,10 @@ func (sp *VHFStream) Peek(inReal float64) (float64, error) {
 	var sumChange float64
 	var prev float64
 	var tempReal float64
+	var optInTimePeriod int32
+	var winCap_i int32
+	var winPos_i int32
+	var win_i_inReal []float64
 	var cur_outReal float64
 	pkSlot0 := int32(-1)
 	var pkVal0 float64
@@ -275,27 +325,31 @@ func (sp *VHFStream) Peek(inReal float64) (float64, error) {
 	lowest = highest
 	prev = highest
 	sumChange = 0.0
-	for i = sp.optInTimePeriod; i >= 0; i -= 1 {
+	optInTimePeriod = sp.optInTimePeriod
+	winCap_i = sp.winCap_i
+	winPos_i = sp.winPos_i
+	win_i_inReal = sp.win_i_inReal
+	for i = optInTimePeriod; i >= 0; i -= 1 {
 		var _T0 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T0 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+		if winPos_i+winCap_i-i >= winCap_i {
+			_T0 = winPos_i + winCap_i - i - winCap_i
 		} else {
-			_T0 = sp.winPos_i + sp.winCap_i - i
+			_T0 = winPos_i + winCap_i - i
 		}
 		var _T2 float64
 		if _T0 != pkSlot0 {
 			var _T1 int32
-			if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-				_T1 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
+			if winPos_i+winCap_i-i >= winCap_i {
+				_T1 = winPos_i + winCap_i - i - winCap_i
 			} else {
-				_T1 = sp.winPos_i + sp.winCap_i - i
+				_T1 = winPos_i + winCap_i - i
 			}
-			_T2 = sp.win_i_inReal[_T1]
+			_T2 = win_i_inReal[_T1]
 		} else {
 			_T2 = pkVal0
 		}
 		tempReal = _T2
-		if i < sp.optInTimePeriod {
+		if i < optInTimePeriod {
 			sumChange += math.Abs(tempReal - prev)
 			if tempReal > highest {
 				highest = tempReal
@@ -325,48 +379,6 @@ func (sp *VHFStream) Clone() *VHFStream {
 	cl := *sp
 	cl.win_i_inReal = append(sp.win_i_inReal[:0:0], sp.win_i_inReal...)
 	return &cl
-}
-
-func vhfStepImpl(sp *VHFStream, inReal float64) {
-	var i int32
-	var highest float64
-	var lowest float64
-	var sumChange float64
-	var prev float64
-	var tempReal float64
-	sp.win_i_inReal[sp.winPos_i] = inReal
-	highest = inReal
-	lowest = highest
-	prev = highest
-	sumChange = 0.0
-	for i = sp.optInTimePeriod; i >= 0; i -= 1 {
-		var _T3 int32
-		if sp.winPos_i+sp.winCap_i-i >= sp.winCap_i {
-			_T3 = sp.winPos_i + sp.winCap_i - i - sp.winCap_i
-		} else {
-			_T3 = sp.winPos_i + sp.winCap_i - i
-		}
-		tempReal = sp.win_i_inReal[_T3]
-		if i < sp.optInTimePeriod {
-			sumChange += math.Abs(tempReal - prev)
-			if tempReal > highest {
-				highest = tempReal
-			}
-			if tempReal < lowest {
-				lowest = tempReal
-			}
-		}
-		prev = tempReal
-	}
-	if sumChange > 0.0 {
-		sp.cur_outReal = (highest - lowest) / sumChange
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	sp.winPos_i = sp.winPos_i + 1
-	if sp.winPos_i >= sp.winCap_i {
-		sp.winPos_i = 0
-	}
 }
 
 func (c *Core) vhfOpenImpl(sp *VHFStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

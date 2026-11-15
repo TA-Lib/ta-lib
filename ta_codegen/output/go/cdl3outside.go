@@ -252,11 +252,61 @@ func (sp *CDL3OUTSIDEStream) Update(inOpen, inHigh, inLow, inClose float64) (int
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdl3outsideStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var _T8 int32
+	if sp.lag1_inClose >= sp.lag1_inOpen {
+		_T8 = 1
+	} else {
+		_T8 = -1
+	}
+	_B10 := _T8 == 1
+	if _B10 {
+		var _T9 int32
+		if sp.lag2_inClose >= sp.lag2_inOpen {
+			_T9 = 1
+		} else {
+			_T9 = -1
+		}
+		_B10 = _T9 == -1
+	}
+	_B14 := _B10 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose
+	if !_B14 {
+		var _T11 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T11 = 1
+		} else {
+			_T11 = -1
+		}
+		_B13 := _T11 == -1
+		if _B13 {
+			var _T12 int32
+			if sp.lag2_inClose >= sp.lag2_inOpen {
+				_T12 = 1
+			} else {
+				_T12 = -1
+			}
+			_B13 = _T12 == 1
+		}
+		_B14 = _B13 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose
+	}
+	if _B14 {
+		var _T15 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T15 = 1
+		} else {
+			_T15 = -1
+		}
+		sp.cur_outInteger = _T15 * 100
+	} else {
+		sp.cur_outInteger = 0
+	}
+	sp.lag2_inOpen = sp.lag1_inOpen
+	sp.lag1_inOpen = inOpen
+	sp.lag2_inClose = sp.lag1_inClose
+	sp.lag1_inClose = inClose
 	return sp.cur_outInteger, nil
 }
 
@@ -264,7 +314,7 @@ func (sp *CDL3OUTSIDEStream) Update(inOpen, inHigh, inLow, inClose float64) (int
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDL3OUTSIDEStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outInteger int32
@@ -328,60 +378,6 @@ func (sp *CDL3OUTSIDEStream) Value() int32 {
 func (sp *CDL3OUTSIDEStream) Clone() *CDL3OUTSIDEStream {
 	cl := *sp
 	return &cl
-}
-
-func cdl3outsideStepImpl(sp *CDL3OUTSIDEStream, inOpen, inHigh, inLow, inClose float64) {
-	var _T8 int32
-	if sp.lag1_inClose >= sp.lag1_inOpen {
-		_T8 = 1
-	} else {
-		_T8 = -1
-	}
-	_B10 := _T8 == 1
-	if _B10 {
-		var _T9 int32
-		if sp.lag2_inClose >= sp.lag2_inOpen {
-			_T9 = 1
-		} else {
-			_T9 = -1
-		}
-		_B10 = _T9 == -1
-	}
-	_B14 := _B10 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose
-	if !_B14 {
-		var _T11 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T11 = 1
-		} else {
-			_T11 = -1
-		}
-		_B13 := _T11 == -1
-		if _B13 {
-			var _T12 int32
-			if sp.lag2_inClose >= sp.lag2_inOpen {
-				_T12 = 1
-			} else {
-				_T12 = -1
-			}
-			_B13 = _T12 == 1
-		}
-		_B14 = _B13 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose
-	}
-	if _B14 {
-		var _T15 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T15 = 1
-		} else {
-			_T15 = -1
-		}
-		sp.cur_outInteger = _T15 * 100
-	} else {
-		sp.cur_outInteger = 0
-	}
-	sp.lag2_inOpen = sp.lag1_inOpen
-	sp.lag1_inOpen = inOpen
-	sp.lag2_inClose = sp.lag1_inClose
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) cdl3outsideOpenImpl(sp *CDL3OUTSIDEStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {
@@ -505,9 +501,9 @@ func (c *Core) cdl3outsideOpenSinkFrame(sp *CDL3OUTSIDEStream, inOpen, inHigh, i
 	}
 	i = startIdx
 	outIdx = 0
-	for i < endIdx {
-		outIdx += 1
-		i += 1
+	if i < endIdx {
+		outIdx = outIdx + (endIdx - i)
+		i = endIdx
 	}
 	var _T24 int32
 	if inClose[i-1] >= inOpen[i-1] {

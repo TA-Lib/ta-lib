@@ -311,12 +311,36 @@ func (sp *KCStream) Update(inHigh, inLow, inClose float64) (float64, float64, fl
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	if err := kcStepImpl(sp, inHigh, inLow, inClose); err != nil {
-		return 0, 0, 0, err
+	var middle float64
+	var tempReal float64
+	var cur_tempTP float64
+	var cur_tempATR float64
+	var cur_outRealMiddleBand float64
+	var cur_outRealUpperBand float64
+	var cur_outRealLowerBand float64
+	var subErr error
+	cur_tempTP, subErr = sp.sub0.Update(inHigh, inLow, inClose)
+	if subErr != nil {
+		return 0, 0, 0, subErr
 	}
+	cur_tempATR, subErr = sp.sub1.Update(inHigh, inLow, inClose)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	cur_outRealMiddleBand, subErr = sp.sub2.Update(cur_tempTP)
+	if subErr != nil {
+		return 0, 0, 0, subErr
+	}
+	middle = cur_outRealMiddleBand
+	tempReal = float64(cur_tempATR * sp.optInNbDev)
+	cur_outRealUpperBand = middle + tempReal
+	cur_outRealLowerBand = middle - tempReal
+	sp.cur_outRealUpperBand = cur_outRealUpperBand
+	sp.cur_outRealMiddleBand = cur_outRealMiddleBand
+	sp.cur_outRealLowerBand = cur_outRealLowerBand
 	sp.outRangeCount++
 	return sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand, nil
 }
@@ -325,7 +349,7 @@ func (sp *KCStream) Update(inHigh, inLow, inClose float64) (float64, float64, fl
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *KCStream) Peek(inHigh, inLow, inClose float64) (float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var middle float64
@@ -369,37 +393,6 @@ func (sp *KCStream) Clone() *KCStream {
 	cl.sub1 = sp.sub1.Clone()
 	cl.sub2 = sp.sub2.Clone()
 	return &cl
-}
-
-func kcStepImpl(sp *KCStream, inHigh, inLow, inClose float64) error {
-	var middle float64
-	var tempReal float64
-	var cur_tempTP float64
-	var cur_tempATR float64
-	var cur_outRealMiddleBand float64
-	var cur_outRealUpperBand float64
-	var cur_outRealLowerBand float64
-	var subErr error
-	cur_tempTP, subErr = sp.sub0.Update(inHigh, inLow, inClose)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempATR, subErr = sp.sub1.Update(inHigh, inLow, inClose)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outRealMiddleBand, subErr = sp.sub2.Update(cur_tempTP)
-	if subErr != nil {
-		return subErr
-	}
-	middle = cur_outRealMiddleBand
-	tempReal = float64(cur_tempATR * sp.optInNbDev)
-	cur_outRealUpperBand = middle + tempReal
-	cur_outRealLowerBand = middle - tempReal
-	sp.cur_outRealUpperBand = cur_outRealUpperBand
-	sp.cur_outRealMiddleBand = cur_outRealMiddleBand
-	sp.cur_outRealLowerBand = cur_outRealLowerBand
-	return nil
 }
 
 func (c *Core) kcOpenImpl(sp *KCStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod, optInATRPeriod int32, optInNbDev float64, outBegIdx, outNBElement *int32, outRealUpperBand, outRealMiddleBand, outRealLowerBand []float64, outStride int32) RetCode {

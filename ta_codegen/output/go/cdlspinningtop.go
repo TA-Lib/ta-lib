@@ -73,7 +73,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		outIdx = 0
@@ -84,7 +84,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				if BodyShort_avgPeriod != 0 {
 					_T0 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T0 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T0 = (math.Abs(inClose[i] - inOpen[i]))
 				}
 				_B1 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T0)
 			}
@@ -101,7 +101,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(0, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -116,7 +116,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (inHigh[i] - inLow[i])
 			i += 1
 		}
 		outIdx = 0
@@ -127,7 +127,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				if BodyShort_avgPeriod != 0 {
 					_T3 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T3 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T3 = (inHigh[i] - inLow[i])
 				}
 				_B4 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T3)
 			}
@@ -144,7 +144,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(1, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx])
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -159,7 +159,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		outIdx = 0
@@ -170,7 +170,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				if BodyShort_avgPeriod != 0 {
 					_T6 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T6 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T6 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 				}
 				_B7 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T6)/2.0
 			}
@@ -187,7 +187,7 @@ func (c *Core) cdlspinningtopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(2, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i])) - ((inHigh[BodyTrailingIdx] - selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx], inOpen[BodyTrailingIdx])) + (selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx]) - inLow[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -383,11 +383,79 @@ func (sp *CDLSPINNINGTOPStream) Update(inOpen, inHigh, inLow, inClose float64) (
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdlspinningtopStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var ringPosL_BodyTrailingIdx int32
+	BodyShort_rangeType := sp.cs_BodyShort_rangeType
+	BodyShort_avgPeriod := sp.cs_BodyShort_avgPeriod
+	BodyShort_factor := sp.cs_BodyShort_factor
+	if sp.ringCap_BodyTrailingIdx == 0 {
+		var _R5 float64
+		switch BodyShort_rangeType {
+		case 0:
+			_R5 = math.Abs(inClose - inOpen)
+		case 1:
+			_R5 = inHigh - inLow
+		case 2:
+			_R5 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+		}
+		sp.ring_BodyTrailingIdx_derived[0] = _R5
+	}
+	_B9 := inHigh-selF(inClose >= inOpen, inClose, inOpen) > math.Abs(inClose-inOpen) && selF(inClose >= inOpen, inOpen, inClose)-inLow > math.Abs(inClose-inOpen)
+	if _B9 {
+		var _T7 float64
+		if BodyShort_avgPeriod != 0 {
+			_T7 = sp.BodyPeriodTotal / float64(BodyShort_avgPeriod)
+		} else {
+			var _R6 float64
+			switch BodyShort_rangeType {
+			case 0:
+				_R6 = math.Abs(inClose - inOpen)
+			case 1:
+				_R6 = inHigh - inLow
+			case 2:
+				_R6 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+			}
+			_T7 = _R6
+		}
+		var _T8 float64
+		if BodyShort_rangeType == 2 {
+			_T8 = 2.0
+		} else {
+			_T8 = 1.0
+		}
+		_B9 = math.Abs(inClose-inOpen) < float64(BodyShort_factor*_T7)/_T8
+	}
+	if _B9 {
+		var _T10 int32
+		if inClose >= inOpen {
+			_T10 = 1
+		} else {
+			_T10 = -1
+		}
+		sp.cur_outInteger = _T10 * 100
+	} else {
+		sp.cur_outInteger = 0
+	}
+	sp.BodyPeriodTotal += candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose) - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx]
+	ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx
+	var _R11 float64
+	switch BodyShort_rangeType {
+	case 0:
+		_R11 = math.Abs(inClose - inOpen)
+	case 1:
+		_R11 = inHigh - inLow
+	case 2:
+		_R11 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+	}
+	sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = _R11
+	ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1
+	if ringPosL_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
+		ringPosL_BodyTrailingIdx = 0
+	}
+	sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx
 	return sp.cur_outInteger, nil
 }
 
@@ -395,53 +463,46 @@ func (sp *CDLSPINNINGTOPStream) Update(inOpen, inHigh, inLow, inClose float64) (
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDLSPINNINGTOPStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outInteger int32
 	BodyShort_rangeType := sp.cs_BodyShort_rangeType
 	BodyShort_avgPeriod := sp.cs_BodyShort_avgPeriod
 	BodyShort_factor := sp.cs_BodyShort_factor
-	var _T0 float64
-	if inClose >= inOpen {
-		_T0 = inClose
-	} else {
-		_T0 = inOpen
-	}
-	_B2 := inHigh-_T0 > math.Abs(inClose-inOpen)
-	if _B2 {
+	_B3 := inHigh-selF(inClose >= inOpen, inClose, inOpen) > math.Abs(inClose-inOpen) && selF(inClose >= inOpen, inOpen, inClose)-inLow > math.Abs(inClose-inOpen)
+	if _B3 {
 		var _T1 float64
-		if inClose >= inOpen {
-			_T1 = inOpen
-		} else {
-			_T1 = inClose
-		}
-		_B2 = _T1-inLow > math.Abs(inClose-inOpen)
-	}
-	_B5 := _B2
-	if _B5 {
-		var _T3 float64
 		if BodyShort_avgPeriod != 0 {
-			_T3 = sp.BodyPeriodTotal / float64(BodyShort_avgPeriod)
+			_T1 = sp.BodyPeriodTotal / float64(BodyShort_avgPeriod)
 		} else {
-			_T3 = candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose)
+			var _R0 float64
+			switch BodyShort_rangeType {
+			case 0:
+				_R0 = math.Abs(inClose - inOpen)
+			case 1:
+				_R0 = inHigh - inLow
+			case 2:
+				_R0 = (inHigh - selF(inClose >= inOpen, inClose, inOpen)) + (selF(inClose >= inOpen, inOpen, inClose) - inLow)
+			}
+			_T1 = _R0
 		}
-		var _T4 float64
+		var _T2 float64
 		if BodyShort_rangeType == 2 {
-			_T4 = 2.0
+			_T2 = 2.0
 		} else {
-			_T4 = 1.0
+			_T2 = 1.0
 		}
-		_B5 = math.Abs(inClose-inOpen) < float64(BodyShort_factor*_T3)/_T4
+		_B3 = math.Abs(inClose-inOpen) < float64(BodyShort_factor*_T1)/_T2
 	}
-	if _B5 {
-		var _T6 int32
+	if _B3 {
+		var _T4 int32
 		if inClose >= inOpen {
-			_T6 = 1
+			_T4 = 1
 		} else {
-			_T6 = -1
+			_T4 = -1
 		}
-		cur_outInteger = _T6 * 100
+		cur_outInteger = _T4 * 100
 	} else {
 		cur_outInteger = 0
 	}
@@ -459,67 +520,6 @@ func (sp *CDLSPINNINGTOPStream) Clone() *CDLSPINNINGTOPStream {
 	cl := *sp
 	cl.ring_BodyTrailingIdx_derived = append(sp.ring_BodyTrailingIdx_derived[:0:0], sp.ring_BodyTrailingIdx_derived...)
 	return &cl
-}
-
-func cdlspinningtopStepImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, inLow, inClose float64) {
-	var ringPosL_BodyTrailingIdx int32
-	BodyShort_rangeType := sp.cs_BodyShort_rangeType
-	BodyShort_avgPeriod := sp.cs_BodyShort_avgPeriod
-	BodyShort_factor := sp.cs_BodyShort_factor
-	if sp.ringCap_BodyTrailingIdx == 0 {
-		sp.ring_BodyTrailingIdx_derived[0] = candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose)
-	}
-	var _T7 float64
-	if inClose >= inOpen {
-		_T7 = inClose
-	} else {
-		_T7 = inOpen
-	}
-	_B9 := inHigh-_T7 > math.Abs(inClose-inOpen)
-	if _B9 {
-		var _T8 float64
-		if inClose >= inOpen {
-			_T8 = inOpen
-		} else {
-			_T8 = inClose
-		}
-		_B9 = _T8-inLow > math.Abs(inClose-inOpen)
-	}
-	_B12 := _B9
-	if _B12 {
-		var _T10 float64
-		if BodyShort_avgPeriod != 0 {
-			_T10 = sp.BodyPeriodTotal / float64(BodyShort_avgPeriod)
-		} else {
-			_T10 = candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose)
-		}
-		var _T11 float64
-		if BodyShort_rangeType == 2 {
-			_T11 = 2.0
-		} else {
-			_T11 = 1.0
-		}
-		_B12 = math.Abs(inClose-inOpen) < float64(BodyShort_factor*_T10)/_T11
-	}
-	if _B12 {
-		var _T13 int32
-		if inClose >= inOpen {
-			_T13 = 1
-		} else {
-			_T13 = -1
-		}
-		sp.cur_outInteger = _T13 * 100
-	} else {
-		sp.cur_outInteger = 0
-	}
-	sp.BodyPeriodTotal += candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose) - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx]
-	ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx
-	sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = candleRange(BodyShort_rangeType, inOpen, inHigh, inLow, inClose)
-	ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1
-	if ringPosL_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
-		ringPosL_BodyTrailingIdx = 0
-	}
-	sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx
 }
 
 func (c *Core) cdlspinningtopOpenImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {
@@ -559,35 +559,35 @@ func (c *Core) cdlspinningtopOpenImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, 
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		outIdx = 0
 		for {
-			_B15 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-			if _B15 {
-				var _T14 float64
+			_B13 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+			if _B13 {
+				var _T12 float64
 				if BodyShort_avgPeriod != 0 {
-					_T14 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+					_T12 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T14 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T12 = (math.Abs(inClose[i] - inOpen[i]))
 				}
-				_B15 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T14)
+				_B13 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T12)
 			}
-			if _B15 {
-				var _T16 int32
+			if _B13 {
+				var _T14 int32
 				if inClose[i] >= inOpen[i] {
-					_T16 = 1
+					_T14 = 1
 				} else {
-					_T16 = -1
+					_T14 = -1
 				}
-				outInteger[outIdx*outStride] = _T16 * 100
+				outInteger[outIdx*outStride] = _T14 * 100
 				outIdx++
 			} else {
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(0, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -601,35 +601,35 @@ func (c *Core) cdlspinningtopOpenImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, 
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (inHigh[i] - inLow[i])
 			i += 1
 		}
 		outIdx = 0
 		for {
-			_B18 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-			if _B18 {
-				var _T17 float64
+			_B16 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+			if _B16 {
+				var _T15 float64
 				if BodyShort_avgPeriod != 0 {
-					_T17 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+					_T15 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T17 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T15 = (inHigh[i] - inLow[i])
 				}
-				_B18 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T17)
+				_B16 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T15)
 			}
-			if _B18 {
-				var _T19 int32
+			if _B16 {
+				var _T17 int32
 				if inClose[i] >= inOpen[i] {
-					_T19 = 1
+					_T17 = 1
 				} else {
-					_T19 = -1
+					_T17 = -1
 				}
-				outInteger[outIdx*outStride] = _T19 * 100
+				outInteger[outIdx*outStride] = _T17 * 100
 				outIdx++
 			} else {
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(1, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx])
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -643,35 +643,35 @@ func (c *Core) cdlspinningtopOpenImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, 
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		outIdx = 0
 		for {
-			_B21 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-			if _B21 {
-				var _T20 float64
+			_B19 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+			if _B19 {
+				var _T18 float64
 				if BodyShort_avgPeriod != 0 {
-					_T20 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+					_T18 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T20 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T18 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 				}
-				_B21 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T20)/2.0
+				_B19 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T18)/2.0
 			}
-			if _B21 {
-				var _T22 int32
+			if _B19 {
+				var _T20 int32
 				if inClose[i] >= inOpen[i] {
-					_T22 = 1
+					_T20 = 1
 				} else {
-					_T22 = -1
+					_T20 = -1
 				}
-				outInteger[outIdx*outStride] = _T22 * 100
+				outInteger[outIdx*outStride] = _T20 * 100
 				outIdx++
 			} else {
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(2, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i])) - ((inHigh[BodyTrailingIdx] - selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx], inOpen[BodyTrailingIdx])) + (selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx]) - inLow[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			if !(i <= endIdx) {
@@ -690,30 +690,30 @@ func (c *Core) cdlspinningtopOpenImpl(sp *CDLSPINNINGTOPStream, inOpen, inHigh, 
 		}
 		outIdx = 0
 		for {
-			_B25 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-			if _B25 {
-				var _T23 float64
+			_B23 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+			if _B23 {
+				var _T21 float64
 				if BodyShort_avgPeriod != 0 {
-					_T23 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+					_T21 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 				} else {
-					_T23 = candleRange(BodyShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
+					_T21 = candleRange(BodyShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
 				}
-				var _T24 float64
+				var _T22 float64
 				if BodyShort_rangeType == 2 {
-					_T24 = 2.0
+					_T22 = 2.0
 				} else {
-					_T24 = 1.0
+					_T22 = 1.0
 				}
-				_B25 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T23)/_T24
+				_B23 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T21)/_T22
 			}
-			if _B25 {
-				var _T26 int32
+			if _B23 {
+				var _T24 int32
 				if inClose[i] >= inOpen[i] {
-					_T26 = 1
+					_T24 = 1
 				} else {
-					_T26 = -1
+					_T24 = -1
 				}
-				outInteger[outIdx*outStride] = _T26 * 100
+				outInteger[outIdx*outStride] = _T24 * 100
 				outIdx++
 			} else {
 				outInteger[outIdx*outStride] = 0
@@ -785,40 +785,40 @@ func (c *Core) cdlspinningtopOpenSinkFrame(sp *CDLSPINNINGTOPStream, inOpen, inH
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i]))
 			i += 1
 		}
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(0, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 		}
-		_B28 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-		if _B28 {
-			var _T27 float64
+		_B26 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+		if _B26 {
+			var _T25 float64
 			if BodyShort_avgPeriod != 0 {
-				_T27 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+				_T25 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 			} else {
-				_T27 = candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T25 = (math.Abs(inClose[i] - inOpen[i]))
 			}
-			_B28 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T27)
+			_B26 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T25)
 		}
-		if _B28 {
-			var _T29 int32
+		if _B26 {
+			var _T27 int32
 			if inClose[i] >= inOpen[i] {
-				_T29 = 1
+				_T27 = 1
 			} else {
-				_T29 = -1
+				_T27 = -1
 			}
-			outInteger[0] = _T29 * 100
+			outInteger[0] = _T27 * 100
 			outIdx += 1
 		} else {
 			outInteger[0] = 0
 			outIdx += 1
 		}
-		BodyPeriodTotal += candleRange(0, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(0, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+		BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
 		i += 1
 		BodyTrailingIdx += 1
 		*outNBElement = outIdx
@@ -828,40 +828,40 @@ func (c *Core) cdlspinningtopOpenSinkFrame(sp *CDLSPINNINGTOPStream, inOpen, inH
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += (inHigh[i] - inLow[i])
 			i += 1
 		}
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(1, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx])
 			i += 1
 			BodyTrailingIdx += 1
 		}
-		_B31 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-		if _B31 {
-			var _T30 float64
+		_B29 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+		if _B29 {
+			var _T28 float64
 			if BodyShort_avgPeriod != 0 {
-				_T30 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+				_T28 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 			} else {
-				_T30 = candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T28 = (inHigh[i] - inLow[i])
 			}
-			_B31 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T30)
+			_B29 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T28)
 		}
-		if _B31 {
-			var _T32 int32
+		if _B29 {
+			var _T30 int32
 			if inClose[i] >= inOpen[i] {
-				_T32 = 1
+				_T30 = 1
 			} else {
-				_T32 = -1
+				_T30 = -1
 			}
-			outInteger[0] = _T32 * 100
+			outInteger[0] = _T30 * 100
 			outIdx += 1
 		} else {
 			outInteger[0] = 0
 			outIdx += 1
 		}
-		BodyPeriodTotal += candleRange(1, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(1, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+		BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx])
 		i += 1
 		BodyTrailingIdx += 1
 		*outNBElement = outIdx
@@ -871,40 +871,40 @@ func (c *Core) cdlspinningtopOpenSinkFrame(sp *CDLSPINNINGTOPStream, inOpen, inH
 		BodyTrailingIdx = startIdx - BodyShort_avgPeriod
 		i = BodyTrailingIdx
 		for i < startIdx {
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			i += 1
 		}
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(2, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+			BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i])) - ((inHigh[BodyTrailingIdx] - selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx], inOpen[BodyTrailingIdx])) + (selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx]) - inLow[BodyTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 		}
-		_B34 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-		if _B34 {
-			var _T33 float64
+		_B32 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+		if _B32 {
+			var _T31 float64
 			if BodyShort_avgPeriod != 0 {
-				_T33 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+				_T31 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 			} else {
-				_T33 = candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T31 = ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i]))
 			}
-			_B34 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T33)/2.0
+			_B32 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T31)/2.0
 		}
-		if _B34 {
-			var _T35 int32
+		if _B32 {
+			var _T33 int32
 			if inClose[i] >= inOpen[i] {
-				_T35 = 1
+				_T33 = 1
 			} else {
-				_T35 = -1
+				_T33 = -1
 			}
-			outInteger[0] = _T35 * 100
+			outInteger[0] = _T33 * 100
 			outIdx += 1
 		} else {
 			outInteger[0] = 0
 			outIdx += 1
 		}
-		BodyPeriodTotal += candleRange(2, inOpen[i], inHigh[i], inLow[i], inClose[i]) - candleRange(2, inOpen[BodyTrailingIdx], inHigh[BodyTrailingIdx], inLow[BodyTrailingIdx], inClose[BodyTrailingIdx])
+		BodyPeriodTotal += ((inHigh[i] - selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i])) + (selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i]) - inLow[i])) - ((inHigh[BodyTrailingIdx] - selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx], inOpen[BodyTrailingIdx])) + (selF(inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx], inOpen[BodyTrailingIdx], inClose[BodyTrailingIdx]) - inLow[BodyTrailingIdx]))
 		i += 1
 		BodyTrailingIdx += 1
 		*outNBElement = outIdx
@@ -924,30 +924,30 @@ func (c *Core) cdlspinningtopOpenSinkFrame(sp *CDLSPINNINGTOPStream, inOpen, inH
 			i += 1
 			BodyTrailingIdx += 1
 		}
-		_B38 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
-		if _B38 {
-			var _T36 float64
+		_B36 := inHigh[i]-selF(inClose[i] >= inOpen[i], inClose[i], inOpen[i]) > math.Abs(inClose[i]-inOpen[i]) && selF(inClose[i] >= inOpen[i], inOpen[i], inClose[i])-inLow[i] > math.Abs(inClose[i]-inOpen[i])
+		if _B36 {
+			var _T34 float64
 			if BodyShort_avgPeriod != 0 {
-				_T36 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
+				_T34 = BodyPeriodTotal / float64(BodyShort_avgPeriod)
 			} else {
-				_T36 = candleRange(BodyShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
+				_T34 = candleRange(BodyShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
 			}
-			var _T37 float64
+			var _T35 float64
 			if BodyShort_rangeType == 2 {
-				_T37 = 2.0
+				_T35 = 2.0
 			} else {
-				_T37 = 1.0
+				_T35 = 1.0
 			}
-			_B38 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T36)/_T37
+			_B36 = math.Abs(inClose[i]-inOpen[i]) < float64(BodyShort_factor*_T34)/_T35
 		}
-		if _B38 {
-			var _T39 int32
+		if _B36 {
+			var _T37 int32
 			if inClose[i] >= inOpen[i] {
-				_T39 = 1
+				_T37 = 1
 			} else {
-				_T39 = -1
+				_T37 = -1
 			}
-			outInteger[0] = _T39 * 100
+			outInteger[0] = _T37 * 100
 			outIdx += 1
 		} else {
 			outInteger[0] = 0

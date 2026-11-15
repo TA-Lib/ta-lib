@@ -194,11 +194,15 @@ func (sp *MARKETFIStream) Update(inHigh, inLow, inVolume float64) (float64, erro
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	marketfiStepImpl(sp, inHigh, inLow, inVolume)
 	sp.outRangeCount++
+	if inVolume != 0.0 {
+		sp.cur_outReal = (inHigh - inLow) / inVolume
+	} else {
+		sp.cur_outReal = 0.0
+	}
 	return sp.cur_outReal, nil
 }
 
@@ -206,7 +210,7 @@ func (sp *MARKETFIStream) Update(inHigh, inLow, inVolume float64) (float64, erro
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *MARKETFIStream) Peek(inHigh, inLow, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -228,14 +232,6 @@ func (sp *MARKETFIStream) Value() float64 {
 func (sp *MARKETFIStream) Clone() *MARKETFIStream {
 	cl := *sp
 	return &cl
-}
-
-func marketfiStepImpl(sp *MARKETFIStream, inHigh, inLow, inVolume float64) {
-	if inVolume != 0.0 {
-		sp.cur_outReal = (inHigh - inLow) / inVolume
-	} else {
-		sp.cur_outReal = 0.0
-	}
 }
 
 func (c *Core) marketfiOpenImpl(sp *MARKETFIStream, inHigh, inLow, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

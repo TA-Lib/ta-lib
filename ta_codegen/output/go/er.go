@@ -289,18 +289,53 @@ func (sp *ERStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	erStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var live int32
+	var periodROC float64
+	var tempReal float64
+	var tempReal2 float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	tempReal = inReal
+	tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
+	periodROC = tempReal - tempReal2
+	sp.sumROC1 -= math.Abs(sp.trailingValue - tempReal2)
+	sp.sumROC1 += math.Abs(tempReal - sp.lag1_inReal)
+	live = b2i(!(math.Abs(tempReal-sp.lag1_inReal) <= 0.0))
+	sp.nullRun = (sp.nullRun + 1) & (live - 1)
+	if sp.nullRun >= sp.optInTimePeriod {
+		sp.nullRun = sp.optInTimePeriod
+		sp.sumROC1 = 0.0
+		sp.cur_outReal = 1.0
+	} else if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
+		sp.cur_outReal = 1.0
+	} else {
+		tempReal = math.Abs(periodROC / sp.sumROC1)
+		if tempReal > 1.0 {
+			tempReal = 1.0
+		}
+		sp.cur_outReal = tempReal
+	}
+	sp.trailingValue = tempReal2
+	sp.lag1_inReal = inReal
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *ERStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var live int32
@@ -344,45 +379,6 @@ func (sp *ERStream) Clone() *ERStream {
 	cl := *sp
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	return &cl
-}
-
-func erStepImpl(sp *ERStream, inReal float64) {
-	var live int32
-	var periodROC float64
-	var tempReal float64
-	var tempReal2 float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	tempReal = inReal
-	tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
-	periodROC = tempReal - tempReal2
-	sp.sumROC1 -= math.Abs(sp.trailingValue - tempReal2)
-	sp.sumROC1 += math.Abs(tempReal - sp.lag1_inReal)
-	live = b2i(!(math.Abs(tempReal-sp.lag1_inReal) <= 0.0))
-	sp.nullRun = (sp.nullRun + 1) & (live - 1)
-	if sp.nullRun >= sp.optInTimePeriod {
-		sp.nullRun = sp.optInTimePeriod
-		sp.sumROC1 = 0.0
-		sp.cur_outReal = 1.0
-	} else if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
-		sp.cur_outReal = 1.0
-	} else {
-		tempReal = math.Abs(periodROC / sp.sumROC1)
-		if tempReal > 1.0 {
-			tempReal = 1.0
-		}
-		sp.cur_outReal = tempReal
-	}
-	sp.trailingValue = tempReal2
-	sp.lag1_inReal = inReal
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) erOpenImpl(sp *ERStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -181,18 +181,18 @@ func (sp *MEDPRICEStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	medpriceStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	sp.cur_outReal = (inHigh + inLow) / 2.0
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *MEDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -210,10 +210,6 @@ func (sp *MEDPRICEStream) Value() float64 {
 func (sp *MEDPRICEStream) Clone() *MEDPRICEStream {
 	cl := *sp
 	return &cl
-}
-
-func medpriceStepImpl(sp *MEDPRICEStream, inHigh, inLow float64) {
-	sp.cur_outReal = (inHigh + inLow) / 2.0
 }
 
 func (c *Core) medpriceOpenImpl(sp *MEDPRICEStream, inHigh, inLow []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -518,121 +518,10 @@ func (sp *HT_PHASORStream) Update(inReal float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	htPhasorStepImpl(sp, inReal)
 	sp.outRangeCount++
-	return sp.cur_outInPhase, sp.cur_outQuadrature, nil
-}
-
-// Peek returns what Update would return for the bar inReal, changing nothing.
-// It returns [BadParam] for a bar value that is not finite.
-func (sp *HT_PHASORStream) Peek(inReal float64) (float64, float64, error) {
-	if !isFinite(inReal) {
-		return 0, 0, BadParam
-	}
-	var adjustedPrevPeriod float64
-	var smoothedValue float64
-	var hilbertTempReal float64
-	var detrender float64
-	var Q1 float64
-	var todayValue float64
-	I1ForEvenPrev2 := sp.I1ForEvenPrev2
-	I1ForEvenPrev3 := sp.I1ForEvenPrev3
-	I1ForOddPrev2 := sp.I1ForOddPrev2
-	I1ForOddPrev3 := sp.I1ForOddPrev3
-	var cur_outInPhase float64
-	var cur_outQuadrature float64
-	hilbertIdx := sp.hilbertIdx
-	periodWMASub := sp.periodWMASub
-	periodWMASum := sp.periodWMASum
-	prev_Q1_Even := sp.prev_Q1_Even
-	prev_Q1_Odd := sp.prev_Q1_Odd
-	prev_Q1_input_Even := sp.prev_Q1_input_Even
-	prev_Q1_input_Odd := sp.prev_Q1_input_Odd
-	prev_detrender_Even := sp.prev_detrender_Even
-	prev_detrender_Odd := sp.prev_detrender_Odd
-	prev_detrender_input_Even := sp.prev_detrender_input_Even
-	prev_detrender_input_Odd := sp.prev_detrender_input_Odd
-	trailingWMAValue := sp.trailingWMAValue
-	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
-	todayValue = inReal
-	periodWMASub += todayValue
-	periodWMASub -= trailingWMAValue
-	periodWMASum += float64(todayValue * 4.0)
-	trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
-	smoothedValue = float64(periodWMASum * 0.1)
-	periodWMASum -= periodWMASub
-	if sp.streamParity == 0 {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Even[hilbertIdx]
-		detrender += hilbertTempReal
-		detrender -= prev_detrender_Even
-		prev_detrender_Even = float64(sp.b * prev_detrender_input_Even)
-		detrender += prev_detrender_Even
-		prev_detrender_input_Even = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Even[hilbertIdx]
-		Q1 += hilbertTempReal
-		Q1 -= prev_Q1_Even
-		prev_Q1_Even = float64(sp.b * prev_Q1_input_Even)
-		Q1 += prev_Q1_Even
-		prev_Q1_input_Even = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		cur_outQuadrature = Q1
-		cur_outInPhase = I1ForEvenPrev3
-		hilbertTempReal = float64(sp.a * I1ForEvenPrev3)
-		hilbertTempReal = float64(sp.a * Q1)
-		hilbertIdx++
-		if hilbertIdx == 3 {
-			hilbertIdx = 0
-		}
-		I1ForOddPrev3 = I1ForOddPrev2
-		I1ForOddPrev2 = detrender
-	} else {
-		hilbertTempReal = float64(sp.a * smoothedValue)
-		detrender = -sp.detrender_Odd[hilbertIdx]
-		detrender += hilbertTempReal
-		detrender -= prev_detrender_Odd
-		prev_detrender_Odd = float64(sp.b * prev_detrender_input_Odd)
-		detrender += prev_detrender_Odd
-		prev_detrender_input_Odd = smoothedValue
-		detrender = float64(detrender * adjustedPrevPeriod)
-		hilbertTempReal = float64(sp.a * detrender)
-		Q1 = -sp.Q1_Odd[hilbertIdx]
-		Q1 += hilbertTempReal
-		Q1 -= prev_Q1_Odd
-		prev_Q1_Odd = float64(sp.b * prev_Q1_input_Odd)
-		Q1 += prev_Q1_Odd
-		prev_Q1_input_Odd = detrender
-		Q1 = float64(Q1 * adjustedPrevPeriod)
-		cur_outQuadrature = Q1
-		cur_outInPhase = I1ForOddPrev3
-		hilbertTempReal = float64(sp.a * I1ForOddPrev3)
-		hilbertTempReal = float64(sp.a * Q1)
-		I1ForEvenPrev3 = I1ForEvenPrev2
-		I1ForEvenPrev2 = detrender
-	}
-	return cur_outInPhase, cur_outQuadrature, nil
-}
-
-// Value returns the outputs at the last bar of OutRange, in Update's order;
-// Peek does not change them.
-func (sp *HT_PHASORStream) Value() (float64, float64) {
-	return sp.cur_outInPhase, sp.cur_outQuadrature
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *HT_PHASORStream) Clone() *HT_PHASORStream {
-	cl := *sp
-	cl.ring_trailingWMAIdx_inReal = append(sp.ring_trailingWMAIdx_inReal[:0:0], sp.ring_trailingWMAIdx_inReal...)
-	return &cl
-}
-
-func htPhasorStepImpl(sp *HT_PHASORStream, inReal float64) {
 	var tempReal float64
 	var tempReal2 float64
 	var adjustedPrevPeriod float64
@@ -777,6 +666,113 @@ func htPhasorStepImpl(sp *HT_PHASORStream, inReal float64) {
 	}
 	sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx
 	sp.streamParity = 1 - sp.streamParity
+	return sp.cur_outInPhase, sp.cur_outQuadrature, nil
+}
+
+// Peek returns what Update would return for the bar inReal, changing nothing.
+// It returns [BadParam] for a bar value that is not finite.
+func (sp *HT_PHASORStream) Peek(inReal float64) (float64, float64, error) {
+	if inReal-inReal != 0 {
+		return 0, 0, BadParam
+	}
+	var adjustedPrevPeriod float64
+	var smoothedValue float64
+	var hilbertTempReal float64
+	var detrender float64
+	var Q1 float64
+	var todayValue float64
+	I1ForEvenPrev2 := sp.I1ForEvenPrev2
+	I1ForEvenPrev3 := sp.I1ForEvenPrev3
+	I1ForOddPrev2 := sp.I1ForOddPrev2
+	I1ForOddPrev3 := sp.I1ForOddPrev3
+	var cur_outInPhase float64
+	var cur_outQuadrature float64
+	hilbertIdx := sp.hilbertIdx
+	periodWMASub := sp.periodWMASub
+	periodWMASum := sp.periodWMASum
+	prev_Q1_Even := sp.prev_Q1_Even
+	prev_Q1_Odd := sp.prev_Q1_Odd
+	prev_Q1_input_Even := sp.prev_Q1_input_Even
+	prev_Q1_input_Odd := sp.prev_Q1_input_Odd
+	prev_detrender_Even := sp.prev_detrender_Even
+	prev_detrender_Odd := sp.prev_detrender_Odd
+	prev_detrender_input_Even := sp.prev_detrender_input_Even
+	prev_detrender_input_Odd := sp.prev_detrender_input_Odd
+	trailingWMAValue := sp.trailingWMAValue
+	adjustedPrevPeriod = math.FMA(0.075, sp.period, 0.54)
+	todayValue = inReal
+	periodWMASub += todayValue
+	periodWMASub -= trailingWMAValue
+	periodWMASum += float64(todayValue * 4.0)
+	trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx]
+	smoothedValue = float64(periodWMASum * 0.1)
+	periodWMASum -= periodWMASub
+	if sp.streamParity == 0 {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Even[hilbertIdx]
+		detrender += hilbertTempReal
+		detrender -= prev_detrender_Even
+		prev_detrender_Even = float64(sp.b * prev_detrender_input_Even)
+		detrender += prev_detrender_Even
+		prev_detrender_input_Even = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Even[hilbertIdx]
+		Q1 += hilbertTempReal
+		Q1 -= prev_Q1_Even
+		prev_Q1_Even = float64(sp.b * prev_Q1_input_Even)
+		Q1 += prev_Q1_Even
+		prev_Q1_input_Even = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		cur_outQuadrature = Q1
+		cur_outInPhase = I1ForEvenPrev3
+		hilbertTempReal = float64(sp.a * I1ForEvenPrev3)
+		hilbertTempReal = float64(sp.a * Q1)
+		hilbertIdx++
+		if hilbertIdx == 3 {
+			hilbertIdx = 0
+		}
+		I1ForOddPrev3 = I1ForOddPrev2
+		I1ForOddPrev2 = detrender
+	} else {
+		hilbertTempReal = float64(sp.a * smoothedValue)
+		detrender = -sp.detrender_Odd[hilbertIdx]
+		detrender += hilbertTempReal
+		detrender -= prev_detrender_Odd
+		prev_detrender_Odd = float64(sp.b * prev_detrender_input_Odd)
+		detrender += prev_detrender_Odd
+		prev_detrender_input_Odd = smoothedValue
+		detrender = float64(detrender * adjustedPrevPeriod)
+		hilbertTempReal = float64(sp.a * detrender)
+		Q1 = -sp.Q1_Odd[hilbertIdx]
+		Q1 += hilbertTempReal
+		Q1 -= prev_Q1_Odd
+		prev_Q1_Odd = float64(sp.b * prev_Q1_input_Odd)
+		Q1 += prev_Q1_Odd
+		prev_Q1_input_Odd = detrender
+		Q1 = float64(Q1 * adjustedPrevPeriod)
+		cur_outQuadrature = Q1
+		cur_outInPhase = I1ForOddPrev3
+		hilbertTempReal = float64(sp.a * I1ForOddPrev3)
+		hilbertTempReal = float64(sp.a * Q1)
+		I1ForEvenPrev3 = I1ForEvenPrev2
+		I1ForEvenPrev2 = detrender
+	}
+	return cur_outInPhase, cur_outQuadrature, nil
+}
+
+// Value returns the outputs at the last bar of OutRange, in Update's order;
+// Peek does not change them.
+func (sp *HT_PHASORStream) Value() (float64, float64) {
+	return sp.cur_outInPhase, sp.cur_outQuadrature
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *HT_PHASORStream) Clone() *HT_PHASORStream {
+	cl := *sp
+	cl.ring_trailingWMAIdx_inReal = append(sp.ring_trailingWMAIdx_inReal[:0:0], sp.ring_trailingWMAIdx_inReal...)
+	return &cl
 }
 
 func (c *Core) htPhasorOpenImpl(sp *HT_PHASORStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outInPhase, outQuadrature []float64, outStride int32) RetCode {

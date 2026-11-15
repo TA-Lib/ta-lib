@@ -349,18 +349,37 @@ func (sp *MASSIStream) Update(inHigh, inLow float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
-	massiStepImpl(sp, inHigh, inLow)
 	sp.outRangeCount++
+	var hl float64
+	var ratio float64
+	var tempReal float64
+	hl = inHigh - inLow
+	sp.ema1 = math.FMA(sp.emaBeta, sp.ema1, float64(sp.optInK_1*hl))
+	sp.ema2 = math.FMA(sp.emaBeta, sp.ema2, float64(sp.optInK_1*sp.ema1))
+	if sp.ema2 == 0.0 {
+		ratio = 1.0
+	} else {
+		ratio = sp.ema1 / sp.ema2
+	}
+	sp.cb_ratioRing[sp.ratioRing_Idx] = ratio
+	sp.total = sp.total + ratio
+	sp.ratioRing_Idx = sp.ratioRing_Idx + 1
+	if sp.ratioRing_Idx > sp.maxIdx_ratioRing {
+		sp.ratioRing_Idx = 0
+	}
+	tempReal = sp.total
+	sp.total = sp.total - sp.cb_ratioRing[sp.ratioRing_Idx]
+	sp.cur_outReal = tempReal
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *MASSIStream) Peek(inHigh, inLow float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, BadParam
 	}
 	var hl float64
@@ -411,29 +430,6 @@ func (sp *MASSIStream) Clone() *MASSIStream {
 	cl := *sp
 	cl.cb_ratioRing = append(sp.cb_ratioRing[:0:0], sp.cb_ratioRing...)
 	return &cl
-}
-
-func massiStepImpl(sp *MASSIStream, inHigh, inLow float64) {
-	var hl float64
-	var ratio float64
-	var tempReal float64
-	hl = inHigh - inLow
-	sp.ema1 = math.FMA(sp.emaBeta, sp.ema1, float64(sp.optInK_1*hl))
-	sp.ema2 = math.FMA(sp.emaBeta, sp.ema2, float64(sp.optInK_1*sp.ema1))
-	if sp.ema2 == 0.0 {
-		ratio = 1.0
-	} else {
-		ratio = sp.ema1 / sp.ema2
-	}
-	sp.cb_ratioRing[sp.ratioRing_Idx] = ratio
-	sp.total = sp.total + ratio
-	sp.ratioRing_Idx = sp.ratioRing_Idx + 1
-	if sp.ratioRing_Idx > sp.maxIdx_ratioRing {
-		sp.ratioRing_Idx = 0
-	}
-	tempReal = sp.total
-	sp.total = sp.total - sp.cb_ratioRing[sp.ratioRing_Idx]
-	sp.cur_outReal = tempReal
 }
 
 func (c *Core) massiOpenImpl(sp *MASSIStream, inHigh, inLow []float64, startIdx, optInFastPeriod, optInSlowPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

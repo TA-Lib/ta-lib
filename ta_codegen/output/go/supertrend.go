@@ -369,11 +369,57 @@ func (sp *SUPERTRENDStream) Update(inHigh, inLow, inClose float64) (float64, int
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
-	supertrendStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var val2 float64
+	var val3 float64
+	var greatest float64
+	var tempCY float64
+	var tempLT float64
+	var tempHT float64
+	var medianPrice float64
+	var band float64
+	var basicUpper float64
+	var basicLower float64
+	var closeToday float64
+	tempLT = inLow
+	tempHT = inHigh
+	tempCY = sp.lag1_inClose
+	greatest = tempHT - tempLT
+	val2 = math.Abs(tempCY - tempHT)
+	greatest = selF(val2 > greatest, val2, greatest)
+	val3 = math.Abs(tempCY - tempLT)
+	greatest = selF(val3 > greatest, val3, greatest)
+	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
+	medianPrice = (tempHT + tempLT) / 2.0
+	band = float64(sp.optInMultiplier * sp.prevATR)
+	basicUpper = medianPrice + band
+	basicLower = medianPrice - band
+	if basicUpper < sp.finalUpper || sp.prevClose > sp.finalUpper {
+		sp.finalUpper = basicUpper
+	}
+	if basicLower > sp.finalLower || sp.prevClose < sp.finalLower {
+		sp.finalLower = basicLower
+	}
+	closeToday = inClose
+	if sp.isUptrend != 0 {
+		if closeToday < sp.finalLower {
+			sp.isUptrend = 0
+		}
+	} else if closeToday > sp.finalUpper {
+		sp.isUptrend = 1
+	}
+	if sp.isUptrend != 0 {
+		sp.cur_outSupertrend = sp.finalLower
+		sp.cur_outTrend = 1
+	} else {
+		sp.cur_outSupertrend = sp.finalUpper
+		sp.cur_outTrend = -1
+	}
+	sp.prevClose = closeToday
+	sp.lag1_inClose = inClose
 	return sp.cur_outSupertrend, sp.cur_outTrend, nil
 }
 
@@ -381,7 +427,7 @@ func (sp *SUPERTRENDStream) Update(inHigh, inLow, inClose float64) (float64, int
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *SUPERTRENDStream) Peek(inHigh, inLow, inClose float64) (float64, int32, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
 	var val2 float64
@@ -406,13 +452,9 @@ func (sp *SUPERTRENDStream) Peek(inHigh, inLow, inClose float64) (float64, int32
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
+	greatest = selF(val2 > greatest, val2, greatest)
 	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
+	greatest = selF(val3 > greatest, val3, greatest)
 	prevATR = math.FMA(sp.wBeta, prevATR, float64(sp.wAlpha*greatest))
 	medianPrice = (tempHT + tempLT) / 2.0
 	band = float64(sp.optInMultiplier * prevATR)
@@ -453,60 +495,6 @@ func (sp *SUPERTRENDStream) Value() (float64, int32) {
 func (sp *SUPERTRENDStream) Clone() *SUPERTRENDStream {
 	cl := *sp
 	return &cl
-}
-
-func supertrendStepImpl(sp *SUPERTRENDStream, inHigh, inLow, inClose float64) {
-	var val2 float64
-	var val3 float64
-	var greatest float64
-	var tempCY float64
-	var tempLT float64
-	var tempHT float64
-	var medianPrice float64
-	var band float64
-	var basicUpper float64
-	var basicLower float64
-	var closeToday float64
-	tempLT = inLow
-	tempHT = inHigh
-	tempCY = sp.lag1_inClose
-	greatest = tempHT - tempLT
-	val2 = math.Abs(tempCY - tempHT)
-	if val2 > greatest {
-		greatest = val2
-	}
-	val3 = math.Abs(tempCY - tempLT)
-	if val3 > greatest {
-		greatest = val3
-	}
-	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
-	medianPrice = (tempHT + tempLT) / 2.0
-	band = float64(sp.optInMultiplier * sp.prevATR)
-	basicUpper = medianPrice + band
-	basicLower = medianPrice - band
-	if basicUpper < sp.finalUpper || sp.prevClose > sp.finalUpper {
-		sp.finalUpper = basicUpper
-	}
-	if basicLower > sp.finalLower || sp.prevClose < sp.finalLower {
-		sp.finalLower = basicLower
-	}
-	closeToday = inClose
-	if sp.isUptrend != 0 {
-		if closeToday < sp.finalLower {
-			sp.isUptrend = 0
-		}
-	} else if closeToday > sp.finalUpper {
-		sp.isUptrend = 1
-	}
-	if sp.isUptrend != 0 {
-		sp.cur_outSupertrend = sp.finalLower
-		sp.cur_outTrend = 1
-	} else {
-		sp.cur_outSupertrend = sp.finalUpper
-		sp.cur_outTrend = -1
-	}
-	sp.prevClose = closeToday
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) supertrendOpenImpl(sp *SUPERTRENDStream, inHigh, inLow, inClose []float64, startIdx, optInTimePeriod int32, optInMultiplier float64, outBegIdx, outNBElement *int32, outSupertrend []float64, outTrend []int32, outStride int32) RetCode {

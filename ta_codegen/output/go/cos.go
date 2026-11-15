@@ -174,18 +174,18 @@ func (sp *COSStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	cosStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.cur_outReal = math.Cos(inReal)
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *COSStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -203,10 +203,6 @@ func (sp *COSStream) Value() float64 {
 func (sp *COSStream) Clone() *COSStream {
 	cl := *sp
 	return &cl
-}
-
-func cosStepImpl(sp *COSStream, inReal float64) {
-	sp.cur_outReal = math.Cos(inReal)
 }
 
 func (c *Core) cosOpenImpl(sp *COSStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

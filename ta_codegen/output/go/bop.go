@@ -195,11 +195,17 @@ func (sp *BOPStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, er
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	bopStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var tempReal float64
+	tempReal = inHigh - inLow
+	if tempReal <= 0.0 {
+		sp.cur_outReal = 0.0
+	} else {
+		sp.cur_outReal = (inClose - inOpen) / tempReal
+	}
 	return sp.cur_outReal, nil
 }
 
@@ -207,7 +213,7 @@ func (sp *BOPStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, er
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *BOPStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -231,16 +237,6 @@ func (sp *BOPStream) Value() float64 {
 func (sp *BOPStream) Clone() *BOPStream {
 	cl := *sp
 	return &cl
-}
-
-func bopStepImpl(sp *BOPStream, inOpen, inHigh, inLow, inClose float64) {
-	var tempReal float64
-	tempReal = inHigh - inLow
-	if tempReal <= 0.0 {
-		sp.cur_outReal = 0.0
-	} else {
-		sp.cur_outReal = (inClose - inOpen) / tempReal
-	}
 }
 
 func (c *Core) bopOpenImpl(sp *BOPStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

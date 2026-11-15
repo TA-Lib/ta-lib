@@ -407,163 +407,9 @@ func (sp *STOCHStream) Update(inHigh, inLow, inClose float64) (float64, float64,
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, BadParam
 	}
-	if err := stochStepImpl(sp, inHigh, inLow, inClose); err != nil {
-		return 0, 0, err
-	}
-	sp.outRangeCount++
-	return sp.cur_outSlowK, sp.cur_outSlowD, nil
-}
-
-// Peek returns what Update would return for the bar (inHigh, inLow and
-// inClose), changing nothing. It returns [BadParam] for a bar value that is not
-// finite.
-func (sp *STOCHStream) Peek(inHigh, inLow, inClose float64) (float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
-		return 0, 0, BadParam
-	}
-	var cur_tempBuffer float64
-	var cur_outSlowD float64
-	var cur_outSlowK float64
-	var subErr error
-	var tmp float64
-	highest := sp.highest
-	highestIdx := sp.highestIdx
-	i := sp.i
-	lowest := sp.lowest
-	lowestIdx := sp.lowestIdx
-	pkSlot0 := int32(-1)
-	var pkVal0 float64
-	pkSlot1 := int32(-1)
-	var pkVal1 float64
-	pkSlot2 := int32(-1)
-	var pkVal2 float64
-	pkSlot0 = sp.today & sp.xMask
-	pkVal0 = inHigh
-	pkSlot1 = sp.today & sp.xMask
-	pkVal1 = inLow
-	pkSlot2 = sp.today & sp.xMask
-	pkVal2 = inClose
-	var _T0 float64
-	if sp.today&sp.xMask != pkSlot1 {
-		_T0 = sp.x_inLow[sp.today&sp.xMask]
-	} else {
-		_T0 = pkVal1
-	}
-	tmp = _T0
-	if lowestIdx < sp.trailingIdx {
-		lowestIdx = sp.trailingIdx
-		var _T1 float64
-		if lowestIdx&sp.xMask != pkSlot1 {
-			_T1 = sp.x_inLow[lowestIdx&sp.xMask]
-		} else {
-			_T1 = pkVal1
-		}
-		lowest = _T1
-		i = lowestIdx
-		for {
-			i++
-			if !(i <= sp.today) {
-				break
-			}
-			var _T2 float64
-			if i&sp.xMask != pkSlot1 {
-				_T2 = sp.x_inLow[i&sp.xMask]
-			} else {
-				_T2 = pkVal1
-			}
-			tmp = _T2
-			if tmp < lowest {
-				lowestIdx = i
-				lowest = tmp
-			}
-		}
-	} else if tmp <= lowest {
-		lowestIdx = sp.today
-		lowest = tmp
-	}
-	var _T3 float64
-	if sp.today&sp.xMask != pkSlot0 {
-		_T3 = sp.x_inHigh[sp.today&sp.xMask]
-	} else {
-		_T3 = pkVal0
-	}
-	tmp = _T3
-	if highestIdx < sp.trailingIdx {
-		highestIdx = sp.trailingIdx
-		var _T4 float64
-		if highestIdx&sp.xMask != pkSlot0 {
-			_T4 = sp.x_inHigh[highestIdx&sp.xMask]
-		} else {
-			_T4 = pkVal0
-		}
-		highest = _T4
-		i = highestIdx
-		for {
-			i++
-			if !(i <= sp.today) {
-				break
-			}
-			var _T5 float64
-			if i&sp.xMask != pkSlot0 {
-				_T5 = sp.x_inHigh[i&sp.xMask]
-			} else {
-				_T5 = pkVal0
-			}
-			tmp = _T5
-			if tmp > highest {
-				highestIdx = i
-				highest = tmp
-			}
-		}
-	} else if tmp >= highest {
-		highestIdx = sp.today
-		highest = tmp
-	}
-	if !isZeroScaled(highest-lowest, math.Abs(highest)+math.Abs(lowest)) {
-		var _T6 float64
-		if sp.today&sp.xMask != pkSlot2 {
-			_T6 = sp.x_inClose[sp.today&sp.xMask]
-		} else {
-			_T6 = pkVal2
-		}
-		cur_tempBuffer = float64((_T6 - lowest) / (highest - lowest) * 100.0)
-	} else {
-		cur_tempBuffer = 0.0
-	}
-	cur_tempBuffer, subErr = sp.sub0.Peek(cur_tempBuffer)
-	if subErr != nil {
-		return 0, 0, subErr
-	}
-	cur_outSlowD, subErr = sp.sub1.Peek(cur_tempBuffer)
-	if subErr != nil {
-		return 0, 0, subErr
-	}
-	cur_outSlowK = cur_tempBuffer
-	return cur_outSlowK, cur_outSlowD, nil
-}
-
-// Value returns the outputs at the last bar of OutRange, in Update's order;
-// Peek does not change them.
-func (sp *STOCHStream) Value() (float64, float64) {
-	return sp.cur_outSlowK, sp.cur_outSlowD
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *STOCHStream) Clone() *STOCHStream {
-	cl := *sp
-	cl.x_inHigh = append(sp.x_inHigh[:0:0], sp.x_inHigh...)
-	cl.x_inLow = append(sp.x_inLow[:0:0], sp.x_inLow...)
-	cl.x_inClose = append(sp.x_inClose[:0:0], sp.x_inClose...)
-	cl.sub0 = sp.sub0.Clone()
-	cl.sub1 = sp.sub1.Clone()
-	return &cl
-}
-
-func stochStepImpl(sp *STOCHStream, inHigh, inLow, inClose float64) error {
 	var tmp float64
 	var cur_tempBuffer float64
 	var cur_outSlowD float64
@@ -620,15 +466,172 @@ func stochStepImpl(sp *STOCHStream, inHigh, inLow, inClose float64) error {
 	sp.today += 1
 	cur_tempBuffer, subErr = sp.sub0.Update(cur_tempBuffer)
 	if subErr != nil {
-		return subErr
+		return 0, 0, subErr
 	}
 	cur_outSlowD, subErr = sp.sub1.Update(cur_tempBuffer)
 	if subErr != nil {
-		return subErr
+		return 0, 0, subErr
 	}
 	sp.cur_outSlowK = cur_tempBuffer
 	sp.cur_outSlowD = cur_outSlowD
-	return nil
+	sp.outRangeCount++
+	return sp.cur_outSlowK, sp.cur_outSlowD, nil
+}
+
+// Peek returns what Update would return for the bar (inHigh, inLow and
+// inClose), changing nothing. It returns [BadParam] for a bar value that is not
+// finite.
+func (sp *STOCHStream) Peek(inHigh, inLow, inClose float64) (float64, float64, error) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
+		return 0, 0, BadParam
+	}
+	var cur_tempBuffer float64
+	var cur_outSlowD float64
+	var cur_outSlowK float64
+	var subErr error
+	var tmp float64
+	var today int32
+	var xMask int32
+	var x_inLow []float64
+	var x_inHigh []float64
+	highest := sp.highest
+	highestIdx := sp.highestIdx
+	i := sp.i
+	lowest := sp.lowest
+	lowestIdx := sp.lowestIdx
+	pkSlot0 := int32(-1)
+	var pkVal0 float64
+	pkSlot1 := int32(-1)
+	var pkVal1 float64
+	pkSlot2 := int32(-1)
+	var pkVal2 float64
+	pkSlot0 = sp.today & sp.xMask
+	pkVal0 = inHigh
+	pkSlot1 = sp.today & sp.xMask
+	pkVal1 = inLow
+	pkSlot2 = sp.today & sp.xMask
+	pkVal2 = inClose
+	var _T0 float64
+	if sp.today&sp.xMask != pkSlot1 {
+		_T0 = sp.x_inLow[sp.today&sp.xMask]
+	} else {
+		_T0 = pkVal1
+	}
+	tmp = _T0
+	if lowestIdx < sp.trailingIdx {
+		lowestIdx = sp.trailingIdx
+		var _T1 float64
+		if lowestIdx&sp.xMask != pkSlot1 {
+			_T1 = sp.x_inLow[lowestIdx&sp.xMask]
+		} else {
+			_T1 = pkVal1
+		}
+		lowest = _T1
+		i = lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			var _T2 float64
+			if i&xMask != pkSlot1 {
+				_T2 = x_inLow[i&xMask]
+			} else {
+				_T2 = pkVal1
+			}
+			tmp = _T2
+			if tmp < lowest {
+				lowestIdx = i
+				lowest = tmp
+			}
+		}
+	} else if tmp <= lowest {
+		lowestIdx = sp.today
+		lowest = tmp
+	}
+	var _T3 float64
+	if sp.today&sp.xMask != pkSlot0 {
+		_T3 = sp.x_inHigh[sp.today&sp.xMask]
+	} else {
+		_T3 = pkVal0
+	}
+	tmp = _T3
+	if highestIdx < sp.trailingIdx {
+		highestIdx = sp.trailingIdx
+		var _T4 float64
+		if highestIdx&sp.xMask != pkSlot0 {
+			_T4 = sp.x_inHigh[highestIdx&sp.xMask]
+		} else {
+			_T4 = pkVal0
+		}
+		highest = _T4
+		i = highestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			var _T5 float64
+			if i&xMask != pkSlot0 {
+				_T5 = x_inHigh[i&xMask]
+			} else {
+				_T5 = pkVal0
+			}
+			tmp = _T5
+			if tmp > highest {
+				highestIdx = i
+				highest = tmp
+			}
+		}
+	} else if tmp >= highest {
+		highestIdx = sp.today
+		highest = tmp
+	}
+	if !isZeroScaled(highest-lowest, math.Abs(highest)+math.Abs(lowest)) {
+		var _T6 float64
+		if sp.today&sp.xMask != pkSlot2 {
+			_T6 = sp.x_inClose[sp.today&sp.xMask]
+		} else {
+			_T6 = pkVal2
+		}
+		cur_tempBuffer = float64((_T6 - lowest) / (highest - lowest) * 100.0)
+	} else {
+		cur_tempBuffer = 0.0
+	}
+	cur_tempBuffer, subErr = sp.sub0.Peek(cur_tempBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_outSlowD, subErr = sp.sub1.Peek(cur_tempBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_outSlowK = cur_tempBuffer
+	return cur_outSlowK, cur_outSlowD, nil
+}
+
+// Value returns the outputs at the last bar of OutRange, in Update's order;
+// Peek does not change them.
+func (sp *STOCHStream) Value() (float64, float64) {
+	return sp.cur_outSlowK, sp.cur_outSlowD
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *STOCHStream) Clone() *STOCHStream {
+	cl := *sp
+	cl.x_inHigh = append(sp.x_inHigh[:0:0], sp.x_inHigh...)
+	cl.x_inLow = append(sp.x_inLow[:0:0], sp.x_inLow...)
+	cl.x_inClose = append(sp.x_inClose[:0:0], sp.x_inClose...)
+	cl.sub0 = sp.sub0.Clone()
+	cl.sub1 = sp.sub1.Clone()
+	return &cl
 }
 
 func (c *Core) stochOpenImpl(sp *STOCHStream, inHigh, inLow, inClose []float64, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType int32, outBegIdx, outNBElement *int32, outSlowK, outSlowD []float64, outStride int32) RetCode {

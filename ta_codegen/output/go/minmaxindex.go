@@ -289,22 +289,97 @@ func (sp *MINMAXINDEXStream) Update(inReal float64) (int32, int32, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	minmaxindexStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tmpHigh float64
+	var tmpLow float64
+	var highest float64
+	var highestIdx int32
+	var i int32
+	var today int32
+	var xMask int32
+	var x_inReal []float64
+	var lowest float64
+	var lowestIdx int32
+	sp.x_inReal[sp.today&sp.xMask] = inReal
+	tmpHigh = sp.x_inReal[sp.today&sp.xMask]
+	tmpLow = tmpHigh
+	if sp.highestIdx < sp.trailingIdx {
+		sp.highestIdx = sp.trailingIdx
+		sp.highest = sp.x_inReal[sp.highestIdx&sp.xMask]
+		sp.i = sp.highestIdx
+		highest = sp.highest
+		highestIdx = sp.highestIdx
+		i = sp.i
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmpHigh = x_inReal[i&xMask]
+			if tmpHigh >= highest {
+				highestIdx = i
+				highest = tmpHigh
+			}
+		}
+		sp.highest = highest
+		sp.highestIdx = highestIdx
+		sp.i = i
+	} else if tmpHigh >= sp.highest {
+		sp.highestIdx = sp.today
+		sp.highest = tmpHigh
+	}
+	if sp.lowestIdx < sp.trailingIdx {
+		sp.lowestIdx = sp.trailingIdx
+		sp.lowest = sp.x_inReal[sp.lowestIdx&sp.xMask]
+		sp.i = sp.lowestIdx
+		i = sp.i
+		lowest = sp.lowest
+		lowestIdx = sp.lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for {
+			i++
+			if !(i <= today) {
+				break
+			}
+			tmpLow = x_inReal[i&xMask]
+			if tmpLow <= lowest {
+				lowestIdx = i
+				lowest = tmpLow
+			}
+		}
+		sp.i = i
+		sp.lowest = lowest
+		sp.lowestIdx = lowestIdx
+	} else if tmpLow <= sp.lowest {
+		sp.lowestIdx = sp.today
+		sp.lowest = tmpLow
+	}
+	sp.cur_outMaxIdx = sp.highestIdx
+	sp.cur_outMinIdx = sp.lowestIdx
+	sp.trailingIdx += 1
+	sp.today += 1
 	return sp.cur_outMinIdx, sp.cur_outMaxIdx, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MINMAXINDEXStream) Peek(inReal float64) (int32, int32, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
 	var tmpHigh float64
 	var tmpLow float64
+	var today int32
+	var xMask int32
+	var x_inReal []float64
 	var cur_outMaxIdx int32
 	var cur_outMinIdx int32
 	highest := sp.highest
@@ -334,14 +409,17 @@ func (sp *MINMAXINDEXStream) Peek(inReal float64) (int32, int32, error) {
 		}
 		highest = _T1
 		i = highestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T2 float64
-			if i&sp.xMask != pkSlot0 {
-				_T2 = sp.x_inReal[i&sp.xMask]
+			if i&xMask != pkSlot0 {
+				_T2 = x_inReal[i&xMask]
 			} else {
 				_T2 = pkVal0
 			}
@@ -365,14 +443,17 @@ func (sp *MINMAXINDEXStream) Peek(inReal float64) (int32, int32, error) {
 		}
 		lowest = _T3
 		i = lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
 		for {
 			i++
-			if !(i <= sp.today) {
+			if !(i <= today) {
 				break
 			}
 			var _T4 float64
-			if i&sp.xMask != pkSlot0 {
-				_T4 = sp.x_inReal[i&sp.xMask]
+			if i&xMask != pkSlot0 {
+				_T4 = x_inReal[i&xMask]
 			} else {
 				_T4 = pkVal0
 			}
@@ -403,56 +484,6 @@ func (sp *MINMAXINDEXStream) Clone() *MINMAXINDEXStream {
 	cl := *sp
 	cl.x_inReal = append(sp.x_inReal[:0:0], sp.x_inReal...)
 	return &cl
-}
-
-func minmaxindexStepImpl(sp *MINMAXINDEXStream, inReal float64) {
-	var tmpHigh float64
-	var tmpLow float64
-	sp.x_inReal[sp.today&sp.xMask] = inReal
-	tmpHigh = sp.x_inReal[sp.today&sp.xMask]
-	tmpLow = tmpHigh
-	if sp.highestIdx < sp.trailingIdx {
-		sp.highestIdx = sp.trailingIdx
-		sp.highest = sp.x_inReal[sp.highestIdx&sp.xMask]
-		sp.i = sp.highestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmpHigh = sp.x_inReal[sp.i&sp.xMask]
-			if tmpHigh >= sp.highest {
-				sp.highestIdx = sp.i
-				sp.highest = tmpHigh
-			}
-		}
-	} else if tmpHigh >= sp.highest {
-		sp.highestIdx = sp.today
-		sp.highest = tmpHigh
-	}
-	if sp.lowestIdx < sp.trailingIdx {
-		sp.lowestIdx = sp.trailingIdx
-		sp.lowest = sp.x_inReal[sp.lowestIdx&sp.xMask]
-		sp.i = sp.lowestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
-			tmpLow = sp.x_inReal[sp.i&sp.xMask]
-			if tmpLow <= sp.lowest {
-				sp.lowestIdx = sp.i
-				sp.lowest = tmpLow
-			}
-		}
-	} else if tmpLow <= sp.lowest {
-		sp.lowestIdx = sp.today
-		sp.lowest = tmpLow
-	}
-	sp.cur_outMaxIdx = sp.highestIdx
-	sp.cur_outMinIdx = sp.lowestIdx
-	sp.trailingIdx += 1
-	sp.today += 1
 }
 
 func (c *Core) minmaxindexOpenImpl(sp *MINMAXINDEXStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outMinIdx, outMaxIdx []int32, outStride int32) RetCode {

@@ -478,18 +478,47 @@ func (sp *DOSCStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	doscStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var gainDelta float64
+	var tempValue1 float64
+	var tempValue2 float64
+	var rsiValue float64
+	tempValue1 = inReal
+	tempValue2 = tempValue1 - sp.prevValue
+	sp.prevValue = tempValue1
+	sp.prevLoss = float64(sp.prevLoss * float64(sp.optInTimePeriod-1))
+	sp.prevGain = float64(sp.prevGain * float64(sp.optInTimePeriod-1))
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+	sp.prevGain += gainDelta
+	sp.prevLoss += gainDelta - tempValue2
+	sp.prevLoss = float64(sp.prevLoss * sp.invPeriod)
+	sp.prevGain = float64(sp.prevGain * sp.invPeriod)
+	tempValue1 = sp.prevGain + sp.prevLoss
+	if tempValue1 > 0.0 {
+		rsiValue = float64(100.0 * (sp.prevGain / tempValue1))
+	} else {
+		rsiValue = 50.0
+	}
+	sp.ema1 = math.FMA(sp.beta1, sp.ema1, float64(sp.k1*rsiValue))
+	sp.ema2 = math.FMA(sp.beta2, sp.ema2, float64(sp.k2*sp.ema1))
+	sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2
+	sp.sumSignal = sp.sumSignal + sp.ema2
+	sp.cur_outReal = sp.ema2 - sp.sumSignal/float64(sp.optInSignalPeriod)
+	sp.dsBuffer_Idx = sp.dsBuffer_Idx + 1
+	if sp.dsBuffer_Idx > sp.maxIdx_dsBuffer {
+		sp.dsBuffer_Idx = 0
+	}
+	sp.sumSignal = sp.sumSignal - sp.cb_dsBuffer[sp.dsBuffer_Idx]
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *DOSCStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var gainDelta float64
@@ -508,13 +537,7 @@ func (sp *DOSCStream) Peek(inReal float64) (float64, error) {
 	prevValue = tempValue1
 	prevLoss = float64(prevLoss * float64(sp.optInTimePeriod-1))
 	prevGain = float64(prevGain * float64(sp.optInTimePeriod-1))
-	var _T0 float64
-	if tempValue2 > 0.0 {
-		_T0 = tempValue2
-	} else {
-		_T0 = 0.0
-	}
-	gainDelta = _T0
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	prevGain += gainDelta
 	prevLoss += gainDelta - tempValue2
 	prevLoss = float64(prevLoss * sp.invPeriod)
@@ -543,45 +566,6 @@ func (sp *DOSCStream) Clone() *DOSCStream {
 	cl := *sp
 	cl.cb_dsBuffer = append(sp.cb_dsBuffer[:0:0], sp.cb_dsBuffer...)
 	return &cl
-}
-
-func doscStepImpl(sp *DOSCStream, inReal float64) {
-	var gainDelta float64
-	var tempValue1 float64
-	var tempValue2 float64
-	var rsiValue float64
-	tempValue1 = inReal
-	tempValue2 = tempValue1 - sp.prevValue
-	sp.prevValue = tempValue1
-	sp.prevLoss = float64(sp.prevLoss * float64(sp.optInTimePeriod-1))
-	sp.prevGain = float64(sp.prevGain * float64(sp.optInTimePeriod-1))
-	var _T1 float64
-	if tempValue2 > 0.0 {
-		_T1 = tempValue2
-	} else {
-		_T1 = 0.0
-	}
-	gainDelta = _T1
-	sp.prevGain += gainDelta
-	sp.prevLoss += gainDelta - tempValue2
-	sp.prevLoss = float64(sp.prevLoss * sp.invPeriod)
-	sp.prevGain = float64(sp.prevGain * sp.invPeriod)
-	tempValue1 = sp.prevGain + sp.prevLoss
-	if tempValue1 > 0.0 {
-		rsiValue = float64(100.0 * (sp.prevGain / tempValue1))
-	} else {
-		rsiValue = 50.0
-	}
-	sp.ema1 = math.FMA(sp.beta1, sp.ema1, float64(sp.k1*rsiValue))
-	sp.ema2 = math.FMA(sp.beta2, sp.ema2, float64(sp.k2*sp.ema1))
-	sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2
-	sp.sumSignal = sp.sumSignal + sp.ema2
-	sp.cur_outReal = sp.ema2 - sp.sumSignal/float64(sp.optInSignalPeriod)
-	sp.dsBuffer_Idx = sp.dsBuffer_Idx + 1
-	if sp.dsBuffer_Idx > sp.maxIdx_dsBuffer {
-		sp.dsBuffer_Idx = 0
-	}
-	sp.sumSignal = sp.sumSignal - sp.cb_dsBuffer[sp.dsBuffer_Idx]
 }
 
 func (c *Core) doscOpenImpl(sp *DOSCStream, inReal []float64, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -695,13 +679,13 @@ func (c *Core) doscOpenImpl(sp *DOSCStream, inReal []float64, startIdx, optInTim
 		today = today + 1
 		tempValue2 = tempValue1 - prevValue
 		prevValue = tempValue1
-		var _T2 float64
+		var _T0 float64
 		if tempValue2 > 0.0 {
-			_T2 = tempValue2
+			_T0 = tempValue2
 		} else {
-			_T2 = 0.0
+			_T0 = 0.0
 		}
-		gainDelta = _T2
+		gainDelta = _T0
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 	}
@@ -751,13 +735,13 @@ func (c *Core) doscOpenImpl(sp *DOSCStream, inReal []float64, startIdx, optInTim
 		prevValue = tempValue1
 		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		var _T3 float64
+		var _T1 float64
 		if tempValue2 > 0.0 {
-			_T3 = tempValue2
+			_T1 = tempValue2
 		} else {
-			_T3 = 0.0
+			_T1 = 0.0
 		}
-		gainDelta = _T3
+		gainDelta = _T1
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 		prevLoss = float64(prevLoss * invPeriod)
@@ -788,13 +772,13 @@ func (c *Core) doscOpenImpl(sp *DOSCStream, inReal []float64, startIdx, optInTim
 		prevValue = tempValue1
 		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		var _T4 float64
+		var _T2 float64
 		if tempValue2 > 0.0 {
-			_T4 = tempValue2
+			_T2 = tempValue2
 		} else {
-			_T4 = 0.0
+			_T2 = 0.0
 		}
-		gainDelta = _T4
+		gainDelta = _T2
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 		prevLoss = float64(prevLoss * invPeriod)

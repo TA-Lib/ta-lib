@@ -289,11 +289,32 @@ func (sp *HAStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, flo
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, 0, BadParam
 	}
-	haStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var haHigh float64
+	var haLow float64
+	var tempOpen float64
+	var tempHigh float64
+	var tempLow float64
+	var tempClose float64
+	tempOpen = inOpen
+	tempHigh = inHigh
+	tempLow = inLow
+	tempClose = inClose
+	sp.haOpen = (sp.haOpen + sp.haClose) / 2.0
+	sp.haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0
+	haHigh = tempHigh
+	haHigh = selF(sp.haOpen > haHigh, sp.haOpen, haHigh)
+	haHigh = selF(sp.haClose > haHigh, sp.haClose, haHigh)
+	haLow = tempLow
+	haLow = selF(sp.haOpen < haLow, sp.haOpen, haLow)
+	haLow = selF(sp.haClose < haLow, sp.haClose, haLow)
+	sp.cur_outHAOpen = sp.haOpen
+	sp.cur_outHAHigh = haHigh
+	sp.cur_outHALow = haLow
+	sp.cur_outHAClose = sp.haClose
 	return sp.cur_outHAOpen, sp.cur_outHAHigh, sp.cur_outHALow, sp.cur_outHAClose, nil
 }
 
@@ -301,7 +322,7 @@ func (sp *HAStream) Update(inOpen, inHigh, inLow, inClose float64) (float64, flo
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *HAStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, float64, float64, float64, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, 0, BadParam
 	}
 	var haHigh float64
@@ -323,19 +344,11 @@ func (sp *HAStream) Peek(inOpen, inHigh, inLow, inClose float64) (float64, float
 	haOpen = (haOpen + haClose) / 2.0
 	haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0
 	haHigh = tempHigh
-	if haOpen > haHigh {
-		haHigh = haOpen
-	}
-	if haClose > haHigh {
-		haHigh = haClose
-	}
+	haHigh = selF(haOpen > haHigh, haOpen, haHigh)
+	haHigh = selF(haClose > haHigh, haClose, haHigh)
 	haLow = tempLow
-	if haOpen < haLow {
-		haLow = haOpen
-	}
-	if haClose < haLow {
-		haLow = haClose
-	}
+	haLow = selF(haOpen < haLow, haOpen, haLow)
+	haLow = selF(haClose < haLow, haClose, haLow)
 	cur_outHAOpen = haOpen
 	cur_outHAHigh = haHigh
 	cur_outHALow = haLow
@@ -354,39 +367,6 @@ func (sp *HAStream) Value() (float64, float64, float64, float64) {
 func (sp *HAStream) Clone() *HAStream {
 	cl := *sp
 	return &cl
-}
-
-func haStepImpl(sp *HAStream, inOpen, inHigh, inLow, inClose float64) {
-	var haHigh float64
-	var haLow float64
-	var tempOpen float64
-	var tempHigh float64
-	var tempLow float64
-	var tempClose float64
-	tempOpen = inOpen
-	tempHigh = inHigh
-	tempLow = inLow
-	tempClose = inClose
-	sp.haOpen = (sp.haOpen + sp.haClose) / 2.0
-	sp.haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0
-	haHigh = tempHigh
-	if sp.haOpen > haHigh {
-		haHigh = sp.haOpen
-	}
-	if sp.haClose > haHigh {
-		haHigh = sp.haClose
-	}
-	haLow = tempLow
-	if sp.haOpen < haLow {
-		haLow = sp.haOpen
-	}
-	if sp.haClose < haLow {
-		haLow = sp.haClose
-	}
-	sp.cur_outHAOpen = sp.haOpen
-	sp.cur_outHAHigh = haHigh
-	sp.cur_outHALow = haLow
-	sp.cur_outHAClose = sp.haClose
 }
 
 func (c *Core) haOpenImpl(sp *HAStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outHAOpen, outHAHigh, outHALow, outHAClose []float64, outStride int32) RetCode {

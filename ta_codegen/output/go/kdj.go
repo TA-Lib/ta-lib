@@ -310,12 +310,21 @@ func (sp *KDJStream) Update(inHigh, inLow, inClose float64) (float64, float64, f
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
-	if err := kdjStepImpl(sp, inHigh, inLow, inClose); err != nil {
-		return 0, 0, 0, err
+	var cur_outK float64
+	var cur_outD float64
+	var cur_outJ float64
+	var subErr error
+	cur_outK, cur_outD, subErr = sp.sub0.Update(inHigh, inLow, inClose)
+	if subErr != nil {
+		return 0, 0, 0, subErr
 	}
+	cur_outJ = float64(3.0*cur_outK) - float64(2.0*cur_outD)
+	sp.cur_outK = cur_outK
+	sp.cur_outD = cur_outD
+	sp.cur_outJ = cur_outJ
 	sp.outRangeCount++
 	return sp.cur_outK, sp.cur_outD, sp.cur_outJ, nil
 }
@@ -324,7 +333,7 @@ func (sp *KDJStream) Update(inHigh, inLow, inClose float64) (float64, float64, f
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *KDJStream) Peek(inHigh, inLow, inClose float64) (float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, 0, 0, BadParam
 	}
 	var cur_outK float64
@@ -351,22 +360,6 @@ func (sp *KDJStream) Clone() *KDJStream {
 	cl := *sp
 	cl.sub0 = sp.sub0.Clone()
 	return &cl
-}
-
-func kdjStepImpl(sp *KDJStream, inHigh, inLow, inClose float64) error {
-	var cur_outK float64
-	var cur_outD float64
-	var cur_outJ float64
-	var subErr error
-	cur_outK, cur_outD, subErr = sp.sub0.Update(inHigh, inLow, inClose)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outJ = float64(3.0*cur_outK) - float64(2.0*cur_outD)
-	sp.cur_outK = cur_outK
-	sp.cur_outD = cur_outD
-	sp.cur_outJ = cur_outJ
-	return nil
 }
 
 func (c *Core) kdjOpenImpl(sp *KDJStream, inHigh, inLow, inClose []float64, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType int32, outBegIdx, outNBElement *int32, outK, outD, outJ []float64, outStride int32) RetCode {

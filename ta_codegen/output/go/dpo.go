@@ -248,47 +248,10 @@ func (sp *DPOStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	dpoStepImpl(sp, inReal)
 	sp.outRangeCount++
-	return sp.cur_outReal, nil
-}
-
-// Peek returns what Update would return for the bar inReal, changing nothing.
-// It returns [BadParam] for a bar value that is not finite.
-func (sp *DPOStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
-		return 0, BadParam
-	}
-	var tempReal float64
-	var dispVal float64
-	var cur_outReal float64
-	periodTotal := sp.periodTotal
-	periodTotal += inReal
-	tempReal = periodTotal
-	periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
-	dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx]
-	cur_outReal = dispVal - tempReal/float64(sp.optInTimePeriod)
-	return cur_outReal, nil
-}
-
-// Value returns the value at the last bar of OutRange; Peek does not change it.
-func (sp *DPOStream) Value() float64 {
-	return sp.cur_outReal
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *DPOStream) Clone() *DPOStream {
-	cl := *sp
-	cl.ring_dispIdx_inReal = append(sp.ring_dispIdx_inReal[:0:0], sp.ring_dispIdx_inReal...)
-	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
-	return &cl
-}
-
-func dpoStepImpl(sp *DPOStream, inReal float64) {
 	var tempReal float64
 	var dispVal float64
 	var ringPosL_dispIdx int32
@@ -316,6 +279,39 @@ func dpoStepImpl(sp *DPOStream, inReal float64) {
 		ringPosL_trailingIdx = 0
 	}
 	sp.ringPos_trailingIdx = ringPosL_trailingIdx
+	return sp.cur_outReal, nil
+}
+
+// Peek returns what Update would return for the bar inReal, changing nothing.
+// It returns [BadParam] for a bar value that is not finite.
+func (sp *DPOStream) Peek(inReal float64) (float64, error) {
+	if inReal-inReal != 0 {
+		return 0, BadParam
+	}
+	var tempReal float64
+	var dispVal float64
+	var cur_outReal float64
+	periodTotal := sp.periodTotal
+	periodTotal += inReal
+	tempReal = periodTotal
+	periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
+	dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx]
+	cur_outReal = dispVal - tempReal/float64(sp.optInTimePeriod)
+	return cur_outReal, nil
+}
+
+// Value returns the value at the last bar of OutRange; Peek does not change it.
+func (sp *DPOStream) Value() float64 {
+	return sp.cur_outReal
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *DPOStream) Clone() *DPOStream {
+	cl := *sp
+	cl.ring_dispIdx_inReal = append(sp.ring_dispIdx_inReal[:0:0], sp.ring_dispIdx_inReal...)
+	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
+	return &cl
 }
 
 func (c *Core) dpoOpenImpl(sp *DPOStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

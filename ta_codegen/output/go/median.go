@@ -373,18 +373,113 @@ func (sp *MEDIANStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	medianStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var newValue float64
+	var oldValue float64
+	var result float64
+	var lower float64
+	var upper float64
+	var j int32
+	var pos int32
+	var lo int32
+	var hi int32
+	var mid int32
+	var cb_sorted []float64
+	var lookbackTotal int32
+	newValue = inReal
+	if sp.lookbackTotal < 128 {
+		pos = 0
+		cb_sorted = sp.cb_sorted
+		lookbackTotal = sp.lookbackTotal
+		for pos < lookbackTotal && cb_sorted[pos] <= newValue {
+			pos += 1
+		}
+	} else {
+		lo = 0
+		hi = sp.lookbackTotal
+		cb_sorted = sp.cb_sorted
+		for lo < hi {
+			mid = (lo + hi) / 2
+			if cb_sorted[mid] <= newValue {
+				lo = mid + 1
+			} else {
+				hi = mid
+			}
+		}
+		pos = lo
+	}
+	if sp.lowerIdx < pos {
+		lower = sp.cb_sorted[sp.lowerIdx]
+	} else if sp.lowerIdx == pos {
+		lower = newValue
+	} else {
+		lower = sp.cb_sorted[sp.lowerIdx-1]
+	}
+	if sp.upperIdx < pos {
+		upper = sp.cb_sorted[sp.upperIdx]
+	} else if sp.upperIdx == pos {
+		upper = newValue
+	} else {
+		upper = sp.cb_sorted[sp.upperIdx-1]
+	}
+	if sp.lowerIdx == sp.upperIdx {
+		result = lower
+	} else {
+		result = (lower + upper) / 2.0
+	}
+	sp.cur_outReal = result
+	sp.cb_ring[sp.ring_Idx] = newValue
+	sp.ring_Idx = sp.ring_Idx + 1
+	if sp.ring_Idx > sp.maxIdx_ring {
+		sp.ring_Idx = 0
+	}
+	oldValue = sp.cb_ring[sp.ring_Idx]
+	if sp.lookbackTotal < 128 {
+		j = 0
+		cb_sorted = sp.cb_sorted
+		lookbackTotal = sp.lookbackTotal
+		for j < lookbackTotal && cb_sorted[j] < oldValue {
+			j += 1
+		}
+	} else {
+		lo = 0
+		hi = sp.lookbackTotal
+		cb_sorted = sp.cb_sorted
+		for lo < hi {
+			mid = (lo + hi) / 2
+			if cb_sorted[mid] < oldValue {
+				lo = mid + 1
+			} else {
+				hi = mid
+			}
+		}
+		j = lo
+	}
+	if j < pos {
+		cb_sorted = sp.cb_sorted
+		for j < pos-1 {
+			cb_sorted[j] = cb_sorted[j+1]
+			j += 1
+		}
+		sp.cb_sorted[pos-1] = newValue
+	} else {
+		cb_sorted = sp.cb_sorted
+		for j > pos {
+			cb_sorted[j] = cb_sorted[j-1]
+			j -= 1
+		}
+		sp.cb_sorted[pos] = newValue
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MEDIANStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var newValue float64
@@ -395,19 +490,24 @@ func (sp *MEDIANStream) Peek(inReal float64) (float64, error) {
 	var lo int32
 	var hi int32
 	var mid int32
+	var cb_sorted []float64
+	var lookbackTotal int32
 	var cur_outReal float64
 	newValue = inReal
 	if sp.lookbackTotal < 128 {
 		pos = 0
-		for pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+		cb_sorted = sp.cb_sorted
+		lookbackTotal = sp.lookbackTotal
+		for pos < lookbackTotal && cb_sorted[pos] <= newValue {
 			pos += 1
 		}
 	} else {
 		lo = 0
 		hi = sp.lookbackTotal
+		cb_sorted = sp.cb_sorted
 		for lo < hi {
 			mid = (lo + hi) / 2
-			if sp.cb_sorted[mid] <= newValue {
+			if cb_sorted[mid] <= newValue {
 				lo = mid + 1
 			} else {
 				hi = mid
@@ -450,95 +550,6 @@ func (sp *MEDIANStream) Clone() *MEDIANStream {
 	cl.cb_ring = append(sp.cb_ring[:0:0], sp.cb_ring...)
 	cl.cb_sorted = append(sp.cb_sorted[:0:0], sp.cb_sorted...)
 	return &cl
-}
-
-func medianStepImpl(sp *MEDIANStream, inReal float64) {
-	var newValue float64
-	var oldValue float64
-	var result float64
-	var lower float64
-	var upper float64
-	var j int32
-	var pos int32
-	var lo int32
-	var hi int32
-	var mid int32
-	newValue = inReal
-	if sp.lookbackTotal < 128 {
-		pos = 0
-		for pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
-			pos += 1
-		}
-	} else {
-		lo = 0
-		hi = sp.lookbackTotal
-		for lo < hi {
-			mid = (lo + hi) / 2
-			if sp.cb_sorted[mid] <= newValue {
-				lo = mid + 1
-			} else {
-				hi = mid
-			}
-		}
-		pos = lo
-	}
-	if sp.lowerIdx < pos {
-		lower = sp.cb_sorted[sp.lowerIdx]
-	} else if sp.lowerIdx == pos {
-		lower = newValue
-	} else {
-		lower = sp.cb_sorted[sp.lowerIdx-1]
-	}
-	if sp.upperIdx < pos {
-		upper = sp.cb_sorted[sp.upperIdx]
-	} else if sp.upperIdx == pos {
-		upper = newValue
-	} else {
-		upper = sp.cb_sorted[sp.upperIdx-1]
-	}
-	if sp.lowerIdx == sp.upperIdx {
-		result = lower
-	} else {
-		result = (lower + upper) / 2.0
-	}
-	sp.cur_outReal = result
-	sp.cb_ring[sp.ring_Idx] = newValue
-	sp.ring_Idx = sp.ring_Idx + 1
-	if sp.ring_Idx > sp.maxIdx_ring {
-		sp.ring_Idx = 0
-	}
-	oldValue = sp.cb_ring[sp.ring_Idx]
-	if sp.lookbackTotal < 128 {
-		j = 0
-		for j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
-			j += 1
-		}
-	} else {
-		lo = 0
-		hi = sp.lookbackTotal
-		for lo < hi {
-			mid = (lo + hi) / 2
-			if sp.cb_sorted[mid] < oldValue {
-				lo = mid + 1
-			} else {
-				hi = mid
-			}
-		}
-		j = lo
-	}
-	if j < pos {
-		for j < pos-1 {
-			sp.cb_sorted[j] = sp.cb_sorted[j+1]
-			j += 1
-		}
-		sp.cb_sorted[pos-1] = newValue
-	} else {
-		for j > pos {
-			sp.cb_sorted[j] = sp.cb_sorted[j-1]
-			j -= 1
-		}
-		sp.cb_sorted[pos] = newValue
-	}
 }
 
 func (c *Core) medianOpenImpl(sp *MEDIANStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -382,11 +382,96 @@ func (sp *MAStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	if err := maStepImpl(sp, inReal); err != nil {
-		return 0, err
+	switch sp.arm {
+	case -1:
+		sp.cur_outReal = inReal
+	case 0:
+		v0, err := sp.sub.(*SMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 1:
+		v0, err := sp.sub.(*EMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 2:
+		v0, err := sp.sub.(*WMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 3:
+		v0, err := sp.sub.(*DEMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 4:
+		v0, err := sp.sub.(*TEMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 5:
+		v0, err := sp.sub.(*TRIMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 6:
+		v0, err := sp.sub.(*KAMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 7:
+		v0, _, err := sp.sub.(*MAMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 8:
+		v0, err := sp.sub.(*T3Stream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 9:
+		v0, err := sp.sub.(*HMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 10:
+		v0, err := sp.sub.(*ZLEMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 11:
+		v0, err := sp.sub.(*RMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 12:
+		v0, err := sp.sub.(*VIDYAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
+	case 13:
+		v0, err := sp.sub.(*ALMAStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
 	}
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
@@ -395,7 +480,7 @@ func (sp *MAStream) Update(inReal float64) (float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MAStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	switch sp.arm {
@@ -475,98 +560,6 @@ func (sp *MAStream) Clone() *MAStream {
 		cl.sub = sub.Clone()
 	}
 	return &cl
-}
-
-func maStepImpl(sp *MAStream, inReal float64) error {
-	switch sp.arm {
-	case -1:
-		sp.cur_outReal = inReal
-	case 0:
-		v0, err := sp.sub.(*SMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 1:
-		v0, err := sp.sub.(*EMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 2:
-		v0, err := sp.sub.(*WMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 3:
-		v0, err := sp.sub.(*DEMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 4:
-		v0, err := sp.sub.(*TEMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 5:
-		v0, err := sp.sub.(*TRIMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 6:
-		v0, err := sp.sub.(*KAMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 7:
-		v0, _, err := sp.sub.(*MAMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 8:
-		v0, err := sp.sub.(*T3Stream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 9:
-		v0, err := sp.sub.(*HMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 10:
-		v0, err := sp.sub.(*ZLEMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 11:
-		v0, err := sp.sub.(*RMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 12:
-		v0, err := sp.sub.(*VIDYAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	case 13:
-		v0, err := sp.sub.(*ALMAStream).Update(inReal)
-		if err != nil {
-			return err
-		}
-		sp.cur_outReal = v0
-	}
-	return nil
 }
 
 func (c *Core) maOpenImpl(sp *MAStream, inReal []float64, startIdx, optInTimePeriod, optInMAType int32) RetCode {

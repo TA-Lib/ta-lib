@@ -204,18 +204,32 @@ func (sp *PVIStream) Update(inClose, inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	pviStepImpl(sp, inClose, inVolume)
 	sp.outRangeCount++
+	var tempClose float64
+	var tempVolume float64
+	var tempPVI float64
+	tempClose = inClose
+	tempVolume = inVolume
+	if tempVolume > sp.prevVolume && sp.prevClose != 0.0 {
+		tempPVI = sp.prevPVI
+		tempPVI += float64((tempClose - sp.prevClose) / sp.prevClose * tempPVI)
+		if isFinite(tempPVI) {
+			sp.prevPVI = tempPVI
+		}
+	}
+	sp.cur_outReal = sp.prevPVI
+	sp.prevClose = tempClose
+	sp.prevVolume = tempVolume
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar (inClose and inVolume),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *PVIStream) Peek(inClose, inVolume float64) (float64, error) {
-	if !isFinite(inClose) || !isFinite(inVolume) {
+	if (inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var tempClose float64
@@ -246,24 +260,6 @@ func (sp *PVIStream) Value() float64 {
 func (sp *PVIStream) Clone() *PVIStream {
 	cl := *sp
 	return &cl
-}
-
-func pviStepImpl(sp *PVIStream, inClose, inVolume float64) {
-	var tempClose float64
-	var tempVolume float64
-	var tempPVI float64
-	tempClose = inClose
-	tempVolume = inVolume
-	if tempVolume > sp.prevVolume && sp.prevClose != 0.0 {
-		tempPVI = sp.prevPVI
-		tempPVI += float64((tempClose - sp.prevClose) / sp.prevClose * tempPVI)
-		if isFinite(tempPVI) {
-			sp.prevPVI = tempPVI
-		}
-	}
-	sp.cur_outReal = sp.prevPVI
-	sp.prevClose = tempClose
-	sp.prevVolume = tempVolume
 }
 
 func (c *Core) pviOpenImpl(sp *PVIStream, inClose, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -397,96 +397,10 @@ func (sp *COPPOCKStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	coppockStepImpl(sp, inReal)
 	sp.outRangeCount++
-	return sp.cur_outReal, nil
-}
-
-// Peek returns what Update would return for the bar inReal, changing nothing.
-// It returns [BadParam] for a bar value that is not finite.
-func (sp *COPPOCKStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
-		return 0, BadParam
-	}
-	var q int32
-	var rw int32
-	var ringWalk int32
-	var tempReal float64
-	var tempReal2 float64
-	var base1 float64
-	var base2 float64
-	var roc1 float64
-	var roc2 float64
-	barsSinceReseed := sp.barsSinceReseed
-	var cur_outReal float64
-	periodSum := sp.periodSum
-	sRing_Idx := sp.sRing_Idx
-	base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx]
-	base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx]
-	var _T0 float64
-	if base1 != 0.0 {
-		_T0 = float64((inReal/base1 - 1.0) * 100.0)
-	} else {
-		_T0 = 0.0
-	}
-	roc1 = _T0
-	var _T1 float64
-	if base2 != 0.0 {
-		_T1 = float64((inReal/base2 - 1.0) * 100.0)
-	} else {
-		_T1 = 0.0
-	}
-	roc2 = _T1
-	tempReal = roc1 + roc2
-	periodSum += float64(tempReal * float64(sp.optInWMAPeriod))
-	barsSinceReseed -= 1
-	if barsSinceReseed <= 0 {
-		barsSinceReseed = 8 * sp.optInWMAPeriod
-		periodSum = 0.0
-		rw = 1
-		ringWalk = sRing_Idx
-		for q = 0; q < sp.ringSize; q += 1 {
-			tempReal2 = sp.cb_sRing[ringWalk]
-			periodSum += float64(tempReal2 * float64(rw))
-			rw += 1
-			ringWalk += 1
-			if ringWalk >= sp.ringSize {
-				ringWalk = 0
-			}
-		}
-		periodSum += float64(tempReal * float64(sp.optInWMAPeriod))
-	}
-	sRing_Idx = sRing_Idx + 1
-	if sRing_Idx > sp.maxIdx_sRing {
-		sRing_Idx = 0
-	}
-	if sp.optInWMAPeriod == 1 {
-		cur_outReal = tempReal
-	} else {
-		cur_outReal = periodSum / sp.divider
-	}
-	return cur_outReal, nil
-}
-
-// Value returns the value at the last bar of OutRange; Peek does not change it.
-func (sp *COPPOCKStream) Value() float64 {
-	return sp.cur_outReal
-}
-
-// Clone returns an independent copy of the stream at the same bar: the two
-// evolve separately and share only the [Core].
-func (sp *COPPOCKStream) Clone() *COPPOCKStream {
-	cl := *sp
-	cl.ring_roc1Idx_inReal = append(sp.ring_roc1Idx_inReal[:0:0], sp.ring_roc1Idx_inReal...)
-	cl.ring_roc2Idx_inReal = append(sp.ring_roc2Idx_inReal[:0:0], sp.ring_roc2Idx_inReal...)
-	cl.cb_sRing = append(sp.cb_sRing[:0:0], sp.cb_sRing...)
-	return &cl
-}
-
-func coppockStepImpl(sp *COPPOCKStream, inReal float64) {
 	var q int32
 	var rw int32
 	var ringWalk int32
@@ -500,6 +414,10 @@ func coppockStepImpl(sp *COPPOCKStream, inReal float64) {
 	var ringPosL_roc2Idx int32
 	var ringCapL_roc1Idx int32
 	var ringCapL_roc2Idx int32
+	var cb_sRing []float64
+	var periodSub float64
+	var periodSum float64
+	var ringSize int32
 	base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx]
 	base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx]
 	var _T2 float64
@@ -527,16 +445,22 @@ func coppockStepImpl(sp *COPPOCKStream, inReal float64) {
 		sp.periodSum = 0.0
 		rw = 1
 		ringWalk = sp.sRing_Idx
-		for q = 0; q < sp.ringSize; q += 1 {
-			tempReal2 = sp.cb_sRing[ringWalk]
-			sp.periodSub += tempReal2
-			sp.periodSum += float64(tempReal2 * float64(rw))
+		cb_sRing = sp.cb_sRing
+		periodSub = sp.periodSub
+		periodSum = sp.periodSum
+		ringSize = sp.ringSize
+		for q = 0; q < ringSize; q += 1 {
+			tempReal2 = cb_sRing[ringWalk]
+			periodSub += tempReal2
+			periodSum += float64(tempReal2 * float64(rw))
 			rw += 1
 			ringWalk += 1
-			if ringWalk >= sp.ringSize {
+			if ringWalk >= ringSize {
 				ringWalk = 0
 			}
 		}
+		sp.periodSub = periodSub
+		sp.periodSum = periodSum
 		sp.periodSub += tempReal
 		sp.periodSum += float64(tempReal * float64(sp.optInWMAPeriod))
 	}
@@ -568,6 +492,92 @@ func coppockStepImpl(sp *COPPOCKStream, inReal float64) {
 		ringPosL_roc2Idx = 0
 	}
 	sp.ringPos_roc2Idx = ringPosL_roc2Idx
+	return sp.cur_outReal, nil
+}
+
+// Peek returns what Update would return for the bar inReal, changing nothing.
+// It returns [BadParam] for a bar value that is not finite.
+func (sp *COPPOCKStream) Peek(inReal float64) (float64, error) {
+	if inReal-inReal != 0 {
+		return 0, BadParam
+	}
+	var q int32
+	var rw int32
+	var ringWalk int32
+	var tempReal float64
+	var tempReal2 float64
+	var base1 float64
+	var base2 float64
+	var roc1 float64
+	var roc2 float64
+	var cb_sRing []float64
+	var ringSize int32
+	barsSinceReseed := sp.barsSinceReseed
+	var cur_outReal float64
+	periodSum := sp.periodSum
+	sRing_Idx := sp.sRing_Idx
+	base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx]
+	base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx]
+	var _T0 float64
+	if base1 != 0.0 {
+		_T0 = float64((inReal/base1 - 1.0) * 100.0)
+	} else {
+		_T0 = 0.0
+	}
+	roc1 = _T0
+	var _T1 float64
+	if base2 != 0.0 {
+		_T1 = float64((inReal/base2 - 1.0) * 100.0)
+	} else {
+		_T1 = 0.0
+	}
+	roc2 = _T1
+	tempReal = roc1 + roc2
+	periodSum += float64(tempReal * float64(sp.optInWMAPeriod))
+	barsSinceReseed -= 1
+	if barsSinceReseed <= 0 {
+		barsSinceReseed = 8 * sp.optInWMAPeriod
+		periodSum = 0.0
+		rw = 1
+		ringWalk = sRing_Idx
+		cb_sRing = sp.cb_sRing
+		ringSize = sp.ringSize
+		for q = 0; q < ringSize; q += 1 {
+			tempReal2 = cb_sRing[ringWalk]
+			periodSum += float64(tempReal2 * float64(rw))
+			rw += 1
+			ringWalk += 1
+			if ringWalk >= ringSize {
+				ringWalk = 0
+			}
+		}
+		periodSum += float64(tempReal * float64(sp.optInWMAPeriod))
+	}
+	sRing_Idx = sRing_Idx + 1
+	if sRing_Idx > sp.maxIdx_sRing {
+		sRing_Idx = 0
+	}
+	if sp.optInWMAPeriod == 1 {
+		cur_outReal = tempReal
+	} else {
+		cur_outReal = periodSum / sp.divider
+	}
+	return cur_outReal, nil
+}
+
+// Value returns the value at the last bar of OutRange; Peek does not change it.
+func (sp *COPPOCKStream) Value() float64 {
+	return sp.cur_outReal
+}
+
+// Clone returns an independent copy of the stream at the same bar: the two
+// evolve separately and share only the [Core].
+func (sp *COPPOCKStream) Clone() *COPPOCKStream {
+	cl := *sp
+	cl.ring_roc1Idx_inReal = append(sp.ring_roc1Idx_inReal[:0:0], sp.ring_roc1Idx_inReal...)
+	cl.ring_roc2Idx_inReal = append(sp.ring_roc2Idx_inReal[:0:0], sp.ring_roc2Idx_inReal...)
+	cl.cb_sRing = append(sp.cb_sRing[:0:0], sp.cb_sRing...)
+	return &cl
 }
 
 func (c *Core) coppockOpenImpl(sp *COPPOCKStream, inReal []float64, startIdx, optInWMAPeriod, optInROC1Period, optInROC2Period int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

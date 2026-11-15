@@ -466,12 +466,50 @@ func (sp *PERCENTBStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	if err := percentbStepImpl(sp, inReal); err != nil {
-		return 0, err
+	var den float64
+	var deviation float64
+	var lower float64
+	var middle float64
+	var tempReal float64
+	var upper float64
+	var cur_tempX float64
+	var cur_tempMA float64
+	var cur_outReal float64
+	var subErr error
+	cur_tempX = inReal
+	cur_tempMA, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
 	}
+	cur_outReal, subErr = sp.sub1.Update(inReal)
+	if subErr != nil {
+		return 0, subErr
+	}
+	if sp.optInNbDevUp == sp.optInNbDevDn {
+		middle = cur_tempMA
+		tempReal = float64(math.Sqrt(cur_outReal) * sp.optInNbDevUp)
+		upper = middle + tempReal
+		lower = middle - tempReal
+		den = upper - lower
+		cur_outReal = (cur_tempX - lower) / den
+		if den == 0.0 {
+			cur_outReal = 0.5
+		}
+	} else {
+		middle = cur_tempMA
+		deviation = math.Sqrt(cur_outReal)
+		upper = math.FMA(deviation, sp.optInNbDevUp, middle)
+		lower = middle - float64(deviation*sp.optInNbDevDn)
+		den = upper - lower
+		cur_outReal = (cur_tempX - lower) / den
+		if den == 0.0 {
+			cur_outReal = 0.5
+		}
+	}
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -479,7 +517,7 @@ func (sp *PERCENTBStream) Update(inReal float64) (float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *PERCENTBStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var den float64
@@ -537,51 +575,6 @@ func (sp *PERCENTBStream) Clone() *PERCENTBStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func percentbStepImpl(sp *PERCENTBStream, inReal float64) error {
-	var den float64
-	var deviation float64
-	var lower float64
-	var middle float64
-	var tempReal float64
-	var upper float64
-	var cur_tempX float64
-	var cur_tempMA float64
-	var cur_outReal float64
-	var subErr error
-	cur_tempX = inReal
-	cur_tempMA, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal, subErr = sp.sub1.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	if sp.optInNbDevUp == sp.optInNbDevDn {
-		middle = cur_tempMA
-		tempReal = float64(math.Sqrt(cur_outReal) * sp.optInNbDevUp)
-		upper = middle + tempReal
-		lower = middle - tempReal
-		den = upper - lower
-		cur_outReal = (cur_tempX - lower) / den
-		if den == 0.0 {
-			cur_outReal = 0.5
-		}
-	} else {
-		middle = cur_tempMA
-		deviation = math.Sqrt(cur_outReal)
-		upper = math.FMA(deviation, sp.optInNbDevUp, middle)
-		lower = middle - float64(deviation*sp.optInNbDevDn)
-		den = upper - lower
-		cur_outReal = (cur_tempX - lower) / den
-		if den == 0.0 {
-			cur_outReal = 0.5
-		}
-	}
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) percentbOpenImpl(sp *PERCENTBStream, inReal []float64, startIdx, optInTimePeriod int32, optInNbDevUp, optInNbDevDn float64, optInMAType int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

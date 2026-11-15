@@ -184,18 +184,19 @@ func (sp *CUMSUMStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	cumsumStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.total += inReal
+	sp.cur_outReal = sp.total
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CUMSUMStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -215,11 +216,6 @@ func (sp *CUMSUMStream) Value() float64 {
 func (sp *CUMSUMStream) Clone() *CUMSUMStream {
 	cl := *sp
 	return &cl
-}
-
-func cumsumStepImpl(sp *CUMSUMStream, inReal float64) {
-	sp.total += inReal
-	sp.cur_outReal = sp.total
 }
 
 func (c *Core) cumsumOpenImpl(sp *CUMSUMStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

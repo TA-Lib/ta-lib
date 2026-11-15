@@ -305,18 +305,27 @@ func (sp *TRIXStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	trixStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempReal float64
+	tempReal = sp.prevEMA3
+	sp.prevEMA1 = math.FMA(sp.emaBeta, sp.prevEMA1, float64(sp.optInK_1*inReal))
+	sp.prevEMA2 = math.FMA(sp.emaBeta, sp.prevEMA2, float64(sp.optInK_1*sp.prevEMA1))
+	sp.prevEMA3 = math.FMA(sp.emaBeta, sp.prevEMA3, float64(sp.optInK_1*sp.prevEMA2))
+	if tempReal != 0.0 {
+		sp.cur_outReal = float64((sp.prevEMA3/tempReal - 1.0) * 100.0)
+	} else {
+		sp.cur_outReal = 0.0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *TRIXStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -346,19 +355,6 @@ func (sp *TRIXStream) Value() float64 {
 func (sp *TRIXStream) Clone() *TRIXStream {
 	cl := *sp
 	return &cl
-}
-
-func trixStepImpl(sp *TRIXStream, inReal float64) {
-	var tempReal float64
-	tempReal = sp.prevEMA3
-	sp.prevEMA1 = math.FMA(sp.emaBeta, sp.prevEMA1, float64(sp.optInK_1*inReal))
-	sp.prevEMA2 = math.FMA(sp.emaBeta, sp.prevEMA2, float64(sp.optInK_1*sp.prevEMA1))
-	sp.prevEMA3 = math.FMA(sp.emaBeta, sp.prevEMA3, float64(sp.optInK_1*sp.prevEMA2))
-	if tempReal != 0.0 {
-		sp.cur_outReal = float64((sp.prevEMA3/tempReal - 1.0) * 100.0)
-	} else {
-		sp.cur_outReal = 0.0
-	}
 }
 
 func (c *Core) trixOpenImpl(sp *TRIXStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

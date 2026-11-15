@@ -257,18 +257,27 @@ func (sp *MCGDStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	mcgdStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var tempMD float64
+	var tempReal float64
+	var ratio float64
+	tempReal = inReal
+	ratio = tempReal / sp.prevMD
+	tempMD = sp.prevMD + (tempReal-sp.prevMD)/float64(sp.period*float64(float64(ratio*ratio)*float64(ratio*ratio)))
+	if isFinite(tempMD) {
+		sp.prevMD = tempMD
+	}
+	sp.cur_outReal = sp.prevMD
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *MCGDStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var tempMD float64
@@ -296,19 +305,6 @@ func (sp *MCGDStream) Value() float64 {
 func (sp *MCGDStream) Clone() *MCGDStream {
 	cl := *sp
 	return &cl
-}
-
-func mcgdStepImpl(sp *MCGDStream, inReal float64) {
-	var tempMD float64
-	var tempReal float64
-	var ratio float64
-	tempReal = inReal
-	ratio = tempReal / sp.prevMD
-	tempMD = sp.prevMD + (tempReal-sp.prevMD)/float64(sp.period*float64(float64(ratio*ratio)*float64(ratio*ratio)))
-	if isFinite(tempMD) {
-		sp.prevMD = tempMD
-	}
-	sp.cur_outReal = sp.prevMD
 }
 
 func (c *Core) mcgdOpenImpl(sp *MCGDStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

@@ -174,18 +174,18 @@ func (sp *EXPStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	expStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.cur_outReal = math.Exp(inReal)
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *EXPStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -203,10 +203,6 @@ func (sp *EXPStream) Value() float64 {
 func (sp *EXPStream) Clone() *EXPStream {
 	cl := *sp
 	return &cl
-}
-
-func expStepImpl(sp *EXPStream, inReal float64) {
-	sp.cur_outReal = math.Exp(inReal)
 }
 
 func (c *Core) expOpenImpl(sp *EXPStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

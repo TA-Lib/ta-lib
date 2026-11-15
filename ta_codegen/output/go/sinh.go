@@ -176,18 +176,18 @@ func (sp *SINHStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	sinhStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.cur_outReal = math.Sinh(inReal)
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *SINHStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -205,10 +205,6 @@ func (sp *SINHStream) Value() float64 {
 func (sp *SINHStream) Clone() *SINHStream {
 	cl := *sp
 	return &cl
-}
-
-func sinhStepImpl(sp *SINHStream, inReal float64) {
-	sp.cur_outReal = math.Sinh(inReal)
 }
 
 func (c *Core) sinhOpenImpl(sp *SINHStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

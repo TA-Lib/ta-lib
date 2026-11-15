@@ -187,11 +187,11 @@ func (sp *WCLPRICEStream) Update(inHigh, inLow, inClose float64) (float64, error
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	wclpriceStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	sp.cur_outReal = math.FMA(inClose, 2.0, inHigh+inLow) / 4.0
 	return sp.cur_outReal, nil
 }
 
@@ -199,7 +199,7 @@ func (sp *WCLPRICEStream) Update(inHigh, inLow, inClose float64) (float64, error
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *WCLPRICEStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -217,10 +217,6 @@ func (sp *WCLPRICEStream) Value() float64 {
 func (sp *WCLPRICEStream) Clone() *WCLPRICEStream {
 	cl := *sp
 	return &cl
-}
-
-func wclpriceStepImpl(sp *WCLPRICEStream, inHigh, inLow, inClose float64) {
-	sp.cur_outReal = math.FMA(inClose, 2.0, inHigh+inLow) / 4.0
 }
 
 func (c *Core) wclpriceOpenImpl(sp *WCLPRICEStream, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

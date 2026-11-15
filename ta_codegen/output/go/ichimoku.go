@@ -337,12 +337,38 @@ func (sp *ICHIMOKUStream) Update(inHigh, inLow float64) (float64, float64, float
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, 0, BadParam
 	}
-	if err := ichimokuStepImpl(sp, inHigh, inLow); err != nil {
-		return 0, 0, 0, 0, err
+	var cur_tempT float64
+	var cur_tempK float64
+	var cur_outSenkouSpanB float64
+	var cur_outSenkouSpanA float64
+	var cur_outTenkanSen float64
+	var cur_outKijunSen float64
+	var subErr error
+	cur_tempT, subErr = sp.sub0.Update(inHigh, inLow)
+	if subErr != nil {
+		return 0, 0, 0, 0, subErr
 	}
+	cur_tempK, subErr = sp.sub1.Update(inHigh, inLow)
+	if subErr != nil {
+		return 0, 0, 0, 0, subErr
+	}
+	cur_outSenkouSpanB, subErr = sp.sub2.Update(inHigh, inLow)
+	if subErr != nil {
+		return 0, 0, 0, 0, subErr
+	}
+	cur_outSenkouSpanA, subErr = sp.sub3.Update(cur_tempT, cur_tempK)
+	if subErr != nil {
+		return 0, 0, 0, 0, subErr
+	}
+	cur_outTenkanSen = cur_tempT
+	cur_outKijunSen = cur_tempK
+	sp.cur_outTenkanSen = cur_outTenkanSen
+	sp.cur_outKijunSen = cur_outKijunSen
+	sp.cur_outSenkouSpanA = cur_outSenkouSpanA
+	sp.cur_outSenkouSpanB = cur_outSenkouSpanB
 	sp.outRangeCount++
 	return sp.cur_outTenkanSen, sp.cur_outKijunSen, sp.cur_outSenkouSpanA, sp.cur_outSenkouSpanB, nil
 }
@@ -350,7 +376,7 @@ func (sp *ICHIMOKUStream) Update(inHigh, inLow float64) (float64, float64, float
 // Peek returns what Update would return for the bar (inHigh and inLow),
 // changing nothing. It returns [BadParam] for a bar value that is not finite.
 func (sp *ICHIMOKUStream) Peek(inHigh, inLow float64) (float64, float64, float64, float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) {
+	if (inHigh-inHigh)+(inLow-inLow) != 0 {
 		return 0, 0, 0, 0, BadParam
 	}
 	var cur_tempT float64
@@ -396,39 +422,6 @@ func (sp *ICHIMOKUStream) Clone() *ICHIMOKUStream {
 	cl.sub2 = sp.sub2.Clone()
 	cl.sub3 = sp.sub3.Clone()
 	return &cl
-}
-
-func ichimokuStepImpl(sp *ICHIMOKUStream, inHigh, inLow float64) error {
-	var cur_tempT float64
-	var cur_tempK float64
-	var cur_outSenkouSpanB float64
-	var cur_outSenkouSpanA float64
-	var cur_outTenkanSen float64
-	var cur_outKijunSen float64
-	var subErr error
-	cur_tempT, subErr = sp.sub0.Update(inHigh, inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempK, subErr = sp.sub1.Update(inHigh, inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outSenkouSpanB, subErr = sp.sub2.Update(inHigh, inLow)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outSenkouSpanA, subErr = sp.sub3.Update(cur_tempT, cur_tempK)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outTenkanSen = cur_tempT
-	cur_outKijunSen = cur_tempK
-	sp.cur_outTenkanSen = cur_outTenkanSen
-	sp.cur_outKijunSen = cur_outKijunSen
-	sp.cur_outSenkouSpanA = cur_outSenkouSpanA
-	sp.cur_outSenkouSpanB = cur_outSenkouSpanB
-	return nil
 }
 
 func (c *Core) ichimokuOpenImpl(sp *ICHIMOKUStream, inHigh, inLow []float64, startIdx, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod int32, outBegIdx, outNBElement *int32, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB []float64, outStride int32) RetCode {

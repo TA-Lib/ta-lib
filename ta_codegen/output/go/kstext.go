@@ -519,12 +519,54 @@ func (sp *KSTEXTStream) Update(inReal float64) (float64, float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
-	if err := kstextStepImpl(sp, inReal); err != nil {
-		return 0, 0, err
+	var cur_kstBuffer float64
+	var cur_tempBuffer float64
+	var cur_outKSTSignal float64
+	var subErr error
+	cur_kstBuffer, subErr = sp.sub0.Update(inReal)
+	if subErr != nil {
+		return 0, 0, subErr
 	}
+	cur_kstBuffer, subErr = sp.sub1.Update(cur_kstBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_tempBuffer, subErr = sp.sub2.Update(inReal)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_tempBuffer, subErr = sp.sub3.Update(cur_tempBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_kstBuffer = math.FMA(2.0, cur_tempBuffer, cur_kstBuffer)
+	cur_tempBuffer, subErr = sp.sub4.Update(inReal)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_tempBuffer, subErr = sp.sub5.Update(cur_tempBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_kstBuffer = math.FMA(3.0, cur_tempBuffer, cur_kstBuffer)
+	cur_tempBuffer, subErr = sp.sub6.Update(inReal)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_tempBuffer, subErr = sp.sub7.Update(cur_tempBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	cur_kstBuffer = math.FMA(4.0, cur_tempBuffer, cur_kstBuffer)
+	cur_outKSTSignal, subErr = sp.sub8.Update(cur_kstBuffer)
+	if subErr != nil {
+		return 0, 0, subErr
+	}
+	sp.cur_outKST = cur_kstBuffer
+	sp.cur_outKSTSignal = cur_outKSTSignal
 	sp.outRangeCount++
 	return sp.cur_outKST, sp.cur_outKSTSignal, nil
 }
@@ -532,7 +574,7 @@ func (sp *KSTEXTStream) Update(inReal float64) (float64, float64, error) {
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *KSTEXTStream) Peek(inReal float64) (float64, float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, 0, BadParam
 	}
 	var cur_kstBuffer float64
@@ -603,55 +645,6 @@ func (sp *KSTEXTStream) Clone() *KSTEXTStream {
 	cl.sub7 = sp.sub7.Clone()
 	cl.sub8 = sp.sub8.Clone()
 	return &cl
-}
-
-func kstextStepImpl(sp *KSTEXTStream, inReal float64) error {
-	var cur_kstBuffer float64
-	var cur_tempBuffer float64
-	var cur_outKSTSignal float64
-	var subErr error
-	cur_kstBuffer, subErr = sp.sub0.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_kstBuffer, subErr = sp.sub1.Update(cur_kstBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempBuffer, subErr = sp.sub2.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempBuffer, subErr = sp.sub3.Update(cur_tempBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	cur_kstBuffer = math.FMA(2.0, cur_tempBuffer, cur_kstBuffer)
-	cur_tempBuffer, subErr = sp.sub4.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempBuffer, subErr = sp.sub5.Update(cur_tempBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	cur_kstBuffer = math.FMA(3.0, cur_tempBuffer, cur_kstBuffer)
-	cur_tempBuffer, subErr = sp.sub6.Update(inReal)
-	if subErr != nil {
-		return subErr
-	}
-	cur_tempBuffer, subErr = sp.sub7.Update(cur_tempBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	cur_kstBuffer = math.FMA(4.0, cur_tempBuffer, cur_kstBuffer)
-	cur_outKSTSignal, subErr = sp.sub8.Update(cur_kstBuffer)
-	if subErr != nil {
-		return subErr
-	}
-	sp.cur_outKST = cur_kstBuffer
-	sp.cur_outKSTSignal = cur_outKSTSignal
-	return nil
 }
 
 func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType int32, outBegIdx, outNBElement *int32, outKST, outKSTSignal []float64, outStride int32) RetCode {

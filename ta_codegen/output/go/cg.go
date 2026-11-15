@@ -588,18 +588,417 @@ func (sp *CGStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	cgStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var j int32
+	var k int32
+	var fits int32
+	var maxAt int32
+	var failAt int32
+	var fit2Mid int32
+	var fit2Lo int32
+	var fit3Mid int32
+	var value float64
+	var maxAbs float64
+	var scale2Mid float64
+	var scale2Lo float64
+	var scale3Mid float64
+	var scale3Lo float64
+	var x float64
+	var y float64
+	var a float64
+	var b float64
+	var c_ float64
+	var q float64
+	var t float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	var den float64
+	var lookbackTotal int32
+	var num float64
+	var winCap_j int32
+	var winPos_j int32
+	var win_j_inReal []float64
+	var half float64
+	var ylim2 float64
+	var ylim3 float64
+	var denA float64
+	var denC float64
+	var invWidth float64
+	var numA float64
+	var numC float64
+	var scale float64
+	var width float64
+	var denB float64
+	var invWidthSq float64
+	var numB float64
+	var widthSq float64
+	sp.win_j_inReal[sp.winPos_j] = inReal
+	fits = 0
+	x = inReal
+	y = float64(x * sp.scale)
+	if sp.limbs == 2 {
+		if math.Abs(y) < sp.ylim && (y != 0.0 || x == 0.0) {
+			t = float64(y * sp.invWidth)
+			a = t + 6755399441055744.0 - 6755399441055744.0
+			t = float64(a * sp.width)
+			c_ = y - t
+			if c_+6755399441055744.0-6755399441055744.0 == c_ {
+				sp.denA += a
+				sp.denC += c_
+				sp.numA += sp.denA
+				sp.numC += sp.denC
+				fits = 1
+			}
+		}
+	} else if sp.limbs == 3 {
+		if math.Abs(y) < sp.ylim && (y != 0.0 || x == 0.0) {
+			t = float64(y * sp.invWidthSq)
+			a = t + 6755399441055744.0 - 6755399441055744.0
+			t = float64(a * sp.widthSq)
+			q = y - t
+			t = float64(q * sp.invWidth)
+			b = t + 6755399441055744.0 - 6755399441055744.0
+			t = float64(b * sp.width)
+			c_ = q - t
+			if c_+6755399441055744.0-6755399441055744.0 == c_ {
+				sp.denA += a
+				sp.denB += b
+				sp.denC += c_
+				sp.numA += sp.denA
+				sp.numB += sp.denB
+				sp.numC += sp.denC
+				fits = 1
+			}
+		}
+	}
+	if fits == 0 && sp.limbs == 0 && sp.stickyBars > 0 {
+		sp.stickyBars -= 1
+		sp.num = 0.0
+		sp.den = 0.0
+		den = sp.den
+		lookbackTotal = sp.lookbackTotal
+		num = sp.num
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		for j = lookbackTotal; j >= 0; j -= 1 {
+			var _T15 int32
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T15 = winPos_j + winCap_j - j - winCap_j
+			} else {
+				_T15 = winPos_j + winCap_j - j
+			}
+			den += win_j_inReal[_T15]
+			num += den
+		}
+		sp.den = den
+		sp.num = num
+	} else if fits == 0 {
+		maxAbs = 0.0
+		maxAt = 0
+		k = 0
+		lookbackTotal = sp.lookbackTotal
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		for j = lookbackTotal; j >= 0; j -= 1 {
+			var _T16 int32
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T16 = winPos_j + winCap_j - j - winCap_j
+			} else {
+				_T16 = winPos_j + winCap_j - j
+			}
+			x = math.Abs(win_j_inReal[_T16])
+			if x >= maxAbs {
+				maxAbs = x
+				maxAt = k
+			}
+			k += 1
+		}
+		if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+			half = sp.half
+			for float64(half*65536.0) <= maxAbs {
+				half = float64(half * 65536.0)
+			}
+			sp.half = half
+			half = sp.half
+			for float64(half*2.0) <= maxAbs {
+				half = float64(half * 2.0)
+			}
+			sp.half = half
+			half = sp.half
+			for half > float64(maxAbs*65536.0) {
+				half = float64(half * 1.52587890625e-5)
+			}
+			sp.half = half
+			half = sp.half
+			for half > maxAbs {
+				half = float64(half * 0.5)
+			}
+			sp.half = half
+		}
+		scale2Lo = float64(sp.ylim2*0.5) / sp.half
+		if scale2Lo > 4.49423283715579e307 {
+			scale2Lo = 4.49423283715579e307
+		}
+		scale2Mid = scale2Lo / sp.head2
+		scale3Lo = float64(sp.ylim3*0.5) / sp.half
+		if scale3Lo > 4.49423283715579e307 {
+			scale3Lo = 4.49423283715579e307
+		}
+		scale3Mid = scale3Lo / sp.head3
+		fit2Mid = 1
+		fit2Lo = 1
+		fit3Mid = 1
+		failAt = -1
+		sp.num = 0.0
+		sp.den = 0.0
+		k = 0
+		den = sp.den
+		lookbackTotal = sp.lookbackTotal
+		num = sp.num
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		ylim2 = sp.ylim2
+		ylim3 = sp.ylim3
+		for j = lookbackTotal; j >= 0; j -= 1 {
+			var _T17 int32
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T17 = winPos_j + winCap_j - j - winCap_j
+			} else {
+				_T17 = winPos_j + winCap_j - j
+			}
+			x = win_j_inReal[_T17]
+			den += x
+			num += den
+			y = math.Abs(float64(x * scale2Mid))
+			if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+				fit2Mid = 0
+			}
+			y = math.Abs(float64(x * scale2Lo))
+			if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+				fit2Lo = 0
+			}
+			y = math.Abs(float64(x * scale3Mid))
+			if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+				fit3Mid = 0
+			}
+			y = math.Abs(float64(x * scale3Lo))
+			if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+				failAt = k
+			}
+			k += 1
+		}
+		sp.den = den
+		sp.num = num
+		sp.limbs = 0
+		if failAt >= 0 {
+			if failAt < maxAt {
+				sp.stickyBars = failAt
+			} else {
+				sp.stickyBars = maxAt
+			}
+		} else {
+			if fit2Mid == 1 || fit2Lo == 1 {
+				sp.limbs = 2
+				sp.width = sp.width2
+				sp.ylim = sp.ylim2
+				if fit2Mid == 1 {
+					sp.scale = scale2Mid
+				} else {
+					sp.scale = scale2Lo
+				}
+			} else {
+				sp.limbs = 3
+				sp.width = sp.width3
+				sp.ylim = sp.ylim3
+				if fit3Mid == 1 {
+					sp.scale = scale3Mid
+				} else {
+					sp.scale = scale3Lo
+				}
+			}
+			sp.invWidth = 1.0 / sp.width
+			sp.widthSq = float64(sp.width * sp.width)
+			sp.invWidthSq = float64(sp.invWidth * sp.invWidth)
+			sp.denA = 0.0
+			sp.denB = 0.0
+			sp.denC = 0.0
+			sp.numA = 0.0
+			sp.numB = 0.0
+			sp.numC = 0.0
+			if sp.limbs == 2 {
+				denA = sp.denA
+				denC = sp.denC
+				invWidth = sp.invWidth
+				lookbackTotal = sp.lookbackTotal
+				numA = sp.numA
+				numC = sp.numC
+				scale = sp.scale
+				width = sp.width
+				winCap_j = sp.winCap_j
+				winPos_j = sp.winPos_j
+				win_j_inReal = sp.win_j_inReal
+				for j = lookbackTotal; j >= 0; j -= 1 {
+					var _T18 int32
+					if winPos_j+winCap_j-j >= winCap_j {
+						_T18 = winPos_j + winCap_j - j - winCap_j
+					} else {
+						_T18 = winPos_j + winCap_j - j
+					}
+					y = float64(win_j_inReal[_T18] * scale)
+					t = float64(y * invWidth)
+					a = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(a * width)
+					c_ = y - t
+					denA += a
+					denC += c_
+					numA += denA
+					numC += denC
+				}
+				sp.denA = denA
+				sp.denC = denC
+				sp.numA = numA
+				sp.numC = numC
+			} else {
+				denA = sp.denA
+				denB = sp.denB
+				denC = sp.denC
+				invWidth = sp.invWidth
+				invWidthSq = sp.invWidthSq
+				lookbackTotal = sp.lookbackTotal
+				numA = sp.numA
+				numB = sp.numB
+				numC = sp.numC
+				scale = sp.scale
+				width = sp.width
+				widthSq = sp.widthSq
+				winCap_j = sp.winCap_j
+				winPos_j = sp.winPos_j
+				win_j_inReal = sp.win_j_inReal
+				for j = lookbackTotal; j >= 0; j -= 1 {
+					var _T19 int32
+					if winPos_j+winCap_j-j >= winCap_j {
+						_T19 = winPos_j + winCap_j - j - winCap_j
+					} else {
+						_T19 = winPos_j + winCap_j - j
+					}
+					y = float64(win_j_inReal[_T19] * scale)
+					t = float64(y * invWidthSq)
+					a = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(a * widthSq)
+					q = y - t
+					t = float64(q * invWidth)
+					b = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(b * width)
+					c_ = q - t
+					denA += a
+					denB += b
+					denC += c_
+					numA += denA
+					numB += denB
+					numC += denC
+				}
+				sp.denA = denA
+				sp.denB = denB
+				sp.denC = denC
+				sp.numA = numA
+				sp.numB = numB
+				sp.numC = numC
+			}
+		}
+	}
+	if sp.limbs == 2 {
+		t = float64(sp.denA * sp.width)
+		sp.den = t + sp.denC
+		t = float64(sp.numA * sp.width)
+		sp.num = t + sp.numC
+	} else if sp.limbs == 3 {
+		t = float64(sp.denC * sp.invWidth)
+		q = t + 6755399441055744.0 - 6755399441055744.0
+		b = sp.denB + q
+		t = float64(q * sp.width)
+		c_ = sp.denC - t
+		t = float64(b * sp.invWidth)
+		q = t + 6755399441055744.0 - 6755399441055744.0
+		t = float64(q * sp.width)
+		b = b - t
+		t = float64(b * sp.width)
+		c_ = t + c_
+		t = sp.denA + q
+		t = float64(t * sp.widthSq)
+		sp.den = t + c_
+		t = float64(sp.numC * sp.invWidth)
+		q = t + 6755399441055744.0 - 6755399441055744.0
+		b = sp.numB + q
+		t = float64(q * sp.width)
+		c_ = sp.numC - t
+		t = float64(b * sp.invWidth)
+		q = t + 6755399441055744.0 - 6755399441055744.0
+		t = float64(q * sp.width)
+		b = b - t
+		t = float64(b * sp.width)
+		c_ = t + c_
+		t = sp.numA + q
+		t = float64(t * sp.widthSq)
+		sp.num = t + c_
+	}
+	if sp.den != 0.0 {
+		value = -sp.num / sp.den
+	} else {
+		value = sp.flatValue
+	}
+	if sp.limbs == 2 {
+		y = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale)
+		t = float64(y * sp.invWidth)
+		a = t + 6755399441055744.0 - 6755399441055744.0
+		t = float64(a * sp.width)
+		c_ = y - t
+		sp.denA -= a
+		sp.denC -= c_
+		sp.numA -= float64(sp.periodDouble * a)
+		sp.numC -= float64(sp.periodDouble * c_)
+	} else if sp.limbs == 3 {
+		y = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale)
+		t = float64(y * sp.invWidthSq)
+		a = t + 6755399441055744.0 - 6755399441055744.0
+		t = float64(a * sp.widthSq)
+		q = y - t
+		t = float64(q * sp.invWidth)
+		b = t + 6755399441055744.0 - 6755399441055744.0
+		t = float64(b * sp.width)
+		c_ = q - t
+		sp.denA -= a
+		sp.denB -= b
+		sp.denC -= c_
+		sp.numA -= float64(sp.periodDouble * a)
+		sp.numB -= float64(sp.periodDouble * b)
+		sp.numC -= float64(sp.periodDouble * c_)
+	}
+	sp.cur_outReal = value
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
+	sp.winPos_j = sp.winPos_j + 1
+	if sp.winPos_j >= sp.winCap_j {
+		sp.winPos_j = 0
+	}
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CGStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var j int32
@@ -623,6 +1022,12 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 	var c_ float64
 	var q float64
 	var t float64
+	var lookbackTotal int32
+	var winCap_j int32
+	var winPos_j int32
+	var win_j_inReal []float64
+	var ylim2 float64
+	var ylim3 float64
 	var cur_outReal float64
 	den := sp.den
 	denA := sp.denA
@@ -687,22 +1092,26 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 		stickyBars -= 1
 		num = 0.0
 		den = 0.0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
+		lookbackTotal = sp.lookbackTotal
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		for j = lookbackTotal; j >= 0; j -= 1 {
 			var _T0 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T0 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T0 = winPos_j + winCap_j - j - winCap_j
 			} else {
-				_T0 = sp.winPos_j + sp.winCap_j - j
+				_T0 = winPos_j + winCap_j - j
 			}
 			var _T2 float64
 			if _T0 != pkSlot0 {
 				var _T1 int32
-				if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-					_T1 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+				if winPos_j+winCap_j-j >= winCap_j {
+					_T1 = winPos_j + winCap_j - j - winCap_j
 				} else {
-					_T1 = sp.winPos_j + sp.winCap_j - j
+					_T1 = winPos_j + winCap_j - j
 				}
-				_T2 = sp.win_j_inReal[_T1]
+				_T2 = win_j_inReal[_T1]
 			} else {
 				_T2 = pkVal0
 			}
@@ -713,22 +1122,26 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 		maxAbs = 0.0
 		maxAt = 0
 		k = 0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
+		lookbackTotal = sp.lookbackTotal
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		for j = lookbackTotal; j >= 0; j -= 1 {
 			var _T3 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T3 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T3 = winPos_j + winCap_j - j - winCap_j
 			} else {
-				_T3 = sp.winPos_j + sp.winCap_j - j
+				_T3 = winPos_j + winCap_j - j
 			}
 			var _T5 float64
 			if _T3 != pkSlot0 {
 				var _T4 int32
-				if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-					_T4 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+				if winPos_j+winCap_j-j >= winCap_j {
+					_T4 = winPos_j + winCap_j - j - winCap_j
 				} else {
-					_T4 = sp.winPos_j + sp.winCap_j - j
+					_T4 = winPos_j + winCap_j - j
 				}
-				_T5 = sp.win_j_inReal[_T4]
+				_T5 = win_j_inReal[_T4]
 			} else {
 				_T5 = pkVal0
 			}
@@ -770,22 +1183,28 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 		num = 0.0
 		den = 0.0
 		k = 0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
+		lookbackTotal = sp.lookbackTotal
+		winCap_j = sp.winCap_j
+		winPos_j = sp.winPos_j
+		win_j_inReal = sp.win_j_inReal
+		ylim2 = sp.ylim2
+		ylim3 = sp.ylim3
+		for j = lookbackTotal; j >= 0; j -= 1 {
 			var _T6 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T6 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+			if winPos_j+winCap_j-j >= winCap_j {
+				_T6 = winPos_j + winCap_j - j - winCap_j
 			} else {
-				_T6 = sp.winPos_j + sp.winCap_j - j
+				_T6 = winPos_j + winCap_j - j
 			}
 			var _T8 float64
 			if _T6 != pkSlot0 {
 				var _T7 int32
-				if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-					_T7 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+				if winPos_j+winCap_j-j >= winCap_j {
+					_T7 = winPos_j + winCap_j - j - winCap_j
 				} else {
-					_T7 = sp.winPos_j + sp.winCap_j - j
+					_T7 = winPos_j + winCap_j - j
 				}
-				_T8 = sp.win_j_inReal[_T7]
+				_T8 = win_j_inReal[_T7]
 			} else {
 				_T8 = pkVal0
 			}
@@ -793,19 +1212,19 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 			den += x
 			num += den
 			y = math.Abs(float64(x * scale2Mid))
-			if !(y < sp.ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+			if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
 				fit2Mid = 0
 			}
 			y = math.Abs(float64(x * scale2Lo))
-			if !(y < sp.ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+			if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
 				fit2Lo = 0
 			}
 			y = math.Abs(float64(x * scale3Mid))
-			if !(y < sp.ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+			if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
 				fit3Mid = 0
 			}
 			y = math.Abs(float64(x * scale3Lo))
-			if !(y < sp.ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+			if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
 				failAt = k
 			}
 			k += 1
@@ -847,22 +1266,26 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 			numB = 0.0
 			numC = 0.0
 			if limbs == 2 {
-				for j = sp.lookbackTotal; j >= 0; j -= 1 {
+				lookbackTotal = sp.lookbackTotal
+				winCap_j = sp.winCap_j
+				winPos_j = sp.winPos_j
+				win_j_inReal = sp.win_j_inReal
+				for j = lookbackTotal; j >= 0; j -= 1 {
 					var _T9 int32
-					if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-						_T9 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+					if winPos_j+winCap_j-j >= winCap_j {
+						_T9 = winPos_j + winCap_j - j - winCap_j
 					} else {
-						_T9 = sp.winPos_j + sp.winCap_j - j
+						_T9 = winPos_j + winCap_j - j
 					}
 					var _T11 float64
 					if _T9 != pkSlot0 {
 						var _T10 int32
-						if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-							_T10 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+						if winPos_j+winCap_j-j >= winCap_j {
+							_T10 = winPos_j + winCap_j - j - winCap_j
 						} else {
-							_T10 = sp.winPos_j + sp.winCap_j - j
+							_T10 = winPos_j + winCap_j - j
 						}
-						_T11 = sp.win_j_inReal[_T10]
+						_T11 = win_j_inReal[_T10]
 					} else {
 						_T11 = pkVal0
 					}
@@ -877,22 +1300,26 @@ func (sp *CGStream) Peek(inReal float64) (float64, error) {
 					numC += denC
 				}
 			} else {
-				for j = sp.lookbackTotal; j >= 0; j -= 1 {
+				lookbackTotal = sp.lookbackTotal
+				winCap_j = sp.winCap_j
+				winPos_j = sp.winPos_j
+				win_j_inReal = sp.win_j_inReal
+				for j = lookbackTotal; j >= 0; j -= 1 {
 					var _T12 int32
-					if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-						_T12 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+					if winPos_j+winCap_j-j >= winCap_j {
+						_T12 = winPos_j + winCap_j - j - winCap_j
 					} else {
-						_T12 = sp.winPos_j + sp.winCap_j - j
+						_T12 = winPos_j + winCap_j - j
 					}
 					var _T14 float64
 					if _T12 != pkSlot0 {
 						var _T13 int32
-						if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-							_T13 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
+						if winPos_j+winCap_j-j >= winCap_j {
+							_T13 = winPos_j + winCap_j - j - winCap_j
 						} else {
-							_T13 = sp.winPos_j + sp.winCap_j - j
+							_T13 = winPos_j + winCap_j - j
 						}
-						_T14 = sp.win_j_inReal[_T13]
+						_T14 = win_j_inReal[_T13]
 					} else {
 						_T14 = pkVal0
 					}
@@ -998,323 +1425,6 @@ func (sp *CGStream) Clone() *CGStream {
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	cl.win_j_inReal = append(sp.win_j_inReal[:0:0], sp.win_j_inReal...)
 	return &cl
-}
-
-func cgStepImpl(sp *CGStream, inReal float64) {
-	var j int32
-	var k int32
-	var fits int32
-	var maxAt int32
-	var failAt int32
-	var fit2Mid int32
-	var fit2Lo int32
-	var fit3Mid int32
-	var value float64
-	var maxAbs float64
-	var scale2Mid float64
-	var scale2Lo float64
-	var scale3Mid float64
-	var scale3Lo float64
-	var x float64
-	var y float64
-	var a float64
-	var b float64
-	var c_ float64
-	var q float64
-	var t float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	sp.win_j_inReal[sp.winPos_j] = inReal
-	fits = 0
-	x = inReal
-	y = float64(x * sp.scale)
-	if sp.limbs == 2 {
-		if math.Abs(y) < sp.ylim && (y != 0.0 || x == 0.0) {
-			t = float64(y * sp.invWidth)
-			a = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(a * sp.width)
-			c_ = y - t
-			if c_+6755399441055744.0-6755399441055744.0 == c_ {
-				sp.denA += a
-				sp.denC += c_
-				sp.numA += sp.denA
-				sp.numC += sp.denC
-				fits = 1
-			}
-		}
-	} else if sp.limbs == 3 {
-		if math.Abs(y) < sp.ylim && (y != 0.0 || x == 0.0) {
-			t = float64(y * sp.invWidthSq)
-			a = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(a * sp.widthSq)
-			q = y - t
-			t = float64(q * sp.invWidth)
-			b = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(b * sp.width)
-			c_ = q - t
-			if c_+6755399441055744.0-6755399441055744.0 == c_ {
-				sp.denA += a
-				sp.denB += b
-				sp.denC += c_
-				sp.numA += sp.denA
-				sp.numB += sp.denB
-				sp.numC += sp.denC
-				fits = 1
-			}
-		}
-	}
-	if fits == 0 && sp.limbs == 0 && sp.stickyBars > 0 {
-		sp.stickyBars -= 1
-		sp.num = 0.0
-		sp.den = 0.0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
-			var _T15 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T15 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-			} else {
-				_T15 = sp.winPos_j + sp.winCap_j - j
-			}
-			sp.den += sp.win_j_inReal[_T15]
-			sp.num += sp.den
-		}
-	} else if fits == 0 {
-		maxAbs = 0.0
-		maxAt = 0
-		k = 0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
-			var _T16 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T16 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-			} else {
-				_T16 = sp.winPos_j + sp.winCap_j - j
-			}
-			x = math.Abs(sp.win_j_inReal[_T16])
-			if x >= maxAbs {
-				maxAbs = x
-				maxAt = k
-			}
-			k += 1
-		}
-		if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
-			for float64(sp.half*65536.0) <= maxAbs {
-				sp.half = float64(sp.half * 65536.0)
-			}
-			for float64(sp.half*2.0) <= maxAbs {
-				sp.half = float64(sp.half * 2.0)
-			}
-			for sp.half > float64(maxAbs*65536.0) {
-				sp.half = float64(sp.half * 1.52587890625e-5)
-			}
-			for sp.half > maxAbs {
-				sp.half = float64(sp.half * 0.5)
-			}
-		}
-		scale2Lo = float64(sp.ylim2*0.5) / sp.half
-		if scale2Lo > 4.49423283715579e307 {
-			scale2Lo = 4.49423283715579e307
-		}
-		scale2Mid = scale2Lo / sp.head2
-		scale3Lo = float64(sp.ylim3*0.5) / sp.half
-		if scale3Lo > 4.49423283715579e307 {
-			scale3Lo = 4.49423283715579e307
-		}
-		scale3Mid = scale3Lo / sp.head3
-		fit2Mid = 1
-		fit2Lo = 1
-		fit3Mid = 1
-		failAt = -1
-		sp.num = 0.0
-		sp.den = 0.0
-		k = 0
-		for j = sp.lookbackTotal; j >= 0; j -= 1 {
-			var _T17 int32
-			if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-				_T17 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-			} else {
-				_T17 = sp.winPos_j + sp.winCap_j - j
-			}
-			x = sp.win_j_inReal[_T17]
-			sp.den += x
-			sp.num += sp.den
-			y = math.Abs(float64(x * scale2Mid))
-			if !(y < sp.ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-				fit2Mid = 0
-			}
-			y = math.Abs(float64(x * scale2Lo))
-			if !(y < sp.ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-				fit2Lo = 0
-			}
-			y = math.Abs(float64(x * scale3Mid))
-			if !(y < sp.ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-				fit3Mid = 0
-			}
-			y = math.Abs(float64(x * scale3Lo))
-			if !(y < sp.ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-				failAt = k
-			}
-			k += 1
-		}
-		sp.limbs = 0
-		if failAt >= 0 {
-			if failAt < maxAt {
-				sp.stickyBars = failAt
-			} else {
-				sp.stickyBars = maxAt
-			}
-		} else {
-			if fit2Mid == 1 || fit2Lo == 1 {
-				sp.limbs = 2
-				sp.width = sp.width2
-				sp.ylim = sp.ylim2
-				if fit2Mid == 1 {
-					sp.scale = scale2Mid
-				} else {
-					sp.scale = scale2Lo
-				}
-			} else {
-				sp.limbs = 3
-				sp.width = sp.width3
-				sp.ylim = sp.ylim3
-				if fit3Mid == 1 {
-					sp.scale = scale3Mid
-				} else {
-					sp.scale = scale3Lo
-				}
-			}
-			sp.invWidth = 1.0 / sp.width
-			sp.widthSq = float64(sp.width * sp.width)
-			sp.invWidthSq = float64(sp.invWidth * sp.invWidth)
-			sp.denA = 0.0
-			sp.denB = 0.0
-			sp.denC = 0.0
-			sp.numA = 0.0
-			sp.numB = 0.0
-			sp.numC = 0.0
-			if sp.limbs == 2 {
-				for j = sp.lookbackTotal; j >= 0; j -= 1 {
-					var _T18 int32
-					if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-						_T18 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-					} else {
-						_T18 = sp.winPos_j + sp.winCap_j - j
-					}
-					y = float64(sp.win_j_inReal[_T18] * sp.scale)
-					t = float64(y * sp.invWidth)
-					a = t + 6755399441055744.0 - 6755399441055744.0
-					t = float64(a * sp.width)
-					c_ = y - t
-					sp.denA += a
-					sp.denC += c_
-					sp.numA += sp.denA
-					sp.numC += sp.denC
-				}
-			} else {
-				for j = sp.lookbackTotal; j >= 0; j -= 1 {
-					var _T19 int32
-					if sp.winPos_j+sp.winCap_j-j >= sp.winCap_j {
-						_T19 = sp.winPos_j + sp.winCap_j - j - sp.winCap_j
-					} else {
-						_T19 = sp.winPos_j + sp.winCap_j - j
-					}
-					y = float64(sp.win_j_inReal[_T19] * sp.scale)
-					t = float64(y * sp.invWidthSq)
-					a = t + 6755399441055744.0 - 6755399441055744.0
-					t = float64(a * sp.widthSq)
-					q = y - t
-					t = float64(q * sp.invWidth)
-					b = t + 6755399441055744.0 - 6755399441055744.0
-					t = float64(b * sp.width)
-					c_ = q - t
-					sp.denA += a
-					sp.denB += b
-					sp.denC += c_
-					sp.numA += sp.denA
-					sp.numB += sp.denB
-					sp.numC += sp.denC
-				}
-			}
-		}
-	}
-	if sp.limbs == 2 {
-		t = float64(sp.denA * sp.width)
-		sp.den = t + sp.denC
-		t = float64(sp.numA * sp.width)
-		sp.num = t + sp.numC
-	} else if sp.limbs == 3 {
-		t = float64(sp.denC * sp.invWidth)
-		q = t + 6755399441055744.0 - 6755399441055744.0
-		b = sp.denB + q
-		t = float64(q * sp.width)
-		c_ = sp.denC - t
-		t = float64(b * sp.invWidth)
-		q = t + 6755399441055744.0 - 6755399441055744.0
-		t = float64(q * sp.width)
-		b = b - t
-		t = float64(b * sp.width)
-		c_ = t + c_
-		t = sp.denA + q
-		t = float64(t * sp.widthSq)
-		sp.den = t + c_
-		t = float64(sp.numC * sp.invWidth)
-		q = t + 6755399441055744.0 - 6755399441055744.0
-		b = sp.numB + q
-		t = float64(q * sp.width)
-		c_ = sp.numC - t
-		t = float64(b * sp.invWidth)
-		q = t + 6755399441055744.0 - 6755399441055744.0
-		t = float64(q * sp.width)
-		b = b - t
-		t = float64(b * sp.width)
-		c_ = t + c_
-		t = sp.numA + q
-		t = float64(t * sp.widthSq)
-		sp.num = t + c_
-	}
-	if sp.den != 0.0 {
-		value = -sp.num / sp.den
-	} else {
-		value = sp.flatValue
-	}
-	if sp.limbs == 2 {
-		y = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale)
-		t = float64(y * sp.invWidth)
-		a = t + 6755399441055744.0 - 6755399441055744.0
-		t = float64(a * sp.width)
-		c_ = y - t
-		sp.denA -= a
-		sp.denC -= c_
-		sp.numA -= float64(sp.periodDouble * a)
-		sp.numC -= float64(sp.periodDouble * c_)
-	} else if sp.limbs == 3 {
-		y = float64(sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.scale)
-		t = float64(y * sp.invWidthSq)
-		a = t + 6755399441055744.0 - 6755399441055744.0
-		t = float64(a * sp.widthSq)
-		q = y - t
-		t = float64(q * sp.invWidth)
-		b = t + 6755399441055744.0 - 6755399441055744.0
-		t = float64(b * sp.width)
-		c_ = q - t
-		sp.denA -= a
-		sp.denB -= b
-		sp.denC -= c_
-		sp.numA -= float64(sp.periodDouble * a)
-		sp.numB -= float64(sp.periodDouble * b)
-		sp.numC -= float64(sp.periodDouble * c_)
-	}
-	sp.cur_outReal = value
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
-	sp.winPos_j = sp.winPos_j + 1
-	if sp.winPos_j >= sp.winCap_j {
-		sp.winPos_j = 0
-	}
 }
 
 func (c *Core) cgOpenImpl(sp *CGStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

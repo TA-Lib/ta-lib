@@ -189,11 +189,16 @@ func (sp *IBSStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	ibsStepImpl(sp, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var range_ float64
+	range_ = inHigh - inLow
+	sp.cur_outReal = (inClose - inLow) / range_
+	if range_ <= 0.0 {
+		sp.cur_outReal = 0.5
+	}
 	return sp.cur_outReal, nil
 }
 
@@ -201,7 +206,7 @@ func (sp *IBSStream) Update(inHigh, inLow, inClose float64) (float64, error) {
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *IBSStream) Peek(inHigh, inLow, inClose float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var range_ float64
@@ -224,15 +229,6 @@ func (sp *IBSStream) Value() float64 {
 func (sp *IBSStream) Clone() *IBSStream {
 	cl := *sp
 	return &cl
-}
-
-func ibsStepImpl(sp *IBSStream, inHigh, inLow, inClose float64) {
-	var range_ float64
-	range_ = inHigh - inLow
-	sp.cur_outReal = (inClose - inLow) / range_
-	if range_ <= 0.0 {
-		sp.cur_outReal = 0.5
-	}
 }
 
 func (c *Core) ibsOpenImpl(sp *IBSStream, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

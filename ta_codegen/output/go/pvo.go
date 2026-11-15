@@ -476,12 +476,51 @@ func (sp *PVOStream) Update(inVolume float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inVolume) {
+	if inVolume-inVolume != 0 {
 		return 0, BadParam
 	}
-	if err := pvoStepImpl(sp, inVolume); err != nil {
-		return 0, err
+	var tempReal float64
+	var cur_tempBuffer float64
+	var cur_outReal float64
+	var subErr error
+	cur_tempBuffer, subErr = sp.sub0.Update(inVolume)
+	if subErr != nil {
+		return 0, subErr
 	}
+	cur_outReal, subErr = sp.sub1.Update(inVolume)
+	if subErr != nil {
+		return 0, subErr
+	}
+	slowLookback := sp.slowLookback
+	windowed := sp.windowed
+	zeroRun := sp.zeroRun
+	if windowed != 0 {
+		var _T1 int32
+		if math.Abs(inVolume) <= 0.0 {
+			_T1 = zeroRun + 1
+		} else {
+			_T1 = 0
+		}
+		zeroRun = _T1
+		tempReal = cur_outReal
+		if zeroRun > slowLookback {
+			zeroRun = slowLookback
+			cur_outReal = 0.0
+		} else if !isZero(tempReal) {
+			cur_outReal = float64((cur_tempBuffer - tempReal) / tempReal * 100.0)
+		} else {
+			cur_outReal = 0.0
+		}
+	} else {
+		tempReal = cur_outReal
+		if !isZero(tempReal) {
+			cur_outReal = float64((cur_tempBuffer - tempReal) / tempReal * 100.0)
+		} else {
+			cur_outReal = 0.0
+		}
+	}
+	sp.zeroRun = zeroRun
+	sp.cur_outReal = cur_outReal
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
 }
@@ -489,7 +528,7 @@ func (sp *PVOStream) Update(inVolume float64) (float64, error) {
 // Peek returns what Update would return for the bar inVolume, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *PVOStream) Peek(inVolume float64) (float64, error) {
-	if !isFinite(inVolume) {
+	if inVolume-inVolume != 0 {
 		return 0, BadParam
 	}
 	var tempReal float64
@@ -547,52 +586,6 @@ func (sp *PVOStream) Clone() *PVOStream {
 	cl.sub0 = sp.sub0.Clone()
 	cl.sub1 = sp.sub1.Clone()
 	return &cl
-}
-
-func pvoStepImpl(sp *PVOStream, inVolume float64) error {
-	var tempReal float64
-	var cur_tempBuffer float64
-	var cur_outReal float64
-	var subErr error
-	cur_tempBuffer, subErr = sp.sub0.Update(inVolume)
-	if subErr != nil {
-		return subErr
-	}
-	cur_outReal, subErr = sp.sub1.Update(inVolume)
-	if subErr != nil {
-		return subErr
-	}
-	slowLookback := sp.slowLookback
-	windowed := sp.windowed
-	zeroRun := sp.zeroRun
-	if windowed != 0 {
-		var _T1 int32
-		if math.Abs(inVolume) <= 0.0 {
-			_T1 = zeroRun + 1
-		} else {
-			_T1 = 0
-		}
-		zeroRun = _T1
-		tempReal = cur_outReal
-		if zeroRun > slowLookback {
-			zeroRun = slowLookback
-			cur_outReal = 0.0
-		} else if !isZero(tempReal) {
-			cur_outReal = float64((cur_tempBuffer - tempReal) / tempReal * 100.0)
-		} else {
-			cur_outReal = 0.0
-		}
-	} else {
-		tempReal = cur_outReal
-		if !isZero(tempReal) {
-			cur_outReal = float64((cur_tempBuffer - tempReal) / tempReal * 100.0)
-		} else {
-			cur_outReal = 0.0
-		}
-	}
-	sp.zeroRun = zeroRun
-	sp.cur_outReal = cur_outReal
-	return nil
 }
 
 func (c *Core) pvoOpenImpl(sp *PVOStream, inVolume []float64, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

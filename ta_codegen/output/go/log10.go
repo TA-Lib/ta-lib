@@ -175,18 +175,18 @@ func (sp *LOG10Stream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	log10StepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.cur_outReal = math.Log10(inReal)
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *LOG10Stream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -204,10 +204,6 @@ func (sp *LOG10Stream) Value() float64 {
 func (sp *LOG10Stream) Clone() *LOG10Stream {
 	cl := *sp
 	return &cl
-}
-
-func log10StepImpl(sp *LOG10Stream, inReal float64) {
-	sp.cur_outReal = math.Log10(inReal)
 }
 
 func (c *Core) log10OpenImpl(sp *LOG10Stream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

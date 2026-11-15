@@ -336,18 +336,118 @@ func (sp *CTIStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	ctiStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var x float64
+	var trailingX float64
+	var ssX float64
+	var spXY float64
+	var tempReal float64
+	var windowStart int32
+	var j int32
+	var today int32
+	var xMask int32
+	var x_inReal []float64
+	var shift float64
+	var sumX float64
+	var sumX2 float64
+	var sumXY float64
+	sp.x_inReal[sp.today&sp.xMask] = inReal
+	x = sp.x_inReal[sp.today&sp.xMask] - sp.shift
+	sp.sumX += x
+	sp.sumX2 += float64(x * x)
+	sp.peakX2 = selF(sp.sumX2 > sp.peakX2, sp.sumX2, sp.peakX2)
+	ssX = sp.sumX2 - float64(float64(sp.sumX*sp.sumX)*sp.invPeriod)
+	spXY = sp.sumXY - float64(float64(sp.sumX*sp.sumY)*sp.invPeriod)
+	sp.barsSinceReseed -= 1
+	if ssX < float64(1e-6*sp.peakX2) || sp.barsSinceReseed <= 0 {
+		sp.barsSinceReseed = 32 * sp.optInTimePeriod
+		windowStart = sp.today - sp.lookbackTotal
+		tempReal = 0.0
+		j = sp.j
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= today; j += 1 {
+			tempReal += x_inReal[j&xMask]
+		}
+		sp.j = j
+		sp.shift = float64(tempReal * sp.invPeriod)
+		sp.sumXY = 0.0
+		sp.sumX2 = sp.sumXY
+		sp.sumX = sp.sumX2
+		j = sp.j
+		shift = sp.shift
+		sumX = sp.sumX
+		sumX2 = sp.sumX2
+		sumXY = sp.sumXY
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= today; j += 1 {
+			x = x_inReal[j&xMask] - shift
+			sumX += x
+			sumX2 += float64(x * x)
+			sumXY += float64(x * float64(today-j))
+		}
+		sp.j = j
+		sp.sumX = sumX
+		sp.sumX2 = sumX2
+		sp.sumXY = sumXY
+		if sp.sumX2-float64(float64(sp.sumX*sp.sumX)*sp.invPeriod) < float64(1e-6*sp.sumX2) {
+			sp.shift = sp.x_inReal[sp.today&sp.xMask]
+			sp.sumXY = 0.0
+			sp.sumX2 = sp.sumXY
+			sp.sumX = sp.sumX2
+			j = sp.j
+			shift = sp.shift
+			sumX = sp.sumX
+			sumX2 = sp.sumX2
+			sumXY = sp.sumXY
+			today = sp.today
+			xMask = sp.xMask
+			x_inReal = sp.x_inReal
+			for j = windowStart; j <= today; j += 1 {
+				x = x_inReal[j&xMask] - shift
+				sumX += x
+				sumX2 += float64(x * x)
+				sumXY += float64(x * float64(today-j))
+			}
+			sp.j = j
+			sp.sumX = sumX
+			sp.sumX2 = sumX2
+			sp.sumXY = sumXY
+		}
+		sp.peakX2 = sp.sumX2
+		ssX = sp.sumX2 - float64(float64(sp.sumX*sp.sumX)*sp.invPeriod)
+		spXY = sp.sumXY - float64(float64(sp.sumX*sp.sumY)*sp.invPeriod)
+	}
+	trailingX = sp.x_inReal[sp.trailingIdx&sp.xMask] - sp.shift
+	sp.trailingIdx += 1
+	if ssX > float64(1e-14*sp.sumX2) && float64(ssX*sp.ssY) > 0.0 {
+		tempReal = -spXY / math.Sqrt(float64(ssX*sp.ssY))
+		if tempReal > 1.0 {
+			tempReal = 1.0
+		} else if tempReal < -1.0 {
+			tempReal = -1.0
+		}
+		sp.cur_outReal = tempReal
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	sp.sumXY = sp.sumXY + sp.sumX - float64(sp.dPeriod*trailingX)
+	sp.sumX -= trailingX
+	sp.sumX2 -= float64(trailingX * trailingX)
+	sp.today += 1
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CTIStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var x float64
@@ -355,6 +455,9 @@ func (sp *CTIStream) Peek(inReal float64) (float64, error) {
 	var spXY float64
 	var tempReal float64
 	var windowStart int32
+	var today int32
+	var xMask int32
+	var x_inReal []float64
 	barsSinceReseed := sp.barsSinceReseed
 	var cur_outReal float64
 	j := sp.j
@@ -376,13 +479,7 @@ func (sp *CTIStream) Peek(inReal float64) (float64, error) {
 	x = _T0 - shift
 	sumX += x
 	sumX2 += float64(x * x)
-	var _T1 float64
-	if sumX2 > peakX2 {
-		_T1 = sumX2
-	} else {
-		_T1 = peakX2
-	}
-	peakX2 = _T1
+	peakX2 = selF(sumX2 > peakX2, sumX2, peakX2)
 	ssX = sumX2 - float64(float64(sumX*sumX)*sp.invPeriod)
 	spXY = sumXY - float64(float64(sumX*sp.sumY)*sp.invPeriod)
 	barsSinceReseed -= 1
@@ -390,53 +487,62 @@ func (sp *CTIStream) Peek(inReal float64) (float64, error) {
 		barsSinceReseed = 32 * sp.optInTimePeriod
 		windowStart = sp.today - sp.lookbackTotal
 		tempReal = 0.0
-		for j = windowStart; j <= sp.today; j += 1 {
-			var _T2 float64
-			if j&sp.xMask != pkSlot0 {
-				_T2 = sp.x_inReal[j&sp.xMask]
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= today; j += 1 {
+			var _T1 float64
+			if j&xMask != pkSlot0 {
+				_T1 = x_inReal[j&xMask]
 			} else {
-				_T2 = pkVal0
+				_T1 = pkVal0
 			}
-			tempReal += _T2
+			tempReal += _T1
 		}
 		shift = float64(tempReal * sp.invPeriod)
 		sumXY = 0.0
 		sumX2 = sumXY
 		sumX = sumX2
-		for j = windowStart; j <= sp.today; j += 1 {
+		today = sp.today
+		xMask = sp.xMask
+		x_inReal = sp.x_inReal
+		for j = windowStart; j <= today; j += 1 {
+			var _T2 float64
+			if j&xMask != pkSlot0 {
+				_T2 = x_inReal[j&xMask]
+			} else {
+				_T2 = pkVal0
+			}
+			x = _T2 - shift
+			sumX += x
+			sumX2 += float64(x * x)
+			sumXY += float64(x * float64(today-j))
+		}
+		if sumX2-float64(float64(sumX*sumX)*sp.invPeriod) < float64(1e-6*sumX2) {
 			var _T3 float64
-			if j&sp.xMask != pkSlot0 {
-				_T3 = sp.x_inReal[j&sp.xMask]
+			if sp.today&sp.xMask != pkSlot0 {
+				_T3 = sp.x_inReal[sp.today&sp.xMask]
 			} else {
 				_T3 = pkVal0
 			}
-			x = _T3 - shift
-			sumX += x
-			sumX2 += float64(x * x)
-			sumXY += float64(x * float64(sp.today-j))
-		}
-		if sumX2-float64(float64(sumX*sumX)*sp.invPeriod) < float64(1e-6*sumX2) {
-			var _T4 float64
-			if sp.today&sp.xMask != pkSlot0 {
-				_T4 = sp.x_inReal[sp.today&sp.xMask]
-			} else {
-				_T4 = pkVal0
-			}
-			shift = _T4
+			shift = _T3
 			sumXY = 0.0
 			sumX2 = sumXY
 			sumX = sumX2
-			for j = windowStart; j <= sp.today; j += 1 {
-				var _T5 float64
-				if j&sp.xMask != pkSlot0 {
-					_T5 = sp.x_inReal[j&sp.xMask]
+			today = sp.today
+			xMask = sp.xMask
+			x_inReal = sp.x_inReal
+			for j = windowStart; j <= today; j += 1 {
+				var _T4 float64
+				if j&xMask != pkSlot0 {
+					_T4 = x_inReal[j&xMask]
 				} else {
-					_T5 = pkVal0
+					_T4 = pkVal0
 				}
-				x = _T5 - shift
+				x = _T4 - shift
 				sumX += x
 				sumX2 += float64(x * x)
-				sumXY += float64(x * float64(sp.today-j))
+				sumXY += float64(x * float64(today-j))
 			}
 		}
 		peakX2 = sumX2
@@ -468,79 +574,6 @@ func (sp *CTIStream) Clone() *CTIStream {
 	cl := *sp
 	cl.x_inReal = append(sp.x_inReal[:0:0], sp.x_inReal...)
 	return &cl
-}
-
-func ctiStepImpl(sp *CTIStream, inReal float64) {
-	var x float64
-	var trailingX float64
-	var ssX float64
-	var spXY float64
-	var tempReal float64
-	var windowStart int32
-	sp.x_inReal[sp.today&sp.xMask] = inReal
-	x = sp.x_inReal[sp.today&sp.xMask] - sp.shift
-	sp.sumX += x
-	sp.sumX2 += float64(x * x)
-	var _T6 float64
-	if sp.sumX2 > sp.peakX2 {
-		_T6 = sp.sumX2
-	} else {
-		_T6 = sp.peakX2
-	}
-	sp.peakX2 = _T6
-	ssX = sp.sumX2 - float64(float64(sp.sumX*sp.sumX)*sp.invPeriod)
-	spXY = sp.sumXY - float64(float64(sp.sumX*sp.sumY)*sp.invPeriod)
-	sp.barsSinceReseed -= 1
-	if ssX < float64(1e-6*sp.peakX2) || sp.barsSinceReseed <= 0 {
-		sp.barsSinceReseed = 32 * sp.optInTimePeriod
-		windowStart = sp.today - sp.lookbackTotal
-		tempReal = 0.0
-		for sp.j = windowStart; sp.j <= sp.today; sp.j += 1 {
-			tempReal += sp.x_inReal[sp.j&sp.xMask]
-		}
-		sp.shift = float64(tempReal * sp.invPeriod)
-		sp.sumXY = 0.0
-		sp.sumX2 = sp.sumXY
-		sp.sumX = sp.sumX2
-		for sp.j = windowStart; sp.j <= sp.today; sp.j += 1 {
-			x = sp.x_inReal[sp.j&sp.xMask] - sp.shift
-			sp.sumX += x
-			sp.sumX2 += float64(x * x)
-			sp.sumXY += float64(x * float64(sp.today-sp.j))
-		}
-		if sp.sumX2-float64(float64(sp.sumX*sp.sumX)*sp.invPeriod) < float64(1e-6*sp.sumX2) {
-			sp.shift = sp.x_inReal[sp.today&sp.xMask]
-			sp.sumXY = 0.0
-			sp.sumX2 = sp.sumXY
-			sp.sumX = sp.sumX2
-			for sp.j = windowStart; sp.j <= sp.today; sp.j += 1 {
-				x = sp.x_inReal[sp.j&sp.xMask] - sp.shift
-				sp.sumX += x
-				sp.sumX2 += float64(x * x)
-				sp.sumXY += float64(x * float64(sp.today-sp.j))
-			}
-		}
-		sp.peakX2 = sp.sumX2
-		ssX = sp.sumX2 - float64(float64(sp.sumX*sp.sumX)*sp.invPeriod)
-		spXY = sp.sumXY - float64(float64(sp.sumX*sp.sumY)*sp.invPeriod)
-	}
-	trailingX = sp.x_inReal[sp.trailingIdx&sp.xMask] - sp.shift
-	sp.trailingIdx += 1
-	if ssX > float64(1e-14*sp.sumX2) && float64(ssX*sp.ssY) > 0.0 {
-		tempReal = -spXY / math.Sqrt(float64(ssX*sp.ssY))
-		if tempReal > 1.0 {
-			tempReal = 1.0
-		} else if tempReal < -1.0 {
-			tempReal = -1.0
-		}
-		sp.cur_outReal = tempReal
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	sp.sumXY = sp.sumXY + sp.sumX - float64(sp.dPeriod*trailingX)
-	sp.sumX -= trailingX
-	sp.sumX2 -= float64(trailingX * trailingX)
-	sp.today += 1
 }
 
 func (c *Core) ctiOpenImpl(sp *CTIStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {
@@ -613,13 +646,13 @@ func (c *Core) ctiOpenImpl(sp *CTIStream, inReal []float64, startIdx, optInTimeP
 		x = inReal[today] - shift
 		sumX += x
 		sumX2 += float64(x * x)
-		var _T7 float64
+		var _T5 float64
 		if sumX2 > peakX2 {
-			_T7 = sumX2
+			_T5 = sumX2
 		} else {
-			_T7 = peakX2
+			_T5 = peakX2
 		}
-		peakX2 = _T7
+		peakX2 = _T5
 		ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 		spXY = sumXY - float64(float64(sumX*sumY)*invPeriod)
 		barsSinceReseed -= 1

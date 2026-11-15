@@ -216,11 +216,24 @@ func (sp *VWAPStream) Update(inHigh, inLow, inClose, inVolume float64) (float64,
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	vwapStepImpl(sp, inHigh, inLow, inClose, inVolume)
 	sp.outRangeCount++
+	var typPrice float64
+	var volume float64
+	var tempReal float64
+	typPrice = (inHigh + inLow + inClose) / 3.0
+	volume = inVolume
+	tempReal = float64(typPrice * volume)
+	if isFinite(typPrice) && isFinite(volume) {
+		sp.sumPV += tempReal
+		sp.sumV += volume
+	}
+	if sp.sumV > 0.0 {
+		sp.vwap = sp.sumPV / sp.sumV
+	}
+	sp.cur_outReal = sp.vwap
 	return sp.cur_outReal, nil
 }
 
@@ -228,7 +241,7 @@ func (sp *VWAPStream) Update(inHigh, inLow, inClose, inVolume float64) (float64,
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *VWAPStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var typPrice float64
@@ -262,23 +275,6 @@ func (sp *VWAPStream) Value() float64 {
 func (sp *VWAPStream) Clone() *VWAPStream {
 	cl := *sp
 	return &cl
-}
-
-func vwapStepImpl(sp *VWAPStream, inHigh, inLow, inClose, inVolume float64) {
-	var typPrice float64
-	var volume float64
-	var tempReal float64
-	typPrice = (inHigh + inLow + inClose) / 3.0
-	volume = inVolume
-	tempReal = float64(typPrice * volume)
-	if isFinite(typPrice) && isFinite(volume) {
-		sp.sumPV += tempReal
-		sp.sumV += volume
-	}
-	if sp.sumV > 0.0 {
-		sp.vwap = sp.sumPV / sp.sumV
-	}
-	sp.cur_outReal = sp.vwap
 }
 
 func (c *Core) vwapOpenImpl(sp *VWAPStream, inHigh, inLow, inClose, inVolume []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

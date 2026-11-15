@@ -300,18 +300,59 @@ func (sp *CMOUStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	cmouStepImpl(sp, inReal)
 	sp.outRangeCount++
+	var live int32
+	var sum float64
+	var diff float64
+	var up float64
+	var tempReal float64
+	var ringPosL_trailingIdx int32
+	var ringCapL_trailingIdx int32
+	tempReal = inReal
+	diff = tempReal - sp.prevValue
+	sp.prevValue = tempReal
+	up = float64((diff + math.Abs(diff)) * 0.5)
+	sp.upSum += up
+	sp.downSum += up - diff
+	live = b2i(!(math.Abs(diff) <= 0.0))
+	sp.nullRun = (sp.nullRun + 1) & (live - 1)
+	if sp.nullRun >= sp.optInTimePeriod {
+		sp.nullRun = sp.optInTimePeriod
+		sp.upSum = 0.0
+		sp.downSum = 0.0
+		sp.cur_outReal = 0.0
+	} else {
+		sum = sp.upSum + sp.downSum
+		if sum > 0.0 {
+			sp.cur_outReal = float64(100.0*(sp.upSum-sp.downSum)) / sum
+		} else {
+			sp.cur_outReal = 0.0
+		}
+	}
+	tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
+	diff = tempReal - sp.trailingValue
+	sp.trailingValue = tempReal
+	up = float64((diff + math.Abs(diff)) * 0.5)
+	sp.upSum -= up
+	sp.downSum -= up - diff
+	ringCapL_trailingIdx = sp.ringCap_trailingIdx
+	ringPosL_trailingIdx = sp.ringPos_trailingIdx
+	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
+	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
+	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+		ringPosL_trailingIdx = 0
+	}
+	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *CMOUStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var live int32
@@ -359,51 +400,6 @@ func (sp *CMOUStream) Clone() *CMOUStream {
 	cl := *sp
 	cl.ring_trailingIdx_inReal = append(sp.ring_trailingIdx_inReal[:0:0], sp.ring_trailingIdx_inReal...)
 	return &cl
-}
-
-func cmouStepImpl(sp *CMOUStream, inReal float64) {
-	var live int32
-	var sum float64
-	var diff float64
-	var up float64
-	var tempReal float64
-	var ringPosL_trailingIdx int32
-	var ringCapL_trailingIdx int32
-	tempReal = inReal
-	diff = tempReal - sp.prevValue
-	sp.prevValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
-	sp.upSum += up
-	sp.downSum += up - diff
-	live = b2i(!(math.Abs(diff) <= 0.0))
-	sp.nullRun = (sp.nullRun + 1) & (live - 1)
-	if sp.nullRun >= sp.optInTimePeriod {
-		sp.nullRun = sp.optInTimePeriod
-		sp.upSum = 0.0
-		sp.downSum = 0.0
-		sp.cur_outReal = 0.0
-	} else {
-		sum = sp.upSum + sp.downSum
-		if sum > 0.0 {
-			sp.cur_outReal = float64(100.0*(sp.upSum-sp.downSum)) / sum
-		} else {
-			sp.cur_outReal = 0.0
-		}
-	}
-	tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]
-	diff = tempReal - sp.trailingValue
-	sp.trailingValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
-	sp.upSum -= up
-	sp.downSum -= up - diff
-	ringCapL_trailingIdx = sp.ringCap_trailingIdx
-	ringPosL_trailingIdx = sp.ringPos_trailingIdx
-	sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal
-	ringPosL_trailingIdx = ringPosL_trailingIdx + 1
-	if ringPosL_trailingIdx >= ringCapL_trailingIdx {
-		ringPosL_trailingIdx = 0
-	}
-	sp.ringPos_trailingIdx = ringPosL_trailingIdx
 }
 
 func (c *Core) cmouOpenImpl(sp *CMOUStream, inReal []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

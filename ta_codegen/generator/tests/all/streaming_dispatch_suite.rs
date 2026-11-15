@@ -990,7 +990,7 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
     let go = backends::go::generate(&func, &enums, registry, &helpers);
 
     // (backend, source, definition, call sites, the retired word)
-    let cases: [(&str, &str, &str, &[&str], &str); 6] = [
+    let cases: [(&str, &str, &str, &[&str], &str); 5] = [
         (
             "c",
             &c,
@@ -1032,14 +1032,6 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             &["smaStepImpl(this,"],
             "StreamStep",
         ),
-        (
-            "go",
-            &go,
-            // A package function: the handle's state is unexported fields.
-            "\nfunc smaStepImpl(sp *SMAStream,",
-            &["\tsmaStepImpl(sp, inReal)\n"],
-            "StreamStep",
-        ),
     ];
 
     for (lang, src, def, calls, retired) in cases {
@@ -1055,6 +1047,18 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
         // so it discriminates only while the positives hold.
         assert!(!src.contains(retired), "{lang}: `{retired}` is the retired spelling");
     }
+
+    // Go is the stated exception: the step runs inside `Update`, so SMA has no
+    // transition tier. A step another frame calls keeps it, under the same word.
+    assert!(!go.contains("func smaStepImpl("), "go: a step only `Update` runs is not a function of its own");
+    let update = &go[go.find("func (sp *SMAStream) Update(").expect("go: SMA's Update")..];
+    let update = &update[..update.find("\n}\n").expect("go: Update closes")];
+    assert!(update.contains("sp.periodTotal"), "go: SMA's transition runs inside Update:\n{update}");
+    let (mavp, mavp_enums) = load_indicator("mavp");
+    let go_mavp = backends::go::generate(&mavp, &mavp_enums, registry, &helpers);
+    assert_eq!(go_mavp.matches("\nfunc mavpStepImpl(sp *MAVPStream,").count(), 1, "go: MAVP's fill calls its step");
+    assert!(go_mavp.contains("err := mavpStepImpl(sp, inReal, inPeriods); err != nil"), "go: so its Update calls it too");
+    assert!(!go.contains("StreamStep") && !go_mavp.contains("StreamStep"), "go: `StreamStep` is the retired spelling");
 }
 
 /// The clamp and its history re-check are ONE edit, in all four backends.

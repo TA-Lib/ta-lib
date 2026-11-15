@@ -323,11 +323,47 @@ func (sp *CMFStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, 
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
-	cmfStepImpl(sp, inHigh, inLow, inClose, inVolume)
 	sp.outRangeCount++
+	var high float64
+	var low float64
+	var close_ float64
+	var tmp float64
+	var mfv float64
+	var liveVol int32
+	sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx]
+	sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx]
+	high = inHigh
+	low = inLow
+	close_ = inClose
+	tmp = high - low
+	if tmp > 0.0 {
+		mfv = float64((close_ - low - (high - close_)) / tmp * inVolume)
+	} else {
+		mfv = 0.0
+	}
+	sp.cb_mfv_flow[sp.mfv_Idx] = mfv
+	sp.cb_mfv_volume[sp.mfv_Idx] = inVolume
+	sp.sumMFV += mfv
+	sp.sumVol += inVolume
+	liveVol = b2i(!(math.Abs(inVolume) <= 0.0))
+	sp.nullRun = (sp.nullRun + 1) & (liveVol - 1)
+	if sp.nullRun >= sp.optInTimePeriod {
+		sp.nullRun = sp.optInTimePeriod
+		sp.sumMFV = 0.0
+		sp.sumVol = 0.0
+		sp.cur_outReal = 0.0
+	} else if sp.sumVol > 0.0 {
+		sp.cur_outReal = sp.sumMFV / sp.sumVol
+	} else {
+		sp.cur_outReal = 0.0
+	}
+	sp.mfv_Idx = sp.mfv_Idx + 1
+	if sp.mfv_Idx > sp.maxIdx_mfv {
+		sp.mfv_Idx = 0
+	}
 	return sp.cur_outReal, nil
 }
 
@@ -335,7 +371,7 @@ func (sp *CMFStream) Update(inHigh, inLow, inClose, inVolume float64) (float64, 
 // inVolume), changing nothing. It returns [BadParam] for a bar value that is
 // not finite.
 func (sp *CMFStream) Peek(inHigh, inLow, inClose, inVolume float64) (float64, error) {
-	if !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) || !isFinite(inVolume) {
+	if (inHigh-inHigh)+(inLow-inLow)+(inClose-inClose)+(inVolume-inVolume) != 0 {
 		return 0, BadParam
 	}
 	var high float64
@@ -388,46 +424,6 @@ func (sp *CMFStream) Clone() *CMFStream {
 	cl.cb_mfv_flow = append(sp.cb_mfv_flow[:0:0], sp.cb_mfv_flow...)
 	cl.cb_mfv_volume = append(sp.cb_mfv_volume[:0:0], sp.cb_mfv_volume...)
 	return &cl
-}
-
-func cmfStepImpl(sp *CMFStream, inHigh, inLow, inClose, inVolume float64) {
-	var high float64
-	var low float64
-	var close_ float64
-	var tmp float64
-	var mfv float64
-	var liveVol int32
-	sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx]
-	sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx]
-	high = inHigh
-	low = inLow
-	close_ = inClose
-	tmp = high - low
-	if tmp > 0.0 {
-		mfv = float64((close_ - low - (high - close_)) / tmp * inVolume)
-	} else {
-		mfv = 0.0
-	}
-	sp.cb_mfv_flow[sp.mfv_Idx] = mfv
-	sp.cb_mfv_volume[sp.mfv_Idx] = inVolume
-	sp.sumMFV += mfv
-	sp.sumVol += inVolume
-	liveVol = b2i(!(math.Abs(inVolume) <= 0.0))
-	sp.nullRun = (sp.nullRun + 1) & (liveVol - 1)
-	if sp.nullRun >= sp.optInTimePeriod {
-		sp.nullRun = sp.optInTimePeriod
-		sp.sumMFV = 0.0
-		sp.sumVol = 0.0
-		sp.cur_outReal = 0.0
-	} else if sp.sumVol > 0.0 {
-		sp.cur_outReal = sp.sumMFV / sp.sumVol
-	} else {
-		sp.cur_outReal = 0.0
-	}
-	sp.mfv_Idx = sp.mfv_Idx + 1
-	if sp.mfv_Idx > sp.maxIdx_mfv {
-		sp.mfv_Idx = 0
-	}
 }
 
 func (c *Core) cmfOpenImpl(sp *CMFStream, inHigh, inLow, inClose, inVolume []float64, startIdx, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

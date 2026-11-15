@@ -262,11 +262,69 @@ func (sp *CDLENGULFINGStream) Update(inOpen, inHigh, inLow, inClose float64) (in
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
-	cdlengulfingStepImpl(sp, inOpen, inHigh, inLow, inClose)
 	sp.outRangeCount++
+	var _T9 int32
+	if inClose >= inOpen {
+		_T9 = 1
+	} else {
+		_T9 = -1
+	}
+	_B11 := _T9 == 1
+	if _B11 {
+		var _T10 int32
+		if sp.lag1_inClose >= sp.lag1_inOpen {
+			_T10 = 1
+		} else {
+			_T10 = -1
+		}
+		_B11 = _T10 == -1
+	}
+	_B15 := _B11 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose)
+	if !_B15 {
+		var _T12 int32
+		if inClose >= inOpen {
+			_T12 = 1
+		} else {
+			_T12 = -1
+		}
+		_B14 := _T12 == -1
+		if _B14 {
+			var _T13 int32
+			if sp.lag1_inClose >= sp.lag1_inOpen {
+				_T13 = 1
+			} else {
+				_T13 = -1
+			}
+			_B14 = _T13 == 1
+		}
+		_B15 = _B14 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen)
+	}
+	if _B15 {
+		if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
+			var _T16 int32
+			if inClose >= inOpen {
+				_T16 = 1
+			} else {
+				_T16 = -1
+			}
+			sp.cur_outInteger = _T16 * 100
+		} else {
+			var _T17 int32
+			if inClose >= inOpen {
+				_T17 = 1
+			} else {
+				_T17 = -1
+			}
+			sp.cur_outInteger = _T17 * 80
+		}
+	} else {
+		sp.cur_outInteger = 0
+	}
+	sp.lag1_inOpen = inOpen
+	sp.lag1_inClose = inClose
 	return sp.cur_outInteger, nil
 }
 
@@ -274,7 +332,7 @@ func (sp *CDLENGULFINGStream) Update(inOpen, inHigh, inLow, inClose float64) (in
 // inClose), changing nothing. It returns [BadParam] for a bar value that is not
 // finite.
 func (sp *CDLENGULFINGStream) Peek(inOpen, inHigh, inLow, inClose float64) (int32, error) {
-	if !isFinite(inOpen) || !isFinite(inHigh) || !isFinite(inLow) || !isFinite(inClose) {
+	if (inOpen-inOpen)+(inHigh-inHigh)+(inLow-inLow)+(inClose-inClose) != 0 {
 		return 0, BadParam
 	}
 	var cur_outInteger int32
@@ -348,68 +406,6 @@ func (sp *CDLENGULFINGStream) Value() int32 {
 func (sp *CDLENGULFINGStream) Clone() *CDLENGULFINGStream {
 	cl := *sp
 	return &cl
-}
-
-func cdlengulfingStepImpl(sp *CDLENGULFINGStream, inOpen, inHigh, inLow, inClose float64) {
-	var _T9 int32
-	if inClose >= inOpen {
-		_T9 = 1
-	} else {
-		_T9 = -1
-	}
-	_B11 := _T9 == 1
-	if _B11 {
-		var _T10 int32
-		if sp.lag1_inClose >= sp.lag1_inOpen {
-			_T10 = 1
-		} else {
-			_T10 = -1
-		}
-		_B11 = _T10 == -1
-	}
-	_B15 := _B11 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose)
-	if !_B15 {
-		var _T12 int32
-		if inClose >= inOpen {
-			_T12 = 1
-		} else {
-			_T12 = -1
-		}
-		_B14 := _T12 == -1
-		if _B14 {
-			var _T13 int32
-			if sp.lag1_inClose >= sp.lag1_inOpen {
-				_T13 = 1
-			} else {
-				_T13 = -1
-			}
-			_B14 = _T13 == 1
-		}
-		_B15 = _B14 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen)
-	}
-	if _B15 {
-		if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
-			var _T16 int32
-			if inClose >= inOpen {
-				_T16 = 1
-			} else {
-				_T16 = -1
-			}
-			sp.cur_outInteger = _T16 * 100
-		} else {
-			var _T17 int32
-			if inClose >= inOpen {
-				_T17 = 1
-			} else {
-				_T17 = -1
-			}
-			sp.cur_outInteger = _T17 * 80
-		}
-	} else {
-		sp.cur_outInteger = 0
-	}
-	sp.lag1_inOpen = inOpen
-	sp.lag1_inClose = inClose
 }
 
 func (c *Core) cdlengulfingOpenImpl(sp *CDLENGULFINGStream, inOpen, inHigh, inLow, inClose []float64, startIdx int32, outBegIdx, outNBElement *int32, outInteger []int32, outStride int32) RetCode {
@@ -542,9 +538,9 @@ func (c *Core) cdlengulfingOpenSinkFrame(sp *CDLENGULFINGStream, inOpen, inHigh,
 	}
 	i = startIdx
 	outIdx = 0
-	for i < endIdx {
-		outIdx += 1
-		i += 1
+	if i < endIdx {
+		outIdx = outIdx + (endIdx - i)
+		i = endIdx
 	}
 	var _T27 int32
 	if inClose[i] >= inOpen[i] {

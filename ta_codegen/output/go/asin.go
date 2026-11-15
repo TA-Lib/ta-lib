@@ -176,18 +176,18 @@ func (sp *ASINStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	asinStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.cur_outReal = math.Asin(inReal)
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *ASINStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
@@ -205,10 +205,6 @@ func (sp *ASINStream) Value() float64 {
 func (sp *ASINStream) Clone() *ASINStream {
 	cl := *sp
 	return &cl
-}
-
-func asinStepImpl(sp *ASINStream, inReal float64) {
-	sp.cur_outReal = math.Asin(inReal)
 }
 
 func (c *Core) asinOpenImpl(sp *ASINStream, inReal []float64, startIdx int32, outBegIdx, outNBElement *int32, outReal []float64, outStride int32) RetCode {

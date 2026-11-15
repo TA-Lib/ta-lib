@@ -275,18 +275,19 @@ func (sp *RMAStream) Update(inReal float64) (float64, error) {
 	if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {
 		return 0, OutOfRangeEndIndex
 	}
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
-	rmaStepImpl(sp, inReal)
 	sp.outRangeCount++
+	sp.prevRMA = math.FMA(sp.wBeta, sp.prevRMA, float64(sp.wAlpha*inReal))
+	sp.cur_outReal = sp.prevRMA
 	return sp.cur_outReal, nil
 }
 
 // Peek returns what Update would return for the bar inReal, changing nothing.
 // It returns [BadParam] for a bar value that is not finite.
 func (sp *RMAStream) Peek(inReal float64) (float64, error) {
-	if !isFinite(inReal) {
+	if inReal-inReal != 0 {
 		return 0, BadParam
 	}
 	var cur_outReal float64
