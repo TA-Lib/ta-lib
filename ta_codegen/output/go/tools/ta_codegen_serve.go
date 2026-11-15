@@ -70,9 +70,23 @@ func (p params) i64(name string, def int64) int64 {
 	return def
 }
 
+// A value outside int32 saturates, as the C server's does. Never down to
+// MinInt32: that is IntegerDefault, and would turn the request into "use the
+// default".
+func (p params) i32(name string, def int32) int32 {
+	v, err := strconv.ParseInt(string(p[name]), 10, 32)
+	if errors.Is(err, strconv.ErrRange) {
+		return max(int32(v), math.MinInt32+1)
+	}
+	if err != nil {
+		return def
+	}
+	return int32(v)
+}
+
 // integer reads an optional parameter: absent is the default sentinel.
 func (p params) integer(name string) int {
-	return int(p.i64(name, talib.IntegerDefault))
+	return int(p.i32(name, talib.IntegerDefault))
 }
 
 func (p params) real(name string) float64 {
@@ -193,7 +207,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 	in := make([][]float64, len(slots))
 	switch {
 	case p.i64("gen_present", 0) != 0:
-		n := int(p.i64("gen_n", 0))
+		n := int(p.i32("gen_n", 0))
 		if n < 0 {
 			n = 0
 		}
@@ -201,7 +215,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 		for k := range series {
 			series[k] = make([]float64, n)
 		}
-		fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n,
+		fuzzGen(p.i32("gen_shape", 0), p.i32("gen_seed", 0), n,
 			series[0], series[1], series[2], series[3], series[4], series[5])
 		for k, slot := range slots {
 			in[k] = series[slot.fuzz]
@@ -222,7 +236,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 // previous setting, as C's TA_SetUnstablePeriod does.
 func (s *server) pin(p params, id talib.FuncUnstId) {
 	if _, ok := p["unstablePeriod"]; ok {
-		_ = s.core.SetUnstablePeriod(id, int(p.i64("unstablePeriod", 0)))
+		_ = s.core.SetUnstablePeriod(id, int(p.i32("unstablePeriod", 0)))
 	}
 }
 
@@ -232,7 +246,7 @@ func (s *server) pin(p params, id talib.FuncUnstId) {
 func (s *server) batch(p params, ins []inSlot, outs []outSlot, lookback func() (int, error),
 	run func(c *call) (talib.OutRange, error), open func(in [][]float64) error,
 	fill func(in [][]float64, c *call) (talib.OutRange, error), ride func(c *call) string) string {
-	c := &call{start: int(p.i64("startIdx", 0)), end: int(p.i64("endIdx", 0))}
+	c := &call{start: int(p.i32("startIdx", 0)), end: int(p.i32("endIdx", 0))}
 	c.in = s.inputs(p, ins)
 	mode := p.i64("bench_mode", 0)
 	if mode < 0 || mode > 2 || mode != 0 && open == nil {
@@ -249,7 +263,7 @@ func (s *server) batch(p params, ins []inSlot, outs []outSlot, lookback func() (
 	if lb, err := lookback(); err == nil && max(c.start, lb) <= c.end {
 		size = c.end - max(c.start, lb) + 1
 	}
-	size += int(p.i64("out_pad", 0))
+	size += int(p.i32("out_pad", 0))
 	for _, o := range outs {
 		if o.isInt {
 			buf := make([]int32, size)
@@ -391,23 +405,19 @@ func errorReply(msg string) string {
 }
 
 func (s *server) setUnstablePeriod(p params) string {
-	id := p.i64("id", 99)
-	if id < 0 || id > math.MaxInt32 {
+	id := p.i32("id", 99)
+	if id < 0 {
 		return errorReply("Invalid unstable period id")
 	}
-	if s.core.SetUnstablePeriod(talib.FuncUnstId(id), int(p.i64("period", 0))) != nil {
+	if s.core.SetUnstablePeriod(talib.FuncUnstId(id), int(p.i32("period", 0))) != nil {
 		return errorReply("Invalid unstable period")
 	}
 	return `{"status":"ok"}`
 }
 
-func fitsInt32(v int64) bool {
-	return v >= math.MinInt32 && v <= math.MaxInt32
-}
-
 func (s *server) setCandleSettings(p params) string {
-	st, rt, ap := p.i64("settingType", -1), p.i64("rangeType", -1), p.i64("avgPeriod", 0)
-	if !fitsInt32(st) || !fitsInt32(rt) || s.core.SetCandleSetting(talib.CandleSettingType(st),
+	st, rt, ap := p.i32("settingType", -1), p.i32("rangeType", -1), p.i32("avgPeriod", 0)
+	if s.core.SetCandleSetting(talib.CandleSettingType(st),
 		talib.RangeType(rt), int(ap), p.f64Bits("factorBits", 1.0)) != nil {
 		return errorReply("Invalid candle setting")
 	}
@@ -415,20 +425,20 @@ func (s *server) setCandleSettings(p params) string {
 }
 
 func (s *server) restoreCandleDefaultSettings(p params) string {
-	st := p.i64("settingType", -1)
-	if !fitsInt32(st) || s.core.RestoreCandleDefault(talib.CandleSettingType(st)) != nil {
+	st := p.i32("settingType", -1)
+	if s.core.RestoreCandleDefault(talib.CandleSettingType(st)) != nil {
 		return errorReply("Invalid candle setting type")
 	}
 	return `{"status":"ok"}`
 }
 
 func fuzzInHash(p params) string {
-	n := max(int(p.i64("gen_n", 0)), 0)
+	n := max(int(p.i32("gen_n", 0)), 0)
 	var a [6][]float64
 	for k := range a {
 		a[k] = make([]float64, n)
 	}
-	fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n, a[0], a[1], a[2], a[3], a[4], a[5])
+	fuzzGen(p.i32("gen_shape", 0), p.i32("gen_seed", 0), n, a[0], a[1], a[2], a[3], a[4], a[5])
 	h := fuzzHashInit()
 	for _, x := range a {
 		h = fuzzHashF64(h, x)
@@ -534,7 +544,7 @@ func absFuncAttributes(p params) string {
 
 func absInputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.Inputs()) {
 		return absNotFound
 	}
@@ -545,7 +555,7 @@ func absInputInfo(p params) string {
 
 func absOutputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.Outputs()) {
 		return absNotFound
 	}
@@ -556,7 +566,7 @@ func absOutputInfo(p params) string {
 
 func absOptInputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.OptInputs()) {
 		return absNotFound
 	}
@@ -622,8 +632,8 @@ func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
 			}
 			err = h.SetOptInputReal(k, v)
 		default:
-			v, perr := strconv.ParseInt(string(raw), 10, 64)
-			if perr != nil || !fitsInt32(v) {
+			v, perr := strconv.ParseInt(string(raw), 10, 32)
+			if perr != nil {
 				return talib.BadParam
 			}
 			err = h.SetOptInputInteger(k, int(v))
@@ -668,7 +678,7 @@ func (s *server) absDisplayShift(p params) string {
 	}
 	ds := math.MinInt32
 	if h != nil {
-		if v, err := h.DisplayShift(int(p.i64("outputIdx", 0))); err == nil {
+		if v, err := h.DisplayShift(int(p.i32("outputIdx", 0))); err == nil {
 			ds = v
 		}
 	}
@@ -685,7 +695,7 @@ func (s *server) absCall(p params) string {
 	if !ok {
 		return errorReply("Unknown function: " + p.str("funcName"))
 	}
-	start, end := p.i64("startIdx", 0), p.i64("endIdx", 0)
+	start, end := p.i32("startIdx", 0), p.i32("endIdx", 0)
 	early := func(rc talib.RetCode) string {
 		return `{"binder":1,"lookback":-1,"retCode":` + strconv.Itoa(int(rc)) + `,"outBegIdx":0,"outNBElement":0}`
 	}
@@ -706,7 +716,7 @@ func (s *server) absCall(p params) string {
 		}
 	}
 	inputs, outputs := f.Inputs(), f.Outputs()
-	skipIn, skipOut := int(p.i64("skipInput", 0)), int(p.i64("skipOutput", 0))
+	skipIn, skipOut := int(p.i32("skipInput", 0)), int(p.i32("skipOutput", 0))
 	generic := 0
 	for _, in := range inputs {
 		if in.Kind != metadata.InputPrice {
@@ -6164,12 +6174,12 @@ func (s *server) streamVerify(p params) string {
 }
 
 func svAC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInFastPeriod := int(p.i64("optInFastPeriod", 5))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 34))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInFastPeriod := int(p.i32("optInFastPeriod", 5))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 34))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 5))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -6506,10 +6516,10 @@ func svAC(s *server, p params) string {
 }
 
 func svACCBANDS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -7013,9 +7023,9 @@ func svACCBANDS(s *server, p params) string {
 }
 
 func svACOS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -7352,9 +7362,9 @@ func svACOS(s *server, p params) string {
 }
 
 func svAD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -7691,9 +7701,9 @@ func svAD(s *server, p params) string {
 }
 
 func svADD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -8030,12 +8040,12 @@ func svADD(s *server, p params) string {
 }
 
 func svADOSC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 3))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 3))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -8375,10 +8385,10 @@ func svADOSC(s *server, p params) string {
 }
 
 func svADR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -8715,11 +8725,11 @@ func svADR(s *server, p params) string {
 }
 
 func svADX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -9059,11 +9069,11 @@ func svADX(s *server, p params) string {
 }
 
 func svADXR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -9403,16 +9413,16 @@ func svADXR(s *server, p params) string {
 }
 
 func svALLIGATOR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInJawPeriod := int(p.i64("optInJawPeriod", 13))
-	optInJawShift := int(p.i64("optInJawShift", 8))
-	optInTeethPeriod := int(p.i64("optInTeethPeriod", 8))
-	optInTeethShift := int(p.i64("optInTeethShift", 5))
-	optInLipsPeriod := int(p.i64("optInLipsPeriod", 5))
-	optInLipsShift := int(p.i64("optInLipsShift", 3))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInJawPeriod := int(p.i32("optInJawPeriod", 13))
+	optInJawShift := int(p.i32("optInJawShift", 8))
+	optInTeethPeriod := int(p.i32("optInTeethPeriod", 8))
+	optInTeethShift := int(p.i32("optInTeethShift", 5))
+	optInLipsPeriod := int(p.i32("optInLipsPeriod", 5))
+	optInLipsShift := int(p.i32("optInLipsShift", 3))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -9919,10 +9929,10 @@ func svALLIGATOR(s *server, p params) string {
 }
 
 func svALMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 9))
 	optInSigma := p.realOr("optInSigma", 6.0)
 	optInOffset := p.realOr("optInOffset", 0.85)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -10261,11 +10271,11 @@ func svALMA(s *server, p params) string {
 }
 
 func svAO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInFastPeriod := int(p.i64("optInFastPeriod", 5))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 34))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInFastPeriod := int(p.i32("optInFastPeriod", 5))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 34))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -10602,13 +10612,13 @@ func svAO(s *server, p params) string {
 }
 
 func svAPO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -10963,10 +10973,10 @@ func svAPO(s *server, p params) string {
 }
 
 func svAROON(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -11388,10 +11398,10 @@ func svAROON(s *server, p params) string {
 }
 
 func svAROONOSC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -11728,9 +11738,9 @@ func svAROONOSC(s *server, p params) string {
 }
 
 func svASI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	optInLimitMove := p.realOr("optInLimitMove", 3.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -12068,9 +12078,9 @@ func svASI(s *server, p params) string {
 }
 
 func svASIN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -12407,9 +12417,9 @@ func svASIN(s *server, p params) string {
 }
 
 func svATAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -12746,11 +12756,11 @@ func svATAN(s *server, p params) string {
 }
 
 func svATR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -13090,10 +13100,10 @@ func svATR(s *server, p params) string {
 }
 
 func svAVGDEV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -13430,9 +13440,9 @@ func svAVGDEV(s *server, p params) string {
 }
 
 func svAVGPRICE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -13769,14 +13779,14 @@ func svAVGPRICE(s *server, p params) string {
 }
 
 func svBBANDS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInNbDevUp := p.realOr("optInNbDevUp", 2.0)
 	optInNbDevDn := p.realOr("optInNbDevDn", 2.0)
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -14298,14 +14308,14 @@ func svBBANDS(s *server, p params) string {
 }
 
 func svBBW(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInNbDevUp := p.realOr("optInNbDevUp", 2.0)
 	optInNbDevDn := p.realOr("optInNbDevDn", 2.0)
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -14660,10 +14670,10 @@ func svBBW(s *server, p params) string {
 }
 
 func svBETA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 5))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -15000,9 +15010,9 @@ func svBETA(s *server, p params) string {
 }
 
 func svBOP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -15339,10 +15349,10 @@ func svBOP(s *server, p params) string {
 }
 
 func svCCI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -15679,9 +15689,9 @@ func svCCI(s *server, p params) string {
 }
 
 func svCDL2CROWS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -16026,9 +16036,9 @@ func svCDL2CROWS(s *server, p params) string {
 }
 
 func svCDL3BLACKCROWS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -16373,9 +16383,9 @@ func svCDL3BLACKCROWS(s *server, p params) string {
 }
 
 func svCDL3INSIDE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -16720,9 +16730,9 @@ func svCDL3INSIDE(s *server, p params) string {
 }
 
 func svCDL3LINESTRIKE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -17067,9 +17077,9 @@ func svCDL3LINESTRIKE(s *server, p params) string {
 }
 
 func svCDL3OUTSIDE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -17414,9 +17424,9 @@ func svCDL3OUTSIDE(s *server, p params) string {
 }
 
 func svCDL3STARSINSOUTH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -17761,9 +17771,9 @@ func svCDL3STARSINSOUTH(s *server, p params) string {
 }
 
 func svCDL3WHITESOLDIERS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -18108,9 +18118,9 @@ func svCDL3WHITESOLDIERS(s *server, p params) string {
 }
 
 func svCDLABANDONEDBABY(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.3)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -18456,9 +18466,9 @@ func svCDLABANDONEDBABY(s *server, p params) string {
 }
 
 func svCDLADVANCEBLOCK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -18803,9 +18813,9 @@ func svCDLADVANCEBLOCK(s *server, p params) string {
 }
 
 func svCDLBELTHOLD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -19150,9 +19160,9 @@ func svCDLBELTHOLD(s *server, p params) string {
 }
 
 func svCDLBREAKAWAY(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -19497,9 +19507,9 @@ func svCDLBREAKAWAY(s *server, p params) string {
 }
 
 func svCDLCLOSINGMARUBOZU(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -19844,9 +19854,9 @@ func svCDLCLOSINGMARUBOZU(s *server, p params) string {
 }
 
 func svCDLCONCEALBABYSWALL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -20191,9 +20201,9 @@ func svCDLCONCEALBABYSWALL(s *server, p params) string {
 }
 
 func svCDLCOUNTERATTACK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -20538,9 +20548,9 @@ func svCDLCOUNTERATTACK(s *server, p params) string {
 }
 
 func svCDLDARKCLOUDCOVER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.5)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -20886,9 +20896,9 @@ func svCDLDARKCLOUDCOVER(s *server, p params) string {
 }
 
 func svCDLDOJI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -21233,9 +21243,9 @@ func svCDLDOJI(s *server, p params) string {
 }
 
 func svCDLDOJISTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -21580,9 +21590,9 @@ func svCDLDOJISTAR(s *server, p params) string {
 }
 
 func svCDLDRAGONFLYDOJI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -21927,9 +21937,9 @@ func svCDLDRAGONFLYDOJI(s *server, p params) string {
 }
 
 func svCDLENGULFING(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -22274,9 +22284,9 @@ func svCDLENGULFING(s *server, p params) string {
 }
 
 func svCDLEVENINGDOJISTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.3)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -22622,9 +22632,9 @@ func svCDLEVENINGDOJISTAR(s *server, p params) string {
 }
 
 func svCDLEVENINGSTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.3)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -22970,9 +22980,9 @@ func svCDLEVENINGSTAR(s *server, p params) string {
 }
 
 func svCDLGAPSIDESIDEWHITE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -23317,9 +23327,9 @@ func svCDLGAPSIDESIDEWHITE(s *server, p params) string {
 }
 
 func svCDLGRAVESTONEDOJI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -23664,9 +23674,9 @@ func svCDLGRAVESTONEDOJI(s *server, p params) string {
 }
 
 func svCDLHAMMER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -24011,9 +24021,9 @@ func svCDLHAMMER(s *server, p params) string {
 }
 
 func svCDLHANGINGMAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -24358,9 +24368,9 @@ func svCDLHANGINGMAN(s *server, p params) string {
 }
 
 func svCDLHARAMI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -24705,9 +24715,9 @@ func svCDLHARAMI(s *server, p params) string {
 }
 
 func svCDLHARAMICROSS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -25052,9 +25062,9 @@ func svCDLHARAMICROSS(s *server, p params) string {
 }
 
 func svCDLHIGHWAVE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -25399,9 +25409,9 @@ func svCDLHIGHWAVE(s *server, p params) string {
 }
 
 func svCDLHIKKAKE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -25746,9 +25756,9 @@ func svCDLHIKKAKE(s *server, p params) string {
 }
 
 func svCDLHIKKAKEMOD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -26093,9 +26103,9 @@ func svCDLHIKKAKEMOD(s *server, p params) string {
 }
 
 func svCDLHOMINGPIGEON(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -26440,9 +26450,9 @@ func svCDLHOMINGPIGEON(s *server, p params) string {
 }
 
 func svCDLIDENTICAL3CROWS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -26787,9 +26797,9 @@ func svCDLIDENTICAL3CROWS(s *server, p params) string {
 }
 
 func svCDLINNECK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -27134,9 +27144,9 @@ func svCDLINNECK(s *server, p params) string {
 }
 
 func svCDLINVERTEDHAMMER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -27481,9 +27491,9 @@ func svCDLINVERTEDHAMMER(s *server, p params) string {
 }
 
 func svCDLKICKING(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -27828,9 +27838,9 @@ func svCDLKICKING(s *server, p params) string {
 }
 
 func svCDLKICKINGBYLENGTH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -28175,9 +28185,9 @@ func svCDLKICKINGBYLENGTH(s *server, p params) string {
 }
 
 func svCDLLADDERBOTTOM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -28522,9 +28532,9 @@ func svCDLLADDERBOTTOM(s *server, p params) string {
 }
 
 func svCDLLONGLEGGEDDOJI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -28869,9 +28879,9 @@ func svCDLLONGLEGGEDDOJI(s *server, p params) string {
 }
 
 func svCDLLONGLINE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -29216,9 +29226,9 @@ func svCDLLONGLINE(s *server, p params) string {
 }
 
 func svCDLMARUBOZU(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -29563,9 +29573,9 @@ func svCDLMARUBOZU(s *server, p params) string {
 }
 
 func svCDLMATCHINGLOW(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -29910,9 +29920,9 @@ func svCDLMATCHINGLOW(s *server, p params) string {
 }
 
 func svCDLMATHOLD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.5)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -30258,9 +30268,9 @@ func svCDLMATHOLD(s *server, p params) string {
 }
 
 func svCDLMORNINGDOJISTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.3)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -30606,9 +30616,9 @@ func svCDLMORNINGDOJISTAR(s *server, p params) string {
 }
 
 func svCDLMORNINGSTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	optInPenetration := p.realOr("optInPenetration", 0.3)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -30954,9 +30964,9 @@ func svCDLMORNINGSTAR(s *server, p params) string {
 }
 
 func svCDLONNECK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -31301,9 +31311,9 @@ func svCDLONNECK(s *server, p params) string {
 }
 
 func svCDLPIERCING(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -31648,9 +31658,9 @@ func svCDLPIERCING(s *server, p params) string {
 }
 
 func svCDLRICKSHAWMAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -31995,9 +32005,9 @@ func svCDLRICKSHAWMAN(s *server, p params) string {
 }
 
 func svCDLRISEFALL3METHODS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -32342,9 +32352,9 @@ func svCDLRISEFALL3METHODS(s *server, p params) string {
 }
 
 func svCDLSEPARATINGLINES(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -32689,9 +32699,9 @@ func svCDLSEPARATINGLINES(s *server, p params) string {
 }
 
 func svCDLSHOOTINGSTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -33036,9 +33046,9 @@ func svCDLSHOOTINGSTAR(s *server, p params) string {
 }
 
 func svCDLSHORTLINE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -33383,9 +33393,9 @@ func svCDLSHORTLINE(s *server, p params) string {
 }
 
 func svCDLSPINNINGTOP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -33730,9 +33740,9 @@ func svCDLSPINNINGTOP(s *server, p params) string {
 }
 
 func svCDLSTALLEDPATTERN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -34077,9 +34087,9 @@ func svCDLSTALLEDPATTERN(s *server, p params) string {
 }
 
 func svCDLSTICKSANDWICH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -34424,9 +34434,9 @@ func svCDLSTICKSANDWICH(s *server, p params) string {
 }
 
 func svCDLTAKURI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -34771,9 +34781,9 @@ func svCDLTAKURI(s *server, p params) string {
 }
 
 func svCDLTASUKIGAP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -35118,9 +35128,9 @@ func svCDLTASUKIGAP(s *server, p params) string {
 }
 
 func svCDLTHRUSTING(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -35465,9 +35475,9 @@ func svCDLTHRUSTING(s *server, p params) string {
 }
 
 func svCDLTRISTAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -35812,9 +35822,9 @@ func svCDLTRISTAR(s *server, p params) string {
 }
 
 func svCDLUNIQUE3RIVER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -36159,9 +36169,9 @@ func svCDLUNIQUE3RIVER(s *server, p params) string {
 }
 
 func svCDLUPSIDEGAP2CROWS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -36506,9 +36516,9 @@ func svCDLUPSIDEGAP2CROWS(s *server, p params) string {
 }
 
 func svCDLXSIDEGAP3METHODS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	candleLegs := p.i64("candleLegs", 0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -36853,11 +36863,11 @@ func svCDLXSIDEGAP3METHODS(s *server, p params) string {
 }
 
 func svCE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 22))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 22))
 	optInMultiplier := p.realOr("optInMultiplier", 3.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -37283,9 +37293,9 @@ func svCE(s *server, p params) string {
 }
 
 func svCEIL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -37622,10 +37632,10 @@ func svCEIL(s *server, p params) string {
 }
 
 func svCG(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -37962,10 +37972,10 @@ func svCG(s *server, p params) string {
 }
 
 func svCHOP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -38302,10 +38312,10 @@ func svCHOP(s *server, p params) string {
 }
 
 func svCHOPTR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -38642,13 +38652,13 @@ func svCHOPTR(s *server, p params) string {
 }
 
 func svCKSP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	optInMultiplier := p.realOr("optInMultiplier", 1.0)
-	optInStopPeriod := int(p.i64("optInStopPeriod", 9))
+	optInStopPeriod := int(p.i32("optInStopPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -39073,10 +39083,10 @@ func svCKSP(s *server, p params) string {
 }
 
 func svCMF(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -39413,11 +39423,11 @@ func svCMF(s *server, p params) string {
 }
 
 func svCMO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -39757,10 +39767,10 @@ func svCMO(s *server, p params) string {
 }
 
 func svCMOU(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -40097,12 +40107,12 @@ func svCMOU(s *server, p params) string {
 }
 
 func svCOPPOCK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInWMAPeriod := int(p.i64("optInWMAPeriod", 10))
-	optInROC1Period := int(p.i64("optInROC1Period", 11))
-	optInROC2Period := int(p.i64("optInROC2Period", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInWMAPeriod := int(p.i32("optInWMAPeriod", 10))
+	optInROC1Period := int(p.i32("optInROC1Period", 11))
+	optInROC2Period := int(p.i32("optInROC2Period", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -40439,10 +40449,10 @@ func svCOPPOCK(s *server, p params) string {
 }
 
 func svCORREL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -40779,9 +40789,9 @@ func svCORREL(s *server, p params) string {
 }
 
 func svCOS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -41118,9 +41128,9 @@ func svCOS(s *server, p params) string {
 }
 
 func svCOSH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -41457,13 +41467,13 @@ func svCOSH(s *server, p params) string {
 }
 
 func svCRSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 3))
-	optInStreakPeriod := int(p.i64("optInStreakPeriod", 2))
-	optInRankPeriod := int(p.i64("optInRankPeriod", 100))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 3))
+	optInStreakPeriod := int(p.i32("optInStreakPeriod", 2))
+	optInRankPeriod := int(p.i32("optInRankPeriod", 100))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -41803,10 +41813,10 @@ func svCRSI(s *server, p params) string {
 }
 
 func svCTI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -42143,9 +42153,9 @@ func svCTI(s *server, p params) string {
 }
 
 func svCUMSUM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -42482,12 +42492,12 @@ func svCUMSUM(s *server, p params) string {
 }
 
 func svCVI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
-	optInROCPeriod := int(p.i64("optInROCPeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
+	optInROCPeriod := int(p.i32("optInROCPeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -42827,11 +42837,11 @@ func svCVI(s *server, p params) string {
 }
 
 func svDEMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -43171,9 +43181,9 @@ func svDEMA(s *server, p params) string {
 }
 
 func svDIV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -43510,10 +43520,10 @@ func svDIV(s *server, p params) string {
 }
 
 func svDONCHIAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -44017,14 +44027,14 @@ func svDONCHIAN(s *server, p params) string {
 }
 
 func svDOSC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
-	optInFirstPeriod := int(p.i64("optInFirstPeriod", 5))
-	optInSecondPeriod := int(p.i64("optInSecondPeriod", 3))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
+	optInFirstPeriod := int(p.i32("optInFirstPeriod", 5))
+	optInSecondPeriod := int(p.i32("optInSecondPeriod", 3))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -44367,10 +44377,10 @@ func svDOSC(s *server, p params) string {
 }
 
 func svDPO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -44707,11 +44717,11 @@ func svDPO(s *server, p params) string {
 }
 
 func svDX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -45051,11 +45061,11 @@ func svDX(s *server, p params) string {
 }
 
 func svEFI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 13))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 13))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -45395,11 +45405,11 @@ func svEFI(s *server, p params) string {
 }
 
 func svEMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -45739,10 +45749,10 @@ func svEMA(s *server, p params) string {
 }
 
 func svEMV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	optInVolumeDivisor := p.realOr("optInVolumeDivisor", 10000.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -46080,10 +46090,10 @@ func svEMV(s *server, p params) string {
 }
 
 func svER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -46420,11 +46430,11 @@ func svER(s *server, p params) string {
 }
 
 func svERI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 13))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 13))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -46849,9 +46859,9 @@ func svERI(s *server, p params) string {
 }
 
 func svEXP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -47188,11 +47198,11 @@ func svEXP(s *server, p params) string {
 }
 
 func svFISHER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -47617,9 +47627,9 @@ func svFISHER(s *server, p params) string {
 }
 
 func svFLOOR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -47956,10 +47966,10 @@ func svFLOOR(s *server, p params) string {
 }
 
 func svFOSC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 5))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -48296,11 +48306,11 @@ func svFOSC(s *server, p params) string {
 }
 
 func svFRACTAL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInLeftBars := int(p.i64("optInLeftBars", 2))
-	optInRightBars := int(p.i64("optInRightBars", 2))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInLeftBars := int(p.i32("optInLeftBars", 2))
+	optInRightBars := int(p.i32("optInRightBars", 2))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]int32, svN)
@@ -48716,11 +48726,11 @@ func svFRACTAL(s *server, p params) string {
 }
 
 func svFRAMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 16))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 16))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -49060,16 +49070,16 @@ func svFRAMA(s *server, p params) string {
 }
 
 func svGATOR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInJawPeriod := int(p.i64("optInJawPeriod", 13))
-	optInJawShift := int(p.i64("optInJawShift", 8))
-	optInTeethPeriod := int(p.i64("optInTeethPeriod", 8))
-	optInTeethShift := int(p.i64("optInTeethShift", 5))
-	optInLipsPeriod := int(p.i64("optInLipsPeriod", 5))
-	optInLipsShift := int(p.i64("optInLipsShift", 3))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInJawPeriod := int(p.i32("optInJawPeriod", 13))
+	optInJawShift := int(p.i32("optInJawShift", 8))
+	optInTeethPeriod := int(p.i32("optInTeethPeriod", 8))
+	optInTeethShift := int(p.i32("optInTeethShift", 5))
+	optInLipsPeriod := int(p.i32("optInLipsPeriod", 5))
+	optInLipsShift := int(p.i32("optInLipsShift", 3))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -49494,10 +49504,10 @@ func svGATOR(s *server, p params) string {
 }
 
 func svHA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -50086,10 +50096,10 @@ func svHA(s *server, p params) string {
 }
 
 func svHMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -50426,10 +50436,10 @@ func svHMA(s *server, p params) string {
 }
 
 func svHT_DCPERIOD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -50769,10 +50779,10 @@ func svHT_DCPERIOD(s *server, p params) string {
 }
 
 func svHT_DCPHASE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -51112,10 +51122,10 @@ func svHT_DCPHASE(s *server, p params) string {
 }
 
 func svHT_PHASOR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -51540,10 +51550,10 @@ func svHT_PHASOR(s *server, p params) string {
 }
 
 func svHT_SINE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -51968,10 +51978,10 @@ func svHT_SINE(s *server, p params) string {
 }
 
 func svHT_TRENDLINE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -52311,10 +52321,10 @@ func svHT_TRENDLINE(s *server, p params) string {
 }
 
 func svHT_TRENDMODE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]int32, svN)
@@ -52651,9 +52661,9 @@ func svHT_TRENDMODE(s *server, p params) string {
 }
 
 func svIBS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -52990,12 +53000,12 @@ func svIBS(s *server, p params) string {
 }
 
 func svICHIMOKU(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTenkanPeriod := int(p.i64("optInTenkanPeriod", 9))
-	optInKijunPeriod := int(p.i64("optInKijunPeriod", 26))
-	optInSenkouBPeriod := int(p.i64("optInSenkouBPeriod", 52))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTenkanPeriod := int(p.i32("optInTenkanPeriod", 9))
+	optInKijunPeriod := int(p.i32("optInKijunPeriod", 26))
+	optInSenkouBPeriod := int(p.i32("optInSenkouBPeriod", 52))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -53581,10 +53591,10 @@ func svICHIMOKU(s *server, p params) string {
 }
 
 func svIMI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -53921,11 +53931,11 @@ func svIMI(s *server, p params) string {
 }
 
 func svKAMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -54265,12 +54275,12 @@ func svKAMA(s *server, p params) string {
 }
 
 func svKC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
-	optInATRPeriod := int(p.i64("optInATRPeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
+	optInATRPeriod := int(p.i32("optInATRPeriod", 10))
 	optInNbDev := p.realOr("optInNbDev", 2.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -54781,15 +54791,15 @@ func svKC(s *server, p params) string {
 }
 
 func svKDJ(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastK_Period := int(p.i64("optInFastK_Period", 9))
-	optInSlowK_Period := int(p.i64("optInSlowK_Period", 3))
-	optInSlowK_MAType := talib.MAType(p.i64("optInSlowK_MAType", int64(talib.MATypeDEFAULT)))
-	optInSlowD_Period := int(p.i64("optInSlowD_Period", 3))
-	optInSlowD_MAType := talib.MAType(p.i64("optInSlowD_MAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastK_Period := int(p.i32("optInFastK_Period", 9))
+	optInSlowK_Period := int(p.i32("optInSlowK_Period", 3))
+	optInSlowK_MAType := talib.MAType(p.i32("optInSlowK_MAType", int32(talib.MATypeDEFAULT)))
+	optInSlowD_Period := int(p.i32("optInSlowD_Period", 3))
+	optInSlowD_MAType := talib.MAType(p.i32("optInSlowD_MAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -55311,18 +55321,18 @@ func svKDJ(s *server, p params) string {
 }
 
 func svKST(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInROC1Period := int(p.i64("optInROC1Period", 10))
-	optInROC2Period := int(p.i64("optInROC2Period", 15))
-	optInROC3Period := int(p.i64("optInROC3Period", 20))
-	optInROC4Period := int(p.i64("optInROC4Period", 30))
-	optInSMA1Period := int(p.i64("optInSMA1Period", 10))
-	optInSMA2Period := int(p.i64("optInSMA2Period", 10))
-	optInSMA3Period := int(p.i64("optInSMA3Period", 10))
-	optInSMA4Period := int(p.i64("optInSMA4Period", 15))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInROC1Period := int(p.i32("optInROC1Period", 10))
+	optInROC2Period := int(p.i32("optInROC2Period", 15))
+	optInROC3Period := int(p.i32("optInROC3Period", 20))
+	optInROC4Period := int(p.i32("optInROC4Period", 30))
+	optInSMA1Period := int(p.i32("optInSMA1Period", 10))
+	optInSMA2Period := int(p.i32("optInSMA2Period", 10))
+	optInSMA3Period := int(p.i32("optInSMA3Period", 10))
+	optInSMA4Period := int(p.i32("optInSMA4Period", 15))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -55744,21 +55754,21 @@ func svKST(s *server, p params) string {
 }
 
 func svKSTEXT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInROC1Period := int(p.i64("optInROC1Period", 10))
-	optInROC2Period := int(p.i64("optInROC2Period", 15))
-	optInROC3Period := int(p.i64("optInROC3Period", 20))
-	optInROC4Period := int(p.i64("optInROC4Period", 30))
-	optInMA1Period := int(p.i64("optInMA1Period", 10))
-	optInMA2Period := int(p.i64("optInMA2Period", 10))
-	optInMA3Period := int(p.i64("optInMA3Period", 10))
-	optInMA4Period := int(p.i64("optInMA4Period", 15))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
-	optInROCMAType := talib.MAType(p.i64("optInROCMAType", int64(talib.MATypeDEFAULT)))
-	optInSignalMAType := talib.MAType(p.i64("optInSignalMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInROC1Period := int(p.i32("optInROC1Period", 10))
+	optInROC2Period := int(p.i32("optInROC2Period", 15))
+	optInROC3Period := int(p.i32("optInROC3Period", 20))
+	optInROC4Period := int(p.i32("optInROC4Period", 30))
+	optInMA1Period := int(p.i32("optInMA1Period", 10))
+	optInMA2Period := int(p.i32("optInMA2Period", 10))
+	optInMA3Period := int(p.i32("optInMA3Period", 10))
+	optInMA4Period := int(p.i32("optInMA4Period", 15))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
+	optInROCMAType := talib.MAType(p.i32("optInROCMAType", int32(talib.MATypeDEFAULT)))
+	optInSignalMAType := talib.MAType(p.i32("optInSignalMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -56198,10 +56208,10 @@ func svKSTEXT(s *server, p params) string {
 }
 
 func svKURTOSIS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -56538,13 +56548,13 @@ func svKURTOSIS(s *server, p params) string {
 }
 
 func svKVO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 34))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 55))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 13))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 34))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 55))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 13))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -56969,10 +56979,10 @@ func svKVO(s *server, p params) string {
 }
 
 func svLINEARREG(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -57309,10 +57319,10 @@ func svLINEARREG(s *server, p params) string {
 }
 
 func svLINEARREG_ANGLE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -57649,10 +57659,10 @@ func svLINEARREG_ANGLE(s *server, p params) string {
 }
 
 func svLINEARREG_INTERCEPT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -57989,10 +57999,10 @@ func svLINEARREG_INTERCEPT(s *server, p params) string {
 }
 
 func svLINEARREG_SLOPE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -58329,9 +58339,9 @@ func svLINEARREG_SLOPE(s *server, p params) string {
 }
 
 func svLN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -58668,9 +58678,9 @@ func svLN(s *server, p params) string {
 }
 
 func svLOG10(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -59007,12 +59017,12 @@ func svLOG10(s *server, p params) string {
 }
 
 func svMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -59367,13 +59377,13 @@ func svMA(s *server, p params) string {
 }
 
 func svMACD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -59880,16 +59890,16 @@ func svMACD(s *server, p params) string {
 }
 
 func svMACDEXT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInFastMAType := talib.MAType(p.i64("optInFastMAType", int64(talib.MATypeDEFAULT)))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInSlowMAType := talib.MAType(p.i64("optInSlowMAType", int64(talib.MATypeDEFAULT)))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
-	optInSignalMAType := talib.MAType(p.i64("optInSignalMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInFastMAType := talib.MAType(p.i32("optInFastMAType", int32(talib.MATypeDEFAULT)))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInSlowMAType := talib.MAType(p.i32("optInSlowMAType", int32(talib.MATypeDEFAULT)))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
+	optInSignalMAType := talib.MAType(p.i32("optInSignalMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -60411,11 +60421,11 @@ func svMACDEXT(s *server, p params) string {
 }
 
 func svMACDFIX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -60922,13 +60932,13 @@ func svMACDFIX(s *server, p params) string {
 }
 
 func svMACDV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -61438,10 +61448,10 @@ func svMACDV(s *server, p params) string {
 }
 
 func svMAMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
 	optInFastLimit := p.realOr("optInFastLimit", 0.5)
 	optInSlowLimit := p.realOr("optInSlowLimit", 0.05)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -61868,9 +61878,9 @@ func svMAMA(s *server, p params) string {
 }
 
 func svMARKETFI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -62207,12 +62217,12 @@ func svMARKETFI(s *server, p params) string {
 }
 
 func svMASSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 9))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 25))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 9))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 25))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -62552,13 +62562,13 @@ func svMASSI(s *server, p params) string {
 }
 
 func svMAVP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInMinPeriod := int(p.i64("optInMinPeriod", 2))
-	optInMaxPeriod := int(p.i64("optInMaxPeriod", 30))
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInMinPeriod := int(p.i32("optInMinPeriod", 2))
+	optInMaxPeriod := int(p.i32("optInMaxPeriod", 30))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	for pi := range fzV {
@@ -62916,10 +62926,10 @@ func svMAVP(s *server, p params) string {
 }
 
 func svMAX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -63256,10 +63266,10 @@ func svMAX(s *server, p params) string {
 }
 
 func svMAXINDEX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]int32, svN)
@@ -63593,11 +63603,11 @@ func svMAXINDEX(s *server, p params) string {
 }
 
 func svMCGD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -63937,10 +63947,10 @@ func svMCGD(s *server, p params) string {
 }
 
 func svMEDIAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -64277,9 +64287,9 @@ func svMEDIAN(s *server, p params) string {
 }
 
 func svMEDPRICE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -64616,10 +64626,10 @@ func svMEDPRICE(s *server, p params) string {
 }
 
 func svMFI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -64956,10 +64966,10 @@ func svMFI(s *server, p params) string {
 }
 
 func svMIDPOINT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -65296,10 +65306,10 @@ func svMIDPOINT(s *server, p params) string {
 }
 
 func svMIDPRICE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -65636,10 +65646,10 @@ func svMIDPRICE(s *server, p params) string {
 }
 
 func svMIN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -65976,10 +65986,10 @@ func svMIN(s *server, p params) string {
 }
 
 func svMININDEX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]int32, svN)
@@ -66313,10 +66323,10 @@ func svMININDEX(s *server, p params) string {
 }
 
 func svMINMAX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -66738,10 +66748,10 @@ func svMINMAX(s *server, p params) string {
 }
 
 func svMINMAXINDEX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]int32, svN)
@@ -67157,11 +67167,11 @@ func svMINMAXINDEX(s *server, p params) string {
 }
 
 func svMINUS_DI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -67501,11 +67511,11 @@ func svMINUS_DI(s *server, p params) string {
 }
 
 func svMINUS_DM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -67845,10 +67855,10 @@ func svMINUS_DM(s *server, p params) string {
 }
 
 func svMOM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -68185,9 +68195,9 @@ func svMOM(s *server, p params) string {
 }
 
 func svMULT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -68524,11 +68534,11 @@ func svMULT(s *server, p params) string {
 }
 
 func svNATR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -68868,9 +68878,9 @@ func svNATR(s *server, p params) string {
 }
 
 func svNVI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -69207,9 +69217,9 @@ func svNVI(s *server, p params) string {
 }
 
 func svOBV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -69546,14 +69556,14 @@ func svOBV(s *server, p params) string {
 }
 
 func svPERCENTB(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInNbDevUp := p.realOr("optInNbDevUp", 2.0)
 	optInNbDevDn := p.realOr("optInNbDevDn", 2.0)
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -69908,10 +69918,10 @@ func svPERCENTB(s *server, p params) string {
 }
 
 func svPERCENTILE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 100))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 100))
 	optInPercentile := p.realOr("optInPercentile", 50.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -70249,10 +70259,10 @@ func svPERCENTILE(s *server, p params) string {
 }
 
 func svPERCENTRANK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 100))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 100))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -70589,11 +70599,11 @@ func svPERCENTRANK(s *server, p params) string {
 }
 
 func svPLUS_DI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -70933,11 +70943,11 @@ func svPLUS_DI(s *server, p params) string {
 }
 
 func svPLUS_DM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -71277,13 +71287,13 @@ func svPLUS_DM(s *server, p params) string {
 }
 
 func svPPO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -71638,12 +71648,12 @@ func svPPO(s *server, p params) string {
 }
 
 func svPSO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastK_Period := int(p.i64("optInFastK_Period", 8))
-	optInEMAPeriod := int(p.i64("optInEMAPeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastK_Period := int(p.i32("optInFastK_Period", 8))
+	optInEMAPeriod := int(p.i32("optInEMAPeriod", 5))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -71983,9 +71993,9 @@ func svPSO(s *server, p params) string {
 }
 
 func svPVI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -72322,13 +72332,13 @@ func svPVI(s *server, p params) string {
 }
 
 func svPVO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 12))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 26))
-	optInMAType := talib.MAType(p.i64("optInMAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 12))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 26))
+	optInMAType := talib.MAType(p.i32("optInMAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -72683,9 +72693,9 @@ func svPVO(s *server, p params) string {
 }
 
 func svPVT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -73022,10 +73032,10 @@ func svPVT(s *server, p params) string {
 }
 
 func svQSTICK(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -73362,11 +73372,11 @@ func svQSTICK(s *server, p params) string {
 }
 
 func svRMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -73706,10 +73716,10 @@ func svRMA(s *server, p params) string {
 }
 
 func svROC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -74046,10 +74056,10 @@ func svROC(s *server, p params) string {
 }
 
 func svROCP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -74386,10 +74396,10 @@ func svROCP(s *server, p params) string {
 }
 
 func svROCR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -74726,10 +74736,10 @@ func svROCR(s *server, p params) string {
 }
 
 func svROCR100(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -75066,10 +75076,10 @@ func svROCR100(s *server, p params) string {
 }
 
 func svROGERSSATCHELL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	optInAnnualization := p.realOr("optInAnnualization", 252.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -75407,11 +75417,11 @@ func svROGERSSATCHELL(s *server, p params) string {
 }
 
 func svRSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -75751,12 +75761,12 @@ func svRSI(s *server, p params) string {
 }
 
 func svRVI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
-	optInStdDevPeriod := int(p.i64("optInStdDevPeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
+	optInStdDevPeriod := int(p.i32("optInStdDevPeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -76096,12 +76106,12 @@ func svRVI(s *server, p params) string {
 }
 
 func svRVIR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
-	optInStdDevPeriod := int(p.i64("optInStdDevPeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
+	optInStdDevPeriod := int(p.i32("optInStdDevPeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -76441,10 +76451,10 @@ func svRVIR(s *server, p params) string {
 }
 
 func svRVOL(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -76781,9 +76791,9 @@ func svRVOL(s *server, p params) string {
 }
 
 func svSAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	optInAcceleration := p.realOr("optInAcceleration", 0.02)
 	optInMaximum := p.realOr("optInMaximum", 0.2)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -77122,9 +77132,9 @@ func svSAR(s *server, p params) string {
 }
 
 func svSAREXT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	optInStartValue := p.realOr("optInStartValue", 0.0)
 	optInOffsetOnReverse := p.realOr("optInOffsetOnReverse", 0.0)
 	optInAccelerationInitLong := p.realOr("optInAccelerationInitLong", 0.02)
@@ -77469,10 +77479,10 @@ func svSAREXT(s *server, p params) string {
 }
 
 func svSHARPE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInRiskFreeRate := p.realOr("optInRiskFreeRate", 0.0)
 	optInAnnualization := p.realOr("optInAnnualization", 252.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -77811,9 +77821,9 @@ func svSHARPE(s *server, p params) string {
 }
 
 func svSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	optInLimitMove := p.realOr("optInLimitMove", 3.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -78151,9 +78161,9 @@ func svSI(s *server, p params) string {
 }
 
 func svSIN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -78490,9 +78500,9 @@ func svSIN(s *server, p params) string {
 }
 
 func svSINH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -78829,10 +78839,10 @@ func svSINH(s *server, p params) string {
 }
 
 func svSKEW(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -79169,10 +79179,10 @@ func svSKEW(s *server, p params) string {
 }
 
 func svSMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -79509,14 +79519,14 @@ func svSMA(s *server, p params) string {
 }
 
 func svSMI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 13))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 2))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 25))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 13))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 2))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 25))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -79941,10 +79951,10 @@ func svSMI(s *server, p params) string {
 }
 
 func svSORTINO(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInMAR := p.realOr("optInMAR", 0.0)
 	optInAnnualization := p.realOr("optInAnnualization", 252.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
@@ -80283,9 +80293,9 @@ func svSORTINO(s *server, p params) string {
 }
 
 func svSQRT(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -80622,12 +80632,12 @@ func svSQRT(s *server, p params) string {
 }
 
 func svSQZMOM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInBBPeriod := int(p.i64("optInBBPeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInBBPeriod := int(p.i32("optInBBPeriod", 20))
 	optInNbDev := p.realOr("optInNbDev", 2.0)
-	optInKCPeriod := int(p.i64("optInKCPeriod", 20))
+	optInKCPeriod := int(p.i32("optInKCPeriod", 20))
 	optInFactorWide := p.realOr("optInFactorWide", 2.0)
 	optInFactorNormal := p.realOr("optInFactorNormal", 1.5)
 	optInFactorNarrow := p.realOr("optInFactorNarrow", 1.0)
@@ -81049,13 +81059,13 @@ func svSQZMOM(s *server, p params) string {
 }
 
 func svSTC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastPeriod := int(p.i64("optInFastPeriod", 23))
-	optInSlowPeriod := int(p.i64("optInSlowPeriod", 50))
-	optInCyclePeriod := int(p.i64("optInCyclePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastPeriod := int(p.i32("optInFastPeriod", 23))
+	optInSlowPeriod := int(p.i32("optInSlowPeriod", 50))
+	optInCyclePeriod := int(p.i32("optInCyclePeriod", 10))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -81398,10 +81408,10 @@ func svSTC(s *server, p params) string {
 }
 
 func svSTDDEV(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 5))
 	optInNbDev := p.realOr("optInNbDev", 1.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -81739,15 +81749,15 @@ func svSTDDEV(s *server, p params) string {
 }
 
 func svSTOCH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastK_Period := int(p.i64("optInFastK_Period", 5))
-	optInSlowK_Period := int(p.i64("optInSlowK_Period", 3))
-	optInSlowK_MAType := talib.MAType(p.i64("optInSlowK_MAType", int64(talib.MATypeDEFAULT)))
-	optInSlowD_Period := int(p.i64("optInSlowD_Period", 3))
-	optInSlowD_MAType := talib.MAType(p.i64("optInSlowD_MAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastK_Period := int(p.i32("optInFastK_Period", 5))
+	optInSlowK_Period := int(p.i32("optInSlowK_Period", 3))
+	optInSlowK_MAType := talib.MAType(p.i32("optInSlowK_MAType", int32(talib.MATypeDEFAULT)))
+	optInSlowD_Period := int(p.i32("optInSlowD_Period", 3))
+	optInSlowD_MAType := talib.MAType(p.i32("optInSlowD_MAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -82187,13 +82197,13 @@ func svSTOCH(s *server, p params) string {
 }
 
 func svSTOCHF(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFastK_Period := int(p.i64("optInFastK_Period", 5))
-	optInFastD_Period := int(p.i64("optInFastD_Period", 3))
-	optInFastD_MAType := talib.MAType(p.i64("optInFastD_MAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFastK_Period := int(p.i32("optInFastK_Period", 5))
+	optInFastD_Period := int(p.i32("optInFastD_Period", 3))
+	optInFastD_MAType := talib.MAType(p.i32("optInFastD_MAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -82633,14 +82643,14 @@ func svSTOCHF(s *server, p params) string {
 }
 
 func svSTOCHRSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
-	optInFastK_Period := int(p.i64("optInFastK_Period", 5))
-	optInFastD_Period := int(p.i64("optInFastD_Period", 3))
-	optInFastD_MAType := talib.MAType(p.i64("optInFastD_MAType", int64(talib.MATypeDEFAULT)))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
+	optInFastK_Period := int(p.i32("optInFastK_Period", 5))
+	optInFastD_Period := int(p.i32("optInFastD_Period", 3))
+	optInFastD_MAType := talib.MAType(p.i32("optInFastD_MAType", int32(talib.MATypeDEFAULT)))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -83083,9 +83093,9 @@ func svSTOCHRSI(s *server, p params) string {
 }
 
 func svSUB(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -83422,10 +83432,10 @@ func svSUB(s *server, p params) string {
 }
 
 func svSUM(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -83762,11 +83772,11 @@ func svSUM(s *server, p params) string {
 }
 
 func svSUPERTREND(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 10))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
 	optInMultiplier := p.realOr("optInMultiplier", 3.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -84189,11 +84199,11 @@ func svSUPERTREND(s *server, p params) string {
 }
 
 func svSWAK_2PHP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -84533,11 +84543,11 @@ func svSWAK_2PHP(s *server, p params) string {
 }
 
 func svSWAK_BP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	optInDelta := p.realOr("optInDelta", 0.1)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -84878,11 +84888,11 @@ func svSWAK_BP(s *server, p params) string {
 }
 
 func svSWAK_BUTTER(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -85222,11 +85232,11 @@ func svSWAK_BUTTER(s *server, p params) string {
 }
 
 func svSWAK_GAUSS(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -85566,11 +85576,11 @@ func svSWAK_GAUSS(s *server, p params) string {
 }
 
 func svSWAK_HP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 20))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 20))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -85910,11 +85920,11 @@ func svSWAK_HP(s *server, p params) string {
 }
 
 func svT3(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 5))
 	optInVFactor := p.realOr("optInVFactor", 0.7)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -86255,9 +86265,9 @@ func svT3(s *server, p params) string {
 }
 
 func svTAN(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -86594,9 +86604,9 @@ func svTAN(s *server, p params) string {
 }
 
 func svTANH(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -86933,11 +86943,11 @@ func svTANH(s *server, p params) string {
 }
 
 func svTEMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -87277,9 +87287,9 @@ func svTEMA(s *server, p params) string {
 }
 
 func svTRANGE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -87616,10 +87626,10 @@ func svTRANGE(s *server, p params) string {
 }
 
 func svTRIMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -87956,11 +87966,11 @@ func svTRIMA(s *server, p params) string {
 }
 
 func svTRIX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -88300,10 +88310,10 @@ func svTRIX(s *server, p params) string {
 }
 
 func svTSF(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -88640,12 +88650,12 @@ func svTSF(s *server, p params) string {
 }
 
 func svTSI(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInFirstPeriod := int(p.i64("optInFirstPeriod", 25))
-	optInSecondPeriod := int(p.i64("optInSecondPeriod", 13))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInFirstPeriod := int(p.i32("optInFirstPeriod", 25))
+	optInSecondPeriod := int(p.i32("optInSecondPeriod", 13))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -88985,9 +88995,9 @@ func svTSI(s *server, p params) string {
 }
 
 func svTYPPRICE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -89324,12 +89334,12 @@ func svTYPPRICE(s *server, p params) string {
 }
 
 func svULTOSC(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod1 := int(p.i64("optInTimePeriod1", 7))
-	optInTimePeriod2 := int(p.i64("optInTimePeriod2", 14))
-	optInTimePeriod3 := int(p.i64("optInTimePeriod3", 28))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod1 := int(p.i32("optInTimePeriod1", 7))
+	optInTimePeriod2 := int(p.i32("optInTimePeriod2", 14))
+	optInTimePeriod3 := int(p.i32("optInTimePeriod3", 28))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -89666,10 +89676,10 @@ func svULTOSC(s *server, p params) string {
 }
 
 func svVAR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 5))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 5))
 	optInNbDev := p.realOr("optInNbDev", 1.0)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
@@ -90007,10 +90017,10 @@ func svVAR(s *server, p params) string {
 }
 
 func svVHF(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 28))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 28))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -90347,12 +90357,12 @@ func svVHF(s *server, p params) string {
 }
 
 func svVIDYA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 12))
-	optInCMOPeriod := int(p.i64("optInCMOPeriod", 9))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 12))
+	optInCMOPeriod := int(p.i32("optInCMOPeriod", 9))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -90692,10 +90702,10 @@ func svVIDYA(s *server, p params) string {
 }
 
 func svVORTEX(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -91117,9 +91127,9 @@ func svVORTEX(s *server, p params) string {
 }
 
 func svVWAP(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -91456,10 +91466,10 @@ func svVWAP(s *server, p params) string {
 }
 
 func svVWMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -91796,9 +91806,9 @@ func svVWMA(s *server, p params) string {
 }
 
 func svWAD(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -92135,13 +92145,13 @@ func svWAD(s *server, p params) string {
 }
 
 func svWAVETREND(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInChannelPeriod := int(p.i64("optInChannelPeriod", 10))
-	optInAveragePeriod := int(p.i64("optInAveragePeriod", 21))
-	optInSignalPeriod := int(p.i64("optInSignalPeriod", 4))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInChannelPeriod := int(p.i32("optInChannelPeriod", 10))
+	optInAveragePeriod := int(p.i32("optInAveragePeriod", 21))
+	optInSignalPeriod := int(p.i32("optInSignalPeriod", 4))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -92566,9 +92576,9 @@ func svWAVETREND(s *server, p params) string {
 }
 
 func svWCLPRICE(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -92905,10 +92915,10 @@ func svWCLPRICE(s *server, p params) string {
 }
 
 func svWILLR(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 14))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 14))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -93245,10 +93255,10 @@ func svWILLR(s *server, p params) string {
 }
 
 func svWMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -93585,11 +93595,11 @@ func svWMA(s *server, p params) string {
 }
 
 func svZIGZAG(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
 	optInSensitivity := p.realOr("optInSensitivity", 5.0)
-	optInMinTrendLength := int(p.i64("optInMinTrendLength", 1))
+	optInMinTrendLength := int(p.i32("optInMinTrendLength", 1))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)
@@ -94090,11 +94100,11 @@ func svZIGZAG(s *server, p params) string {
 }
 
 func svZLEMA(s *server, p params) string {
-	svShape := int32(p.i64("gen_shape", 0))
-	svSeed := int32(p.i64("gen_seed", 0))
-	svN := min(max(int(p.i64("gen_n", 0)), 2), 256)
-	svK := int(p.i64("unstablePeriod", 0))
-	optInTimePeriod := int(p.i64("optInTimePeriod", 30))
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 30))
 	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
 	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
 	b0 := make([]float64, svN)

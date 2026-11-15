@@ -6168,9 +6168,23 @@ func (p params) i64(name string, def int64) int64 {
 	return def
 }
 
+// A value outside int32 saturates, as the C server's does. Never down to
+// MinInt32: that is IntegerDefault, and would turn the request into "use the
+// default".
+func (p params) i32(name string, def int32) int32 {
+	v, err := strconv.ParseInt(string(p[name]), 10, 32)
+	if errors.Is(err, strconv.ErrRange) {
+		return max(int32(v), math.MinInt32+1)
+	}
+	if err != nil {
+		return def
+	}
+	return int32(v)
+}
+
 // integer reads an optional parameter: absent is the default sentinel.
 func (p params) integer(name string) int {
-	return int(p.i64(name, talib.IntegerDefault))
+	return int(p.i32(name, talib.IntegerDefault))
 }
 
 func (p params) real(name string) float64 {
@@ -6291,7 +6305,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 	in := make([][]float64, len(slots))
 	switch {
 	case p.i64("gen_present", 0) != 0:
-		n := int(p.i64("gen_n", 0))
+		n := int(p.i32("gen_n", 0))
 		if n < 0 {
 			n = 0
 		}
@@ -6299,7 +6313,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 		for k := range series {
 			series[k] = make([]float64, n)
 		}
-		fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n,
+		fuzzGen(p.i32("gen_shape", 0), p.i32("gen_seed", 0), n,
 			series[0], series[1], series[2], series[3], series[4], series[5])
 		for k, slot := range slots {
 			in[k] = series[slot.fuzz]
@@ -6320,7 +6334,7 @@ func (s *server) inputs(p params, slots []inSlot) [][]float64 {
 // previous setting, as C's TA_SetUnstablePeriod does.
 func (s *server) pin(p params, id talib.FuncUnstId) {
 	if _, ok := p["unstablePeriod"]; ok {
-		_ = s.core.SetUnstablePeriod(id, int(p.i64("unstablePeriod", 0)))
+		_ = s.core.SetUnstablePeriod(id, int(p.i32("unstablePeriod", 0)))
 	}
 }
 
@@ -6330,7 +6344,7 @@ func (s *server) pin(p params, id talib.FuncUnstId) {
 func (s *server) batch(p params, ins []inSlot, outs []outSlot, lookback func() (int, error),
 	run func(c *call) (talib.OutRange, error), open func(in [][]float64) error,
 	fill func(in [][]float64, c *call) (talib.OutRange, error), ride func(c *call) string) string {
-	c := &call{start: int(p.i64("startIdx", 0)), end: int(p.i64("endIdx", 0))}
+	c := &call{start: int(p.i32("startIdx", 0)), end: int(p.i32("endIdx", 0))}
 	c.in = s.inputs(p, ins)
 	mode := p.i64("bench_mode", 0)
 	if mode < 0 || mode > 2 || mode != 0 && open == nil {
@@ -6347,7 +6361,7 @@ func (s *server) batch(p params, ins []inSlot, outs []outSlot, lookback func() (
 	if lb, err := lookback(); err == nil && max(c.start, lb) <= c.end {
 		size = c.end - max(c.start, lb) + 1
 	}
-	size += int(p.i64("out_pad", 0))
+	size += int(p.i32("out_pad", 0))
 	for _, o := range outs {
 		if o.isInt {
 			buf := make([]int32, size)
@@ -6489,23 +6503,19 @@ func errorReply(msg string) string {
 }
 
 func (s *server) setUnstablePeriod(p params) string {
-	id := p.i64("id", 99)
-	if id < 0 || id > math.MaxInt32 {
+	id := p.i32("id", 99)
+	if id < 0 {
 		return errorReply("Invalid unstable period id")
 	}
-	if s.core.SetUnstablePeriod(talib.FuncUnstId(id), int(p.i64("period", 0))) != nil {
+	if s.core.SetUnstablePeriod(talib.FuncUnstId(id), int(p.i32("period", 0))) != nil {
 		return errorReply("Invalid unstable period")
 	}
 	return `{"status":"ok"}`
 }
 
-func fitsInt32(v int64) bool {
-	return v >= math.MinInt32 && v <= math.MaxInt32
-}
-
 func (s *server) setCandleSettings(p params) string {
-	st, rt, ap := p.i64("settingType", -1), p.i64("rangeType", -1), p.i64("avgPeriod", 0)
-	if !fitsInt32(st) || !fitsInt32(rt) || s.core.SetCandleSetting(talib.CandleSettingType(st),
+	st, rt, ap := p.i32("settingType", -1), p.i32("rangeType", -1), p.i32("avgPeriod", 0)
+	if s.core.SetCandleSetting(talib.CandleSettingType(st),
 		talib.RangeType(rt), int(ap), p.f64Bits("factorBits", 1.0)) != nil {
 		return errorReply("Invalid candle setting")
 	}
@@ -6513,20 +6523,20 @@ func (s *server) setCandleSettings(p params) string {
 }
 
 func (s *server) restoreCandleDefaultSettings(p params) string {
-	st := p.i64("settingType", -1)
-	if !fitsInt32(st) || s.core.RestoreCandleDefault(talib.CandleSettingType(st)) != nil {
+	st := p.i32("settingType", -1)
+	if s.core.RestoreCandleDefault(talib.CandleSettingType(st)) != nil {
 		return errorReply("Invalid candle setting type")
 	}
 	return `{"status":"ok"}`
 }
 
 func fuzzInHash(p params) string {
-	n := max(int(p.i64("gen_n", 0)), 0)
+	n := max(int(p.i32("gen_n", 0)), 0)
 	var a [6][]float64
 	for k := range a {
 		a[k] = make([]float64, n)
 	}
-	fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n, a[0], a[1], a[2], a[3], a[4], a[5])
+	fuzzGen(p.i32("gen_shape", 0), p.i32("gen_seed", 0), n, a[0], a[1], a[2], a[3], a[4], a[5])
 	h := fuzzHashInit()
 	for _, x := range a {
 		h = fuzzHashF64(h, x)
@@ -6638,7 +6648,7 @@ func absFuncAttributes(p params) string {
 
 func absInputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.Inputs()) {
 		return absNotFound
 	}
@@ -6649,7 +6659,7 @@ func absInputInfo(p params) string {
 
 func absOutputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.Outputs()) {
 		return absNotFound
 	}
@@ -6660,7 +6670,7 @@ func absOutputInfo(p params) string {
 
 func absOptInputInfo(p params) string {
 	f, ok := absLookup(p)
-	i := int(p.i64("paramIndex", -1))
+	i := int(p.i32("paramIndex", -1))
 	if !ok || i < 0 || i >= len(f.OptInputs()) {
 		return absNotFound
 	}
@@ -6726,8 +6736,8 @@ func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
 			}
 			err = h.SetOptInputReal(k, v)
 		default:
-			v, perr := strconv.ParseInt(string(raw), 10, 64)
-			if perr != nil || !fitsInt32(v) {
+			v, perr := strconv.ParseInt(string(raw), 10, 32)
+			if perr != nil {
 				return talib.BadParam
 			}
 			err = h.SetOptInputInteger(k, int(v))
@@ -6772,7 +6782,7 @@ func (s *server) absDisplayShift(p params) string {
 	}
 	ds := math.MinInt32
 	if h != nil {
-		if v, err := h.DisplayShift(int(p.i64("outputIdx", 0))); err == nil {
+		if v, err := h.DisplayShift(int(p.i32("outputIdx", 0))); err == nil {
 			ds = v
 		}
 	}
@@ -6789,7 +6799,7 @@ func (s *server) absCall(p params) string {
 	if !ok {
 		return errorReply("Unknown function: " + p.str("funcName"))
 	}
-	start, end := p.i64("startIdx", 0), p.i64("endIdx", 0)
+	start, end := p.i32("startIdx", 0), p.i32("endIdx", 0)
 	early := func(rc talib.RetCode) string {
 		return `{"binder":1,"lookback":-1,"retCode":` + strconv.Itoa(int(rc)) + `,"outBegIdx":0,"outNBElement":0}`
 	}
@@ -6810,7 +6820,7 @@ func (s *server) absCall(p params) string {
 		}
 	}
 	inputs, outputs := f.Inputs(), f.Outputs()
-	skipIn, skipOut := int(p.i64("skipInput", 0)), int(p.i64("skipOutput", 0))
+	skipIn, skipOut := int(p.i32("skipInput", 0)), int(p.i32("skipOutput", 0))
 	generic := 0
 	for _, in := range inputs {
 		if in.Kind != metadata.InputPrice {

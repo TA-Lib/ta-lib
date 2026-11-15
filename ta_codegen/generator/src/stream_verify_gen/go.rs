@@ -100,12 +100,12 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
 
     let mut l = L { s: String::new(), depth: 0 };
     l.open(format!("func sv{name}(s *server, p params) string {{"));
-    l.line("svShape := int32(p.i64(\"gen_shape\", 0))");
-    l.line("svSeed := int32(p.i64(\"gen_seed\", 0))");
-    l.line("svN := min(max(int(p.i64(\"gen_n\", 0)), 2), 256)");
+    l.line("svShape := p.i32(\"gen_shape\", 0)");
+    l.line("svSeed := p.i32(\"gen_seed\", 0)");
+    l.line("svN := min(max(int(p.i32(\"gen_n\", 0)), 2), 256)");
     let pin_ids = collect_pin_ids(func, funcs, enums);
     if !pin_ids.is_empty() {
-        l.line("svK := int(p.i64(\"unstablePeriod\", 0))");
+        l.line("svK := int(p.i32(\"unstablePeriod\", 0))");
     }
     if candle {
         l.line("candleLegs := p.i64(\"candleLegs\", 0)");
@@ -114,8 +114,8 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         let n = &prm.name;
         match &prm.param_type {
             ParamType::Real => l.line(format!("{n} := p.realOr(\"{n}\", {:?})", prm.default.unwrap_or(0.0))),
-            ParamType::Enum(e) => l.line(format!("{n} := talib.{e}(p.i64(\"{n}\", int64(talib.{e}DEFAULT)))")),
-            _ => l.line(format!("{n} := int(p.i64(\"{n}\", {}))", prm.default.unwrap_or(0.0) as i64)),
+            ParamType::Enum(e) => l.line(format!("{n} := talib.{e}(p.i32(\"{n}\", int32(talib.{e}DEFAULT)))")),
+            _ => l.line(format!("{n} := int(p.i32(\"{n}\", {}))", prm.default.unwrap_or(0.0) as i64)),
         }
     }
     l.line("fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)");
