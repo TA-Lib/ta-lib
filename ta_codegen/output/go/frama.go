@@ -66,9 +66,13 @@ func (c *Core) framaLookback(optInTimePeriod int32) int32 {
 func (c *Core) framaImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTimePeriod int32, outBegIdx, outNBElement *int32, outReal []float64) RetCode {
 	var expScale float64
 	var slot_sufHigh []float64
+	var local_slot_sufHigh [32]float64
 	var slot_sufLow []float64
+	var local_slot_sufLow [32]float64
 	var slot_oldHigh []float64
+	var local_slot_oldHigh [32]float64
 	var slot_oldLow []float64
+	var local_slot_oldLow [32]float64
 	var slot_Idx int32
 	var maxIdx_slot int32
 	maxIdx_slot = 31
@@ -122,10 +126,26 @@ func (c *Core) framaImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInT
 	if half < 1 {
 		return InternalError
 	}
-	slot_sufHigh = make([]float64, half)
-	slot_sufLow = make([]float64, half)
-	slot_oldHigh = make([]float64, half)
-	slot_oldLow = make([]float64, half)
+	if half <= 32 {
+		slot_sufHigh = local_slot_sufHigh[:half]
+	} else {
+		slot_sufHigh = make([]float64, half)
+	}
+	if half <= 32 {
+		slot_sufLow = local_slot_sufLow[:half]
+	} else {
+		slot_sufLow = make([]float64, half)
+	}
+	if half <= 32 {
+		slot_oldHigh = local_slot_oldHigh[:half]
+	} else {
+		slot_oldHigh = make([]float64, half)
+	}
+	if half <= 32 {
+		slot_oldLow = local_slot_oldLow[:half]
+	} else {
+		slot_oldLow = make([]float64, half)
+	}
 	maxIdx_slot = half - 1
 	slot_Idx = 0
 	today = startIdx - lookbackTotal + 1

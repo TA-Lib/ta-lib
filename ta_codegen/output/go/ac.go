@@ -68,6 +68,7 @@ func (c *Core) acImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInFast
 	var oscStartIdx int32
 	var lookbackTotal int32
 	var oscBuffer []float64
+	var local_oscBuffer [32]float64
 	var oscBuffer_Idx int32
 	var maxIdx_oscBuffer int32
 	maxIdx_oscBuffer = 31
@@ -104,7 +105,11 @@ func (c *Core) acImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInFast
 	if optInSignalPeriod < 1 {
 		return InternalError
 	}
-	oscBuffer = make([]float64, optInSignalPeriod)
+	if optInSignalPeriod <= 32 {
+		oscBuffer = local_oscBuffer[:optInSignalPeriod]
+	} else {
+		oscBuffer = make([]float64, optInSignalPeriod)
+	}
 	maxIdx_oscBuffer = optInSignalPeriod - 1
 	oscBuffer_Idx = 0
 	oscStartIdx = startIdx - (optInSignalPeriod - 1)

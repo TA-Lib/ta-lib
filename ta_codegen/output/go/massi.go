@@ -70,6 +70,7 @@ func (c *Core) massiImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInF
 	var nBar int32
 	var n2 int32
 	var ratioRing []float64
+	var local_ratioRing [32]float64
 	var ratioRing_Idx int32
 	var maxIdx_ratioRing int32
 	maxIdx_ratioRing = 31
@@ -103,7 +104,11 @@ func (c *Core) massiImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInF
 	if optInSlowPeriod < 1 {
 		return InternalError
 	}
-	ratioRing = make([]float64, optInSlowPeriod)
+	if optInSlowPeriod <= 32 {
+		ratioRing = local_ratioRing[:optInSlowPeriod]
+	} else {
+		ratioRing = make([]float64, optInSlowPeriod)
+	}
 	maxIdx_ratioRing = optInSlowPeriod - 1
 	ratioRing_Idx = 0
 	*outBegIdx = startIdx

@@ -80,6 +80,7 @@ func (c *Core) coppockImpl(startIdx, endIdx int32, inReal []float64, optInWMAPer
 	var roc1 float64
 	var roc2 float64
 	var sRing []float64
+	var local_sRing [50]float64
 	var sRing_Idx int32
 	var maxIdx_sRing int32
 	maxIdx_sRing = 49
@@ -122,7 +123,11 @@ func (c *Core) coppockImpl(startIdx, endIdx int32, inReal []float64, optInWMAPer
 	if ringSize < 1 {
 		return InternalError
 	}
-	sRing = make([]float64, ringSize)
+	if ringSize <= 50 {
+		sRing = local_sRing[:ringSize]
+	} else {
+		sRing = make([]float64, ringSize)
+	}
 	maxIdx_sRing = ringSize - 1
 	sRing_Idx = 0
 	sRing[0] = 0.0

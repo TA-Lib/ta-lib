@@ -64,17 +64,23 @@ func (c *Core) stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod in
 
 func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod, optInSlowPeriod, optInCyclePeriod int32, outBegIdx, outNBElement *int32, outReal []float64) RetCode {
 	var lineRing []float64
+	var local_lineRing [30]float64
 	var lineRing_Idx int32
 	var maxIdx_lineRing int32
 	maxIdx_lineRing = 29
 	var lineSufHi []float64
+	var local_lineSufHi [30]float64
 	var lineSufLo []float64
+	var local_lineSufLo [30]float64
 	var pfRing []float64
+	var local_pfRing [30]float64
 	var pfRing_Idx int32
 	var maxIdx_pfRing int32
 	maxIdx_pfRing = 29
 	var pfSufHi []float64
+	var local_pfSufHi [30]float64
 	var pfSufLo []float64
+	var local_pfSufLo [30]float64
 	var prevFast float64
 	var prevSlow float64
 	var fastK float64
@@ -156,31 +162,55 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	lineRing = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		lineRing = local_lineRing[:optInCyclePeriod]
+	} else {
+		lineRing = make([]float64, optInCyclePeriod)
+	}
 	maxIdx_lineRing = optInCyclePeriod - 1
 	lineRing_Idx = 0
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	lineSufHi = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		lineSufHi = local_lineSufHi[:optInCyclePeriod]
+	} else {
+		lineSufHi = make([]float64, optInCyclePeriod)
+	}
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	lineSufLo = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		lineSufLo = local_lineSufLo[:optInCyclePeriod]
+	} else {
+		lineSufLo = make([]float64, optInCyclePeriod)
+	}
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	pfRing = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		pfRing = local_pfRing[:optInCyclePeriod]
+	} else {
+		pfRing = make([]float64, optInCyclePeriod)
+	}
 	maxIdx_pfRing = optInCyclePeriod - 1
 	pfRing_Idx = 0
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	pfSufHi = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		pfSufHi = local_pfSufHi[:optInCyclePeriod]
+	} else {
+		pfSufHi = make([]float64, optInCyclePeriod)
+	}
 	if optInCyclePeriod < 1 {
 		return InternalError
 	}
-	pfSufLo = make([]float64, optInCyclePeriod)
+	if optInCyclePeriod <= 30 {
+		pfSufLo = local_pfSufLo[:optInCyclePeriod]
+	} else {
+		pfSufLo = make([]float64, optInCyclePeriod)
+	}
 	lastIdx = optInCyclePeriod - 1
 	lookbackSlow = c.emaLookback(optInSlowPeriod)
 	lineStart = startIdx - (lookbackTotal - lookbackSlow)

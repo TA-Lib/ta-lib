@@ -124,22 +124,27 @@ func (c *Core) kstImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period
 	var rcma3 float64
 	var rcma4 float64
 	var ring1 []float64
+	var local_ring1 [30]float64
 	var ring1_Idx int32
 	var maxIdx_ring1 int32
 	maxIdx_ring1 = 29
 	var ring2 []float64
+	var local_ring2 [30]float64
 	var ring2_Idx int32
 	var maxIdx_ring2 int32
 	maxIdx_ring2 = 29
 	var ring3 []float64
+	var local_ring3 [30]float64
 	var ring3_Idx int32
 	var maxIdx_ring3 int32
 	maxIdx_ring3 = 29
 	var ring4 []float64
+	var local_ring4 [30]float64
 	var ring4_Idx int32
 	var maxIdx_ring4 int32
 	maxIdx_ring4 = 29
 	var sigRing []float64
+	var local_sigRing [30]float64
 	var sigRing_Idx int32
 	var maxIdx_sigRing int32
 	maxIdx_sigRing = 29
@@ -209,31 +214,51 @@ func (c *Core) kstImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period
 	if optInSMA1Period < 1 {
 		return InternalError
 	}
-	ring1 = make([]float64, optInSMA1Period)
+	if optInSMA1Period <= 30 {
+		ring1 = local_ring1[:optInSMA1Period]
+	} else {
+		ring1 = make([]float64, optInSMA1Period)
+	}
 	maxIdx_ring1 = optInSMA1Period - 1
 	ring1_Idx = 0
 	if optInSMA2Period < 1 {
 		return InternalError
 	}
-	ring2 = make([]float64, optInSMA2Period)
+	if optInSMA2Period <= 30 {
+		ring2 = local_ring2[:optInSMA2Period]
+	} else {
+		ring2 = make([]float64, optInSMA2Period)
+	}
 	maxIdx_ring2 = optInSMA2Period - 1
 	ring2_Idx = 0
 	if optInSMA3Period < 1 {
 		return InternalError
 	}
-	ring3 = make([]float64, optInSMA3Period)
+	if optInSMA3Period <= 30 {
+		ring3 = local_ring3[:optInSMA3Period]
+	} else {
+		ring3 = make([]float64, optInSMA3Period)
+	}
 	maxIdx_ring3 = optInSMA3Period - 1
 	ring3_Idx = 0
 	if optInSMA4Period < 1 {
 		return InternalError
 	}
-	ring4 = make([]float64, optInSMA4Period)
+	if optInSMA4Period <= 30 {
+		ring4 = local_ring4[:optInSMA4Period]
+	} else {
+		ring4 = make([]float64, optInSMA4Period)
+	}
 	maxIdx_ring4 = optInSMA4Period - 1
 	ring4_Idx = 0
 	if optInSignalPeriod < 1 {
 		return InternalError
 	}
-	sigRing = make([]float64, optInSignalPeriod)
+	if optInSignalPeriod <= 30 {
+		sigRing = local_sigRing[:optInSignalPeriod]
+	} else {
+		sigRing = make([]float64, optInSignalPeriod)
+	}
 	maxIdx_sigRing = optInSignalPeriod - 1
 	sigRing_Idx = 0
 	sigStart = startIdx - (optInSignalPeriod - 1)

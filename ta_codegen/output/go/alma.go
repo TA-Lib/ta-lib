@@ -77,6 +77,7 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	var m int32
 	var b int32
 	var weights []float64
+	var local_weights [30]float64
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -120,7 +121,11 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	weights = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		weights = local_weights[:optInTimePeriod]
+	} else {
+		weights = make([]float64, optInTimePeriod)
+	}
 	m = f2i(math.Floor(float64(optInOffset * float64(lookbackTotal))))
 	s = float64(optInTimePeriod) / optInSigma
 	twoSSq = float64(float64(2.0*s) * s)

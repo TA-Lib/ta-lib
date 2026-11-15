@@ -138,10 +138,12 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 	var seg int32
 	var room int32
 	var ring []float64
+	var local_ring [100]float64
 	var ring_Idx int32
 	var maxIdx_ring int32
 	maxIdx_ring = 99
 	var sorted []float64
+	var local_sorted [100]float64
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -170,13 +172,21 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	ring = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 100 {
+		ring = local_ring[:optInTimePeriod]
+	} else {
+		ring = make([]float64, optInTimePeriod)
+	}
 	maxIdx_ring = optInTimePeriod - 1
 	ring_Idx = 0
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	sorted = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 100 {
+		sorted = local_sorted[:optInTimePeriod]
+	} else {
+		sorted = make([]float64, optInTimePeriod)
+	}
 	sorted[lookbackTotal] = 0.0
 	rank = f2i(math.Ceil(float64(optInPercentile*float64(optInTimePeriod)) / 100.0))
 	if rank < 1 {
@@ -562,13 +572,17 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 			if layout != 0 {
 				if layout == 2 {
 					if pendDel < pendPos {
-						for k = pendDel; k < pendPos-1; k += 1 {
-							sorted[k] = sorted[k+1]
+						k = pendDel
+						if k < pendPos-1 {
+							copy(sorted[k:pendPos-1], sorted[k+1:pendPos-1+1])
+							k = pendPos - 1
 						}
 						sorted[pendPos-1] = pendNew
 					} else {
-						for k = pendDel; k > pendPos; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = pendDel
+						if k > pendPos {
+							copy(sorted[pendPos+1:k+1], sorted[pendPos:k])
+							k = pendPos
 						}
 						sorted[pendPos] = pendNew
 					}
@@ -797,35 +811,47 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 						room = lookbackTotal - slot
 						if cnt <= room {
 							e = slot + cnt
-							for k = slot; k < e; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = slot
+							if k < e {
+								copy(sorted[k:e], sorted[k+1:e+1])
+								k = e
 							}
 							slot = e
 						} else {
-							for k = slot; k < lookbackTotal; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = slot
+							if k < lookbackTotal {
+								copy(sorted[k:lookbackTotal], sorted[k+1:lookbackTotal+1])
+								k = lookbackTotal
 							}
 							sorted[lookbackTotal] = sorted[0]
 							e = cnt - room - 1
-							for k = 0; k < e; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = 0
+							if k < e {
+								copy(sorted[k:e], sorted[k+1:e+1])
+								k = e
 							}
 							slot = e
 						}
 					} else if cnt <= slot {
 						e = slot - cnt
-						for k = slot; k > e; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = slot
+						if k > e {
+							copy(sorted[e+1:k+1], sorted[e:k])
+							k = e
 						}
 						slot = e
 					} else {
-						for k = slot; k > 0; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = slot
+						if k > 0 {
+							copy(sorted[0+1:k+1], sorted[0:k])
+							k = 0
 						}
 						sorted[0] = sorted[lookbackTotal]
 						e = lookbackTotal - (cnt - slot - 1)
-						for k = lookbackTotal; k > e; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = lookbackTotal
+						if k > e {
+							copy(sorted[e+1:k+1], sorted[e:k])
+							k = e
 						}
 						slot = e
 					}
@@ -965,13 +991,17 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 				}
 				del = _T53
 				if pendDel < pendPos {
-					for k = pendDel; k < pendPos-1; k += 1 {
-						sorted[k] = sorted[k+1]
+					k = pendDel
+					if k < pendPos-1 {
+						copy(sorted[k:pendPos-1], sorted[k+1:pendPos-1+1])
+						k = pendPos - 1
 					}
 					sorted[pendPos-1] = pendNew
 				} else {
-					for k = pendDel; k > pendPos; k -= 1 {
-						sorted[k] = sorted[k-1]
+					k = pendDel
+					if k > pendPos {
+						copy(sorted[pendPos+1:k+1], sorted[pendPos:k])
+						k = pendPos
 					}
 					sorted[pendPos] = pendNew
 				}
@@ -1491,16 +1521,20 @@ func (sp *PERCENTILEStream) Update(inReal float64) (float64, error) {
 					cb_sorted = sp.cb_sorted
 					pendDel = sp.pendDel
 					pendPos = sp.pendPos
-					for k = pendDel; k < pendPos-1; k += 1 {
-						cb_sorted[k] = cb_sorted[k+1]
+					k = pendDel
+					if k < pendPos-1 {
+						copy(cb_sorted[k:pendPos-1], cb_sorted[k+1:pendPos-1+1])
+						k = pendPos - 1
 					}
 					sp.cb_sorted[sp.pendPos-1] = sp.pendNew
 				} else {
 					cb_sorted = sp.cb_sorted
 					pendDel = sp.pendDel
 					pendPos = sp.pendPos
-					for k = pendDel; k > pendPos; k -= 1 {
-						cb_sorted[k] = cb_sorted[k-1]
+					k = pendDel
+					if k > pendPos {
+						copy(cb_sorted[pendPos+1:k+1], cb_sorted[pendPos:k])
+						k = pendPos
 					}
 					sp.cb_sorted[sp.pendPos] = sp.pendNew
 				}
@@ -1732,42 +1766,54 @@ func (sp *PERCENTILEStream) Update(inReal float64) (float64, error) {
 					if cnt <= room {
 						e = slot + cnt
 						cb_sorted = sp.cb_sorted
-						for k = slot; k < e; k += 1 {
-							cb_sorted[k] = cb_sorted[k+1]
+						k = slot
+						if k < e {
+							copy(cb_sorted[k:e], cb_sorted[k+1:e+1])
+							k = e
 						}
 						slot = e
 					} else {
 						cb_sorted = sp.cb_sorted
 						lookbackTotal = sp.lookbackTotal
-						for k = slot; k < lookbackTotal; k += 1 {
-							cb_sorted[k] = cb_sorted[k+1]
+						k = slot
+						if k < lookbackTotal {
+							copy(cb_sorted[k:lookbackTotal], cb_sorted[k+1:lookbackTotal+1])
+							k = lookbackTotal
 						}
 						sp.cb_sorted[sp.lookbackTotal] = sp.cb_sorted[0]
 						e = cnt - room - 1
 						cb_sorted = sp.cb_sorted
-						for k = 0; k < e; k += 1 {
-							cb_sorted[k] = cb_sorted[k+1]
+						k = 0
+						if k < e {
+							copy(cb_sorted[k:e], cb_sorted[k+1:e+1])
+							k = e
 						}
 						slot = e
 					}
 				} else if cnt <= slot {
 					e = slot - cnt
 					cb_sorted = sp.cb_sorted
-					for k = slot; k > e; k -= 1 {
-						cb_sorted[k] = cb_sorted[k-1]
+					k = slot
+					if k > e {
+						copy(cb_sorted[e+1:k+1], cb_sorted[e:k])
+						k = e
 					}
 					slot = e
 				} else {
 					cb_sorted = sp.cb_sorted
-					for k = slot; k > 0; k -= 1 {
-						cb_sorted[k] = cb_sorted[k-1]
+					k = slot
+					if k > 0 {
+						copy(cb_sorted[0+1:k+1], cb_sorted[0:k])
+						k = 0
 					}
 					sp.cb_sorted[0] = sp.cb_sorted[sp.lookbackTotal]
 					e = sp.lookbackTotal - (cnt - slot - 1)
 					cb_sorted = sp.cb_sorted
 					lookbackTotal = sp.lookbackTotal
-					for k = lookbackTotal; k > e; k -= 1 {
-						cb_sorted[k] = cb_sorted[k-1]
+					k = lookbackTotal
+					if k > e {
+						copy(cb_sorted[e+1:k+1], cb_sorted[e:k])
+						k = e
 					}
 					slot = e
 				}
@@ -1914,16 +1960,20 @@ func (sp *PERCENTILEStream) Update(inReal float64) (float64, error) {
 				cb_sorted = sp.cb_sorted
 				pendDel = sp.pendDel
 				pendPos = sp.pendPos
-				for k = pendDel; k < pendPos-1; k += 1 {
-					cb_sorted[k] = cb_sorted[k+1]
+				k = pendDel
+				if k < pendPos-1 {
+					copy(cb_sorted[k:pendPos-1], cb_sorted[k+1:pendPos-1+1])
+					k = pendPos - 1
 				}
 				sp.cb_sorted[sp.pendPos-1] = sp.pendNew
 			} else {
 				cb_sorted = sp.cb_sorted
 				pendDel = sp.pendDel
 				pendPos = sp.pendPos
-				for k = pendDel; k > pendPos; k -= 1 {
-					cb_sorted[k] = cb_sorted[k-1]
+				k = pendDel
+				if k > pendPos {
+					copy(cb_sorted[pendPos+1:k+1], cb_sorted[pendPos:k])
+					k = pendPos
 				}
 				sp.cb_sorted[sp.pendPos] = sp.pendNew
 			}
@@ -2576,13 +2626,17 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 			if layout != 0 {
 				if layout == 2 {
 					if pendDel < pendPos {
-						for k = pendDel; k < pendPos-1; k += 1 {
-							sorted[k] = sorted[k+1]
+						k = pendDel
+						if k < pendPos-1 {
+							copy(sorted[k:pendPos-1], sorted[k+1:pendPos-1+1])
+							k = pendPos - 1
 						}
 						sorted[pendPos-1] = pendNew
 					} else {
-						for k = pendDel; k > pendPos; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = pendDel
+						if k > pendPos {
+							copy(sorted[pendPos+1:k+1], sorted[pendPos:k])
+							k = pendPos
 						}
 						sorted[pendPos] = pendNew
 					}
@@ -2811,35 +2865,47 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 						room = lookbackTotal - slot
 						if cnt <= room {
 							e = slot + cnt
-							for k = slot; k < e; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = slot
+							if k < e {
+								copy(sorted[k:e], sorted[k+1:e+1])
+								k = e
 							}
 							slot = e
 						} else {
-							for k = slot; k < lookbackTotal; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = slot
+							if k < lookbackTotal {
+								copy(sorted[k:lookbackTotal], sorted[k+1:lookbackTotal+1])
+								k = lookbackTotal
 							}
 							sorted[lookbackTotal] = sorted[0]
 							e = cnt - room - 1
-							for k = 0; k < e; k += 1 {
-								sorted[k] = sorted[k+1]
+							k = 0
+							if k < e {
+								copy(sorted[k:e], sorted[k+1:e+1])
+								k = e
 							}
 							slot = e
 						}
 					} else if cnt <= slot {
 						e = slot - cnt
-						for k = slot; k > e; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = slot
+						if k > e {
+							copy(sorted[e+1:k+1], sorted[e:k])
+							k = e
 						}
 						slot = e
 					} else {
-						for k = slot; k > 0; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = slot
+						if k > 0 {
+							copy(sorted[0+1:k+1], sorted[0:k])
+							k = 0
 						}
 						sorted[0] = sorted[lookbackTotal]
 						e = lookbackTotal - (cnt - slot - 1)
-						for k = lookbackTotal; k > e; k -= 1 {
-							sorted[k] = sorted[k-1]
+						k = lookbackTotal
+						if k > e {
+							copy(sorted[e+1:k+1], sorted[e:k])
+							k = e
 						}
 						slot = e
 					}
@@ -2979,13 +3045,17 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 				}
 				del = _T108
 				if pendDel < pendPos {
-					for k = pendDel; k < pendPos-1; k += 1 {
-						sorted[k] = sorted[k+1]
+					k = pendDel
+					if k < pendPos-1 {
+						copy(sorted[k:pendPos-1], sorted[k+1:pendPos-1+1])
+						k = pendPos - 1
 					}
 					sorted[pendPos-1] = pendNew
 				} else {
-					for k = pendDel; k > pendPos; k -= 1 {
-						sorted[k] = sorted[k-1]
+					k = pendDel
+					if k > pendPos {
+						copy(sorted[pendPos+1:k+1], sorted[pendPos:k])
+						k = pendPos
 					}
 					sorted[pendPos] = pendNew
 				}

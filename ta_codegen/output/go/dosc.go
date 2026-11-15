@@ -92,6 +92,7 @@ func (c *Core) doscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	var n1 int32
 	var n2 int32
 	var dsBuffer []float64
+	var local_dsBuffer [32]float64
 	var dsBuffer_Idx int32
 	var maxIdx_dsBuffer int32
 	maxIdx_dsBuffer = 31
@@ -133,7 +134,11 @@ func (c *Core) doscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	if optInSignalPeriod < 1 {
 		return InternalError
 	}
-	dsBuffer = make([]float64, optInSignalPeriod)
+	if optInSignalPeriod <= 32 {
+		dsBuffer = local_dsBuffer[:optInSignalPeriod]
+	} else {
+		dsBuffer = make([]float64, optInSignalPeriod)
+	}
 	maxIdx_dsBuffer = optInSignalPeriod - 1
 	dsBuffer_Idx = 0
 	lookbackRSI = c.rsiLookback(optInTimePeriod)

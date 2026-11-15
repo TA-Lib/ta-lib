@@ -89,6 +89,7 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	var w float64
 	var rw float64
 	var dRing []float64
+	var local_dRing [50]float64
 	var dRing_Idx int32
 	var maxIdx_dRing int32
 	maxIdx_dRing = 49
@@ -193,7 +194,11 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		if ringSize < 1 {
 			return InternalError
 		}
-		dRing = make([]float64, ringSize)
+		if ringSize <= 50 {
+			dRing = local_dRing[:ringSize]
+		} else {
+			dRing = make([]float64, ringSize)
+		}
 		maxIdx_dRing = ringSize - 1
 		dRing_Idx = 0
 		dRing[ringSize-1] = 0.0

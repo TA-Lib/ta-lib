@@ -70,6 +70,7 @@ func (c *Core) rogerssatchellImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 	var nbInitialElementNeeded int32
 	var barsSinceRebuild int32
 	var termRing []float64
+	var local_termRing [32]float64
 	var termRing_Idx int32
 	var maxIdx_termRing int32
 	maxIdx_termRing = 31
@@ -101,7 +102,11 @@ func (c *Core) rogerssatchellImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	termRing = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 32 {
+		termRing = local_termRing[:optInTimePeriod]
+	} else {
+		termRing = make([]float64, optInTimePeriod)
+	}
 	maxIdx_termRing = optInTimePeriod - 1
 	termRing_Idx = 0
 	sqrtA = math.Sqrt(optInAnnualization)

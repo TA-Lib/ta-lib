@@ -61,7 +61,9 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	var nullRun int32
 	var liveVol int32
 	var mfv_flow []float64
+	var local_mfv_flow [50]float64
 	var mfv_volume []float64
+	var local_mfv_volume [50]float64
 	var mfv_Idx int32
 	var maxIdx_mfv int32
 	maxIdx_mfv = 49
@@ -88,8 +90,16 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	mfv_flow = make([]float64, optInTimePeriod)
-	mfv_volume = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 50 {
+		mfv_flow = local_mfv_flow[:optInTimePeriod]
+	} else {
+		mfv_flow = make([]float64, optInTimePeriod)
+	}
+	if optInTimePeriod <= 50 {
+		mfv_volume = local_mfv_volume[:optInTimePeriod]
+	} else {
+		mfv_volume = make([]float64, optInTimePeriod)
+	}
 	maxIdx_mfv = optInTimePeriod - 1
 	mfv_Idx = 0
 	outIdx = 0

@@ -62,15 +62,19 @@ func (c *Core) ckspLookback(optInTimePeriod int32, optInMultiplier float64, optI
 
 func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, optInTimePeriod int32, optInMultiplier float64, optInStopPeriod int32, outBegIdx, outNBElement *int32, outHighStop, outLowStop []float64) RetCode {
 	var hhBuf []float64
+	var local_hhBuf [30]float64
 	var hhBuf_Idx int32
 	var maxIdx_hhBuf int32
 	maxIdx_hhBuf = 29
 	var llBuf []float64
+	var local_llBuf [30]float64
 	var hsBuf []float64
+	var local_hsBuf [30]float64
 	var hsBuf_Idx int32
 	var maxIdx_hsBuf int32
 	maxIdx_hsBuf = 29
 	var lsBuf []float64
+	var local_lsBuf [30]float64
 	var i int32
 	var ip int32
 	var iq int32
@@ -137,23 +141,39 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	hhBuf = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		hhBuf = local_hhBuf[:optInTimePeriod]
+	} else {
+		hhBuf = make([]float64, optInTimePeriod)
+	}
 	maxIdx_hhBuf = optInTimePeriod - 1
 	hhBuf_Idx = 0
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	llBuf = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		llBuf = local_llBuf[:optInTimePeriod]
+	} else {
+		llBuf = make([]float64, optInTimePeriod)
+	}
 	if optInStopPeriod < 1 {
 		return InternalError
 	}
-	hsBuf = make([]float64, optInStopPeriod)
+	if optInStopPeriod <= 30 {
+		hsBuf = local_hsBuf[:optInStopPeriod]
+	} else {
+		hsBuf = make([]float64, optInStopPeriod)
+	}
 	maxIdx_hsBuf = optInStopPeriod - 1
 	hsBuf_Idx = 0
 	if optInStopPeriod < 1 {
 		return InternalError
 	}
-	lsBuf = make([]float64, optInStopPeriod)
+	if optInStopPeriod <= 30 {
+		lsBuf = local_lsBuf[:optInStopPeriod]
+	} else {
+		lsBuf = make([]float64, optInStopPeriod)
+	}
 	lastP = optInTimePeriod - 1
 	lastQ = optInStopPeriod - 1
 	wBeta = float64(optInTimePeriod-1) / float64(optInTimePeriod)

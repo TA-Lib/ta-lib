@@ -252,6 +252,9 @@ pub(super) struct Ctx<'a> {
     scan: std::cell::RefCell<super::go_select::FrameScan>,
     stmt_depth: Cell<usize>,
     cur_stmt: Cell<usize>,
+    /// Batch circular buffers kept in a stack array up to their static size,
+    /// as C keeps them: the id and that size.
+    pub(super) stack_circ: std::cell::RefCell<HashMap<String, i64>>,
 }
 
 const RETCODE_NAMES: &[(&str, &str)] = &[
@@ -391,6 +394,7 @@ impl<'a> Ctx<'a> {
             scan: std::cell::RefCell::default(),
             stmt_depth: Cell::new(0),
             cur_stmt: Cell::new(0),
+            stack_circ: std::cell::RefCell::new(HashMap::new()),
         }
     }
 
@@ -428,6 +432,7 @@ impl<'a> Ctx<'a> {
             scan: std::cell::RefCell::default(),
             stmt_depth: Cell::new(0),
             cur_stmt: Cell::new(0),
+            stack_circ: std::cell::RefCell::new(HashMap::new()),
         }
     }
 
@@ -1255,6 +1260,9 @@ impl<'a> Ctx<'a> {
     }
 
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) {
+        if self.shift_copy(init, condition, update, body, out) {
+            return;
+        }
         let init_lines = self.block(std::slice::from_ref(init));
         let header_init = match init_lines.as_slice() {
             [one] if is_simple_stmt(one) => one.clone(),
@@ -1278,6 +1286,68 @@ impl<'a> Ctx<'a> {
             out.extend(indented(&b));
         }
         out.push("}".to_string());
+    }
+
+    /// A loop that only moves a run of one array by one slot, toward the end
+    /// it reads from (`x[k] = x[k+1]` counting up, `x[k] = x[k-1]` counting
+    /// down), as `copy`: a move in that direction never reads a slot it already
+    /// wrote, so memmove's result is the loop's, and gc keeps the loop element
+    /// by element where C gets a memmove. The opposite direction smears and
+    /// stays a loop.
+    fn shift_copy(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) -> bool {
+        let Statement::Assign { target: Expr::Var(k), compound: false, .. } = init else { return false };
+        let step = match update {
+            Statement::Assign { target: Expr::Var(t), value: Expr::BinOp(l, op, r), .. } if t == k => match (l.as_ref(), op, r.as_ref()) {
+                (Expr::Var(lv), BinOp::Add, Expr::IntLiteral(1)) if lv == k => 1,
+                (Expr::Var(lv), BinOp::Sub, Expr::IntLiteral(1)) if lv == k => -1,
+                _ => return false,
+            },
+            Statement::Expr(Expr::PostIncrement(v) | Expr::PreIncrement(v)) if matches!(v.as_ref(), Expr::Var(t) if t == k) => 1,
+            Statement::Expr(Expr::PostDecrement(v) | Expr::PreDecrement(v)) if matches!(v.as_ref(), Expr::Var(t) if t == k) => -1,
+            _ => return false,
+        };
+        let Expr::BinOp(cl, cop, bound) = condition else { return false };
+        let want = if step == 1 { BinOp::Less } else { BinOp::Greater };
+        if !matches!(cl.as_ref(), Expr::Var(v) if v == k) || *cop != want {
+            return false;
+        }
+        let code: Vec<&Statement> = body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+        let [Statement::Assign { target: Expr::ArrayAccess(dst, di), value: Expr::ArrayAccess(src, si), compound: false }] = code.as_slice() else {
+            return false;
+        };
+        let src_op = if step == 1 { BinOp::Add } else { BinOp::Sub };
+        let shifted = matches!(si.as_ref(), Expr::BinOp(l, op, r) if matches!(l.as_ref(), Expr::Var(v) if v == k) && *op == src_op && matches!(r.as_ref(), Expr::IntLiteral(1)));
+        if dst != src || !matches!(di.as_ref(), Expr::Var(v) if v == k) || !shifted {
+            return false;
+        }
+        let mut pure = true;
+        crate::streaming::walk_expr(bound, &mut |e| {
+            if !matches!(e, Expr::Var(_) | Expr::IntLiteral(_) | Expr::BinOp(..)) || matches!(e, Expr::Var(v) if v == k || v == dst) {
+                pure = false;
+            }
+        });
+        if !pure || self.arrays.contains(dst) {
+            return false;
+        }
+        let mut sc = Scope::default();
+        let b = self.lower_as(bound, CType::Int32, &mut sc);
+        if !sc.is_empty() {
+            return false;
+        }
+        out.extend(self.block(std::slice::from_ref(init)));
+        let (x, kv) = (GExpr::name(go_ident(dst)), GExpr::name(go_ident(k)));
+        let plus1 = |e: &GExpr| GExpr::bin(e.clone(), GOp::Add, GExpr::name("1"));
+        let (dst_s, src_s) = if step == 1 {
+            (GExpr::slice(x.clone(), Some(kv.clone()), Some(b.clone())), GExpr::slice(x, Some(plus1(&kv)), Some(plus1(&b))))
+        } else {
+            (GExpr::slice(x.clone(), Some(plus1(&b)), Some(plus1(&kv))), GExpr::slice(x, Some(b.clone()), Some(kv.clone())))
+        };
+        let test = GExpr::bin(kv.clone(), if step == 1 { GOp::Lt } else { GOp::Gt }, b.clone());
+        out.push(format!("if {} {{", test.render()));
+        out.push(format!("\t{}", GExpr::call("copy", vec![dst_s, src_s]).render()));
+        out.push(format!("\t{} = {}", kv.render(), strip_paren(b).render()));
+        out.push("}".to_string());
+        true
     }
 
     /// A `for` post statement: one simple statement, or a parallel assignment
@@ -1608,15 +1678,32 @@ impl<'a> Ctx<'a> {
                 out.push(format!("if {sz} < 1 {{"));
                 out.push("\treturn InternalError".to_string());
                 out.push("}".to_string());
+                let stack = self.stack_circ.borrow().get(id).copied();
                 for (arr, t) in circbuf_arrays(id, layout) {
-                    out.push(format!("{} = make({}, {sz})", go_ident(&arr), circbuf_type(&t)));
+                    let a = go_ident(&arr);
+                    match stack {
+                        Some(n) => {
+                            out.push(format!("if {sz} <= {n} {{"));
+                            out.push(format!("\t{a} = local_{a}[:{sz}]"));
+                            out.push("} else {".to_string());
+                            out.push(format!("\t{a} = make({}, {sz})", circbuf_type(&t)));
+                            out.push("}".to_string());
+                        }
+                        None => out.push(format!("{a} = make({}, {sz})", circbuf_type(&t))),
+                    }
                 }
                 out.push(format!("maxIdx_{id} = {sz} - 1"));
                 out.push(format!("{id}_Idx = 0"));
             }
             CircBuf::InitLocalOnly { id, layout } => {
+                let stack = self.stack_circ.borrow().contains_key(id);
                 for (arr, t) in circbuf_arrays(id, layout) {
-                    out.push(format!("{} = make({}, maxIdx_{id}+1)", go_ident(&arr), circbuf_type(&t)));
+                    let a = go_ident(&arr);
+                    if stack {
+                        out.push(format!("{a} = local_{a}[:maxIdx_{id}+1]"));
+                    } else {
+                        out.push(format!("{a} = make({}, maxIdx_{id}+1)", circbuf_type(&t)));
+                    }
                 }
             }
         }
@@ -1805,6 +1892,66 @@ pub(super) fn copy_call(d: GExpr, doff: GExpr, s: GExpr, soff: GExpr, n: GExpr) 
     let hi = if soff.is_name("0") { n } else { GExpr::bin(soff.clone(), GOp::Add, n) };
     let lo = if soff.is_name("0") { None } else { Some(soff) };
     GExpr::call("copy", vec![dst, GExpr::slice(s, lo, Some(hi))])
+}
+
+/// The batch body's circular buffers that may live in a stack array of their
+/// static size, as C's `CIRCBUF_PROLOG` keeps them, and that size. A fresh
+/// array is zero like `make`'s only on the first initialisation, so a buffer
+/// initialised more than once, or inside a loop, stays on `make`; one named
+/// in a call stays there too, since a slice that escapes would move the array
+/// to the heap on every call.
+fn stack_circbufs(body: &[Statement]) -> HashMap<String, i64> {
+    fn walk(list: &[Statement], in_loop: bool, inits: &mut HashMap<String, (usize, bool)>, called: &mut HashSet<String>) {
+        for st in list {
+            if let Statement::CircBuf(CircBuf::Init { id, .. } | CircBuf::InitLocalOnly { id, .. }) = st {
+                let e = inits.entry(id.clone()).or_insert((0, false));
+                e.0 += 1;
+                e.1 |= in_loop;
+            }
+            crate::streaming::walk_stmt_exprs(st, &mut |top| {
+                crate::streaming::walk_expr(top, &mut |e| {
+                    if let Expr::FuncCall(_, args) = e {
+                        for a in args {
+                            crate::streaming::walk_expr(a, &mut |x| {
+                                if let Expr::Var(v) | Expr::ArrayAccess(v, _) = x {
+                                    called.insert(v.clone());
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+            let (nested, loops): (Vec<&[Statement]>, bool) = match st {
+                Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } | Statement::ForC { body, .. } => {
+                    (vec![body], true)
+                }
+                Statement::Block { body } => (vec![body], false),
+                Statement::If { then_body, else_body, .. } => (vec![then_body, else_body], false),
+                Statement::Switch { cases, default, .. } => {
+                    let mut v: Vec<&[Statement]> = cases.iter().map(|(_, b)| b.as_slice()).collect();
+                    v.push(default);
+                    (v, false)
+                }
+                _ => (Vec::new(), false),
+            };
+            for b in nested {
+                walk(b, in_loop || loops, inits, called);
+            }
+        }
+    }
+    let mut inits = HashMap::new();
+    let mut called = HashSet::new();
+    walk(body, false, &mut inits, &mut called);
+    body.iter()
+        .filter_map(|st| match st {
+            Statement::CircBuf(CircBuf::Prolog { id, layout, static_size }) if *static_size > 0 => {
+                let arrays = circbuf_arrays(id, layout);
+                let named = arrays.iter().any(|(a, _)| called.contains(a)) || called.contains(id);
+                (inits.get(id) == Some(&(1, false)) && !named).then(|| (id.clone(), *static_size))
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 pub(super) fn circbuf_type(t: &VarType) -> &'static str {
@@ -2124,11 +2271,16 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
         params.push((o.name.clone(), array_type(&o.param_type).to_string()));
     }
 
+    let stack = stack_circbufs(body);
+    ctx.stack_circ.borrow_mut().extend(stack.iter().map(|(k, v)| (k.clone(), *v)));
     let mut lines = Vec::new();
     for stmt in body {
         if let Statement::CircBuf(CircBuf::Prolog { id, layout, static_size }) = stmt {
             for (arr, t) in circbuf_arrays(id, layout) {
                 lines.push(format!("var {} {}", go_ident(&arr), circbuf_type(&t)));
+                if stack.contains_key(id) {
+                    lines.push(format!("var local_{} [{static_size}]{}", go_ident(&arr), &circbuf_type(&t)[2..]));
+                }
             }
             lines.push(format!("var {id}_Idx int32"));
             lines.push(format!("var maxIdx_{id} int32"));

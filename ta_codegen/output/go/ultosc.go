@@ -91,7 +91,9 @@ func (c *Core) ultoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	var periods [3]int32
 	var sortedPeriods [3]int32
 	var term_closeMinusTrueLow []float64
+	var local_term_closeMinusTrueLow [32]float64
 	var term_trueRange []float64
+	var local_term_trueRange [32]float64
 	var term_Idx int32
 	var maxIdx_term int32
 	maxIdx_term = 31
@@ -149,8 +151,16 @@ func (c *Core) ultoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	if optInTimePeriod3 < 1 {
 		return InternalError
 	}
-	term_closeMinusTrueLow = make([]float64, optInTimePeriod3)
-	term_trueRange = make([]float64, optInTimePeriod3)
+	if optInTimePeriod3 <= 32 {
+		term_closeMinusTrueLow = local_term_closeMinusTrueLow[:optInTimePeriod3]
+	} else {
+		term_closeMinusTrueLow = make([]float64, optInTimePeriod3)
+	}
+	if optInTimePeriod3 <= 32 {
+		term_trueRange = local_term_trueRange[:optInTimePeriod3]
+	} else {
+		term_trueRange = make([]float64, optInTimePeriod3)
+	}
 	maxIdx_term = optInTimePeriod3 - 1
 	term_Idx = 0
 	a1Total = 0.0

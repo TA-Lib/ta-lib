@@ -62,6 +62,7 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 	var outIdx int32
 	var lookbackTotal int32
 	var emaRing []float64
+	var local_emaRing [32]float64
 	var emaRing_Idx int32
 	var maxIdx_emaRing int32
 	maxIdx_emaRing = 31
@@ -93,7 +94,11 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 	if optInROCPeriod < 1 {
 		return InternalError
 	}
-	emaRing = make([]float64, optInROCPeriod)
+	if optInROCPeriod <= 32 {
+		emaRing = local_emaRing[:optInROCPeriod]
+	} else {
+		emaRing = make([]float64, optInROCPeriod)
+	}
 	maxIdx_emaRing = optInROCPeriod - 1
 	emaRing_Idx = 0
 	emaBeta = float64(optInTimePeriod-1) / float64(optInTimePeriod+1)

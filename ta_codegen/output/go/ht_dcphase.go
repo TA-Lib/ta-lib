@@ -102,6 +102,7 @@ func (c *Core) htDcphaseImpl(startIdx, endIdx int32, inReal []float64, outBegIdx
 	var todayValue float64
 	var smoothPeriod float64
 	var smoothPrice []float64
+	var local_smoothPrice [50]float64
 	var smoothPrice_Idx int32
 	var maxIdx_smoothPrice int32
 	maxIdx_smoothPrice = 49
@@ -119,7 +120,7 @@ func (c *Core) htDcphaseImpl(startIdx, endIdx int32, inReal []float64, outBegIdx
 	}
 	a = 0.0962
 	b = 0.5769
-	smoothPrice = make([]float64, maxIdx_smoothPrice+1)
+	smoothPrice = local_smoothPrice[:maxIdx_smoothPrice+1]
 	tempReal = math.Atan(1.0)
 	rad2Deg = 45.0 / tempReal
 	constDeg2RadBy360 = float64(tempReal * 8.0)

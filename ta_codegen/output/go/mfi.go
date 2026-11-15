@@ -63,7 +63,9 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	var today int32
 	var nullRun int32
 	var mflow_positive []float64
+	var local_mflow_positive [50]float64
 	var mflow_negative []float64
+	var local_mflow_negative [50]float64
 	var mflow_Idx int32
 	var maxIdx_mflow int32
 	maxIdx_mflow = 49
@@ -90,8 +92,16 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	mflow_positive = make([]float64, optInTimePeriod)
-	mflow_negative = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 50 {
+		mflow_positive = local_mflow_positive[:optInTimePeriod]
+	} else {
+		mflow_positive = make([]float64, optInTimePeriod)
+	}
+	if optInTimePeriod <= 50 {
+		mflow_negative = local_mflow_negative[:optInTimePeriod]
+	} else {
+		mflow_negative = make([]float64, optInTimePeriod)
+	}
 	maxIdx_mflow = optInTimePeriod - 1
 	mflow_Idx = 0
 	outIdx = 0

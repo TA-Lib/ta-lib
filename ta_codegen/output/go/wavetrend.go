@@ -84,6 +84,7 @@ func (c *Core) wavetrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []fl
 	var nDev int32
 	var nCi int32
 	var wtBuffer []float64
+	var local_wtBuffer [32]float64
 	var wtBuffer_Idx int32
 	var maxIdx_wtBuffer int32
 	maxIdx_wtBuffer = 31
@@ -123,7 +124,11 @@ func (c *Core) wavetrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []fl
 	if optInSignalPeriod < 1 {
 		return InternalError
 	}
-	wtBuffer = make([]float64, optInSignalPeriod)
+	if optInSignalPeriod <= 32 {
+		wtBuffer = local_wtBuffer[:optInSignalPeriod]
+	} else {
+		wtBuffer = make([]float64, optInSignalPeriod)
+	}
 	maxIdx_wtBuffer = optInSignalPeriod - 1
 	wtBuffer_Idx = 0
 	lookbackChannel = c.emaLookback(optInChannelPeriod)

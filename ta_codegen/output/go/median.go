@@ -62,10 +62,12 @@ func (c *Core) medianImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	var hi int32
 	var mid int32
 	var ring []float64
+	var local_ring [30]float64
 	var ring_Idx int32
 	var maxIdx_ring int32
 	maxIdx_ring = 29
 	var sorted []float64
+	var local_sorted [30]float64
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -89,13 +91,21 @@ func (c *Core) medianImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	ring = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		ring = local_ring[:optInTimePeriod]
+	} else {
+		ring = make([]float64, optInTimePeriod)
+	}
 	maxIdx_ring = optInTimePeriod - 1
 	ring_Idx = 0
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	sorted = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		sorted = local_sorted[:optInTimePeriod]
+	} else {
+		sorted = make([]float64, optInTimePeriod)
+	}
 	sorted[lookbackTotal] = 0.0
 	lowerIdx = (optInTimePeriod - 1) / 2
 	upperIdx = optInTimePeriod / 2

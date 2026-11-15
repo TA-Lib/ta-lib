@@ -61,6 +61,7 @@ func (c *Core) emvImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []float64
 	var outIdx int32
 	var i int32
 	var rawBuffer []float64
+	var local_rawBuffer [50]float64
 	var rawBuffer_Idx int32
 	var maxIdx_rawBuffer int32
 	maxIdx_rawBuffer = 49
@@ -92,7 +93,11 @@ func (c *Core) emvImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []float64
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	rawBuffer = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 50 {
+		rawBuffer = local_rawBuffer[:optInTimePeriod]
+	} else {
+		rawBuffer = make([]float64, optInTimePeriod)
+	}
 	maxIdx_rawBuffer = optInTimePeriod - 1
 	rawBuffer_Idx = 0
 	i = startIdx - lookbackTotal

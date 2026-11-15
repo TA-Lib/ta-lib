@@ -53,10 +53,12 @@ func (c *Core) ceLookback(optInTimePeriod int32, optInMultiplier float64) int32 
 
 func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, optInTimePeriod int32, optInMultiplier float64, outBegIdx, outNBElement *int32, outRealLong, outRealShort []float64) RetCode {
 	var hhBuf []float64
+	var local_hhBuf [30]float64
 	var hhBuf_Idx int32
 	var maxIdx_hhBuf int32
 	maxIdx_hhBuf = 29
 	var llBuf []float64
+	var local_llBuf [30]float64
 	var i int32
 	var ip int32
 	var today int32
@@ -112,13 +114,21 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	hhBuf = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		hhBuf = local_hhBuf[:optInTimePeriod]
+	} else {
+		hhBuf = make([]float64, optInTimePeriod)
+	}
 	maxIdx_hhBuf = optInTimePeriod - 1
 	hhBuf_Idx = 0
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	llBuf = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		llBuf = local_llBuf[:optInTimePeriod]
+	} else {
+		llBuf = make([]float64, optInTimePeriod)
+	}
 	lastP = optInTimePeriod - 1
 	wBeta = float64(optInTimePeriod-1) / float64(optInTimePeriod)
 	wAlpha = 1.0 - wBeta
