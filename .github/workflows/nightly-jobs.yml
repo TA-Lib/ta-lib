@@ -34,6 +34,9 @@ on:
         type: string
 
 jobs:
+  # No job here `needs: test`. Each checks out job.workflow_sha and builds what
+  # it uses; waiting on packaging would add its whole time to the critical
+  # path, and a failure there must not skip the others.
   test:
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -354,11 +357,9 @@ jobs:
         shell: bash
         run: python scripts/check_dll_exports.py
 
-  # Cross-language codegen verification. No `needs: test`: it builds all it
-  # uses, so waiting on the packaging job only lengthens the run. It runs
-  # ta_regtest --codegen: every function in every language server diffed
-  # against the in-process library, including the
-  # non-default-parameter sweep. POSIX-only (the server harness uses
+  # Cross-language codegen verification. It runs ta_regtest --codegen: every
+  # function in every language server diffed against the in-process library,
+  # including the non-default-parameter sweep. POSIX-only (the server harness uses
   # fork/exec), hence no Windows leg.
   #
   # --codegen runs the C reference tests in the same process as the codegen
@@ -517,8 +518,7 @@ jobs:
           python3 scripts/synth_gate.py
 
   # The publishable Java jars, built with the committed Maven wrapper and tested
-  # AS THE ARTIFACT (#428). No `needs:`, so a dist-pool failure cannot take it
-  # down with it.
+  # AS THE ARTIFACT (#428).
   java:
     name: Java jars built and tested
     runs-on: ubuntu-latest
@@ -927,7 +927,7 @@ jobs:
   # panic. This job rebuilds the Rust server with the debug profile (overflow
   # checks on) and runs the codegen edge-range sweep (test_codegen.c
   # run_edge_range_sweep) against it, so any such overflow becomes a hard
-  # failure. Rust-only (no JDK/.NET), gated on the C hero job.
+  # failure. Rust-only (no JDK/.NET).
   #
   # The BATCH tier is what the sweep covers; the second step extends the same
   # debug binary to the STREAM tier (Open/Update/Peek/Close, rings, sub-handles),
@@ -935,7 +935,6 @@ jobs:
   # warm — it costs one extra pipe, not a second job.
   cross-language-rust-debug:
     name: Rust tests (debug profile — overflow gate)
-    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -981,8 +980,7 @@ jobs:
   # sets #![warn(missing_docs)] (#179 D7), and `-D warnings` here is the only thing
   # that turns an undocumented public item into a failure rather than a warning
   # nobody reads.
-  # Rust-only and self-contained: no C build, no JDK/.NET, and intentionally NOT
-  # gated on the C hero 'test' job, so an unrelated dist failure can't skip it.
+  # Rust-only and self-contained: no C build, no JDK/.NET.
   #
   # This job also RUNS the generator's own unit tests (`cargo test`). Clippy with
   # --all-targets only *compiles* the test target; it never executes it, so
@@ -1161,9 +1159,6 @@ jobs:
   # ta_codegen/generator/src/main.rs moves this gate with it, and the two
   # reads are also the job's non-vacuity guard -- a missing floor, or a ta-lib
   # floor below ta-lib-dispatch's, fails before any toolchain is installed.
-  #
-  # Rust-only and self-contained, so like clippy above it is deliberately NOT
-  # gated on the C hero 'test' job.
   msrv:
     name: Rust MSRV floor
     runs-on: ubuntu-latest
@@ -1241,8 +1236,7 @@ jobs:
   #
   # Nightly, not the PR gate, for the same reason as msrv above: two rust-std
   # downloads of unmeasured time do not belong in every contributor's
-  # merge-blocking path. Rust-only and self-contained, so also not gated on the
-  # C hero 'test' job.
+  # merge-blocking path.
   cross-target:
     name: Rust cross-target check
     runs-on: ubuntu-latest
@@ -1298,10 +1292,6 @@ jobs:
   # ta-ref.yml. fetch-depth: 0 so the release tags are available.
   ta-ref:
     name: C Latest vs frozen releases
-    needs: test
-    # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
-    # silently skip this release gate — it has its own checkout+build.
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1329,8 +1319,6 @@ jobs:
   # start passes every other gate.
   auto-stabilization-sample:
     name: Auto-Stabilization sampled census
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -1371,9 +1359,6 @@ jobs:
   #      an FMA-baseline target can therefore make the two sides generate DIFFERENT
   #      inputs from the same (shape, seed, n). The reporter could not test this
   #      half: macOS /usr/bin/gcc is an Apple clang shim.
-  #
-  # Not gated on 'test': that job is x86-64 + Windows, so an unrelated dist failure
-  # there must never skip this platform's only coverage.
   arm64-linux:
     name: arm64 Linux (GCC, baseline FMA — oracle contraction gate)
     runs-on: ubuntu-24.04-arm
@@ -1573,8 +1558,6 @@ jobs:
   # block below — it needs only Docker and the repo root as $PWD.
   musl-build:
     name: musllinux build (FMA dispatch correctly excluded)
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1631,11 +1614,9 @@ jobs:
   # parameter-boundary sweep (every optional parameter at min/min+1/default+-1/
   # large across every function). Turns an out-of-bounds / uninitialized read in
   # indicator code (the MACD/TRIX/MAVP/STOCH boundary class) into a hard failure
-  # instead of plausible garbage. C-only, GCC, gated on 'test'.
+  # instead of plausible garbage. C-only, GCC.
   sanitizers:
     name: ASan/UBSan (C reference suite + boundary sweep)
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1675,14 +1656,12 @@ jobs:
   # gcc + Python (the server compiles from the committed generated sources — no
   # cargo). Allocation-failure branches are guarded by generate-time generator
   # tests instead (they require malloc to fail, which no run exercises). C-only,
-  # GCC, gated on 'test'.
+  # GCC.
   #
   # Its last step is the one run of the C library on several threads, under
   # ThreadSanitizer. That one needs clang: see scripts/thread_sanitize.py.
   stream-sanitizers:
     name: ASan/UBSan/LSan (streaming API)
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1713,10 +1692,9 @@ jobs:
 
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_TESTING stays off in the
-  # recipe). Gated on the C hero job like the other non-hero jobs.
+  # recipe).
   conan:
     name: Conan package build
-    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1802,14 +1780,10 @@ jobs:
           python setup.py build_ext --inplace
           PYTHONPATH=. pytest -q
 
-  # Runs LAST (needs: test) so every other job tested the committed,
-  # already-generated sources. This regenerates from ta_codegen/input/ and fails
-  # if anything differs — i.e. an input edit whose generated output was never
-  # re-generated and committed.
+  # Regenerates from ta_codegen/input/ and fails if anything differs — i.e. an
+  # input edit whose generated output was never re-generated and committed.
   regen-check:
     name: ta_codegen output up-to-date
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -1918,9 +1892,9 @@ jobs:
   # A job here rather than its own workflow because it COMMITS to dev: keeping it
   # inside the nightly's single writer window is what keeps "green dev-nightly
   # means mergeable dev" true. Do not give it `needs:` and do not feed it another
-  # job's build artifact (which would require one): the critical path is the
-  # arm64 job at ~21 min and this is ~1, so in parallel it costs zero wall clock,
-  # while serialising it charges the nightly for every minute it takes.
+  # job's build artifact (which would require one): in parallel it costs no
+  # wall clock, while serialising it charges the nightly for every minute it
+  # takes.
   #
   # It counts retired instructions under callgrind rather than timing anything:
   # exact, byte-identical across runs on a loaded box, which is what lets a 10%
