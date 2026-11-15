@@ -71,7 +71,7 @@ impl Core {
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDL3OUTSIDE_Lookback")]
     pub fn cdl3outside_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((3) as usize);
+        return Ok(3 as usize);
     }
     /// Display shift of one output of [`Core::cdl3outside`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
@@ -135,8 +135,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inOpen = &inOpen[..=endIdx];
@@ -162,7 +162,6 @@ impl Core {
                     (_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk]) & (_w0[_wk + 2] < _w0[_wk + 1]))), // third candle lower
                     ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-                i += 1;
             }
         } else {
             loop {
@@ -177,8 +176,8 @@ impl Core {
             }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body)
@@ -343,7 +342,7 @@ struct Cdl3outsideStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdl3outside_step_impl(sp: &mut Cdl3outsideStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdl3outside_step_impl(sp: &mut Cdl3outsideStreamState, inOpen: f64, _inHigh: f64, _inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 &&
             (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // white engulfs black
             sp.lag1_inClose > sp.lag2_inOpen &&
@@ -355,11 +354,11 @@ impl Core {
             sp.lag1_inClose < sp.lag2_inOpen &&
             inClose < sp.lag1_inClose                                         // third candle lower
         {
-            (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+            *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
         } else {
-            (*outInteger) = 0;
+            *outInteger = 0;
         }
-        sp.cur_outInteger = (*outInteger);
+        sp.cur_outInteger = *outInteger;
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
         sp.lag2_inClose = sp.lag1_inClose;
@@ -380,8 +379,8 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if outStride == 0 {
@@ -394,13 +393,11 @@ impl Core {
     /// Every bar but the last carries the state alone; the last is decided once.
     #[inline(never)]
     fn cdl3outside_open_sink_frame(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+        &self, inOpen: &[f64], _inHigh: &[f64], _inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<Cdl3outsideStream, RetCode> {
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -414,8 +411,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Do the calculation using tight loops.
@@ -437,10 +434,9 @@ impl Core {
             (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i] < inClose[i - 1]))), // third candle lower
             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
         outIdx += 1;
-        i += 1;
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = Cdl3outsideStreamState {
@@ -455,13 +451,11 @@ impl Core {
 
     #[inline(never)]
     fn cdl3outside_open_fill_frame(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+        &self, inOpen: &[f64], _inHigh: &[f64], _inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<Cdl3outsideStream, RetCode> {
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -475,8 +469,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Do the calculation using tight loops.
@@ -500,7 +494,6 @@ impl Core {
                     (_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk]) & (_w0[_wk + 2] < _w0[_wk + 1]))), // third candle lower
                     ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-                i += 1;
             }
         } else {
             loop {
@@ -515,8 +508,8 @@ impl Core {
             }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = Cdl3outsideStreamState {
@@ -721,9 +714,9 @@ impl Cdl3outsideStream {
                 sp.lag1_inClose < sp.lag2_inOpen &&
                 inClose < sp.lag1_inClose                                         // third candle lower
             {
-                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+                *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         }
         Ok(outInteger)

@@ -86,31 +86,28 @@ impl Core {
     #[doc(alias = "TA_STC_Lookback")]
     #[inline]
     pub fn stc_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 23;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 50;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInCyclePeriod) as i32) == (i32::MIN) {
+        if optInCyclePeriod == i32::MIN {
             optInCyclePeriod = 10;
-        } else if (((optInCyclePeriod) as i32) < 2) || (((optInCyclePeriod) as i32) > 100000) {
+        } else if optInCyclePeriod < 2 || optInCyclePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        let mut tempInteger: usize = 0_usize;
         if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
         }
         // The MACD line's own lookback, which is what inherits TA_FUNC_UNST_EMA,
         // then one window per stochastic stage. The two 0.5 smoothers seed on
         // their first input, so they add only the unstable period.
-        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + ((self.unstable_count(FuncUnstId::STC, (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1))) as usize)) as usize);
+        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + (self.unstable_count(FuncUnstId::STC, (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1)) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::stc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -130,7 +127,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_STC_DisplayShift")]
-    pub fn stc_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn stc_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -192,19 +189,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 23;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 50;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInCyclePeriod) as i32) == (i32::MIN) {
+        if optInCyclePeriod == i32::MIN {
             optInCyclePeriod = 10;
-        } else if (((optInCyclePeriod) as i32) < 2) || (((optInCyclePeriod) as i32) > 100000) {
+        } else if optInCyclePeriod < 2 || optInCyclePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod).unwrap_or(usize::MAX);
@@ -265,21 +262,21 @@ impl Core {
         let mut nLine: usize = 0_usize;
         let mut nPF: usize = 0_usize;
         if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         lookbackTotal = self.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         fastK = 1.0 - fastBeta;
         if fastBeta < 0.5 {
@@ -295,45 +292,45 @@ impl Core {
         // suffix extremum from slot j+1. The extrema are exact, so the output must
         // stay bit-identical to a full rescan of each window.
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            lineRing = &mut local_lineRing[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            lineRing = &mut local_lineRing[..optInCyclePeriod as usize];
         } else {
             heap_lineRing = vec![0.0_f64; (optInCyclePeriod) as usize];
             lineRing = &mut heap_lineRing;
         }
         lineRing_Idx = 0;
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            lineSufHi = &mut local_lineSufHi[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            lineSufHi = &mut local_lineSufHi[..optInCyclePeriod as usize];
         } else {
             heap_lineSufHi = vec![0.0_f64; (optInCyclePeriod) as usize];
             lineSufHi = &mut heap_lineSufHi;
         }
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            lineSufLo = &mut local_lineSufLo[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            lineSufLo = &mut local_lineSufLo[..optInCyclePeriod as usize];
         } else {
             heap_lineSufLo = vec![0.0_f64; (optInCyclePeriod) as usize];
             lineSufLo = &mut heap_lineSufLo;
         }
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            pfRing = &mut local_pfRing[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            pfRing = &mut local_pfRing[..optInCyclePeriod as usize];
         } else {
             heap_pfRing = vec![0.0_f64; (optInCyclePeriod) as usize];
             pfRing = &mut heap_pfRing;
         }
         pfRing_Idx = 0;
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            pfSufHi = &mut local_pfSufHi[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            pfSufHi = &mut local_pfSufHi[..optInCyclePeriod as usize];
         } else {
             heap_pfSufHi = vec![0.0_f64; (optInCyclePeriod) as usize];
             pfSufHi = &mut heap_pfSufHi;
         }
         if optInCyclePeriod < 1 { return RetCode::InternalError; }
-        if (optInCyclePeriod) as usize <= 30usize {
-            pfSufLo = &mut local_pfSufLo[..(optInCyclePeriod) as usize];
+        if optInCyclePeriod as usize <= 30usize {
+            pfSufLo = &mut local_pfSufLo[..optInCyclePeriod as usize];
         } else {
             heap_pfSufLo = vec![0.0_f64; (optInCyclePeriod) as usize];
             pfSufLo = &mut heap_pfSufLo;
@@ -351,26 +348,26 @@ impl Core {
         lineStart = startIdx - (lookbackTotal - lookbackSlow);
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
         fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX));
         prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
         }
-        prevFast = prevFast / ((optInFastPeriod) as f64);
+        prevFast = prevFast / (optInFastPeriod as f64);
         while today < fastToday {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -393,8 +390,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -407,7 +404,7 @@ impl Core {
             }
             highest = lineHi;
             lowest = lineLo;
-            if nLine >= ((optInCyclePeriod) as usize) && lineRing_Idx < lastIdx {
+            if nLine >= (optInCyclePeriod as usize) && lineRing_Idx < lastIdx {
                 tempReal = lineSufHi[lineRing_Idx + 1];
                 highest = c_max(tempReal, highest);
                 tempReal = lineSufLo[lineRing_Idx + 1];
@@ -436,7 +433,7 @@ impl Core {
                     }
                 }
             }
-            if nLine >= ((optInCyclePeriod) as usize) {
+            if nLine >= (optInCyclePeriod as usize) {
                 range = highest - lowest;
                 if range > 0.0 {
                     frac1 = (lineValue - lowest) / range * 100.0;
@@ -459,7 +456,7 @@ impl Core {
                 }
                 highest = pfHi;
                 lowest = pfLo;
-                if nPF >= ((optInCyclePeriod) as usize) && pfRing_Idx < lastIdx {
+                if nPF >= (optInCyclePeriod as usize) && pfRing_Idx < lastIdx {
                     tempReal = pfSufHi[pfRing_Idx + 1];
                     highest = c_max(tempReal, highest);
                     tempReal = pfSufLo[pfRing_Idx + 1];
@@ -488,14 +485,14 @@ impl Core {
                         }
                     }
                 }
-                if nPF >= ((optInCyclePeriod) as usize) {
+                if nPF >= (optInCyclePeriod as usize) {
                     range = highest - lowest;
                     if range > 0.0 {
                         frac2 = (pf - lowest) / range * 100.0;
                     } else {
                         cold_arm();
                     }
-                    if nPF == ((optInCyclePeriod) as usize) {
+                    if nPF == (optInCyclePeriod as usize) {
                         pff = frac2;
                     } else {
                         pff = fmadd!(0.5 as f64, frac2 - pff, pff);
@@ -508,8 +505,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -607,7 +604,7 @@ impl Core {
             outIdx += 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic, each pass
@@ -757,9 +754,6 @@ struct StcStreamState {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct StcStreamScalars {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
-    optInCyclePeriod: i32,
     prevFast: f64,
     prevSlow: f64,
     fastK: f64,
@@ -778,21 +772,7 @@ struct StcStreamScalars {
     lineRing_Idx: usize,
     pfRing_Idx: usize,
     maxIdx_lineRing: usize,
-    lineSufHi_Idx: usize,
-    maxIdx_lineSufHi: usize,
-    lineSufLo_Idx: usize,
-    maxIdx_lineSufLo: usize,
     maxIdx_pfRing: usize,
-    pfSufHi_Idx: usize,
-    maxIdx_pfSufHi: usize,
-    pfSufLo_Idx: usize,
-    maxIdx_pfSufLo: usize,
-    cbSize_lineRing: usize,
-    cbSize_lineSufHi: usize,
-    cbSize_lineSufLo: usize,
-    cbSize_pfRing: usize,
-    cbSize_pfSufHi: usize,
-    cbSize_pfSufLo: usize,
     cur_outReal: f64,
 }
 
@@ -812,8 +792,8 @@ impl Core {
         let mut sufLo: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         tempReal = inReal;
-        sp.prevFast = fmadd!(sp.fastBeta as f64, sp.prevFast, sp.fastK * tempReal);
-        sp.prevSlow = fmadd!(sp.slowBeta as f64, sp.prevSlow, sp.slowK * tempReal);
+        sp.prevFast = fmadd!(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = fmadd!(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
         lineValue = sp.prevFast - sp.prevSlow;
         cb_lineRing[sp.lineRing_Idx] = lineValue;
         if sp.lineRing_Idx == 0 {
@@ -899,8 +879,8 @@ impl Core {
             cold_arm();
         }
         sp.pff = fmadd!(0.5 as f64, sp.frac2 - sp.pff, sp.pff);
-        (*outReal) = sp.pff;
-        sp.cur_outReal = (*outReal);
+        *outReal = sp.pff;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::stc_open_internal`]
@@ -929,48 +909,42 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 23;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 50;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInCyclePeriod) as i32) == (i32::MIN) {
+        if optInCyclePeriod == i32::MIN {
             optInCyclePeriod = 10;
-        } else if (((optInCyclePeriod) as i32) < 2) || (((optInCyclePeriod) as i32) > 100000) {
+        } else if optInCyclePeriod < 2 || optInCyclePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lineRing: Vec<f64> = Vec::new();
         let mut lineRing_Idx: usize = 0;
         let mut maxIdx_lineRing: usize = 29;
         let mut lineSufHi: Vec<f64> = Vec::new();
-        let mut lineSufHi_Idx: usize = 0;
         let mut maxIdx_lineSufHi: usize = 29;
         let mut lineSufLo: Vec<f64> = Vec::new();
-        let mut lineSufLo_Idx: usize = 0;
         let mut maxIdx_lineSufLo: usize = 29;
         let mut pfRing: Vec<f64> = Vec::new();
         let mut pfRing_Idx: usize = 0;
         let mut maxIdx_pfRing: usize = 29;
         let mut pfSufHi: Vec<f64> = Vec::new();
-        let mut pfSufHi_Idx: usize = 0;
         let mut maxIdx_pfSufHi: usize = 29;
         let mut pfSufLo: Vec<f64> = Vec::new();
-        let mut pfSufLo_Idx: usize = 0;
         let mut maxIdx_pfSufLo: usize = 29;
         let mut prevFast: f64 = 0.0_f64;
         let mut prevSlow: f64 = 0.0_f64;
@@ -1005,20 +979,20 @@ impl Core {
         let mut nLine: usize = 0_usize;
         let mut nPF: usize = 0_usize;
         if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         lookbackTotal = self.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         fastK = 1.0 - fastBeta;
         if fastBeta < 0.5 {
@@ -1035,28 +1009,24 @@ impl Core {
         // stay bit-identical to a full rescan of each window.
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         lineRing = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_lineRing = ((optInCyclePeriod) as usize) - 1;
+        maxIdx_lineRing = (optInCyclePeriod as usize) - 1;
         lineRing_Idx = 0;
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         lineSufHi = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_lineSufHi = ((optInCyclePeriod) as usize) - 1;
-        lineSufHi_Idx = 0;
+        maxIdx_lineSufHi = (optInCyclePeriod as usize) - 1;
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         lineSufLo = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_lineSufLo = ((optInCyclePeriod) as usize) - 1;
-        lineSufLo_Idx = 0;
+        maxIdx_lineSufLo = (optInCyclePeriod as usize) - 1;
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         pfRing = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_pfRing = ((optInCyclePeriod) as usize) - 1;
+        maxIdx_pfRing = (optInCyclePeriod as usize) - 1;
         pfRing_Idx = 0;
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         pfSufHi = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_pfSufHi = ((optInCyclePeriod) as usize) - 1;
-        pfSufHi_Idx = 0;
+        maxIdx_pfSufHi = (optInCyclePeriod as usize) - 1;
         if optInCyclePeriod < 1 { return Err(RetCode::InternalError); }
         pfSufLo = vec![0.0_f64; (optInCyclePeriod) as usize];
-        maxIdx_pfSufLo = ((optInCyclePeriod) as usize) - 1;
-        pfSufLo_Idx = 0;
+        maxIdx_pfSufLo = (optInCyclePeriod as usize) - 1;
         lastIdx = (optInCyclePeriod - 1) as usize;
         // The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
         // both EMAs advanced to lineStart, so that from lineStart on it is
@@ -1070,26 +1040,26 @@ impl Core {
         lineStart = startIdx - (lookbackTotal - lookbackSlow);
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
         fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod)?);
         prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
         }
-        prevFast = prevFast / ((optInFastPeriod) as f64);
+        prevFast = prevFast / (optInFastPeriod as f64);
         while today < fastToday {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -1112,8 +1082,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -1126,7 +1096,7 @@ impl Core {
             }
             highest = lineHi;
             lowest = lineLo;
-            if nLine >= ((optInCyclePeriod) as usize) && lineRing_Idx < lastIdx {
+            if nLine >= (optInCyclePeriod as usize) && lineRing_Idx < lastIdx {
                 tempReal = lineSufHi[lineRing_Idx + 1];
                 highest = c_max(tempReal, highest);
                 tempReal = lineSufLo[lineRing_Idx + 1];
@@ -1149,7 +1119,7 @@ impl Core {
                     lineSufLo[i] = sufLo;
                 }
             }
-            if nLine >= ((optInCyclePeriod) as usize) {
+            if nLine >= (optInCyclePeriod as usize) {
                 range = highest - lowest;
                 if range > 0.0 {
                     frac1 = (lineValue - lowest) / range * 100.0;
@@ -1172,7 +1142,7 @@ impl Core {
                 }
                 highest = pfHi;
                 lowest = pfLo;
-                if nPF >= ((optInCyclePeriod) as usize) && pfRing_Idx < lastIdx {
+                if nPF >= (optInCyclePeriod as usize) && pfRing_Idx < lastIdx {
                     tempReal = pfSufHi[pfRing_Idx + 1];
                     highest = c_max(tempReal, highest);
                     tempReal = pfSufLo[pfRing_Idx + 1];
@@ -1195,14 +1165,14 @@ impl Core {
                         pfSufLo[i] = sufLo;
                     }
                 }
-                if nPF >= ((optInCyclePeriod) as usize) {
+                if nPF >= (optInCyclePeriod as usize) {
                     range = highest - lowest;
                     if range > 0.0 {
                         frac2 = (pf - lowest) / range * 100.0;
                     } else {
                         cold_arm();
                     }
-                    if nPF == ((optInCyclePeriod) as usize) {
+                    if nPF == (optInCyclePeriod as usize) {
                         pff = frac2;
                     } else {
                         pff = fmadd!(0.5 as f64, frac2 - pff, pff);
@@ -1211,12 +1181,12 @@ impl Core {
             }
             today = today + 1;
         }
-        outReal[(0 * outStride) as usize] = pff;
+        outReal[0] = pff;
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -1298,10 +1268,10 @@ impl Core {
                 cold_arm();
             }
             pff = fmadd!(0.5 as f64, frac2 - pff, pff);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = pff;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = pff;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_lineRing: usize = maxIdx_lineRing + 1;
@@ -1330,9 +1300,6 @@ impl Core {
         }
         let state = StcStreamState {
             scalars: StcStreamScalars {
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInCyclePeriod,
                 prevFast,
                 prevSlow,
                 fastK,
@@ -1351,22 +1318,8 @@ impl Core {
                 lineRing_Idx,
                 pfRing_Idx,
                 maxIdx_lineRing,
-                lineSufHi_Idx,
-                maxIdx_lineSufHi,
-                lineSufLo_Idx,
-                maxIdx_lineSufLo,
                 maxIdx_pfRing,
-                pfSufHi_Idx,
-                maxIdx_pfSufHi,
-                pfSufLo_Idx,
-                maxIdx_pfSufLo,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
-                cbSize_lineRing: cbSize_lineRing,
-                cbSize_lineSufHi: cbSize_lineSufHi,
-                cbSize_lineSufLo: cbSize_lineSufLo,
-                cbSize_pfRing: cbSize_pfRing,
-                cbSize_pfSufHi: cbSize_pfSufHi,
-                cbSize_pfSufLo: cbSize_pfSufLo,
             },
             cb_lineRing: lineRing,
             cb_lineSufHi: lineSufHi,
@@ -1380,7 +1333,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::stc_open`] (composition seam).
     pub(crate) fn stc_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32,
     ) -> Result<(StcStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1453,7 +1406,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_STC_OpenAndFill")]
     pub fn stc_open_and_fill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32, outReal: &mut [f64],
     ) -> Result<(StcStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1472,7 +1425,7 @@ impl Core {
     /// [`Core::stc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn stc_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<StcStream, RetCode> {
         self.stc_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1570,8 +1523,8 @@ impl StcStream {
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
             tempReal = inReal;
-            prevFast = fmadd!(sp.fastBeta as f64, prevFast, sp.fastK * tempReal);
-            prevSlow = fmadd!(sp.slowBeta as f64, prevSlow, sp.slowK * tempReal);
+            prevFast = fmadd!(sp.fastBeta, prevFast, sp.fastK * tempReal);
+            prevSlow = fmadd!(sp.slowBeta, prevSlow, sp.slowK * tempReal);
             lineValue = prevFast - prevSlow;
             pkSlot0 = lineRing_Idx as usize;
             pkVal0 = lineValue;
@@ -1595,12 +1548,12 @@ impl StcStream {
                 lineRing_Idx = 0;
             }
             if lineRing_Idx == 0 {
-                sufHi = (if (sp.lastIdx as usize) != pkSlot0 { cb_lineRing[sp.lastIdx] } else { pkVal0 });
+                sufHi = if (sp.lastIdx as usize) != pkSlot0 { cb_lineRing[sp.lastIdx] } else { pkVal0 };
                 sufLo = sufHi;
                 i = sp.lastIdx;
                 while i > 0 {
                     i -= 1;
-                    tempReal = (if (i as usize) != pkSlot0 { cb_lineRing[i] } else { pkVal0 });
+                    tempReal = if (i as usize) != pkSlot0 { cb_lineRing[i] } else { pkVal0 };
                     sufHi = c_max(tempReal, sufHi);
                     sufLo = c_min(tempReal, sufLo);
                 }
@@ -1634,12 +1587,12 @@ impl StcStream {
                 pfRing_Idx = 0;
             }
             if pfRing_Idx == 0 {
-                sufHi = (if (sp.lastIdx as usize) != pkSlot1 { cb_pfRing[sp.lastIdx] } else { pkVal1 });
+                sufHi = if (sp.lastIdx as usize) != pkSlot1 { cb_pfRing[sp.lastIdx] } else { pkVal1 };
                 sufLo = sufHi;
                 i = sp.lastIdx;
                 while i > 0 {
                     i -= 1;
-                    tempReal = (if (i as usize) != pkSlot1 { cb_pfRing[i] } else { pkVal1 });
+                    tempReal = if (i as usize) != pkSlot1 { cb_pfRing[i] } else { pkVal1 };
                     sufHi = c_max(tempReal, sufHi);
                     sufLo = c_min(tempReal, sufLo);
                 }
@@ -1651,7 +1604,7 @@ impl StcStream {
                 cold_arm();
             }
             pff = fmadd!(0.5 as f64, frac2 - pff, pff);
-            (*outReal) = pff;
+            *outReal = pff;
         }
         Ok(outReal)
     }

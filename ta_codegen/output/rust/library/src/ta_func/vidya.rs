@@ -82,22 +82,22 @@ impl Core {
     #[doc(alias = "TA_VIDYA_Lookback")]
     #[inline]
     pub fn vidya_lookback(&self, mut optInTimePeriod: i32, mut optInCMOPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 12;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInCMOPeriod) as i32) == (i32::MIN) {
+        if optInCMOPeriod == i32::MIN {
             optInCMOPeriod = 9;
-        } else if (((optInCMOPeriod) as i32) < 2) || (((optInCMOPeriod) as i32) > 100000) {
+        } else if optInCMOPeriod < 2 || optInCMOPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut root: usize = 0_usize;
         root = ((optInCMOPeriod as f64).sqrt() as usize) as usize;
         if optInTimePeriod == 1 {
-            return Ok((self.unstable_count(FuncUnstId::VIDYA, 0, 0)) as usize);
+            return Ok(self.unstable_count(FuncUnstId::VIDYA, 0, 0) as usize);
         }
-        return Ok((optInCMOPeriod + self.unstable_count(FuncUnstId::VIDYA, (if 2 * 4 * (optInTimePeriod + 1) * ((root) as i32) > 100000000 { 100000000 } else { 2 * 4 * (optInTimePeriod + 1) * ((root) as i32) }), (if 2 * 8 * (optInTimePeriod + 1) * ((root) as i32) > 100000000 { 100000000 } else { 2 * 8 * (optInTimePeriod + 1) * ((root) as i32) }))) as usize);
+        return Ok((optInCMOPeriod + self.unstable_count(FuncUnstId::VIDYA, if 2 * 4 * (optInTimePeriod + 1) * (root as i32) > 100000000 { 100000000 } else { 2 * 4 * (optInTimePeriod + 1) * (root as i32) }, if 2 * 8 * (optInTimePeriod + 1) * (root as i32) > 100000000 { 100000000 } else { 2 * 8 * (optInTimePeriod + 1) * (root as i32) })) as usize);
     }
     /// Display shift of one output of [`Core::vidya`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -118,7 +118,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_VIDYA_DisplayShift")]
-    pub fn vidya_display_shift(&self, mut optInTimePeriod: i32, mut optInCMOPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn vidya_display_shift(&self, optInTimePeriod: i32, optInCMOPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.vidya_lookback(optInTimePeriod, optInCMOPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -177,14 +177,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 12;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInCMOPeriod) as i32) == (i32::MIN) {
+        if optInCMOPeriod == i32::MIN {
             optInCMOPeriod = 9;
-        } else if (((optInCMOPeriod) as i32) < 2) || (((optInCMOPeriod) as i32) > 100000) {
+        } else if optInCMOPeriod < 2 || optInCMOPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.vidya_lookback(optInTimePeriod, optInCMOPeriod).unwrap_or(usize::MAX);
@@ -210,8 +210,8 @@ impl Core {
         let mut alpha: f64 = 0.0_f64;
         let mut k: f64 = 0.0_f64;
         let mut prevVIDYA: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // No smoothing at period 1: the output is a copy of the input, as MA gives
         // for every MAType. The unstable period still delays the first output.
         if optInTimePeriod == 1 {
@@ -222,14 +222,14 @@ impl Core {
             if startIdx > endIdx {
                 return RetCode::Success;
             }
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             while today <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = today; today += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
         lookbackTotal = self.vidya_lookback(optInTimePeriod, optInCMOPeriod).unwrap_or(usize::MAX);
@@ -256,15 +256,15 @@ impl Core {
         nullRun = 0;
         // for( i = 0; i < ((optInCMOPeriod) as usize); i += 1 )
         i = 0;
-        while i < ((optInCMOPeriod) as usize) {
+        while i < (optInCMOPeriod as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             sum = upSum + downSum;
             if sum > 0.0 {
@@ -272,7 +272,7 @@ impl Core {
             } else {
                 k = 0.0;
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
             i += 1;
         }
         // Each bar below drops the change that leaves the window after its own
@@ -281,7 +281,7 @@ impl Core {
         diff = tempReal - trailingValue;
         trailingValue = tempReal;
         trailingIdx += 1;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         upSum -= up;
         downSum -= up - diff;
         today += 1;
@@ -290,14 +290,14 @@ impl Core {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInCMOPeriod) as usize) {
+            if nullRun >= (optInCMOPeriod as usize) {
                 cold_arm();
-                nullRun = (optInCMOPeriod) as usize;
+                nullRun = optInCMOPeriod as usize;
                 upSum = 0.0;
                 downSum = 0.0;
                 k = 0.0;
@@ -309,12 +309,12 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum -= up;
             downSum -= up - diff;
             today += 1;
@@ -325,14 +325,14 @@ impl Core {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInCMOPeriod) as usize) {
+            if nullRun >= (optInCMOPeriod as usize) {
                 cold_arm();
-                nullRun = (optInCMOPeriod) as usize;
+                nullRun = optInCMOPeriod as usize;
                 upSum = 0.0;
                 downSum = 0.0;
                 k = 0.0;
@@ -344,20 +344,20 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
             outReal[outIdx] = prevVIDYA;
             outIdx += 1;
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum -= up;
             downSum -= up - diff;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is scaled
@@ -525,21 +525,21 @@ impl Core {
         let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         tempReal = inReal;
         diff = tempReal - sp.prevValue;
         sp.prevValue = tempReal;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         sp.upSum += up;
         sp.downSum += up - diff;
-        live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+        live = if diff.abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInCMOPeriod) as usize) {
+        if sp.nullRun >= (sp.optInCMOPeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInCMOPeriod) as usize;
+            sp.nullRun = sp.optInCMOPeriod as usize;
             sp.upSum = 0.0;
             sp.downSum = 0.0;
             k = 0.0;
@@ -551,15 +551,15 @@ impl Core {
                 k = 0.0;
             }
         }
-        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA as f64, k, sp.prevVIDYA);
-        (*outReal) = sp.prevVIDYA;
+        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
+        *outReal = sp.prevVIDYA;
         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
         diff = tempReal - sp.trailingValue;
         sp.trailingValue = tempReal;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         sp.upSum -= up;
         sp.downSum -= up - diff;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
@@ -580,14 +580,14 @@ impl Core {
         tempReal = inReal;
         diff = tempReal - sp.prevValue;
         sp.prevValue = tempReal;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         sp.upSum += up;
         sp.downSum += up - diff;
-        live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+        live = if diff.abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInCMOPeriod) as usize) {
+        if sp.nullRun >= (sp.optInCMOPeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInCMOPeriod) as usize;
+            sp.nullRun = sp.optInCMOPeriod as usize;
             sp.upSum = 0.0;
             sp.downSum = 0.0;
             k = 0.0;
@@ -599,15 +599,15 @@ impl Core {
                 k = 0.0;
             }
         }
-        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA as f64, k, sp.prevVIDYA);
-        (*outReal) = sp.prevVIDYA;
+        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
+        *outReal = sp.prevVIDYA;
         tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
         diff = tempReal - sp.trailingValue;
         sp.trailingValue = tempReal;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         sp.upSum -= up;
         sp.downSum -= up - diff;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::vidya_open_internal`]
@@ -636,26 +636,24 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 12;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInCMOPeriod) as i32) == (i32::MIN) {
+        if optInCMOPeriod == i32::MIN {
             optInCMOPeriod = 9;
-        } else if (((optInCMOPeriod) as i32) < 2) || (((optInCMOPeriod) as i32) > 100000) {
+        } else if optInCMOPeriod < 2 || optInCMOPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.vidya_lookback(optInTimePeriod, optInCMOPeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -677,8 +675,8 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -708,8 +706,8 @@ impl Core {
         let mut alpha: f64 = 0.0_f64;
         let mut k: f64 = 0.0_f64;
         let mut prevVIDYA: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.vidya_lookback(optInTimePeriod, optInCMOPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -733,15 +731,15 @@ impl Core {
         nullRun = 0;
         // for( i = 0; i < ((optInCMOPeriod) as usize); i += 1 )
         i = 0;
-        while i < ((optInCMOPeriod) as usize) {
+        while i < (optInCMOPeriod as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             sum = upSum + downSum;
             if sum > 0.0 {
@@ -749,7 +747,7 @@ impl Core {
             } else {
                 k = 0.0;
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
             i += 1;
         }
         // Each bar below drops the change that leaves the window after its own
@@ -758,7 +756,7 @@ impl Core {
         diff = tempReal - trailingValue;
         trailingValue = tempReal;
         trailingIdx += 1;
-        up = (diff + (diff).abs()) * 0.5;
+        up = (diff + diff.abs()) * 0.5;
         upSum -= up;
         downSum -= up - diff;
         today += 1;
@@ -767,14 +765,14 @@ impl Core {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInCMOPeriod) as usize) {
+            if nullRun >= (optInCMOPeriod as usize) {
                 cold_arm();
-                nullRun = (optInCMOPeriod) as usize;
+                nullRun = optInCMOPeriod as usize;
                 upSum = 0.0;
                 downSum = 0.0;
                 k = 0.0;
@@ -786,30 +784,30 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum -= up;
             downSum -= up - diff;
             today += 1;
         }
-        outReal[(0 * outStride) as usize] = prevVIDYA;
+        outReal[0] = prevVIDYA;
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInCMOPeriod) as usize) {
+            if nullRun >= (optInCMOPeriod as usize) {
                 cold_arm();
-                nullRun = (optInCMOPeriod) as usize;
+                nullRun = optInCMOPeriod as usize;
                 upSum = 0.0;
                 downSum = 0.0;
                 k = 0.0;
@@ -821,19 +819,19 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevVIDYA;
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevVIDYA;
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum -= up;
             downSum -= up - diff;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -864,7 +862,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::vidya_open`] (composition seam).
     pub(crate) fn vidya_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInCMOPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInCMOPeriod: i32,
     ) -> Result<(VidyaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -937,7 +935,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VIDYA_OpenAndFill")]
     pub fn vidya_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInCMOPeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInCMOPeriod: i32, outReal: &mut [f64],
     ) -> Result<(VidyaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -956,7 +954,7 @@ impl Core {
     /// [`Core::vidya_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn vidya_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInCMOPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInCMOPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VidyaStream, RetCode> {
         self.vidya_open_impl(inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1035,21 +1033,18 @@ impl VidyaStream {
             let mut prevValue = sp.prevValue;
             let mut upSum = sp.upSum;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             tempReal = inReal;
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInCMOPeriod) as usize) {
-                nullRun = (sp.optInCMOPeriod) as usize;
-                upSum = 0.0;
-                downSum = 0.0;
+            if nullRun >= (sp.optInCMOPeriod as usize) {
                 k = 0.0;
             } else {
                 sum = upSum + downSum;
@@ -1059,8 +1054,8 @@ impl VidyaStream {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
-            (*outReal) = prevVIDYA;
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
+            *outReal = prevVIDYA;
         }
         Ok(outReal)
     }
@@ -1131,7 +1126,7 @@ impl VidyaStream {
         outReal
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
         let mut outReal: f64 = 0.0_f64;
         {
             let sp = &self.state;
@@ -1150,15 +1145,12 @@ impl VidyaStream {
             tempReal = inReal;
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upSum += up;
             downSum += up - diff;
-            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            live = if diff.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInCMOPeriod) as usize) {
-                nullRun = (sp.optInCMOPeriod) as usize;
-                upSum = 0.0;
-                downSum = 0.0;
+            if nullRun >= (sp.optInCMOPeriod as usize) {
                 k = 0.0;
             } else {
                 sum = upSum + downSum;
@@ -1168,8 +1160,8 @@ impl VidyaStream {
                     k = 0.0;
                 }
             }
-            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
-            (*outReal) = prevVIDYA;
+            prevVIDYA = fmadd!(prevValue - prevVIDYA, k, prevVIDYA);
+            *outReal = prevVIDYA;
         }
         Ok(outReal)
     }

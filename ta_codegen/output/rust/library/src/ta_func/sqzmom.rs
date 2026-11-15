@@ -92,20 +92,18 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_SQZMOM_Lookback")]
     #[inline]
-    pub fn sqzmom_lookback(&self, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64) -> Result<usize, RetCode> {
-        if ((optInBBPeriod) as i32) == (i32::MIN) {
+    pub fn sqzmom_lookback(&self, mut optInBBPeriod: i32, optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64) -> Result<usize, RetCode> {
+        if optInBBPeriod == i32::MIN {
             optInBBPeriod = 20;
-        } else if (((optInBBPeriod) as i32) < 2) || (((optInBBPeriod) as i32) > 100000) {
+        } else if optInBBPeriod < 2 || optInBBPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == Self::REAL_DEFAULT {
-            optInNbDev = 2e0;
-        } else if !((optInNbDev >= 0e0) && (optInNbDev <= Self::REAL_MAX)) {
+        if optInNbDev != Self::REAL_DEFAULT && !((optInNbDev >= 0e0) && (optInNbDev <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if ((optInKCPeriod) as i32) == (i32::MIN) {
+        if optInKCPeriod == i32::MIN {
             optInKCPeriod = 20;
-        } else if (((optInKCPeriod) as i32) < 2) || (((optInKCPeriod) as i32) > 100000) {
+        } else if optInKCPeriod < 2 || optInKCPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInFactorWide == Self::REAL_DEFAULT {
@@ -182,7 +180,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_SQZMOM_DisplayShift")]
-    pub fn sqzmom_display_shift(&self, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn sqzmom_display_shift(&self, optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -216,9 +214,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInBBPeriod) as i32) == (i32::MIN) {
+        if optInBBPeriod == i32::MIN {
             optInBBPeriod = 20;
-        } else if (((optInBBPeriod) as i32) < 2) || (((optInBBPeriod) as i32) > 100000) {
+        } else if optInBBPeriod < 2 || optInBBPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -226,9 +224,9 @@ impl Core {
         } else if !((optInNbDev >= 0e0) && (optInNbDev <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if ((optInKCPeriod) as i32) == (i32::MIN) {
+        if optInKCPeriod == i32::MIN {
             optInKCPeriod = 20;
-        } else if (((optInKCPeriod) as i32) < 2) || (((optInKCPeriod) as i32) > 100000) {
+        } else if optInKCPeriod < 2 || optInKCPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInFactorWide == Self::REAL_DEFAULT {
@@ -254,15 +252,12 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMomentum.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSqueeze.len());
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut stageLookback: usize = 0_usize;
         let mut stageIdx: usize = 0_usize;
         let mut stageLen: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut n: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
-        let mut tempNbElement: usize = 0_usize;
         let mut kcmNb: usize = 0_usize;
         let mut sdNb: usize = 0_usize;
         let mut kcmShift: usize = 0_usize;
@@ -300,16 +295,16 @@ impl Core {
         }
         lookbackTotal = self.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow).unwrap_or(usize::MAX);
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inClose = &inClose[..=endIdx];
@@ -325,46 +320,31 @@ impl Core {
         // The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
         // midprice is bit-identical to donchian's middle band.
         let _xr0 = match self.midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, &mut tempDev[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr0.beg_idx;
-        (*outNBElement) = _xr0.count;
-        retCode = RetCode::Success;
+        *outBegIdx = _xr0.beg_idx;
+        *outNBElement = _xr0.count;
         let _xr1 = match self.sma(stageIdx, endIdx, inClose, optInKCPeriod, &mut tempKCM[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
         kcmNb = _xr1.count;
-        retCode = RetCode::Success;
         // DEV, over the staged range. The close is read at the index midprice
         // reported for the range, which is what lets this loop stream: keep
         // outBegIdx as midprice's receiver, and reuse it for no call above here.
         i = 0;
         if i < stageLen {
             let _wn: usize = stageLen - i;
-            let _w0 = &inClose[((*outBegIdx) + i) as usize..][.._wn];
+            let _w0 = &inClose[(*outBegIdx + i) as usize..][.._wn];
             let _w1 = &mut tempDev[i..][.._wn];
             let _w2 = &tempKCM[i..][.._wn];
             for _wk in 0.._wn {
                 _w1[_wk] = _w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
-                i += 1;
             }
         }
         // The compression band: the simple mean of the true range, not an ATR.
         // trange's own lookback is 1, and stageIdx is at least 1 because the
         // compression chain alone puts lookbackTotal at k or more.
         let _xr2 = match self.trange(stageIdx, endIdx, inHigh, inLow, inClose, &mut tempWork[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
-        retCode = RetCode::Success;
         let _xr3 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr3.beg_idx;
-        tempNbElement = _xr3.count;
-        retCode = RetCode::Success;
         let _xr4 = match self.sma(startIdx, endIdx, inClose, optInBBPeriod, &mut tempMid[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr4.beg_idx;
-        tempNbElement = _xr4.count;
-        retCode = RetCode::Success;
         let _xr5 = match self.stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, &mut tempSD[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr5.beg_idx;
         sdNb = _xr5.count;
-        retCode = RetCode::Success;
         // The centre is staged one regression window early; the shift puts it on
         // the bar the bands are on.
         kcmShift = kcmNb - sdNb;
@@ -376,9 +356,6 @@ impl Core {
         // The regression window closes on the first output bar, so entering it at 0 of
         // the staged range puts its first fitted value on startIdx.
         let _xr6 = match self.linearreg(0, stageLen - 1, &tempDev, optInKCPeriod, outMomentum) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr6.beg_idx;
-        tempNbElement = _xr6.count;
-        retCode = RetCode::Success;
         // The ordinal. Every comparison is strict: a band exactly on a channel
         // edge is not inside that channel and not outside it either.
         //
@@ -400,12 +377,11 @@ impl Core {
                 lo = _w2[_wk] - dev;
                 centre = _w1[_wk];
                 band = _w4[_wk];
-                _w0[_wk] = std::hint::select_unpredictable(((lo > centre - ((optInFactorNarrow) as f64) * band) & (up < centre + ((optInFactorNarrow) as f64) * band)), 3, std::hint::select_unpredictable(((lo > centre - ((optInFactorNormal) as f64) * band) & (up < centre + ((optInFactorNormal) as f64) * band)), 2, std::hint::select_unpredictable(((lo > centre - ((optInFactorWide) as f64) * band) & (up < centre + ((optInFactorWide) as f64) * band)), 1, std::hint::select_unpredictable(((lo < centre - ((optInFactorWide) as f64) * band) & (up > centre + ((optInFactorWide) as f64) * band)), -1, 0))));
-                i += 1;
+                _w0[_wk] = std::hint::select_unpredictable((lo > centre - (optInFactorNarrow as f64) * band) & (up < centre + (optInFactorNarrow as f64) * band), 3, std::hint::select_unpredictable((lo > centre - (optInFactorNormal as f64) * band) & (up < centre + (optInFactorNormal as f64) * band), 2, std::hint::select_unpredictable((lo > centre - (optInFactorWide as f64) * band) & (up < centre + (optInFactorWide as f64) * band), 1, std::hint::select_unpredictable((lo < centre - (optInFactorWide as f64) * band) & (up > centre + (optInFactorWide as f64) * band), -1, 0))));
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = n;
+        *outBegIdx = startIdx;
+        *outNBElement = n;
         return RetCode::Success;
     }
     /// John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014. Volatility
@@ -598,9 +574,7 @@ pub struct SqzmomStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SqzmomStreamState {
-    optInBBPeriod: i32,
     optInNbDev: f64,
-    optInKCPeriod: i32,
     optInFactorWide: f64,
     optInFactorNormal: f64,
     optInFactorNarrow: f64,
@@ -651,19 +625,19 @@ impl Core {
         lo = cur_tempMid - dev;
         centre = cur_tempKCM;
         band = cur_tempWork;
-        if lo > centre - ((sp.optInFactorNarrow) as f64) * band && up < centre + ((sp.optInFactorNarrow) as f64) * band {
+        if lo > centre - (sp.optInFactorNarrow as f64) * band && up < centre + (sp.optInFactorNarrow as f64) * band {
             cur_outSqueeze = 3;
-        } else if lo > centre - ((sp.optInFactorNormal) as f64) * band && up < centre + ((sp.optInFactorNormal) as f64) * band {
+        } else if lo > centre - (sp.optInFactorNormal as f64) * band && up < centre + (sp.optInFactorNormal as f64) * band {
             cur_outSqueeze = 2;
-        } else if lo > centre - ((sp.optInFactorWide) as f64) * band && up < centre + ((sp.optInFactorWide) as f64) * band {
+        } else if lo > centre - (sp.optInFactorWide as f64) * band && up < centre + (sp.optInFactorWide as f64) * band {
             cur_outSqueeze = 1;
-        } else if lo < centre - ((sp.optInFactorWide) as f64) * band && up > centre + ((sp.optInFactorWide) as f64) * band {
+        } else if lo < centre - (sp.optInFactorWide as f64) * band && up > centre + (sp.optInFactorWide as f64) * band {
             cur_outSqueeze = -1;
         } else {
             cur_outSqueeze = 0;
         }
-        (*outMomentum) = cur_outMomentum;
-        (*outSqueeze) = cur_outSqueeze;
+        *outMomentum = cur_outMomentum;
+        *outSqueeze = cur_outSqueeze;
         Ok(())
     }
 
@@ -675,9 +649,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInBBPeriod) as i32) == (i32::MIN) {
+        if optInBBPeriod == i32::MIN {
             optInBBPeriod = 20;
-        } else if (((optInBBPeriod) as i32) < 2) || (((optInBBPeriod) as i32) > 100000) {
+        } else if optInBBPeriod < 2 || optInBBPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -685,9 +659,9 @@ impl Core {
         } else if !((optInNbDev >= 0e0) && (optInNbDev <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if ((optInKCPeriod) as i32) == (i32::MIN) {
+        if optInKCPeriod == i32::MIN {
             optInKCPeriod = 20;
-        } else if (((optInKCPeriod) as i32) < 2) || (((optInKCPeriod) as i32) > 100000) {
+        } else if optInKCPeriod < 2 || optInKCPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInFactorWide == Self::REAL_DEFAULT {
@@ -710,14 +684,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outMomentum: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outMomentum: &mut [f64] =
@@ -732,7 +704,6 @@ impl Core {
         let mut lagNb3: i64 = 0;
         let mut lagNb4: i64 = 0;
         let mut lagNb5: i64 = 0;
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut stageLookback: usize = 0_usize;
         let mut stageIdx: usize = 0_usize;
@@ -778,16 +749,16 @@ impl Core {
         }
         lookbackTotal = self.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow)?;
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         n = endIdx - startIdx + 1;
@@ -801,24 +772,22 @@ impl Core {
         tempSD = vec![0.0_f64; (n * 1) as usize];
         // The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
         // midprice is bit-identical to donchian's middle band.
-        lagNb0 = ((endIdx + 1) as i64);
+        lagNb0 = (endIdx + 1) as i64;
         // Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, outBegIdx, outNBElement, &mut tempDev[..])?;
-        retCode = RetCode::Success;
-        lagNb1 = ((*outNBElement) as i64);
+        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], stageIdx as usize, optInKCPeriod, outBegIdx, outNBElement, &mut tempDev[..])?;
+        lagNb1 = *outNBElement as i64;
         // Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut kcmNb, &mut tempKCM[..])?;
-        retCode = RetCode::Success;
-        lagNb2 = (kcmNb as i64);
+        let sub1 = self.sma_open_and_fill_internal(&inClose[..(endIdx as usize) + 1], stageIdx as usize, optInKCPeriod, &mut tempBegIdx, &mut kcmNb, &mut tempKCM[..])?;
+        lagNb2 = kcmNb as i64;
         // DEV, over the staged range. The close is read at the index midprice
         // reported for the range, which is what lets this loop stream: keep
         // outBegIdx as midprice's receiver, and reuse it for no call above here.
         if (stageLen as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        if lagNb0 - (stageLen as i64) - ((*outBegIdx) as i64) != 0 {
+        if lagNb0 - (stageLen as i64) - (*outBegIdx as i64) != 0 {
             return Err(RetCode::InternalError);
         }
         if lagNb2 - (stageLen as i64) != 0 {
@@ -830,7 +799,7 @@ impl Core {
         // for( i = 0; i < stageLen; i += 1 )
         i = 0;
         while i < stageLen {
-            tempDev[i] = inClose[((*outBegIdx) + i) as usize] - (tempDev[i] + tempKCM[i]) / 2.0;
+            tempDev[i] = inClose[(*outBegIdx + i) as usize] - (tempDev[i] + tempKCM[i]) / 2.0;
             i += 1;
         }
         // The compression band: the simple mean of the true range, not an ATR.
@@ -838,29 +807,25 @@ impl Core {
         // compression chain alone puts lookbackTotal at k or more.
         // Sub-stream 2: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.trange_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
-        retCode = RetCode::Success;
-        lagNb3 = (tempNbElement as i64);
+        let sub2 = self.trange_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], &inClose[..(endIdx as usize) + 1], stageIdx as usize, &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
+        lagNb3 = tempNbElement as i64;
         // Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub3, _) = self.sma_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod)?;
+        let (sub3, _) = self.sma_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], 0 as usize, optInKCPeriod)?;
         if lagNb3 - 1 - ((stageLen - 1) as i64) != 0 {
             return Err(RetCode::InternalError);
         }
         let _xr0 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
         // Sub-stream 4: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub4 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempMid[..])?;
-        retCode = RetCode::Success;
-        lagNb4 = (tempNbElement as i64);
+        let sub4 = self.sma_open_and_fill_internal(&inClose[..(endIdx as usize) + 1], startIdx as usize, optInBBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempMid[..])?;
+        lagNb4 = tempNbElement as i64;
         // Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub5 = self.stddev_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, 1.0, &mut tempBegIdx, &mut sdNb, &mut tempSD[..])?;
-        retCode = RetCode::Success;
-        lagNb5 = (sdNb as i64);
+        let sub5 = self.stddev_open_and_fill_internal(&inClose[..(endIdx as usize) + 1], startIdx as usize, optInBBPeriod, 1.0, &mut tempBegIdx, &mut sdNb, &mut tempSD[..])?;
+        lagNb5 = sdNb as i64;
         // The centre is staged one regression window early; the shift puts it on
         // the bar the bands are on.
         kcmShift = kcmNb - sdNb;
@@ -873,8 +838,7 @@ impl Core {
         // the staged range puts its first fitted value on startIdx.
         // Sub-stream 6: linearreg over `tempDev`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub6 = self.linearreg_open_and_fill_internal(&tempDev[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outMomentum[..])?;
-        retCode = RetCode::Success;
+        let sub6 = self.linearreg_open_and_fill_internal(&tempDev[..((stageLen - 1) as usize) + 1], 0 as usize, optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outMomentum[..])?;
         // The ordinal. Every comparison is strict: a band exactly on a channel
         // edge is not inside that channel and not outside it either.
         //
@@ -902,21 +866,21 @@ impl Core {
             lo = tempMid[i] - dev;
             centre = tempKCM[i + kcmShift];
             band = tempWork[i];
-            if lo > centre - ((optInFactorNarrow) as f64) * band && up < centre + ((optInFactorNarrow) as f64) * band {
+            if lo > centre - (optInFactorNarrow as f64) * band && up < centre + (optInFactorNarrow as f64) * band {
                 sc_outSqueeze[i] = 3;
-            } else if lo > centre - ((optInFactorNormal) as f64) * band && up < centre + ((optInFactorNormal) as f64) * band {
+            } else if lo > centre - (optInFactorNormal as f64) * band && up < centre + (optInFactorNormal as f64) * band {
                 sc_outSqueeze[i] = 2;
-            } else if lo > centre - ((optInFactorWide) as f64) * band && up < centre + ((optInFactorWide) as f64) * band {
+            } else if lo > centre - (optInFactorWide as f64) * band && up < centre + (optInFactorWide as f64) * band {
                 sc_outSqueeze[i] = 1;
-            } else if lo < centre - ((optInFactorWide) as f64) * band && up > centre + ((optInFactorWide) as f64) * band {
+            } else if lo < centre - (optInFactorWide as f64) * band && up > centre + (optInFactorWide as f64) * band {
                 sc_outSqueeze[i] = -1;
             } else {
                 sc_outSqueeze[i] = 0;
             }
             i += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = n;
+        *outBegIdx = startIdx;
+        *outNBElement = n;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
@@ -925,9 +889,7 @@ impl Core {
         let mut state = SqzmomStreamState {
             cur_outMomentum: 0.0_f64,
             cur_outSqueeze: 0_i32,
-            optInBBPeriod,
             optInNbDev,
-            optInKCPeriod,
             optInFactorWide,
             optInFactorNormal,
             optInFactorNarrow,
@@ -954,7 +916,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::sqzmom_open`] (composition seam).
     pub(crate) fn sqzmom_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64,
     ) -> Result<(SqzmomStream, (f64, i32)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1044,7 +1006,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SQZMOM_OpenAndFill")]
     pub fn sqzmom_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outMomentum: &mut [f64], outSqueeze: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64, outMomentum: &mut [f64], outSqueeze: &mut [i32],
     ) -> Result<(SqzmomStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1069,7 +1031,7 @@ impl Core {
     /// [`Core::sqzmom_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn sqzmom_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32],
     ) -> Result<SqzmomStream, RetCode> {
         self.sqzmom_open_impl(inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1)
     }
@@ -1170,19 +1132,19 @@ impl SqzmomStream {
             lo = cur_tempMid - dev;
             centre = cur_tempKCM;
             band = cur_tempWork;
-            if lo > centre - ((sp.optInFactorNarrow) as f64) * band && up < centre + ((sp.optInFactorNarrow) as f64) * band {
+            if lo > centre - (sp.optInFactorNarrow as f64) * band && up < centre + (sp.optInFactorNarrow as f64) * band {
                 cur_outSqueeze = 3;
-            } else if lo > centre - ((sp.optInFactorNormal) as f64) * band && up < centre + ((sp.optInFactorNormal) as f64) * band {
+            } else if lo > centre - (sp.optInFactorNormal as f64) * band && up < centre + (sp.optInFactorNormal as f64) * band {
                 cur_outSqueeze = 2;
-            } else if lo > centre - ((sp.optInFactorWide) as f64) * band && up < centre + ((sp.optInFactorWide) as f64) * band {
+            } else if lo > centre - (sp.optInFactorWide as f64) * band && up < centre + (sp.optInFactorWide as f64) * band {
                 cur_outSqueeze = 1;
-            } else if lo < centre - ((sp.optInFactorWide) as f64) * band && up > centre + ((sp.optInFactorWide) as f64) * band {
+            } else if lo < centre - (sp.optInFactorWide as f64) * band && up > centre + (sp.optInFactorWide as f64) * band {
                 cur_outSqueeze = -1;
             } else {
                 cur_outSqueeze = 0;
             }
-            (*outMomentum) = cur_outMomentum;
-            (*outSqueeze) = cur_outSqueeze;
+            *outMomentum = cur_outMomentum;
+            *outSqueeze = cur_outSqueeze;
         }
         Ok((outMomentum, outSqueeze))
     }

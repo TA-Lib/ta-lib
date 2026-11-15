@@ -98,9 +98,9 @@ impl Core {
         let mut count8: i32 = 0i32;
         // ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
         // count is defined as this double expression, not as the real quotient.
-        limit = (if optInFastLimit > optInSlowLimit { optInFastLimit } else { optInSlowLimit });
-        count4 = (c_ceil(20.0 / limit)) as i32;
-        count8 = (c_ceil(38.0 / limit)) as i32;
+        limit = if optInFastLimit > optInSlowLimit { optInFastLimit } else { optInSlowLimit };
+        count4 = c_ceil(20.0 / limit) as i32;
+        count8 = c_ceil(38.0 / limit) as i32;
         // Lookback is a fix amount + the unstable period.
         //
         //
@@ -116,7 +116,7 @@ impl Core {
         //          1 price bar for the Delta Phase
         //        -------
         //         32 Total
-        return Ok((32 + self.unstable_count(FuncUnstId::MAMA, (((80 + 50 * 4)) as i32) + count4, (((80 + 50 * 8)) as i32) + count8)) as usize);
+        return Ok((32 + self.unstable_count(FuncUnstId::MAMA, ((80 + 50 * 4) as i32) + count4, ((80 + 50 * 8) as i32) + count8)) as usize);
     }
     /// Display shift of one output of [`Core::mama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -137,7 +137,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
     /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MAMA_DisplayShift")]
-    pub fn mama_display_shift(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn mama_display_shift(&self, optInFastLimit: f64, optInSlowLimit: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.mama_lookback(optInFastLimit, optInSlowLimit)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -214,7 +214,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFAMA.len());
-        if (outMAMA.as_ptr() == outFAMA.as_ptr()) {
+        if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -294,12 +294,12 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -535,16 +535,16 @@ impl Core {
                 tempReal = optInFastLimit;
             }
             // Calculate MAMA, FAMA
-            mama = fmadd!(1_f64 - tempReal as f64, mama, tempReal * todayValue);
+            mama = fmadd!(1_f64 - tempReal, mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = fmadd!(1_f64 - tempReal as f64, fama, tempReal * mama);
+            fama = fmadd!(1_f64 - tempReal, fama, tempReal * mama);
             if today >= startIdx {
                 outFAMA[outIdx] = fama;
                 outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -570,7 +570,7 @@ impl Core {
             today += 1;
         }
         // Default return values
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the
@@ -919,13 +919,13 @@ impl Core {
             tempReal = sp.optInFastLimit;
         }
         // Calculate MAMA, FAMA
-        sp.mama = fmadd!(1_f64 - tempReal as f64, sp.mama, tempReal * todayValue);
+        sp.mama = fmadd!(1_f64 - tempReal, sp.mama, tempReal * todayValue);
         tempReal *= 0.5;
-        sp.fama = fmadd!(1_f64 - tempReal as f64, sp.fama, tempReal * sp.mama);
-        (*outFAMA) = sp.fama;
-        (*outMAMA) = sp.mama;
+        sp.fama = fmadd!(1_f64 - tempReal, sp.fama, tempReal * sp.mama);
+        *outFAMA = sp.fama;
+        *outMAMA = sp.mama;
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -948,8 +948,8 @@ impl Core {
         }
         sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
-        sp.cur_outMAMA = (*outMAMA);
-        sp.cur_outFAMA = (*outFAMA);
+        sp.cur_outMAMA = *outMAMA;
+        sp.cur_outFAMA = *outFAMA;
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
@@ -1106,13 +1106,13 @@ impl Core {
             tempReal = sp.optInFastLimit;
         }
         // Calculate MAMA, FAMA
-        sp.mama = fmadd!(1_f64 - tempReal as f64, sp.mama, tempReal * todayValue);
+        sp.mama = fmadd!(1_f64 - tempReal, sp.mama, tempReal * todayValue);
         tempReal *= 0.5;
-        sp.fama = fmadd!(1_f64 - tempReal as f64, sp.fama, tempReal * sp.mama);
-        (*outFAMA) = sp.fama;
-        (*outMAMA) = sp.mama;
+        sp.fama = fmadd!(1_f64 - tempReal, sp.fama, tempReal * sp.mama);
+        *outFAMA = sp.fama;
+        *outMAMA = sp.mama;
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -1135,8 +1135,8 @@ impl Core {
         }
         sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
-        sp.cur_outMAMA = (*outMAMA);
-        sp.cur_outFAMA = (*outFAMA);
+        sp.cur_outMAMA = *outMAMA;
+        sp.cur_outFAMA = *outFAMA;
         sp.streamParity = 1 - sp.streamParity;
     }
 
@@ -1178,14 +1178,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -1262,11 +1260,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -1502,15 +1500,15 @@ impl Core {
                 tempReal = optInFastLimit;
             }
             // Calculate MAMA, FAMA
-            mama = fmadd!(1_f64 - tempReal as f64, mama, tempReal * todayValue);
+            mama = fmadd!(1_f64 - tempReal, mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = fmadd!(1_f64 - tempReal as f64, fama, tempReal * mama);
+            fama = fmadd!(1_f64 - tempReal, fama, tempReal * mama);
             if today >= startIdx {
-                outFAMA[(outIdx * outStride) as usize] = fama;
-                outMAMA[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = mama;
+                outFAMA[outIdx * outStride] = fama;
+                outMAMA[{ let _v = outIdx; outIdx += 1; _v } * outStride] = mama;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -1536,7 +1534,7 @@ impl Core {
             today += 1;
         }
         // Default return values
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
@@ -1605,7 +1603,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::mama_open`] (composition seam).
     pub(crate) fn mama_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64,
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64,
     ) -> Result<(MamaStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1684,7 +1682,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MAMA_OpenAndFill")]
     pub fn mama_open_and_fill(
-        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
+        &self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<(MamaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1706,7 +1704,7 @@ impl Core {
     /// [`Core::mama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn mama_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<MamaStream, RetCode> {
         self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
@@ -1798,41 +1796,25 @@ impl MamaStream {
             let mut detrender: f64 = 0.0_f64;
             let mut Q1: f64 = 0.0_f64;
             let mut todayValue: f64 = 0.0_f64;
-            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
-            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
-            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
-            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut fama = sp.fama;
-            let mut hilbertIdx = sp.hilbertIdx;
+            let hilbertIdx = sp.hilbertIdx;
             let mut mama = sp.mama;
-            let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
-            let mut prevPhase = sp.prevPhase;
+            let prevPhase = sp.prevPhase;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
-            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
-            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
             let mut prev_detrender_Even = sp.prev_detrender_Even;
             let mut prev_detrender_Odd = sp.prev_detrender_Odd;
-            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
-            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
-            let mut prev_jI_Even = sp.prev_jI_Even;
-            let mut prev_jI_Odd = sp.prev_jI_Odd;
-            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
-            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
-            let mut prev_jQ_Even = sp.prev_jQ_Even;
-            let mut prev_jQ_Odd = sp.prev_jQ_Odd;
-            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
-            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut trailingWMAValue = sp.trailingWMAValue;
+            let prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
             adjustedPrevPeriod = fmadd!(0.075 as f64, sp.period, 0.54);
             todayValue = inReal;
-            periodWMASub += todayValue;
-            periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
-            periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1841,7 +1823,6 @@ impl MamaStream {
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
                 detrender += prev_detrender_Even;
-                prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Even[hilbertIdx];
@@ -1849,24 +1830,12 @@ impl MamaStream {
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
                 Q1 += prev_Q1_Even;
-                prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
-                hilbertTempReal = sp.a * I1ForEvenPrev3;
-                prev_jI_Even = sp.b * prev_jI_input_Even;
-                prev_jI_input_Even = I1ForEvenPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Even = sp.b * prev_jQ_input_Even;
-                prev_jQ_input_Even = Q1;
-                if { hilbertIdx += 1; hilbertIdx } == 3 {
-                    hilbertIdx = 0;
-                }
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForOddPrev3 = I1ForOddPrev2;
-                I1ForOddPrev2 = detrender;
                 // Put Alpha in tempReal2
                 if I1ForEvenPrev3 != 0.0 {
                     tempReal2 = (Q1 / I1ForEvenPrev3).atan() * sp.rad2Deg;
@@ -1881,7 +1850,6 @@ impl MamaStream {
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
                 detrender += prev_detrender_Odd;
-                prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Odd[hilbertIdx];
@@ -1889,21 +1857,12 @@ impl MamaStream {
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
                 Q1 += prev_Q1_Odd;
-                prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
-                hilbertTempReal = sp.a * I1ForOddPrev3;
-                prev_jI_Odd = sp.b * prev_jI_input_Odd;
-                prev_jI_input_Odd = I1ForOddPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
-                prev_jQ_input_Odd = Q1;
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForEvenPrev3 = I1ForEvenPrev2;
-                I1ForEvenPrev2 = detrender;
                 // Put Alpha in tempReal2
                 if I1ForOddPrev3 != 0.0 {
                     tempReal2 = (Q1 / I1ForOddPrev3).atan() * sp.rad2Deg;
@@ -1913,7 +1872,6 @@ impl MamaStream {
             }
             // Put Delta Phase into tempReal
             tempReal = prevPhase - tempReal2;
-            prevPhase = tempReal2;
             if tempReal < 1.0 {
                 tempReal = 1.0;
             }
@@ -1925,11 +1883,11 @@ impl MamaStream {
                 tempReal = sp.optInFastLimit;
             }
             // Calculate MAMA, FAMA
-            mama = fmadd!(1_f64 - tempReal as f64, mama, tempReal * todayValue);
+            mama = fmadd!(1_f64 - tempReal, mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = fmadd!(1_f64 - tempReal as f64, fama, tempReal * mama);
-            (*outFAMA) = fama;
-            (*outMAMA) = mama;
+            fama = fmadd!(1_f64 - tempReal, fama, tempReal * mama);
+            *outFAMA = fama;
+            *outMAMA = mama;
         }
         Ok((outMAMA, outFAMA))
     }
@@ -2001,7 +1959,7 @@ impl MamaStream {
         (outMAMA, outFAMA)
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<(f64, f64), RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<(f64, f64), RetCode> {
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
         {
@@ -2016,41 +1974,25 @@ impl MamaStream {
             let mut detrender: f64 = 0.0_f64;
             let mut Q1: f64 = 0.0_f64;
             let mut todayValue: f64 = 0.0_f64;
-            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
-            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
-            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
-            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut fama = sp.fama;
-            let mut hilbertIdx = sp.hilbertIdx;
+            let hilbertIdx = sp.hilbertIdx;
             let mut mama = sp.mama;
-            let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
-            let mut prevPhase = sp.prevPhase;
+            let prevPhase = sp.prevPhase;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
-            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
-            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
             let mut prev_detrender_Even = sp.prev_detrender_Even;
             let mut prev_detrender_Odd = sp.prev_detrender_Odd;
-            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
-            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
-            let mut prev_jI_Even = sp.prev_jI_Even;
-            let mut prev_jI_Odd = sp.prev_jI_Odd;
-            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
-            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
-            let mut prev_jQ_Even = sp.prev_jQ_Even;
-            let mut prev_jQ_Odd = sp.prev_jQ_Odd;
-            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
-            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut trailingWMAValue = sp.trailingWMAValue;
+            let prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
             adjustedPrevPeriod = fmadd!(0.075 as f64, sp.period, 0.54);
             todayValue = inReal;
-            periodWMASub += todayValue;
-            periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = tape[(tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize];
             smoothedValue = periodWMASum * 0.1;
-            periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -2059,7 +2001,6 @@ impl MamaStream {
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
                 detrender += prev_detrender_Even;
-                prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Even[hilbertIdx];
@@ -2067,24 +2008,12 @@ impl MamaStream {
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
                 Q1 += prev_Q1_Even;
-                prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
-                hilbertTempReal = sp.a * I1ForEvenPrev3;
-                prev_jI_Even = sp.b * prev_jI_input_Even;
-                prev_jI_input_Even = I1ForEvenPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Even = sp.b * prev_jQ_input_Even;
-                prev_jQ_input_Even = Q1;
-                if { hilbertIdx += 1; hilbertIdx } == 3 {
-                    hilbertIdx = 0;
-                }
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForOddPrev3 = I1ForOddPrev2;
-                I1ForOddPrev2 = detrender;
                 // Put Alpha in tempReal2
                 if I1ForEvenPrev3 != 0.0 {
                     tempReal2 = (Q1 / I1ForEvenPrev3).atan() * sp.rad2Deg;
@@ -2099,7 +2028,6 @@ impl MamaStream {
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
                 detrender += prev_detrender_Odd;
-                prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Odd[hilbertIdx];
@@ -2107,21 +2035,12 @@ impl MamaStream {
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
                 Q1 += prev_Q1_Odd;
-                prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
-                hilbertTempReal = sp.a * I1ForOddPrev3;
-                prev_jI_Odd = sp.b * prev_jI_input_Odd;
-                prev_jI_input_Odd = I1ForOddPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
-                prev_jQ_input_Odd = Q1;
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForEvenPrev3 = I1ForEvenPrev2;
-                I1ForEvenPrev2 = detrender;
                 // Put Alpha in tempReal2
                 if I1ForOddPrev3 != 0.0 {
                     tempReal2 = (Q1 / I1ForOddPrev3).atan() * sp.rad2Deg;
@@ -2131,7 +2050,6 @@ impl MamaStream {
             }
             // Put Delta Phase into tempReal
             tempReal = prevPhase - tempReal2;
-            prevPhase = tempReal2;
             if tempReal < 1.0 {
                 tempReal = 1.0;
             }
@@ -2143,11 +2061,11 @@ impl MamaStream {
                 tempReal = sp.optInFastLimit;
             }
             // Calculate MAMA, FAMA
-            mama = fmadd!(1_f64 - tempReal as f64, mama, tempReal * todayValue);
+            mama = fmadd!(1_f64 - tempReal, mama, tempReal * todayValue);
             tempReal *= 0.5;
-            fama = fmadd!(1_f64 - tempReal as f64, fama, tempReal * mama);
-            (*outFAMA) = fama;
-            (*outMAMA) = mama;
+            fama = fmadd!(1_f64 - tempReal, fama, tempReal * mama);
+            *outFAMA = fama;
+            *outMAMA = mama;
         }
         Ok((outMAMA, outFAMA))
     }

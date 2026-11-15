@@ -802,7 +802,7 @@ TA_RetCode max( int    startIdx,
    if( mask & 16 )
       return TA_INTERNAL_ERROR;
    if( (mask & 1) && (neg < 0) )
-      outIdx = 0;
+      return TA_BAD_PARAM;
    if( !(mask & 1) )
       return TA_INTERNAL_ERROR;
    while( mask & 1024 )
@@ -859,7 +859,7 @@ TA_RetCode max( int    startIdx,
     }
 
     for needle in [
-        "& !(1)",
+        "& !1",
         "mask |= 2;",
         "mask &= 15;",
         "mask ^= 1;",
@@ -933,7 +933,7 @@ fn rust_negative_capable_cast_gets_signed_local() {
         // assign the bounds directly and never narrow.
         "tempPeriod = inPeriods[startIdx + i];",
         "if !(tempPeriod >= minPeriodReal) {",  // NaN-catching spelling
-        "tempInt = (tempPeriod) as i32;",       // narrowed only once in range
+        "tempInt = tempPeriod as i32;",       // narrowed only once in range
         "if tempInt < 1 {",                     // clamps stay signed compares
     ] {
         assert!(out.rust.contains(needle), "MAVP Rust missing `{needle}`:\n{}", out.rust);

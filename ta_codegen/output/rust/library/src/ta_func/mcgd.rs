@@ -78,9 +78,9 @@ impl Core {
     #[doc(alias = "TA_MCGD_Lookback")]
     #[inline]
     pub fn mcgd_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::MCGD, 5 * 4 * optInTimePeriod, 5 * 8 * optInTimePeriod)) as usize);
@@ -101,7 +101,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MCGD_DisplayShift")]
-    pub fn mcgd_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn mcgd_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.mcgd_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -127,9 +127,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.mcgd_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -147,8 +147,8 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut ratio: f64 = 0.0_f64;
         let mut period: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.mcgd_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -172,7 +172,7 @@ impl Core {
             tempReal = inReal[today];
             ratio = tempReal / prevMD;
             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
-            if (tempMD).is_finite() {
+            if tempMD.is_finite() {
                 prevMD = tempMD;
             }
             today += 1;
@@ -185,15 +185,15 @@ impl Core {
             tempReal = inReal[today];
             ratio = tempReal / prevMD;
             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
-            if (tempMD).is_finite() {
+            if tempMD.is_finite() {
                 prevMD = tempMD;
             }
             outReal[outIdx] = prevMD;
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed adjusts to the
@@ -325,7 +325,6 @@ pub struct McgdStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct McgdStreamState {
-    optInTimePeriod: i32,
     prevMD: f64,
     period: f64,
     cur_outReal: f64,
@@ -344,11 +343,11 @@ impl Core {
         tempReal = inReal;
         ratio = tempReal / sp.prevMD;
         tempMD = sp.prevMD + (tempReal - sp.prevMD) / (sp.period * (ratio * ratio * (ratio * ratio)));
-        if (tempMD).is_finite() {
+        if tempMD.is_finite() {
             sp.prevMD = tempMD;
         }
-        (*outReal) = sp.prevMD;
-        sp.cur_outReal = (*outReal);
+        *outReal = sp.prevMD;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::mcgd_open_internal`]
@@ -359,21 +358,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -384,8 +381,8 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut ratio: f64 = 0.0_f64;
         let mut period: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.mcgd_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -408,31 +405,30 @@ impl Core {
             tempReal = inReal[today];
             ratio = tempReal / prevMD;
             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
-            if (tempMD).is_finite() {
+            if tempMD.is_finite() {
                 prevMD = tempMD;
             }
             today += 1;
             i -= 1;
         }
         outIdx = 1;
-        outReal[(0 * outStride) as usize] = prevMD;
+        outReal[0] = prevMD;
         nbMCGD = endIdx - startIdx + 1;
         while { nbMCGD = nbMCGD.wrapping_sub(1); nbMCGD } != 0 {
             tempReal = inReal[today];
             ratio = tempReal / prevMD;
             tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
-            if (tempMD).is_finite() {
+            if tempMD.is_finite() {
                 prevMD = tempMD;
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMD;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevMD;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = McgdStreamState {
-            optInTimePeriod,
             prevMD,
             period,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -442,7 +438,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::mcgd_open`] (composition seam).
     pub(crate) fn mcgd_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(McgdStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -515,7 +511,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MCGD_OpenAndFill")]
     pub fn mcgd_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(McgdStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -534,7 +530,7 @@ impl Core {
     /// [`Core::mcgd_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn mcgd_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<McgdStream, RetCode> {
         self.mcgd_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -608,10 +604,10 @@ impl McgdStream {
             tempReal = inReal;
             ratio = tempReal / prevMD;
             tempMD = prevMD + (tempReal - prevMD) / (sp.period * (ratio * ratio * (ratio * ratio)));
-            if (tempMD).is_finite() {
+            if tempMD.is_finite() {
                 prevMD = tempMD;
             }
-            (*outReal) = prevMD;
+            *outReal = prevMD;
         }
         Ok(outReal)
     }

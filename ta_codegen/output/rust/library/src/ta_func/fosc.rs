@@ -79,12 +79,12 @@ impl Core {
     #[doc(alias = "TA_FOSC_Lookback")]
     #[inline]
     pub fn fosc_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::fosc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FOSC_DisplayShift")]
-    pub fn fosc_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn fosc_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.fosc_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -159,9 +159,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.fosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -210,36 +210,36 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        SumX = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * ((2 * optInTimePeriod - 1) as f64) / 6.0;
+        Divisor = SumX * SumX - (optInTimePeriod as f64) * SumXSqr;
         SumXY = 0.0;
         SumY = 0.0;
         sumAbs = 0.0;
         // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             tempValue1 = inReal[today - 1 - i];
             SumY += tempValue1;
             SumXY += (i as f64) * tempValue1;
-            sumAbs += (tempValue1).abs();
+            sumAbs += tempValue1.abs();
         }
-        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        m = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
         b = (SumY - m * SumX) / (optInTimePeriod as f64);
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
         closeValue = inReal[today];
         if closeValue != 0.0 {
-            outReal[outIdx] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
+            outReal[outIdx] = 100.0 * (closeValue - fmadd!(m, optInTimePeriod as f64, b)) / closeValue;
             outIdx += 1;
         } else {
             outReal[outIdx] = 0.0;
@@ -250,9 +250,9 @@ impl Core {
             weightedTrailing = (optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + inReal[today - 1];
-            sumAbs = sumAbs - (trailingValue).abs() + (inReal[today - 1]).abs();
+            sumAbs = sumAbs - trailingValue.abs() + inReal[today - 1].abs();
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 SumY = 0.0;
@@ -265,18 +265,18 @@ impl Core {
                     tempValue1 = inReal[j];
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
+                    sumAbs += tempValue1.abs();
                     tempValue2 -= 1.0;
                     j += 1;
                 }
             }
-            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            m = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
             closeValue = inReal[today];
             if closeValue != 0.0 {
-                outReal[outIdx] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
+                outReal[outIdx] = 100.0 * (closeValue - fmadd!(m, optInTimePeriod as f64, b)) / closeValue;
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
@@ -284,8 +284,8 @@ impl Core {
             }
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Forecast Oscillator: the percentage by which the close deviates from the Time Series
@@ -452,38 +452,38 @@ impl Core {
         weightedTrailing = (sp.optInTimePeriod as f64) * sp.trailingValue;
         sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;
         sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[(sp.today - 1 & sp.xMask) as usize];
-        sp.sumAbs = sp.sumAbs - (sp.trailingValue).abs() + (sp.x_inReal[(sp.today - 1 & sp.xMask) as usize]).abs();
+        sp.sumAbs = sp.sumAbs - sp.trailingValue.abs() + sp.x_inReal[(sp.today - 1 & sp.xMask) as usize].abs();
         sp.barsSinceReseed -= 1;
-        if sp.barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sp.sumAbs {
+        if sp.barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sp.sumAbs {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
             sp.SumY = 0.0;
             sp.SumXY = 0.0;
             sp.sumAbs = 0.0;
             tempValue2 = (sp.optInTimePeriod - 1) as f64;
             // for( sp.j = (windowStart) as i32; sp.j < sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j < sp.today {
                 tempValue1 = sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.SumY += tempValue1;
                 sp.SumXY += tempValue2 * tempValue1;
-                sp.sumAbs += (tempValue1).abs();
+                sp.sumAbs += tempValue1.abs();
                 tempValue2 -= 1.0;
                 sp.j += 1;
             }
         }
-        m = (((sp.optInTimePeriod) as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+        m = ((sp.optInTimePeriod as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
         b = (sp.SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
         sp.trailingValue = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize];
         sp.trailingIdx += 1;
         closeValue = sp.x_inReal[(sp.today & sp.xMask) as usize];
         if closeValue != 0.0 {
-            (*outReal) = 100.0 * (closeValue - (fmadd!(m as f64, sp.optInTimePeriod as f64, b))) / closeValue;
+            *outReal = 100.0 * (closeValue - fmadd!(m, sp.optInTimePeriod as f64, b)) / closeValue;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         sp.lag1_inReal = inReal;
     }
 
@@ -513,21 +513,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -569,46 +567,46 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        SumX = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * ((2 * optInTimePeriod - 1) as f64) / 6.0;
+        Divisor = SumX * SumX - (optInTimePeriod as f64) * SumXSqr;
         SumXY = 0.0;
         SumY = 0.0;
         sumAbs = 0.0;
         // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             tempValue1 = inReal[today - 1 - i];
             SumY += tempValue1;
             SumXY += (i as f64) * tempValue1;
-            sumAbs += (tempValue1).abs();
+            sumAbs += tempValue1.abs();
         }
-        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        m = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
         b = (SumY - m * SumX) / (optInTimePeriod as f64);
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
         closeValue = inReal[today];
         if closeValue != 0.0 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * (closeValue - fmadd!(m, optInTimePeriod as f64, b)) / closeValue;
         } else {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
         }
         today += 1;
         while today <= endIdx {
             weightedTrailing = (optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + inReal[today - 1];
-            sumAbs = sumAbs - (trailingValue).abs() + (inReal[today - 1]).abs();
+            sumAbs = sumAbs - trailingValue.abs() + inReal[today - 1].abs();
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 SumY = 0.0;
@@ -621,25 +619,25 @@ impl Core {
                     tempValue1 = inReal[j];
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
+                    sumAbs += tempValue1.abs();
                     tempValue2 -= 1.0;
                     j += 1;
                 }
             }
-            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            m = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
             closeValue = inReal[today];
             if closeValue != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * (closeValue - fmadd!(m, optInTimePeriod as f64, b)) / closeValue;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -661,7 +659,7 @@ impl Core {
         let state = FoscStreamState {
             optInTimePeriod,
             lookbackTotal,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             SumX,
             SumXY,
             SumY,
@@ -669,8 +667,8 @@ impl Core {
             barsSinceReseed,
             trailingValue,
             sumAbs,
-            j: (j) as i32,
-            today: (today) as i32,
+            j: j as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inReal: inReal[historyLen - 1],
             xMask: (physX - 1) as i32,
@@ -681,7 +679,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::fosc_open`] (composition seam).
     pub(crate) fn fosc_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(FoscStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -754,7 +752,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_FOSC_OpenAndFill")]
     pub fn fosc_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(FoscStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -773,7 +771,7 @@ impl Core {
     /// [`Core::fosc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn fosc_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<FoscStream, RetCode> {
         self.fosc_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -852,8 +850,7 @@ impl FoscStream {
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
-            let mut trailingIdx = sp.trailingIdx;
-            let mut trailingValue = sp.trailingValue;
+            let trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.today & sp.xMask) as usize;
@@ -861,35 +858,30 @@ impl FoscStream {
             weightedTrailing = (sp.optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + (if ((sp.today - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today - 1 & sp.xMask) as usize] } else { pkVal0 });
-            sumAbs = sumAbs - (trailingValue).abs() + ((if ((sp.today - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today - 1 & sp.xMask) as usize] } else { pkVal0 })).abs();
+            sumAbs = sumAbs - trailingValue.abs() + (if ((sp.today - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today - 1 & sp.xMask) as usize] } else { pkVal0 }).abs();
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
+                windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
                 SumY = 0.0;
                 SumXY = 0.0;
-                sumAbs = 0.0;
                 tempValue2 = (sp.optInTimePeriod - 1) as f64;
                 // for( j = (windowStart) as i32; j < sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j < sp.today {
-                    tempValue1 = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempValue1 = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
                     tempValue2 -= 1.0;
                     j += 1;
                 }
             }
-            m = (((sp.optInTimePeriod) as f64) * SumXY - sp.SumX * SumY) / sp.Divisor;
+            m = ((sp.optInTimePeriod as f64) * SumXY - sp.SumX * SumY) / sp.Divisor;
             b = (SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
-            trailingValue = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
-            trailingIdx += 1;
-            closeValue = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            closeValue = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             if closeValue != 0.0 {
-                (*outReal) = 100.0 * (closeValue - (fmadd!(m as f64, sp.optInTimePeriod as f64, b))) / closeValue;
+                *outReal = 100.0 * (closeValue - fmadd!(m, sp.optInTimePeriod as f64, b)) / closeValue;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

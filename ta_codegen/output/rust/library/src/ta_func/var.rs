@@ -86,15 +86,13 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_VAR_Lookback")]
     #[inline]
-    pub fn var_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn var_lookback(&self, mut optInTimePeriod: i32, optInNbDev: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == Self::REAL_DEFAULT {
-            optInNbDev = 1e0;
-        } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
+        if optInNbDev != Self::REAL_DEFAULT && !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -118,7 +116,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_VAR_DisplayShift")]
-    pub fn var_display_shift(&self, mut optInTimePeriod: i32, mut optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn var_display_shift(&self, optInTimePeriod: i32, optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.var_lookback(optInTimePeriod, optInNbDev)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -145,9 +143,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -184,8 +182,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -220,7 +218,7 @@ impl Core {
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -242,20 +240,18 @@ impl Core {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal = inReal[j] - shift;
                     periodTotal1 += tempReal;
                     tempReal *= tempReal;
                     periodTotal2 += tempReal;
                 }
-                j = (i as usize) + 1;
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
                 // A window flat to within the rounding of its own mean leaves the
@@ -266,13 +262,12 @@ impl Core {
                     shift = inReal[i];
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         tempReal = inReal[j] - shift;
                         periodTotal1 += tempReal;
                         tempReal *= tempReal;
                         periodTotal2 += tempReal;
                     }
-                    j = (i as usize) + 1;
                     meanValue1 = periodTotal1 * invPeriod;
                     variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
                 }
@@ -299,8 +294,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Rolling population variance of a real series over a given period. Measures dispersion of
@@ -427,7 +422,6 @@ pub struct VarStream {
 #[allow(non_snake_case, dead_code)]
 struct VarStreamState {
     optInTimePeriod: i32,
-    optInNbDev: f64,
     shift: f64,
     periodTotal1: f64,
     periodTotal2: f64,
@@ -460,7 +454,7 @@ impl Core {
         sp.periodTotal1 += tempReal;
         tempReal *= tempReal;
         sp.periodTotal2 += tempReal;
-        sp.peakTotal2 = (if sp.periodTotal2 > sp.peakTotal2 { sp.periodTotal2 } else { sp.peakTotal2 });
+        sp.peakTotal2 = if sp.periodTotal2 > sp.peakTotal2 { sp.periodTotal2 } else { sp.peakTotal2 };
         meanValue1 = sp.periodTotal1 * sp.invPeriod;
         variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
         // Remove the trailing value (prepares the next window).
@@ -480,7 +474,7 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if variance < 0.000001 * (sp.peakTotal2 * sp.invPeriod) || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            sp.windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
+            sp.windowStart = sp.i - (sp.nbInitialElementNeeded as i32);
             tempReal = 0.0;
             // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
             sp.j = sp.windowStart;
@@ -539,39 +533,35 @@ impl Core {
             tempReal *= tempReal;
             sp.periodTotal2 -= tempReal;
         }
-        (*outReal) = variance;
+        *outReal = variance;
         sp.i += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::var_open_internal`]
     /// (stride 0, scalar sink) and [`Core::var_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn var_open_impl(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<VarStream, RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == Self::REAL_DEFAULT {
-            optInNbDev = 1e0;
-        } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
+        if optInNbDev != Self::REAL_DEFAULT && !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
         let mut shift: f64 = 0.0_f64;
         let mut periodTotal1: f64 = 0.0_f64;
@@ -596,8 +586,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         invPeriod = 1.0 / (optInTimePeriod as f64);
@@ -631,7 +621,7 @@ impl Core {
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -653,20 +643,19 @@ impl Core {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal = inReal[j] - shift;
                     periodTotal1 += tempReal;
                     tempReal *= tempReal;
                     periodTotal2 += tempReal;
                 }
-                j = (i as usize) + 1;
+                j = i + 1;
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
                 // A window flat to within the rounding of its own mean leaves the
@@ -677,13 +666,13 @@ impl Core {
                     shift = inReal[i];
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         tempReal = inReal[j] - shift;
                         periodTotal1 += tempReal;
                         tempReal *= tempReal;
                         periodTotal2 += tempReal;
                     }
-                    j = (i as usize) + 1;
+                    j = i + 1;
                     meanValue1 = periodTotal1 * invPeriod;
                     variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
                 }
@@ -704,13 +693,13 @@ impl Core {
                 tempReal *= tempReal;
                 periodTotal2 -= tempReal;
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = variance;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = variance;
             i += 1;
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -731,18 +720,17 @@ impl Core {
         }
         let state = VarStreamState {
             optInTimePeriod,
-            optInNbDev,
             shift,
             periodTotal1,
             periodTotal2,
             invPeriod,
             peakTotal2,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
-            j: (j) as i32,
-            windowStart: (windowStart) as i32,
-            i: (i) as i32,
+            j: j as i32,
+            windowStart: windowStart as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -752,7 +740,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::var_open`] (composition seam).
     pub(crate) fn var_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDev: f64,
     ) -> Result<(VarStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -825,7 +813,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VAR_OpenAndFill")]
     pub fn var_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64, outReal: &mut [f64],
     ) -> Result<(VarStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -844,7 +832,7 @@ impl Core {
     /// [`Core::var_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn var_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VarStream, RetCode> {
         self.var_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
@@ -920,7 +908,7 @@ impl VarStream {
             let mut periodTotal1 = sp.periodTotal1;
             let mut periodTotal2 = sp.periodTotal2;
             let mut shift = sp.shift;
-            let mut trailingIdx = sp.trailingIdx;
+            let trailingIdx = sp.trailingIdx;
             let mut windowStart = sp.windowStart;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -931,7 +919,7 @@ impl VarStream {
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanValue1 = periodTotal1 * sp.invPeriod;
             variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -939,7 +927,6 @@ impl VarStream {
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
             periodTotal2 -= tempReal;
-            trailingIdx += 1;
             // Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
             // of the LARGEST mean squared deviation held since the last rebuild, or at
             // least every 32 windows. Measure against that peak, not the current sum:
@@ -950,13 +937,12 @@ impl VarStream {
             // bar.
             barsSinceReseed -= 1;
             if variance < 0.000001 * (peakTotal2 * sp.invPeriod) || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
+                windowStart = sp.i - (sp.nbInitialElementNeeded as i32);
                 tempReal = 0.0;
                 // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
                 while j <= sp.i {
-                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempReal += if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
@@ -978,7 +964,7 @@ impl VarStream {
                 // every bar. Anchored on one of its own values it cannot: the variance
                 // is then at least 1/(2n) of the mean square it is extracted from.
                 if variance < 0.000001 * (periodTotal2 * sp.invPeriod) {
-                    shift = (if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 });
+                    shift = if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 };
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
                     // for( j = windowStart; j <= sp.i; j += 1 )
@@ -994,7 +980,6 @@ impl VarStream {
                     variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
                 }
                 // Before the re-remove below: the peak must hold the whole window.
-                peakTotal2 = periodTotal2;
                 // After the re-anchor a window with any spread sits orders above this
                 // floor, so it catches only a variance that rounding left at or below
                 // 0. That keeps the output non-negative, which lets STDDEV and BBANDS
@@ -1005,12 +990,8 @@ impl VarStream {
                 }
                 // Re-remove the trailing value under the new shift so the carried state
                 // matches the non-reseed path.
-                tempReal = (if ((windowStart & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart & sp.xMask) as usize] } else { pkVal0 }) - shift;
-                periodTotal1 -= tempReal;
-                tempReal *= tempReal;
-                periodTotal2 -= tempReal;
             }
-            (*outReal) = variance;
+            *outReal = variance;
         }
         Ok(outReal)
     }

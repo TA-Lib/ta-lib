@@ -79,9 +79,9 @@ impl Core {
     #[doc(alias = "TA_DONCHIAN_Lookback")]
     #[inline]
     pub fn donchian_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -102,7 +102,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_DONCHIAN_DisplayShift")]
-    pub fn donchian_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn donchian_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.donchian_lookback(optInTimePeriod)?;
         if outputIdx >= 3 {
             return Err(RetCode::BadParam);
@@ -131,9 +131,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.donchian_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -181,8 +181,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -205,34 +205,34 @@ impl Core {
         while today <= endIdx {
             tmpHigh = inHigh[today];
             tmpLow = inLow[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpHigh = inHigh[i];
                     if tmpHigh > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmpHigh;
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmpHigh;
             }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpLow = inLow[i];
                     if tmpLow < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmpLow;
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmpLow;
             }
             outRealUpperBand[outIdx] = highest;
@@ -244,8 +244,8 @@ impl Core {
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Donchian Channels: three overlap lines built from rolling price extrema. The upper band is
@@ -393,7 +393,6 @@ pub struct DonchianStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct DonchianStreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
     trailingIdx: i32,
@@ -452,14 +451,14 @@ impl Core {
             sp.lowestIdx = sp.today;
             sp.lowest = tmpLow;
         }
-        (*outRealUpperBand) = sp.highest;
-        (*outRealLowerBand) = sp.lowest;
-        (*outRealMiddleBand) = (sp.highest + sp.lowest) / 2.0;
+        *outRealUpperBand = sp.highest;
+        *outRealLowerBand = sp.lowest;
+        *outRealMiddleBand = (sp.highest + sp.lowest) / 2.0;
         sp.trailingIdx += 1;
         sp.today += 1;
-        sp.cur_outRealUpperBand = (*outRealUpperBand);
-        sp.cur_outRealMiddleBand = (*outRealMiddleBand);
-        sp.cur_outRealLowerBand = (*outRealLowerBand);
+        sp.cur_outRealUpperBand = *outRealUpperBand;
+        sp.cur_outRealMiddleBand = *outRealMiddleBand;
+        sp.cur_outRealLowerBand = *outRealLowerBand;
     }
 
     /// The single whole-history transcription behind [`Core::donchian_open_internal`]
@@ -470,9 +469,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -480,14 +479,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
@@ -522,8 +519,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
@@ -544,47 +541,47 @@ impl Core {
         while today <= endIdx {
             tmpHigh = inHigh[today];
             tmpLow = inLow[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpHigh = inHigh[i];
                     if tmpHigh > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmpHigh;
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmpHigh;
             }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpLow = inLow[i];
                     if tmpLow < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmpLow;
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmpLow;
             }
-            outRealUpperBand[(outIdx * outStride) as usize] = highest;
-            outRealLowerBand[(outIdx * outStride) as usize] = lowest;
-            outRealMiddleBand[(outIdx * outStride) as usize] = (highest + lowest) / 2.0;
+            outRealUpperBand[outIdx * outStride] = highest;
+            outRealLowerBand[outIdx * outStride] = lowest;
+            outRealMiddleBand[outIdx * outStride] = (highest + lowest) / 2.0;
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -606,14 +603,13 @@ impl Core {
             }
         }
         let state = DonchianStreamState {
-            optInTimePeriod,
             lowest,
             highest,
-            trailingIdx: (trailingIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            highestIdx: highestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outRealUpperBand: outRealUpperBand[(*outNBElement - 1) * outStride],
             cur_outRealMiddleBand: outRealMiddleBand[(*outNBElement - 1) * outStride],
             cur_outRealLowerBand: outRealLowerBand[(*outNBElement - 1) * outStride],
@@ -626,7 +622,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::donchian_open`] (composition seam).
     pub(crate) fn donchian_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(DonchianStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -717,7 +713,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_DONCHIAN_OpenAndFill")]
     pub fn donchian_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<(DonchianStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -745,7 +741,7 @@ impl Core {
     /// [`Core::donchian_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn donchian_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<DonchianStream, RetCode> {
         self.donchian_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
@@ -833,41 +829,37 @@ impl DonchianStream {
             pkVal0 = inHigh;
             pkSlot1 = (sp.today & sp.xMask) as usize;
             pkVal1 = inLow;
-            tmpHigh = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
-            tmpLow = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            tmpHigh = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 };
+            tmpLow = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 };
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmpHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmpHigh = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmpHigh > highest {
-                        highestIdx = i;
                         highest = tmpHigh;
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = sp.today;
                 highest = tmpHigh;
             }
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmpLow = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tmpLow = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     if tmpLow < lowest {
-                        lowestIdx = i;
                         lowest = tmpLow;
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = sp.today;
                 lowest = tmpLow;
             }
-            (*outRealUpperBand) = highest;
-            (*outRealLowerBand) = lowest;
-            (*outRealMiddleBand) = (highest + lowest) / 2.0;
+            *outRealUpperBand = highest;
+            *outRealLowerBand = lowest;
+            *outRealMiddleBand = (highest + lowest) / 2.0;
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }

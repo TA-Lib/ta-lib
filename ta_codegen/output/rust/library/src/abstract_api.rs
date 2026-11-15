@@ -4894,7 +4894,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ac(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4908,9 +4908,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.accbands(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -4924,7 +4924,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.acos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4939,7 +4939,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ad(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4952,7 +4952,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.add(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4967,7 +4967,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adosc(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4980,7 +4980,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adr(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4994,7 +4994,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5008,7 +5008,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5020,7 +5020,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.alma(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5033,7 +5033,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ao(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5046,7 +5046,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.apo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5059,8 +5059,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.aroon(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5074,7 +5074,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5089,7 +5089,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.asi(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5101,7 +5101,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.asin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5113,7 +5113,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.atan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5127,7 +5127,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.atr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5139,7 +5139,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.avgdev(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5154,7 +5154,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.avgprice(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5167,9 +5167,9 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bbands(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5184,7 +5184,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bbw(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5197,7 +5197,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.beta(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5212,7 +5212,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5226,7 +5226,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cci(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5241,7 +5241,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5256,7 +5256,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3blackcrows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5271,7 +5271,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3inside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5286,7 +5286,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3linestrike(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5301,7 +5301,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3outside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5316,7 +5316,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3starsinsouth(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5331,7 +5331,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3whitesoldiers(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5346,7 +5346,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlabandonedbaby(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5361,7 +5361,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdladvanceblock(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5376,7 +5376,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlbelthold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5391,7 +5391,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlbreakaway(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5406,7 +5406,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlclosingmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5421,7 +5421,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlconcealbabyswall(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5436,7 +5436,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlcounterattack(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5451,7 +5451,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldarkcloudcover(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5466,7 +5466,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5481,7 +5481,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5496,7 +5496,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldragonflydoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5511,7 +5511,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlengulfing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5526,7 +5526,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdleveningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5541,7 +5541,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdleveningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5556,7 +5556,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlgapsidesidewhite(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5571,7 +5571,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlgravestonedoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5586,7 +5586,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5601,7 +5601,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhangingman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5616,7 +5616,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlharami(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5631,7 +5631,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlharamicross(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5646,7 +5646,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhighwave(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5661,7 +5661,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhikkake(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5676,7 +5676,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhikkakemod(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5691,7 +5691,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhomingpigeon(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5706,7 +5706,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlidentical3crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5721,7 +5721,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlinneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5736,7 +5736,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlinvertedhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5751,7 +5751,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlkicking(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5766,7 +5766,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlkickingbylength(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5781,7 +5781,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlladderbottom(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5796,7 +5796,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdllongleggeddoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5811,7 +5811,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdllongline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5826,7 +5826,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5841,7 +5841,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmatchinglow(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5856,7 +5856,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmathold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5871,7 +5871,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmorningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5886,7 +5886,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmorningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5901,7 +5901,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlonneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5916,7 +5916,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlpiercing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5931,7 +5931,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlrickshawman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5946,7 +5946,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlrisefall3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5961,7 +5961,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlseparatinglines(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5976,7 +5976,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlshootingstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5991,7 +5991,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlshortline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6006,7 +6006,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlspinningtop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6021,7 +6021,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlstalledpattern(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6036,7 +6036,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlsticksandwich(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6051,7 +6051,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltakuri(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6066,7 +6066,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltasukigap(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6081,7 +6081,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlthrusting(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6096,7 +6096,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltristar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6111,7 +6111,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlunique3river(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6126,7 +6126,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlupsidegap2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6141,7 +6141,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6153,7 +6153,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ceil(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6165,7 +6165,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6179,7 +6179,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.chop(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6193,7 +6193,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.choptr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6207,8 +6207,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cksp(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6224,7 +6224,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmf(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6236,7 +6236,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6248,7 +6248,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmou(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6260,7 +6260,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.coppock(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6273,7 +6273,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.correl(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6285,7 +6285,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6297,7 +6297,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cosh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6309,7 +6309,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.crsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6321,7 +6321,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cti(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6333,7 +6333,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cumsum(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6346,7 +6346,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cvi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6358,7 +6358,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6371,7 +6371,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.div(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6384,9 +6384,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.donchian(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6400,7 +6400,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dosc(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6412,7 +6412,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dpo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6426,7 +6426,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6439,7 +6439,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.efi(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6451,7 +6451,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6465,7 +6465,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.emv(start_idx, end_idx, i0_1, i0_2, i0_4, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6477,7 +6477,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.er(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6491,8 +6491,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.eri(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6505,7 +6505,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.exp(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6518,8 +6518,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.fisher(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6532,7 +6532,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.floor(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6544,7 +6544,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.fosc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6557,8 +6557,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.fractal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -6572,7 +6572,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.frama(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6587,10 +6587,10 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ha(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0, &mut *o1, &mut *o2, &mut *o3);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6605,7 +6605,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.hma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6617,7 +6617,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_dcperiod(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6629,7 +6629,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_dcphase(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6641,8 +6641,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_phasor(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6655,8 +6655,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_sine(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6669,7 +6669,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_trendline(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6681,7 +6681,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_trendmode(start_idx, end_idx, i0, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6695,7 +6695,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ibs(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6708,10 +6708,10 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ichimoku(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2, &mut *o3);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6727,7 +6727,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.imi(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6739,7 +6739,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kama(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6753,9 +6753,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.real_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6773,9 +6773,9 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let e4 = MAType::try_from(self.int_opt[4])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kdj(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6789,8 +6789,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kst(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6805,8 +6805,8 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let e9 = MAType::try_from(self.int_opt[9])?;
                 let e10 = MAType::try_from(self.int_opt[10])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kstext(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], e9, e10, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6819,7 +6819,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kurtosis(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6834,8 +6834,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kvo(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6848,7 +6848,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6860,7 +6860,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_angle(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6872,7 +6872,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_intercept(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6884,7 +6884,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_slope(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6896,7 +6896,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ln(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6908,7 +6908,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.log10(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6921,7 +6921,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e1 = MAType::try_from(self.int_opt[1])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ma(start_idx, end_idx, i0, self.int_opt[0], e1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6933,9 +6933,9 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macd(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6952,9 +6952,9 @@ impl<'a> ParamHolder<'a> {
                 let e1 = MAType::try_from(self.int_opt[1])?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
                 let e5 = MAType::try_from(self.int_opt[5])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdext(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6968,9 +6968,9 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6984,8 +6984,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7000,7 +7000,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.marketfi(start_idx, end_idx, i0_1, i0_2, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7013,7 +7013,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.massi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7027,7 +7027,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mavp(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7039,7 +7039,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.max(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7051,7 +7051,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -7063,7 +7063,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mcgd(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7075,7 +7075,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.median(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7088,7 +7088,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.medprice(start_idx, end_idx, i0_1, i0_2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7103,7 +7103,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mfi(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7115,7 +7115,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.midpoint(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7128,7 +7128,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.midprice(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7140,7 +7140,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.min(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7152,7 +7152,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -7164,8 +7164,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minmax(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7178,8 +7178,8 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minmaxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -7194,7 +7194,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7207,7 +7207,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7219,7 +7219,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mom(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7232,7 +7232,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mult(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7246,7 +7246,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.natr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7259,7 +7259,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.nvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7272,7 +7272,7 @@ impl<'a> ParamHolder<'a> {
                 let i1_4 = self.price[1][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.obv(start_idx, end_idx, i0, i1_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7285,7 +7285,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentb(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7297,7 +7297,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentile(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7309,7 +7309,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentrank(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7323,7 +7323,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.plus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7336,7 +7336,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.plus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7349,7 +7349,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7363,7 +7363,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pso(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7376,7 +7376,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7389,7 +7389,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvo(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7402,7 +7402,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvt(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7415,7 +7415,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.qstick(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7427,7 +7427,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7439,7 +7439,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.roc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7451,7 +7451,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7463,7 +7463,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocr(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7475,7 +7475,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7490,7 +7490,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rogerssatchell(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7502,7 +7502,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rsi(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7514,7 +7514,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7527,7 +7527,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvir(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7539,7 +7539,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvol(start_idx, end_idx, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7552,7 +7552,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sar(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7565,7 +7565,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7580,7 +7580,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.si(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7592,7 +7592,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7604,7 +7604,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sinh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7616,7 +7616,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7630,8 +7630,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.smi(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7644,7 +7644,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sqrt(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7658,8 +7658,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sqzmom(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], self.int_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -7672,7 +7672,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stc(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7684,7 +7684,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stddev(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7700,8 +7700,8 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let e4 = MAType::try_from(self.int_opt[4])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stoch(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7717,8 +7717,8 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stochf(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7732,8 +7732,8 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stochrsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -7747,7 +7747,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sub(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7759,7 +7759,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sum(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7773,8 +7773,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.supertrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -7787,7 +7787,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_2php(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7799,7 +7799,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_bp(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7811,7 +7811,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_butter(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7823,7 +7823,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_gauss(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7835,7 +7835,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_hp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7847,7 +7847,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.t3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7859,7 +7859,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7871,7 +7871,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tanh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7883,7 +7883,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7897,7 +7897,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trange(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7909,7 +7909,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trima(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7921,7 +7921,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7933,7 +7933,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tsf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7945,7 +7945,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7959,7 +7959,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.typprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7973,7 +7973,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ultosc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7985,7 +7985,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.var(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7997,7 +7997,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vhf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8009,7 +8009,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vidya(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8023,8 +8023,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vortex(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -8040,7 +8040,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vwap(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8053,7 +8053,7 @@ impl<'a> ParamHolder<'a> {
                 let i1_4 = self.price[1][4].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vwma(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8067,7 +8067,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wad(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8081,8 +8081,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wavetrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -8097,7 +8097,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wclprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8111,7 +8111,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.willr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8123,7 +8123,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8136,9 +8136,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.int_out[1].is_none() || self.int_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.int_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.int_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.zigzag(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.int_opt[1], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -8152,7 +8152,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.zlema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8166,8 +8166,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ce(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -8182,9 +8182,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdv(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -8198,7 +8198,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.skew(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8210,7 +8210,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sharpe(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8222,7 +8222,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sortino(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -8235,9 +8235,9 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.alligator(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -8252,8 +8252,8 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
                 Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.gator(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);

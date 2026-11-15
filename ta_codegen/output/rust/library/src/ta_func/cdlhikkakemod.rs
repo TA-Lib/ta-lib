@@ -75,12 +75,7 @@ impl Core {
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDLHIKKAKEMOD_Lookback")]
     pub fn cdlhikkakemod_lookback(&self) -> Result<usize, RetCode> {
-        #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
         return Ok(((1).max(Near_avgPeriod) + 5) as usize);
     }
     /// Display shift of one output of [`Core::cdlhikkakemod`]: how many bars ahead (positive) or
@@ -141,11 +136,8 @@ impl Core {
         let mut patternCount: usize = 0_usize;
         let mut patternHigh: f64 = 0.0_f64;
         let mut patternLow: f64 = 0.0_f64;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Confirmation window countdown (replaces the absolute patternIdx guard)
         // and a cache of the 3rd candle's high/low (replaces inHigh/inLow
@@ -160,8 +152,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inOpen = &inOpen[..=endIdx];
@@ -172,7 +164,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx - 3 {
                 let _wn: usize = startIdx - 3 - i;
@@ -182,7 +174,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 0 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -198,11 +190,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx - 3 {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 0 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -246,10 +237,10 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -263,7 +254,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 0 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -279,10 +270,10 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -296,7 +287,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 0 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -333,16 +324,16 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -357,8 +348,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 0 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
-                        NearTrailingIdx += 1;
+                        NearPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         if patternCount > 0 {
                             patternCount -= 1;
                         }
@@ -372,16 +362,16 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -396,7 +386,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 0 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -413,16 +403,16 @@ impl Core {
                        inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                        (inHigh[i] < inHigh[i - 1] &&
                          inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                         inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                         inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                         inHigh[i] > inHigh[i - 1] &&
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                         inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                         inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
                         patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
-                        outInteger[outIdx] = (patternResult) as i32;
+                        outInteger[outIdx] = patternResult as i32;
                         outIdx += 1;
                     } else if patternCount > 0 &&
                        (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -437,7 +427,7 @@ impl Core {
                         outInteger[outIdx] = 0;
                         outIdx += 1;
                     }
-                    NearPeriodTotal += (match 0 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                    NearPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                     NearTrailingIdx += 1;
                     if patternCount > 0 {
                         patternCount -= 1;
@@ -447,14 +437,14 @@ impl Core {
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else if Near_rangeType == 1 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx - 3 {
                 let _wn: usize = startIdx - 3 - i;
@@ -464,7 +454,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 1 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -480,11 +470,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx - 3 {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 1 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -528,10 +517,10 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -545,7 +534,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 1 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -561,10 +550,10 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -578,7 +567,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 1 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -615,16 +604,16 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -639,8 +628,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 1 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
-                        NearTrailingIdx += 1;
+                        NearPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         if patternCount > 0 {
                             patternCount -= 1;
                         }
@@ -654,16 +642,16 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -678,7 +666,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 1 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -695,16 +683,16 @@ impl Core {
                        inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                        (inHigh[i] < inHigh[i - 1] &&
                          inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                         inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                         inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                         inHigh[i] > inHigh[i - 1] &&
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                         inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                         inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
                         patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
-                        outInteger[outIdx] = (patternResult) as i32;
+                        outInteger[outIdx] = patternResult as i32;
                         outIdx += 1;
                     } else if patternCount > 0 &&
                        (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -719,7 +707,7 @@ impl Core {
                         outInteger[outIdx] = 0;
                         outIdx += 1;
                     }
-                    NearPeriodTotal += (match 1 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                    NearPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                     NearTrailingIdx += 1;
                     if patternCount > 0 {
                         patternCount -= 1;
@@ -729,14 +717,14 @@ impl Core {
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else if Near_rangeType == 2 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx - 3 {
                 let _wn: usize = startIdx - 3 - i;
@@ -746,7 +734,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 2 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -762,11 +750,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx - 3 {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 2 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -810,10 +797,10 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -827,7 +814,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 2 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -843,10 +830,10 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -860,7 +847,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match 2 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -897,16 +884,16 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -921,8 +908,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 2 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
-                        NearTrailingIdx += 1;
+                        NearPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         if patternCount > 0 {
                             patternCount -= 1;
                         }
@@ -936,16 +922,16 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -960,7 +946,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match 2 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -977,16 +963,16 @@ impl Core {
                        inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                        (inHigh[i] < inHigh[i - 1] &&
                          inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                         inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                         inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                         inHigh[i] > inHigh[i - 1] &&
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                         inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                         inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
                         patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
-                        outInteger[outIdx] = (patternResult) as i32;
+                        outInteger[outIdx] = patternResult as i32;
                         outIdx += 1;
                     } else if patternCount > 0 &&
                        (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -1001,7 +987,7 @@ impl Core {
                         outInteger[outIdx] = 0;
                         outIdx += 1;
                     }
-                    NearPeriodTotal += (match 2 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                    NearPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                     NearTrailingIdx += 1;
                     if patternCount > 0 {
                         patternCount -= 1;
@@ -1011,14 +997,14 @@ impl Core {
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx - 3 {
                 let _wn: usize = startIdx - 3 - i;
@@ -1028,7 +1014,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1044,11 +1030,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx - 3 {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_1 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -1092,10 +1077,10 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -1109,7 +1094,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -1125,10 +1110,10 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
@@ -1142,7 +1127,7 @@ impl Core {
                         {
                             patternCount = 0;
                         }
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -1179,16 +1164,16 @@ impl Core {
                            _w5[_wk + 2] > _w5[_wk + 1] &&   // 3rd: lower high and higher low than 2nd
                            (_w3[_wk + 3] < _w3[_wk + 2] &&
                              _w5[_wk + 3] < _w5[_wk + 2] && // (bull) 4th: lower high and lower low
-                             _w1[_wk] <= _w5[_wk + 1] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             _w1[_wk] <= _w5[_wk + 1] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             _w3[_wk + 3] > _w3[_wk + 2] &&
                              _w5[_wk + 3] > _w5[_wk + 2] && // (bear) 4th: higher high and higher low
-                             _w1[_wk] >= _w3[_wk + 1] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk + 1]) - (_w5[_wk + 1]), 2 => ((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             _w1[_wk] >= _w3[_wk + 1] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (_w1[_wk] - _w7[_wk]).abs(), 1 => _w3[_wk + 1] - _w5[_wk + 1], 2 => (_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -1203,8 +1188,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk + 1]) - (_w5[_wk + 1])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk + 1]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk + 1]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
-                        NearTrailingIdx += 1;
+                        NearPeriodTotal += match Near_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk + 1] - _w5[_wk + 1]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk + 1] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk + 1])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         if patternCount > 0 {
                             patternCount -= 1;
                         }
@@ -1218,16 +1202,16 @@ impl Core {
                            inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                            (inHigh[i] < inHigh[i - 1] &&
                              inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                             inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                             inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                             inHigh[i] > inHigh[i - 1] &&
                              inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                             inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                             inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                         {
                             patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                             patternHigh = inHigh[i - 1];
                             patternLow = inLow[i - 1];
                             patternCount = 4;
-                            outInteger[outIdx] = (patternResult) as i32;
+                            outInteger[outIdx] = patternResult as i32;
                             outIdx += 1;
                         } else if patternCount > 0 &&
                            (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -1242,7 +1226,7 @@ impl Core {
                             outInteger[outIdx] = 0;
                             outIdx += 1;
                         }
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                         NearTrailingIdx += 1;
                         if patternCount > 0 {
                             patternCount -= 1;
@@ -1259,16 +1243,16 @@ impl Core {
                        inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                        (inHigh[i] < inHigh[i - 1] &&
                          inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                         inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                         inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                         inHigh[i] > inHigh[i - 1] &&
                          inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                         inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                         inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                     {
                         patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                         patternHigh = inHigh[i - 1];
                         patternLow = inLow[i - 1];
                         patternCount = 4;
-                        outInteger[outIdx] = (patternResult) as i32;
+                        outInteger[outIdx] = patternResult as i32;
                         outIdx += 1;
                     } else if patternCount > 0 &&
                        (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
@@ -1283,7 +1267,7 @@ impl Core {
                         outInteger[outIdx] = 0;
                         outIdx += 1;
                     }
-                    NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                    NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                     NearTrailingIdx += 1;
                     if patternCount > 0 {
                         patternCount -= 1;
@@ -1293,8 +1277,8 @@ impl Core {
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         }
     }
@@ -1479,13 +1463,10 @@ struct CdlhikkakemodStreamState {
 impl Core {
     fn cdlhikkakemod_step_impl(sp: &mut CdlhikkakemodStreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut ringPosL_NearTrailingIdx: usize = 0_usize;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = cs_near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = cs_near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = cs_near.factor;
-        let mut _candlerange_0: f64;
+        let _candlerange_0: f64;
         match Near_rangeType {
             0 => {
                 _candlerange_0 = (inClose - inOpen).abs();
@@ -1507,28 +1488,28 @@ impl Core {
            sp.lag1_inLow > sp.lag2_inLow &&   // 3rd: lower high and higher low than 2nd
            (inHigh < sp.lag1_inHigh &&
              inLow < sp.lag1_inLow &&         // (bull) 4th: lower high and lower low
-             sp.lag2_inClose <= sp.lag2_inLow + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+             sp.lag2_inClose <= sp.lag2_inLow + (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => sp.lag2_inHigh - sp.lag2_inLow, 2 => (sp.lag2_inHigh - (if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inClose } else { sp.lag2_inOpen })) + ((if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inOpen } else { sp.lag2_inClose }) - sp.lag2_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
             inHigh > sp.lag1_inHigh &&
              inLow > sp.lag1_inLow &&         // (bear) 4th: higher high and higher low
-             sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+             sp.lag2_inClose >= sp.lag2_inHigh - (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => sp.lag2_inHigh - sp.lag2_inLow, 2 => (sp.lag2_inHigh - (if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inClose } else { sp.lag2_inOpen })) + ((if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inOpen } else { sp.lag2_inClose }) - sp.lag2_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
         {
             sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
             sp.patternHigh = sp.lag1_inHigh;
             sp.patternLow = sp.lag1_inLow;
             sp.patternCount = 4;
-            (*outInteger) = (sp.patternResult) as i32;
+            *outInteger = sp.patternResult as i32;
         } else if sp.patternCount > 0 &&
            (sp.patternResult > 0 &&      // search for confirmation if modified hikkake was no more than 3 bars ago
              inClose > sp.patternHigh || // close higher than the high of 3rd
             sp.patternResult < 0 &&
              inClose < sp.patternLow)    // close lower than the low of 3rd
         {
-            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+            *outInteger = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             sp.patternCount = 0;
         } else {
-            (*outInteger) = 0;
+            *outInteger = 0;
         }
-        let mut _candlerange_1: f64;
+        let _candlerange_1: f64;
         match Near_rangeType {
             0 => {
                 _candlerange_1 = (sp.lag2_inClose - sp.lag2_inOpen).abs();
@@ -1547,7 +1528,7 @@ impl Core {
         if sp.patternCount > 0 {
             sp.patternCount -= 1;
         }
-        sp.cur_outInteger = (*outInteger);
+        sp.cur_outInteger = *outInteger;
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
         sp.lag3_inHigh = sp.lag2_inHigh;
@@ -1579,14 +1560,12 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut NearPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -1596,11 +1575,8 @@ impl Core {
         let mut patternCount: usize = 0_usize;
         let mut patternHigh: f64 = 0.0_f64;
         let mut patternLow: f64 = 0.0_f64;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Confirmation window countdown (replaces the absolute patternIdx guard)
         // and a cache of the 3rd candle's high/low (replaces inHigh/inLow
@@ -1615,18 +1591,18 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if Near_rangeType == 0 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             while i < startIdx - 3 {
-                let mut _candlerange_2: f64;
+                let _candlerange_2: f64;
                 match 0 {
                     0 => {
                         _candlerange_2 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -1657,10 +1633,10 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
@@ -1674,7 +1650,7 @@ impl Core {
                 {
                     patternCount = 0;
                 }
-                NearPeriodTotal += (match 0 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -1698,28 +1674,28 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
                     patternLow = inLow[i - 1];
                     patternCount = 4;
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = patternResult as i32;
                 } else if patternCount > 0 &&
                    (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
                      inClose[i] > patternHigh || // close higher than the high of 3rd
                     patternResult < 0 &&
                      inClose[i] < patternLow)    // close lower than the low of 3rd
                 {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                     patternCount = 0;
                 } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0;
                 }
-                NearPeriodTotal += (match 0 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 0 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -1728,8 +1704,8 @@ impl Core {
                 if !(i <= endIdx) { break; }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1742,7 +1718,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1773,10 +1749,10 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             while i < startIdx - 3 {
-                let mut _candlerange_2: f64;
+                let _candlerange_2: f64;
                 match 1 {
                     0 => {
                         _candlerange_2 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -1807,10 +1783,10 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
@@ -1824,7 +1800,7 @@ impl Core {
                 {
                     patternCount = 0;
                 }
-                NearPeriodTotal += (match 1 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -1848,28 +1824,28 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
                     patternLow = inLow[i - 1];
                     patternCount = 4;
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = patternResult as i32;
                 } else if patternCount > 0 &&
                    (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
                      inClose[i] > patternHigh || // close higher than the high of 3rd
                     patternResult < 0 &&
                      inClose[i] < patternLow)    // close lower than the low of 3rd
                 {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                     patternCount = 0;
                 } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0;
                 }
-                NearPeriodTotal += (match 1 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 1 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -1878,8 +1854,8 @@ impl Core {
                 if !(i <= endIdx) { break; }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1892,7 +1868,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1923,10 +1899,10 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             while i < startIdx - 3 {
-                let mut _candlerange_2: f64;
+                let _candlerange_2: f64;
                 match 2 {
                     0 => {
                         _candlerange_2 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -1957,10 +1933,10 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
@@ -1974,7 +1950,7 @@ impl Core {
                 {
                     patternCount = 0;
                 }
-                NearPeriodTotal += (match 2 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -1998,28 +1974,28 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
                     patternLow = inLow[i - 1];
                     patternCount = 4;
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = patternResult as i32;
                 } else if patternCount > 0 &&
                    (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
                      inClose[i] > patternHigh || // close higher than the high of 3rd
                     patternResult < 0 &&
                      inClose[i] < patternLow)    // close lower than the low of 3rd
                 {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                     patternCount = 0;
                 } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0;
                 }
-                NearPeriodTotal += (match 2 { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match 2 { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -2028,8 +2004,8 @@ impl Core {
                 if !(i <= endIdx) { break; }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2042,7 +2018,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2073,10 +2049,10 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - 3 - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             while i < startIdx - 3 {
-                let mut _candlerange_2: f64;
+                let _candlerange_2: f64;
                 match Near_rangeType {
                     0 => {
                         _candlerange_2 = (inClose[i - 2] - inOpen[i - 2]).abs();
@@ -2107,10 +2083,10 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
@@ -2124,7 +2100,7 @@ impl Core {
                 {
                     patternCount = 0;
                 }
-                NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -2148,28 +2124,28 @@ impl Core {
                    inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
                    (inHigh[i] < inHigh[i - 1] &&
                      inLow[i] < inLow[i - 1] &&     // (bull) 4th: lower high and lower low
-                     inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                     inClose[i - 2] <= inLow[i - 2] + (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                     inHigh[i] > inHigh[i - 1] &&
                      inLow[i] > inLow[i - 1] &&     // (bear) 4th: higher high and higher low
-                     inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                     inClose[i - 2] >= inHigh[i - 2] - (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => inHigh[i - 2] - inLow[i - 2], 2 => (inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
                 {
                     patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { -1 });
                     patternHigh = inHigh[i - 1];
                     patternLow = inLow[i - 1];
                     patternCount = 4;
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = patternResult as i32;
                 } else if patternCount > 0 &&
                    (patternResult > 0 &&         // search for confirmation if modified hikkake was no more than 3 bars ago
                      inClose[i] > patternHigh || // close higher than the high of 3rd
                     patternResult < 0 &&
                      inClose[i] < patternLow)    // close lower than the low of 3rd
                 {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                     patternCount = 0;
                 } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
+                    outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0;
                 }
-                NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 2]) - (inOpen[i - 2])).abs()) - (((inClose[NearTrailingIdx - 2]) - (inOpen[NearTrailingIdx - 2])).abs()), 1 => ((inHigh[i - 2]) - (inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2]) - (inLow[NearTrailingIdx - 2])), 2 => (((inHigh[i - 2]) - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - (inLow[i - 2]))) - (((inHigh[NearTrailingIdx - 2]) - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - (inLow[NearTrailingIdx - 2]))), _ => 0.0 });
+                NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 2] - inOpen[i - 2]).abs()) - ((inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs()), 1 => (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]), 2 => ((inHigh[i - 2] - c_color_max!((inClose[i - 2]), (inOpen[i - 2]))) + (c_color_min!((inClose[i - 2]), (inOpen[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - c_color_max!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2]))) + (c_color_min!((inClose[NearTrailingIdx - 2]), (inOpen[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])), _ => 0.0 };
                 NearTrailingIdx += 1;
                 if patternCount > 0 {
                     patternCount -= 1;
@@ -2178,8 +2154,8 @@ impl Core {
                 if !(i <= endIdx) { break; }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2192,7 +2168,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2403,15 +2379,12 @@ impl CdlhikkakemodStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut patternCount = sp.patternCount;
-            let mut patternHigh = sp.patternHigh;
-            let mut patternLow = sp.patternLow;
+            let patternCount = sp.patternCount;
+            let patternHigh = sp.patternHigh;
+            let patternLow = sp.patternLow;
             let mut patternResult = sp.patternResult;
-            #[allow(non_snake_case)]
             let Near_rangeType: i32 = self.cs_near.range_type as i32;
-            #[allow(non_snake_case)]
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
-            #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
             if sp.lag2_inHigh < sp.lag3_inHigh &&
                sp.lag2_inLow > sp.lag3_inLow &&   // 2nd: lower high and higher low than 1st
@@ -2419,26 +2392,22 @@ impl CdlhikkakemodStream {
                sp.lag1_inLow > sp.lag2_inLow &&   // 3rd: lower high and higher low than 2nd
                (inHigh < sp.lag1_inHigh &&
                  inLow < sp.lag1_inLow &&         // (bull) 4th: lower high and lower low
-                 sp.lag2_inClose <= sp.lag2_inLow + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
+                 sp.lag2_inClose <= sp.lag2_inLow + (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => sp.lag2_inHigh - sp.lag2_inLow, 2 => (sp.lag2_inHigh - (if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inClose } else { sp.lag2_inOpen })) + ((if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inOpen } else { sp.lag2_inClose }) - sp.lag2_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) || // (bull) 2nd: close near the low
                 inHigh > sp.lag1_inHigh &&
                  inLow > sp.lag1_inLow &&         // (bear) 4th: higher high and higher low
-                 sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
+                 sp.lag2_inClose >= sp.lag2_inHigh - (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => sp.lag2_inHigh - sp.lag2_inLow, 2 => (sp.lag2_inHigh - (if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inClose } else { sp.lag2_inOpen })) + ((if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inOpen } else { sp.lag2_inClose }) - sp.lag2_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 }))) // (bull) 2nd: close near the top
             {
                 patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
-                patternHigh = sp.lag1_inHigh;
-                patternLow = sp.lag1_inLow;
-                patternCount = 4;
-                (*outInteger) = (patternResult) as i32;
+                *outInteger = patternResult as i32;
             } else if patternCount > 0 &&
                (patternResult > 0 &&      // search for confirmation if modified hikkake was no more than 3 bars ago
                  inClose > patternHigh || // close higher than the high of 3rd
                 patternResult < 0 &&
                  inClose < patternLow)    // close lower than the low of 3rd
             {
-                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
-                patternCount = 0;
+                *outInteger = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         }
         Ok(outInteger)

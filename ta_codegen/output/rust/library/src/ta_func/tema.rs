@@ -86,9 +86,9 @@ impl Core {
     #[doc(alias = "TA_TEMA_Lookback")]
     #[inline]
     pub fn tema_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut retValue: usize = 0_usize;
@@ -112,7 +112,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_TEMA_DisplayShift")]
-    pub fn tema_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn tema_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.tema_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -168,9 +168,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.tema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -212,8 +212,8 @@ impl Core {
         //
         // DEMA is very similar (and from the same author).
         // Will change only on success.
-        (*outNBElement) = 0;
-        (*outBegIdx) = 0;
+        *outNBElement = 0;
+        *outBegIdx = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackEMA = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         lookbackTotal = lookbackEMA * 3;
@@ -230,13 +230,13 @@ impl Core {
         // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
         // contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             while startIdx <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = startIdx; startIdx += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = startIdx; startIdx += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
         // The three EMA are computed in a single lockstep pass: each new
@@ -257,21 +257,21 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA1 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 alone through its unstable period, up to
         // the bar where EMA2 seeding begins.
         while today <= startIdx - lookbackEMA * 2 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         // Seed EMA2 with a simple average of the first 'period'
         // EMA1 values, accumulated as EMA1 produces them.
@@ -279,15 +279,15 @@ impl Core {
         tempReal += prevEMA1;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += prevEMA1;
         }
-        prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA2 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 and EMA2 in lockstep through the unstable
         // period of EMA2, up to the bar where EMA3 seeding begins.
         while today <= startIdx - lookbackEMA {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
         }
         // Seed EMA3 with a simple average of the first 'period'
         // EMA2 values, accumulated as EMA2 produces them.
@@ -295,33 +295,33 @@ impl Core {
         tempReal += prevEMA2;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
             tempReal += prevEMA2;
         }
-        prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA3 = tempReal / (optInTimePeriod as f64);
         // Advance all three EMA in lockstep through the unstable
         // period of EMA3, up to the first output bar.
         while today <= startIdx {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
-            prevEMA3 = fmadd!(emaBeta as f64, prevEMA3, ((optInK_1) as f64) * prevEMA2);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA3 = fmadd!(emaBeta, prevEMA3, ((optInK_1) as f64) * prevEMA2);
         }
         // Stable zone: keep advancing the three EMA in lockstep and
         // write the TEMA into the output.
         outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         outIdx = 1;
         while today <= endIdx {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
-            prevEMA3 = fmadd!(emaBeta as f64, prevEMA3, ((optInK_1) as f64) * prevEMA2);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA3 = fmadd!(emaBeta, prevEMA3, ((optInK_1) as f64) * prevEMA2);
             outReal[outIdx] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
             outIdx += 1;
         }
         // Succeed. Indicate where the output starts relative to
         // the caller input.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Triple Exponential Moving Average: a smoothed price overlay built from three
@@ -466,15 +466,15 @@ impl Core {
     #[inline(always)]
     fn tema_step_impl(sp: &mut TemaStreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
-        sp.prevEMA1 = fmadd!(sp.emaBeta as f64, sp.prevEMA1, ((sp.optInK_1) as f64) * inReal);
-        sp.prevEMA2 = fmadd!(sp.emaBeta as f64, sp.prevEMA2, ((sp.optInK_1) as f64) * sp.prevEMA1);
-        sp.prevEMA3 = fmadd!(sp.emaBeta as f64, sp.prevEMA3, ((sp.optInK_1) as f64) * sp.prevEMA2);
-        (*outReal) = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
-        sp.cur_outReal = (*outReal);
+        sp.prevEMA1 = fmadd!(sp.emaBeta, sp.prevEMA1, ((sp.optInK_1) as f64) * inReal);
+        sp.prevEMA2 = fmadd!(sp.emaBeta, sp.prevEMA2, ((sp.optInK_1) as f64) * sp.prevEMA1);
+        sp.prevEMA3 = fmadd!(sp.emaBeta, sp.prevEMA3, ((sp.optInK_1) as f64) * sp.prevEMA2);
+        *outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::tema_open_internal`]
@@ -503,21 +503,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.tema_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -533,8 +531,8 @@ impl Core {
                 optInK_1: 0.0_f64,
                 emaBeta: 0.0_f64,
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -580,8 +578,8 @@ impl Core {
         //
         // DEMA is very similar (and from the same author).
         // Will change only on success.
-        (*outNBElement) = 0;
-        (*outBegIdx) = 0;
+        *outNBElement = 0;
+        *outBegIdx = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackEMA = self.ema_lookback(optInTimePeriod)?;
         lookbackTotal = lookbackEMA * 3;
@@ -610,21 +608,21 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevEMA1 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA1 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 alone through its unstable period, up to
         // the bar where EMA2 seeding begins.
         while today <= startIdx - lookbackEMA * 2 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         // Seed EMA2 with a simple average of the first 'period'
         // EMA1 values, accumulated as EMA1 produces them.
@@ -632,15 +630,15 @@ impl Core {
         tempReal += prevEMA1;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += prevEMA1;
         }
-        prevEMA2 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA2 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 and EMA2 in lockstep through the unstable
         // period of EMA2, up to the bar where EMA3 seeding begins.
         while today <= startIdx - lookbackEMA {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
         }
         // Seed EMA3 with a simple average of the first 'period'
         // EMA2 values, accumulated as EMA2 produces them.
@@ -648,32 +646,32 @@ impl Core {
         tempReal += prevEMA2;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
             tempReal += prevEMA2;
         }
-        prevEMA3 = tempReal / ((optInTimePeriod) as f64);
+        prevEMA3 = tempReal / (optInTimePeriod as f64);
         // Advance all three EMA in lockstep through the unstable
         // period of EMA3, up to the first output bar.
         while today <= startIdx {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
-            prevEMA3 = fmadd!(emaBeta as f64, prevEMA3, ((optInK_1) as f64) * prevEMA2);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA3 = fmadd!(emaBeta, prevEMA3, ((optInK_1) as f64) * prevEMA2);
         }
         // Stable zone: keep advancing the three EMA in lockstep and
         // write the TEMA into the output.
-        outReal[(0 * outStride) as usize] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+        outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         outIdx = 1;
         while today <= endIdx {
-            prevEMA1 = fmadd!(emaBeta as f64, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta as f64, prevEMA2, ((optInK_1) as f64) * prevEMA1);
-            prevEMA3 = fmadd!(emaBeta as f64, prevEMA3, ((optInK_1) as f64) * prevEMA2);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+            prevEMA1 = fmadd!(emaBeta, prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = fmadd!(emaBeta, prevEMA2, ((optInK_1) as f64) * prevEMA1);
+            prevEMA3 = fmadd!(emaBeta, prevEMA3, ((optInK_1) as f64) * prevEMA2);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         }
         // Succeed. Indicate where the output starts relative to
         // the caller input.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = TemaStreamState {
@@ -690,7 +688,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::tema_open`] (composition seam).
     pub(crate) fn tema_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(TemaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -763,7 +761,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_TEMA_OpenAndFill")]
     pub fn tema_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(TemaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -782,7 +780,7 @@ impl Core {
     /// [`Core::tema_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn tema_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TemaStream, RetCode> {
         self.tema_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -867,13 +865,13 @@ impl TemaStream {
             let mut prevEMA2 = sp.prevEMA2;
             let mut prevEMA3 = sp.prevEMA3;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
-            prevEMA1 = fmadd!(sp.emaBeta as f64, prevEMA1, ((sp.optInK_1) as f64) * inReal);
-            prevEMA2 = fmadd!(sp.emaBeta as f64, prevEMA2, ((sp.optInK_1) as f64) * prevEMA1);
-            prevEMA3 = fmadd!(sp.emaBeta as f64, prevEMA3, ((sp.optInK_1) as f64) * prevEMA2);
-            (*outReal) = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+            prevEMA1 = fmadd!(sp.emaBeta, prevEMA1, ((sp.optInK_1) as f64) * inReal);
+            prevEMA2 = fmadd!(sp.emaBeta, prevEMA2, ((sp.optInK_1) as f64) * prevEMA1);
+            prevEMA3 = fmadd!(sp.emaBeta, prevEMA3, ((sp.optInK_1) as f64) * prevEMA2);
+            *outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         }
         Ok(outReal)
     }
@@ -937,14 +935,14 @@ impl TemaStream {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl TemaStream {
-    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+    pub(crate) fn step_tape(&mut self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
         Core::tema_step_impl(&mut self.state, inReal, &mut outReal);
         self.out.count += 1;
         outReal
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
         self.peek(inReal)
     }
 

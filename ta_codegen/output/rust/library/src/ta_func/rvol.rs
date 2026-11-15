@@ -82,12 +82,12 @@ impl Core {
     #[doc(alias = "TA_RVOL_Lookback")]
     #[inline]
     pub fn rvol_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::rvol`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -106,7 +106,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_RVOL_DisplayShift")]
-    pub fn rvol_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn rvol_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.rvol_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -132,9 +132,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.rvol_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -159,8 +159,8 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inVolume = &inVolume[..=endIdx];
@@ -177,7 +177,7 @@ impl Core {
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
-            liveIn = (if (inVolume[i]).abs() <= 0.0 { 0 } else { 1 });
+            liveIn = if inVolume[i].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveIn.wrapping_sub(1);
             i = i + 1;
         }
@@ -198,15 +198,15 @@ impl Core {
             outIdx = outIdx + 1;
             periodTotal -= trailingVolume;
             periodTotal += todayVolume;
-            liveIn = (if (todayVolume).abs() <= 0.0 { 0 } else { 1 });
+            liveIn = if todayVolume.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveIn.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
                 periodTotal = 0.0;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Relative Volume: today's volume as a ratio to the average volume of the bars that came
@@ -372,16 +372,16 @@ impl Core {
         todayVolume = inVolume as f64;
         // After both reads (input and output may be one buffer) and before the
         // total moves, or the divide keeps the old total live across the reset.
-        (*outReal) = todayVolume / baseline;
+        *outReal = todayVolume / baseline;
         sp.periodTotal -= trailingVolume;
         sp.periodTotal += todayVolume;
-        liveIn = (if (todayVolume).abs() <= 0.0 { 0 } else { 1 });
+        liveIn = if todayVolume.abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & liveIn.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
             sp.periodTotal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
@@ -400,21 +400,19 @@ impl Core {
         if inVolume.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inVolume.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
         let mut baseline: f64 = 0.0_f64;
         let mut todayVolume: f64 = 0.0_f64;
@@ -432,8 +430,8 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         periodTotal = 0.0;
@@ -449,7 +447,7 @@ impl Core {
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
-            liveIn = (if (inVolume[i]).abs() <= 0.0 { 0 } else { 1 });
+            liveIn = if inVolume[i].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveIn.wrapping_sub(1);
             i = i + 1;
         }
@@ -466,19 +464,19 @@ impl Core {
             i = i + 1;
             // After both reads (input and output may be one buffer) and before the
             // total moves, or the divide keeps the old total live across the reset.
-            outReal[(outIdx * outStride) as usize] = todayVolume / baseline;
+            outReal[outIdx * outStride] = todayVolume / baseline;
             outIdx = outIdx + 1;
             periodTotal -= trailingVolume;
             periodTotal += todayVolume;
-            liveIn = (if (todayVolume).abs() <= 0.0 { 0 } else { 1 });
+            liveIn = if todayVolume.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveIn.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
                 periodTotal = 0.0;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
@@ -503,7 +501,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::rvol_open`] (composition seam).
     pub(crate) fn rvol_open_internal(
-        &self, inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inVolume: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(RvolStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -576,7 +574,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_RVOL_OpenAndFill")]
     pub fn rvol_open_and_fill(
-        &self, inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inVolume: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(RvolStream, OutRange), RetCode> {
         if inVolume.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -595,7 +593,7 @@ impl Core {
     /// [`Core::rvol_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn rvol_open_and_fill_internal(
-        &self, inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RvolStream, RetCode> {
         self.rvol_open_impl(inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -672,7 +670,7 @@ impl RvolStream {
             todayVolume = inVolume as f64;
             // After both reads (input and output may be one buffer) and before the
             // total moves, or the divide keeps the old total live across the reset.
-            (*outReal) = todayVolume / baseline;
+            *outReal = todayVolume / baseline;
         }
         Ok(outReal)
     }

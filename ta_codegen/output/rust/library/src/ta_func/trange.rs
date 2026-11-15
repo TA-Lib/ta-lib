@@ -69,7 +69,7 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_TRANGE_Lookback")]
     pub fn trange_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((1) as usize);
+        return Ok(1 as usize);
     }
     /// Display shift of one output of [`Core::trange`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -145,8 +145,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -173,11 +173,10 @@ impl Core {
                 greatest = c_max(val3, greatest);
                 _w3[_wk] = greatest;
                 outIdx += 1;
-                today += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// True Range: the greatest of today's high-low span and the two gaps between yesterday's close
@@ -346,8 +345,8 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        (*outReal) = greatest;
-        sp.cur_outReal = (*outReal);
+        *outReal = greatest;
+        sp.cur_outReal = *outReal;
         sp.lag1_inClose = inClose;
     }
 
@@ -364,14 +363,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut val2: f64 = 0.0_f64;
@@ -399,8 +396,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         outIdx = 0;
@@ -416,11 +413,11 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = greatest;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = greatest;
             today += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = TrangeStreamState {
@@ -622,7 +619,7 @@ impl TrangeStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            (*outReal) = greatest;
+            *outReal = greatest;
         }
         Ok(outReal)
     }

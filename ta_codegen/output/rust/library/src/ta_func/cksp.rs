@@ -86,20 +86,18 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_CKSP_Lookback")]
     #[inline]
-    pub fn cksp_lookback(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn cksp_lookback(&self, mut optInTimePeriod: i32, optInMultiplier: f64, mut optInStopPeriod: i32) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInMultiplier == Self::REAL_DEFAULT {
-            optInMultiplier = 1e0;
-        } else if !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
+        if optInMultiplier != Self::REAL_DEFAULT && !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if ((optInStopPeriod) as i32) == (i32::MIN) {
+        if optInStopPeriod == i32::MIN {
             optInStopPeriod = 9;
-        } else if (((optInStopPeriod) as i32) < 1) || (((optInStopPeriod) as i32) > 100000) {
+        } else if optInStopPeriod < 1 || optInStopPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The first stops need the Average True Range at their own bar, and the
@@ -110,7 +108,7 @@ impl Core {
         // A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
         // was that much closer to its seed: the first difference two starts show
         // is the smaller for it, and an Auto level is held against that one.
-        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((if self.unstable_count(FuncUnstId::ATR, 1, 1) != self.unstable_count(FuncUnstId::ATR, 0, 0) { self.unstable_count(FuncUnstId::ATR, ((optInStopPeriod - 1) as i32), ((optInStopPeriod - 1) as i32)) - self.unstable_count(FuncUnstId::ATR, 0, 0) } else { 0 })) as usize)) as usize);
+        return Ok((self.atr_lookback(optInTimePeriod)? + (optInStopPeriod as usize) - 1 + ((if self.unstable_count(FuncUnstId::ATR, 1, 1) != self.unstable_count(FuncUnstId::ATR, 0, 0) { self.unstable_count(FuncUnstId::ATR, (optInStopPeriod - 1) as i32, (optInStopPeriod - 1) as i32) - self.unstable_count(FuncUnstId::ATR, 0, 0) } else { 0 }) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -134,7 +132,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_CKSP_DisplayShift")]
-    pub fn cksp_display_shift(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cksp_display_shift(&self, optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -205,9 +203,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMultiplier == Self::REAL_DEFAULT {
@@ -215,9 +213,9 @@ impl Core {
         } else if !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if ((optInStopPeriod) as i32) == (i32::MIN) {
+        if optInStopPeriod == i32::MIN {
             optInStopPeriod = 9;
-        } else if (((optInStopPeriod) as i32) < 1) || (((optInStopPeriod) as i32) > 100000) {
+        } else if optInStopPeriod < 1 || optInStopPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
@@ -227,7 +225,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outHighStop.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLowStop.len());
-        if (outHighStop.as_ptr() == outLowStop.as_ptr()) {
+        if outHighStop.as_ptr() == outLowStop.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -275,8 +273,8 @@ impl Core {
         let mut band: f64 = 0.0_f64;
         let mut highStop: f64 = 0.0_f64;
         let mut lowStop: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -299,31 +297,31 @@ impl Core {
         // TA_MAX( TA_MAX(high) - x*TA_ATR ) and its mirror, whatever the block
         // phase; only the sign of a zero tied between +0.0 and -0.0 is free.
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            hhBuf = &mut local_hhBuf[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            hhBuf = &mut local_hhBuf[..optInTimePeriod as usize];
         } else {
             heap_hhBuf = vec![0.0_f64; (optInTimePeriod) as usize];
             hhBuf = &mut heap_hhBuf;
         }
         hhBuf_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            llBuf = &mut local_llBuf[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            llBuf = &mut local_llBuf[..optInTimePeriod as usize];
         } else {
             heap_llBuf = vec![0.0_f64; (optInTimePeriod) as usize];
             llBuf = &mut heap_llBuf;
         }
         if optInStopPeriod < 1 { return RetCode::InternalError; }
-        if (optInStopPeriod) as usize <= 30usize {
-            hsBuf = &mut local_hsBuf[..(optInStopPeriod) as usize];
+        if optInStopPeriod as usize <= 30usize {
+            hsBuf = &mut local_hsBuf[..optInStopPeriod as usize];
         } else {
             heap_hsBuf = vec![0.0_f64; (optInStopPeriod) as usize];
             hsBuf = &mut heap_hsBuf;
         }
         hsBuf_Idx = 0;
         if optInStopPeriod < 1 { return RetCode::InternalError; }
-        if (optInStopPeriod) as usize <= 30usize {
-            lsBuf = &mut local_lsBuf[..(optInStopPeriod) as usize];
+        if optInStopPeriod as usize <= 30usize {
+            lsBuf = &mut local_lsBuf[..optInStopPeriod as usize];
         } else {
             heap_lsBuf = vec![0.0_f64; (optInStopPeriod) as usize];
             lsBuf = &mut heap_lsBuf;
@@ -343,14 +341,13 @@ impl Core {
         wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
             let _w1 = &inHigh[today - 1 + 1..][.._wn];
             let _w2 = &inLow[today - 1 + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempLT = _w2[_wk];
                 tempHT = _w1[_wk];
                 tempCY = _w0[_wk];
@@ -363,15 +360,12 @@ impl Core {
                 periodTotal += greatest;
                 today += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        prevATR = periodTotal / (optInTimePeriod as f64);
         // Skip the bars the lookback adds for the unstable period. Taking the count
         // from the lookback rather than naming the setting keeps the two from
         // disagreeing.
-        i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
+        i = lookbackTotal - lastQ - (optInTimePeriod as usize);
         if i != 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
@@ -387,9 +381,8 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
                 today += 1;
-                i -= 1;
             }
         }
         // prevATR is now the Average True Range of bar today-1, the first bar with
@@ -421,7 +414,7 @@ impl Core {
         // The multiple of the ATR is formed on its own, never fused into the
         // offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
         // caller composing the three functions would compute it.
-        band = ((optInMultiplier) as f64) * prevATR;
+        band = (optInMultiplier as f64) * prevATR;
         highStop = highest - band;
         lowStop = lowest + band;
         hsPre = highStop;
@@ -441,7 +434,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             // Keep this shape: the prefix extreme selected in a local, the
             // block-start override after it, one store. A store made only when the
             // bar sets a new extreme, or the override ahead of the select, compiles
@@ -486,7 +479,7 @@ impl Core {
                     }
                 }
             }
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             highStop = highest - band;
             lowStop = lowest + band;
             hsPre = c_max(highStop, hsPre);
@@ -529,7 +522,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);
@@ -550,7 +543,7 @@ impl Core {
             llBuf[hhBuf_Idx] = tempLT;
             hhBuf_Idx += 1;
             if hhBuf_Idx >= hhBuf.len() { hhBuf_Idx = 0; }
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             highStop = highest - band;
             lowStop = lowest + band;
             highest = hsPre;
@@ -619,8 +612,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Chande and Kroll's two-line volatility stop. The highest high is offset down, and the lowest
@@ -803,9 +796,7 @@ struct CkspStreamState {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CkspStreamScalars {
-    optInTimePeriod: i32,
     optInMultiplier: f64,
-    optInStopPeriod: i32,
     lastP: usize,
     lastQ: usize,
     prevATR: f64,
@@ -818,16 +809,8 @@ struct CkspStreamScalars {
     hhBuf_Idx: usize,
     hsBuf_Idx: usize,
     maxIdx_hhBuf: usize,
-    llBuf_Idx: usize,
-    maxIdx_llBuf: usize,
     maxIdx_hsBuf: usize,
-    lsBuf_Idx: usize,
-    maxIdx_lsBuf: usize,
     lag1_inClose: f64,
-    cbSize_hhBuf: usize,
-    cbSize_llBuf: usize,
-    cbSize_hsBuf: usize,
-    cbSize_lsBuf: usize,
     cur_outHighStop: f64,
     cur_outLowStop: f64,
 }
@@ -864,7 +847,7 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
+        sp.prevATR = fmadd!(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
         highest = sp.hhPre;
         lowest = sp.llPre;
         highest = c_max(tempHT, highest);
@@ -887,7 +870,7 @@ impl Core {
         if sp.hhBuf_Idx > sp.maxIdx_hhBuf {
             sp.hhBuf_Idx = 0;
         }
-        band = ((sp.optInMultiplier) as f64) * sp.prevATR;
+        band = (sp.optInMultiplier as f64) * sp.prevATR;
         highStop = highest - band;
         lowStop = lowest + band;
         highest = sp.hsPre;
@@ -912,8 +895,8 @@ impl Core {
         if sp.hsBuf_Idx > sp.maxIdx_hsBuf {
             sp.hsBuf_Idx = 0;
         }
-        (*outHighStop) = highest;
-        (*outLowStop) = lowest;
+        *outHighStop = highest;
+        *outLowStop = lowest;
         // A completed block becomes its suffix extrema. Nothing this bar reads
         // them, so both passes stay below the output stores, where the peek
         // frame never runs them.
@@ -945,8 +928,8 @@ impl Core {
                 cb_lsBuf[iq] = sufLo;
             }
         }
-        sp.cur_outHighStop = (*outHighStop);
-        sp.cur_outLowStop = (*outLowStop);
+        sp.cur_outHighStop = *outHighStop;
+        sp.cur_outLowStop = *outLowStop;
         sp.lag1_inClose = inClose;
     }
 
@@ -976,9 +959,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMultiplier == Self::REAL_DEFAULT {
@@ -986,9 +969,9 @@ impl Core {
         } else if !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if ((optInStopPeriod) as i32) == (i32::MIN) {
+        if optInStopPeriod == i32::MIN {
             optInStopPeriod = 9;
-        } else if (((optInStopPeriod) as i32) < 1) || (((optInStopPeriod) as i32) > 100000) {
+        } else if optInStopPeriod < 1 || optInStopPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -996,25 +979,21 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut hhBuf: Vec<f64> = Vec::new();
         let mut hhBuf_Idx: usize = 0;
         let mut maxIdx_hhBuf: usize = 29;
         let mut llBuf: Vec<f64> = Vec::new();
-        let mut llBuf_Idx: usize = 0;
         let mut maxIdx_llBuf: usize = 29;
         let mut hsBuf: Vec<f64> = Vec::new();
         let mut hsBuf_Idx: usize = 0;
         let mut maxIdx_hsBuf: usize = 29;
         let mut lsBuf: Vec<f64> = Vec::new();
-        let mut lsBuf_Idx: usize = 0;
         let mut maxIdx_lsBuf: usize = 29;
         let mut i: usize = 0_usize;
         let mut ip: usize = 0_usize;
@@ -1046,8 +1025,8 @@ impl Core {
         let mut band: f64 = 0.0_f64;
         let mut highStop: f64 = 0.0_f64;
         let mut lowStop: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -1068,20 +1047,18 @@ impl Core {
         // phase; only the sign of a zero tied between +0.0 and -0.0 is free.
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         hhBuf = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_hhBuf = ((optInTimePeriod) as usize) - 1;
+        maxIdx_hhBuf = (optInTimePeriod as usize) - 1;
         hhBuf_Idx = 0;
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         llBuf = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_llBuf = ((optInTimePeriod) as usize) - 1;
-        llBuf_Idx = 0;
+        maxIdx_llBuf = (optInTimePeriod as usize) - 1;
         if optInStopPeriod < 1 { return Err(RetCode::InternalError); }
         hsBuf = vec![0.0_f64; (optInStopPeriod) as usize];
-        maxIdx_hsBuf = ((optInStopPeriod) as usize) - 1;
+        maxIdx_hsBuf = (optInStopPeriod as usize) - 1;
         hsBuf_Idx = 0;
         if optInStopPeriod < 1 { return Err(RetCode::InternalError); }
         lsBuf = vec![0.0_f64; (optInStopPeriod) as usize];
-        maxIdx_lsBuf = ((optInStopPeriod) as usize) - 1;
-        lsBuf_Idx = 0;
+        maxIdx_lsBuf = (optInStopPeriod as usize) - 1;
         lastP = (optInTimePeriod - 1) as usize;
         lastQ = (optInStopPeriod - 1) as usize;
         // The Average True Range is carried inline rather than taken from a call,
@@ -1097,7 +1074,7 @@ impl Core {
         wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -1111,11 +1088,11 @@ impl Core {
             periodTotal += greatest;
             today += 1;
         }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        prevATR = periodTotal / (optInTimePeriod as f64);
         // Skip the bars the lookback adds for the unstable period. Taking the count
         // from the lookback rather than naming the setting keeps the two from
         // disagreeing.
-        i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
+        i = lookbackTotal - lastQ - (optInTimePeriod as usize);
         while i != 0 {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -1126,7 +1103,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -1152,7 +1129,7 @@ impl Core {
         // The multiple of the ATR is formed on its own, never fused into the
         // offset, so that each first stop is TA_MAX - x*TA_ATR (or its mirror) as a
         // caller composing the three functions would compute it.
-        band = ((optInMultiplier) as f64) * prevATR;
+        band = (optInMultiplier as f64) * prevATR;
         highStop = highest - band;
         lowStop = lowest + band;
         hsPre = highStop;
@@ -1172,7 +1149,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             // Keep this shape: the prefix extreme selected in a local, the
             // block-start override after it, one store. A store made only when the
             // bar sets a new extreme, or the override ahead of the select, compiles
@@ -1212,7 +1189,7 @@ impl Core {
                     llBuf[ip] = sufLo;
                 }
             }
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             highStop = highest - band;
             lowStop = lowest + band;
             hsPre = c_max(highStop, hsPre);
@@ -1237,8 +1214,8 @@ impl Core {
             sufLo = c_min(tempReal, sufLo);
             lsBuf[iq] = sufLo;
         }
-        outHighStop[(0 * outStride) as usize] = hsPre;
-        outLowStop[(0 * outStride) as usize] = lsPre;
+        outHighStop[0] = hsPre;
+        outLowStop[0] = lsPre;
         outIdx = 1;
         while today <= endIdx {
             tempLT = inLow[today];
@@ -1250,7 +1227,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);
@@ -1271,7 +1248,7 @@ impl Core {
             llBuf[hhBuf_Idx] = tempLT;
             hhBuf_Idx += 1;
             if hhBuf_Idx > maxIdx_hhBuf { hhBuf_Idx = 0; }
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             highStop = highest - band;
             lowStop = lowest + band;
             highest = hsPre;
@@ -1294,8 +1271,8 @@ impl Core {
             lsBuf[hsBuf_Idx] = lowStop;
             hsBuf_Idx += 1;
             if hsBuf_Idx > maxIdx_hsBuf { hsBuf_Idx = 0; }
-            outHighStop[(outIdx * outStride) as usize] = highest;
-            outLowStop[(outIdx * outStride) as usize] = lowest;
+            outHighStop[outIdx * outStride] = highest;
+            outLowStop[outIdx * outStride] = lowest;
             // A completed block becomes its suffix extrema. Nothing this bar reads
             // them, so both passes stay below the output stores, where the peek
             // frame never runs them.
@@ -1330,8 +1307,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_hhBuf: usize = maxIdx_hhBuf + 1;
@@ -1352,9 +1329,7 @@ impl Core {
         }
         let state = CkspStreamState {
             scalars: CkspStreamScalars {
-                optInTimePeriod,
                 optInMultiplier,
-                optInStopPeriod,
                 lastP,
                 lastQ,
                 prevATR,
@@ -1367,18 +1342,10 @@ impl Core {
                 hhBuf_Idx,
                 hsBuf_Idx,
                 maxIdx_hhBuf,
-                llBuf_Idx,
-                maxIdx_llBuf,
                 maxIdx_hsBuf,
-                lsBuf_Idx,
-                maxIdx_lsBuf,
                 cur_outHighStop: outHighStop[(*outNBElement - 1) * outStride],
                 cur_outLowStop: outLowStop[(*outNBElement - 1) * outStride],
                 lag1_inClose: inClose[historyLen - 1],
-                cbSize_hhBuf: cbSize_hhBuf,
-                cbSize_llBuf: cbSize_llBuf,
-                cbSize_hsBuf: cbSize_hsBuf,
-                cbSize_lsBuf: cbSize_lsBuf,
             },
             cb_hhBuf: hhBuf,
             cb_llBuf: llBuf,
@@ -1390,7 +1357,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cksp_open`] (composition seam).
     pub(crate) fn cksp_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32,
     ) -> Result<(CkspStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1481,7 +1448,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CKSP_OpenAndFill")]
     pub fn cksp_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32, outHighStop: &mut [f64], outLowStop: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, outHighStop: &mut [f64], outLowStop: &mut [f64],
     ) -> Result<(CkspStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1506,7 +1473,7 @@ impl Core {
     /// [`Core::cksp_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cksp_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outHighStop: &mut [f64], outLowStop: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outHighStop: &mut [f64], outLowStop: &mut [f64],
     ) -> Result<CkspStream, RetCode> {
         self.cksp_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, 1)
     }
@@ -1592,12 +1559,12 @@ impl CkspStream {
             let mut band: f64 = 0.0_f64;
             let mut highStop: f64 = 0.0_f64;
             let mut lowStop: f64 = 0.0_f64;
-            let mut hhBuf_Idx = sp.hhBuf_Idx;
-            let mut hhPre = sp.hhPre;
-            let mut hsBuf_Idx = sp.hsBuf_Idx;
-            let mut hsPre = sp.hsPre;
-            let mut llPre = sp.llPre;
-            let mut lsPre = sp.lsPre;
+            let hhBuf_Idx = sp.hhBuf_Idx;
+            let hhPre = sp.hhPre;
+            let hsBuf_Idx = sp.hsBuf_Idx;
+            let hsPre = sp.hsPre;
+            let llPre = sp.llPre;
+            let lsPre = sp.lsPre;
             let mut prevATR = sp.prevATR;
             tempLT = inLow;
             tempHT = inHigh;
@@ -1608,7 +1575,7 @@ impl CkspStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
+            prevATR = fmadd!(sp.wBeta, prevATR, sp.wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);
@@ -1617,19 +1584,13 @@ impl CkspStream {
                 highest = tempHT;
                 lowest = tempLT;
             }
-            hhPre = highest;
-            llPre = lowest;
             if hhBuf_Idx < sp.lastP {
                 tempReal = cb_hhBuf[hhBuf_Idx + 1];
                 highest = c_max(tempReal, highest);
                 tempReal = cb_llBuf[hhBuf_Idx + 1];
                 lowest = c_min(tempReal, lowest);
             }
-            hhBuf_Idx = hhBuf_Idx + 1;
-            if hhBuf_Idx > sp.maxIdx_hhBuf {
-                hhBuf_Idx = 0;
-            }
-            band = ((sp.optInMultiplier) as f64) * prevATR;
+            band = (sp.optInMultiplier as f64) * prevATR;
             highStop = highest - band;
             lowStop = lowest + band;
             highest = hsPre;
@@ -1640,20 +1601,14 @@ impl CkspStream {
                 highest = highStop;
                 lowest = lowStop;
             }
-            hsPre = highest;
-            lsPre = lowest;
             if hsBuf_Idx < sp.lastQ {
                 tempReal = cb_hsBuf[hsBuf_Idx + 1];
                 highest = c_max(tempReal, highest);
                 tempReal = cb_lsBuf[hsBuf_Idx + 1];
                 lowest = c_min(tempReal, lowest);
             }
-            hsBuf_Idx = hsBuf_Idx + 1;
-            if hsBuf_Idx > sp.maxIdx_hsBuf {
-                hsBuf_Idx = 0;
-            }
-            (*outHighStop) = highest;
-            (*outLowStop) = lowest;
+            *outHighStop = highest;
+            *outLowStop = lowest;
         }
         Ok((outHighStop, outLowStop))
     }

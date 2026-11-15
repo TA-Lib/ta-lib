@@ -79,12 +79,12 @@ impl Core {
     #[doc(alias = "TA_VHF_Lookback")]
     #[inline]
     pub fn vhf_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 28;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::vhf`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_VHF_DisplayShift")]
-    pub fn vhf_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn vhf_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.vhf_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -129,9 +129,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 28;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.vhf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -148,8 +148,8 @@ impl Core {
         let mut sumChange: f64 = 0.0_f64;
         let mut prev: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.vhf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -171,10 +171,10 @@ impl Core {
             prev = highest;
             sumChange = 0.0;
             // for( i = optInTimePeriod; i >= 0; i -= 1 )
-            i = (optInTimePeriod) as usize;
+            i = optInTimePeriod as usize;
             loop {
                 tempReal = inReal[today - i];
-                if i < ((optInTimePeriod) as usize) {
+                if i < (optInTimePeriod as usize) {
                     sumChange += (tempReal - prev).abs();
                     highest = c_max(tempReal, highest);
                     lowest = c_min(tempReal, lowest);
@@ -195,8 +195,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Vertical Horizontal Filter: Adam White's trend-versus-range filter, the range a window
@@ -359,10 +359,10 @@ impl Core {
         prev = highest;
         sumChange = 0.0;
         // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
-        i = (sp.optInTimePeriod) as usize;
+        i = sp.optInTimePeriod as usize;
         loop {
-            tempReal = sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            if i < ((sp.optInTimePeriod) as usize) {
+            tempReal = sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
+            if i < (sp.optInTimePeriod as usize) {
                 sumChange += (tempReal - prev).abs();
                 highest = c_max(tempReal, highest);
                 lowest = c_min(tempReal, lowest);
@@ -376,11 +376,11 @@ impl Core {
         // exact zero, never an epsilon band: a band carries the quote unit and
         // zeroes the filter for anything priced under it (issue #253).
         if sumChange > 0.0 {
-            (*outReal) = (highest - lowest) / sumChange;
+            *outReal = (highest - lowest) / sumChange;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -395,21 +395,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 28;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -419,8 +417,8 @@ impl Core {
         let mut sumChange: f64 = 0.0_f64;
         let mut prev: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.vhf_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -441,10 +439,10 @@ impl Core {
             prev = highest;
             sumChange = 0.0;
             // for( i = optInTimePeriod; i >= 0; i -= 1 )
-            i = (optInTimePeriod) as usize;
+            i = optInTimePeriod as usize;
             loop {
                 tempReal = inReal[today - i];
-                if i < ((optInTimePeriod) as usize) {
+                if i < (optInTimePeriod as usize) {
                     sumChange += (tempReal - prev).abs();
                     highest = c_max(tempReal, highest);
                     lowest = c_min(tempReal, lowest);
@@ -458,15 +456,15 @@ impl Core {
             // exact zero, never an epsilon band: a band carries the quote unit and
             // zeroes the filter for anything priced under it (issue #253).
             if sumChange > 0.0 {
-                outReal[(outIdx * outStride) as usize] = (highest - lowest) / sumChange;
+                outReal[outIdx * outStride] = (highest - lowest) / sumChange;
             } else {
-                outReal[(outIdx * outStride) as usize] = 0.0;
+                outReal[outIdx * outStride] = 0.0;
             }
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_i: i64 = (optInTimePeriod + 1) as i64;
@@ -487,7 +485,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::vhf_open`] (composition seam).
     pub(crate) fn vhf_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(VhfStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -560,7 +558,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VHF_OpenAndFill")]
     pub fn vhf_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(VhfStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -579,7 +577,7 @@ impl Core {
     /// [`Core::vhf_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn vhf_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VhfStream, RetCode> {
         self.vhf_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -665,10 +663,10 @@ impl VhfStream {
             prev = highest;
             sumChange = 0.0;
             // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
-            i = (sp.optInTimePeriod) as usize;
+            i = sp.optInTimePeriod as usize;
             loop {
-                tempReal = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                if i < ((sp.optInTimePeriod) as usize) {
+                tempReal = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 };
+                if i < (sp.optInTimePeriod as usize) {
                     sumChange += (tempReal - prev).abs();
                     highest = c_max(tempReal, highest);
                     lowest = c_min(tempReal, lowest);
@@ -682,9 +680,9 @@ impl VhfStream {
             // exact zero, never an epsilon band: a band carries the quote unit and
             // zeroes the filter for anything priced under it (issue #253).
             if sumChange > 0.0 {
-                (*outReal) = (highest - lowest) / sumChange;
+                *outReal = (highest - lowest) / sumChange;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

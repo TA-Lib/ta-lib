@@ -96,17 +96,17 @@ impl Core {
     #[doc(alias = "TA_KAMA_Lookback")]
     #[inline]
     pub fn kama_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut root: usize = 0_usize;
         root = ((optInTimePeriod as f64).sqrt() as usize) as usize;
         if optInTimePeriod == 1 {
-            return Ok((self.unstable_count(FuncUnstId::KAMA, 0, 0)) as usize);
+            return Ok(self.unstable_count(FuncUnstId::KAMA, 0, 0) as usize);
         }
-        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::KAMA, 25 * 4 * ((root) as i32), 25 * 8 * ((root) as i32))) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::KAMA, 25 * 4 * (root as i32), 25 * 8 * (root as i32))) as usize);
     }
     /// Display shift of one output of [`Core::kama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -125,7 +125,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_KAMA_DisplayShift")]
-    pub fn kama_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn kama_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.kama_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -181,9 +181,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.kama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -209,8 +209,8 @@ impl Core {
         constMax = 2.0 / (30.0 + 1.0);
         constDiff = 2.0 / (2.0 + 1.0) - constMax;
         // Default return values
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). The unstable period
         // still delays the first output for API consistency.
@@ -222,14 +222,14 @@ impl Core {
             if startIdx > endIdx {
                 return RetCode::Success;
             }
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             while today <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = today; today += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
         // Identify the minimum number of price bar needed
@@ -242,8 +242,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -259,22 +259,18 @@ impl Core {
         nullRun = 0;
         today = startIdx - lookbackTotal;
         trailingIdx = today;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn + 1];
             for _wk in 0.._wn {
-                i -= 1;
                 tempReal = _w0[_wk];
                 today += 1;
                 tempReal -= _w0[_wk + 1];
-                sumROC1 += (tempReal).abs();
-                live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+                sumROC1 += tempReal.abs();
+                live = if tempReal.abs() <= 0.0 { 0 } else { 1 };
                 nullRun = nullRun + 1 & live.wrapping_sub(1);
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
         // At this point sumROC1 represent the
         // summation of the 1-day price difference
@@ -307,11 +303,11 @@ impl Core {
             }
         }
         // Calculate the smoothing constant
-        tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+        tempReal = fmadd!(tempReal, constDiff, constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
+        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
         // 'today' keep track of where the processing is within the
         // input.
         // Skip the unstable period. Do the whole processing
@@ -328,11 +324,11 @@ impl Core {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
@@ -349,16 +345,16 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+            tempReal = fmadd!(tempReal, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
         }
         // Write the first value.
         outReal[0] = prevKAMA;
         outIdx = 1;
-        (*outBegIdx) = today - 1;
+        *outBegIdx = today - 1;
         // Do the KAMA calculation for the requested range.
         while today <= endIdx {
             tempReal = inReal[today];
@@ -372,11 +368,11 @@ impl Core {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
@@ -393,15 +389,15 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+            tempReal = fmadd!(tempReal, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
             outReal[outIdx] = prevKAMA;
             outIdx += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an
@@ -559,8 +555,8 @@ impl Core {
         let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         tempReal = inReal;
@@ -574,11 +570,11 @@ impl Core {
         // Once a whole window of flat bars has gone by, every 1-day change it
         // spans is exactly zero, so the sum is known to be exactly zero, the
         // residue can be dropped, and the efficiency ratio is 1.
-        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.sumROC1 = 0.0;
             tempReal = 1.0;
         } else if sp.sumROC1 <= 0.0 ||
@@ -595,13 +591,13 @@ impl Core {
         // and outReal can be pointers to the same buffer.
         sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
-        tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
+        tempReal = fmadd!(tempReal, sp.constDiff, sp.constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA as f64, tempReal, sp.prevKAMA);
-        (*outReal) = sp.prevKAMA;
-        sp.cur_outReal = (*outReal);
+        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
+        *outReal = sp.prevKAMA;
+        sp.cur_outReal = *outReal;
         sp.lag1_inReal = inReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
@@ -629,11 +625,11 @@ impl Core {
         // Once a whole window of flat bars has gone by, every 1-day change it
         // spans is exactly zero, so the sum is known to be exactly zero, the
         // residue can be dropped, and the efficiency ratio is 1.
-        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.sumROC1 = 0.0;
             tempReal = 1.0;
         } else if sp.sumROC1 <= 0.0 ||
@@ -650,13 +646,13 @@ impl Core {
         // and outReal can be pointers to the same buffer.
         sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
-        tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
+        tempReal = fmadd!(tempReal, sp.constDiff, sp.constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA as f64, tempReal, sp.prevKAMA);
-        (*outReal) = sp.prevKAMA;
-        sp.cur_outReal = (*outReal);
+        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
+        *outReal = sp.prevKAMA;
+        sp.cur_outReal = *outReal;
         sp.lag1_inReal = inReal;
     }
 
@@ -686,21 +682,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.kama_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -721,8 +715,8 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -752,8 +746,8 @@ impl Core {
         constMax = 2.0 / (30.0 + 1.0);
         constDiff = 2.0 / (2.0 + 1.0) - constMax;
         // Default return values
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.kama_lookback(optInTimePeriod)?;
@@ -764,8 +758,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Initialize the variables by going through
@@ -780,12 +774,12 @@ impl Core {
         nullRun = 0;
         today = startIdx - lookbackTotal;
         trailingIdx = today;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-            live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+            sumROC1 += tempReal.abs();
+            live = if tempReal.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
         }
         // At this point sumROC1 represent the
@@ -819,11 +813,11 @@ impl Core {
             }
         }
         // Calculate the smoothing constant
-        tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+        tempReal = fmadd!(tempReal, constDiff, constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
+        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
         // 'today' keep track of where the processing is within the
         // input.
         // Skip the unstable period. Do the whole processing
@@ -840,11 +834,11 @@ impl Core {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
@@ -861,16 +855,16 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+            tempReal = fmadd!(tempReal, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
         }
         // Write the first value.
-        outReal[(0 * outStride) as usize] = prevKAMA;
+        outReal[0] = prevKAMA;
         outIdx = 1;
-        (*outBegIdx) = today - 1;
+        *outBegIdx = today - 1;
         // Do the KAMA calculation for the requested range.
         while today <= endIdx {
             tempReal = inReal[today];
@@ -884,11 +878,11 @@ impl Core {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
@@ -905,14 +899,14 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
+            tempReal = fmadd!(tempReal, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevKAMA;
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA, tempReal, prevKAMA);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevKAMA;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -942,7 +936,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::kama_open`] (composition seam).
     pub(crate) fn kama_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(KamaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1015,7 +1009,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KAMA_OpenAndFill")]
     pub fn kama_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(KamaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1034,7 +1028,7 @@ impl Core {
     /// [`Core::kama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn kama_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<KamaStream, RetCode> {
         self.kama_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1108,10 +1102,10 @@ impl KamaStream {
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
-            let mut trailingValue = sp.trailingValue;
+            let trailingValue = sp.trailingValue;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             tempReal = inReal;
             tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -1124,11 +1118,9 @@ impl KamaStream {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
-                sumROC1 = 0.0;
+            if nullRun >= (sp.optInTimePeriod as usize) {
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
                sumROC1 <= periodROC // Calculate the efficiency ratio
@@ -1142,14 +1134,13 @@ impl KamaStream {
             }
             // Save the trailing value. Do this because inReal
             // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
+            tempReal = fmadd!(tempReal, sp.constDiff, sp.constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal - prevKAMA as f64, tempReal, prevKAMA);
-            (*outReal) = prevKAMA;
+            prevKAMA = fmadd!(inReal - prevKAMA, tempReal, prevKAMA);
+            *outReal = prevKAMA;
         }
         Ok(outReal)
     }
@@ -1232,7 +1223,7 @@ impl KamaStream {
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
-            let mut trailingValue = sp.trailingValue;
+            let trailingValue = sp.trailingValue;
             tempReal = inReal;
             tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
             periodROC = tempReal - tempReal2;
@@ -1244,11 +1235,9 @@ impl KamaStream {
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero, the
             // residue can be dropped, and the efficiency ratio is 1.
-            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
-                sumROC1 = 0.0;
+            if nullRun >= (sp.optInTimePeriod as usize) {
                 tempReal = 1.0;
             } else if sumROC1 <= 0.0 ||
                sumROC1 <= periodROC // Calculate the efficiency ratio
@@ -1262,14 +1251,13 @@ impl KamaStream {
             }
             // Save the trailing value. Do this because inReal
             // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
+            tempReal = fmadd!(tempReal, sp.constDiff, sp.constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = fmadd!(inReal - prevKAMA as f64, tempReal, prevKAMA);
-            (*outReal) = prevKAMA;
+            prevKAMA = fmadd!(inReal - prevKAMA, tempReal, prevKAMA);
+            *outReal = prevKAMA;
         }
         Ok(outReal)
     }

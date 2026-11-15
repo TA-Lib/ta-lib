@@ -79,9 +79,9 @@ impl Core {
     #[doc(alias = "TA_CG_Lookback")]
     #[inline]
     pub fn cg_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -102,7 +102,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CG_DisplayShift")]
-    pub fn cg_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cg_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cg_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -128,9 +128,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -142,7 +142,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut k: usize = 0_usize;
         let mut limbs: usize = 0_usize;
         let mut fits: usize = 0_usize;
@@ -189,8 +188,8 @@ impl Core {
         let mut numA: f64 = 0.0_f64;
         let mut numB: f64 = 0.0_f64;
         let mut numC: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.cg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -264,7 +263,7 @@ impl Core {
             x = inReal[today];
             y = x * scale;
             if limbs == 2 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidth;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * width;
@@ -278,7 +277,7 @@ impl Core {
                     }
                 }
             } else if limbs == 3 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidthSq;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * widthSq;
@@ -305,26 +304,24 @@ impl Core {
                 stickyBars -= 1;
                 num = 0.0;
                 den = 0.0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                for j in today - lookbackTotal..today + 1 {
                     den += inReal[j];
                     num += den;
                 }
-                j = (today as usize) + 1;
             } else if fits == 0 {
                 // The incoming value does not fit the scale: pick one from the
                 // window alone.
                 maxAbs = 0.0;
                 maxAt = 0;
                 k = 0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
-                    x = (inReal[j]).abs();
+                for j in today - lookbackTotal..today + 1 {
+                    x = inReal[j].abs();
                     if x >= maxAbs {
                         maxAbs = x;
                         maxAt = k;
                     }
                     k += 1;
                 }
-                j = (today as usize) + 1;
                 // The largest power of two not above the window's largest
                 // magnitude. The search may start from any finite power of two, so
                 // it starts from the last window's; keep it uncapped, or a start far
@@ -370,7 +367,7 @@ impl Core {
                 num = 0.0;
                 den = 0.0;
                 k = 0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                for j in today - lookbackTotal..today + 1 {
                     x = inReal[j];
                     den += x;
                     num += den;
@@ -388,15 +385,14 @@ impl Core {
                     }
                     y = (x * scale3Lo).abs();
                     if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
-                        failAt = (k) as i32;
+                        failAt = k as i32;
                     }
                     k += 1;
                 }
-                j = (today as usize) + 1;
                 limbs = 0;
                 if failAt >= 0 {
-                    if failAt < ((maxAt) as i32) {
-                        stickyBars = (failAt) as usize;
+                    if failAt < (maxAt as i32) {
+                        stickyBars = failAt as usize;
                     } else {
                         stickyBars = maxAt;
                     }
@@ -430,7 +426,7 @@ impl Core {
                     numB = 0.0;
                     numC = 0.0;
                     if limbs == 2 {
-                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                        for j in today - lookbackTotal..today + 1 {
                             y = inReal[j] * scale;
                             t = y * invWidth;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
@@ -441,9 +437,8 @@ impl Core {
                             numA += denA;
                             numC += denC;
                         }
-                        j = (today as usize) + 1;
                     } else {
-                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                        for j in today - lookbackTotal..today + 1 {
                             y = inReal[j] * scale;
                             t = y * invWidthSq;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
@@ -460,7 +455,6 @@ impl Core {
                             numB += denB;
                             numC += denC;
                         }
-                        j = (today as usize) + 1;
                     }
                 }
             }
@@ -543,8 +537,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// John Ehlers' Center of Gravity oscillator: the balance point of the last `optInTimePeriod`
@@ -677,7 +671,6 @@ pub struct CgStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CgStreamState {
-    optInTimePeriod: i32,
     lookbackTotal: usize,
     limbs: usize,
     stickyBars: usize,
@@ -749,7 +742,7 @@ impl Core {
         x = inReal;
         y = x * sp.scale;
         if sp.limbs == 2 {
-            if (y).abs() < sp.ylim && (y != 0.0 || x == 0.0) {
+            if y.abs() < sp.ylim && (y != 0.0 || x == 0.0) {
                 t = y * sp.invWidth;
                 a = t + 6.755399441055744e15 - 6.755399441055744e15;
                 t = a * sp.width;
@@ -763,7 +756,7 @@ impl Core {
                 }
             }
         } else if sp.limbs == 3 {
-            if (y).abs() < sp.ylim && (y != 0.0 || x == 0.0) {
+            if y.abs() < sp.ylim && (y != 0.0 || x == 0.0) {
                 t = y * sp.invWidthSq;
                 a = t + 6.755399441055744e15 - 6.755399441055744e15;
                 t = a * sp.widthSq;
@@ -793,7 +786,7 @@ impl Core {
             // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
             j = sp.lookbackTotal;
             loop {
-                sp.den += sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+                sp.den += sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize];
                 sp.num += sp.den;
                 if j == 0 { break; }
                 j -= 1;
@@ -807,7 +800,7 @@ impl Core {
             // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
             j = sp.lookbackTotal;
             loop {
-                x = (sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize]).abs();
+                x = sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize].abs();
                 if x >= maxAbs {
                     maxAbs = x;
                     maxAt = k;
@@ -864,7 +857,7 @@ impl Core {
             // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
             j = sp.lookbackTotal;
             loop {
-                x = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+                x = sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize];
                 sp.den += x;
                 sp.num += sp.den;
                 y = (x * scale2Mid).abs();
@@ -881,7 +874,7 @@ impl Core {
                 }
                 y = (x * scale3Lo).abs();
                 if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
-                    failAt = (k) as i32;
+                    failAt = k as i32;
                 }
                 k += 1;
                 if j == 0 { break; }
@@ -889,8 +882,8 @@ impl Core {
             }
             sp.limbs = 0;
             if failAt >= 0 {
-                if failAt < ((maxAt) as i32) {
-                    sp.stickyBars = (failAt) as usize;
+                if failAt < (maxAt as i32) {
+                    sp.stickyBars = failAt as usize;
                 } else {
                     sp.stickyBars = maxAt;
                 }
@@ -927,7 +920,7 @@ impl Core {
                     // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                     j = sp.lookbackTotal;
                     loop {
-                        y = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] * sp.scale;
+                        y = sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] * sp.scale;
                         t = y * sp.invWidth;
                         a = t + 6.755399441055744e15 - 6.755399441055744e15;
                         t = a * sp.width;
@@ -943,7 +936,7 @@ impl Core {
                     // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                     j = sp.lookbackTotal;
                     loop {
-                        y = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] * sp.scale;
+                        y = sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] * sp.scale;
                         t = y * sp.invWidthSq;
                         a = t + 6.755399441055744e15 - 6.755399441055744e15;
                         t = a * sp.widthSq;
@@ -1038,8 +1031,8 @@ impl Core {
             sp.numC -= sp.periodDouble * c;
         }
         // After the trailing value is read: outReal may be inReal.
-        (*outReal) = value;
-        sp.cur_outReal = (*outReal);
+        *outReal = value;
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
@@ -1062,26 +1055,23 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut k: usize = 0_usize;
         let mut limbs: usize = 0_usize;
         let mut fits: usize = 0_usize;
@@ -1128,8 +1118,8 @@ impl Core {
         let mut numA: f64 = 0.0_f64;
         let mut numB: f64 = 0.0_f64;
         let mut numC: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.cg_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -1202,7 +1192,7 @@ impl Core {
             x = inReal[today];
             y = x * scale;
             if limbs == 2 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidth;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * width;
@@ -1216,7 +1206,7 @@ impl Core {
                     }
                 }
             } else if limbs == 3 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidthSq;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * widthSq;
@@ -1243,26 +1233,24 @@ impl Core {
                 stickyBars -= 1;
                 num = 0.0;
                 den = 0.0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                for j in today - lookbackTotal..today + 1 {
                     den += inReal[j];
                     num += den;
                 }
-                j = (today as usize) + 1;
             } else if fits == 0 {
                 // The incoming value does not fit the scale: pick one from the
                 // window alone.
                 maxAbs = 0.0;
                 maxAt = 0;
                 k = 0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
-                    x = (inReal[j]).abs();
+                for j in today - lookbackTotal..today + 1 {
+                    x = inReal[j].abs();
                     if x >= maxAbs {
                         maxAbs = x;
                         maxAt = k;
                     }
                     k += 1;
                 }
-                j = (today as usize) + 1;
                 // The largest power of two not above the window's largest
                 // magnitude. The search may start from any finite power of two, so
                 // it starts from the last window's; keep it uncapped, or a start far
@@ -1308,7 +1296,7 @@ impl Core {
                 num = 0.0;
                 den = 0.0;
                 k = 0;
-                for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                for j in today - lookbackTotal..today + 1 {
                     x = inReal[j];
                     den += x;
                     num += den;
@@ -1326,15 +1314,14 @@ impl Core {
                     }
                     y = (x * scale3Lo).abs();
                     if !(y < ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
-                        failAt = (k) as i32;
+                        failAt = k as i32;
                     }
                     k += 1;
                 }
-                j = (today as usize) + 1;
                 limbs = 0;
                 if failAt >= 0 {
-                    if failAt < ((maxAt) as i32) {
-                        stickyBars = (failAt) as usize;
+                    if failAt < (maxAt as i32) {
+                        stickyBars = failAt as usize;
                     } else {
                         stickyBars = maxAt;
                     }
@@ -1368,7 +1355,7 @@ impl Core {
                     numB = 0.0;
                     numC = 0.0;
                     if limbs == 2 {
-                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                        for j in today - lookbackTotal..today + 1 {
                             y = inReal[j] * scale;
                             t = y * invWidth;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
@@ -1379,9 +1366,8 @@ impl Core {
                             numA += denA;
                             numC += denC;
                         }
-                        j = (today as usize) + 1;
                     } else {
-                        for j in (today - lookbackTotal as usize)..(today as usize) + 1 {
+                        for j in today - lookbackTotal..today + 1 {
                             y = inReal[j] * scale;
                             t = y * invWidthSq;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
@@ -1398,7 +1384,6 @@ impl Core {
                             numB += denB;
                             numC += denC;
                         }
-                        j = (today as usize) + 1;
                     }
                 }
             }
@@ -1476,13 +1461,13 @@ impl Core {
                 numC -= periodDouble * c;
             }
             // After the trailing value is read: outReal may be inReal.
-            outReal[(outIdx * outStride) as usize] = value;
+            outReal[outIdx * outStride] = value;
             trailingIdx += 1;
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -1500,7 +1485,6 @@ impl Core {
         let mut win_j_inReal: Vec<f64> = vec![0.0_f64; cap_j as usize];
         win_j_inReal.copy_from_slice(&inReal[historyLen - cap_j as usize..]);
         let state = CgStreamState {
-            optInTimePeriod,
             lookbackTotal,
             limbs,
             stickyBars,
@@ -1540,7 +1524,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cg_open`] (composition seam).
     pub(crate) fn cg_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CgStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1613,7 +1597,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CG_OpenAndFill")]
     pub fn cg_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CgStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1632,7 +1616,7 @@ impl Core {
     /// [`Core::cg_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cg_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CgStream, RetCode> {
         self.cg_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1702,7 +1686,6 @@ impl CgStream {
             let mut j: usize = 0_usize;
             let mut k: usize = 0_usize;
             let mut fits: usize = 0_usize;
-            let mut maxAt: usize = 0_usize;
             let mut failAt: i32 = 0_i32;
             let mut fit2Mid: usize = 0_usize;
             let mut fit2Lo: usize = 0_usize;
@@ -1733,10 +1716,10 @@ impl CgStream {
             let mut numB = sp.numB;
             let mut numC = sp.numC;
             let mut scale = sp.scale;
-            let mut stickyBars = sp.stickyBars;
+            let stickyBars = sp.stickyBars;
             let mut width = sp.width;
             let mut widthSq = sp.widthSq;
-            let mut ylim = sp.ylim;
+            let ylim = sp.ylim;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = sp.winPos_j as usize;
@@ -1746,7 +1729,7 @@ impl CgStream {
             x = inReal;
             y = x * scale;
             if limbs == 2 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidth;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * width;
@@ -1760,7 +1743,7 @@ impl CgStream {
                     }
                 }
             } else if limbs == 3 {
-                if (y).abs() < ylim && (y != 0.0 || x == 0.0) {
+                if y.abs() < ylim && (y != 0.0 || x == 0.0) {
                     t = y * invWidthSq;
                     a = t + 6.755399441055744e15 - 6.755399441055744e15;
                     t = a * widthSq;
@@ -1784,13 +1767,12 @@ impl CgStream {
                 // Both witnesses of the last failed fit are still in the window, so
                 // it cannot fit either: its largest value can only be larger, which
                 // only coarsens the scale the failing value already missed.
-                stickyBars -= 1;
                 num = 0.0;
                 den = 0.0;
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    den += (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
+                    den += if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 };
                     num += den;
                     if j == 0 { break; }
                     j -= 1;
@@ -1799,17 +1781,13 @@ impl CgStream {
                 // The incoming value does not fit the scale: pick one from the
                 // window alone.
                 maxAbs = 0.0;
-                maxAt = 0;
-                k = 0;
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    x = ((if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 })).abs();
+                    x = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 }).abs();
                     if x >= maxAbs {
                         maxAbs = x;
-                        maxAt = k;
                     }
-                    k += 1;
                     if j == 0 { break; }
                     j -= 1;
                 }
@@ -1861,7 +1839,7 @@ impl CgStream {
                 // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                 j = sp.lookbackTotal;
                 loop {
-                    x = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
+                    x = if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 };
                     den += x;
                     num += den;
                     y = (x * scale2Mid).abs();
@@ -1878,7 +1856,7 @@ impl CgStream {
                     }
                     y = (x * scale3Lo).abs();
                     if !(y < sp.ylim3) || y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y || y == 0.0 && x != 0.0 {
-                        failAt = (k) as i32;
+                        failAt = k as i32;
                     }
                     k += 1;
                     if j == 0 { break; }
@@ -1886,16 +1864,10 @@ impl CgStream {
                 }
                 limbs = 0;
                 if failAt >= 0 {
-                    if failAt < ((maxAt) as i32) {
-                        stickyBars = (failAt) as usize;
-                    } else {
-                        stickyBars = maxAt;
-                    }
                 } else {
                     if fit2Mid == 1 || fit2Lo == 1 {
                         limbs = 2;
                         width = sp.width2;
-                        ylim = sp.ylim2;
                         if fit2Mid == 1 {
                             scale = scale2Mid;
                         } else {
@@ -1904,7 +1876,6 @@ impl CgStream {
                     } else {
                         limbs = 3;
                         width = sp.width3;
-                        ylim = sp.ylim3;
                         if fit3Mid == 1 {
                             scale = scale3Mid;
                         } else {
@@ -1924,7 +1895,7 @@ impl CgStream {
                         // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                         j = sp.lookbackTotal;
                         loop {
-                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 }) * scale;
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 }) * scale;
                             t = y * invWidth;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
                             t = a * width;
@@ -1940,7 +1911,7 @@ impl CgStream {
                         // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
                         j = sp.lookbackTotal;
                         loop {
-                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 }) * scale;
+                            y = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 }) * scale;
                             t = y * invWidthSq;
                             a = t + 6.755399441055744e15 - 6.755399441055744e15;
                             t = a * widthSq;
@@ -2007,35 +1978,8 @@ impl CgStream {
             } else {
                 value = sp.flatValue;
             }
-            if limbs == 2 {
-                y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
-                t = y * invWidth;
-                a = t + 6.755399441055744e15 - 6.755399441055744e15;
-                t = a * width;
-                c = y - t;
-                denA -= a;
-                denC -= c;
-                numA -= sp.periodDouble * a;
-                numC -= sp.periodDouble * c;
-            } else if limbs == 3 {
-                y = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * scale;
-                t = y * invWidthSq;
-                a = t + 6.755399441055744e15 - 6.755399441055744e15;
-                t = a * widthSq;
-                q = y - t;
-                t = q * invWidth;
-                b = t + 6.755399441055744e15 - 6.755399441055744e15;
-                t = b * width;
-                c = q - t;
-                denA -= a;
-                denB -= b;
-                denC -= c;
-                numA -= sp.periodDouble * a;
-                numB -= sp.periodDouble * b;
-                numC -= sp.periodDouble * c;
-            }
             // After the trailing value is read: outReal may be inReal.
-            (*outReal) = value;
+            *outReal = value;
         }
         Ok(outReal)
     }

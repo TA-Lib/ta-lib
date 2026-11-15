@@ -214,7 +214,7 @@ fn no_candlestick_carries_the_divergent_shadows_spelling() {
 fn rust_candleaverage_halves_by_multiplying() {
     let s = rust_source("cdldoji");
     assert!(
-        s.contains("* (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })"),
+        s.contains("* (if BodyDoji_rangeType == 2 { 0.5 } else { 1.0 })"),
         "the Shadows average should halve by a multiply: {s}"
     );
     assert!(!s.contains("{ 2.0 } else { 1.0 }"), "no divide by a selected 2.0/1.0 may remain: {s}");

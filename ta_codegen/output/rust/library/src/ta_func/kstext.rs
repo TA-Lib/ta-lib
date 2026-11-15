@@ -97,49 +97,49 @@ impl Core {
     #[doc(alias = "TA_KSTEXT_Lookback")]
     #[inline]
     pub fn kstext_lookback(&self, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA1Period) as i32) == (i32::MIN) {
+        if optInMA1Period == i32::MIN {
             optInMA1Period = 10;
-        } else if (((optInMA1Period) as i32) < 1) || (((optInMA1Period) as i32) > 100000) {
+        } else if optInMA1Period < 1 || optInMA1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA2Period) as i32) == (i32::MIN) {
+        if optInMA2Period == i32::MIN {
             optInMA2Period = 10;
-        } else if (((optInMA2Period) as i32) < 1) || (((optInMA2Period) as i32) > 100000) {
+        } else if optInMA2Period < 1 || optInMA2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA3Period) as i32) == (i32::MIN) {
+        if optInMA3Period == i32::MIN {
             optInMA3Period = 10;
-        } else if (((optInMA3Period) as i32) < 1) || (((optInMA3Period) as i32) > 100000) {
+        } else if optInMA3Period < 1 || optInMA3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA4Period) as i32) == (i32::MIN) {
+        if optInMA4Period == i32::MIN {
             optInMA4Period = 15;
-        } else if (((optInMA4Period) as i32) < 1) || (((optInMA4Period) as i32) > 100000) {
+        } else if optInMA4Period < 1 || optInMA4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInROCMAType == MAType::DEFAULT {
@@ -150,16 +150,16 @@ impl Core {
         }
         let mut legMax: usize = 0_usize;
         let mut leg: usize = 0_usize;
-        legMax = ((optInROC1Period) as usize) + self.ma_lookback(optInMA1Period, optInROCMAType)?;
-        leg = ((optInROC2Period) as usize) + self.ma_lookback(optInMA2Period, optInROCMAType)?;
+        legMax = (optInROC1Period as usize) + self.ma_lookback(optInMA1Period, optInROCMAType)?;
+        leg = (optInROC2Period as usize) + self.ma_lookback(optInMA2Period, optInROCMAType)?;
         if leg > legMax {
             legMax = leg;
         }
-        leg = ((optInROC3Period) as usize) + self.ma_lookback(optInMA3Period, optInROCMAType)?;
+        leg = (optInROC3Period as usize) + self.ma_lookback(optInMA3Period, optInROCMAType)?;
         if leg > legMax {
             legMax = leg;
         }
-        leg = ((optInROC4Period) as usize) + self.ma_lookback(optInMA4Period, optInROCMAType)?;
+        leg = (optInROC4Period as usize) + self.ma_lookback(optInMA4Period, optInROCMAType)?;
         if leg > legMax {
             legMax = leg;
         }
@@ -199,7 +199,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_KSTEXT_DisplayShift")]
-    pub fn kstext_display_shift(&self, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn kstext_display_shift(&self, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -288,49 +288,49 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInMA1Period) as i32) == (i32::MIN) {
+        if optInMA1Period == i32::MIN {
             optInMA1Period = 10;
-        } else if (((optInMA1Period) as i32) < 1) || (((optInMA1Period) as i32) > 100000) {
+        } else if optInMA1Period < 1 || optInMA1Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInMA2Period) as i32) == (i32::MIN) {
+        if optInMA2Period == i32::MIN {
             optInMA2Period = 10;
-        } else if (((optInMA2Period) as i32) < 1) || (((optInMA2Period) as i32) > 100000) {
+        } else if optInMA2Period < 1 || optInMA2Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInMA3Period) as i32) == (i32::MIN) {
+        if optInMA3Period == i32::MIN {
             optInMA3Period = 10;
-        } else if (((optInMA3Period) as i32) < 1) || (((optInMA3Period) as i32) > 100000) {
+        } else if optInMA3Period < 1 || optInMA3Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInMA4Period) as i32) == (i32::MIN) {
+        if optInMA4Period == i32::MIN {
             optInMA4Period = 15;
-        } else if (((optInMA4Period) as i32) < 1) || (((optInMA4Period) as i32) > 100000) {
+        } else if optInMA4Period < 1 || optInMA4Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInROCMAType == MAType::DEFAULT {
@@ -344,13 +344,12 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outKST.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outKSTSignal.len());
-        if (outKST.as_ptr() == outKSTSignal.as_ptr()) {
+        if outKST.as_ptr() == outKSTSignal.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut kstBuffer: Vec<f64> = Vec::new();
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
@@ -360,33 +359,31 @@ impl Core {
         let mut lookbackMA3: usize = 0_usize;
         let mut lookbackMA4: usize = 0_usize;
         let mut tempInteger: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
         let mut rocNb: usize = 0_usize;
         let mut kstNb: usize = 0_usize;
-        let mut legNb: usize = 0_usize;
         let mut sigNb: usize = 0_usize;
         let mut i: usize = 0_usize;
         // With every type SMA this is bit-exact with kst(): each leg's average
         // starts on the first bar the signal consumes, and the line accumulates
         // its legs left to right. Changing either breaks the equality.
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType).unwrap_or(usize::MAX);
-        lookbackTotal = ((optInROC1Period) as usize) + lookbackMA1;
-        tempInteger = ((optInROC2Period) as usize) + lookbackMA2;
+        lookbackTotal = (optInROC1Period as usize) + lookbackMA1;
+        tempInteger = (optInROC2Period as usize) + lookbackMA2;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
-        tempInteger = ((optInROC3Period) as usize) + lookbackMA3;
+        tempInteger = (optInROC3Period as usize) + lookbackMA3;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
-        tempInteger = ((optInROC4Period) as usize) + lookbackMA4;
+        tempInteger = (optInROC4Period as usize) + lookbackMA4;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
@@ -414,21 +411,12 @@ impl Core {
         kstBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         let _xr0 = match self.roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, &mut kstBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
         rocNb = _xr0.count;
-        retCode = RetCode::Success;
         let _xr1 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
         kstNb = _xr1.count;
-        retCode = RetCode::Success;
         let _xr2 = match self.roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
         rocNb = _xr2.count;
-        retCode = RetCode::Success;
         let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr3.beg_idx;
-        legNb = _xr3.count;
-        retCode = RetCode::Success;
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -436,17 +424,11 @@ impl Core {
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
                 _w0[_wk] = fmadd!(2.0 as f64, _w1[_wk], _w0[_wk]);
-                i += 1;
             }
         }
         let _xr4 = match self.roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr4.beg_idx;
         rocNb = _xr4.count;
-        retCode = RetCode::Success;
         let _xr5 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr5.beg_idx;
-        legNb = _xr5.count;
-        retCode = RetCode::Success;
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -454,17 +436,11 @@ impl Core {
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
                 _w0[_wk] = fmadd!(3.0 as f64, _w1[_wk], _w0[_wk]);
-                i += 1;
             }
         }
         let _xr6 = match self.roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr6.beg_idx;
         rocNb = _xr6.count;
-        retCode = RetCode::Success;
         let _xr7 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr7.beg_idx;
-        legNb = _xr7.count;
-        retCode = RetCode::Success;
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -472,22 +448,19 @@ impl Core {
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
                 _w0[_wk] = fmadd!(4.0 as f64, _w1[_wk], _w0[_wk]);
-                i += 1;
             }
         }
         // Every read of inReal is done: an output may alias it.
         {
             let _n = ((endIdx - startIdx + 1) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackSignal) as usize;
+            let _di = 0 as usize;
+            let _si = lookbackSignal as usize;
             outKST[_di.._di + _n].copy_from_slice(&kstBuffer[_si.._si + _n]);
         };
         let _xr8 = match self.ma(0, kstNb - 1, &kstBuffer, optInSignalPeriod, optInSignalMAType, outKSTSignal) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr8.beg_idx;
         sigNb = _xr8.count;
-        retCode = RetCode::Success;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = sigNb;
+        *outBegIdx = startIdx;
+        *outNBElement = sigNb;
         return RetCode::Success;
     }
     /// Know Sure Thing with selectable moving averages: Pring's weighted sum of four smoothed rates
@@ -669,17 +642,6 @@ pub struct KstextStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct KstextStreamState {
-    optInROC1Period: i32,
-    optInROC2Period: i32,
-    optInROC3Period: i32,
-    optInROC4Period: i32,
-    optInMA1Period: i32,
-    optInMA2Period: i32,
-    optInMA3Period: i32,
-    optInMA4Period: i32,
-    optInSignalPeriod: i32,
-    optInROCMAType: MAType,
-    optInSignalMAType: MAType,
     sub0: RocStream,
     sub1: MaStream,
     sub2: RocStream,
@@ -721,8 +683,8 @@ impl Core {
         // Combine map (batch tail, per bar).
         cur_kstBuffer = fmadd!(4.0 as f64, cur_tempBuffer, cur_kstBuffer);
         cur_outKSTSignal = sp.sub8.update(cur_kstBuffer)?;
-        (*outKST) = cur_kstBuffer;
-        (*outKSTSignal) = cur_outKSTSignal;
+        *outKST = cur_kstBuffer;
+        *outKSTSignal = cur_outKSTSignal;
         Ok(())
     }
 
@@ -752,49 +714,49 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA1Period) as i32) == (i32::MIN) {
+        if optInMA1Period == i32::MIN {
             optInMA1Period = 10;
-        } else if (((optInMA1Period) as i32) < 1) || (((optInMA1Period) as i32) > 100000) {
+        } else if optInMA1Period < 1 || optInMA1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA2Period) as i32) == (i32::MIN) {
+        if optInMA2Period == i32::MIN {
             optInMA2Period = 10;
-        } else if (((optInMA2Period) as i32) < 1) || (((optInMA2Period) as i32) > 100000) {
+        } else if optInMA2Period < 1 || optInMA2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA3Period) as i32) == (i32::MIN) {
+        if optInMA3Period == i32::MIN {
             optInMA3Period = 10;
-        } else if (((optInMA3Period) as i32) < 1) || (((optInMA3Period) as i32) > 100000) {
+        } else if optInMA3Period < 1 || optInMA3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMA4Period) as i32) == (i32::MIN) {
+        if optInMA4Period == i32::MIN {
             optInMA4Period = 15;
-        } else if (((optInMA4Period) as i32) < 1) || (((optInMA4Period) as i32) > 100000) {
+        } else if optInMA4Period < 1 || optInMA4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInROCMAType == MAType::DEFAULT {
@@ -805,14 +767,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outKST: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outKST: &mut [f64] =
@@ -828,7 +788,6 @@ impl Core {
         let mut lagNb4: i64 = 0;
         let mut kstBuffer: Vec<f64> = Vec::new();
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
@@ -847,24 +806,24 @@ impl Core {
         // With every type SMA this is bit-exact with kst(): each leg's average
         // starts on the first bar the signal consumes, and the line accumulates
         // its legs left to right. Changing either breaks the equality.
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
         lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType)?;
         lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType)?;
         lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType)?;
         lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType)?;
-        lookbackTotal = ((optInROC1Period) as usize) + lookbackMA1;
-        tempInteger = ((optInROC2Period) as usize) + lookbackMA2;
+        lookbackTotal = (optInROC1Period as usize) + lookbackMA1;
+        tempInteger = (optInROC2Period as usize) + lookbackMA2;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
-        tempInteger = ((optInROC3Period) as usize) + lookbackMA3;
+        tempInteger = (optInROC3Period as usize) + lookbackMA3;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
-        tempInteger = ((optInROC4Period) as usize) + lookbackMA4;
+        tempInteger = (optInROC4Period as usize) + lookbackMA4;
         if tempInteger > lookbackTotal {
             lookbackTotal = tempInteger;
         }
@@ -893,27 +852,23 @@ impl Core {
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         // Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA1) as usize), optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA1 as usize), optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
         // Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&kstBuffer[..((rocNb - 1) as usize) + 1], ((0) as usize), optInMA1Period, optInROCMAType)?;
+        let (sub1, _) = self.ma_open_internal(&kstBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA1Period, optInROCMAType)?;
         let _xr0 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr0.beg_idx;
         kstNb = _xr0.count;
-        retCode = RetCode::Success;
         // Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA2) as usize), optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub2 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA2 as usize), optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub3, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], ((0) as usize), optInMA2Period, optInROCMAType)?;
+        let (sub3, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA2Period, optInROCMAType)?;
         let _xr1 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr1.beg_idx;
         legNb = _xr1.count;
-        retCode = RetCode::Success;
-        lagNb0 = (legNb as i64);
+        lagNb0 = legNb as i64;
         if (kstNb as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -928,16 +883,14 @@ impl Core {
         }
         // Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub4 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA3) as usize), optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub4 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA3 as usize), optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub5, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], ((0) as usize), optInMA3Period, optInROCMAType)?;
+        let (sub5, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA3Period, optInROCMAType)?;
         let _xr2 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr2.beg_idx;
         legNb = _xr2.count;
-        retCode = RetCode::Success;
-        lagNb1 = (legNb as i64);
+        lagNb1 = legNb as i64;
         if (kstNb as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -952,17 +905,15 @@ impl Core {
         }
         // Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub6 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA4) as usize), optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub6 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA4 as usize), optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub7, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], ((0) as usize), optInMA4Period, optInROCMAType)?;
+        let (sub7, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA4Period, optInROCMAType)?;
         let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr3.beg_idx;
         legNb = _xr3.count;
-        retCode = RetCode::Success;
-        lagNb2 = (legNb as i64);
-        lagNb3 = (kstNb as i64);
+        lagNb2 = legNb as i64;
+        lagNb3 = kstNb as i64;
         if (kstNb as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -976,7 +927,7 @@ impl Core {
             i += 1;
         }
         // Every read of inReal is done: an output may alias it.
-        lagNb4 = ((endIdx - startIdx + 1) as i64);
+        lagNb4 = (endIdx - startIdx + 1) as i64;
         if ((endIdx - startIdx) as i64) < 0 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -985,38 +936,26 @@ impl Core {
         }
         {
             let _n = ((endIdx - startIdx + 1) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackSignal) as usize;
+            let _di = 0 as usize;
+            let _si = lookbackSignal as usize;
             sc_outKST[_di.._di + _n].copy_from_slice(&kstBuffer[_si.._si + _n]);
         };
         // Sub-stream 8: ma over `kstBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub8 = self.ma_open_and_fill_internal(&kstBuffer[..((kstNb - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType, &mut tempBegIdx, &mut sigNb, &mut sc_outKSTSignal[..])?;
-        retCode = RetCode::Success;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = sigNb;
+        let sub8 = self.ma_open_and_fill_internal(&kstBuffer[..((kstNb - 1) as usize) + 1], 0 as usize, optInSignalPeriod, optInSignalMAType, &mut tempBegIdx, &mut sigNb, &mut sc_outKSTSignal[..])?;
+        *outBegIdx = startIdx;
+        *outNBElement = sigNb;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        if lagNb4 - ((*outNBElement) as i64) != 0 {
+        if lagNb4 - (*outNBElement as i64) != 0 {
             return Err(RetCode::InternalError);
         }
         let mut state = KstextStreamState {
             cur_outKST: 0.0_f64,
             cur_outKSTSignal: 0.0_f64,
-            optInROC1Period,
-            optInROC2Period,
-            optInROC3Period,
-            optInROC4Period,
-            optInMA1Period,
-            optInMA2Period,
-            optInMA3Period,
-            optInMA4Period,
-            optInSignalPeriod,
-            optInROCMAType,
-            optInSignalMAType,
             sub0,
             sub1,
             sub2,
@@ -1042,7 +981,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::kstext_open`] (composition seam).
     pub(crate) fn kstext_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType,
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType,
     ) -> Result<(KstextStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1121,7 +1060,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KSTEXT_OpenAndFill")]
     pub fn kstext_open_and_fill(
-        &self, inReal: &[f64], mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outKST: &mut [f64], outKSTSignal: &mut [f64],
+        &self, inReal: &[f64], optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<(KstextStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1143,7 +1082,7 @@ impl Core {
     /// [`Core::kstext_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn kstext_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<KstextStream, RetCode> {
         self.kstext_open_impl(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, 1)
     }
@@ -1249,8 +1188,8 @@ impl KstextStream {
             // Combine map (batch tail, per bar).
             cur_kstBuffer = fmadd!(4.0 as f64, cur_tempBuffer, cur_kstBuffer);
             cur_outKSTSignal = sp.sub8.peek(cur_kstBuffer)?;
-            (*outKST) = cur_kstBuffer;
-            (*outKSTSignal) = cur_outKSTSignal;
+            *outKST = cur_kstBuffer;
+            *outKSTSignal = cur_outKSTSignal;
         }
         Ok((outKST, outKSTSignal))
     }

@@ -73,7 +73,7 @@ impl Core {
         // One bar in, one bar out: the value reads only its own bar, so there is
         // nothing to warm up. bop.c:19-22's lookback, and stochf_lookback(1,1,SMA)
         // agrees, since ma_lookback returns 0 for a period of 1 (ma.c:28-29).
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::ibs`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,9 +121,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         let mut range: f64 = 0.0_f64;
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
@@ -131,7 +129,7 @@ impl Core {
         // IBS = (Close - Low)/(High - Low): where the close sits inside its own
         // bar, 0 at the low and 1 at the high.
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             // An exact test: the range of one bar carries the quote unit, so any
             // band would flip every bar of a small enough instrument to 0.5. Spelled
             // <= so a NaN input keeps the quotient's NaN.
@@ -139,15 +137,14 @@ impl Core {
             // Store, then overwrite: gcc keeps a guarded or selected quotient
             // scalar under -ftrapping-math.
             range = inHigh[i] - inLow[i];
-            outReal[outIdx] = (((inClose[i] - inLow[i]) / range) as f64);
+            outReal[outIdx] = ((inClose[i] - inLow[i]) / range) as f64;
             if range <= 0.0 {
                 outReal[outIdx] = 0.5;
             }
             outIdx += 1;
         }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Internal Bar Strength: where the close sits inside its own bar's range. It is 0 when the bar
@@ -315,11 +312,11 @@ impl Core {
         // Store, then overwrite: gcc keeps a guarded or selected quotient
         // scalar under -ftrapping-math.
         range = inHigh - inLow;
-        (*outReal) = (inClose - inLow) / range;
+        *outReal = (inClose - inLow) / range;
         if range <= 0.0 {
-            (*outReal) = 0.5;
+            *outReal = 0.5;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::ibs_open_internal`]
@@ -335,21 +332,17 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         let mut range: f64 = 0.0_f64;
         // IBS = (Close - Low)/(High - Low): where the close sits inside its own
         // bar, 0 at the low and 1 at the high.
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             // An exact test: the range of one bar carries the quote unit, so any
             // band would flip every bar of a small enough instrument to 0.5. Spelled
             // <= so a NaN input keeps the quotient's NaN.
@@ -357,15 +350,14 @@ impl Core {
             // Store, then overwrite: gcc keeps a guarded or selected quotient
             // scalar under -ftrapping-math.
             range = inHigh[i] - inLow[i];
-            outReal[(outIdx * outStride) as usize] = (((inClose[i] - inLow[i]) / range) as f64);
+            outReal[outIdx * outStride] = ((inClose[i] - inLow[i]) / range) as f64;
             if range <= 0.0 {
-                outReal[(outIdx * outStride) as usize] = 0.5;
+                outReal[outIdx * outStride] = 0.5;
             }
             outIdx += 1;
         }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = IbsStreamState {
@@ -560,9 +552,9 @@ impl IbsStream {
             // Store, then overwrite: gcc keeps a guarded or selected quotient
             // scalar under -ftrapping-math.
             range = inHigh - inLow;
-            (*outReal) = (inClose - inLow) / range;
+            *outReal = (inClose - inLow) / range;
             if range <= 0.0 {
-                (*outReal) = 0.5;
+                *outReal = 0.5;
             }
         }
         Ok(outReal)

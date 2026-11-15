@@ -81,20 +81,20 @@ impl Core {
     #[doc(alias = "TA_MASSI_Lookback")]
     #[inline]
     pub fn massi_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 9;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // Two stacked EMA warm-ups over the high-low range, then the summation
         // window. The EMA term is exactly the callee's own lookback, which is what
         // makes MASSI inherit TA_FUNC_UNST_EMA -- and it shifts by 2u, not u.
-        return Ok((self.ema_lookback(optInFastPeriod)? * 2 + (((optInSlowPeriod - 1)) as usize)) as usize);
+        return Ok((self.ema_lookback(optInFastPeriod)? * 2 + ((optInSlowPeriod - 1) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::massi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -115,7 +115,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MASSI_DisplayShift")]
-    pub fn massi_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn massi_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.massi_lookback(optInFastPeriod, optInSlowPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -177,14 +177,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 9;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.massi_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
@@ -216,26 +216,26 @@ impl Core {
         let mut ratioRing_Idx: usize = 0;
         lookbackEma = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
         lookbackEma2 = lookbackEma * 2;
-        lookbackTotal = lookbackEma2 + (((optInSlowPeriod - 1)) as usize);
+        lookbackTotal = lookbackEma2 + ((optInSlowPeriod - 1) as usize);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         if optInSlowPeriod < 1 { return RetCode::InternalError; }
-        if (optInSlowPeriod) as usize <= 32usize {
-            ratioRing = &mut local_ratioRing[..(optInSlowPeriod) as usize];
+        if optInSlowPeriod as usize <= 32usize {
+            ratioRing = &mut local_ratioRing[..optInSlowPeriod as usize];
         } else {
             heap_ratioRing = vec![0.0_f64; (optInSlowPeriod) as usize];
             ratioRing = &mut heap_ratioRing;
         }
         ratioRing_Idx = 0;
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
         // their ratio summed over a trailing window.
         //
@@ -249,7 +249,7 @@ impl Core {
         emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         ema1 = 0.0;
         ema2 = 0.0;
@@ -263,13 +263,13 @@ impl Core {
         // window and so produces the first output.
         while today <= startIdx {
             hl = inHigh[today] - inLow[today];
-            if nBar < ((optInFastPeriod) as usize) {
+            if nBar < (optInFastPeriod as usize) {
                 sum1 = sum1 + hl;
                 if nBar == ((optInFastPeriod - 1) as usize) {
-                    ema1 = sum1 / ((optInFastPeriod) as f64);
+                    ema1 = sum1 / (optInFastPeriod as f64);
                 }
             } else {
-                ema1 = fmadd!(emaBeta as f64, ema1, ((optInK_1) as f64) * hl);
+                ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -277,13 +277,13 @@ impl Core {
             // subtraction underflows for the first lookbackEma bars.
             if nBar >= lookbackEma {
                 n2 = nBar - lookbackEma;
-                if n2 < ((optInFastPeriod) as usize) {
+                if n2 < (optInFastPeriod as usize) {
                     sum2 = sum2 + ema1;
                     if n2 == ((optInFastPeriod - 1) as usize) {
-                        ema2 = sum2 / ((optInFastPeriod) as f64);
+                        ema2 = sum2 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta as f64, ema2, ((optInK_1) as f64) * ema1);
+                    ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -319,8 +319,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = fmadd!(emaBeta as f64, ema1, ((optInK_1) as f64) * hl);
-            ema2 = fmadd!(emaBeta as f64, ema2, ((optInK_1) as f64) * ema1);
+            ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
+            ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -336,7 +336,7 @@ impl Core {
             outIdx = outIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Mass Index: Donald Dorsey's non-directional measure of how the trading range itself is
@@ -492,8 +492,6 @@ pub struct MassiStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MassiStreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
     optInK_1: f64,
     emaBeta: f64,
     ema1: f64,
@@ -501,7 +499,6 @@ struct MassiStreamState {
     total: f64,
     ratioRing_Idx: usize,
     maxIdx_ratioRing: usize,
-    cbSize_ratioRing: usize,
     cb_ratioRing: Vec<f64>,
     cur_outReal: f64,
 }
@@ -517,8 +514,8 @@ impl Core {
         let mut ratio: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         hl = inHigh - inLow;
-        sp.ema1 = fmadd!(sp.emaBeta as f64, sp.ema1, ((sp.optInK_1) as f64) * hl);
-        sp.ema2 = fmadd!(sp.emaBeta as f64, sp.ema2, ((sp.optInK_1) as f64) * sp.ema1);
+        sp.ema1 = fmadd!(sp.emaBeta, sp.ema1, ((sp.optInK_1) as f64) * hl);
+        sp.ema2 = fmadd!(sp.emaBeta, sp.ema2, ((sp.optInK_1) as f64) * sp.ema1);
         if sp.ema2 == 0.0 {
             ratio = 1.0;
         } else {
@@ -532,8 +529,8 @@ impl Core {
         }
         tempReal = sp.total;
         sp.total = sp.total - sp.cb_ratioRing[sp.ratioRing_Idx];
-        (*outReal) = tempReal;
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::massi_open_internal`]
@@ -562,14 +559,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 9;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -577,14 +574,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut optInK_1: f64 = 0.0_f64;
         let mut emaBeta: f64 = 0.0_f64;
         let mut hl: f64 = 0.0_f64;
@@ -607,20 +602,20 @@ impl Core {
         let mut maxIdx_ratioRing: usize = 31;
         lookbackEma = self.ema_lookback(optInFastPeriod)?;
         lookbackEma2 = lookbackEma * 2;
-        lookbackTotal = lookbackEma2 + (((optInSlowPeriod - 1)) as usize);
+        lookbackTotal = lookbackEma2 + ((optInSlowPeriod - 1) as usize);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInSlowPeriod < 1 { return Err(RetCode::InternalError); }
         ratioRing = vec![0.0_f64; (optInSlowPeriod) as usize];
-        maxIdx_ratioRing = ((optInSlowPeriod) as usize) - 1;
+        maxIdx_ratioRing = (optInSlowPeriod as usize) - 1;
         ratioRing_Idx = 0;
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
         // their ratio summed over a trailing window.
         //
@@ -634,7 +629,7 @@ impl Core {
         emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         ema1 = 0.0;
         ema2 = 0.0;
@@ -648,13 +643,13 @@ impl Core {
         // window and so produces the first output.
         while today <= startIdx {
             hl = inHigh[today] - inLow[today];
-            if nBar < ((optInFastPeriod) as usize) {
+            if nBar < (optInFastPeriod as usize) {
                 sum1 = sum1 + hl;
                 if nBar == ((optInFastPeriod - 1) as usize) {
-                    ema1 = sum1 / ((optInFastPeriod) as f64);
+                    ema1 = sum1 / (optInFastPeriod as f64);
                 }
             } else {
-                ema1 = fmadd!(emaBeta as f64, ema1, ((optInK_1) as f64) * hl);
+                ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -662,13 +657,13 @@ impl Core {
             // subtraction underflows for the first lookbackEma bars.
             if nBar >= lookbackEma {
                 n2 = nBar - lookbackEma;
-                if n2 < ((optInFastPeriod) as usize) {
+                if n2 < (optInFastPeriod as usize) {
                     sum2 = sum2 + ema1;
                     if n2 == ((optInFastPeriod - 1) as usize) {
-                        ema2 = sum2 / ((optInFastPeriod) as f64);
+                        ema2 = sum2 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta as f64, ema2, ((optInK_1) as f64) * ema1);
+                    ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -700,12 +695,12 @@ impl Core {
         }
         // In-place safe: this store lands lookbackTotal bars behind the input
         // cursor, so no bar is written under a read still owed to it.
-        outReal[(0 * outStride) as usize] = tempReal;
+        outReal[0] = tempReal;
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = fmadd!(emaBeta as f64, ema1, ((optInK_1) as f64) * hl);
-            ema2 = fmadd!(emaBeta as f64, ema2, ((optInK_1) as f64) * ema1);
+            ema1 = fmadd!(emaBeta, ema1, ((optInK_1) as f64) * hl);
+            ema2 = fmadd!(emaBeta, ema2, ((optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -717,11 +712,11 @@ impl Core {
             if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
             tempReal = total;
             total = total - ratioRing[ratioRing_Idx];
-            outReal[(outIdx * outStride) as usize] = tempReal;
+            outReal[outIdx * outStride] = tempReal;
             outIdx = outIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_ratioRing: usize = maxIdx_ratioRing + 1;
@@ -729,8 +724,6 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = MassiStreamState {
-            optInFastPeriod,
-            optInSlowPeriod,
             optInK_1,
             emaBeta,
             ema1,
@@ -739,7 +732,6 @@ impl Core {
             ratioRing_Idx,
             maxIdx_ratioRing,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_ratioRing: cbSize_ratioRing,
             cb_ratioRing: ratioRing,
         };
         Ok(MassiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -747,7 +739,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::massi_open`] (composition seam).
     pub(crate) fn massi_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32,
     ) -> Result<(MassiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -826,7 +818,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MASSI_OpenAndFill")]
     pub fn massi_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, outReal: &mut [f64],
     ) -> Result<(MassiStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -848,7 +840,7 @@ impl Core {
     /// [`Core::massi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn massi_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MassiStream, RetCode> {
         self.massi_open_impl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -920,28 +912,18 @@ impl MassiStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut ema1 = sp.ema1;
             let mut ema2 = sp.ema2;
-            let mut ratioRing_Idx = sp.ratioRing_Idx;
             let mut total = sp.total;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             hl = inHigh - inLow;
-            ema1 = fmadd!(sp.emaBeta as f64, ema1, ((sp.optInK_1) as f64) * hl);
-            ema2 = fmadd!(sp.emaBeta as f64, ema2, ((sp.optInK_1) as f64) * ema1);
+            ema1 = fmadd!(sp.emaBeta, ema1, ((sp.optInK_1) as f64) * hl);
+            ema2 = fmadd!(sp.emaBeta, ema2, ((sp.optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
                 ratio = ema1 / ema2;
             }
-            pkSlot0 = ratioRing_Idx as usize;
-            pkVal0 = ratio;
             total = total + ratio;
-            ratioRing_Idx = ratioRing_Idx + 1;
-            if ratioRing_Idx > sp.maxIdx_ratioRing {
-                ratioRing_Idx = 0;
-            }
             tempReal = total;
-            total = total - (if (ratioRing_Idx as usize) != pkSlot0 { sp.cb_ratioRing[ratioRing_Idx] } else { pkVal0 });
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         }
         Ok(outReal)
     }

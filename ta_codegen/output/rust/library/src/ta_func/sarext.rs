@@ -97,50 +97,34 @@ impl Core {
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SAREXT_Lookback")]
     #[inline]
-    pub fn sarext_lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> Result<usize, RetCode> {
-        if optInStartValue == Self::REAL_DEFAULT {
-            optInStartValue = 0e0;
-        } else if !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
+    pub fn sarext_lookback(&self, optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<usize, RetCode> {
+        if optInStartValue != Self::REAL_DEFAULT && !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInOffsetOnReverse == Self::REAL_DEFAULT {
-            optInOffsetOnReverse = 0e0;
-        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
+        if optInOffsetOnReverse != Self::REAL_DEFAULT && !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitLong == Self::REAL_DEFAULT {
-            optInAccelerationInitLong = 2e-2;
-        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
+        if optInAccelerationInitLong != Self::REAL_DEFAULT && !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationLong == Self::REAL_DEFAULT {
-            optInAccelerationLong = 2e-2;
-        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
+        if optInAccelerationLong != Self::REAL_DEFAULT && !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxLong == Self::REAL_DEFAULT {
-            optInAccelerationMaxLong = 2e-1;
-        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
+        if optInAccelerationMaxLong != Self::REAL_DEFAULT && !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitShort == Self::REAL_DEFAULT {
-            optInAccelerationInitShort = 2e-2;
-        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
+        if optInAccelerationInitShort != Self::REAL_DEFAULT && !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationShort == Self::REAL_DEFAULT {
-            optInAccelerationShort = 2e-2;
-        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
+        if optInAccelerationShort != Self::REAL_DEFAULT && !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxShort == Self::REAL_DEFAULT {
-            optInAccelerationMaxShort = 2e-1;
-        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
+        if optInAccelerationMaxShort != Self::REAL_DEFAULT && !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         // SAR always sacrifices one price bar to establish the
         // initial extreme price.
-        return Ok((1) as usize);
+        return Ok(1 as usize);
     }
     /// Display shift of one output of [`Core::sarext`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -171,7 +155,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
     /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SAREXT_DisplayShift")]
-    pub fn sarext_display_shift(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn sarext_display_shift(&self, optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -297,11 +281,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
         let mut isLong: usize = 0_usize;
         let mut todayIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
         let mut newHigh: f64 = 0.0_f64;
         let mut newLow: f64 = 0.0_f64;
         let mut prevHigh: f64 = 0.0_f64;
@@ -376,8 +358,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -406,9 +388,6 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let _xr0 = match self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut ep_temp) { Ok(_r) => _r, Err(_e) => return _e };
-            tempInt = _xr0.beg_idx;
-            tempInt = _xr0.count;
-            retCode = RetCode::Success;
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -421,7 +400,7 @@ impl Core {
             // optInStartValue_0 < 0 => Start Short
             isLong = 0;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         outIdx = 0;
         // Write the first SAR.
         todayIdx = startIdx;
@@ -443,7 +422,7 @@ impl Core {
         } else {
             // if optInStartValue < 0 => Start Short at specified value.
             ep = inLow[todayIdx];
-            sar = (optInStartValue).abs();
+            sar = optInStartValue.abs();
         }
         // Cheat on the newLow and newHigh for the
         // first iteration.
@@ -479,7 +458,7 @@ impl Core {
                     afShort = optInAccelerationInitShort;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = fmadd!(afShort as f64, ep - sar, sar);
+                    sar = fmadd!(afShort, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -502,7 +481,7 @@ impl Core {
                         }
                     }
                     // Calculate the new SAR
-                    sar = fmadd!(afLong as f64, ep - sar, sar);
+                    sar = fmadd!(afLong, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -535,7 +514,7 @@ impl Core {
                 afLong = optInAccelerationInitLong;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = fmadd!(afLong as f64, ep - sar, sar);
+                sar = fmadd!(afLong, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -558,7 +537,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sar = fmadd!(afShort as f64, ep - sar, sar);
+                sar = fmadd!(afShort, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {
@@ -569,7 +548,7 @@ impl Core {
                 }
             }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial
@@ -731,7 +710,6 @@ pub struct SarextStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SarextStreamState {
-    optInStartValue: f64,
     optInOffsetOnReverse: f64,
     optInAccelerationInitLong: f64,
     optInAccelerationLong: f64,
@@ -781,12 +759,12 @@ impl Core {
                 if sp.optInOffsetOnReverse != 0.0 {
                     sp.sar += sp.sar * sp.optInOffsetOnReverse;
                 }
-                (*outReal) = -sp.sar;
+                *outReal = -sp.sar;
                 // Adjust afShort and ep
                 sp.afShort = sp.optInAccelerationInitShort;
                 sp.ep = sp.newLow;
                 // Calculate the new SAR
-                sp.sar = fmadd!(sp.afShort as f64, sp.ep - sp.sar, sp.sar);
+                sp.sar = fmadd!(sp.afShort, sp.ep - sp.sar, sp.sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sp.sar < prevHigh {
@@ -798,7 +776,7 @@ impl Core {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                (*outReal) = sp.sar;
+                *outReal = sp.sar;
                 // Adjust afLong and ep.
                 if sp.newHigh > sp.ep {
                     sp.ep = sp.newHigh;
@@ -808,7 +786,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sp.sar = fmadd!(sp.afLong as f64, sp.ep - sp.sar, sp.sar);
+                sp.sar = fmadd!(sp.afLong, sp.ep - sp.sar, sp.sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sp.sar > prevLow {
@@ -835,12 +813,12 @@ impl Core {
             if sp.optInOffsetOnReverse != 0.0 {
                 sp.sar -= sp.sar * sp.optInOffsetOnReverse;
             }
-            (*outReal) = sp.sar;
+            *outReal = sp.sar;
             // Adjust afLong and ep
             sp.afLong = sp.optInAccelerationInitLong;
             sp.ep = sp.newHigh;
             // Calculate the new SAR
-            sp.sar = fmadd!(sp.afLong as f64, sp.ep - sp.sar, sp.sar);
+            sp.sar = fmadd!(sp.afLong, sp.ep - sp.sar, sp.sar);
             // Make sure the new SAR is within
             // yesterday's and today's range.
             if sp.sar > prevLow {
@@ -852,7 +830,7 @@ impl Core {
         } else {
             // No switch
             // Output the SAR (was calculated in the previous iteration)
-            (*outReal) = -sp.sar;
+            *outReal = -sp.sar;
             // Adjust afShort and ep.
             if sp.newLow < sp.ep {
                 sp.ep = sp.newLow;
@@ -862,7 +840,7 @@ impl Core {
                 }
             }
             // Calculate the new SAR
-            sp.sar = fmadd!(sp.afShort as f64, sp.ep - sp.sar, sp.sar);
+            sp.sar = fmadd!(sp.afShort, sp.ep - sp.sar, sp.sar);
             // Make sure the new SAR is within
             // yesterday's and today's range.
             if sp.sar < prevHigh {
@@ -872,7 +850,7 @@ impl Core {
                 sp.sar = sp.newHigh;
             }
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::sarext_open_internal`]
@@ -946,19 +924,15 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut retCode: RetCode = RetCode::Success;
         let mut isLong: usize = 0_usize;
         let mut todayIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
         let mut newHigh: f64 = 0.0_f64;
         let mut newLow: f64 = 0.0_f64;
         let mut prevHigh: f64 = 0.0_f64;
@@ -1033,8 +1007,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Check if the acceleration factors are being defined by the user.
@@ -1061,9 +1035,6 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let _xr0 = match self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut ep_temp) { Ok(_r) => _r, Err(_e) => return Err(_e) };
-            tempInt = _xr0.beg_idx;
-            tempInt = _xr0.count;
-            retCode = RetCode::Success;
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -1076,7 +1047,7 @@ impl Core {
             // optInStartValue_0 < 0 => Start Short
             isLong = 0;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         outIdx = 0;
         // Write the first SAR.
         todayIdx = startIdx;
@@ -1098,7 +1069,7 @@ impl Core {
         } else {
             // if optInStartValue < 0 => Start Short at specified value.
             ep = inLow[todayIdx];
-            sar = (optInStartValue).abs();
+            sar = optInStartValue.abs();
         }
         // Cheat on the newLow and newHigh for the
         // first iteration.
@@ -1128,12 +1099,12 @@ impl Core {
                     if optInOffsetOnReverse != 0.0 {
                         sar += sar * optInOffsetOnReverse;
                     }
-                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -sar;
+                    outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = -sar;
                     // Adjust afShort and ep
                     afShort = optInAccelerationInitShort;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = fmadd!(afShort as f64, ep - sar, sar);
+                    sar = fmadd!(afShort, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -1145,7 +1116,7 @@ impl Core {
                 } else {
                     // No switch
                     // Output the SAR (was calculated in the previous iteration)
-                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
+                    outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sar;
                     // Adjust afLong and ep.
                     if newHigh > ep {
                         ep = newHigh;
@@ -1155,7 +1126,7 @@ impl Core {
                         }
                     }
                     // Calculate the new SAR
-                    sar = fmadd!(afLong as f64, ep - sar, sar);
+                    sar = fmadd!(afLong, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -1182,12 +1153,12 @@ impl Core {
                 if optInOffsetOnReverse != 0.0 {
                     sar -= sar * optInOffsetOnReverse;
                 }
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sar;
                 // Adjust afLong and ep
                 afLong = optInAccelerationInitLong;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = fmadd!(afLong as f64, ep - sar, sar);
+                sar = fmadd!(afLong, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -1199,7 +1170,7 @@ impl Core {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -sar;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = -sar;
                 // Adjust afShort and ep.
                 if newLow < ep {
                     ep = newLow;
@@ -1209,7 +1180,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sar = fmadd!(afShort as f64, ep - sar, sar);
+                sar = fmadd!(afShort, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {
@@ -1220,11 +1191,10 @@ impl Core {
                 }
             }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = SarextStreamState {
-            optInStartValue,
             optInOffsetOnReverse,
             optInAccelerationInitLong,
             optInAccelerationLong,
@@ -1246,7 +1216,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::sarext_open`] (composition seam).
     pub(crate) fn sarext_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64,
     ) -> Result<(SarextStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1325,7 +1295,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SAREXT_OpenAndFill")]
     pub fn sarext_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64, outReal: &mut [f64],
     ) -> Result<(SarextStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1347,7 +1317,7 @@ impl Core {
     /// [`Core::sarext_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn sarext_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SarextStream, RetCode> {
         self.sarext_open_impl(inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1433,7 +1403,7 @@ impl SarextStream {
             let mut afLong = sp.afLong;
             let mut afShort = sp.afShort;
             let mut ep = sp.ep;
-            let mut isLong = sp.isLong;
+            let isLong = sp.isLong;
             let mut newHigh = sp.newHigh;
             let mut newLow = sp.newLow;
             let mut sar = sp.sar;
@@ -1445,7 +1415,6 @@ impl SarextStream {
                 // Switch to short if the low penetrates the SAR value.
                 if newLow <= sar {
                     // Switch and Overide the SAR with the ep
-                    isLong = 0;
                     sar = ep;
                     // Make sure the overide SAR is within
                     // yesterday's and today's range.
@@ -1459,12 +1428,12 @@ impl SarextStream {
                     if sp.optInOffsetOnReverse != 0.0 {
                         sar += sar * sp.optInOffsetOnReverse;
                     }
-                    (*outReal) = -sar;
+                    *outReal = -sar;
                     // Adjust afShort and ep
                     afShort = sp.optInAccelerationInitShort;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = fmadd!(afShort as f64, ep - sar, sar);
+                    sar = fmadd!(afShort, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -1476,7 +1445,7 @@ impl SarextStream {
                 } else {
                     // No switch
                     // Output the SAR (was calculated in the previous iteration)
-                    (*outReal) = sar;
+                    *outReal = sar;
                     // Adjust afLong and ep.
                     if newHigh > ep {
                         ep = newHigh;
@@ -1486,7 +1455,7 @@ impl SarextStream {
                         }
                     }
                     // Calculate the new SAR
-                    sar = fmadd!(afLong as f64, ep - sar, sar);
+                    sar = fmadd!(afLong, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -1499,7 +1468,6 @@ impl SarextStream {
             // Switch to long if the high penetrates the SAR value.
             } else if newHigh >= sar {
                 // Switch and Overide the SAR with the ep
-                isLong = 1;
                 sar = ep;
                 // Make sure the overide SAR is within
                 // yesterday's and today's range.
@@ -1513,24 +1481,18 @@ impl SarextStream {
                 if sp.optInOffsetOnReverse != 0.0 {
                     sar -= sar * sp.optInOffsetOnReverse;
                 }
-                (*outReal) = sar;
+                *outReal = sar;
                 // Adjust afLong and ep
                 afLong = sp.optInAccelerationInitLong;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = fmadd!(afLong as f64, ep - sar, sar);
+                sar = fmadd!(afLong, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
-                if sar > prevLow {
-                    sar = prevLow;
-                }
-                if sar > newLow {
-                    sar = newLow;
-                }
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                (*outReal) = -sar;
+                *outReal = -sar;
                 // Adjust afShort and ep.
                 if newLow < ep {
                     ep = newLow;
@@ -1540,15 +1502,9 @@ impl SarextStream {
                     }
                 }
                 // Calculate the new SAR
-                sar = fmadd!(afShort as f64, ep - sar, sar);
+                sar = fmadd!(afShort, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
-                if sar < prevHigh {
-                    sar = prevHigh;
-                }
-                if sar < newHigh {
-                    sar = newHigh;
-                }
             }
         }
         Ok(outReal)

@@ -96,26 +96,26 @@ impl Core {
     #[doc(alias = "TA_ULTOSC_Lookback")]
     #[inline]
     pub fn ultosc_lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod1) as i32) == (i32::MIN) {
+        if optInTimePeriod1 == i32::MIN {
             optInTimePeriod1 = 7;
-        } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
+        } else if optInTimePeriod1 < 1 || optInTimePeriod1 > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTimePeriod2) as i32) == (i32::MIN) {
+        if optInTimePeriod2 == i32::MIN {
             optInTimePeriod2 = 14;
-        } else if (((optInTimePeriod2) as i32) < 1) || (((optInTimePeriod2) as i32) > 100000) {
+        } else if optInTimePeriod2 < 1 || optInTimePeriod2 > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTimePeriod3) as i32) == (i32::MIN) {
+        if optInTimePeriod3 == i32::MIN {
             optInTimePeriod3 = 28;
-        } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
+        } else if optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut maxPeriod: usize = 0_usize;
         // Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
         // time period, plus 1 for the True Range.
-        maxPeriod = (((optInTimePeriod1).max(optInTimePeriod2)).max(optInTimePeriod3)) as usize;
-        return Ok((self.sma_lookback((maxPeriod) as i32)? + 1) as usize);
+        maxPeriod = optInTimePeriod1.max(optInTimePeriod2).max(optInTimePeriod3) as usize;
+        return Ok((self.sma_lookback(maxPeriod as i32)? + 1) as usize);
     }
     /// Display shift of one output of [`Core::ultosc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -135,7 +135,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ULTOSC_DisplayShift")]
-    pub fn ultosc_display_shift(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn ultosc_display_shift(&self, optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -165,19 +165,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod1) as i32) == (i32::MIN) {
+        if optInTimePeriod1 == i32::MIN {
             optInTimePeriod1 = 7;
-        } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
+        } else if optInTimePeriod1 < 1 || optInTimePeriod1 > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInTimePeriod2) as i32) == (i32::MIN) {
+        if optInTimePeriod2 == i32::MIN {
             optInTimePeriod2 = 14;
-        } else if (((optInTimePeriod2) as i32) < 1) || (((optInTimePeriod2) as i32) > 100000) {
+        } else if optInTimePeriod2 < 1 || optInTimePeriod2 > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInTimePeriod3) as i32) == (i32::MIN) {
+        if optInTimePeriod3 == i32::MIN {
             optInTimePeriod3 = 28;
-        } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
+        } else if optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
@@ -235,8 +235,8 @@ impl Core {
         // One entry per bar of the longest window. Stays on the stack for every
         // period up to 32, which covers the 7/14/28 default.
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Ensure that the time periods are ordered from shortest to longest.
         // Sort.
         periods[0] = optInTimePeriod1;
@@ -253,14 +253,14 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
-                    longestPeriod = (periods[j]) as usize;
+                if usedFlag[j] == 0 && (periods[j] as usize) > longestPeriod {
+                    longestPeriod = periods[j] as usize;
                     longestIndex = j;
                 }
                 j += 1;
             }
             usedFlag[longestIndex] = 1;
-            sortedPeriods[i] = (longestPeriod) as i32;
+            sortedPeriods[i] = longestPeriod as i32;
             i += 1;
         }
         optInTimePeriod1 = sortedPeriods[2];
@@ -279,9 +279,9 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         if optInTimePeriod3 < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod3) as usize <= 32usize {
-            term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..(optInTimePeriod3) as usize];
-            term_trueRange = &mut local_term_trueRange[..(optInTimePeriod3) as usize];
+        if optInTimePeriod3 as usize <= 32usize {
+            term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..optInTimePeriod3 as usize];
+            term_trueRange = &mut local_term_trueRange[..optInTimePeriod3 as usize];
         } else {
             heap_term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
             term_closeMinusTrueLow = &mut heap_term_closeMinusTrueLow;
@@ -316,7 +316,7 @@ impl Core {
         // quoted below it (issue #253).
         nullRun = 0;
         // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
-        i = startIdx - ((optInTimePeriod3) as usize) + 1;
+        i = startIdx - (optInTimePeriod3 as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -332,13 +332,13 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
+            if i >= startIdx - (optInTimePeriod1 as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
+            if i >= startIdx - (optInTimePeriod2 as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -352,16 +352,16 @@ impl Core {
         // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
         // `today` and, once advanced past it, the slot of the bar leaving the
         // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
-        if trailingPos1 >= ((optInTimePeriod3) as usize) {
-            trailingPos1 -= (optInTimePeriod3) as usize;
+        trailingPos1 = term_Idx + (optInTimePeriod3 as usize) - (optInTimePeriod1 as usize) + 1;
+        if trailingPos1 >= (optInTimePeriod3 as usize) {
+            trailingPos1 -= optInTimePeriod3 as usize;
         }
-        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
-        if trailingPos2 >= ((optInTimePeriod3) as usize) {
-            trailingPos2 -= (optInTimePeriod3) as usize;
+        trailingPos2 = term_Idx + (optInTimePeriod3 as usize) - (optInTimePeriod2 as usize) + 1;
+        if trailingPos2 >= (optInTimePeriod3 as usize) {
+            trailingPos2 -= optInTimePeriod3 as usize;
         }
         trailingPos3 = term_Idx + 1;
-        if trailingPos3 >= ((optInTimePeriod3) as usize) {
+        if trailingPos3 >= (optInTimePeriod3 as usize) {
             trailingPos3 = 0;
         }
         negSlot = 0;
@@ -379,7 +379,7 @@ impl Core {
             trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
@@ -388,9 +388,9 @@ impl Core {
             // one. A run as long as the longest window skips the adds, the output
             // and the retire, which would only add and remove zeros: held prices
             // take this path on most bars.
-            if nullRun >= ((optInTimePeriod3) as usize) {
+            if nullRun >= (optInTimePeriod3 as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod3) as usize;
+                nullRun = optInTimePeriod3 as usize;
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -405,11 +405,11 @@ impl Core {
                 b1Total += trueRange;
                 b2Total += trueRange;
                 b3Total += trueRange;
-                if nullRun >= ((optInTimePeriod1) as usize) {
+                if nullRun >= (optInTimePeriod1 as usize) {
                     cold_arm();
                     a1Total = 0.0;
                     b1Total = 0.0;
-                    if nullRun >= ((optInTimePeriod2) as usize) {
+                    if nullRun >= (optInTimePeriod2 as usize) {
                         a2Total = 0.0;
                         b2Total = 0.0;
                     }
@@ -441,16 +441,16 @@ impl Core {
                 b3Total -= term_trueRange[trailingPos3];
             }
             trailingPos1 += 1;
-            if trailingPos1 >= ((optInTimePeriod3) as usize) {
+            if trailingPos1 >= (optInTimePeriod3 as usize) {
                 trailingPos1 = 0;
             }
             trailingPos2 += 1;
-            if trailingPos2 >= ((optInTimePeriod3) as usize) {
+            if trailingPos2 >= (optInTimePeriod3 as usize) {
                 trailingPos2 = 0;
             }
             term_Idx = trailingPos3;
             trailingPos3 += 1;
-            if trailingPos3 >= ((optInTimePeriod3) as usize) {
+            if trailingPos3 >= (optInTimePeriod3 as usize) {
                 trailingPos3 = 0;
             }
             // Store only after this bar's last input read: the output array may be
@@ -473,8 +473,8 @@ impl Core {
             // compiles to straight-line selects in Rust. The windows are nested,
             // so a1 <= a2 <= a3 and either select stays predictable should a
             // compiler emit it as a branch.
-            lowest = (if a1Total < a2Total { a1Total } else { a2Total });
-            lowest = (if a3Total < lowest { a3Total } else { lowest });
+            lowest = if a1Total < a2Total { a1Total } else { a2Total };
+            lowest = if a3Total < lowest { a3Total } else { lowest };
             if lowest < 0.0 {
                 cold_arm();
                 if negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0 {
@@ -486,10 +486,10 @@ impl Core {
                     b3Total = 0.0;
                     // for( i = 1; i < ((optInTimePeriod3) as usize); i += 1 )
                     i = 1;
-                    while i < ((optInTimePeriod3) as usize) {
+                    while i < (optInTimePeriod3 as usize) {
                         j = term_Idx + i;
-                        if j >= ((optInTimePeriod3) as usize) {
-                            j -= (optInTimePeriod3) as usize;
+                        if j >= (optInTimePeriod3 as usize) {
+                            j -= optInTimePeriod3 as usize;
                         }
                         if i > ((optInTimePeriod3 - optInTimePeriod1) as usize) {
                             a1Total += term_closeMinusTrueLow[j];
@@ -513,8 +513,8 @@ impl Core {
             today += 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Ultimate Oscillator: momentum indicator combining buying-pressure/true-range ratios over
@@ -684,9 +684,7 @@ struct UltoscStreamState {
     trailingPos3: usize,
     nullRun: usize,
     term_Idx: usize,
-    maxIdx_term: usize,
     lag1_inClose: f64,
-    cbSize_term: usize,
     cb_term_closeMinusTrueLow: Vec<f64>,
     cb_term_trueRange: Vec<f64>,
     cur_outReal: f64,
@@ -724,7 +722,7 @@ impl Core {
         trueRange = c_max(tempDouble, trueRange);
         sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
         sp.cb_term_trueRange[sp.term_Idx] = trueRange;
-        live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+        live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         // Once a whole window of no-contribution bars has gone by, every slot it
         // spans is 0.0, so its totals are known to be exactly zero and the
@@ -733,9 +731,9 @@ impl Core {
         // one. A run as long as the longest window skips the adds, the output
         // and the retire, which would only add and remove zeros: held prices
         // take this path on most bars.
-        if sp.nullRun >= ((sp.optInTimePeriod3) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod3 as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod3) as usize;
+            sp.nullRun = sp.optInTimePeriod3 as usize;
             sp.a1Total = 0.0;
             sp.b1Total = 0.0;
             sp.a2Total = 0.0;
@@ -750,11 +748,11 @@ impl Core {
             sp.b1Total += trueRange;
             sp.b2Total += trueRange;
             sp.b3Total += trueRange;
-            if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+            if sp.nullRun >= (sp.optInTimePeriod1 as usize) {
                 cold_arm();
                 sp.a1Total = 0.0;
                 sp.b1Total = 0.0;
-                if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
+                if sp.nullRun >= (sp.optInTimePeriod2 as usize) {
                     sp.a2Total = 0.0;
                     sp.b2Total = 0.0;
                 }
@@ -786,21 +784,21 @@ impl Core {
             sp.b3Total -= sp.cb_term_trueRange[sp.trailingPos3];
         }
         sp.trailingPos1 += 1;
-        if sp.trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
+        if sp.trailingPos1 >= (sp.optInTimePeriod3 as usize) {
             sp.trailingPos1 = 0;
         }
         sp.trailingPos2 += 1;
-        if sp.trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
+        if sp.trailingPos2 >= (sp.optInTimePeriod3 as usize) {
             sp.trailingPos2 = 0;
         }
         sp.term_Idx = sp.trailingPos3;
         sp.trailingPos3 += 1;
-        if sp.trailingPos3 >= ((sp.optInTimePeriod3) as usize) {
+        if sp.trailingPos3 >= (sp.optInTimePeriod3 as usize) {
             sp.trailingPos3 = 0;
         }
         // Store only after this bar's last input read: the output array may be
         // one of the input arrays.
-        (*outReal) = 100.0 * (output / 7.0);
+        *outReal = 100.0 * (output / 7.0);
         // On well-formed bars every term is non-negative, so a total below zero
         // is the residue a term far larger than the rest of its window left
         // when it retired. Tested here, on the totals the next bar adds to, and
@@ -818,8 +816,8 @@ impl Core {
         // compiles to straight-line selects in Rust. The windows are nested,
         // so a1 <= a2 <= a3 and either select stays predictable should a
         // compiler emit it as a branch.
-        lowest = (if sp.a1Total < sp.a2Total { sp.a1Total } else { sp.a2Total });
-        lowest = (if sp.a3Total < lowest { sp.a3Total } else { lowest });
+        lowest = if sp.a1Total < sp.a2Total { sp.a1Total } else { sp.a2Total };
+        lowest = if sp.a3Total < lowest { sp.a3Total } else { lowest };
         if lowest < 0.0 {
             cold_arm();
             if sp.negSlot == sp.term_Idx || sp.cb_term_closeMinusTrueLow[sp.negSlot] >= 0.0 {
@@ -831,10 +829,10 @@ impl Core {
                 sp.b3Total = 0.0;
                 // for( i = 1; i < ((sp.optInTimePeriod3) as usize); i += 1 )
                 i = 1;
-                while i < ((sp.optInTimePeriod3) as usize) {
+                while i < (sp.optInTimePeriod3 as usize) {
                     j = sp.term_Idx + i;
-                    if j >= ((sp.optInTimePeriod3) as usize) {
-                        j -= (sp.optInTimePeriod3) as usize;
+                    if j >= (sp.optInTimePeriod3 as usize) {
+                        j -= sp.optInTimePeriod3 as usize;
                     }
                     if i > ((sp.optInTimePeriod3 - sp.optInTimePeriod1) as usize) {
                         sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
@@ -854,7 +852,7 @@ impl Core {
             }
         }
         // Increment indexes
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         sp.lag1_inClose = inClose;
     }
 
@@ -866,19 +864,19 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod1) as i32) == (i32::MIN) {
+        if optInTimePeriod1 == i32::MIN {
             optInTimePeriod1 = 7;
-        } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
+        } else if optInTimePeriod1 < 1 || optInTimePeriod1 > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTimePeriod2) as i32) == (i32::MIN) {
+        if optInTimePeriod2 == i32::MIN {
             optInTimePeriod2 = 14;
-        } else if (((optInTimePeriod2) as i32) < 1) || (((optInTimePeriod2) as i32) > 100000) {
+        } else if optInTimePeriod2 < 1 || optInTimePeriod2 > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTimePeriod3) as i32) == (i32::MIN) {
+        if optInTimePeriod3 == i32::MIN {
             optInTimePeriod3 = 28;
-        } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
+        } else if optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -886,14 +884,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut a1Total: f64 = 0.0_f64;
         let mut b1Total: f64 = 0.0_f64;
         let mut a2Total: f64 = 0.0_f64;
@@ -939,8 +935,8 @@ impl Core {
         // One entry per bar of the longest window. Stays on the stack for every
         // period up to 32, which covers the 7/14/28 default.
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Ensure that the time periods are ordered from shortest to longest.
         // Sort.
         periods[0] = optInTimePeriod1;
@@ -957,14 +953,14 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
-                    longestPeriod = (periods[j]) as usize;
+                if usedFlag[j] == 0 && (periods[j] as usize) > longestPeriod {
+                    longestPeriod = periods[j] as usize;
                     longestIndex = j;
                 }
                 j += 1;
             }
             usedFlag[longestIndex] = 1;
-            sortedPeriods[i] = (longestPeriod) as i32;
+            sortedPeriods[i] = longestPeriod as i32;
             i += 1;
         }
         optInTimePeriod1 = sortedPeriods[2];
@@ -982,7 +978,7 @@ impl Core {
         if optInTimePeriod3 < 1 { return Err(RetCode::InternalError); }
         term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
         term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
-        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
+        maxIdx_term = (optInTimePeriod3 as usize) - 1;
         term_Idx = 0;
         // Prime running totals used in moving averages.
         //
@@ -1011,7 +1007,7 @@ impl Core {
         // quoted below it (issue #253).
         nullRun = 0;
         // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
-        i = startIdx - ((optInTimePeriod3) as usize) + 1;
+        i = startIdx - (optInTimePeriod3 as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -1027,13 +1023,13 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
+            if i >= startIdx - (optInTimePeriod1 as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
+            if i >= startIdx - (optInTimePeriod2 as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -1047,16 +1043,16 @@ impl Core {
         // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
         // `today` and, once advanced past it, the slot of the bar leaving the
         // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
-        if trailingPos1 >= ((optInTimePeriod3) as usize) {
-            trailingPos1 -= (optInTimePeriod3) as usize;
+        trailingPos1 = term_Idx + (optInTimePeriod3 as usize) - (optInTimePeriod1 as usize) + 1;
+        if trailingPos1 >= (optInTimePeriod3 as usize) {
+            trailingPos1 -= optInTimePeriod3 as usize;
         }
-        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
-        if trailingPos2 >= ((optInTimePeriod3) as usize) {
-            trailingPos2 -= (optInTimePeriod3) as usize;
+        trailingPos2 = term_Idx + (optInTimePeriod3 as usize) - (optInTimePeriod2 as usize) + 1;
+        if trailingPos2 >= (optInTimePeriod3 as usize) {
+            trailingPos2 -= optInTimePeriod3 as usize;
         }
         trailingPos3 = term_Idx + 1;
-        if trailingPos3 >= ((optInTimePeriod3) as usize) {
+        if trailingPos3 >= (optInTimePeriod3 as usize) {
             trailingPos3 = 0;
         }
         negSlot = 0;
@@ -1074,7 +1070,7 @@ impl Core {
             trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
@@ -1083,9 +1079,9 @@ impl Core {
             // one. A run as long as the longest window skips the adds, the output
             // and the retire, which would only add and remove zeros: held prices
             // take this path on most bars.
-            if nullRun >= ((optInTimePeriod3) as usize) {
+            if nullRun >= (optInTimePeriod3 as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod3) as usize;
+                nullRun = optInTimePeriod3 as usize;
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -1100,11 +1096,11 @@ impl Core {
                 b1Total += trueRange;
                 b2Total += trueRange;
                 b3Total += trueRange;
-                if nullRun >= ((optInTimePeriod1) as usize) {
+                if nullRun >= (optInTimePeriod1 as usize) {
                     cold_arm();
                     a1Total = 0.0;
                     b1Total = 0.0;
-                    if nullRun >= ((optInTimePeriod2) as usize) {
+                    if nullRun >= (optInTimePeriod2 as usize) {
                         a2Total = 0.0;
                         b2Total = 0.0;
                     }
@@ -1136,21 +1132,21 @@ impl Core {
                 b3Total -= term_trueRange[trailingPos3];
             }
             trailingPos1 += 1;
-            if trailingPos1 >= ((optInTimePeriod3) as usize) {
+            if trailingPos1 >= (optInTimePeriod3 as usize) {
                 trailingPos1 = 0;
             }
             trailingPos2 += 1;
-            if trailingPos2 >= ((optInTimePeriod3) as usize) {
+            if trailingPos2 >= (optInTimePeriod3 as usize) {
                 trailingPos2 = 0;
             }
             term_Idx = trailingPos3;
             trailingPos3 += 1;
-            if trailingPos3 >= ((optInTimePeriod3) as usize) {
+            if trailingPos3 >= (optInTimePeriod3 as usize) {
                 trailingPos3 = 0;
             }
             // Store only after this bar's last input read: the output array may be
             // one of the input arrays.
-            outReal[(outIdx * outStride) as usize] = 100.0 * (output / 7.0);
+            outReal[outIdx * outStride] = 100.0 * (output / 7.0);
             // On well-formed bars every term is non-negative, so a total below zero
             // is the residue a term far larger than the rest of its window left
             // when it retired. Tested here, on the totals the next bar adds to, and
@@ -1168,8 +1164,8 @@ impl Core {
             // compiles to straight-line selects in Rust. The windows are nested,
             // so a1 <= a2 <= a3 and either select stays predictable should a
             // compiler emit it as a branch.
-            lowest = (if a1Total < a2Total { a1Total } else { a2Total });
-            lowest = (if a3Total < lowest { a3Total } else { lowest });
+            lowest = if a1Total < a2Total { a1Total } else { a2Total };
+            lowest = if a3Total < lowest { a3Total } else { lowest };
             if lowest < 0.0 {
                 cold_arm();
                 if negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0 {
@@ -1181,10 +1177,10 @@ impl Core {
                     b3Total = 0.0;
                     // for( i = 1; i < ((optInTimePeriod3) as usize); i += 1 )
                     i = 1;
-                    while i < ((optInTimePeriod3) as usize) {
+                    while i < (optInTimePeriod3 as usize) {
                         j = term_Idx + i;
-                        if j >= ((optInTimePeriod3) as usize) {
-                            j -= (optInTimePeriod3) as usize;
+                        if j >= (optInTimePeriod3 as usize) {
+                            j -= optInTimePeriod3 as usize;
                         }
                         if i > ((optInTimePeriod3 - optInTimePeriod1) as usize) {
                             a1Total += term_closeMinusTrueLow[j];
@@ -1208,8 +1204,8 @@ impl Core {
             today += 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_term: usize = maxIdx_term + 1;
@@ -1232,10 +1228,8 @@ impl Core {
             trailingPos3,
             nullRun,
             term_Idx,
-            maxIdx_term,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
-            cbSize_term: cbSize_term,
             cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
             cb_term_trueRange: term_trueRange,
         };
@@ -1244,7 +1238,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::ultosc_open`] (composition seam).
     pub(crate) fn ultosc_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32,
     ) -> Result<(UltoscStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1329,7 +1323,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ULTOSC_OpenAndFill")]
     pub fn ultosc_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32, outReal: &mut [f64],
     ) -> Result<(UltoscStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1351,7 +1345,7 @@ impl Core {
     /// [`Core::ultosc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn ultosc_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<UltoscStream, RetCode> {
         self.ultosc_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1434,14 +1428,6 @@ impl UltoscStream {
             let mut b2Total = sp.b2Total;
             let mut b3Total = sp.b3Total;
             let mut nullRun = sp.nullRun;
-            let mut term_Idx = sp.term_Idx;
-            let mut trailingPos1 = sp.trailingPos1;
-            let mut trailingPos2 = sp.trailingPos2;
-            let mut trailingPos3 = sp.trailingPos3;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
             // Add on today's terms
             tempLT = inLow;
             tempHT = inHigh;
@@ -1453,11 +1439,7 @@ impl UltoscStream {
             trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
             trueRange = c_max(tempDouble, trueRange);
-            pkSlot0 = term_Idx as usize;
-            pkVal0 = closeMinusTrueLow;
-            pkSlot1 = term_Idx as usize;
-            pkVal1 = trueRange;
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = if trueRange + closeMinusTrueLow.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
@@ -1466,14 +1448,7 @@ impl UltoscStream {
             // one. A run as long as the longest window skips the adds, the output
             // and the retire, which would only add and remove zeros: held prices
             // take this path on most bars.
-            if nullRun >= ((sp.optInTimePeriod3) as usize) {
-                nullRun = (sp.optInTimePeriod3) as usize;
-                a1Total = 0.0;
-                b1Total = 0.0;
-                a2Total = 0.0;
-                b2Total = 0.0;
-                a3Total = 0.0;
-                b3Total = 0.0;
+            if nullRun >= (sp.optInTimePeriod3 as usize) {
                 output = 0.0;
             } else {
                 a1Total += closeMinusTrueLow;
@@ -1482,10 +1457,10 @@ impl UltoscStream {
                 b1Total += trueRange;
                 b2Total += trueRange;
                 b3Total += trueRange;
-                if nullRun >= ((sp.optInTimePeriod1) as usize) {
+                if nullRun >= (sp.optInTimePeriod1 as usize) {
                     a1Total = 0.0;
                     b1Total = 0.0;
-                    if nullRun >= ((sp.optInTimePeriod2) as usize) {
+                    if nullRun >= (sp.optInTimePeriod2 as usize) {
                         a2Total = 0.0;
                         b2Total = 0.0;
                     }
@@ -1509,29 +1484,10 @@ impl UltoscStream {
                 } else {
                     cold_arm();
                 }
-                a1Total -= (if (trailingPos1 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos1] } else { pkVal0 });
-                b1Total -= (if (trailingPos1 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos1] } else { pkVal1 });
-                a2Total -= (if (trailingPos2 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos2] } else { pkVal0 });
-                b2Total -= (if (trailingPos2 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos2] } else { pkVal1 });
-                a3Total -= (if (trailingPos3 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos3] } else { pkVal0 });
-                b3Total -= (if (trailingPos3 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos3] } else { pkVal1 });
-            }
-            trailingPos1 += 1;
-            if trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
-                trailingPos1 = 0;
-            }
-            trailingPos2 += 1;
-            if trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
-                trailingPos2 = 0;
-            }
-            term_Idx = trailingPos3;
-            trailingPos3 += 1;
-            if trailingPos3 >= ((sp.optInTimePeriod3) as usize) {
-                trailingPos3 = 0;
             }
             // Store only after this bar's last input read: the output array may be
             // one of the input arrays.
-            (*outReal) = 100.0 * (output / 7.0);
+            *outReal = 100.0 * (output / 7.0);
         }
         Ok(outReal)
     }

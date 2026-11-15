@@ -81,9 +81,9 @@ impl Core {
     #[doc(alias = "TA_MEDIAN_Lookback")]
     #[inline]
     pub fn median_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -105,7 +105,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MEDIAN_DisplayShift")]
-    pub fn median_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn median_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.median_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -131,9 +131,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.median_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -170,22 +170,22 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            ring = &mut local_ring[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            ring = &mut local_ring[..optInTimePeriod as usize];
         } else {
             heap_ring = vec![0.0_f64; (optInTimePeriod) as usize];
             ring = &mut heap_ring;
         }
         ring_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sorted = &mut local_sorted[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sorted = &mut local_sorted[..optInTimePeriod as usize];
         } else {
             heap_sorted = vec![0.0_f64; (optInTimePeriod) as usize];
             sorted = &mut heap_sorted;
@@ -330,8 +330,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// The middle order statistic of the trailing window: the central value when `optInTimePeriod`
@@ -473,16 +473,11 @@ struct MedianStreamState {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MedianStreamScalars {
-    optInTimePeriod: i32,
     lookbackTotal: usize,
     lowerIdx: usize,
     upperIdx: usize,
     ring_Idx: usize,
     maxIdx_ring: usize,
-    sorted_Idx: usize,
-    maxIdx_sorted: usize,
-    cbSize_ring: usize,
-    cbSize_sorted: usize,
     cur_outReal: f64,
 }
 
@@ -545,7 +540,7 @@ impl Core {
         } else {
             result = (lower + upper) / 2.0;
         }
-        (*outReal) = result;
+        *outReal = result;
         cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
@@ -580,17 +575,15 @@ impl Core {
         if j < pos {
             if j < pos - 1 {
                 cb_sorted.copy_within(j + 1..=pos - 1, j);
-                j = pos - 1;
             }
             cb_sorted[pos - 1] = newValue;
         } else {
             if j > pos {
                 cb_sorted.copy_within(pos..j, pos + 1);
-                j = pos;
             }
             cb_sorted[pos] = newValue;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::median_open_internal`]
@@ -601,21 +594,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
@@ -636,7 +627,6 @@ impl Core {
         let mut ring_Idx: usize = 0;
         let mut maxIdx_ring: usize = 29;
         let mut sorted: Vec<f64> = Vec::new();
-        let mut sorted_Idx: usize = 0;
         let mut maxIdx_sorted: usize = 29;
         // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -644,18 +634,17 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         ring = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_ring = ((optInTimePeriod) as usize) - 1;
+        maxIdx_ring = (optInTimePeriod as usize) - 1;
         ring_Idx = 0;
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         sorted = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
-        sorted_Idx = 0;
+        maxIdx_sorted = (optInTimePeriod as usize) - 1;
         // Never read: set so two handles opened over the same bars hold the same
         // state.
         sorted[lookbackTotal] = 0.0;
@@ -749,7 +738,7 @@ impl Core {
             } else {
                 result = (lower + upper) / 2.0;
             }
-            outReal[(outIdx * outStride) as usize] = result;
+            outReal[outIdx * outStride] = result;
             outIdx += 1;
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
@@ -796,8 +785,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_ring: usize = maxIdx_ring + 1;
@@ -810,17 +799,12 @@ impl Core {
         }
         let state = MedianStreamState {
             scalars: MedianStreamScalars {
-                optInTimePeriod,
                 lookbackTotal,
                 lowerIdx,
                 upperIdx,
                 ring_Idx,
                 maxIdx_ring,
-                sorted_Idx,
-                maxIdx_sorted,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
-                cbSize_ring: cbSize_ring,
-                cbSize_sorted: cbSize_sorted,
             },
             cb_ring: ring,
             cb_sorted: sorted,
@@ -830,7 +814,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::median_open`] (composition seam).
     pub(crate) fn median_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(MedianStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -903,7 +887,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MEDIAN_OpenAndFill")]
     pub fn median_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(MedianStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -922,7 +906,7 @@ impl Core {
     /// [`Core::median_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn median_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MedianStream, RetCode> {
         self.median_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1040,7 +1024,7 @@ impl MedianStream {
             } else {
                 result = (lower + upper) / 2.0;
             }
-            (*outReal) = result;
+            *outReal = result;
         }
         Ok(outReal)
     }

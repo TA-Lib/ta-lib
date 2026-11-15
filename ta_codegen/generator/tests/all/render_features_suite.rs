@@ -864,7 +864,15 @@ fn backends_render_max_min_fmax_fmin_abs() {
         make_assign("g", "max", vec![Expr::Var("p".to_string()), Expr::Var("q".to_string())]),
         make_assign("f", "floor", vec![x.clone()]),
         make_assign("h", "ceil", vec![Expr::IntLiteral(3)]),
-    ];
+    ]
+    .into_iter()
+    // Each result reaches the output, so no backend may drop it as unread.
+    .chain(["a", "b", "c", "d", "e", "g", "f", "h"].iter().enumerate().map(|(k, v)| Statement::Assign {
+        target: Expr::ArrayAccess("outReal".to_string(), Box::new(Expr::IntLiteral(i64::try_from(k).unwrap()))),
+        value: Expr::Var((*v).to_string()),
+        compound: false,
+    }))
+    .collect::<Vec<_>>();
 
     let func = FuncDef {
         name: "TESTFUNC".to_string(),
@@ -973,7 +981,7 @@ fn backends_render_max_min_fmax_fmin_abs() {
         "Rust: a real max/min must not render as f64::max/min: {rust_out}"
     );
     assert!(
-        rust_out.contains("(p).max(q)"),
+        rust_out.contains("p.max(q)"),
         "Rust: an integer max should stay Ord::max: {rust_out}"
     );
     assert!(
@@ -1900,6 +1908,12 @@ fn make_func_with_helper_call(
         ir::Statement::Assign {
             target: ir::Expr::Var("result".to_string()),
             value: ir::Expr::FuncCall(call_name.to_string(), args),
+            compound: false,
+        },
+        // Read, so no backend may drop the call as unused.
+        ir::Statement::Assign {
+            target: ir::Expr::ArrayAccess("outReal".to_string(), Box::new(ir::Expr::IntLiteral(0))),
+            value: ir::Expr::Var("result".to_string()),
             compound: false,
         },
     ];

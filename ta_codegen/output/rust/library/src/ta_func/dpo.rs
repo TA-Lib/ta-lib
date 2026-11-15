@@ -80,9 +80,9 @@ impl Core {
     #[doc(alias = "TA_DPO_Lookback")]
     #[inline]
     pub fn dpo_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The max is load-bearing, not cosmetic. The displaced read reaches back
@@ -108,15 +108,14 @@ impl Core {
     #[doc(alias = "TA_DPO_DisplayShift")]
     pub fn dpo_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.dpo_lookback(optInTimePeriod)?;
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
         }
-        let outputIdx: i32 = outputIdx as i32;
         // The value computed at a bar detrends the price this many bars back,
         // which is where a chart draws it.
         return Ok(-(optInTimePeriod / 2 + 1));
@@ -140,9 +139,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.dpo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -170,14 +169,14 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         periodTotal = 0.0;
-        trailingIdx = startIdx - (((optInTimePeriod - 1)) as usize);
-        dispIdx = startIdx - (((optInTimePeriod / 2 + 1)) as usize);
+        trailingIdx = startIdx - ((optInTimePeriod - 1) as usize);
+        dispIdx = startIdx - ((optInTimePeriod / 2 + 1) as usize);
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inReal[i];
@@ -192,23 +191,20 @@ impl Core {
             let _w3 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
                 periodTotal += _w1[_wk];
-                i = i + 1;
                 tempReal = periodTotal;
                 periodTotal -= _w2[_wk];
-                trailingIdx = trailingIdx + 1;
                 // Both reads precede the store. Either cursor can EQUAL outIdx -- the
                 // displaced one whenever startIdx equals the displacement, the trailing
                 // one whenever startIdx sits at the lookback -- so a store hoisted above
                 // them would read back what it had just overwritten when the caller
                 // aliases outReal over inReal.
                 dispVal = _w0[_wk];
-                dispIdx = dispIdx + 1;
                 _w3[_wk] = dispVal - tempReal / (optInTimePeriod as f64);
                 outIdx = outIdx + 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Detrended Price Oscillator: the price a half-cycle back, less the moving average that spans
@@ -373,8 +369,8 @@ impl Core {
         // them would read back what it had just overwritten when the caller
         // aliases outReal over inReal.
         dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
-        (*outReal) = dispVal - tempReal / (sp.optInTimePeriod as f64);
-        sp.cur_outReal = (*outReal);
+        *outReal = dispVal - tempReal / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = *outReal;
         ringCapL_dispIdx = sp.ringCap_dispIdx;
         ringPosL_dispIdx = sp.ringPos_dispIdx;
         sp.ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
@@ -401,21 +397,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut dispVal: f64 = 0.0_f64;
@@ -436,13 +430,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         periodTotal = 0.0;
-        trailingIdx = startIdx - (((optInTimePeriod - 1)) as usize);
-        dispIdx = startIdx - (((optInTimePeriod / 2 + 1)) as usize);
+        trailingIdx = startIdx - ((optInTimePeriod - 1) as usize);
+        dispIdx = startIdx - ((optInTimePeriod / 2 + 1) as usize);
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inReal[i];
@@ -462,11 +456,11 @@ impl Core {
             // aliases outReal over inReal.
             dispVal = inReal[dispIdx];
             dispIdx = dispIdx + 1;
-            outReal[(outIdx * outStride) as usize] = dispVal - tempReal / (optInTimePeriod as f64);
+            outReal[outIdx * outStride] = dispVal - tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_dispIdx: i64 = (i as i64) - (dispIdx as i64);
@@ -501,7 +495,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::dpo_open`] (composition seam).
     pub(crate) fn dpo_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(DpoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -574,7 +568,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_DPO_OpenAndFill")]
     pub fn dpo_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(DpoStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -593,7 +587,7 @@ impl Core {
     /// [`Core::dpo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn dpo_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<DpoStream, RetCode> {
         self.dpo_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -665,14 +659,13 @@ impl DpoStream {
             let mut periodTotal = sp.periodTotal;
             periodTotal += inReal;
             tempReal = periodTotal;
-            periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             // Both reads precede the store. Either cursor can EQUAL outIdx -- the
             // displaced one whenever startIdx equals the displacement, the trailing
             // one whenever startIdx sits at the lookback -- so a store hoisted above
             // them would read back what it had just overwritten when the caller
             // aliases outReal over inReal.
             dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
-            (*outReal) = dispVal - tempReal / (sp.optInTimePeriod as f64);
+            *outReal = dispVal - tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)
     }

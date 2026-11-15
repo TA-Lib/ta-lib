@@ -85,9 +85,9 @@ impl Core {
     #[doc(alias = "TA_LINEARREG_SLOPE_Lookback")]
     #[inline]
     pub fn linearreg_slope_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -109,7 +109,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_LINEARREG_SLOPE_DisplayShift")]
-    pub fn linearreg_slope_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn linearreg_slope_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.linearreg_slope_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -135,9 +135,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.linearreg_slope_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -155,7 +155,6 @@ impl Core {
         let mut SumXSqr: f64 = 0.0_f64;
         let mut Divisor: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut windowStart: usize = 0_usize;
         let mut barsSinceReseed: usize = 0_usize;
         let mut tempValue1: f64 = 0.0_f64;
@@ -185,8 +184,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -194,9 +193,9 @@ impl Core {
         // Index into the output.
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        SumX = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * ((2 * optInTimePeriod - 1) as f64) / 6.0;
+        Divisor = SumX * SumX - (optInTimePeriod as f64) * SumXSqr;
         // Prime the two data-dependent window sums for the first output with a
         // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
         // SumY = sum of the window, SumXY = sum of i*value (i the reversed
@@ -205,17 +204,17 @@ impl Core {
         SumY = 0.0;
         sumAbs = 0.0;
         // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             tempValue1 = inReal[today - i];
             SumY += tempValue1;
             SumXY += (i as f64) * tempValue1;
-            sumAbs += (tempValue1).abs();
+            sumAbs += tempValue1.abs();
         }
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
-        outReal[outIdx] = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        outReal[outIdx] = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
         outIdx += 1;
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -230,7 +229,7 @@ impl Core {
             weightedTrailing = (optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + inReal[today];
-            sumAbs = sumAbs - (trailingValue).abs() + (inReal[today]).abs();
+            sumAbs = sumAbs - trailingValue.abs() + inReal[today].abs();
             // Re-anchor: rebuild both sums from the window itself. #103 left them as
             // running totals that are never rebuilt, so each bar's rounding joins a
             // residue no later bar can subtract -- unbounded in the length of the
@@ -289,30 +288,29 @@ impl Core {
             // today-lookbackTotal, which is >= outIdx because startIdx was clamped
             // to at least lookbackTotal.
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 SumY = 0.0;
                 SumXY = 0.0;
                 sumAbs = 0.0;
                 tempValue2 = lookbackTotal as f64;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempValue1 = inReal[j];
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
+                    sumAbs += tempValue1.abs();
                     tempValue2 -= 1.0;
                 }
-                j = (today as usize) + 1;
             }
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
-            outReal[outIdx] = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            outReal[outIdx] = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last optInTimePeriod
@@ -471,7 +469,7 @@ impl Core {
         weightedTrailing = (sp.optInTimePeriod as f64) * sp.trailingValue;
         sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;
         sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[(sp.today & sp.xMask) as usize];
-        sp.sumAbs = sp.sumAbs - (sp.trailingValue).abs() + (sp.x_inReal[(sp.today & sp.xMask) as usize]).abs();
+        sp.sumAbs = sp.sumAbs - sp.trailingValue.abs() + sp.x_inReal[(sp.today & sp.xMask) as usize].abs();
         // Re-anchor: rebuild both sums from the window itself. #103 left them as
         // running totals that are never rebuilt, so each bar's rounding joins a
         // residue no later bar can subtract -- unbounded in the length of the
@@ -530,29 +528,29 @@ impl Core {
         // today-lookbackTotal, which is >= outIdx because startIdx was clamped
         // to at least lookbackTotal.
         sp.barsSinceReseed -= 1;
-        if sp.barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sp.sumAbs {
+        if sp.barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sp.sumAbs {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
             sp.SumY = 0.0;
             sp.SumXY = 0.0;
             sp.sumAbs = 0.0;
             tempValue2 = sp.lookbackTotal as f64;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.today {
                 tempValue1 = sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.SumY += tempValue1;
                 sp.SumXY += tempValue2 * tempValue1;
-                sp.sumAbs += (tempValue1).abs();
+                sp.sumAbs += tempValue1.abs();
                 tempValue2 -= 1.0;
                 sp.j += 1;
             }
         }
         sp.trailingValue = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize];
         sp.trailingIdx += 1;
-        (*outReal) = (((sp.optInTimePeriod) as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+        *outReal = ((sp.optInTimePeriod as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::linearreg_slope_open_internal`]
@@ -563,21 +561,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -618,17 +614,17 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         outIdx = 0;
         // Index into the output.
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
+        SumX = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * 0.5;
+        SumXSqr = (optInTimePeriod as f64) * ((optInTimePeriod - 1) as f64) * ((2 * optInTimePeriod - 1) as f64) / 6.0;
+        Divisor = SumX * SumX - (optInTimePeriod as f64) * SumXSqr;
         // Prime the two data-dependent window sums for the first output with a
         // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
         // SumY = sum of the window, SumXY = sum of i*value (i the reversed
@@ -637,17 +633,17 @@ impl Core {
         SumY = 0.0;
         sumAbs = 0.0;
         // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             tempValue1 = inReal[today - i];
             SumY += tempValue1;
             SumXY += (i as f64) * tempValue1;
-            sumAbs += (tempValue1).abs();
+            sumAbs += tempValue1.abs();
         }
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
-        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+        outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
         // the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -661,7 +657,7 @@ impl Core {
             weightedTrailing = (optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + inReal[today];
-            sumAbs = sumAbs - (trailingValue).abs() + (inReal[today]).abs();
+            sumAbs = sumAbs - trailingValue.abs() + inReal[today].abs();
             // Re-anchor: rebuild both sums from the window itself. #103 left them as
             // running totals that are never rebuilt, so each bar's rounding joins a
             // residue no later bar can subtract -- unbounded in the length of the
@@ -720,29 +716,29 @@ impl Core {
             // today-lookbackTotal, which is >= outIdx because startIdx was clamped
             // to at least lookbackTotal.
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 SumY = 0.0;
                 SumXY = 0.0;
                 sumAbs = 0.0;
                 tempValue2 = lookbackTotal as f64;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempValue1 = inReal[j];
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
+                    sumAbs += tempValue1.abs();
                     tempValue2 -= 1.0;
                 }
-                j = (today as usize) + 1;
+                j = today + 1;
             }
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ((optInTimePeriod as f64) * SumXY - SumX * SumY) / Divisor;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -764,7 +760,7 @@ impl Core {
         let state = LinearregSlopeStreamState {
             optInTimePeriod,
             lookbackTotal,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             SumX,
             SumXY,
             SumY,
@@ -772,8 +768,8 @@ impl Core {
             barsSinceReseed,
             trailingValue,
             sumAbs,
-            j: (j) as i32,
-            today: (today) as i32,
+            j: j as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -783,7 +779,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::linearreg_slope_open`] (composition seam).
     pub(crate) fn linearreg_slope_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(LinearregSlopeStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -856,7 +852,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_LINEARREG_SLOPE_OpenAndFill")]
     pub fn linearreg_slope_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(LinearregSlopeStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -875,7 +871,7 @@ impl Core {
     /// [`Core::linearreg_slope_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn linearreg_slope_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<LinearregSlopeStream, RetCode> {
         self.linearreg_slope_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -951,8 +947,7 @@ impl LinearregSlopeStream {
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
-            let mut trailingIdx = sp.trailingIdx;
-            let mut trailingValue = sp.trailingValue;
+            let trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.today & sp.xMask) as usize;
@@ -960,7 +955,7 @@ impl LinearregSlopeStream {
             weightedTrailing = (sp.optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
             SumY = SumY - trailingValue + (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
-            sumAbs = sumAbs - (trailingValue).abs() + ((if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 })).abs();
+            sumAbs = sumAbs - trailingValue.abs() + (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 }).abs();
             // Re-anchor: rebuild both sums from the window itself. #103 left them as
             // running totals that are never rebuilt, so each bar's rounding joins a
             // residue no later bar can subtract -- unbounded in the length of the
@@ -1019,27 +1014,22 @@ impl LinearregSlopeStream {
             // today-lookbackTotal, which is >= outIdx because startIdx was clamped
             // to at least lookbackTotal.
             barsSinceReseed -= 1;
-            if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            if barsSinceReseed <= 0 || weightedTrailing.abs() > 100.0 * sumAbs {
+                windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
                 SumY = 0.0;
                 SumXY = 0.0;
-                sumAbs = 0.0;
                 tempValue2 = sp.lookbackTotal as f64;
                 // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.today {
-                    tempValue1 = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempValue1 = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;
-                    sumAbs += (tempValue1).abs();
                     tempValue2 -= 1.0;
                     j += 1;
                 }
             }
-            trailingValue = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
-            trailingIdx += 1;
-            (*outReal) = (((sp.optInTimePeriod) as f64) * SumXY - sp.SumX * SumY) / sp.Divisor;
+            *outReal = ((sp.optInTimePeriod as f64) * SumXY - sp.SumX * SumY) / sp.Divisor;
         }
         Ok(outReal)
     }

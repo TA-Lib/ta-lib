@@ -401,10 +401,12 @@ fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
     if pairs.is_empty() {
         return None;
     }
-    Some(format!(
-        "        if {} {{\n            return RetCode::BadParam;\n        }}\n",
-        pairs.join(" || ")
-    ))
+    // A lone comparison is the whole condition, so it carries no parentheses.
+    let cond = match &pairs[..] {
+        [one] => one.strip_prefix('(').and_then(|p| p.strip_suffix(')')).unwrap_or(one).to_string(),
+        _ => pairs.join(" || "),
+    };
+    Some(format!("        if {cond} {{\n            return RetCode::BadParam;\n        }}\n"))
 }
 
 /// The term a cross-typed pair WOULD contribute if the generator stopped
@@ -486,7 +488,7 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
             .filter_map(|opt| {
                 let head = match opt.param_type {
                     ir::ParamType::Integer => {
-                        format!("if (({}) as i32) == (i32::MIN) {{", opt.name)
+                        format!("if {} == i32::MIN {{", opt.name)
                     }
                     ir::ParamType::Real => format!("if {} == Self::REAL_DEFAULT {{", opt.name),
                     _ => return None,
@@ -1068,23 +1070,9 @@ fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
         let (func, enums) = load_indicator(&name);
         scanned += 1;
 
-        let mut rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
-        let mut java = backends::java::generate(&func, &enums, registry, &helpers);
-        let mut csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
-        if func.streaming {
-            if backends::rust_stream::emits_stream(&func, registry) {
-                rust.push_str(&backends::rust_stream::generate(&func, &enums, registry, &helpers));
-            }
-            if backends::java_stream::emits_stream(&func, registry) {
-                java.push_str(&backends::java_stream::generate(&func, &enums, registry, &helpers));
-            }
-            if backends::csharp_stream::emits_stream(&func, registry) {
-                csharp
-                    .push_str(&backends::csharp_stream::generate(&func, &enums, registry, &helpers));
-            }
-        }
-
-        // TS's generate carries its stream section already.
+        let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
+        let java = backends::java::generate(&func, &enums, registry, &helpers);
+        let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
         let ts = backends::ts::generate(&func, &enums, registry, common::make_helpers());
         for (src, success, ne, lang) in [
             (&rust, "RetCode::Success", "!=", "rust"),
@@ -1109,10 +1097,15 @@ fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
     // would read green on a corpus with nothing left to check.
     assert!(common::sweep_filtered() || scanned >= 200, "only {scanned} indicators in the corpus");
     assert!(assigns >= 100, "only {assigns} success assignments seen — the sweep found nothing");
-    // TS drops a code no later statement reads, with its assignment, so only
-    // the sites that read it again remain, and only those can hold a guard.
+    // TS and Rust drop a code no later statement reads, with its assignment,
+    // so only the sites that read it again remain, and only those can hold a
+    // guard.
     for (lang, a) in &per_lang {
-        let floor = if *lang == "ts" { 25 } else { 100 };
+        let floor = match *lang {
+            "rust" => 20,
+            "ts" => 25,
+            _ => 100,
+        };
         assert!(
             common::sweep_filtered() || *a >= floor,
             "{lang}: only {a} success assignments seen — the sweep found nothing"

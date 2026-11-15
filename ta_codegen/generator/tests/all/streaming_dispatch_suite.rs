@@ -2177,7 +2177,7 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
             panic!("BBANDS Rust should write the standard deviation into outRealUpperBand: {rust_out}")
         });
     assert!(
-        dev_write.contains("(variance).sqrt()"),
+        dev_write.contains("variance.sqrt()"),
         "the deviation written into outRealUpperBand should be the root of the variance, \
          got `{dev_write}`: {rust_out}"
     );

@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_FRAMA_Lookback")]
     #[inline]
     pub fn frama_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 16;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut root: usize = 0_usize;
@@ -94,7 +94,7 @@ impl Core {
         if optInTimePeriod % 2 != 0 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::FRAMA, (if 9 * (4 + 4) * (((root + 2)) as i32) / 2 < 99 * 10 { 9 * (4 + 4) * (((root + 2)) as i32) / 2 } else { 99 * 10 }), (if 9 * (8 + 4) * (((root + 2)) as i32) / 2 < 99 * 19 { 9 * (8 + 4) * (((root + 2)) as i32) / 2 } else { 99 * 19 }))) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::FRAMA, if 9 * (4 + 4) * ((root + 2) as i32) / 2 < 99 * 10 { 9 * (4 + 4) * ((root + 2) as i32) / 2 } else { 99 * 10 }, if 9 * (8 + 4) * ((root + 2) as i32) / 2 < 99 * 19 { 9 * (8 + 4) * ((root + 2) as i32) / 2 } else { 99 * 19 })) as usize);
     }
     /// Display shift of one output of [`Core::frama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -113,7 +113,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FRAMA_DisplayShift")]
-    pub fn frama_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn frama_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.frama_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -172,9 +172,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 16;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.frama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -224,8 +224,8 @@ impl Core {
         if optInTimePeriod % 2 != 0 {
             return RetCode::BadParam;
         }
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.frama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -246,11 +246,11 @@ impl Core {
         // stream's Peek read-only and O(1). The slots hold copies, so outReal may
         // alias an input.
         if half < 1 { return RetCode::InternalError; }
-        if (half) as usize <= 32usize {
-            slot_sufHigh = &mut local_slot_sufHigh[..(half) as usize];
-            slot_sufLow = &mut local_slot_sufLow[..(half) as usize];
-            slot_oldHigh = &mut local_slot_oldHigh[..(half) as usize];
-            slot_oldLow = &mut local_slot_oldLow[..(half) as usize];
+        if half as usize <= 32usize {
+            slot_sufHigh = &mut local_slot_sufHigh[..half as usize];
+            slot_sufLow = &mut local_slot_sufLow[..half as usize];
+            slot_oldHigh = &mut local_slot_oldHigh[..half as usize];
+            slot_oldLow = &mut local_slot_oldLow[..half as usize];
         } else {
             heap_slot_sufHigh = vec![0.0_f64; (half) as usize];
             slot_sufHigh = &mut heap_slot_sufHigh;
@@ -263,7 +263,7 @@ impl Core {
         }
         slot_Idx = 0;
         today = startIdx - lookbackTotal + 1;
-        seedIdx = startIdx - (lookbackTotal - ((optInTimePeriod) as usize)) - 1;
+        seedIdx = startIdx - (lookbackTotal - (optInTimePeriod as usize)) - 1;
         // The first block's suffix reads must see a bar inside the window.
         i = 0;
         if i < half {
@@ -356,7 +356,7 @@ impl Core {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }
@@ -384,8 +384,8 @@ impl Core {
             if slot_Idx >= slot_sufHigh.len() { slot_Idx = 0; }
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing factor adapts each bar
@@ -534,7 +534,6 @@ struct FramaStreamState {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct FramaStreamScalars {
-    optInTimePeriod: i32,
     expScale: f64,
     preHigh: f64,
     preLow: f64,
@@ -542,7 +541,6 @@ struct FramaStreamScalars {
     lastSlot: usize,
     slot_Idx: usize,
     maxIdx_slot: usize,
-    cbSize_slot: usize,
     cur_outReal: f64,
 }
 
@@ -595,11 +593,11 @@ impl Core {
         // returns the price exactly too.
         if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
             alpha = (sp.expScale * ((r1 + r2) / r).ln()).exp();
-            sp.prevFRAMA = fmadd!(1.0 - alpha as f64, sp.prevFRAMA, alpha * price);
+            sp.prevFRAMA = fmadd!(1.0 - alpha, sp.prevFRAMA, alpha * price);
         } else {
             sp.prevFRAMA = price;
         }
-        (*outReal) = sp.prevFRAMA;
+        *outReal = sp.prevFRAMA;
         cb_slot_oldHigh[sp.slot_Idx] = hi1;
         cb_slot_oldLow[sp.slot_Idx] = lo1;
         cb_slot_sufHigh[sp.slot_Idx] = tmpHigh;
@@ -616,7 +614,7 @@ impl Core {
         if sp.slot_Idx > sp.maxIdx_slot {
             sp.slot_Idx = 0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::frama_open_internal`]
@@ -645,9 +643,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 16;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -655,14 +653,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut expScale: f64 = 0.0_f64;
         let mut slot_sufHigh: Vec<f64> = Vec::new();
         let mut slot_sufLow: Vec<f64> = Vec::new();
@@ -697,8 +693,8 @@ impl Core {
         if optInTimePeriod % 2 != 0 {
             return Err(RetCode::BadParam);
         }
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.frama_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -721,10 +717,10 @@ impl Core {
         slot_sufLow = vec![0.0_f64; (half) as usize];
         slot_oldHigh = vec![0.0_f64; (half) as usize];
         slot_oldLow = vec![0.0_f64; (half) as usize];
-        maxIdx_slot = ((half) as usize) - 1;
+        maxIdx_slot = (half as usize) - 1;
         slot_Idx = 0;
         today = startIdx - lookbackTotal + 1;
-        seedIdx = startIdx - (lookbackTotal - ((optInTimePeriod) as usize)) - 1;
+        seedIdx = startIdx - (lookbackTotal - (optInTimePeriod as usize)) - 1;
         // The first block's suffix reads must see a bar inside the window.
         i = 0;
         while i < half {
@@ -810,12 +806,12 @@ impl Core {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }
             if today >= startIdx {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevFRAMA;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevFRAMA;
             }
             slot_oldHigh[slot_Idx] = hi1;
             slot_oldLow[slot_Idx] = lo1;
@@ -837,8 +833,8 @@ impl Core {
             if slot_Idx > maxIdx_slot { slot_Idx = 0; }
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_slot: usize = maxIdx_slot + 1;
@@ -847,7 +843,6 @@ impl Core {
         }
         let state = FramaStreamState {
             scalars: FramaStreamScalars {
-                optInTimePeriod,
                 expScale,
                 preHigh,
                 preLow,
@@ -856,7 +851,6 @@ impl Core {
                 slot_Idx,
                 maxIdx_slot,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
-                cbSize_slot: cbSize_slot,
             },
             cb_slot_sufHigh: slot_sufHigh,
             cb_slot_sufLow: slot_sufLow,
@@ -868,7 +862,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::frama_open`] (composition seam).
     pub(crate) fn frama_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(FramaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -947,7 +941,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_FRAMA_OpenAndFill")]
     pub fn frama_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(FramaStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -969,7 +963,7 @@ impl Core {
     /// [`Core::frama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn frama_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<FramaStream, RetCode> {
         self.frama_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1084,11 +1078,11 @@ impl FramaStream {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (sp.expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }
-            (*outReal) = prevFRAMA;
+            *outReal = prevFRAMA;
         }
         Ok(outReal)
     }

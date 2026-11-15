@@ -82,13 +82,13 @@ impl Core {
     #[doc(alias = "TA_ER_Lookback")]
     #[inline]
     pub fn er_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // P one-bar changes need P+1 prices: first output at index P.
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::er`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -108,7 +108,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ER_DisplayShift")]
-    pub fn er_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn er_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.er_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -134,9 +134,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.er_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -198,8 +198,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -209,22 +209,18 @@ impl Core {
         nullRun = 0;
         today = startIdx - lookbackTotal;
         trailingIdx = today;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn + 1];
             for _wk in 0.._wn {
-                i -= 1;
                 tempReal = _w0[_wk];
                 today += 1;
                 tempReal -= _w0[_wk + 1];
-                sumROC1 += (tempReal).abs();
-                live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+                sumROC1 += tempReal.abs();
+                live = if tempReal.abs() <= 0.0 { 0 } else { 1 };
                 nullRun = nullRun + 1 & live.wrapping_sub(1);
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
         // First output: today == startIdx.
         tempReal = inReal[today];
@@ -257,11 +253,11 @@ impl Core {
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
                 outReal[outIdx] = 1.0;
                 outIdx += 1;
@@ -282,8 +278,8 @@ impl Core {
             trailingValue = tempReal2;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure from
@@ -451,27 +447,27 @@ impl Core {
         // Once a whole window of one-bar changes is exactly zero, the sum's
         // only content is rounding residue from the subtract/add carry --
         // purge it so the flat window is recognized exactly (kama.c #253).
-        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.sumROC1 = 0.0;
-            (*outReal) = 1.0;
+            *outReal = 1.0;
         } else if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
-            (*outReal) = 1.0;
+            *outReal = 1.0;
         } else {
             tempReal = (periodROC / sp.sumROC1).abs();
             if tempReal > 1.0 {
                 tempReal = 1.0;
             }
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         }
         // Save the trailing value: outReal may alias inReal, and the next
         // iteration's subtraction needs the ORIGINAL bar, not the slot the
         // write above may have clobbered.
         sp.trailingValue = tempReal2;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         sp.lag1_inReal = inReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
@@ -491,21 +487,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
@@ -560,8 +554,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Prime the path sum over the optInTimePeriod one-bar changes ending
@@ -570,12 +564,12 @@ impl Core {
         nullRun = 0;
         today = startIdx - lookbackTotal;
         trailingIdx = today;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-            live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+            sumROC1 += tempReal.abs();
+            live = if tempReal.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
         }
         // First output: today == startIdx.
@@ -589,13 +583,13 @@ impl Core {
         // ever has non-negative terms added to it -- and is written anyway so both
         // sites read as one rule.
         if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-            outReal[(0 * outStride) as usize] = 1.0;
+            outReal[0] = 1.0;
         } else {
             tempReal = (periodROC / sumROC1).abs();
             if tempReal > 1.0 {
                 tempReal = 1.0;
             }
-            outReal[(0 * outStride) as usize] = tempReal;
+            outReal[0] = tempReal;
         }
         outIdx = 1;
         today += 1;
@@ -609,21 +603,21 @@ impl Core {
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumROC1 = 0.0;
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 1.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 1.0;
             } else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 1.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
                 if tempReal > 1.0 {
                     tempReal = 1.0;
                 }
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = tempReal;
             }
             // Save the trailing value: outReal may alias inReal, and the next
             // iteration's subtraction needs the ORIGINAL bar, not the slot the
@@ -631,8 +625,8 @@ impl Core {
             trailingValue = tempReal2;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -659,7 +653,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::er_open`] (composition seam).
     pub(crate) fn er_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(ErStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -732,7 +726,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ER_OpenAndFill")]
     pub fn er_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(ErStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -751,7 +745,7 @@ impl Core {
     /// [`Core::er_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn er_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ErStream, RetCode> {
         self.er_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -833,20 +827,18 @@ impl ErStream {
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            live = if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
-                sumROC1 = 0.0;
-                (*outReal) = 1.0;
+            if nullRun >= (sp.optInTimePeriod as usize) {
+                *outReal = 1.0;
             } else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-                (*outReal) = 1.0;
+                *outReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
                 if tempReal > 1.0 {
                     tempReal = 1.0;
                 }
-                (*outReal) = tempReal;
+                *outReal = tempReal;
             }
         }
         Ok(outReal)

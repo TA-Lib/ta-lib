@@ -81,9 +81,9 @@ impl Core {
     #[doc(alias = "TA_CMF_Lookback")]
     #[inline]
     pub fn cmf_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -104,7 +104,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CMF_DisplayShift")]
-    pub fn cmf_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cmf_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cmf_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -133,9 +133,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cmf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -171,8 +171,8 @@ impl Core {
         // re-reading inVolume[] at the trailing index is what makes outReal safe to
         // alias any input: once a bar has been consumed it is never read again.
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -190,9 +190,9 @@ impl Core {
         let inClose = &inClose[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 50usize {
-            mfv_flow = &mut local_mfv_flow[..(optInTimePeriod) as usize];
-            mfv_volume = &mut local_mfv_volume[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 50usize {
+            mfv_flow = &mut local_mfv_flow[..optInTimePeriod as usize];
+            mfv_volume = &mut local_mfv_volume[..optInTimePeriod as usize];
         } else {
             heap_mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
             mfv_flow = &mut heap_mfv_flow;
@@ -217,7 +217,7 @@ impl Core {
         // the same result, NaN included, from one flag instead of two.
         nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             high = inHigh[today];
             low = inLow[today];
@@ -232,7 +232,7 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            liveVol = if inVolume[today].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
             mfv_Idx += 1;
@@ -268,12 +268,12 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            liveVol = if inVolume[today].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;
                 outReal[outIdx] = 0.0;
@@ -288,8 +288,8 @@ impl Core {
             mfv_Idx += 1;
             if mfv_Idx >= mfv_flow.len() { mfv_Idx = 0; }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Chaikin Money Flow: over a trailing window of `optInTimePeriod` bars, the sum of each bar's
@@ -466,7 +466,6 @@ struct CmfStreamState {
     nullRun: usize,
     mfv_Idx: usize,
     maxIdx_mfv: usize,
-    cbSize_mfv: usize,
     cb_mfv_flow: Vec<f64>,
     cb_mfv_volume: Vec<f64>,
     cur_outReal: f64,
@@ -500,24 +499,24 @@ impl Core {
         sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
         sp.sumMFV += mfv;
         sp.sumVol += inVolume;
-        liveVol = (if (inVolume).abs() <= 0.0 { 0 } else { 1 });
+        liveVol = if inVolume.abs() <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & liveVol.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.sumMFV = 0.0;
             sp.sumVol = 0.0;
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         } else if sp.sumVol > 0.0 {
-            (*outReal) = sp.sumMFV / sp.sumVol;
+            *outReal = sp.sumMFV / sp.sumVol;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         sp.mfv_Idx = sp.mfv_Idx + 1;
         if sp.mfv_Idx > sp.maxIdx_mfv {
             sp.mfv_Idx = 0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cmf_open_internal`]
@@ -528,9 +527,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -538,14 +537,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumMFV: f64 = 0.0_f64;
         let mut sumVol: f64 = 0.0_f64;
         let mut high: f64 = 0.0_f64;
@@ -568,8 +565,8 @@ impl Core {
         // re-reading inVolume[] at the trailing index is what makes outReal safe to
         // alias any input: once a bar has been consumed it is never read again.
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -585,7 +582,7 @@ impl Core {
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
         mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
+        maxIdx_mfv = (optInTimePeriod as usize) - 1;
         mfv_Idx = 0;
         outIdx = 0;
         // Accumulate the money flow volume and the volume over the first
@@ -604,7 +601,7 @@ impl Core {
         // the same result, NaN included, from one flag instead of two.
         nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             high = inHigh[today];
             low = inLow[today];
@@ -619,7 +616,7 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            liveVol = if inVolume[today].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
             mfv_Idx += 1;
@@ -632,9 +629,9 @@ impl Core {
         // A window whose volume is entirely zero has no money flow to distribute;
         // report 0.0 rather than propagating a division by zero (issue #112).
         if sumVol > 0.0 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sumMFV / sumVol;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sumMFV / sumVol;
         } else {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
         }
         // Now continue processing the remaining bars.
         while today <= endIdx {
@@ -653,25 +650,25 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            liveVol = if inVolume[today].abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             } else if sumVol > 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sumMFV / sumVol;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sumMFV / sumVol;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             mfv_Idx += 1;
             if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_mfv: usize = maxIdx_mfv + 1;
@@ -686,7 +683,6 @@ impl Core {
             mfv_Idx,
             maxIdx_mfv,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_mfv: cbSize_mfv,
             cb_mfv_flow: mfv_flow,
             cb_mfv_volume: mfv_volume,
         };
@@ -695,7 +691,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cmf_open`] (composition seam).
     pub(crate) fn cmf_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CmfStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -786,7 +782,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CMF_OpenAndFill")]
     pub fn cmf_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CmfStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -808,7 +804,7 @@ impl Core {
     /// [`Core::cmf_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cmf_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CmfStream, RetCode> {
         self.cmf_open_impl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -897,17 +893,14 @@ impl CmfStream {
             }
             sumMFV += mfv;
             sumVol += inVolume;
-            liveVol = (if (inVolume).abs() <= 0.0 { 0 } else { 1 });
+            liveVol = if inVolume.abs() <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
-                sumMFV = 0.0;
-                sumVol = 0.0;
-                (*outReal) = 0.0;
+            if nullRun >= (sp.optInTimePeriod as usize) {
+                *outReal = 0.0;
             } else if sumVol > 0.0 {
-                (*outReal) = sumMFV / sumVol;
+                *outReal = sumMFV / sumVol;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

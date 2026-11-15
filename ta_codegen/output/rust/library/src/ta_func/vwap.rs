@@ -71,7 +71,7 @@ impl Core {
         // Cumulative from the first bar of the requested range, so the very
         // first bar already has a complete answer and nothing is consumed
         // before it. Same shape as ta_AD.c and ta_OBV.c.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::vwap`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,7 +121,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
         let mut typPrice: f64 = 0.0_f64;
@@ -129,7 +128,6 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut vwap: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
@@ -149,7 +147,7 @@ impl Core {
         sumV = 0.0;
         vwap = 0.0;
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             // The typical price is written exactly as in ta_TYPPRICE.c so that the
             // two agree bit for bit and this stays a true composite of it.
             typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
@@ -205,7 +203,7 @@ impl Core {
             // it as a fourth state field in every handle -- 8 bytes to hold a value
             // no later bar reads. The multiply on a skipped bar is discarded.
             tempReal = typPrice * volume;
-            if (typPrice).is_finite() && (volume).is_finite() {
+            if typPrice.is_finite() && volume.is_finite() {
                 sumPV += tempReal;
                 sumV += volume;
             }
@@ -235,9 +233,8 @@ impl Core {
             outReal[outIdx] = vwap;
             outIdx += 1;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Volume Weighted Average Price: the average price paid per unit of volume traded, accumulated
@@ -479,7 +476,7 @@ impl Core {
         // it as a fourth state field in every handle -- 8 bytes to hold a value
         // no later bar reads. The multiply on a skipped bar is discarded.
         tempReal = typPrice * volume;
-        if (typPrice).is_finite() && (volume).is_finite() {
+        if typPrice.is_finite() && volume.is_finite() {
             sp.sumPV += tempReal;
             sp.sumV += volume;
         }
@@ -506,8 +503,8 @@ impl Core {
         } else {
             cold_arm();
         }
-        (*outReal) = sp.vwap;
-        sp.cur_outReal = (*outReal);
+        *outReal = sp.vwap;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::vwap_open_internal`]
@@ -523,14 +520,11 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
         let mut typPrice: f64 = 0.0_f64;
@@ -538,7 +532,6 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut vwap: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         // Volume Weighted Average Price: the average typical price paid per
         // unit of volume, accumulated from the first bar of the range.
         //
@@ -554,7 +547,7 @@ impl Core {
         sumV = 0.0;
         vwap = 0.0;
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             // The typical price is written exactly as in ta_TYPPRICE.c so that the
             // two agree bit for bit and this stays a true composite of it.
             typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
@@ -610,7 +603,7 @@ impl Core {
             // it as a fourth state field in every handle -- 8 bytes to hold a value
             // no later bar reads. The multiply on a skipped bar is discarded.
             tempReal = typPrice * volume;
-            if (typPrice).is_finite() && (volume).is_finite() {
+            if typPrice.is_finite() && volume.is_finite() {
                 sumPV += tempReal;
                 sumV += volume;
             }
@@ -637,11 +630,10 @@ impl Core {
             } else {
                 cold_arm();
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = vwap;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = vwap;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = VwapStreamState {
@@ -896,7 +888,7 @@ impl VwapStream {
             // it as a fourth state field in every handle -- 8 bytes to hold a value
             // no later bar reads. The multiply on a skipped bar is discarded.
             tempReal = typPrice * volume;
-            if (typPrice).is_finite() && (volume).is_finite() {
+            if typPrice.is_finite() && volume.is_finite() {
                 sumPV += tempReal;
                 sumV += volume;
             }
@@ -923,7 +915,7 @@ impl VwapStream {
             } else {
                 cold_arm();
             }
-            (*outReal) = vwap;
+            *outReal = vwap;
         }
         Ok(outReal)
     }

@@ -60,6 +60,7 @@ pub mod rust_doc;
 pub mod rust_enums;
 pub mod rust_lang;
 pub mod rust_phantom_io;
+pub mod rust_prune;
 pub mod rust_respell;
 pub mod rust_window;
 pub mod rust_stream;

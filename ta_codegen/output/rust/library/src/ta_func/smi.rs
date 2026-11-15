@@ -86,24 +86,24 @@ impl Core {
     #[doc(alias = "TA_SMI_Lookback")]
     #[inline]
     pub fn smi_lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 2;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // One high/low window, then the three EMA warm-ups the pipeline stacks on
@@ -134,7 +134,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SMI_DisplayShift")]
-    pub fn smi_display_shift(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn smi_display_shift(&self, optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -208,24 +208,24 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 2;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -235,7 +235,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSMI.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSMISignal.len());
-        if (outSMI.as_ptr() == outSMISignal.as_ptr()) {
+        if outSMI.as_ptr() == outSMISignal.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -282,14 +282,14 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Blau's pipeline in one pass. A composed form is not available: the
         // streaming producer model carries exactly one intermediate series
         // (streaming.rs:2076) and SMI has two, the numerator and the denominator,
@@ -337,58 +337,58 @@ impl Core {
         lowestIdx = -1;
         // The first bar carrying a full high/low window.
         trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + (((optInTimePeriod - 1)) as usize);
+        today = trailingIdx + ((optInTimePeriod - 1) as usize);
         nBar = 0;
         // Warm-up. Runs through startIdx inclusive: the last pass here is the one
         // that completes the signal seed, so it produces the first output pair.
         while today <= startIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
             // Stage 1: the slow EMA, over the raw momentum.
-            if nBar < ((optInSlowPeriod) as usize) {
+            if nBar < (optInSlowPeriod as usize) {
                 sumSlowNum = sumSlowNum + num;
                 sumSlowDen = sumSlowDen + den;
                 if nBar == ((optInSlowPeriod - 1) as usize) {
-                    emaSlowNum = sumSlowNum / ((optInSlowPeriod) as f64);
-                    emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
+                    emaSlowNum = sumSlowNum / (optInSlowPeriod as f64);
+                    emaSlowDen = sumSlowDen / (optInSlowPeriod as f64);
                 }
             } else {
-                emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
-                emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
+                emaSlowNum = fmadd!(betaSlow, emaSlowNum, kSlow * num);
+                emaSlowDen = fmadd!(betaSlow, emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -403,16 +403,16 @@ impl Core {
             // are still 0.0.
             if nBar >= lookbackSlow {
                 nFast = nBar - lookbackSlow;
-                if nFast < ((optInFastPeriod) as usize) {
+                if nFast < (optInFastPeriod as usize) {
                     sumFastNum = sumFastNum + emaSlowNum;
                     sumFastDen = sumFastDen + emaSlowDen;
                     if nFast == ((optInFastPeriod - 1) as usize) {
-                        emaFastNum = sumFastNum / ((optInFastPeriod) as f64);
-                        emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
+                        emaFastNum = sumFastNum / (optInFastPeriod as f64);
+                        emaFastDen = sumFastDen / (optInFastPeriod as f64);
                     }
                 } else {
-                    emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
-                    emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
+                    emaFastNum = fmadd!(betaFast, emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = fmadd!(betaFast, emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -424,13 +424,13 @@ impl Core {
                 } else {
                     smiValue = 0.0;
                 }
-                if nSignal < ((optInSignalPeriod) as usize) {
+                if nSignal < (optInSignalPeriod as usize) {
                     sumSignal = sumSignal + smiValue;
                     if nSignal == ((optInSignalPeriod - 1) as usize) {
-                        prevSignal = sumSignal / ((optInSignalPeriod) as f64);
+                        prevSignal = sumSignal / (optInSignalPeriod as f64);
                     }
                 } else {
-                    prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
+                    prevSignal = fmadd!(betaSignal, prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
@@ -444,44 +444,44 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
-            emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
-            emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
-            emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
+            emaSlowNum = fmadd!(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = fmadd!(betaSlow, emaSlowDen, kSlow * den);
+            emaFastNum = fmadd!(betaFast, emaFastNum, kFast * emaSlowNum);
+            emaFastDen = fmadd!(betaFast, emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -498,14 +498,14 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
+            prevSignal = fmadd!(betaSignal, prevSignal, kSignal * smiValue);
             outSMI[outIdx] = smiValue;
             outSMISignal[outIdx] = prevSignal;
             outIdx = outIdx + 1;
             trailingIdx = trailingIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Stochastic Momentum Index: where the close sits relative to the **midpoint** of the recent
@@ -681,10 +681,6 @@ pub struct SmiStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SmiStreamState {
-    optInTimePeriod: i32,
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
-    optInSignalPeriod: i32,
     kSlow: f64,
     kFast: f64,
     kSignal: f64,
@@ -762,10 +758,10 @@ impl Core {
         }
         den = sp.highest - sp.lowest;
         num = sp.x_inClose[(sp.today & sp.xMask) as usize] - (sp.highest + sp.lowest) * 0.5;
-        sp.emaSlowNum = fmadd!(sp.betaSlow as f64, sp.emaSlowNum, sp.kSlow * num);
-        sp.emaSlowDen = fmadd!(sp.betaSlow as f64, sp.emaSlowDen, sp.kSlow * den);
-        sp.emaFastNum = fmadd!(sp.betaFast as f64, sp.emaFastNum, sp.kFast * sp.emaSlowNum);
-        sp.emaFastDen = fmadd!(sp.betaFast as f64, sp.emaFastDen, sp.kFast * sp.emaSlowDen);
+        sp.emaSlowNum = fmadd!(sp.betaSlow, sp.emaSlowNum, sp.kSlow * num);
+        sp.emaSlowDen = fmadd!(sp.betaSlow, sp.emaSlowDen, sp.kSlow * den);
+        sp.emaFastNum = fmadd!(sp.betaFast, sp.emaFastNum, sp.kFast * sp.emaSlowNum);
+        sp.emaFastDen = fmadd!(sp.betaFast, sp.emaFastDen, sp.kFast * sp.emaSlowDen);
         // The denominator is an EMA of an EMA of the high-low range: every term
         // is non-negative and every weight is positive, so it carries no
         // cancellation residue and is zero only when every range that reached it
@@ -782,13 +778,13 @@ impl Core {
         } else {
             smiValue = 0.0;
         }
-        sp.prevSignal = fmadd!(sp.betaSignal as f64, sp.prevSignal, sp.kSignal * smiValue);
-        (*outSMI) = smiValue;
-        (*outSMISignal) = sp.prevSignal;
+        sp.prevSignal = fmadd!(sp.betaSignal, sp.prevSignal, sp.kSignal * smiValue);
+        *outSMI = smiValue;
+        *outSMISignal = sp.prevSignal;
         sp.trailingIdx = sp.trailingIdx + 1;
         sp.today = sp.today + 1;
-        sp.cur_outSMI = (*outSMI);
-        sp.cur_outSMISignal = (*outSMISignal);
+        sp.cur_outSMI = *outSMI;
+        sp.cur_outSMISignal = *outSMISignal;
     }
 
     /// The single whole-history transcription behind [`Core::smi_open_internal`]
@@ -817,24 +813,24 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 2;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 25;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -842,14 +838,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut kSlow: f64 = 0.0_f64;
         let mut kFast: f64 = 0.0_f64;
         let mut kSignal: f64 = 0.0_f64;
@@ -893,11 +887,11 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Blau's pipeline in one pass. A composed form is not available: the
         // streaming producer model carries exactly one intermediate series
         // (streaming.rs:2076) and SMI has two, the numerator and the denominator,
@@ -945,58 +939,58 @@ impl Core {
         lowestIdx = -1;
         // The first bar carrying a full high/low window.
         trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + (((optInTimePeriod - 1)) as usize);
+        today = trailingIdx + ((optInTimePeriod - 1) as usize);
         nBar = 0;
         // Warm-up. Runs through startIdx inclusive: the last pass here is the one
         // that completes the signal seed, so it produces the first output pair.
         while today <= startIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
             // Stage 1: the slow EMA, over the raw momentum.
-            if nBar < ((optInSlowPeriod) as usize) {
+            if nBar < (optInSlowPeriod as usize) {
                 sumSlowNum = sumSlowNum + num;
                 sumSlowDen = sumSlowDen + den;
                 if nBar == ((optInSlowPeriod - 1) as usize) {
-                    emaSlowNum = sumSlowNum / ((optInSlowPeriod) as f64);
-                    emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
+                    emaSlowNum = sumSlowNum / (optInSlowPeriod as f64);
+                    emaSlowDen = sumSlowDen / (optInSlowPeriod as f64);
                 }
             } else {
-                emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
-                emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
+                emaSlowNum = fmadd!(betaSlow, emaSlowNum, kSlow * num);
+                emaSlowDen = fmadd!(betaSlow, emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -1011,16 +1005,16 @@ impl Core {
             // are still 0.0.
             if nBar >= lookbackSlow {
                 nFast = nBar - lookbackSlow;
-                if nFast < ((optInFastPeriod) as usize) {
+                if nFast < (optInFastPeriod as usize) {
                     sumFastNum = sumFastNum + emaSlowNum;
                     sumFastDen = sumFastDen + emaSlowDen;
                     if nFast == ((optInFastPeriod - 1) as usize) {
-                        emaFastNum = sumFastNum / ((optInFastPeriod) as f64);
-                        emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
+                        emaFastNum = sumFastNum / (optInFastPeriod as f64);
+                        emaFastDen = sumFastDen / (optInFastPeriod as f64);
                     }
                 } else {
-                    emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
-                    emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
+                    emaFastNum = fmadd!(betaFast, emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = fmadd!(betaFast, emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -1032,64 +1026,64 @@ impl Core {
                 } else {
                     smiValue = 0.0;
                 }
-                if nSignal < ((optInSignalPeriod) as usize) {
+                if nSignal < (optInSignalPeriod as usize) {
                     sumSignal = sumSignal + smiValue;
                     if nSignal == ((optInSignalPeriod - 1) as usize) {
-                        prevSignal = sumSignal / ((optInSignalPeriod) as f64);
+                        prevSignal = sumSignal / (optInSignalPeriod as f64);
                     }
                 } else {
-                    prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
+                    prevSignal = fmadd!(betaSignal, prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
             trailingIdx = trailingIdx + 1;
             today = today + 1;
         }
-        outSMI[(0 * outStride) as usize] = smiValue;
-        outSMISignal[(0 * outStride) as usize] = prevSignal;
+        outSMI[0] = smiValue;
+        outSMISignal[0] = prevSignal;
         outIdx = 1;
         // Stable zone. Every stage is a pure recursion from here on.
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
-            emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
-            emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
-            emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
+            emaSlowNum = fmadd!(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = fmadd!(betaSlow, emaSlowDen, kSlow * den);
+            emaFastNum = fmadd!(betaFast, emaFastNum, kFast * emaSlowNum);
+            emaFastDen = fmadd!(betaFast, emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1106,14 +1100,14 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
-            outSMI[(outIdx * outStride) as usize] = smiValue;
-            outSMISignal[(outIdx * outStride) as usize] = prevSignal;
+            prevSignal = fmadd!(betaSignal, prevSignal, kSignal * smiValue);
+            outSMI[outIdx * outStride] = smiValue;
+            outSMISignal[outIdx * outStride] = prevSignal;
             outIdx = outIdx + 1;
             trailingIdx = trailingIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -1137,10 +1131,6 @@ impl Core {
             }
         }
         let state = SmiStreamState {
-            optInTimePeriod,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInSignalPeriod,
             kSlow,
             kFast,
             kSignal,
@@ -1154,11 +1144,11 @@ impl Core {
             emaSlowDen,
             emaFastDen,
             prevSignal,
-            trailingIdx: (trailingIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            highestIdx: highestIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outSMI: outSMI[(*outNBElement - 1) * outStride],
             cur_outSMISignal: outSMISignal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
@@ -1171,7 +1161,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::smi_open`] (composition seam).
     pub(crate) fn smi_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32,
     ) -> Result<(SmiStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1262,7 +1252,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SMI_OpenAndFill")]
     pub fn smi_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outSMI: &mut [f64], outSMISignal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outSMI: &mut [f64], outSMISignal: &mut [f64],
     ) -> Result<(SmiStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1287,7 +1277,7 @@ impl Core {
     /// [`Core::smi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn smi_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64],
     ) -> Result<SmiStream, RetCode> {
         self.smi_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1)
     }
@@ -1385,45 +1375,41 @@ impl SmiStream {
             pkSlot2 = (sp.today & sp.xMask) as usize;
             pkVal2 = inClose;
             // Set the lowest low
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 };
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     if tmp < lowest {
-                        lowestIdx = i;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = sp.today;
                 lowest = tmp;
             }
             // Set the highest high
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmp > highest {
-                        highestIdx = i;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = sp.today;
                 highest = tmp;
             }
             den = highest - lowest;
             num = (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 }) - (highest + lowest) * 0.5;
-            emaSlowNum = fmadd!(sp.betaSlow as f64, emaSlowNum, sp.kSlow * num);
-            emaSlowDen = fmadd!(sp.betaSlow as f64, emaSlowDen, sp.kSlow * den);
-            emaFastNum = fmadd!(sp.betaFast as f64, emaFastNum, sp.kFast * emaSlowNum);
-            emaFastDen = fmadd!(sp.betaFast as f64, emaFastDen, sp.kFast * emaSlowDen);
+            emaSlowNum = fmadd!(sp.betaSlow, emaSlowNum, sp.kSlow * num);
+            emaSlowDen = fmadd!(sp.betaSlow, emaSlowDen, sp.kSlow * den);
+            emaFastNum = fmadd!(sp.betaFast, emaFastNum, sp.kFast * emaSlowNum);
+            emaFastDen = fmadd!(sp.betaFast, emaFastDen, sp.kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1440,9 +1426,9 @@ impl SmiStream {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = fmadd!(sp.betaSignal as f64, prevSignal, sp.kSignal * smiValue);
-            (*outSMI) = smiValue;
-            (*outSMISignal) = prevSignal;
+            prevSignal = fmadd!(sp.betaSignal, prevSignal, sp.kSignal * smiValue);
+            *outSMI = smiValue;
+            *outSMISignal = prevSignal;
         }
         Ok((outSMI, outSMISignal))
     }

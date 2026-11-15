@@ -85,9 +85,9 @@ impl Core {
     #[doc(alias = "TA_BBW_Lookback")]
     #[inline]
     pub fn bbw_lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDevUp == Self::REAL_DEFAULT {
@@ -128,7 +128,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_BBW_DisplayShift")]
-    pub fn bbw_display_shift(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn bbw_display_shift(&self, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -193,9 +193,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInNbDevUp == Self::REAL_DEFAULT {
@@ -216,7 +216,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut maBegIdx: usize = 0_usize;
         let mut maNbElement: usize = 0_usize;
@@ -257,8 +256,8 @@ impl Core {
                 startIdx = _lookbackTotal;
             }
             if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
+                *outBegIdx = 0;
+                *outNBElement = 0;
                 return RetCode::Success;
             }
             _invPeriod = 1.0 / (optInTimePeriod as f64);
@@ -297,10 +296,10 @@ impl Core {
                     varTotal1 += _tempReal;
                     _tempReal *= _tempReal;
                     varTotal2 += _tempReal;
-                    _peakTotal2 = (if varTotal2 > _peakTotal2 { varTotal2 } else { _peakTotal2 });
+                    _peakTotal2 = if varTotal2 > _peakTotal2 { varTotal2 } else { _peakTotal2 };
                     meanValue1 = varTotal1 * _invPeriod;
                     variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-                    _mid[_outIdx - _tileBase] = maTotal / ((optInTimePeriod) as f64);
+                    _mid[_outIdx - _tileBase] = maTotal / (optInTimePeriod as f64);
                     maTotal -= inReal[_trailingIdx];
                     _tempReal = inReal[_trailingIdx] - shift;
                     varTotal1 -= _tempReal;
@@ -318,7 +317,6 @@ impl Core {
                             let _w0 = &inReal[_j..][.._wn];
                             for _wk in 0.._wn {
                                 _tempReal += _w0[_wk];
-                                _j += 1;
                             }
                         }
                         shift = _tempReal * _invPeriod;
@@ -385,7 +383,7 @@ impl Core {
                     _k = 0;
                     while _k < _outIdx - _tileBase {
                         middle = _mid[_k];
-                        tempReal = (outReal[_tileBase + _k]).sqrt() * optInNbDevUp;
+                        tempReal = outReal[_tileBase + _k].sqrt() * optInNbDevUp;
                         upper = middle + tempReal;
                         lower = middle - tempReal;
                         outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
@@ -399,8 +397,8 @@ impl Core {
                     _k = 0;
                     while _k < _outIdx - _tileBase {
                         middle = _mid[_k];
-                        deviation = (outReal[_tileBase + _k]).sqrt();
-                        upper = fmadd!(deviation as f64, optInNbDevUp, middle);
+                        deviation = outReal[_tileBase + _k].sqrt();
+                        upper = fmadd!(deviation, optInNbDevUp, middle);
                         lower = middle - deviation * optInNbDevDn;
                         outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                         if middle == 0.0 {
@@ -411,13 +409,13 @@ impl Core {
                 }
                 if !(_i <= endIdx) { break; }
             }
-            (*outNBElement) = _outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = _outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         }
         if self.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX) > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
@@ -425,20 +423,18 @@ impl Core {
         let _xr0 = match self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         maBegIdx = _xr0.beg_idx;
         maNbElement = _xr0.count;
-        retCode = RetCode::Success;
         // From the moving average's begIdx, as TA_BBANDS enters its deviation:
         // the variance's shift and reseed schedule are anchored on its start.
         let _xr1 = match self.var(maBegIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr1.beg_idx;
-        (*outNBElement) = _xr1.count;
-        retCode = RetCode::Success;
-        offset = maNbElement - (*outNBElement);
+        *outBegIdx = _xr1.beg_idx;
+        *outNBElement = _xr1.count;
+        offset = maNbElement - *outNBElement;
         if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 middle = tempBuffer[i + offset];
-                tempReal = (outReal[i]).sqrt() * optInNbDevUp;
+                tempReal = outReal[i].sqrt() * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
                 outReal[i] = (upper - lower) / middle * 100.0;
@@ -450,10 +446,10 @@ impl Core {
         } else {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 middle = tempBuffer[i + offset];
-                deviation = (outReal[i]).sqrt();
-                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
+                deviation = outReal[i].sqrt();
+                upper = fmadd!(deviation, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
@@ -605,10 +601,8 @@ pub struct BbwStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BbwStreamState {
-    optInTimePeriod: i32,
     optInNbDevUp: f64,
     optInNbDevDn: f64,
-    optInMAType: MAType,
     sub0: MaStream,
     sub1: VarStream,
     cur_outReal: f64,
@@ -635,7 +629,7 @@ impl Core {
         // Combine map (batch tail, per bar).
         if sp.optInNbDevUp == sp.optInNbDevDn {
             middle = cur_tempBuffer;
-            tempReal = (cur_outReal).sqrt() * sp.optInNbDevUp;
+            tempReal = cur_outReal.sqrt() * sp.optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
             cur_outReal = (upper - lower) / middle * 100.0;
@@ -644,15 +638,15 @@ impl Core {
             }
         } else {
             middle = cur_tempBuffer;
-            deviation = (cur_outReal).sqrt();
-            upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
+            deviation = cur_outReal.sqrt();
+            upper = fmadd!(deviation, sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
             cur_outReal = (upper - lower) / middle * 100.0;
             if middle == 0.0 {
                 cur_outReal = 0.0;
             }
         }
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -682,9 +676,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDevUp == Self::REAL_DEFAULT {
@@ -702,19 +696,15 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut maBegIdx: usize = 0_usize;
         let mut maNbElement: usize = 0_usize;
@@ -726,29 +716,27 @@ impl Core {
         let mut lower: f64 = 0.0_f64;
         let mut tempBuffer: Vec<f64> = Vec::new();
         if self.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)? > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Before the variance: it may be written over inReal.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, &mut maBegIdx, &mut maNbElement, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.ma_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], startIdx as usize, optInTimePeriod, optInMAType, &mut maBegIdx, &mut maNbElement, &mut tempBuffer[..])?;
         // From the moving average's begIdx, as TA_BBANDS enters its deviation:
         // the variance's shift and reseed schedule are anchored on its start.
         // Sub-stream 1: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.var_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((maBegIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
-        offset = maNbElement - (*outNBElement);
+        let sub1 = self.var_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], maBegIdx as usize, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        offset = maNbElement - *outNBElement;
         if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 middle = tempBuffer[i + offset];
-                tempReal = (sc_outReal[i]).sqrt() * optInNbDevUp;
+                tempReal = sc_outReal[i].sqrt() * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
                 sc_outReal[i] = (upper - lower) / middle * 100.0;
@@ -760,10 +748,10 @@ impl Core {
         } else {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 middle = tempBuffer[i + offset];
-                deviation = (sc_outReal[i]).sqrt();
-                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
+                deviation = sc_outReal[i].sqrt();
+                upper = fmadd!(deviation, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
@@ -779,10 +767,8 @@ impl Core {
         }
         let mut state = BbwStreamState {
             cur_outReal: 0.0_f64,
-            optInTimePeriod,
             optInNbDevUp,
             optInNbDevDn,
-            optInMAType,
             sub0,
             sub1,
         };
@@ -796,7 +782,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::bbw_open`] (composition seam).
     pub(crate) fn bbw_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType,
     ) -> Result<(BbwStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -869,7 +855,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_BBW_OpenAndFill")]
     pub fn bbw_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(BbwStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -888,7 +874,7 @@ impl Core {
     /// [`Core::bbw_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn bbw_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<BbwStream, RetCode> {
         self.bbw_open_impl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
@@ -970,7 +956,7 @@ impl BbwStream {
             // Combine map (batch tail, per bar).
             if sp.optInNbDevUp == sp.optInNbDevDn {
                 middle = cur_tempBuffer;
-                tempReal = (cur_outReal).sqrt() * sp.optInNbDevUp;
+                tempReal = cur_outReal.sqrt() * sp.optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
                 cur_outReal = (upper - lower) / middle * 100.0;
@@ -979,15 +965,15 @@ impl BbwStream {
                 }
             } else {
                 middle = cur_tempBuffer;
-                deviation = (cur_outReal).sqrt();
-                upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
+                deviation = cur_outReal.sqrt();
+                upper = fmadd!(deviation, sp.optInNbDevUp, middle);
                 lower = middle - deviation * sp.optInNbDevDn;
                 cur_outReal = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     cur_outReal = 0.0;
                 }
             }
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

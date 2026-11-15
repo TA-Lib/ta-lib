@@ -70,7 +70,7 @@ impl Core {
     #[doc(alias = "TA_HT_DCPERIOD_Lookback")]
     pub fn ht_dcperiod_lookback(&self) -> Result<usize, RetCode> {
         // See mama_lookback for an explanation of these
-        return Ok((32 + self.unstable_count(FuncUnstId::HT_DCPERIOD, (80 + 50 * 4), (80 + 50 * 8))) as usize);
+        return Ok((32 + self.unstable_count(FuncUnstId::HT_DCPERIOD, 80 + 50 * 4, 80 + 50 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::ht_dcperiod`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
@@ -217,12 +217,12 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -431,7 +431,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -461,7 +461,7 @@ impl Core {
             // Ooof... let's do the next price bar now!
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Hilbert Transform estimate of the dominant cycle period (in bars) of the price series.
@@ -763,7 +763,7 @@ impl Core {
             sp.I1ForEvenPrev2 = detrender;
         }
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -786,9 +786,9 @@ impl Core {
         }
         sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
         sp.smoothPeriod = fmadd!(0.67 as f64, sp.smoothPeriod, 0.33 * sp.period);
-        (*outReal) = sp.smoothPeriod;
+        *outReal = sp.smoothPeriod;
         // Ooof... let's do the next price bar now!
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
@@ -828,14 +828,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -910,11 +908,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -1123,7 +1121,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -1147,12 +1145,12 @@ impl Core {
             period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
             smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             if today >= startIdx {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = smoothPeriod;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = smoothPeriod;
             }
             // Ooof... let's do the next price bar now!
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
@@ -1401,44 +1399,36 @@ impl HtDcperiodStream {
             let mut Q2: f64 = 0.0_f64;
             let mut I2: f64 = 0.0_f64;
             let mut todayValue: f64 = 0.0_f64;
-            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
-            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
-            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
-            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
             let mut Re = sp.Re;
-            let mut hilbertIdx = sp.hilbertIdx;
+            let hilbertIdx = sp.hilbertIdx;
             let mut period = sp.period;
-            let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
-            let mut prevI2 = sp.prevI2;
-            let mut prevQ2 = sp.prevQ2;
+            let prevI2 = sp.prevI2;
+            let prevQ2 = sp.prevQ2;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
-            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
-            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
             let mut prev_detrender_Even = sp.prev_detrender_Even;
             let mut prev_detrender_Odd = sp.prev_detrender_Odd;
-            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
-            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+            let prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
             let mut prev_jI_Even = sp.prev_jI_Even;
             let mut prev_jI_Odd = sp.prev_jI_Odd;
-            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
-            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
+            let prev_jI_input_Even = sp.prev_jI_input_Even;
+            let prev_jI_input_Odd = sp.prev_jI_input_Odd;
             let mut prev_jQ_Even = sp.prev_jQ_Even;
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
-            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
-            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+            let prev_jQ_input_Even = sp.prev_jQ_input_Even;
+            let prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
             let mut smoothPeriod = sp.smoothPeriod;
-            let mut trailingWMAValue = sp.trailingWMAValue;
             adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal;
-            periodWMASub += todayValue;
-            periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
-            periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1447,7 +1437,6 @@ impl HtDcperiodStream {
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
                 detrender += prev_detrender_Even;
-                prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Even[hilbertIdx];
@@ -1455,7 +1444,6 @@ impl HtDcperiodStream {
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
                 Q1 += prev_Q1_Even;
-                prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
                 jI = -sp.jI_Even[hilbertIdx];
@@ -1463,7 +1451,6 @@ impl HtDcperiodStream {
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
                 jI += prev_jI_Even;
-                prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
                 jQ = -sp.jQ_Even[hilbertIdx];
@@ -1471,11 +1458,7 @@ impl HtDcperiodStream {
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
                 jQ += prev_jQ_Even;
-                prev_jQ_input_Even = Q1;
                 jQ *= adjustedPrevPeriod;
-                if { hilbertIdx += 1; hilbertIdx } == 3 {
-                    hilbertIdx = 0;
-                }
                 Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
                 I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
@@ -1483,8 +1466,6 @@ impl HtDcperiodStream {
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForOddPrev3 = I1ForOddPrev2;
-                I1ForOddPrev2 = detrender;
             } else {
                 // Do the Hilbert Transforms for odd price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1493,7 +1474,6 @@ impl HtDcperiodStream {
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
                 detrender += prev_detrender_Odd;
-                prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Odd[hilbertIdx];
@@ -1501,7 +1481,6 @@ impl HtDcperiodStream {
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
                 Q1 += prev_Q1_Odd;
-                prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
                 jI = -sp.jI_Odd[hilbertIdx];
@@ -1509,7 +1488,6 @@ impl HtDcperiodStream {
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
                 jI += prev_jI_Odd;
-                prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
                 jQ = -sp.jQ_Odd[hilbertIdx];
@@ -1517,7 +1495,6 @@ impl HtDcperiodStream {
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
                 jQ += prev_jQ_Odd;
-                prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
                 Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
                 I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
@@ -1526,14 +1503,10 @@ impl HtDcperiodStream {
                 //
                 // Save the current detrender value for being
                 // used by the "even" logic later.
-                I1ForEvenPrev3 = I1ForEvenPrev2;
-                I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
-            prevQ2 = Q2;
-            prevI2 = I2;
             tempReal = period;
             if Im != 0.0 && Re != 0.0 {
                 period = 360.0 / ((Im / Re).atan() * sp.rad2Deg);
@@ -1553,7 +1526,7 @@ impl HtDcperiodStream {
             }
             period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
             smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
-            (*outReal) = smoothPeriod;
+            *outReal = smoothPeriod;
         }
         Ok(outReal)
     }

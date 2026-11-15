@@ -75,7 +75,7 @@ impl Core {
     /// the first output value can be produced.
     #[doc(alias = "TA_CDLHIKKAKE_Lookback")]
     pub fn cdlhikkake_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((5) as usize);
+        return Ok(5 as usize);
     }
     /// Display shift of one output of [`Core::cdlhikkake`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
@@ -147,8 +147,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -205,7 +205,7 @@ impl Core {
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
-                outInteger[outIdx] = (patternResult) as i32;
+                outInteger[outIdx] = patternResult as i32;
                 outIdx += 1;
             } else if cd > 0 &&
                (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
@@ -227,8 +227,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// A 3-bar pattern: an inside bar followed by a false breakout, optionally later confirmed by a
@@ -397,7 +397,7 @@ struct CdlhikkakeStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlhikkake_step_impl(sp: &mut CdlhikkakeStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlhikkake_step_impl(sp: &mut CdlhikkakeStreamState, _inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if sp.lag1_inHigh < sp.lag2_inHigh &&
            sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
            (inHigh < sp.lag1_inHigh &&
@@ -409,22 +409,22 @@ impl Core {
             sp.savedHigh = sp.lag1_inHigh;
             sp.savedLow = sp.lag1_inLow;
             sp.cd = 4;
-            (*outInteger) = (sp.patternResult) as i32;
+            *outInteger = sp.patternResult as i32;
         } else if sp.cd > 0 &&
            (sp.patternResult > 0 &&    // search for confirmation if hikkake was no more than 3 bars ago
              inClose > sp.savedHigh || // close higher than the high of 2nd
             sp.patternResult < 0 &&
              inClose < sp.savedLow)    // close lower than the low of 2nd
         {
-            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+            *outInteger = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             sp.cd = 0;
         } else {
-            (*outInteger) = 0;
+            *outInteger = 0;
         }
         if sp.cd > 0 {
             sp.cd -= 1;
         }
-        sp.cur_outInteger = (*outInteger);
+        sp.cur_outInteger = *outInteger;
         sp.lag2_inHigh = sp.lag1_inHigh;
         sp.lag1_inHigh = inHigh;
         sp.lag2_inLow = sp.lag1_inLow;
@@ -444,14 +444,12 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -473,8 +471,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Do the calculation using tight loops.
@@ -528,17 +526,17 @@ impl Core {
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
+                outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = patternResult as i32;
             } else if cd > 0 &&
                (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
                  inClose[i] > savedHigh || // close higher than the high of 2nd
                 patternResult < 0 &&
                  inClose[i] < savedLow)    // close lower than the low of 2nd
             {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
+                outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
                 cd = 0;
             } else {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
+                outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0;
             }
             if cd > 0 {
                 cd -= 1;
@@ -547,8 +545,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = CdlhikkakeStreamState {
@@ -746,10 +744,10 @@ impl CdlhikkakeStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cd = sp.cd;
+            let cd = sp.cd;
             let mut patternResult = sp.patternResult;
-            let mut savedHigh = sp.savedHigh;
-            let mut savedLow = sp.savedLow;
+            let savedHigh = sp.savedHigh;
+            let savedLow = sp.savedLow;
             if sp.lag1_inHigh < sp.lag2_inHigh &&
                sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
                (inHigh < sp.lag1_inHigh &&
@@ -758,20 +756,16 @@ impl CdlhikkakeStream {
                  inLow > sp.lag1_inLow)           // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { -1 });
-                savedHigh = sp.lag1_inHigh;
-                savedLow = sp.lag1_inLow;
-                cd = 4;
-                (*outInteger) = (patternResult) as i32;
+                *outInteger = patternResult as i32;
             } else if cd > 0 &&
                (patternResult > 0 &&    // search for confirmation if hikkake was no more than 3 bars ago
                  inClose > savedHigh || // close higher than the high of 2nd
                 patternResult < 0 &&
                  inClose < savedLow)    // close lower than the low of 2nd
             {
-                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
-                cd = 0;
+                *outInteger = (patternResult + ((100 * (if patternResult > 0 { 1 } else { -1 })) as i32)) as i32;
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         }
         Ok(outInteger)

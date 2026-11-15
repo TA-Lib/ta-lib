@@ -88,20 +88,16 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_ALMA_Lookback")]
     #[inline]
-    pub fn alma_lookback(&self, mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn alma_lookback(&self, mut optInTimePeriod: i32, optInSigma: f64, optInOffset: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 9;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInSigma == Self::REAL_DEFAULT {
-            optInSigma = 6e0;
-        } else if !((optInSigma >= 1e-2) && (optInSigma <= Self::REAL_MAX)) {
+        if optInSigma != Self::REAL_DEFAULT && !((optInSigma >= 1e-2) && (optInSigma <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInOffset == Self::REAL_DEFAULT {
-            optInOffset = 8.5e-1;
-        } else if !((optInOffset >= 0e0) && (optInOffset <= 1e0)) {
+        if optInOffset != Self::REAL_DEFAULT && !((optInOffset >= 0e0) && (optInOffset <= 1e0)) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -127,7 +123,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_ALMA_DisplayShift")]
-    pub fn alma_display_shift(&self, mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn alma_display_shift(&self, optInTimePeriod: i32, optInSigma: f64, optInOffset: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.alma_lookback(optInTimePeriod, optInSigma, optInOffset)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -155,9 +151,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 9;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInSigma == Self::REAL_DEFAULT {
@@ -201,32 +197,30 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         // A dot product seeded with 0.0 would turn a -0.0 input into +0.0.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
-            (*outNBElement) = endIdx - startIdx + 1;
+            *outBegIdx = startIdx;
+            *outNBElement = endIdx - startIdx + 1;
             i = startIdx;
             outIdx = 0;
-            if outIdx < ((((*outNBElement) as usize)) as usize) {
-                let _wn: usize = ((((*outNBElement) as usize)) as usize) - outIdx;
+            if outIdx < ((*outNBElement as usize) as usize) {
+                let _wn: usize = ((*outNBElement as usize) as usize) - outIdx;
                 let _w0 = &inReal[i..][.._wn];
                 let _w1 = &mut outReal[outIdx..][.._wn];
                 for _wk in 0.._wn {
-                    _w1[_wk] = ((_w0[_wk]) as f64);
-                    i += 1;
-                    outIdx += 1;
+                    _w1[_wk] = _w0[_wk] as f64;
                 }
             }
             return RetCode::Success;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            weights = &mut local_weights[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            weights = &mut local_weights[..optInTimePeriod as usize];
         } else {
             heap_weights = vec![0.0_f64; (optInTimePeriod) as usize];
             weights = &mut heap_weights;
@@ -234,23 +228,23 @@ impl Core {
         // The expression order is the spec: it is what makes the output bitwise
         // equal to Tulip's beta/alma.c. Keep the floor in binary64 and (j-m) squared
         // in double (an int square overflows at large periods).
-        m = (c_floor(((optInOffset) as f64) * (lookbackTotal as f64))) as i32;
-        s = (optInTimePeriod as f64) / ((optInSigma) as f64);
+        m = c_floor((optInOffset as f64) * (lookbackTotal as f64)) as i32;
+        s = (optInTimePeriod as f64) / (optInSigma as f64);
         twoSSq = 2.0 * s * s;
         norm = 0.0;
         j = 0;
-        if j < ((optInTimePeriod) as usize) {
+        if j < (optInTimePeriod as usize) {
             let _wn: usize = (optInTimePeriod as usize) - j;
             let _w0 = &mut weights[j..][.._wn];
             for _wk in 0.._wn {
-                d = (((j) as i32) - m) as f64;
+                d = ((j as i32) - m) as f64;
                 _w0[_wk] = (-(d * d) / twoSSq).exp();
                 norm += _w0[_wk];
                 j += 1;
             }
         }
         j = 0;
-        if j < ((optInTimePeriod) as usize) {
+        if j < (optInTimePeriod as usize) {
             let _wn: usize = (optInTimePeriod as usize) - j;
             let _w0 = &mut weights[j..][.._wn];
             for _wk in 0.._wn {
@@ -272,7 +266,7 @@ impl Core {
             s3 = 0.0;
             b = i - lookbackTotal;
             j = 0;
-            if j < ((optInTimePeriod) as usize) {
+            if j < (optInTimePeriod as usize) {
                 let _wn: usize = (optInTimePeriod as usize) - j;
                 let _w0 = &inReal[b..][.._wn + 3];
                 let _w1 = &weights[j..][.._wn];
@@ -311,8 +305,8 @@ impl Core {
             outIdx += 1;
             i += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian whose peak sits a
@@ -456,15 +450,10 @@ pub struct AlmaStream {
 #[allow(non_snake_case, dead_code)]
 struct AlmaStreamState {
     optInTimePeriod: i32,
-    optInSigma: f64,
-    optInOffset: f64,
     lookbackTotal: usize,
-    weights_Idx: usize,
-    maxIdx_weights: usize,
     winPos_j: usize,
     winCap_j: usize,
     win_j_inReal: Vec<f64>,
-    cbSize_weights: usize,
     cb_weights: Vec<f64>,
     cur_outReal: f64,
 }
@@ -480,8 +469,8 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut w: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         sp.win_j_inReal[sp.winPos_j] = inReal;
@@ -490,20 +479,20 @@ impl Core {
         // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
         j = sp.lookbackTotal;
         loop {
-            sum += sp.cb_weights[w] * sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+            sum += sp.cb_weights[w] * sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize];
             w += 1;
             if j == 0 { break; }
             j -= 1;
         }
-        (*outReal) = sum;
-        sp.cur_outReal = (*outReal);
+        *outReal = sum;
+        sp.cur_outReal = *outReal;
         sp.winPos_j = sp.winPos_j + 1;
         if sp.winPos_j >= sp.winCap_j {
             sp.winPos_j = 0;
         }
     }
 
-    fn alma_step_tape_impl(sp: &mut AlmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+    fn alma_step_tape_impl(sp: &mut AlmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, _inReal: f64, outReal: &mut f64) {
         let mut sum: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         let mut w: usize = 0_usize;
@@ -517,8 +506,8 @@ impl Core {
             if j == 0 { break; }
             j -= 1;
         }
-        (*outReal) = sum;
-        sp.cur_outReal = (*outReal);
+        *outReal = sum;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::alma_open_internal`]
@@ -529,9 +518,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 9;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInSigma == Self::REAL_DEFAULT {
@@ -546,14 +535,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.alma_lookback(optInTimePeriod, optInSigma, optInOffset)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -563,19 +550,14 @@ impl Core {
             let state = AlmaStreamState {
                 cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
-                optInSigma: optInSigma,
-                optInOffset: optInOffset,
                 lookbackTotal: 0_usize,
-                weights_Idx: 0_usize,
-                maxIdx_weights: 0_usize,
                 winPos_j: 0_usize,
                 winCap_j: 1_usize,
                 win_j_inReal: vec![0.0_f64; 1],
-                cbSize_weights: 0_usize,
                 cb_weights: Vec::new(),
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -599,7 +581,6 @@ impl Core {
         let mut w: usize = 0_usize;
         let mut m: i32 = 0_i32;
         let mut weights: Vec<f64> = Vec::new();
-        let mut weights_Idx: usize = 0;
         let mut maxIdx_weights: usize = 29;
         // Filled once and read as a plain array.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -607,32 +588,31 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         weights = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_weights = ((optInTimePeriod) as usize) - 1;
-        weights_Idx = 0;
+        maxIdx_weights = (optInTimePeriod as usize) - 1;
         // The expression order is the spec: it is what makes the output bitwise
         // equal to Tulip's beta/alma.c. Keep the floor in binary64 and (j-m) squared
         // in double (an int square overflows at large periods).
-        m = (c_floor(((optInOffset) as f64) * (lookbackTotal as f64))) as i32;
-        s = (optInTimePeriod as f64) / ((optInSigma) as f64);
+        m = c_floor((optInOffset as f64) * (lookbackTotal as f64)) as i32;
+        s = (optInTimePeriod as f64) / (optInSigma as f64);
         twoSSq = 2.0 * s * s;
         norm = 0.0;
         // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((optInTimePeriod) as usize) {
-            d = (((j) as i32) - m) as f64;
+        while j < (optInTimePeriod as usize) {
+            d = ((j as i32) - m) as f64;
             weights[j] = (-(d * d) / twoSSq).exp();
             norm += weights[j];
             j += 1;
         }
         // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((optInTimePeriod) as usize) {
+        while j < (optInTimePeriod as usize) {
             weights[j] = weights[j] / norm;
             j += 1;
         }
@@ -643,17 +623,16 @@ impl Core {
         while i <= endIdx {
             sum = 0.0;
             w = 0;
-            for j in (i - lookbackTotal as usize)..(i as usize) + 1 {
+            for j in i - lookbackTotal..i + 1 {
                 sum += weights[w] * inReal[j];
                 w += 1;
             }
-            j = (i as usize) + 1;
-            outReal[(outIdx * outStride) as usize] = sum;
+            outReal[outIdx * outStride] = sum;
             outIdx += 1;
             i += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_j: i64 = (lookbackTotal + 1) as i64;
@@ -668,16 +647,11 @@ impl Core {
         }
         let state = AlmaStreamState {
             optInTimePeriod,
-            optInSigma,
-            optInOffset,
             lookbackTotal,
-            weights_Idx,
-            maxIdx_weights,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             winPos_j: 0_usize,
             winCap_j: cap_j as usize,
             win_j_inReal,
-            cbSize_weights: cbSize_weights,
             cb_weights: weights,
         };
         Ok(AlmaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -685,7 +659,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::alma_open`] (composition seam).
     pub(crate) fn alma_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInSigma: f64, optInOffset: f64,
     ) -> Result<(AlmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -758,7 +732,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ALMA_OpenAndFill")]
     pub fn alma_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInSigma: f64, optInOffset: f64, outReal: &mut [f64],
     ) -> Result<(AlmaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -777,7 +751,7 @@ impl Core {
     /// [`Core::alma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn alma_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInSigma: f64, mut optInOffset: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInSigma: f64, optInOffset: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AlmaStream, RetCode> {
         self.alma_open_impl(inReal, startIdx, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal, 1)
     }
@@ -850,8 +824,8 @@ impl AlmaStream {
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             pkSlot0 = sp.winPos_j as usize;
             pkVal0 = inReal;
@@ -860,12 +834,12 @@ impl AlmaStream {
             // for( j = sp.lookbackTotal; j >= 0; j -= 1 )
             j = sp.lookbackTotal;
             loop {
-                sum += sp.cb_weights[w] * (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
+                sum += sp.cb_weights[w] * (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 });
                 w += 1;
                 if j == 0 { break; }
                 j -= 1;
             }
-            (*outReal) = sum;
+            *outReal = sum;
         }
         Ok(outReal)
     }
@@ -958,7 +932,7 @@ impl AlmaStream {
                 if j == 0 { break; }
                 j -= 1;
             }
-            (*outReal) = sum;
+            *outReal = sum;
         }
         Ok(outReal)
     }

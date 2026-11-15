@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_FISHER_Lookback")]
     #[inline]
     pub fn fisher_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The smoothed values of two starts differ by 0.67 times less each bar on
@@ -114,7 +114,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FISHER_DisplayShift")]
-    pub fn fisher_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn fisher_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.fisher_lookback(optInTimePeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -176,9 +176,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.fisher_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -187,7 +187,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFisher.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outTrigger.len());
-        if (outFisher.as_ptr() == outTrigger.as_ptr()) {
+        if outFisher.as_ptr() == outTrigger.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -228,8 +228,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -249,29 +249,29 @@ impl Core {
         blockStart = today - lookbackTotal;
         outIdx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..optInTimePeriod as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preHighest = &mut local_preHighest[..optInTimePeriod as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..optInTimePeriod as usize];
         } else {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preLowest = &mut local_preLowest[..optInTimePeriod as usize];
         } else {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
@@ -305,7 +305,7 @@ impl Core {
             // Prefix extrema of the next block, clamped to what remains, stored
             // one slot up: slot 0 repeats the suffix so that bar 'today', whose
             // window is the block itself, runs the same combine as the others.
-            blockNext = blockStart + ((optInTimePeriod) as usize);
+            blockNext = blockStart + (optInTimePeriod as usize);
             nAvail = endIdx + 1 - blockNext;
             if nAvail > ((optInTimePeriod - 1) as usize) {
                 nAvail = (optInTimePeriod - 1) as usize;
@@ -348,7 +348,7 @@ impl Core {
                 tempLow = inLow[today + m];
                 price = (tempHigh + tempLow) / 2.0;
                 tempReal = highest - lowest;
-                if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                if !(tempReal.abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                     ratio = (price - lowest) / tempReal;
                 } else {
                     ratio = 0.5;
@@ -372,8 +372,8 @@ impl Core {
             today = today + nAvail + 1;
             blockStart = blockNext;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's position in its rolling
@@ -528,7 +528,6 @@ pub struct FisherStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct FisherStreamState {
-    optInTimePeriod: i32,
     highest: f64,
     lowest: f64,
     smoothed: f64,
@@ -612,7 +611,7 @@ impl Core {
         // contributes nothing and both recursions decay on their own
         // coefficients.
         tempReal = sp.highest - sp.lowest;
-        if !(((tempReal).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
+        if !(tempReal.abs() <= 1e-14 * (sp.highest.abs() + sp.lowest.abs())) {
             ratio = (price - sp.lowest) / tempReal;
         } else {
             ratio = 0.5;
@@ -629,17 +628,17 @@ impl Core {
             sp.smoothed = -0.999;
         }
         fish = fmadd!(0.5 as f64, ((1.0 + sp.smoothed) / (1.0 - sp.smoothed)).ln(), 0.5 * sp.prevFish);
-        (*outFisher) = fish;
+        *outFisher = fish;
         // The author's second plot is Fish[1]: the previous bar's smoothed,
         // which at the first output bar is the zero seed when no unstable
         // period was discarded, and the computed smoothed of the bar before it
         // when one was.
-        (*outTrigger) = sp.prevFish;
+        *outTrigger = sp.prevFish;
         sp.prevFish = fish;
         sp.trailingIdx += 1;
         sp.today += 1;
-        sp.cur_outFisher = (*outFisher);
-        sp.cur_outTrigger = (*outTrigger);
+        sp.cur_outFisher = *outFisher;
+        sp.cur_outTrigger = *outTrigger;
     }
 
     /// The single whole-history transcription behind [`Core::fisher_open_internal`]
@@ -668,9 +667,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -678,14 +677,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut price: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
@@ -710,8 +707,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -746,42 +743,42 @@ impl Core {
             // with the midpoint recomputed on the rare rescan rather than held in a
             // buffer the caller would have to own.
             price = (inHigh[today] + inLow[today]) / 2.0;
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                tempHigh = inHigh[(highestIdx) as usize];
-                tempLow = inLow[(highestIdx) as usize];
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                tempHigh = inHigh[highestIdx as usize];
+                tempLow = inLow[highestIdx as usize];
                 highest = (tempHigh + tempLow) / 2.0;
-                i = (highestIdx) as usize;
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tempHigh = inHigh[i];
                     tempLow = inLow[i];
                     tempReal = (tempHigh + tempLow) / 2.0;
                     if tempReal > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tempReal;
                     }
                 }
             } else if price >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = price;
             }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                tempHigh = inHigh[(lowestIdx) as usize];
-                tempLow = inLow[(lowestIdx) as usize];
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                tempHigh = inHigh[lowestIdx as usize];
+                tempLow = inLow[lowestIdx as usize];
                 lowest = (tempHigh + tempLow) / 2.0;
-                i = (lowestIdx) as usize;
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tempHigh = inHigh[i];
                     tempLow = inLow[i];
                     tempReal = (tempHigh + tempLow) / 2.0;
                     if tempReal < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tempReal;
                     }
                 }
             } else if price <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = price;
             }
             // A flat window answers the neutral position rather than dividing by
@@ -792,7 +789,7 @@ impl Core {
             // contributes nothing and both recursions decay on their own
             // coefficients.
             tempReal = highest - lowest;
-            if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 ratio = (price - lowest) / tempReal;
             } else {
                 ratio = 0.5;
@@ -810,20 +807,20 @@ impl Core {
             }
             fish = fmadd!(0.5 as f64, ((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
             if today >= startIdx {
-                outFisher[(outIdx * outStride) as usize] = fish;
+                outFisher[outIdx * outStride] = fish;
                 // The author's second plot is Fish[1]: the previous bar's smoothed,
                 // which at the first output bar is the zero seed when no unstable
                 // period was discarded, and the computed smoothed of the bar before it
                 // when one was.
-                outTrigger[(outIdx * outStride) as usize] = prevFish;
+                outTrigger[outIdx * outStride] = prevFish;
                 outIdx = outIdx + 1;
             }
             prevFish = fish;
             trailingIdx += 1;
             today += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -845,16 +842,15 @@ impl Core {
             }
         }
         let state = FisherStreamState {
-            optInTimePeriod,
             highest,
             lowest,
             smoothed,
             prevFish,
-            trailingIdx: (trailingIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            highestIdx: highestIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outFisher: outFisher[(*outNBElement - 1) * outStride],
             cur_outTrigger: outTrigger[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
@@ -866,7 +862,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::fisher_open`] (composition seam).
     pub(crate) fn fisher_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(FisherStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -951,7 +947,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_FISHER_OpenAndFill")]
     pub fn fisher_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outFisher: &mut [f64], outTrigger: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, outFisher: &mut [f64], outTrigger: &mut [f64],
     ) -> Result<(FisherStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -976,7 +972,7 @@ impl Core {
     /// [`Core::fisher_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn fisher_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFisher: &mut [f64], outTrigger: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFisher: &mut [f64], outTrigger: &mut [f64],
     ) -> Result<FisherStream, RetCode> {
         self.fisher_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger, 1)
     }
@@ -1074,40 +1070,36 @@ impl FisherStream {
             price = ((if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 }) + (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 })) / 2.0;
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                tempHigh = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
-                tempLow = (if ((highestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(highestIdx & sp.xMask) as usize] } else { pkVal1 });
+                tempHigh = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
+                tempLow = if ((highestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(highestIdx & sp.xMask) as usize] } else { pkVal1 };
                 highest = (tempHigh + tempLow) / 2.0;
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tempHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
-                    tempLow = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tempHigh = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
+                    tempLow = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     tempReal = (tempHigh + tempLow) / 2.0;
                     if tempReal > highest {
-                        highestIdx = i;
                         highest = tempReal;
                     }
                 }
             } else if price >= highest {
-                highestIdx = sp.today;
                 highest = price;
             }
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                tempHigh = (if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(lowestIdx & sp.xMask) as usize] } else { pkVal0 });
-                tempLow = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                tempHigh = if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(lowestIdx & sp.xMask) as usize] } else { pkVal0 };
+                tempLow = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 lowest = (tempHigh + tempLow) / 2.0;
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tempHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
-                    tempLow = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tempHigh = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
+                    tempLow = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     tempReal = (tempHigh + tempLow) / 2.0;
                     if tempReal < lowest {
-                        lowestIdx = i;
                         lowest = tempReal;
                     }
                 }
             } else if price <= lowest {
-                lowestIdx = sp.today;
                 lowest = price;
             }
             // A flat window answers the neutral position rather than dividing by
@@ -1118,7 +1110,7 @@ impl FisherStream {
             // contributes nothing and both recursions decay on their own
             // coefficients.
             tempReal = highest - lowest;
-            if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 ratio = (price - lowest) / tempReal;
             } else {
                 ratio = 0.5;
@@ -1135,12 +1127,12 @@ impl FisherStream {
                 smoothed = -0.999;
             }
             fish = fmadd!(0.5 as f64, ((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * sp.prevFish);
-            (*outFisher) = fish;
+            *outFisher = fish;
             // The author's second plot is Fish[1]: the previous bar's smoothed,
             // which at the first output bar is the zero seed when no unstable
             // period was discarded, and the computed smoothed of the bar before it
             // when one was.
-            (*outTrigger) = sp.prevFish;
+            *outTrigger = sp.prevFish;
         }
         Ok((outFisher, outTrigger))
     }

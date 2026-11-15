@@ -79,19 +79,19 @@ impl Core {
     #[doc(alias = "TA_COPPOCK_Lookback")]
     #[inline]
     pub fn coppock_lookback(&self, mut optInWMAPeriod: i32, mut optInROC1Period: i32, mut optInROC2Period: i32) -> Result<usize, RetCode> {
-        if ((optInWMAPeriod) as i32) == (i32::MIN) {
+        if optInWMAPeriod == i32::MIN {
             optInWMAPeriod = 10;
-        } else if (((optInWMAPeriod) as i32) < 1) || (((optInWMAPeriod) as i32) > 100000) {
+        } else if optInWMAPeriod < 1 || optInWMAPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 11;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 14;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
         // The ROC sum needs max(p1,p2) prior bars before it exists at all, and the
@@ -122,7 +122,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_COPPOCK_DisplayShift")]
-    pub fn coppock_display_shift(&self, mut optInWMAPeriod: i32, mut optInROC1Period: i32, mut optInROC2Period: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn coppock_display_shift(&self, optInWMAPeriod: i32, optInROC1Period: i32, optInROC2Period: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.coppock_lookback(optInWMAPeriod, optInROC1Period, optInROC2Period)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -150,19 +150,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInWMAPeriod) as i32) == (i32::MIN) {
+        if optInWMAPeriod == i32::MIN {
             optInWMAPeriod = 10;
-        } else if (((optInWMAPeriod) as i32) < 1) || (((optInWMAPeriod) as i32) > 100000) {
+        } else if optInWMAPeriod < 1 || optInWMAPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 11;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 14;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.coppock_lookback(optInWMAPeriod, optInROC1Period, optInROC2Period).unwrap_or(usize::MAX);
@@ -226,14 +226,14 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         // Triangle divider in double: the int product w*(w+1) overflows int32 at
         // w >= 46341 (#142), exactly as in TA_WMA.
-        divider = (optInWMAPeriod as f64) * (((optInWMAPeriod + 1)) as f64) / 2.0;
+        divider = (optInWMAPeriod as f64) * ((optInWMAPeriod + 1) as f64) / 2.0;
         outIdx = 0;
         // The S value computed at bar t expires optInWMAPeriod-1 bars later, so a
         // single-cursor ring of optInWMAPeriod-1 slots is enough: read the
@@ -245,8 +245,8 @@ impl Core {
             ringSize = 1;
         }
         if ringSize < 1 { return RetCode::InternalError; }
-        if (ringSize) as usize <= 50usize {
-            sRing = &mut local_sRing[..(ringSize) as usize];
+        if ringSize as usize <= 50usize {
+            sRing = &mut local_sRing[..ringSize as usize];
         } else {
             heap_sRing = vec![0.0_f64; (ringSize) as usize];
             sRing = &mut heap_sRing;
@@ -257,9 +257,9 @@ impl Core {
         sRing[0] = 0.0;
         // One trailing cursor per ROC denominator, advanced in lock-step from the
         // priming scan onward.
-        inIdx = startIdx - (((optInWMAPeriod - 1)) as usize);
-        roc1Idx = inIdx - ((optInROC1Period) as usize);
-        roc2Idx = inIdx - ((optInROC2Period) as usize);
+        inIdx = startIdx - ((optInWMAPeriod - 1) as usize);
+        roc1Idx = inIdx - (optInROC1Period as usize);
+        roc2Idx = inIdx - (optInROC2Period as usize);
         // Priming: the w-1 S values before the first output, oldest first with
         // the weight counting up from 1 -- TA_WMA's own priming order, which the
         // re-anchor below must reproduce. They also fill the ring.
@@ -277,11 +277,11 @@ impl Core {
                     roc1Idx += 1;
                     base2 = _w2[_wk];
                     roc2Idx += 1;
-                    roc1 = (if base1 != 0.0 { (_w0[_wk] / base1 - 1.0) * 100.0 } else { 0.0 });
-                    roc2 = (if base2 != 0.0 { (_w0[_wk] / base2 - 1.0) * 100.0 } else { 0.0 });
+                    roc1 = if base1 != 0.0 { (_w0[_wk] / base1 - 1.0) * 100.0 } else { 0.0 };
+                    roc2 = if base2 != 0.0 { (_w0[_wk] / base2 - 1.0) * 100.0 } else { 0.0 };
                     tempReal = roc1 + roc2;
                     periodSub += tempReal;
-                    periodSum += tempReal * ((i) as f64);
+                    periodSum += tempReal * (i as f64);
                     i += 1;
                     sRing[sRing_Idx] = tempReal;
                     sRing_Idx += 1;
@@ -294,11 +294,11 @@ impl Core {
                     roc1Idx += 1;
                     base2 = inReal[roc2Idx];
                     roc2Idx += 1;
-                    roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
-                    roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
+                    roc1 = if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 };
+                    roc2 = if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 };
                     tempReal = roc1 + roc2;
                     periodSub += tempReal;
-                    periodSum += tempReal * ((i) as f64);
+                    periodSum += tempReal * (i as f64);
                     i += 1;
                     sRing[sRing_Idx] = tempReal;
                     sRing_Idx += 1;
@@ -315,12 +315,12 @@ impl Core {
             roc1Idx += 1;
             base2 = inReal[roc2Idx];
             roc2Idx += 1;
-            roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
-            roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
+            roc1 = if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 };
+            roc2 = if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 };
             tempReal = roc1 + roc2;
             periodSub += tempReal;
             periodSub -= trailingValue;
-            periodSum += tempReal * ((optInWMAPeriod) as f64);
+            periodSum += tempReal * (optInWMAPeriod as f64);
             // Re-anchor every 8*w bars: rebuild both totals from the window
             // itself -- TA_WMA's #254 fix, same single trigger, same interval.
             // The window lives in the ring (w-1 prior S values, sRing_Idx the
@@ -337,7 +337,7 @@ impl Core {
                 while q < ringSize {
                     tempReal2 = sRing[ringWalk];
                     periodSub += tempReal2;
-                    periodSum += tempReal2 * ((rw) as f64);
+                    periodSum += tempReal2 * (rw as f64);
                     rw += 1;
                     ringWalk += 1;
                     if ringWalk >= ringSize {
@@ -346,7 +346,7 @@ impl Core {
                     q += 1;
                 }
                 periodSub += tempReal;
-                periodSum += tempReal * ((optInWMAPeriod) as f64);
+                periodSum += tempReal * (optInWMAPeriod as f64);
             }
             // Read the expiring S value BEFORE overwriting its slot with the
             // current one -- the ring is the aliasing-safe stand-in for TA_WMA's
@@ -370,8 +370,8 @@ impl Core {
             periodSum -= periodSub;
             inIdx += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator (*Barron's*,
@@ -497,8 +497,6 @@ pub struct CoppockStream {
 #[allow(non_snake_case, dead_code)]
 struct CoppockStreamState {
     optInWMAPeriod: i32,
-    optInROC1Period: i32,
-    optInROC2Period: i32,
     ringSize: usize,
     barsSinceReseed: usize,
     periodSum: f64,
@@ -513,7 +511,6 @@ struct CoppockStreamState {
     ringPos_roc2Idx: usize,
     ringCap_roc2Idx: usize,
     ring_roc2Idx_inReal: Vec<f64>,
-    cbSize_sRing: usize,
     cb_sRing: Vec<f64>,
     cur_outReal: f64,
 }
@@ -540,12 +537,12 @@ impl Core {
         let mut ringCapL_roc2Idx: usize = 0_usize;
         base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
         base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
-        roc1 = (if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 });
-        roc2 = (if base2 != 0.0 { (inReal / base2 - 1.0) * 100.0 } else { 0.0 });
+        roc1 = if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 };
+        roc2 = if base2 != 0.0 { (inReal / base2 - 1.0) * 100.0 } else { 0.0 };
         tempReal = roc1 + roc2;
         sp.periodSub += tempReal;
         sp.periodSub -= sp.trailingValue;
-        sp.periodSum += tempReal * ((sp.optInWMAPeriod) as f64);
+        sp.periodSum += tempReal * (sp.optInWMAPeriod as f64);
         // Re-anchor every 8*w bars: rebuild both totals from the window
         // itself -- TA_WMA's #254 fix, same single trigger, same interval.
         // The window lives in the ring (w-1 prior S values, sRing_Idx the
@@ -562,7 +559,7 @@ impl Core {
             while q < sp.ringSize {
                 tempReal2 = sp.cb_sRing[ringWalk];
                 sp.periodSub += tempReal2;
-                sp.periodSum += tempReal2 * ((rw) as f64);
+                sp.periodSum += tempReal2 * (rw as f64);
                 rw += 1;
                 ringWalk += 1;
                 if ringWalk >= sp.ringSize {
@@ -571,7 +568,7 @@ impl Core {
                 q += 1;
             }
             sp.periodSub += tempReal;
-            sp.periodSum += tempReal * ((sp.optInWMAPeriod) as f64);
+            sp.periodSum += tempReal * (sp.optInWMAPeriod as f64);
         }
         // Read the expiring S value BEFORE overwriting its slot with the
         // current one -- the ring is the aliasing-safe stand-in for TA_WMA's
@@ -589,12 +586,12 @@ impl Core {
         // this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
         // to -6.4591709868291103.
         if sp.optInWMAPeriod == 1 {
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         } else {
-            (*outReal) = sp.periodSum / sp.divider;
+            *outReal = sp.periodSum / sp.divider;
         }
         sp.periodSum -= sp.periodSub;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_roc1Idx = sp.ringCap_roc1Idx;
         ringPosL_roc1Idx = sp.ringPos_roc1Idx;
         sp.ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
@@ -621,31 +618,29 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInWMAPeriod) as i32) == (i32::MIN) {
+        if optInWMAPeriod == i32::MIN {
             optInWMAPeriod = 10;
-        } else if (((optInWMAPeriod) as i32) < 1) || (((optInWMAPeriod) as i32) > 100000) {
+        } else if optInWMAPeriod < 1 || optInWMAPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 11;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 14;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut inIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -701,13 +696,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Triangle divider in double: the int product w*(w+1) overflows int32 at
         // w >= 46341 (#142), exactly as in TA_WMA.
-        divider = (optInWMAPeriod as f64) * (((optInWMAPeriod + 1)) as f64) / 2.0;
+        divider = (optInWMAPeriod as f64) * ((optInWMAPeriod + 1) as f64) / 2.0;
         outIdx = 0;
         // The S value computed at bar t expires optInWMAPeriod-1 bars later, so a
         // single-cursor ring of optInWMAPeriod-1 slots is enough: read the
@@ -720,16 +715,16 @@ impl Core {
         }
         if ringSize < 1 { return Err(RetCode::InternalError); }
         sRing = vec![0.0_f64; (ringSize) as usize];
-        maxIdx_sRing = ((ringSize) as usize) - 1;
+        maxIdx_sRing = (ringSize as usize) - 1;
         sRing_Idx = 0;
         // At w == 1 the priming loop below never runs, so the first trailing read
         // would see an undefined slot; at w > 1 priming overwrites every slot.
         sRing[0] = 0.0;
         // One trailing cursor per ROC denominator, advanced in lock-step from the
         // priming scan onward.
-        inIdx = startIdx - (((optInWMAPeriod - 1)) as usize);
-        roc1Idx = inIdx - ((optInROC1Period) as usize);
-        roc2Idx = inIdx - ((optInROC2Period) as usize);
+        inIdx = startIdx - ((optInWMAPeriod - 1) as usize);
+        roc1Idx = inIdx - (optInROC1Period as usize);
+        roc2Idx = inIdx - (optInROC2Period as usize);
         // Priming: the w-1 S values before the first output, oldest first with
         // the weight counting up from 1 -- TA_WMA's own priming order, which the
         // re-anchor below must reproduce. They also fill the ring.
@@ -741,11 +736,11 @@ impl Core {
             roc1Idx += 1;
             base2 = inReal[roc2Idx];
             roc2Idx += 1;
-            roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
-            roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
+            roc1 = if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 };
+            roc2 = if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 };
             tempReal = roc1 + roc2;
             periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
+            periodSum += tempReal * (i as f64);
             i += 1;
             sRing[sRing_Idx] = tempReal;
             sRing_Idx += 1;
@@ -760,12 +755,12 @@ impl Core {
             roc1Idx += 1;
             base2 = inReal[roc2Idx];
             roc2Idx += 1;
-            roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
-            roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
+            roc1 = if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 };
+            roc2 = if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 };
             tempReal = roc1 + roc2;
             periodSub += tempReal;
             periodSub -= trailingValue;
-            periodSum += tempReal * ((optInWMAPeriod) as f64);
+            periodSum += tempReal * (optInWMAPeriod as f64);
             // Re-anchor every 8*w bars: rebuild both totals from the window
             // itself -- TA_WMA's #254 fix, same single trigger, same interval.
             // The window lives in the ring (w-1 prior S values, sRing_Idx the
@@ -782,7 +777,7 @@ impl Core {
                 while q < ringSize {
                     tempReal2 = sRing[ringWalk];
                     periodSub += tempReal2;
-                    periodSum += tempReal2 * ((rw) as f64);
+                    periodSum += tempReal2 * (rw as f64);
                     rw += 1;
                     ringWalk += 1;
                     if ringWalk >= ringSize {
@@ -791,7 +786,7 @@ impl Core {
                     q += 1;
                 }
                 periodSub += tempReal;
-                periodSum += tempReal * ((optInWMAPeriod) as f64);
+                periodSum += tempReal * (optInWMAPeriod as f64);
             }
             // Read the expiring S value BEFORE overwriting its slot with the
             // current one -- the ring is the aliasing-safe stand-in for TA_WMA's
@@ -807,16 +802,16 @@ impl Core {
             // this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
             // to -6.4591709868291103.
             if optInWMAPeriod == 1 {
-                outReal[(outIdx * outStride) as usize] = tempReal;
+                outReal[outIdx * outStride] = tempReal;
             } else {
-                outReal[(outIdx * outStride) as usize] = periodSum / divider;
+                outReal[outIdx * outStride] = periodSum / divider;
             }
             outIdx += 1;
             periodSum -= periodSub;
             inIdx += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_roc1Idx: i64 = (inIdx as i64) - (roc1Idx as i64);
@@ -841,8 +836,6 @@ impl Core {
         }
         let state = CoppockStreamState {
             optInWMAPeriod,
-            optInROC1Period,
-            optInROC2Period,
             ringSize,
             barsSinceReseed,
             periodSum,
@@ -858,7 +851,6 @@ impl Core {
             ringPos_roc2Idx: 0_usize,
             ringCap_roc2Idx: cap_roc2Idx as usize,
             ring_roc2Idx_inReal,
-            cbSize_sRing: cbSize_sRing,
             cb_sRing: sRing,
         };
         Ok(CoppockStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -866,7 +858,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::coppock_open`] (composition seam).
     pub(crate) fn coppock_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInWMAPeriod: i32, mut optInROC1Period: i32, mut optInROC2Period: i32,
+        &self, inReal: &[f64], startIdx: usize, optInWMAPeriod: i32, optInROC1Period: i32, optInROC2Period: i32,
     ) -> Result<(CoppockStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -939,7 +931,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_COPPOCK_OpenAndFill")]
     pub fn coppock_open_and_fill(
-        &self, inReal: &[f64], mut optInWMAPeriod: i32, mut optInROC1Period: i32, mut optInROC2Period: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInWMAPeriod: i32, optInROC1Period: i32, optInROC2Period: i32, outReal: &mut [f64],
     ) -> Result<(CoppockStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -958,7 +950,7 @@ impl Core {
     /// [`Core::coppock_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn coppock_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInWMAPeriod: i32, mut optInROC1Period: i32, mut optInROC2Period: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInWMAPeriod: i32, optInROC1Period: i32, optInROC2Period: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CoppockStream, RetCode> {
         self.coppock_open_impl(inReal, startIdx, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1035,26 +1027,20 @@ impl CoppockStream {
             let mut roc1: f64 = 0.0_f64;
             let mut roc2: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut periodSub = sp.periodSub;
             let mut periodSum = sp.periodSum;
-            let mut sRing_Idx = sp.sRing_Idx;
-            let mut trailingValue = sp.trailingValue;
+            let sRing_Idx = sp.sRing_Idx;
             base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
             base2 = sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx];
-            roc1 = (if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 });
-            roc2 = (if base2 != 0.0 { (inReal / base2 - 1.0) * 100.0 } else { 0.0 });
+            roc1 = if base1 != 0.0 { (inReal / base1 - 1.0) * 100.0 } else { 0.0 };
+            roc2 = if base2 != 0.0 { (inReal / base2 - 1.0) * 100.0 } else { 0.0 };
             tempReal = roc1 + roc2;
-            periodSub += tempReal;
-            periodSub -= trailingValue;
-            periodSum += tempReal * ((sp.optInWMAPeriod) as f64);
+            periodSum += tempReal * (sp.optInWMAPeriod as f64);
             // Re-anchor every 8*w bars: rebuild both totals from the window
             // itself -- TA_WMA's #254 fix, same single trigger, same interval.
             // The window lives in the ring (w-1 prior S values, sRing_Idx the
             // oldest) plus the current bar's tempReal at weight w.
             barsSinceReseed -= 1;
             if barsSinceReseed <= 0 {
-                barsSinceReseed = (8 * sp.optInWMAPeriod) as usize;
-                periodSub = 0.0 as f64;
                 periodSum = 0.0 as f64;
                 rw = 1;
                 ringWalk = sRing_Idx;
@@ -1062,8 +1048,7 @@ impl CoppockStream {
                 q = 0;
                 while q < sp.ringSize {
                     tempReal2 = sp.cb_sRing[ringWalk];
-                    periodSub += tempReal2;
-                    periodSum += tempReal2 * ((rw) as f64);
+                    periodSum += tempReal2 * (rw as f64);
                     rw += 1;
                     ringWalk += 1;
                     if ringWalk >= sp.ringSize {
@@ -1071,17 +1056,11 @@ impl CoppockStream {
                     }
                     q += 1;
                 }
-                periodSub += tempReal;
-                periodSum += tempReal * ((sp.optInWMAPeriod) as f64);
+                periodSum += tempReal * (sp.optInWMAPeriod as f64);
             }
             // Read the expiring S value BEFORE overwriting its slot with the
             // current one -- the ring is the aliasing-safe stand-in for TA_WMA's
             // "save the trailing value before the store" rule.
-            trailingValue = sp.cb_sRing[sRing_Idx];
-            sRing_Idx = sRing_Idx + 1;
-            if sRing_Idx > sp.maxIdx_sRing {
-                sRing_Idx = 0;
-            }
             // Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
             // and TA_WMA ships an exact copy fast path, but the recurrence here is
             // off by a whole term at w == 1 -- ringSize clamps to 1, so the
@@ -1089,9 +1068,9 @@ impl CoppockStream {
             // this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
             // to -6.4591709868291103.
             if sp.optInWMAPeriod == 1 {
-                (*outReal) = tempReal;
+                *outReal = tempReal;
             } else {
-                (*outReal) = periodSum / sp.divider;
+                *outReal = periodSum / sp.divider;
             }
         }
         Ok(outReal)

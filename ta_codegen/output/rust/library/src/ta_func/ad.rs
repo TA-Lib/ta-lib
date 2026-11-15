@@ -71,7 +71,7 @@ impl Core {
     #[doc(alias = "TA_AD_Lookback")]
     pub fn ad_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::ad`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,7 +121,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut nbBar: usize = 0_usize;
         let mut currentBar: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -149,8 +148,8 @@ impl Core {
         //       its calculations.
         // Default return values
         nbBar = endIdx - startIdx + 1;
-        (*outNBElement) = nbBar;
-        (*outBegIdx) = startIdx;
+        *outNBElement = nbBar;
+        *outBegIdx = startIdx;
         currentBar = startIdx;
         outIdx = 0;
         ad = 0.0;
@@ -340,8 +339,8 @@ impl Core {
         } else {
             cold_arm();
         }
-        (*outReal) = sp.ad;
-        sp.cur_outReal = (*outReal);
+        *outReal = sp.ad;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::ad_open_internal`]
@@ -357,14 +356,11 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut nbBar: usize = 0_usize;
         let mut currentBar: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -388,8 +384,8 @@ impl Core {
         //       its calculations.
         // Default return values
         nbBar = endIdx - startIdx + 1;
-        (*outNBElement) = nbBar;
-        (*outBegIdx) = startIdx;
+        *outNBElement = nbBar;
+        *outBegIdx = startIdx;
         currentBar = startIdx;
         outIdx = 0;
         ad = 0.0;
@@ -403,7 +399,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ad;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ad;
             currentBar += 1;
             nbBar -= 1;
         }
@@ -612,7 +608,7 @@ impl AdStream {
             } else {
                 cold_arm();
             }
-            (*outReal) = ad;
+            *outReal = ad;
         }
         Ok(outReal)
     }

@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_CTI_Lookback")]
     #[inline]
     pub fn cti_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -106,7 +106,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CTI_DisplayShift")]
-    pub fn cti_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cti_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cti_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -132,9 +132,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cti_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -168,12 +168,12 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         dPeriod = optInTimePeriod as f64;
         invPeriod = 1.0 / dPeriod;
@@ -225,7 +225,7 @@ impl Core {
             x = inReal[today] - shift;
             sumX += x;
             sumX2 += x * x;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
             ssX = sumX2 - sumX * sumX * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
             // Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -244,21 +244,19 @@ impl Core {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempReal += inReal[j];
                 }
-                j = (today as usize) + 1;
                 shift = tempReal * invPeriod;
                 sumXY = 0.0;
                 sumX2 = sumXY;
                 sumX = sumX2;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     x = inReal[j] - shift;
                     sumX += x;
                     sumX2 += x * x;
                     sumXY += x * ((today - j) as f64);
                 }
-                j = (today as usize) + 1;
                 sumX = core::hint::black_box(sumX);
                 sumX2 = core::hint::black_box(sumX2);
                 sumXY = core::hint::black_box(sumXY);
@@ -272,13 +270,12 @@ impl Core {
                     sumXY = 0.0;
                     sumX2 = sumXY;
                     sumX = sumX2;
-                    for j in (windowStart as usize)..(today as usize) + 1 {
+                    for j in windowStart..today + 1 {
                         x = inReal[j] - shift;
                         sumX += x;
                         sumX2 += x * x;
                         sumXY += x * ((today - j) as f64);
                     }
-                    j = (today as usize) + 1;
                     sumX = core::hint::black_box(sumX);
                     sumX2 = core::hint::black_box(sumX2);
                     sumXY = core::hint::black_box(sumXY);
@@ -334,7 +331,7 @@ impl Core {
             today += 1;
             if !(today <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of the last
@@ -508,7 +505,7 @@ impl Core {
         x = sp.x_inReal[(sp.today & sp.xMask) as usize] - sp.shift;
         sp.sumX += x;
         sp.sumX2 += x * x;
-        sp.peakX2 = (if sp.sumX2 > sp.peakX2 { sp.sumX2 } else { sp.peakX2 });
+        sp.peakX2 = if sp.sumX2 > sp.peakX2 { sp.sumX2 } else { sp.peakX2 };
         ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
         spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
         // Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -525,10 +522,10 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if ssX < 0.000001 * sp.peakX2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
             tempReal = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.today {
                 tempReal += sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
@@ -538,7 +535,7 @@ impl Core {
             sp.sumX2 = sp.sumXY;
             sp.sumX = sp.sumX2;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.today {
                 x = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                 sp.sumX += x;
@@ -560,7 +557,7 @@ impl Core {
                 sp.sumX2 = sp.sumXY;
                 sp.sumX = sp.sumX2;
                 // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-                sp.j = (windowStart) as i32;
+                sp.j = windowStart as i32;
                 while sp.j <= sp.today {
                     x = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                     sp.sumX += x;
@@ -604,9 +601,9 @@ impl Core {
             } else if tempReal < -1.0 {
                 tempReal = -1.0;
             }
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         // Slide the window one bar in O(1). Advancing it ages every retained
         // value by one bar, which raises each of their weights by 1 and so adds
@@ -619,7 +616,7 @@ impl Core {
         sp.sumX -= trailingX;
         sp.sumX2 -= trailingX * trailingX;
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cti_open_internal`]
@@ -630,21 +627,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumX: f64 = 0.0_f64;
         let mut sumX2: f64 = 0.0_f64;
         let mut sumXY: f64 = 0.0_f64;
@@ -671,11 +666,11 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         dPeriod = optInTimePeriod as f64;
         invPeriod = 1.0 / dPeriod;
@@ -727,7 +722,7 @@ impl Core {
             x = inReal[today] - shift;
             sumX += x;
             sumX2 += x * x;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
             ssX = sumX2 - sumX * sumX * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
             // Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -746,21 +741,20 @@ impl Core {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = today - lookbackTotal;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempReal += inReal[j];
                 }
-                j = (today as usize) + 1;
                 shift = tempReal * invPeriod;
                 sumXY = 0.0;
                 sumX2 = sumXY;
                 sumX = sumX2;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     x = inReal[j] - shift;
                     sumX += x;
                     sumX2 += x * x;
                     sumXY += x * ((today - j) as f64);
                 }
-                j = (today as usize) + 1;
+                j = today + 1;
                 sumX = core::hint::black_box(sumX);
                 sumX2 = core::hint::black_box(sumX2);
                 sumXY = core::hint::black_box(sumXY);
@@ -774,13 +768,13 @@ impl Core {
                     sumXY = 0.0;
                     sumX2 = sumXY;
                     sumX = sumX2;
-                    for j in (windowStart as usize)..(today as usize) + 1 {
+                    for j in windowStart..today + 1 {
                         x = inReal[j] - shift;
                         sumX += x;
                         sumX2 += x * x;
                         sumXY += x * ((today - j) as f64);
                     }
-                    j = (today as usize) + 1;
+                    j = today + 1;
                     sumX = core::hint::black_box(sumX);
                     sumX2 = core::hint::black_box(sumX2);
                     sumXY = core::hint::black_box(sumXY);
@@ -817,9 +811,9 @@ impl Core {
                 } else if tempReal < -1.0 {
                     tempReal = -1.0;
                 }
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = tempReal;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             // Slide the window one bar in O(1). Advancing it ages every retained
             // value by one bar, which raises each of their weights by 1 and so adds
@@ -834,7 +828,7 @@ impl Core {
             today += 1;
             if !(today <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -865,10 +859,10 @@ impl Core {
             sumY,
             ssY,
             lookbackTotal,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             barsSinceReseed,
-            j: (j) as i32,
-            today: (today) as i32,
+            j: j as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -878,7 +872,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cti_open`] (composition seam).
     pub(crate) fn cti_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CtiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -951,7 +945,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CTI_OpenAndFill")]
     pub fn cti_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CtiStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -970,7 +964,7 @@ impl Core {
     /// [`Core::cti_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cti_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CtiStream, RetCode> {
         self.cti_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1049,7 +1043,6 @@ impl CtiStream {
             let mut sumX = sp.sumX;
             let mut sumX2 = sp.sumX2;
             let mut sumXY = sp.sumXY;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.today & sp.xMask) as usize;
@@ -1059,7 +1052,7 @@ impl CtiStream {
             x = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 }) - shift;
             sumX += x;
             sumX2 += x * x;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
             ssX = sumX2 - sumX * sumX * sp.invPeriod;
             spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
             // Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -1075,13 +1068,12 @@ impl CtiStream {
             // ordinary sideways data.
             barsSinceReseed -= 1;
             if ssX < 0.000001 * peakX2 || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+                windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
                 tempReal = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.today {
-                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempReal += if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
@@ -1089,7 +1081,7 @@ impl CtiStream {
                 sumX2 = sumXY;
                 sumX = sumX2;
                 // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.today {
                     x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     sumX += x;
@@ -1106,12 +1098,12 @@ impl CtiStream {
                 // squared range and sumX2 at most n times it, so it cannot, short of
                 // squares that underflow.
                 if sumX2 - sumX * sumX * sp.invPeriod < 0.000001 * sumX2 {
-                    shift = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+                    shift = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 };
                     sumXY = 0.0;
                     sumX2 = sumXY;
                     sumX = sumX2;
                     // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                    j = (windowStart) as i32;
+                    j = windowStart as i32;
                     while j <= sp.today {
                         x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                         sumX += x;
@@ -1123,11 +1115,9 @@ impl CtiStream {
                     sumX2 = core::hint::black_box(sumX2);
                     sumXY = core::hint::black_box(sumXY);
                 }
-                peakX2 = sumX2;
                 ssX = sumX2 - sumX * sumX * sp.invPeriod;
                 spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
             }
-            trailingIdx += 1;
             // THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
             // series correlates NEGATIVELY with it. Ehlers' listing counts the same
             // way and takes Y = -count, the positively-sloped line the indicator is
@@ -1152,9 +1142,9 @@ impl CtiStream {
                 } else if tempReal < -1.0 {
                     tempReal = -1.0;
                 }
-                (*outReal) = tempReal;
+                *outReal = tempReal;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

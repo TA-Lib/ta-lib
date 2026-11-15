@@ -84,9 +84,9 @@ impl Core {
     #[doc(alias = "TA_VWMA_Lookback")]
     #[inline]
     pub fn vwma_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -108,7 +108,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_VWMA_DisplayShift")]
-    pub fn vwma_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn vwma_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.vwma_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -135,9 +135,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.vwma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -167,8 +167,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -178,14 +178,14 @@ impl Core {
         // (P*V)/V round-trips only ~97% of the time in IEEE double, and
         // because a lone zero volume must give the price, not NaN.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             i = startIdx;
             while i <= (endIdx as usize) {
-                outReal[outIdx] = ((inReal[{ let _v = i; i += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = i; i += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
         // Add-up the initial period, except for the last value.
@@ -208,7 +208,7 @@ impl Core {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
-                zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
+                zeroCount += if inVolume[i].abs() <= 0.0 { 1 } else { 0 };
                 i = i + 1;
             }
         }
@@ -220,7 +220,7 @@ impl Core {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount += if inVolume[i].abs() <= 0.0 { 1 } else { 0 };
             i = i + 1;
             // Read the trailing values before writing the output, since the caller
             // may pass the same buffer for an input and the output.
@@ -228,7 +228,7 @@ impl Core {
             tempReal = inReal[trailingIdx] * trailingVolume;
             // Each branch writes its own output: a branch that only zeroes the sums
             // is if-converted into a mask on their dependency chain, hint or not.
-            if zeroCount >= ((optInTimePeriod) as usize) {
+            if zeroCount >= (optInTimePeriod as usize) {
                 cold_arm();
                 // Zero, then subtract the departing bar: a non-finite price times its
                 // zero volume is NaN, not zero.
@@ -248,13 +248,13 @@ impl Core {
                 sumV -= trailingVolume;
                 outReal[outIdx] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
             }
-            zeroCount -= (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount -= if trailingVolume.abs() <= 0.0 { 1 } else { 0 };
             trailingIdx = trailingIdx + 1;
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod`
@@ -426,21 +426,21 @@ impl Core {
         let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         tempReal = inReal * inVolume;
         sp.sumPV += tempReal;
         sp.sumV += inVolume;
-        sp.zeroCount += (if (inVolume).abs() <= 0.0 { 1 } else { 0 });
+        sp.zeroCount += if inVolume.abs() <= 0.0 { 1 } else { 0 };
         // Read the trailing values before writing the output, since the caller
         // may pass the same buffer for an input and the output.
         trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
         // Each branch writes its own output: a branch that only zeroes the sums
         // is if-converted into a mask on their dependency chain, hint or not.
-        if sp.zeroCount >= ((sp.optInTimePeriod) as usize) {
+        if sp.zeroCount >= (sp.optInTimePeriod as usize) {
             cold_arm();
             // Zero, then subtract the departing bar: a non-finite price times its
             // zero volume is NaN, not zero.
@@ -448,7 +448,7 @@ impl Core {
             tempV = 0.0;
             sp.sumPV = 0.0 - tempReal;
             sp.sumV = 0.0 - trailingVolume;
-            (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+            *outReal = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
         } else {
             // Snapshot both sums before removing the trailing bar, mirroring the
             // add-new / snapshot / subtract-old order of TA_SMA. Up to the first
@@ -458,10 +458,10 @@ impl Core {
             tempV = sp.sumV;
             sp.sumPV -= tempReal;
             sp.sumV -= trailingVolume;
-            (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+            *outReal = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
         }
-        sp.zeroCount -= (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
-        sp.cur_outReal = (*outReal);
+        sp.zeroCount -= if trailingVolume.abs() <= 0.0 { 1 } else { 0 };
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
@@ -481,9 +481,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inVolume.len() != inReal.len() {
@@ -491,14 +491,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.vwma_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -516,8 +514,8 @@ impl Core {
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
                 ring_trailingIdx_inVolume: vec![0.0_f64; 1],
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -550,8 +548,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Add-up the initial period, except for the last value.
@@ -574,7 +572,7 @@ impl Core {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
-                zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
+                zeroCount += if inVolume[i].abs() <= 0.0 { 1 } else { 0 };
                 i = i + 1;
             }
         }
@@ -586,7 +584,7 @@ impl Core {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount += if inVolume[i].abs() <= 0.0 { 1 } else { 0 };
             i = i + 1;
             // Read the trailing values before writing the output, since the caller
             // may pass the same buffer for an input and the output.
@@ -594,7 +592,7 @@ impl Core {
             tempReal = inReal[trailingIdx] * trailingVolume;
             // Each branch writes its own output: a branch that only zeroes the sums
             // is if-converted into a mask on their dependency chain, hint or not.
-            if zeroCount >= ((optInTimePeriod) as usize) {
+            if zeroCount >= (optInTimePeriod as usize) {
                 cold_arm();
                 // Zero, then subtract the departing bar: a non-finite price times its
                 // zero volume is NaN, not zero.
@@ -602,7 +600,7 @@ impl Core {
                 tempV = 0.0;
                 sumPV = 0.0 - tempReal;
                 sumV = 0.0 - trailingVolume;
-                outReal[(outIdx * outStride) as usize] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
+                outReal[outIdx * outStride] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
             } else {
                 // Snapshot both sums before removing the trailing bar, mirroring the
                 // add-new / snapshot / subtract-old order of TA_SMA. Up to the first
@@ -612,15 +610,15 @@ impl Core {
                 tempV = sumV;
                 sumPV -= tempReal;
                 sumV -= trailingVolume;
-                outReal[(outIdx * outStride) as usize] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
+                outReal[outIdx * outStride] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
             }
-            zeroCount -= (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount -= if trailingVolume.abs() <= 0.0 { 1 } else { 0 };
             trailingIdx = trailingIdx + 1;
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
@@ -650,7 +648,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::vwma_open`] (composition seam).
     pub(crate) fn vwma_open_internal(
-        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(VwmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -729,7 +727,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VWMA_OpenAndFill")]
     pub fn vwma_open_and_fill(
-        &self, inReal: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(VwmaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -751,7 +749,7 @@ impl Core {
     /// [`Core::vwma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn vwma_open_and_fill_internal(
-        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VwmaStream, RetCode> {
         self.vwma_open_impl(inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -821,32 +819,27 @@ impl VwmaStream {
             let mut tempPV: f64 = 0.0_f64;
             let mut tempV: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut trailingVolume: f64 = 0.0_f64;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut zeroCount = sp.zeroCount;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             tempReal = inReal * inVolume;
             sumPV += tempReal;
             sumV += inVolume;
-            zeroCount += (if (inVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount += if inVolume.abs() <= 0.0 { 1 } else { 0 };
             // Read the trailing values before writing the output, since the caller
             // may pass the same buffer for an input and the output.
-            trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
             // Each branch writes its own output: a branch that only zeroes the sums
             // is if-converted into a mask on their dependency chain, hint or not.
-            if zeroCount >= ((sp.optInTimePeriod) as usize) {
+            if zeroCount >= (sp.optInTimePeriod as usize) {
                 // Zero, then subtract the departing bar: a non-finite price times its
                 // zero volume is NaN, not zero.
                 tempPV = 0.0;
                 tempV = 0.0;
-                sumPV = 0.0 - tempReal;
-                sumV = 0.0 - trailingVolume;
-                (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+                *outReal = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
             } else {
                 // Snapshot both sums before removing the trailing bar, mirroring the
                 // add-new / snapshot / subtract-old order of TA_SMA. Up to the first
@@ -854,9 +847,7 @@ impl VwmaStream {
                 // SMA(inReal*inVolume)/SMA(inVolume).
                 tempPV = sumPV;
                 tempV = sumV;
-                sumPV -= tempReal;
-                sumV -= trailingVolume;
-                (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+                *outReal = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
             }
         }
         Ok(outReal)

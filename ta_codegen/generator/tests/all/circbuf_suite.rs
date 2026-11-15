@@ -189,11 +189,11 @@ fn rust_circbuf_runtime_init_renders_the_crossover_guard() {
         "CCI: body indexes through a &mut slice"
     );
     assert!(
-        batch.contains("if (optInTimePeriod) as usize <= 30usize {"),
+        batch.contains("if optInTimePeriod as usize <= 30usize {"),
         "CCI: crossover guard sits at the static size, matching C's macro"
     );
     assert!(
-        batch.contains("circBuffer = &mut local_circBuffer[..(optInTimePeriod) as usize];"),
+        batch.contains("circBuffer = &mut local_circBuffer[..optInTimePeriod as usize];"),
         "CCI: fits ⇒ bind the stack array, no allocation, at the runtime size"
     );
     assert!(
@@ -260,10 +260,10 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
         1,
         "ULTOSC: the class layout must decide once, not per field"
     );
-    let guard = extract_section(&batch, "if (optInTimePeriod3) as usize <= 32usize {", "term_Idx = 0;");
+    let guard = extract_section(&batch, "if optInTimePeriod3 as usize <= 32usize {", "term_Idx = 0;");
     assert!(
-        guard.contains("term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..(optInTimePeriod3) as usize];")
-            && guard.contains("term_trueRange = &mut local_term_trueRange[..(optInTimePeriod3) as usize];"),
+        guard.contains("term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..optInTimePeriod3 as usize];")
+            && guard.contains("term_trueRange = &mut local_term_trueRange[..optInTimePeriod3 as usize];"),
         "ULTOSC: both fields bind the stack arrays in the fits arm"
     );
     assert!(

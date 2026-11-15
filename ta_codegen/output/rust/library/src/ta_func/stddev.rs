@@ -84,9 +84,9 @@ impl Core {
     #[doc(alias = "TA_STDDEV_Lookback")]
     #[inline]
     pub fn stddev_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -115,7 +115,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_STDDEV_DisplayShift")]
-    pub fn stddev_display_shift(&self, mut optInTimePeriod: i32, mut optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn stddev_display_shift(&self, optInTimePeriod: i32, optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.stddev_lookback(optInTimePeriod, optInNbDev)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -142,9 +142,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -156,9 +156,7 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
         // Nothing to produce: the range ends before the lookback. Return before
         // touching anything.
         //
@@ -168,15 +166,14 @@ impl Core {
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
         if self.stddev_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX) > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         // Calculate the variance.
         let _xr0 = match self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr0.beg_idx;
-        (*outNBElement) = _xr0.count;
-        retCode = RetCode::Success;
+        *outBegIdx = _xr0.beg_idx;
+        *outNBElement = _xr0.count;
         // Calculate the square root of each variance, this
         // is the standard deviation.
         //
@@ -192,22 +189,20 @@ impl Core {
         // Dropping it also leaves a pure map, which the branch had kept sqrt out of.
         if optInNbDev != 1.0 {
             i = 0;
-            if i < ((((*outNBElement) as usize)) as usize) {
-                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            if i < ((*outNBElement as usize) as usize) {
+                let _wn: usize = ((*outNBElement as usize) as usize) - i;
                 let _w0 = &mut outReal[i..][.._wn];
                 for _wk in 0.._wn {
-                    _w0[_wk] = (((_w0[_wk]).sqrt() * optInNbDev) as f64);
-                    i += 1;
+                    _w0[_wk] = (_w0[_wk].sqrt() * optInNbDev) as f64;
                 }
             }
         } else {
             i = 0;
-            if i < ((((*outNBElement) as usize)) as usize) {
-                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            if i < ((*outNBElement as usize) as usize) {
+                let _wn: usize = ((*outNBElement as usize) as usize) - i;
                 let _w0 = &mut outReal[i..][.._wn];
                 for _wk in 0.._wn {
-                    _w0[_wk] = (((_w0[_wk]).sqrt()) as f64);
-                    i += 1;
+                    _w0[_wk] = _w0[_wk].sqrt() as f64;
                 }
             }
         }
@@ -337,7 +332,6 @@ pub struct StddevStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct StddevStreamState {
-    optInTimePeriod: i32,
     optInNbDev: f64,
     sub0: VarStream,
     cur_outReal: f64,
@@ -356,11 +350,11 @@ impl Core {
         cur_outReal = sp.sub0.update(inReal)?;
         // Combine map (batch tail, per bar).
         if sp.optInNbDev != 1.0 {
-            cur_outReal = (cur_outReal).sqrt() * sp.optInNbDev;
+            cur_outReal = cur_outReal.sqrt() * sp.optInNbDev;
         } else {
-            cur_outReal = (cur_outReal).sqrt();
+            cur_outReal = cur_outReal.sqrt();
         }
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -372,9 +366,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -384,20 +378,16 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut i: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
         // Nothing to produce: the range ends before the lookback. Return before
         // touching anything.
         //
@@ -407,15 +397,14 @@ impl Core {
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
         if self.stddev_lookback(optInTimePeriod, optInNbDev)? > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.var_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.var_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], startIdx as usize, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         // Calculate the square root of each variance, this
         // is the standard deviation.
         //
@@ -432,15 +421,15 @@ impl Core {
         if optInNbDev != 1.0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                sc_outReal[i] = (sc_outReal[i]).sqrt() * optInNbDev;
+            while i < ((*outNBElement as usize) as usize) {
+                sc_outReal[i] = sc_outReal[i].sqrt() * optInNbDev;
                 i += 1;
             }
         } else {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                sc_outReal[i] = (sc_outReal[i]).sqrt();
+            while i < ((*outNBElement as usize) as usize) {
+                sc_outReal[i] = sc_outReal[i].sqrt();
                 i += 1;
             }
         }
@@ -451,7 +440,6 @@ impl Core {
         }
         let mut state = StddevStreamState {
             cur_outReal: 0.0_f64,
-            optInTimePeriod,
             optInNbDev,
             sub0,
         };
@@ -465,7 +453,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::stddev_open`] (composition seam).
     pub(crate) fn stddev_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDev: f64,
     ) -> Result<(StddevStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -538,7 +526,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_STDDEV_OpenAndFill")]
     pub fn stddev_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64, outReal: &mut [f64],
     ) -> Result<(StddevStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -557,7 +545,7 @@ impl Core {
     /// [`Core::stddev_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn stddev_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<StddevStream, RetCode> {
         self.stddev_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
@@ -631,11 +619,11 @@ impl StddevStream {
             cur_outReal = sp.sub0.peek(inReal)?;
             // Combine map (batch tail, per bar).
             if sp.optInNbDev != 1.0 {
-                cur_outReal = (cur_outReal).sqrt() * sp.optInNbDev;
+                cur_outReal = cur_outReal.sqrt() * sp.optInNbDev;
             } else {
-                cur_outReal = (cur_outReal).sqrt();
+                cur_outReal = cur_outReal.sqrt();
             }
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

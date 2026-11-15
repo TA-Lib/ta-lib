@@ -76,7 +76,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return Ok((63 + self.unstable_count(FuncUnstId::HT_SINE, (80 + 50 * 4), (80 + 50 * 8))) as usize);
+        return Ok((63 + self.unstable_count(FuncUnstId::HT_SINE, 80 + 50 * 4, 80 + 50 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::ht_sine`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -152,7 +152,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSine.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLeadSine.len());
-        if (outSine.as_ptr() == outLeadSine.as_ptr()) {
+        if outSine.as_ptr() == outLeadSine.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -251,12 +251,12 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -478,7 +478,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -505,7 +505,7 @@ impl Core {
             DCPeriod = smoothPeriod + 0.5;
             // A NaN period has no int value, and C leaves converting one undefined.
             if DCPeriod >= 0.0 {
-                DCPeriodInt = (DCPeriod) as i32;
+                DCPeriodInt = DCPeriod as i32;
             } else {
                 DCPeriodInt = 0;
             }
@@ -516,11 +516,11 @@ impl Core {
             idx = smoothPrice_Idx;
             // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while ((i) as i32) < DCPeriodInt {
+            while (i as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
-                realPart += (tempReal).sin() * tempReal2;
-                imagPart += (tempReal).cos() * tempReal2;
+                realPart += tempReal.sin() * tempReal2;
+                imagPart += tempReal.cos() * tempReal2;
                 if idx == 0 {
                     idx = (50 - 1) as usize;
                 } else {
@@ -528,7 +528,7 @@ impl Core {
                 }
                 i += 1;
             }
-            tempReal = (imagPart).abs();
+            tempReal = imagPart.abs();
             if tempReal > 0.0 {
                 DCPhase = (realPart / imagPart).atan() * rad2Deg;
             } else if tempReal <= 0.01 {
@@ -557,7 +557,7 @@ impl Core {
             if smoothPrice_Idx >= smoothPrice.len() { smoothPrice_Idx = 0; }
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Hilbert Transform SineWave: derives the dominant-cycle phase from price and emits its sine
@@ -742,7 +742,6 @@ struct HtSineStreamState {
     ringPos_trailingWMAIdx: usize,
     ringCap_trailingWMAIdx: usize,
     ring_trailingWMAIdx_inReal: Vec<f64>,
-    cbSize_smoothPrice: usize,
     cb_smoothPrice: Vec<f64>,
     cur_outSine: f64,
     cur_outLeadSine: f64,
@@ -885,7 +884,7 @@ impl Core {
             sp.I1ForEvenPrev2 = detrender;
         }
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -912,7 +911,7 @@ impl Core {
         DCPeriod = sp.smoothPeriod + 0.5;
         // A NaN period has no int value, and C leaves converting one undefined.
         if DCPeriod >= 0.0 {
-            DCPeriodInt = (DCPeriod) as i32;
+            DCPeriodInt = DCPeriod as i32;
         } else {
             DCPeriodInt = 0;
         }
@@ -923,11 +922,11 @@ impl Core {
         idx = sp.smoothPrice_Idx;
         // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
         i = 0;
-        while ((i) as i32) < DCPeriodInt {
+        while (i as i32) < DCPeriodInt {
             tempReal = (i as f64) * sp.constDeg2RadBy360 / (DCPeriodInt as f64);
             tempReal2 = sp.cb_smoothPrice[idx];
-            realPart += (tempReal).sin() * tempReal2;
-            imagPart += (tempReal).cos() * tempReal2;
+            realPart += tempReal.sin() * tempReal2;
+            imagPart += tempReal.cos() * tempReal2;
             if idx == 0 {
                 idx = (50 - 1) as usize;
             } else {
@@ -935,7 +934,7 @@ impl Core {
             }
             i += 1;
         }
-        tempReal = (imagPart).abs();
+        tempReal = imagPart.abs();
         if tempReal > 0.0 {
             sp.DCPhase = (realPart / imagPart).atan() * sp.rad2Deg;
         } else if tempReal <= 0.01 {
@@ -954,15 +953,15 @@ impl Core {
         if sp.DCPhase > 315.0 {
             sp.DCPhase -= 360.0;
         }
-        (*outSine) = (sp.DCPhase * sp.deg2Rad).sin();
-        (*outLeadSine) = ((sp.DCPhase + 45_f64) * sp.deg2Rad).sin();
+        *outSine = (sp.DCPhase * sp.deg2Rad).sin();
+        *outLeadSine = ((sp.DCPhase + 45_f64) * sp.deg2Rad).sin();
         // Ooof... let's do the next price bar now!
         sp.smoothPrice_Idx = sp.smoothPrice_Idx + 1;
         if sp.smoothPrice_Idx > sp.maxIdx_smoothPrice {
             sp.smoothPrice_Idx = 0;
         }
-        sp.cur_outSine = (*outSine);
-        sp.cur_outLeadSine = (*outLeadSine);
+        sp.cur_outSine = *outSine;
+        sp.cur_outLeadSine = *outLeadSine;
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
@@ -1002,14 +1001,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -1072,7 +1069,7 @@ impl Core {
         let mut smoothPeriod: f64 = 0.0_f64;
         let mut smoothPrice: Vec<f64> = Vec::new();
         let mut smoothPrice_Idx: usize = 0;
-        let mut maxIdx_smoothPrice: usize = 49;
+        let maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
         let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;
@@ -1105,11 +1102,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -1328,7 +1325,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -1355,7 +1352,7 @@ impl Core {
             DCPeriod = smoothPeriod + 0.5;
             // A NaN period has no int value, and C leaves converting one undefined.
             if DCPeriod >= 0.0 {
-                DCPeriodInt = (DCPeriod) as i32;
+                DCPeriodInt = DCPeriod as i32;
             } else {
                 DCPeriodInt = 0;
             }
@@ -1366,11 +1363,11 @@ impl Core {
             idx = smoothPrice_Idx;
             // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while ((i) as i32) < DCPeriodInt {
+            while (i as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
-                realPart += (tempReal).sin() * tempReal2;
-                imagPart += (tempReal).cos() * tempReal2;
+                realPart += tempReal.sin() * tempReal2;
+                imagPart += tempReal.cos() * tempReal2;
                 if idx == 0 {
                     idx = (50 - 1) as usize;
                 } else {
@@ -1378,7 +1375,7 @@ impl Core {
                 }
                 i += 1;
             }
-            tempReal = (imagPart).abs();
+            tempReal = imagPart.abs();
             if tempReal > 0.0 {
                 DCPhase = (realPart / imagPart).atan() * rad2Deg;
             } else if tempReal <= 0.01 {
@@ -1398,15 +1395,15 @@ impl Core {
                 DCPhase -= 360.0;
             }
             if today >= startIdx {
-                outSine[(outIdx * outStride) as usize] = (DCPhase * deg2Rad).sin();
-                outLeadSine[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((DCPhase + 45_f64) * deg2Rad).sin();
+                outSine[outIdx * outStride] = (DCPhase * deg2Rad).sin();
+                outLeadSine[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ((DCPhase + 45_f64) * deg2Rad).sin();
             }
             // Ooof... let's do the next price bar now!
             smoothPrice_Idx += 1;
             if smoothPrice_Idx > maxIdx_smoothPrice { smoothPrice_Idx = 0; }
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
@@ -1474,7 +1471,6 @@ impl Core {
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
-            cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
         Ok(HtSineStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -1672,46 +1668,38 @@ impl HtSineStream {
             let mut imagPart: f64 = 0.0_f64;
             let mut realPart: f64 = 0.0_f64;
             let mut DCPhase = sp.DCPhase;
-            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
-            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
-            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
-            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
             let mut Re = sp.Re;
-            let mut hilbertIdx = sp.hilbertIdx;
+            let hilbertIdx = sp.hilbertIdx;
             let mut period = sp.period;
-            let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
-            let mut prevI2 = sp.prevI2;
-            let mut prevQ2 = sp.prevQ2;
+            let prevI2 = sp.prevI2;
+            let prevQ2 = sp.prevQ2;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
-            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
-            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
             let mut prev_detrender_Even = sp.prev_detrender_Even;
             let mut prev_detrender_Odd = sp.prev_detrender_Odd;
-            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
-            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+            let prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
             let mut prev_jI_Even = sp.prev_jI_Even;
             let mut prev_jI_Odd = sp.prev_jI_Odd;
-            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
-            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
+            let prev_jI_input_Even = sp.prev_jI_input_Even;
+            let prev_jI_input_Odd = sp.prev_jI_input_Odd;
             let mut prev_jQ_Even = sp.prev_jQ_Even;
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
-            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
-            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+            let prev_jQ_input_Even = sp.prev_jQ_input_Even;
+            let prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
             let mut smoothPeriod = sp.smoothPeriod;
-            let mut trailingWMAValue = sp.trailingWMAValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal;
-            periodWMASub += todayValue;
-            periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
-            periodWMASum -= periodWMASub;
             // Remember the smoothedValue into the smoothPrice
             // circular buffer.
             pkSlot0 = sp.smoothPrice_Idx as usize;
@@ -1724,7 +1712,6 @@ impl HtSineStream {
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
                 detrender += prev_detrender_Even;
-                prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Even[hilbertIdx];
@@ -1732,7 +1719,6 @@ impl HtSineStream {
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
                 Q1 += prev_Q1_Even;
-                prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
                 jI = -sp.jI_Even[hilbertIdx];
@@ -1740,7 +1726,6 @@ impl HtSineStream {
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
                 jI += prev_jI_Even;
-                prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
                 jQ = -sp.jQ_Even[hilbertIdx];
@@ -1748,11 +1733,7 @@ impl HtSineStream {
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
                 jQ += prev_jQ_Even;
-                prev_jQ_input_Even = Q1;
                 jQ *= adjustedPrevPeriod;
-                if { hilbertIdx += 1; hilbertIdx } == 3 {
-                    hilbertIdx = 0;
-                }
                 Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
                 I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
@@ -1760,8 +1741,6 @@ impl HtSineStream {
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForOddPrev3 = I1ForOddPrev2;
-                I1ForOddPrev2 = detrender;
             } else {
                 // Do the Hilbert Transforms for odd price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1770,7 +1749,6 @@ impl HtSineStream {
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
                 detrender += prev_detrender_Odd;
-                prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Odd[hilbertIdx];
@@ -1778,7 +1756,6 @@ impl HtSineStream {
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
                 Q1 += prev_Q1_Odd;
-                prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
                 jI = -sp.jI_Odd[hilbertIdx];
@@ -1786,7 +1763,6 @@ impl HtSineStream {
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
                 jI += prev_jI_Odd;
-                prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
                 jQ = -sp.jQ_Odd[hilbertIdx];
@@ -1794,7 +1770,6 @@ impl HtSineStream {
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
                 jQ += prev_jQ_Odd;
-                prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
                 Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
                 I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
@@ -1803,14 +1778,10 @@ impl HtSineStream {
                 //
                 // Save the current detrender value for being
                 // used by the "even" logic later.
-                I1ForEvenPrev3 = I1ForEvenPrev2;
-                I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
-            prevQ2 = Q2;
-            prevI2 = I2;
             tempReal = period;
             if Im != 0.0 && Re != 0.0 {
                 period = 360.0 / ((Im / Re).atan() * sp.rad2Deg);
@@ -1834,7 +1805,7 @@ impl HtSineStream {
             DCPeriod = smoothPeriod + 0.5;
             // A NaN period has no int value, and C leaves converting one undefined.
             if DCPeriod >= 0.0 {
-                DCPeriodInt = (DCPeriod) as i32;
+                DCPeriodInt = DCPeriod as i32;
             } else {
                 DCPeriodInt = 0;
             }
@@ -1845,11 +1816,11 @@ impl HtSineStream {
             idx = sp.smoothPrice_Idx;
             // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while ((i) as i32) < DCPeriodInt {
+            while (i as i32) < DCPeriodInt {
                 tempReal = (i as f64) * sp.constDeg2RadBy360 / (DCPeriodInt as f64);
-                tempReal2 = (if (idx as usize) != pkSlot0 { sp.cb_smoothPrice[idx] } else { pkVal0 });
-                realPart += (tempReal).sin() * tempReal2;
-                imagPart += (tempReal).cos() * tempReal2;
+                tempReal2 = if (idx as usize) != pkSlot0 { sp.cb_smoothPrice[idx] } else { pkVal0 };
+                realPart += tempReal.sin() * tempReal2;
+                imagPart += tempReal.cos() * tempReal2;
                 if idx == 0 {
                     idx = (50 - 1) as usize;
                 } else {
@@ -1857,7 +1828,7 @@ impl HtSineStream {
                 }
                 i += 1;
             }
-            tempReal = (imagPart).abs();
+            tempReal = imagPart.abs();
             if tempReal > 0.0 {
                 DCPhase = (realPart / imagPart).atan() * sp.rad2Deg;
             } else if tempReal <= 0.01 {
@@ -1876,8 +1847,8 @@ impl HtSineStream {
             if DCPhase > 315.0 {
                 DCPhase -= 360.0;
             }
-            (*outSine) = (DCPhase * sp.deg2Rad).sin();
-            (*outLeadSine) = ((DCPhase + 45_f64) * sp.deg2Rad).sin();
+            *outSine = (DCPhase * sp.deg2Rad).sin();
+            *outLeadSine = ((DCPhase + 45_f64) * sp.deg2Rad).sin();
         }
         Ok((outSine, outLeadSine))
     }

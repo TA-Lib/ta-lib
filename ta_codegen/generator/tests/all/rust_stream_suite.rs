@@ -97,7 +97,7 @@ fn test_rust_sma_ring_stream_section() {
     // Step: ring read-old-then-push order, `(*outReal)` write.
     assert!(s.contains("fn sma_step_impl(sp: &mut SmaStreamState, inReal: f64, outReal: &mut f64)"));
     // `tempReal` is step-local scratch, not a handle field (#252).
-    assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
+    assert!(s.contains("*outReal = tempReal / (sp.optInTimePeriod as f64);"));
     assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
     assert!(s.contains("ringPosL_trailingIdx = sp.ringPos_trailingIdx;\n        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
@@ -106,7 +106,7 @@ fn test_rust_sma_ring_stream_section() {
     // The public fill takes the batch output tail MINUS the out-meta pair, and
     // hands the range back as the `OutRange` the batch entry point returns
     // (#179 C15) — the crate ships one convention for "which slots were filled".
-    assert!(s.contains("pub fn sma_open_and_fill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],\n    ) -> Result<(SmaStream, OutRange), RetCode> {"));
+    assert!(s.contains("pub fn sma_open_and_fill(\n        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],\n    ) -> Result<(SmaStream, OutRange), RetCode> {"));
     assert!(s.contains("Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))"));
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
@@ -175,7 +175,7 @@ fn test_rust_minmaxindex_extrema_i32() {
     assert!(s.contains("trailingIdx: i32,"));
     assert!(s.contains("highestIdx: i32,"));
     // Capture casts the still-live batch locals at the struct literal.
-    assert!(s.contains("today: (today) as i32,"));
+    assert!(s.contains("today: today as i32,"));
     // Index outputs stay batch-exact i32 pairs.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<(i32, i32), RetCode> {"));
     // One buffer: peek keeps the throwaway copy, the shape whose clone the
@@ -320,7 +320,7 @@ fn rust_output_writes_are_stride_scaled() {
     let s = rust_stream_section("cdlhikkake");
     assert!(!s.contains("fn cdlhikkake_open_sink_frame("), "the pin needs an opener that keeps one body");
     assert!(
-        s.contains("outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = "),
+        s.contains("outInteger[{ let _v = outIdx; outIdx += 1; _v } * outStride] = "),
         "per-bar output writes scale by the stride"
     );
 }
@@ -401,7 +401,7 @@ fn a_candlestick_open_branches_to_one_frame_per_stride() {
         if !s.contains(&sink) {
             assert!(!s.contains(&fill), "{name}: a fill frame without its sink frame");
             assert!(
-                body_of(&s, &format!("fn {name}_open_impl")).contains("* outStride) as usize] = "),
+                body_of(&s, &format!("fn {name}_open_impl")).contains("* outStride] = "),
                 "{name}: an opener without frames keeps its strided body"
             );
             single += 1;
@@ -576,7 +576,7 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
         "the scalar open has no out-meta, so it inherits the arm's own range:\n{scalar}"
     );
     assert!(
-        internal.contains("(*outBegIdx) = fillLb;"),
+        internal.contains("*outBegIdx = fillLb;"),
         "OpenAndFillInternal is a composition seam and keeps the out-meta pair:\n{internal}"
     );
 
@@ -970,7 +970,7 @@ fn a_transcribed_open_selects_where_its_batch_body_does() {
                 (frame_body(&full, &format!("{name}_open_sink_frame")), &["[0] = "]),
             ]
         } else {
-            vec![(body("open_impl"), &["* outStride) as usize] = "])]
+            vec![(body("open_impl"), &["* outStride] = "])]
         };
         for (open, stores) in &opens {
             if batch.contains(picks) != open.contains(picks) {

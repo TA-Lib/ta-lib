@@ -70,7 +70,7 @@ impl Core {
     #[doc(alias = "TA_HT_PHASOR_Lookback")]
     pub fn ht_phasor_lookback(&self) -> Result<usize, RetCode> {
         // See mama_lookback for an explanation of these
-        return Ok((32 + self.unstable_count(FuncUnstId::HT_PHASOR, (80 + 50 * 4), (80 + 50 * 8))) as usize);
+        return Ok((32 + self.unstable_count(FuncUnstId::HT_PHASOR, 80 + 50 * 4, 80 + 50 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::ht_phasor`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -146,7 +146,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outQuadrature.len());
-        if (outInPhase.as_ptr() == outQuadrature.as_ptr()) {
+        if outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -223,12 +223,12 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -446,7 +446,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -472,7 +472,7 @@ impl Core {
             today += 1;
         }
         // Default return values
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Hilbert Transform indicator that decomposes the price series into its in-phase (I) and
@@ -705,8 +705,8 @@ impl Core {
             Q1 += sp.prev_Q1_Even;
             sp.prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
-            (*outQuadrature) = Q1;
-            (*outInPhase) = sp.I1ForEvenPrev3;
+            *outQuadrature = Q1;
+            *outInPhase = sp.I1ForEvenPrev3;
             hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
             jI = -sp.jI_Even[sp.hilbertIdx];
             sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
@@ -757,8 +757,8 @@ impl Core {
             Q1 += sp.prev_Q1_Odd;
             sp.prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
-            (*outQuadrature) = Q1;
-            (*outInPhase) = sp.I1ForOddPrev3;
+            *outQuadrature = Q1;
+            *outInPhase = sp.I1ForOddPrev3;
             hilbertTempReal = sp.a * sp.I1ForOddPrev3;
             jI = -sp.jI_Odd[sp.hilbertIdx];
             sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
@@ -788,7 +788,7 @@ impl Core {
             sp.I1ForEvenPrev2 = detrender;
         }
         // Adjust the period for next price bar
-        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2, sp.prevI2, Q2 * sp.prevQ2)));
         sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
@@ -811,8 +811,8 @@ impl Core {
         }
         sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
-        sp.cur_outInPhase = (*outInPhase);
-        sp.cur_outQuadrature = (*outQuadrature);
+        sp.cur_outInPhase = *outInPhase;
+        sp.cur_outQuadrature = *outQuadrature;
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
@@ -852,14 +852,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -933,11 +931,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
         // To understand this algorithm, I strongly suggest to understand
@@ -1067,8 +1065,8 @@ impl Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 if today >= startIdx {
-                    outQuadrature[(outIdx * outStride) as usize] = Q1;
-                    outInPhase[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = I1ForEvenPrev3;
+                    outQuadrature[outIdx * outStride] = Q1;
+                    outInPhase[{ let _v = outIdx; outIdx += 1; _v } * outStride] = I1ForEvenPrev3;
                 }
                 hilbertTempReal = a * I1ForEvenPrev3;
                 jI = -jI_Even[hilbertIdx];
@@ -1121,8 +1119,8 @@ impl Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 if today >= startIdx {
-                    outQuadrature[(outIdx * outStride) as usize] = Q1;
-                    outInPhase[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = I1ForOddPrev3;
+                    outQuadrature[outIdx * outStride] = Q1;
+                    outInPhase[{ let _v = outIdx; outIdx += 1; _v } * outStride] = I1ForOddPrev3;
                 }
                 hilbertTempReal = a * I1ForOddPrev3;
                 jI = -jI_Odd[hilbertIdx];
@@ -1153,7 +1151,7 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2, prevI2, Q2 * prevQ2)));
             Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
@@ -1179,7 +1177,7 @@ impl Core {
             today += 1;
         }
         // Default return values
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingWMAIdx: i64 = (today as i64) - (trailingWMAIdx as i64);
@@ -1434,38 +1432,22 @@ impl HtPhasorStream {
             let mut detrender: f64 = 0.0_f64;
             let mut Q1: f64 = 0.0_f64;
             let mut todayValue: f64 = 0.0_f64;
-            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
-            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
-            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
-            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
-            let mut hilbertIdx = sp.hilbertIdx;
-            let mut periodWMASub = sp.periodWMASub;
+            let I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let hilbertIdx = sp.hilbertIdx;
             let mut periodWMASum = sp.periodWMASum;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
-            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
-            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
             let mut prev_detrender_Even = sp.prev_detrender_Even;
             let mut prev_detrender_Odd = sp.prev_detrender_Odd;
-            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
-            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
-            let mut prev_jI_Even = sp.prev_jI_Even;
-            let mut prev_jI_Odd = sp.prev_jI_Odd;
-            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
-            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
-            let mut prev_jQ_Even = sp.prev_jQ_Even;
-            let mut prev_jQ_Odd = sp.prev_jQ_Odd;
-            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
-            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut trailingWMAValue = sp.trailingWMAValue;
+            let prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
             adjustedPrevPeriod = fmadd!(0.075 as f64, sp.period, 0.54);
             todayValue = inReal;
-            periodWMASub += todayValue;
-            periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
             smoothedValue = periodWMASum * 0.1;
-            periodWMASum -= periodWMASub;
             if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1474,7 +1456,6 @@ impl HtPhasorStream {
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
                 detrender += prev_detrender_Even;
-                prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Even[hilbertIdx];
@@ -1482,26 +1463,14 @@ impl HtPhasorStream {
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
                 Q1 += prev_Q1_Even;
-                prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
-                (*outQuadrature) = Q1;
-                (*outInPhase) = I1ForEvenPrev3;
-                hilbertTempReal = sp.a * I1ForEvenPrev3;
-                prev_jI_Even = sp.b * prev_jI_input_Even;
-                prev_jI_input_Even = I1ForEvenPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Even = sp.b * prev_jQ_input_Even;
-                prev_jQ_input_Even = Q1;
-                if { hilbertIdx += 1; hilbertIdx } == 3 {
-                    hilbertIdx = 0;
-                }
+                *outQuadrature = Q1;
+                *outInPhase = I1ForEvenPrev3;
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "odd" logic later.
-                I1ForOddPrev3 = I1ForOddPrev2;
-                I1ForOddPrev2 = detrender;
             } else {
                 // Do the Hilbert Transforms for odd price bar
                 hilbertTempReal = sp.a * smoothedValue;
@@ -1510,7 +1479,6 @@ impl HtPhasorStream {
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
                 detrender += prev_detrender_Odd;
-                prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
                 Q1 = -sp.Q1_Odd[hilbertIdx];
@@ -1518,23 +1486,14 @@ impl HtPhasorStream {
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
                 Q1 += prev_Q1_Odd;
-                prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
-                (*outQuadrature) = Q1;
-                (*outInPhase) = I1ForOddPrev3;
-                hilbertTempReal = sp.a * I1ForOddPrev3;
-                prev_jI_Odd = sp.b * prev_jI_input_Odd;
-                prev_jI_input_Odd = I1ForOddPrev3;
-                hilbertTempReal = sp.a * Q1;
-                prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
-                prev_jQ_input_Odd = Q1;
+                *outQuadrature = Q1;
+                *outInPhase = I1ForOddPrev3;
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
                 // Save the current detrender value for being
                 // used by the "even" logic later.
-                I1ForEvenPrev3 = I1ForEvenPrev2;
-                I1ForEvenPrev2 = detrender;
             }
         }
         Ok((outInPhase, outQuadrature))

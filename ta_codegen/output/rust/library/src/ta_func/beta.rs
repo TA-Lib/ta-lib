@@ -90,12 +90,12 @@ impl Core {
     #[doc(alias = "TA_BETA_Lookback")]
     #[inline]
     pub fn beta_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::beta`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -114,7 +114,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_BETA_DisplayShift")]
-    pub fn beta_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn beta_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.beta_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -141,9 +141,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.beta_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -184,10 +184,6 @@ impl Core {
         S_xy = 0.0;
         S_x = 0.0;
         S_y = 0.0;
-        last_price_x = 0.0;
-        last_price_y = 0.0;
-        trailing_last_price_x = 0.0;
-        trailing_last_price_y = 0.0;
         tmp_real = 0.0;
         shift_x = 0.0;
         shift_y = 0.0;
@@ -230,7 +226,7 @@ impl Core {
         // Validate the calculation method type and
         // identify the minimum number of input
         // consume before the first value is output..
-        nbInitialElementNeeded = (optInTimePeriod) as usize;
+        nbInitialElementNeeded = optInTimePeriod as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < nbInitialElementNeeded {
@@ -238,8 +234,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal0 = &inReal0[..=endIdx];
@@ -488,8 +484,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Beta: the slope of a least-squares linear regression of one series' percentage returns (y,
@@ -734,7 +730,7 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            windowStart = (sp.trailingIdx) as usize;
+            windowStart = sp.trailingIdx as usize;
             // Walk the window forward from the price the trailing cursor already
             // carries. A return needs its predecessor, and reading inReal[j-1]
             // would reach one slot BEFORE the window -- which the batch can do and
@@ -746,7 +742,7 @@ impl Core {
             tmp_real = 0.0;
             sp.shift_y = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j < sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j < sp.i {
                 if prev_x != 0.0 {
                     tmp_real += (sp.x_inReal0[(sp.j & sp.xMask) as usize] - prev_x) / prev_x;
@@ -772,7 +768,7 @@ impl Core {
             sp.S_x = 0.0;
             sp.S_y = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j < sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j < sp.i {
                 if prev_x != 0.0 {
                     x = (sp.x_inReal0[(sp.j & sp.xMask) as usize] - prev_x) / prev_x - sp.shift_x;
@@ -831,9 +827,9 @@ impl Core {
         // returns are small". The literal is TA_EPSILON, and the plain `>` also
         // rejects a negative denominator rather than dividing by it.
         if denom > 0.00000000000001 * denom_scale {
-            (*outReal) = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / denom;
+            *outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / denom;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         // Remove the calculation starting with the trailingIdx.
         sp.leaving_xx = x * x;
@@ -843,7 +839,7 @@ impl Core {
         sp.S_xy -= x * y;
         sp.S_x -= x;
         sp.S_y -= y;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::beta_open_internal`]
@@ -854,9 +850,9 @@ impl Core {
         if inReal0.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inReal1.len() != inReal0.len() {
@@ -864,14 +860,12 @@ impl Core {
         }
         let historyLen: usize = inReal0.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut S_xx: f64 = 0.0_f64;
         let mut S_xy: f64 = 0.0_f64;
         let mut S_x: f64 = 0.0_f64;
@@ -904,10 +898,6 @@ impl Core {
         S_xy = 0.0;
         S_x = 0.0;
         S_y = 0.0;
-        last_price_x = 0.0;
-        last_price_y = 0.0;
-        trailing_last_price_x = 0.0;
-        trailing_last_price_y = 0.0;
         tmp_real = 0.0;
         shift_x = 0.0;
         shift_y = 0.0;
@@ -950,7 +940,7 @@ impl Core {
         // Validate the calculation method type and
         // identify the minimum number of input
         // consume before the first value is output..
-        nbInitialElementNeeded = (optInTimePeriod) as usize;
+        nbInitialElementNeeded = optInTimePeriod as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < nbInitialElementNeeded {
@@ -958,8 +948,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Consume first input.
@@ -1189,9 +1179,9 @@ impl Core {
             // returns are small". The literal is TA_EPSILON, and the plain `>` also
             // rejects a negative denominator rather than dividing by it.
             if denom > 0.00000000000001 * denom_scale {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (n * S_xy - S_x * S_y) / denom;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (n * S_xy - S_x * S_y) / denom;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             // Remove the calculation starting with the trailingIdx.
             leaving_xx = x * x;
@@ -1204,8 +1194,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -1243,9 +1233,9 @@ impl Core {
             S_yy,
             barsSinceReseed,
             n,
-            trailingIdx: (trailingIdx) as i32,
-            j: (j) as i32,
-            i: (i) as i32,
+            trailingIdx: trailingIdx as i32,
+            j: j as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal0,
@@ -1256,7 +1246,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::beta_open`] (composition seam).
     pub(crate) fn beta_open_internal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(BetaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1335,7 +1325,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_BETA_OpenAndFill")]
     pub fn beta_open_and_fill(
-        &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(BetaStream, OutRange), RetCode> {
         if inReal0.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1357,7 +1347,7 @@ impl Core {
     /// [`Core::beta_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn beta_open_and_fill_internal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<BetaStream, RetCode> {
         self.beta_open_impl(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1440,13 +1430,13 @@ impl BetaStream {
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut i = sp.i;
             let mut j = sp.j;
-            let mut last_price_x = sp.last_price_x;
-            let mut last_price_y = sp.last_price_y;
+            let last_price_x = sp.last_price_x;
+            let last_price_y = sp.last_price_y;
             let mut shift_x = sp.shift_x;
             let mut shift_y = sp.shift_y;
-            let mut trailingIdx = sp.trailingIdx;
-            let mut trailing_last_price_x = sp.trailing_last_price_x;
-            let mut trailing_last_price_y = sp.trailing_last_price_y;
+            let trailingIdx = sp.trailingIdx;
+            let trailing_last_price_x = sp.trailing_last_price_x;
+            let trailing_last_price_y = sp.trailing_last_price_y;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -1456,21 +1446,19 @@ impl BetaStream {
             pkVal0 = inReal0;
             pkSlot1 = (i & sp.xMask) as usize;
             pkVal1 = inReal1;
-            tmp_real = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(i & sp.xMask) as usize] } else { pkVal0 });
+            tmp_real = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(i & sp.xMask) as usize] } else { pkVal0 };
             if last_price_x != 0.0 {
                 x = (tmp_real - last_price_x) / last_price_x - shift_x;
             } else {
                 x = -shift_x;
             }
-            last_price_x = tmp_real;
             pkIdx0 = ((({ let _v = i; i += 1; _v }) as i32) & sp.xMask) as usize;
-            tmp_real = (if (pkIdx0 as usize) != pkSlot1 { sp.x_inReal1[(pkIdx0) as usize] } else { pkVal1 });
+            tmp_real = if (pkIdx0 as usize) != pkSlot1 { sp.x_inReal1[pkIdx0 as usize] } else { pkVal1 };
             if last_price_y != 0.0 {
                 y = (tmp_real - last_price_y) / last_price_y - shift_y;
             } else {
                 y = -shift_y;
             }
-            last_price_y = tmp_real;
             S_xx += x * x;
             S_yy += y * y;
             S_xy += x * y;
@@ -1524,8 +1512,7 @@ impl BetaStream {
             // startIdx-optInTimePeriod+outIdx, which is >= outIdx.
             barsSinceReseed -= 1;
             if denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * S_xx || sp.leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (trailingIdx) as usize;
+                windowStart = trailingIdx as usize;
                 // Walk the window forward from the price the trailing cursor already
                 // carries. A return needs its predecessor, and reading inReal[j-1]
                 // would reach one slot BEFORE the window -- which the batch can do and
@@ -1537,20 +1524,20 @@ impl BetaStream {
                 tmp_real = 0.0;
                 shift_y = 0.0;
                 // for( j = (windowStart) as i32; j < i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j < i {
                     if prev_x != 0.0 {
                         tmp_real += ((if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - prev_x) / prev_x;
                     } else {
                         cold_arm();
                     }
-                    prev_x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
+                    prev_x = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 };
                     if prev_y != 0.0 {
                         shift_y += ((if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 }) - prev_y) / prev_y;
                     } else {
                         cold_arm();
                     }
-                    prev_y = (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
+                    prev_y = if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 };
                     j += 1;
                 }
                 shift_x = tmp_real / sp.n;
@@ -1558,27 +1545,25 @@ impl BetaStream {
                 prev_x = trailing_last_price_x;
                 prev_y = trailing_last_price_y;
                 S_xx = 0.0;
-                S_yy = 0.0;
                 S_xy = 0.0;
                 S_x = 0.0;
                 S_y = 0.0;
                 // for( j = (windowStart) as i32; j < i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j < i {
                     if prev_x != 0.0 {
                         x = ((if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - prev_x) / prev_x - shift_x;
                     } else {
                         x = -shift_x;
                     }
-                    prev_x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
+                    prev_x = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 };
                     if prev_y != 0.0 {
                         y = ((if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 }) - prev_y) / prev_y - shift_y;
                     } else {
                         y = -shift_y;
                     }
-                    prev_y = (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
+                    prev_y = if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 };
                     S_xx += x * x;
-                    S_yy += y * y;
                     S_xy += x * y;
                     S_x += x;
                     S_y += y;
@@ -1599,21 +1584,6 @@ impl BetaStream {
             }
             // Always read the trailing before writing the output because the input and output
             // buffer can be the same.
-            tmp_real = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
-            if trailing_last_price_x != 0.0 {
-                x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
-            } else {
-                x = -shift_x;
-            }
-            trailing_last_price_x = tmp_real;
-            tmp_real = (if ((trailingIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(trailingIdx & sp.xMask) as usize] } else { pkVal1 });
-            trailingIdx += 1;
-            if trailing_last_price_y != 0.0 {
-                y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
-            } else {
-                y = -shift_y;
-            }
-            trailing_last_price_y = tmp_real;
             // Write the output.
             //
             // The denominator is tested against ITS OWN scale, not a fixed band: it
@@ -1622,9 +1592,9 @@ impl BetaStream {
             // returns are small". The literal is TA_EPSILON, and the plain `>` also
             // rejects a negative denominator rather than dividing by it.
             if denom > 0.00000000000001 * denom_scale {
-                (*outReal) = (sp.n * S_xy - S_x * S_y) / denom;
+                *outReal = (sp.n * S_xy - S_x * S_y) / denom;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

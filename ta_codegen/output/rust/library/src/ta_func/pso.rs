@@ -83,14 +83,14 @@ impl Core {
     #[doc(alias = "TA_PSO_Lookback")]
     #[inline]
     pub fn pso_lookback(&self, mut optInFastK_Period: i32, mut optInEMAPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastK_Period) as i32) == (i32::MIN) {
+        if optInFastK_Period == i32::MIN {
             optInFastK_Period = 8;
-        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+        } else if optInFastK_Period < 1 || optInFastK_Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInEMAPeriod) as i32) == (i32::MIN) {
+        if optInEMAPeriod == i32::MIN {
             optInEMAPeriod = 5;
-        } else if (((optInEMAPeriod) as i32) < 1) || (((optInEMAPeriod) as i32) > 100000) {
+        } else if optInEMAPeriod < 1 || optInEMAPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // One Fast-K window, then the two EMA warm-ups the author stacks on top of
@@ -121,7 +121,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_PSO_DisplayShift")]
-    pub fn pso_display_shift(&self, mut optInFastK_Period: i32, mut optInEMAPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn pso_display_shift(&self, optInFastK_Period: i32, optInEMAPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.pso_lookback(optInFastK_Period, optInEMAPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -186,14 +186,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastK_Period) as i32) == (i32::MIN) {
+        if optInFastK_Period == i32::MIN {
             optInFastK_Period = 8;
-        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+        } else if optInFastK_Period < 1 || optInFastK_Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInEMAPeriod) as i32) == (i32::MIN) {
+        if optInEMAPeriod == i32::MIN {
             optInEMAPeriod = 5;
-        } else if (((optInEMAPeriod) as i32) < 1) || (((optInEMAPeriod) as i32) > 100000) {
+        } else if optInEMAPeriod < 1 || optInEMAPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.pso_lookback(optInFastK_Period, optInEMAPeriod).unwrap_or(usize::MAX);
@@ -248,8 +248,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -274,32 +274,32 @@ impl Core {
         sum2 = 0.0;
         nBar = 0;
         today = startIdx - warmBars;
-        blockStart = today - (((optInFastK_Period - 1)) as usize);
+        blockStart = today - ((optInFastK_Period - 1) as usize);
         outIdx = 0;
         if optInFastK_Period < 1 { return RetCode::InternalError; }
-        if (optInFastK_Period) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest[..(optInFastK_Period) as usize];
+        if optInFastK_Period as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..optInFastK_Period as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInFastK_Period) as usize];
             sufHighest = &mut heap_sufHighest;
         }
         if optInFastK_Period < 1 { return RetCode::InternalError; }
-        if (optInFastK_Period) as usize <= 30usize {
-            preHighest = &mut local_preHighest[..(optInFastK_Period) as usize];
+        if optInFastK_Period as usize <= 30usize {
+            preHighest = &mut local_preHighest[..optInFastK_Period as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInFastK_Period) as usize];
             preHighest = &mut heap_preHighest;
         }
         if optInFastK_Period < 1 { return RetCode::InternalError; }
-        if (optInFastK_Period) as usize <= 30usize {
-            sufLowest = &mut local_sufLowest[..(optInFastK_Period) as usize];
+        if optInFastK_Period as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..optInFastK_Period as usize];
         } else {
             heap_sufLowest = vec![0.0_f64; (optInFastK_Period) as usize];
             sufLowest = &mut heap_sufLowest;
         }
         if optInFastK_Period < 1 { return RetCode::InternalError; }
-        if (optInFastK_Period) as usize <= 30usize {
-            preLowest = &mut local_preLowest[..(optInFastK_Period) as usize];
+        if optInFastK_Period as usize <= 30usize {
+            preLowest = &mut local_preLowest[..optInFastK_Period as usize];
         } else {
             heap_preLowest = vec![0.0_f64; (optInFastK_Period) as usize];
             preLowest = &mut heap_preLowest;
@@ -330,7 +330,7 @@ impl Core {
             // Prefix extrema of the next block, clamped to what remains, stored
             // one slot up: slot 0 repeats the suffix so that bar 'today', whose
             // window is the block itself, runs the same combine as the others.
-            blockNext = blockStart + ((optInFastK_Period) as usize);
+            blockNext = blockStart + (optInFastK_Period as usize);
             nAvail = endIdx + 1 - blockNext;
             if nAvail > ((optInFastK_Period - 1) as usize) {
                 nAvail = (optInFastK_Period - 1) as usize;
@@ -356,7 +356,6 @@ impl Core {
                         lowest = c_min(tmp, lowest);
                         _w2[_wk] = highest;
                         _w3[_wk] = lowest;
-                        i += 1;
                     }
                 }
             }
@@ -371,36 +370,36 @@ impl Core {
                 lowest = sufLowest[m];
                 lowest = c_min(preLowest[m], lowest);
                 tempReal = highest - lowest;
-                if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                if !(tempReal.abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                     fastK = (inClose[today + m] - lowest) / tempReal * 100.0;
                 } else {
                     fastK = 50.0;
                 }
                 nsk = 0.1 * (fastK - 50.0);
                 if nBar > warmBars {
-                    ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
-                    ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
+                    ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
+                    ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
                     outReal[outIdx + nOut] = 0.5 * ema2;
                     nOut = nOut + 1;
                 } else {
                     // The two seeds, staged as pso_ALT1 stages them.
-                    if nBar < ((optInEMAPeriod) as usize) {
+                    if nBar < (optInEMAPeriod as usize) {
                         sum1 = sum1 + nsk;
                         if nBar == ((optInEMAPeriod - 1) as usize) {
-                            ema1 = sum1 / ((optInEMAPeriod) as f64);
+                            ema1 = sum1 / (optInEMAPeriod as f64);
                         }
                     } else {
-                        ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
+                        ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
                     }
                     if nBar >= lookbackEMA {
                         n2 = nBar - lookbackEMA;
-                        if n2 < ((optInEMAPeriod) as usize) {
+                        if n2 < (optInEMAPeriod as usize) {
                             sum2 = sum2 + ema1;
                             if n2 == ((optInEMAPeriod - 1) as usize) {
-                                ema2 = sum2 / ((optInEMAPeriod) as f64);
+                                ema2 = sum2 / (optInEMAPeriod as f64);
                             }
                         } else {
-                            ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
+                            ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
                         }
                     }
                     if nBar == warmBars {
@@ -416,7 +415,7 @@ impl Core {
                 let _wn: usize = nOut - i;
                 let _w0 = &mut outReal[outIdx..][.._wn];
                 for _wk in 0.._wn {
-                    _w0[_wk] = (((_w0[_wk]).tanh()) as f64);
+                    _w0[_wk] = _w0[_wk].tanh() as f64;
                     outIdx = outIdx + 1;
                     i += 1;
                 }
@@ -424,8 +423,8 @@ impl Core {
             today = today + nAvail + 1;
             blockStart = blockNext;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero and rescaled,
@@ -585,8 +584,6 @@ pub struct PsoStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct PsoStreamState {
-    optInFastK_Period: i32,
-    optInEMAPeriod: i32,
     emaK: f64,
     emaBeta: f64,
     highest: f64,
@@ -652,18 +649,18 @@ impl Core {
             sp.highestIdx = sp.today;
             sp.highest = tmp;
         }
-        if !(((sp.highest - sp.lowest).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
+        if !((sp.highest - sp.lowest).abs() <= 1e-14 * (sp.highest.abs() + sp.lowest.abs())) {
             fastK = (sp.x_inClose[(sp.today & sp.xMask) as usize] - sp.lowest) / (sp.highest - sp.lowest) * 100.0;
         } else {
             fastK = 50.0;
         }
         nsk = 0.1 * (fastK - 50.0);
-        sp.ema1 = fmadd!(sp.emaBeta as f64, sp.ema1, sp.emaK * nsk);
-        sp.ema2 = fmadd!(sp.emaBeta as f64, sp.ema2, sp.emaK * sp.ema1);
-        (*outReal) = (0.5 * sp.ema2).tanh();
+        sp.ema1 = fmadd!(sp.emaBeta, sp.ema1, sp.emaK * nsk);
+        sp.ema2 = fmadd!(sp.emaBeta, sp.ema2, sp.emaK * sp.ema1);
+        *outReal = (0.5 * sp.ema2).tanh();
         sp.trailingIdx = sp.trailingIdx + 1;
         sp.today = sp.today + 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::pso_open_internal`]
@@ -692,14 +689,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastK_Period) as i32) == (i32::MIN) {
+        if optInFastK_Period == i32::MIN {
             optInFastK_Period = 8;
-        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
+        } else if optInFastK_Period < 1 || optInFastK_Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInEMAPeriod) as i32) == (i32::MIN) {
+        if optInEMAPeriod == i32::MIN {
             optInEMAPeriod = 5;
-        } else if (((optInEMAPeriod) as i32) < 1) || (((optInEMAPeriod) as i32) > 100000) {
+        } else if optInEMAPeriod < 1 || optInEMAPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -707,14 +704,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut emaK: f64 = 0.0_f64;
         let mut emaBeta: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
@@ -744,11 +739,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Leibfarth's pipeline in one pass: a Fast-K window, the affine step that
         // centres it on zero, two EMA passes and the squash.
         //
@@ -784,43 +779,43 @@ impl Core {
         lowestIdx = -1;
         // The first bar carrying a full Fast-K window.
         trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + (((optInFastK_Period - 1)) as usize);
+        today = trailingIdx + ((optInFastK_Period - 1) as usize);
         nBar = 0;
         // Warm-up. Runs through startIdx inclusive: its last pass produces the
         // first output.
         while today <= startIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             // Fast-K, spelled as stochf.c spells it: divide by the range itself and
@@ -832,32 +827,32 @@ impl Core {
             // Fast-K midpoint, so that a flat market reads PSO 0 instead of
             // -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
             // the window supports (#473 Q4, the neutral-point rule of #112).
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
             } else {
                 fastK = 50.0;
             }
             nsk = 0.1 * (fastK - 50.0);
             // Pass 1, over the normalised Fast-K.
-            if nBar < ((optInEMAPeriod) as usize) {
+            if nBar < (optInEMAPeriod as usize) {
                 sum1 = sum1 + nsk;
                 if nBar == ((optInEMAPeriod - 1) as usize) {
-                    ema1 = sum1 / ((optInEMAPeriod) as f64);
+                    ema1 = sum1 / (optInEMAPeriod as f64);
                 }
             } else {
-                ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
+                ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
             }
             // Pass 2, over what pass 1 publishes. Keep the comparison ahead of
             // the subtraction: the counters are unsigned in Rust.
             if nBar >= lookbackEMA {
                 n2 = nBar - lookbackEMA;
-                if n2 < ((optInEMAPeriod) as usize) {
+                if n2 < (optInEMAPeriod as usize) {
                     sum2 = sum2 + ema1;
                     if n2 == ((optInEMAPeriod - 1) as usize) {
-                        ema2 = sum2 / ((optInEMAPeriod) as f64);
+                        ema2 = sum2 / (optInEMAPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
+                    ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
                 }
             }
             nBar = nBar + 1;
@@ -870,58 +865,58 @@ impl Core {
         // its bar, so ss is only bounded by [-5, 5] on well-formed input; the
         // literal form emits NaN from a successful call once ss exceeds 709.78,
         // which the house rule of #112 forbids (#473 Q3).
-        outReal[(0 * outStride) as usize] = (0.5 * ema2).tanh();
+        outReal[0] = (0.5 * ema2).tanh();
         outIdx = 1;
         // Stable zone. Both passes are pure recursions from here on.
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
             } else {
                 fastK = 50.0;
             }
             nsk = 0.1 * (fastK - 50.0);
-            ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
-            ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
-            outReal[(outIdx * outStride) as usize] = (0.5 * ema2).tanh();
+            ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
+            ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
+            outReal[outIdx * outStride] = (0.5 * ema2).tanh();
             outIdx = outIdx + 1;
             trailingIdx = trailingIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -945,19 +940,17 @@ impl Core {
             }
         }
         let state = PsoStreamState {
-            optInFastK_Period,
-            optInEMAPeriod,
             emaK,
             emaBeta,
             highest,
             lowest,
             ema1,
             ema2,
-            trailingIdx: (trailingIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            highestIdx: highestIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inHigh,
@@ -969,7 +962,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::pso_open`] (composition seam).
     pub(crate) fn pso_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInEMAPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInFastK_Period: i32, optInEMAPeriod: i32,
     ) -> Result<(PsoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1054,7 +1047,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_PSO_OpenAndFill")]
     pub fn pso_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInEMAPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInEMAPeriod: i32, outReal: &mut [f64],
     ) -> Result<(PsoStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1076,7 +1069,7 @@ impl Core {
     /// [`Core::pso_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn pso_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInEMAPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInFastK_Period: i32, optInEMAPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PsoStream, RetCode> {
         self.pso_open_impl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1166,48 +1159,44 @@ impl PsoStream {
             pkSlot2 = (sp.today & sp.xMask) as usize;
             pkVal2 = inClose;
             // Set the lowest low
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 };
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     if tmp < lowest {
-                        lowestIdx = i;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = sp.today;
                 lowest = tmp;
             }
             // Set the highest high
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmp > highest {
-                        highestIdx = i;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = sp.today;
                 highest = tmp;
             }
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 fastK = ((if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 }) - lowest) / (highest - lowest) * 100.0;
             } else {
                 fastK = 50.0;
             }
             nsk = 0.1 * (fastK - 50.0);
-            ema1 = fmadd!(sp.emaBeta as f64, ema1, sp.emaK * nsk);
-            ema2 = fmadd!(sp.emaBeta as f64, ema2, sp.emaK * ema1);
-            (*outReal) = (0.5 * ema2).tanh();
+            ema1 = fmadd!(sp.emaBeta, ema1, sp.emaK * nsk);
+            ema2 = fmadd!(sp.emaBeta, ema2, sp.emaK * ema1);
+            *outReal = (0.5 * ema2).tanh();
         }
         Ok(outReal)
     }

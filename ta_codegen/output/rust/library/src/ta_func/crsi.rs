@@ -82,25 +82,25 @@ impl Core {
     #[doc(alias = "TA_CRSI_Lookback")]
     #[inline]
     pub fn crsi_lookback(&self, mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 3;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInStreakPeriod) as i32) == (i32::MIN) {
+        if optInStreakPeriod == i32::MIN {
             optInStreakPeriod = 2;
-        } else if (((optInStreakPeriod) as i32) < 2) || (((optInStreakPeriod) as i32) > 100000) {
+        } else if optInStreakPeriod < 2 || optInStreakPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInRankPeriod) as i32) == (i32::MIN) {
+        if optInRankPeriod == i32::MIN {
             optInRankPeriod = 100;
-        } else if (((optInRankPeriod) as i32) < 2) || (((optInRankPeriod) as i32) > 10000) {
+        } else if optInRankPeriod < 2 || optInRankPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         let mut retValue: usize = 0_usize;
         retValue = self.rsi_lookback(optInTimePeriod)?;
-        retValue = (retValue).max(self.rsi_lookback(optInStreakPeriod)? + 1);
-        retValue = (retValue).max(self.percentrank_lookback(optInRankPeriod)? + self.rocp_lookback(1)?);
+        retValue = retValue.max(self.rsi_lookback(optInStreakPeriod)? + 1);
+        retValue = retValue.max(self.percentrank_lookback(optInRankPeriod)? + self.rocp_lookback(1)?);
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::crsi`]: how many bars ahead (positive) or behind
@@ -123,7 +123,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CRSI_DisplayShift")]
-    pub fn crsi_display_shift(&self, mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn crsi_display_shift(&self, optInTimePeriod: i32, optInStreakPeriod: i32, optInRankPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -151,19 +151,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 3;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInStreakPeriod) as i32) == (i32::MIN) {
+        if optInStreakPeriod == i32::MIN {
             optInStreakPeriod = 2;
-        } else if (((optInStreakPeriod) as i32) < 2) || (((optInStreakPeriod) as i32) > 100000) {
+        } else if optInStreakPeriod < 2 || optInStreakPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInRankPeriod) as i32) == (i32::MIN) {
+        if optInRankPeriod == i32::MIN {
             optInRankPeriod = 100;
-        } else if (((optInRankPeriod) as i32) < 2) || (((optInRankPeriod) as i32) > 10000) {
+        } else if optInRankPeriod < 2 || optInRankPeriod > 10000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod).unwrap_or(usize::MAX);
@@ -174,7 +174,6 @@ impl Core {
         let mut tempRSI: Vec<f64> = Vec::new();
         let mut tempStreak: Vec<f64> = Vec::new();
         let mut tempStreakRSI: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut anchorIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -182,15 +181,14 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut offsetRSI: usize = 0_usize;
         let mut offsetStreak: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
         let mut rsiNb: usize = 0_usize;
         let mut streakNb: usize = 0_usize;
         let mut rocNb: usize = 0_usize;
         let mut prevClose: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
         let mut streak: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod).unwrap_or(usize::MAX);
         if lookbackTotal > endIdx {
             return RetCode::Success;
@@ -212,9 +210,9 @@ impl Core {
         while today <= endIdx {
             close = inReal[today];
             if close > prevClose {
-                streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
+                streak = if streak > 0.0 { streak + 1.0 } else { 1.0 };
             } else if close < prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
+                streak = if streak < 0.0 { streak - 1.0 } else { -1.0 };
             } else {
                 streak = 0.0;
             }
@@ -224,36 +222,28 @@ impl Core {
             today += 1;
         }
         let _xr0 = match self.rsi(0, outIdx - 1, &tempStreak, optInStreakPeriod, &mut tempStreakRSI[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
         streakNb = _xr0.count;
-        retCode = RetCode::Success;
         let _xr1 = match self.rsi(anchorIdx + self.rsi_lookback(optInTimePeriod).unwrap_or(usize::MAX), endIdx, inReal, optInTimePeriod, &mut tempRSI[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
         rsiNb = _xr1.count;
-        retCode = RetCode::Success;
         // The streak is consumed: its buffer holds the returns.
-        let _xr2 = match self.rocp((startIdx - ((optInRankPeriod) as usize)) as usize, endIdx, inReal, 1, &mut tempStreak[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
+        let _xr2 = match self.rocp((startIdx - (optInRankPeriod as usize)) as usize, endIdx, inReal, 1, &mut tempStreak[..]) { Ok(_r) => _r, Err(_e) => return _e };
         rocNb = _xr2.count;
-        retCode = RetCode::Success;
         let _xr3 = match self.percentrank(0, rocNb - 1, &tempStreak, optInRankPeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr3.beg_idx;
-        (*outNBElement) = _xr3.count;
-        retCode = RetCode::Success;
-        offsetRSI = rsiNb - (*outNBElement);
-        offsetStreak = streakNb - (*outNBElement);
+        *outBegIdx = _xr3.beg_idx;
+        *outNBElement = _xr3.count;
+        offsetRSI = rsiNb - *outNBElement;
+        offsetStreak = streakNb - *outNBElement;
         i = 0;
-        if i < ((((*outNBElement) as usize)) as usize) {
-            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+        if i < ((*outNBElement as usize) as usize) {
+            let _wn: usize = ((*outNBElement as usize) as usize) - i;
             let _w0 = &mut outReal[i..][.._wn];
             let _w1 = &tempRSI[i + offsetRSI..][.._wn];
             let _w2 = &tempStreakRSI[i + offsetStreak..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (((_w1[_wk] + _w2[_wk] + _w0[_wk]) / 3.0) as f64);
-                i += 1;
+                _w0[_wk] = ((_w1[_wk] + _w2[_wk] + _w0[_wk]) / 3.0) as f64;
             }
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Connors RSI: a 0 to 100 oscillator, the plain average of three short-term momentum readings
@@ -396,9 +386,6 @@ pub struct CrsiStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CrsiStreamState {
-    optInTimePeriod: i32,
-    optInStreakPeriod: i32,
-    optInRankPeriod: i32,
     prevClose: f64,
     streak: f64,
     sub0: RsiStream,
@@ -422,9 +409,9 @@ impl Core {
         let mut cur_outReal: f64 = 0.0_f64;
         close = inReal;
         if close > sp.prevClose {
-            sp.streak = (if sp.streak > 0.0 { sp.streak + 1.0 } else { 1.0 });
+            sp.streak = if sp.streak > 0.0 { sp.streak + 1.0 } else { 1.0 };
         } else if close < sp.prevClose {
-            sp.streak = (if sp.streak < 0.0 { sp.streak - 1.0 } else { -1.0 });
+            sp.streak = if sp.streak < 0.0 { sp.streak - 1.0 } else { -1.0 };
         } else {
             sp.streak = 0.0;
         }
@@ -438,7 +425,7 @@ impl Core {
         cur_outReal = sp.sub3.update(cur_tempStreak)?;
         // Combine map (batch tail, per bar).
         cur_outReal = (cur_tempRSI + cur_tempStreakRSI + cur_outReal) / 3.0;
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -450,31 +437,29 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 3;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInStreakPeriod) as i32) == (i32::MIN) {
+        if optInStreakPeriod == i32::MIN {
             optInStreakPeriod = 2;
-        } else if (((optInStreakPeriod) as i32) < 2) || (((optInStreakPeriod) as i32) > 100000) {
+        } else if optInStreakPeriod < 2 || optInStreakPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInRankPeriod) as i32) == (i32::MIN) {
+        if optInRankPeriod == i32::MIN {
             optInRankPeriod = 100;
-        } else if (((optInRankPeriod) as i32) < 2) || (((optInRankPeriod) as i32) > 10000) {
+        } else if optInRankPeriod < 2 || optInRankPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
@@ -482,7 +467,6 @@ impl Core {
         let mut tempRSI: Vec<f64> = Vec::new();
         let mut tempStreak: Vec<f64> = Vec::new();
         let mut tempStreakRSI: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut anchorIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -497,8 +481,8 @@ impl Core {
         let mut prevClose: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
         let mut streak: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod)?;
         if lookbackTotal > endIdx {
             return Err(RetCode::InsufficientHistory);
@@ -520,9 +504,9 @@ impl Core {
         while today <= endIdx {
             close = inReal[today];
             if close > prevClose {
-                streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
+                streak = if streak > 0.0 { streak + 1.0 } else { 1.0 };
             } else if close < prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
+                streak = if streak < 0.0 { streak - 1.0 } else { -1.0 };
             } else {
                 streak = 0.0;
             }
@@ -533,39 +517,32 @@ impl Core {
         }
         // Sub-stream 0: rsi over `tempStreak`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.rsi_open_and_fill_internal(&tempStreak[..((outIdx - 1) as usize) + 1], ((0) as usize), optInStreakPeriod, &mut tempBegIdx, &mut streakNb, &mut tempStreakRSI[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.rsi_open_and_fill_internal(&tempStreak[..((outIdx - 1) as usize) + 1], 0 as usize, optInStreakPeriod, &mut tempBegIdx, &mut streakNb, &mut tempStreakRSI[..])?;
         // Sub-stream 1: rsi over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.rsi_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((anchorIdx + self.rsi_lookback(optInTimePeriod)?) as usize), optInTimePeriod, &mut tempBegIdx, &mut rsiNb, &mut tempRSI[..])?;
-        retCode = RetCode::Success;
+        let sub1 = self.rsi_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (anchorIdx + self.rsi_lookback(optInTimePeriod)?) as usize, optInTimePeriod, &mut tempBegIdx, &mut rsiNb, &mut tempRSI[..])?;
         // The streak is consumed: its buffer holds the returns.
         // Sub-stream 2: rocp over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.rocp_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInRankPeriod) as usize), 1, &mut tempBegIdx, &mut rocNb, &mut tempStreak[..])?;
-        retCode = RetCode::Success;
+        let sub2 = self.rocp_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (startIdx as usize).saturating_sub(optInRankPeriod as usize), 1, &mut tempBegIdx, &mut rocNb, &mut tempStreak[..])?;
         // Sub-stream 3: percentrank over `tempStreak`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub3 = self.percentrank_open_and_fill_internal(&tempStreak[..((rocNb - 1) as usize) + 1], ((0) as usize), optInRankPeriod, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
-        offsetRSI = rsiNb - (*outNBElement);
-        offsetStreak = streakNb - (*outNBElement);
+        let sub3 = self.percentrank_open_and_fill_internal(&tempStreak[..((rocNb - 1) as usize) + 1], 0 as usize, optInRankPeriod, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        offsetRSI = rsiNb - *outNBElement;
+        offsetStreak = streakNb - *outNBElement;
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
+        while i < ((*outNBElement as usize) as usize) {
             sc_outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + sc_outReal[i]) / 3.0;
             i += 1;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
         let state = CrsiStreamState {
-            optInTimePeriod,
-            optInStreakPeriod,
-            optInRankPeriod,
             prevClose,
             streak,
             cur_outReal: sc_outReal[*outNBElement - 1],
@@ -583,7 +560,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::crsi_open`] (composition seam).
     pub(crate) fn crsi_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInStreakPeriod: i32, optInRankPeriod: i32,
     ) -> Result<(CrsiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -656,7 +633,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CRSI_OpenAndFill")]
     pub fn crsi_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInStreakPeriod: i32, optInRankPeriod: i32, outReal: &mut [f64],
     ) -> Result<(CrsiStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -675,7 +652,7 @@ impl Core {
     /// [`Core::crsi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn crsi_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInStreakPeriod: i32, mut optInRankPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInStreakPeriod: i32, optInRankPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CrsiStream, RetCode> {
         self.crsi_open_impl(inReal, startIdx, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -751,9 +728,9 @@ impl CrsiStream {
             let mut streak = sp.streak;
             close = inReal;
             if close > sp.prevClose {
-                streak = (if streak > 0.0 { streak + 1.0 } else { 1.0 });
+                streak = if streak > 0.0 { streak + 1.0 } else { 1.0 };
             } else if close < sp.prevClose {
-                streak = (if streak < 0.0 { streak - 1.0 } else { -1.0 });
+                streak = if streak < 0.0 { streak - 1.0 } else { -1.0 };
             } else {
                 streak = 0.0;
             }
@@ -766,7 +743,7 @@ impl CrsiStream {
             cur_outReal = sp.sub3.peek(cur_tempStreak)?;
             // Combine map (batch tail, per bar).
             cur_outReal = (cur_tempRSI + cur_tempStreakRSI + cur_outReal) / 3.0;
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

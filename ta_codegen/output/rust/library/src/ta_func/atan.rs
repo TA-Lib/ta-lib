@@ -67,7 +67,7 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_ATAN_Lookback")]
     pub fn atan_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::atan`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -111,7 +111,6 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let inReal = &inReal[..=endIdx];
@@ -123,13 +122,12 @@ impl Core {
             let _w0 = &inReal[i..][.._wn];
             let _w1 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                _w1[_wk] = (((_w0[_wk]).atan()) as f64);
-                i += 1;
+                _w1[_wk] = _w0[_wk].atan() as f64;
                 outIdx += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Element-wise arctangent of the input series.
@@ -258,8 +256,8 @@ struct AtanStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn atan_step_impl(sp: &mut AtanStreamState, inReal: f64, outReal: &mut f64) {
-        (*outReal) = (inReal).atan();
-        sp.cur_outReal = (*outReal);
+        *outReal = inReal.atan();
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::atan_open_internal`]
@@ -272,14 +270,11 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Default return values
@@ -287,12 +282,12 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            outReal[(outIdx * outStride) as usize] = (((inReal[i]).atan()) as f64);
+            outReal[outIdx * outStride] = inReal[i].atan() as f64;
             i += 1;
             outIdx += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = AtanStreamState {
@@ -460,7 +455,7 @@ impl AtanStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = (inReal).atan();
+            *outReal = inReal.atan();
         }
         Ok(outReal)
     }

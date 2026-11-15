@@ -89,9 +89,9 @@ impl Core {
     #[doc(alias = "TA_CORREL_Lookback")]
     #[inline]
     pub fn correl_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -112,7 +112,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CORREL_DisplayShift")]
-    pub fn correl_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn correl_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.correl_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -139,9 +139,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.correl_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -187,13 +187,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal0 = &inReal0[..=endIdx];
         let inReal1 = &inReal1[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         // Measure both series against a shift near the window, exactly as TA_VAR
         // does (#118). The running sums then hold deviations rather than raw levels,
@@ -241,8 +241,8 @@ impl Core {
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
-            peakY2 = (if sumY2 > peakY2 { sumY2 } else { peakY2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
+            peakY2 = if sumY2 > peakY2 { sumY2 } else { peakY2 };
             ssX = sumX2 - sumX * sumX * invPeriod;
             ssY = sumY2 - sumY * sumY * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
@@ -274,11 +274,10 @@ impl Core {
                 // twice, not three times.
                 tempReal = 0.0;
                 shiftY = 0.0;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempReal += inReal0[j];
                     shiftY += inReal1[j];
                 }
-                j = (today as usize) + 1;
                 shiftX = tempReal * invPeriod;
                 shiftY = shiftY * invPeriod;
                 sumY2 = 0.0;
@@ -286,7 +285,7 @@ impl Core {
                 sumY = sumX2;
                 sumX = sumY;
                 sumXY = sumX;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     x = inReal0[j] - shiftX;
                     sumX += x;
                     sumX2 += x * x;
@@ -295,7 +294,6 @@ impl Core {
                     sumY += y;
                     sumY2 += y * y;
                 }
-                j = (today as usize) + 1;
                 ssX = sumX2 - sumX * sumX * invPeriod;
                 ssY = sumY2 - sumY * sumY * invPeriod;
                 spXY = sumXY - sumX * sumY * invPeriod;
@@ -316,7 +314,7 @@ impl Core {
                     sumY = sumX2;
                     sumX = sumY;
                     sumXY = sumX;
-                    for j in (windowStart as usize)..(today as usize) + 1 {
+                    for j in windowStart..today + 1 {
                         x = inReal0[j] - shiftX;
                         sumX += x;
                         sumX2 += x * x;
@@ -325,7 +323,6 @@ impl Core {
                         sumY += y;
                         sumY2 += y * y;
                     }
-                    j = (today as usize) + 1;
                     ssX = sumX2 - sumX * sumX * invPeriod;
                     ssY = sumY2 - sumY * sumY * invPeriod;
                     spXY = sumXY - sumX * sumY * invPeriod;
@@ -404,7 +401,7 @@ impl Core {
             today += 1;
             if !(today <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Pearson's correlation coefficient (r) between two input series over a rolling window of
@@ -590,8 +587,8 @@ impl Core {
         sp.sumXY += x * y;
         sp.sumY += y;
         sp.sumY2 += y * y;
-        sp.peakX2 = (if sp.sumX2 > sp.peakX2 { sp.sumX2 } else { sp.peakX2 });
-        sp.peakY2 = (if sp.sumY2 > sp.peakY2 { sp.sumY2 } else { sp.peakY2 });
+        sp.peakX2 = if sp.sumX2 > sp.peakX2 { sp.sumX2 } else { sp.peakX2 };
+        sp.peakY2 = if sp.sumY2 > sp.peakY2 { sp.sumY2 } else { sp.peakY2 };
         ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
         ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
         spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
@@ -617,14 +614,14 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if ssX < 0.000001 * sp.peakX2 || ssY < 0.000001 * sp.peakY2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
             // Both means in one pass over the window: the rebuild below is the
             // only O(period) work on this function's hot path, so it is walked
             // twice, not three times.
             tempReal = 0.0;
             sp.shiftY = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.today {
                 tempReal += sp.x_inReal0[(sp.j & sp.xMask) as usize];
                 sp.shiftY += sp.x_inReal1[(sp.j & sp.xMask) as usize];
@@ -638,7 +635,7 @@ impl Core {
             sp.sumX = sp.sumY;
             sp.sumXY = sp.sumX;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.today {
                 x = sp.x_inReal0[(sp.j & sp.xMask) as usize] - sp.shiftX;
                 sp.sumX += x;
@@ -670,7 +667,7 @@ impl Core {
                 sp.sumX = sp.sumY;
                 sp.sumXY = sp.sumX;
                 // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-                sp.j = (windowStart) as i32;
+                sp.j = windowStart as i32;
                 while sp.j <= sp.today {
                     x = sp.x_inReal0[(sp.j & sp.xMask) as usize] - sp.shiftX;
                     sp.sumX += x;
@@ -744,9 +741,9 @@ impl Core {
             } else if tempReal < -1.0 {
                 tempReal = -1.0;
             }
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         // Remove the trailing values (prepares the next window).
         sp.sumX -= trailingX;
@@ -755,7 +752,7 @@ impl Core {
         sp.sumY -= trailingY;
         sp.sumY2 -= trailingY * trailingY;
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::correl_open_internal`]
@@ -766,9 +763,9 @@ impl Core {
         if inReal0.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inReal1.len() != inReal0.len() {
@@ -776,14 +773,12 @@ impl Core {
         }
         let historyLen: usize = inReal0.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumXY: f64 = 0.0_f64;
         let mut sumX: f64 = 0.0_f64;
         let mut sumY: f64 = 0.0_f64;
@@ -821,11 +816,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         // Measure both series against a shift near the window, exactly as TA_VAR
         // does (#118). The running sums then hold deviations rather than raw levels,
@@ -873,8 +868,8 @@ impl Core {
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
-            peakY2 = (if sumY2 > peakY2 { sumY2 } else { peakY2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
+            peakY2 = if sumY2 > peakY2 { sumY2 } else { peakY2 };
             ssX = sumX2 - sumX * sumX * invPeriod;
             ssY = sumY2 - sumY * sumY * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
@@ -906,11 +901,10 @@ impl Core {
                 // twice, not three times.
                 tempReal = 0.0;
                 shiftY = 0.0;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     tempReal += inReal0[j];
                     shiftY += inReal1[j];
                 }
-                j = (today as usize) + 1;
                 shiftX = tempReal * invPeriod;
                 shiftY = shiftY * invPeriod;
                 sumY2 = 0.0;
@@ -918,7 +912,7 @@ impl Core {
                 sumY = sumX2;
                 sumX = sumY;
                 sumXY = sumX;
-                for j in (windowStart as usize)..(today as usize) + 1 {
+                for j in windowStart..today + 1 {
                     x = inReal0[j] - shiftX;
                     sumX += x;
                     sumX2 += x * x;
@@ -927,7 +921,7 @@ impl Core {
                     sumY += y;
                     sumY2 += y * y;
                 }
-                j = (today as usize) + 1;
+                j = today + 1;
                 ssX = sumX2 - sumX * sumX * invPeriod;
                 ssY = sumY2 - sumY * sumY * invPeriod;
                 spXY = sumXY - sumX * sumY * invPeriod;
@@ -948,7 +942,7 @@ impl Core {
                     sumY = sumX2;
                     sumX = sumY;
                     sumXY = sumX;
-                    for j in (windowStart as usize)..(today as usize) + 1 {
+                    for j in windowStart..today + 1 {
                         x = inReal0[j] - shiftX;
                         sumX += x;
                         sumX2 += x * x;
@@ -957,7 +951,7 @@ impl Core {
                         sumY += y;
                         sumY2 += y * y;
                     }
-                    j = (today as usize) + 1;
+                    j = today + 1;
                     ssX = sumX2 - sumX * sumX * invPeriod;
                     ssY = sumY2 - sumY * sumY * invPeriod;
                     spXY = sumXY - sumX * sumY * invPeriod;
@@ -1021,9 +1015,9 @@ impl Core {
                 } else if tempReal < -1.0 {
                     tempReal = -1.0;
                 }
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = tempReal;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             // Remove the trailing values (prepares the next window).
             sumX -= trailingX;
@@ -1034,7 +1028,7 @@ impl Core {
             today += 1;
             if !(today <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -1068,10 +1062,10 @@ impl Core {
             peakY2,
             invPeriod,
             lookbackTotal,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             barsSinceReseed,
-            j: (j) as i32,
-            today: (today) as i32,
+            j: j as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal0,
@@ -1082,7 +1076,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::correl_open`] (composition seam).
     pub(crate) fn correl_open_internal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CorrelStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1161,7 +1155,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CORREL_OpenAndFill")]
     pub fn correl_open_and_fill(
-        &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CorrelStream, OutRange), RetCode> {
         if inReal0.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1183,7 +1177,7 @@ impl Core {
     /// [`Core::correl_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn correl_open_and_fill_internal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CorrelStream, RetCode> {
         self.correl_open_impl(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1268,7 +1262,6 @@ impl CorrelStream {
             let mut sumXY = sp.sumXY;
             let mut sumY = sp.sumY;
             let mut sumY2 = sp.sumY2;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -1285,8 +1278,8 @@ impl CorrelStream {
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            peakX2 = (if sumX2 > peakX2 { sumX2 } else { peakX2 });
-            peakY2 = (if sumY2 > peakY2 { sumY2 } else { peakY2 });
+            peakX2 = if sumX2 > peakX2 { sumX2 } else { peakX2 };
+            peakY2 = if sumY2 > peakY2 { sumY2 } else { peakY2 };
             ssX = sumX2 - sumX * sumX * sp.invPeriod;
             ssY = sumY2 - sumY * sumY * sp.invPeriod;
             spXY = sumXY - sumX * sumY * sp.invPeriod;
@@ -1311,18 +1304,17 @@ impl CorrelStream {
             // startIdx-lookbackTotal+outIdx, which is >= outIdx.
             barsSinceReseed -= 1;
             if ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+                windowStart = (sp.today - (sp.lookbackTotal as i32)) as usize;
                 // Both means in one pass over the window: the rebuild below is the
                 // only O(period) work on this function's hot path, so it is walked
                 // twice, not three times.
                 tempReal = 0.0;
                 shiftY = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.today {
-                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
-                    shiftY += (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
+                    tempReal += if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 };
+                    shiftY += if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 };
                     j += 1;
                 }
                 shiftX = tempReal * sp.invPeriod;
@@ -1333,7 +1325,7 @@ impl CorrelStream {
                 sumX = sumY;
                 sumXY = sumX;
                 // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.today {
                     x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
                     sumX += x;
@@ -1354,10 +1346,10 @@ impl CorrelStream {
                 // redone.
                 if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 {
                     if ssX < 0.000001 * sumX2 {
-                        shiftX = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+                        shiftX = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(sp.today & sp.xMask) as usize] } else { pkVal0 };
                     }
                     if ssY < 0.000001 * sumY2 {
-                        shiftY = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+                        shiftY = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(sp.today & sp.xMask) as usize] } else { pkVal1 };
                     }
                     sumY2 = 0.0;
                     sumX2 = sumY2;
@@ -1365,7 +1357,7 @@ impl CorrelStream {
                     sumX = sumY;
                     sumXY = sumX;
                     // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
-                    j = (windowStart) as i32;
+                    j = windowStart as i32;
                     while j <= sp.today {
                         x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
                         sumX += x;
@@ -1380,8 +1372,6 @@ impl CorrelStream {
                     ssY = sumY2 - sumY * sumY * sp.invPeriod;
                     spXY = sumXY - sumX * sumY * sp.invPeriod;
                 }
-                peakX2 = sumX2;
-                peakY2 = sumY2;
                 // A sum of squares is non-negative by definition, but this one is
                 // extracted as a difference, so its SIGN is not guaranteed on a window
                 // sitting inside a flat stretch. Enforce the invariant HERE and not at
@@ -1396,7 +1386,6 @@ impl CorrelStream {
                     ssY = 0.0;
                 }
             }
-            trailingIdx += 1;
             // Output the new coefficient.
             //
             // Each sum of squares is tested against its OWN scale, not the pair
@@ -1435,9 +1424,9 @@ impl CorrelStream {
                 } else if tempReal < -1.0 {
                     tempReal = -1.0;
                 }
-                (*outReal) = tempReal;
+                *outReal = tempReal;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

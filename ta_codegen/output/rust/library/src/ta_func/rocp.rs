@@ -80,12 +80,12 @@ impl Core {
     #[doc(alias = "TA_ROCP_Lookback")]
     #[inline]
     pub fn rocp_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::rocp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -104,7 +104,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ROCP_DisplayShift")]
-    pub fn rocp_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn rocp_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.rocp_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -130,9 +130,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.rocp_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -176,20 +176,20 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         if inIdx <= endIdx {
             let _wn: usize = endIdx - inIdx + 1;
             let _w0 = &inReal[inIdx..][.._wn];
@@ -197,15 +197,13 @@ impl Core {
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
                 tempReal = _w1[_wk];
-                trailingIdx += 1;
-                _w2[_wk] = std::hint::select_unpredictable(tempReal != 0.0, (((_w0[_wk] - tempReal) / tempReal) as f64), 0.0);
+                _w2[_wk] = std::hint::select_unpredictable(tempReal != 0.0, ((_w0[_wk] - tempReal) / tempReal) as f64, 0.0);
                 outIdx += 1;
-                inIdx += 1;
             }
         }
         // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Rate of change expressed as a fraction of the price optInTimePeriod bars ago. Normalized and
@@ -330,7 +328,6 @@ pub struct RocpStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct RocpStreamState {
-    optInTimePeriod: i32,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
@@ -349,11 +346,11 @@ impl Core {
         let mut ringCapL_trailingIdx: usize = 0_usize;
         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
         if tempReal != 0.0 {
-            (*outReal) = (inReal - tempReal) / tempReal;
+            *outReal = (inReal - tempReal) / tempReal;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
@@ -372,21 +369,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
@@ -423,27 +418,27 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(tempReal != 0.0, (((inReal[inIdx] - tempReal) / tempReal) as f64), 0.0);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = std::hint::select_unpredictable(tempReal != 0.0, ((inReal[inIdx] - tempReal) / tempReal) as f64, 0.0);
             inIdx += 1;
         }
         // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
@@ -455,7 +450,6 @@ impl Core {
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = RocpStreamState {
-            optInTimePeriod,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
@@ -466,7 +460,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::rocp_open`] (composition seam).
     pub(crate) fn rocp_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(RocpStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -542,7 +536,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ROCP_OpenAndFill")]
     pub fn rocp_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(RocpStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -561,7 +555,7 @@ impl Core {
     /// [`Core::rocp_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn rocp_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RocpStream, RetCode> {
         self.rocp_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -631,9 +625,9 @@ impl RocpStream {
             let mut tempReal: f64 = 0.0_f64;
             tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             if tempReal != 0.0 {
-                (*outReal) = (inReal - tempReal) / tempReal;
+                *outReal = (inReal - tempReal) / tempReal;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

@@ -86,12 +86,12 @@ impl Core {
     #[doc(alias = "TA_CMO_Lookback")]
     #[inline]
     pub fn cmo_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::CMO, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::CMO, if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }, if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 })) as usize);
     }
     /// Display shift of one output of [`Core::cmo`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -110,7 +110,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CMO_DisplayShift")]
-    pub fn cmo_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cmo_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cmo_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -136,9 +136,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -157,8 +157,8 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackTotal = self.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
@@ -183,7 +183,7 @@ impl Core {
         prevGain = 0.0;
         prevLoss = 0.0;
         today += 1;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
@@ -192,10 +192,9 @@ impl Core {
                 today += 1;
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
                 prevGain += gainDelta;
                 prevLoss += gainDelta - tempValue2;
-                i -= 1;
             }
         }
         // Subsequent prevLoss and prevGain are smoothed
@@ -206,8 +205,8 @@ impl Core {
         // difference of two products: prev - (prev - today)*k lets the zero arm fold
         // to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
         // becomes a fused multiply-add.
-        prevLoss /= ((optInTimePeriod) as f64);
-        prevGain /= ((optInTimePeriod) as f64);
+        prevLoss /= optInTimePeriod as f64;
+        prevGain /= optInTimePeriod as f64;
         // Often documentation present the RSI calculation as follow:
         //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
         //
@@ -237,7 +236,7 @@ impl Core {
                 tempValue1 = inReal[today];
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
                 prevGain += gainDelta * invPeriod - prevGain * invPeriod;
                 prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
                 today += 1;
@@ -249,7 +248,7 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta * invPeriod - prevGain * invPeriod;
             prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             tempValue1 = prevGain + prevLoss;
@@ -261,8 +260,8 @@ impl Core {
                 outIdx += 1;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves
@@ -389,7 +388,6 @@ pub struct CmoStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CmoStreamState {
-    optInTimePeriod: i32,
     prevGain: f64,
     prevLoss: f64,
     invPeriod: f64,
@@ -410,16 +408,16 @@ impl Core {
         tempValue1 = inReal;
         tempValue2 = tempValue1 - sp.prevValue;
         sp.prevValue = tempValue1;
-        gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+        gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
         sp.prevGain += gainDelta * sp.invPeriod - sp.prevGain * sp.invPeriod;
         sp.prevLoss += (gainDelta - tempValue2) * sp.invPeriod - sp.prevLoss * sp.invPeriod;
         tempValue1 = sp.prevGain + sp.prevLoss;
         if tempValue1 > 0.0 {
-            (*outReal) = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
+            *outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cmo_open_internal`]
@@ -430,21 +428,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -456,8 +452,8 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackTotal = self.cmo_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
@@ -482,12 +478,12 @@ impl Core {
         prevLoss = 0.0;
         today += 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             i -= 1;
@@ -500,8 +496,8 @@ impl Core {
         // difference of two products: prev - (prev - today)*k lets the zero arm fold
         // to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
         // becomes a fused multiply-add.
-        prevLoss /= ((optInTimePeriod) as f64);
-        prevGain /= ((optInTimePeriod) as f64);
+        prevLoss /= optInTimePeriod as f64;
+        prevGain /= optInTimePeriod as f64;
         // Often documentation present the RSI calculation as follow:
         //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
         //
@@ -518,9 +514,9 @@ impl Core {
         if today > startIdx {
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
         } else {
             // Skip the unstable period. Do the processing
@@ -529,7 +525,7 @@ impl Core {
                 tempValue1 = inReal[today];
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
                 prevGain += gainDelta * invPeriod - prevGain * invPeriod;
                 prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
                 today += 1;
@@ -541,22 +537,21 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta * invPeriod - prevGain * invPeriod;
             prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = CmoStreamState {
-            optInTimePeriod,
             prevGain,
             prevLoss,
             invPeriod,
@@ -568,7 +563,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cmo_open`] (composition seam).
     pub(crate) fn cmo_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CmoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -641,7 +636,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CMO_OpenAndFill")]
     pub fn cmo_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CmoStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -660,7 +655,7 @@ impl Core {
     /// [`Core::cmo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cmo_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CmoStream, RetCode> {
         self.cmo_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -732,18 +727,17 @@ impl CmoStream {
             let mut tempValue2: f64 = 0.0_f64;
             let mut prevGain = sp.prevGain;
             let mut prevLoss = sp.prevLoss;
-            let mut prevValue = sp.prevValue;
+            let prevValue = sp.prevValue;
             tempValue1 = inReal;
             tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta * sp.invPeriod - prevGain * sp.invPeriod;
             prevLoss += (gainDelta - tempValue2) * sp.invPeriod - prevLoss * sp.invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
-                (*outReal) = 100.0 * ((prevGain - prevLoss) / tempValue1);
+                *outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

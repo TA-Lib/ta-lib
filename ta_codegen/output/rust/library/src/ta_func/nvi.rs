@@ -70,7 +70,7 @@ impl Core {
     #[doc(alias = "TA_NVI_Lookback")]
     pub fn nvi_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::nvi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -116,8 +116,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevNVI: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
@@ -133,7 +131,7 @@ impl Core {
         prevClose = inClose[startIdx];
         prevVolume = inVolume[startIdx];
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             tempClose = inClose[i];
             tempVolume = inVolume[i];
             // prevClose != 0 guards the percentage-change division: a zero previous
@@ -152,7 +150,7 @@ impl Core {
                 // overflowing one.
                 tempNVI = prevNVI;
                 tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
-                if (tempNVI).is_finite() {
+                if tempNVI.is_finite() {
                     prevNVI = tempNVI;
                 }
             }
@@ -161,9 +159,8 @@ impl Core {
             prevClose = tempClose;
             prevVolume = tempVolume;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Negative Volume Index: a running cumulative index that changes only on days when volume
@@ -325,14 +322,14 @@ impl Core {
             // overflowing one.
             tempNVI = sp.prevNVI;
             tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
-            if (tempNVI).is_finite() {
+            if tempNVI.is_finite() {
                 sp.prevNVI = tempNVI;
             }
         }
-        (*outReal) = sp.prevNVI;
+        *outReal = sp.prevNVI;
         sp.prevClose = tempClose;
         sp.prevVolume = tempVolume;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::nvi_open_internal`]
@@ -348,15 +345,11 @@ impl Core {
         }
         let historyLen: usize = inClose.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevNVI: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
@@ -370,7 +363,7 @@ impl Core {
         prevClose = inClose[startIdx];
         prevVolume = inVolume[startIdx];
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             tempClose = inClose[i];
             tempVolume = inVolume[i];
             // prevClose != 0 guards the percentage-change division: a zero previous
@@ -389,17 +382,16 @@ impl Core {
                 // overflowing one.
                 tempNVI = prevNVI;
                 tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
-                if (tempNVI).is_finite() {
+                if tempNVI.is_finite() {
                     prevNVI = tempNVI;
                 }
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevNVI;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevNVI;
             prevClose = tempClose;
             prevVolume = tempVolume;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = NviStreamState {
@@ -603,11 +595,11 @@ impl NviStream {
                 // overflowing one.
                 tempNVI = prevNVI;
                 tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
-                if (tempNVI).is_finite() {
+                if tempNVI.is_finite() {
                     prevNVI = tempNVI;
                 }
             }
-            (*outReal) = prevNVI;
+            *outReal = prevNVI;
         }
         Ok(outReal)
     }

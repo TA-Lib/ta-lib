@@ -87,21 +87,21 @@ impl Core {
     #[doc(alias = "TA_PVO_Lookback")]
     #[inline]
     pub fn pvo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
         // Lookback is driven by the slowest MA.
-        return Ok(self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
+        return Ok(self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType)?);
     }
     /// Display shift of one output of [`Core::pvo`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -123,7 +123,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_PVO_DisplayShift")]
-    pub fn pvo_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn pvo_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -185,14 +185,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -202,12 +202,9 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempInteger: usize = 0_usize;
-        let mut fastBeg: usize = 0_usize;
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
         let mut slowLookback: usize = 0_usize;
@@ -225,9 +222,9 @@ impl Core {
         // being false: with a caller-supplied inVolume that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+        if self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         if optInMAType == MAType::SMA {
@@ -275,9 +272,9 @@ impl Core {
             let mut _zeroRun: usize = 0_usize;
             // Make sure slow is really slower than the fast period! if not, swap...
             if optInSlowPeriod < optInFastPeriod {
-                tempInteger = (optInSlowPeriod) as usize;
+                tempInteger = optInSlowPeriod as usize;
                 optInSlowPeriod = optInFastPeriod;
-                optInFastPeriod = (tempInteger) as i32;
+                optInFastPeriod = tempInteger as i32;
             }
             _fastStart = (optInFastPeriod - 1) as usize;
             if _fastStart < startIdx {
@@ -287,7 +284,7 @@ impl Core {
             if _slowStart < startIdx {
                 _slowStart = startIdx;
             }
-            _fastTrailing = _fastStart - (((optInFastPeriod - 1)) as usize);
+            _fastTrailing = _fastStart - ((optInFastPeriod - 1) as usize);
             _fastTotal = 0.0;
             _j = _fastTrailing;
             if _j < _fastStart {
@@ -295,7 +292,6 @@ impl Core {
                 let _w0 = &inVolume[_j..][.._wn];
                 for _wk in 0.._wn {
                     _fastTotal += _w0[_wk];
-                    _j += 1;
                 }
             }
             // One loop seeds the slow sum and warms the dead-window counter: the bars
@@ -311,8 +307,7 @@ impl Core {
                 let _w0 = &inVolume[_j..][.._wn];
                 for _wk in 0.._wn {
                     _slowTotal += _w0[_wk];
-                    _zeroRun = (if (_w0[_wk]).abs() <= 0.0 { _zeroRun + 1 } else { 0 });
-                    _j += 1;
+                    _zeroRun = if _w0[_wk].abs() <= 0.0 { _zeroRun + 1 } else { 0 };
                 }
             }
             // The bars the fast MA has and the slow one does not: advance the fast sum
@@ -327,12 +322,11 @@ impl Core {
                     _fastTotal += _w1[_wk];
                     _fastTotal -= _w0[_wk];
                     _fastTrailing += 1;
-                    _i += 1;
                 }
             }
             _outIdx = 0;
-            for _i in (_slowStart as usize)..(endIdx as usize) + 1 {
-                _zeroRun = (if (inVolume[_i]).abs() <= 0.0 { _zeroRun + 1 } else { 0 });
+            for _i in _slowStart..endIdx + 1 {
+                _zeroRun = if inVolume[_i].abs() <= 0.0 { _zeroRun + 1 } else { 0 };
                 _fastTotal += inVolume[_i];
                 _fastValue = _fastTotal;
                 _fastTotal -= inVolume[_fastTrailing];
@@ -345,16 +339,15 @@ impl Core {
                 if _zeroRun > _slowLookback {
                     _zeroRun = _slowLookback;
                     outReal[_outIdx] = 0.0;
-                } else if !((_slowMA).abs() < 1e-14) {
+                } else if !(_slowMA.abs() < 1e-14) {
                     outReal[_outIdx] = (_fastValue / (optInFastPeriod as f64) - _slowMA) / _slowMA * 100.0;
                 } else {
                     outReal[_outIdx] = 0.0;
                 }
                 _outIdx += 1;
             }
-            _i = (endIdx as usize) + 1;
-            (*outBegIdx) = _slowStart;
-            (*outNBElement) = _outIdx;
+            *outBegIdx = _slowStart;
+            *outNBElement = _outIdx;
             return RetCode::Success;
         }
         if optInMAType == MAType::EMA {
@@ -376,9 +369,9 @@ impl Core {
             let mut _eSlowStart: usize = 0_usize;
             let mut _eOutIdx: usize = 0_usize;
             if optInSlowPeriod < optInFastPeriod {
-                tempInteger = (optInSlowPeriod) as usize;
+                tempInteger = optInSlowPeriod as usize;
                 optInSlowPeriod = optInFastPeriod;
-                optInFastPeriod = (tempInteger) as i32;
+                optInFastPeriod = tempInteger as i32;
             }
             _eFastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
             _eFastK = 1.0 - _eFastBeta;
@@ -403,27 +396,27 @@ impl Core {
             _eFast = 0.0;
             // for( _eN = 0; _eN < ((optInFastPeriod) as usize); _eN += 1 )
             _eN = 0;
-            while _eN < ((optInFastPeriod) as usize) {
+            while _eN < (optInFastPeriod as usize) {
                 _eFast += inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }];
                 _eN += 1;
             }
-            _eFast = _eFast / ((optInFastPeriod) as f64);
+            _eFast = _eFast / (optInFastPeriod as f64);
             while _eFastToday <= _eSlowStart {
-                _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
+                _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
             }
             _eSlow = 0.0;
             // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
             _eN = 0;
-            while _eN < ((optInSlowPeriod) as usize) {
+            while _eN < (optInSlowPeriod as usize) {
                 _eSlow += inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }];
                 _eN += 1;
             }
-            _eSlow = _eSlow / ((optInSlowPeriod) as f64);
+            _eSlow = _eSlow / (optInSlowPeriod as f64);
             while _eSlowToday <= _eSlowStart {
-                _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
+                _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
             }
             _eOutIdx = 0;
-            if !((_eSlow).abs() < 1e-14) {
+            if !(_eSlow.abs() < 1e-14) {
                 outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
                 outReal[_eOutIdx] = 0.0;
@@ -432,17 +425,17 @@ impl Core {
             _eToday = _eSlowStart + 1;
             while _eToday <= endIdx {
                 _eX = inVolume[{ let _v = _eToday; _eToday += 1; _v }];
-                _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * _eX);
-                _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * _eX);
-                if !((_eSlow).abs() < 1e-14) {
+                _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * _eX);
+                _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * _eX);
+                if !(_eSlow.abs() < 1e-14) {
                     outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
                 } else {
                     outReal[_eOutIdx] = 0.0;
                 }
                 _eOutIdx += 1;
             }
-            (*outBegIdx) = _eSlowStart;
-            (*outNBElement) = _eOutIdx;
+            *outBegIdx = _eSlowStart;
+            *outNBElement = _eOutIdx;
             return RetCode::Success;
         }
         // Allocate an intermediate buffer.
@@ -451,24 +444,21 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // Calculate the fast MA into the tempBuffer.
         let _xr0 = match self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        fastBeg = _xr0.beg_idx;
         fastNb = _xr0.count;
-        retCode = RetCode::Success;
         // Calculate the slow MA into the output.
         let _xr1 = match self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr1.beg_idx;
-        (*outNBElement) = _xr1.count;
-        retCode = RetCode::Success;
+        *outBegIdx = _xr1.beg_idx;
+        *outNBElement = _xr1.count;
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
-        offset = fastNb - (*outNBElement);
+        offset = fastNb - *outNBElement;
         // A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
         // zero is exactly zero, but its running sums leave residue there that
         // TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
@@ -476,25 +466,25 @@ impl Core {
         // the window is dead. The recursive MA types really are nonzero on such a
         // window, so they keep the plain loop.
         slowLookback = self.ma_lookback(optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
-        windowed = (if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 });
+        windowed = if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 };
         zeroRun = 0;
         // for( i = (*outBegIdx) - slowLookback; i < (*outBegIdx); i += 1 )
-        i = (*outBegIdx) - slowLookback;
-        while i < (*outBegIdx) {
-            zeroRun = (if (inVolume[i]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+        i = *outBegIdx - slowLookback;
+        while i < *outBegIdx {
+            zeroRun = if inVolume[i].abs() <= 0.0 { zeroRun + 1 } else { 0 };
             i += 1;
         }
         if windowed != 0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                zeroRun = (if (inVolume[((*outBegIdx) + i) as usize]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+            while i < ((*outNBElement as usize) as usize) {
+                zeroRun = if inVolume[(*outBegIdx + i) as usize].abs() <= 0.0 { zeroRun + 1 } else { 0 };
                 tempReal = outReal[i];
                 if zeroRun > slowLookback {
                     zeroRun = slowLookback;
                     outReal[i] = 0.0;
-                } else if !((tempReal).abs() < 1e-14) {
-                    outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
+                } else if !(tempReal.abs() < 1e-14) {
+                    outReal[i] = ((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64;
                 } else {
                     outReal[i] = 0.0;
                 }
@@ -504,10 +494,10 @@ impl Core {
             // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 tempReal = outReal[i];
-                if !((tempReal).abs() < 1e-14) {
-                    outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
+                if !(tempReal.abs() < 1e-14) {
+                    outReal[i] = ((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64;
                 } else {
                     outReal[i] = 0.0;
                 }
@@ -655,9 +645,6 @@ pub struct PvoStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct PvoStreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
-    optInMAType: MAType,
     sub0: MaStream,
     sub1: MaStream,
     slowLookback: usize,
@@ -685,12 +672,12 @@ impl Core {
         let mut zeroRun: usize = sp.zeroRun;
         // Combine map (batch tail, per bar).
         if windowed != 0 {
-            zeroRun = (if (inVolume).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+            zeroRun = if inVolume.abs() <= 0.0 { zeroRun + 1 } else { 0 };
             tempReal = cur_outReal;
             if zeroRun > slowLookback {
                 zeroRun = slowLookback;
                 cur_outReal = 0.0;
-            } else if !((tempReal).abs() < 1e-14) {
+            } else if !(tempReal.abs() < 1e-14) {
                 cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
             } else {
                 cur_outReal = 0.0;
@@ -698,14 +685,14 @@ impl Core {
         } else {
             // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
             tempReal = cur_outReal;
-            if !((tempReal).abs() < 1e-14) {
+            if !(tempReal.abs() < 1e-14) {
                 cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
             } else {
                 cur_outReal = 0.0;
             }
         }
         sp.zeroRun = zeroRun;
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -717,14 +704,14 @@ impl Core {
         if inVolume.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -732,20 +719,16 @@ impl Core {
         }
         let historyLen: usize = inVolume.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempInteger: usize = 0_usize;
         let mut fastBeg: usize = 0_usize;
@@ -766,9 +749,9 @@ impl Core {
         // being false: with a caller-supplied inVolume that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+        if self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType)? > endIdx {
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Allocate an intermediate buffer.
@@ -777,24 +760,22 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.ma_open_and_fill_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.ma_open_and_fill_internal(&inVolume[..(endIdx as usize) + 1], startIdx as usize, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.ma_open_and_fill_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
+        let sub1 = self.ma_open_and_fill_internal(&inVolume[..(endIdx as usize) + 1], startIdx as usize, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
-        offset = fastNb - (*outNBElement);
+        offset = fastNb - *outNBElement;
         // A windowed slow MA (SMA, WMA, TRIMA, HMA) over bars that are all exactly
         // zero is exactly zero, but its running sums leave residue there that
         // TA_IS_ZERO does not catch, and residue over residue is noise where 0 is
@@ -802,24 +783,24 @@ impl Core {
         // the window is dead. The recursive MA types really are nonzero on such a
         // window, so they keep the plain loop.
         slowLookback = self.ma_lookback(optInSlowPeriod, optInMAType)?;
-        windowed = (if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 });
+        windowed = if optInMAType == MAType::SMA || optInMAType == MAType::WMA || optInMAType == MAType::TRIMA || optInMAType == MAType::HMA { 1 } else { 0 };
         zeroRun = 0;
         // for( i = (*outBegIdx) - slowLookback; i < (*outBegIdx); i += 1 )
-        i = (*outBegIdx) - slowLookback;
-        while i < (*outBegIdx) {
-            zeroRun = (if (inVolume[i]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+        i = *outBegIdx - slowLookback;
+        while i < *outBegIdx {
+            zeroRun = if inVolume[i].abs() <= 0.0 { zeroRun + 1 } else { 0 };
             i += 1;
         }
         if windowed != 0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                zeroRun = (if (inVolume[((*outBegIdx) + i) as usize]).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+            while i < ((*outNBElement as usize) as usize) {
+                zeroRun = if inVolume[(*outBegIdx + i) as usize].abs() <= 0.0 { zeroRun + 1 } else { 0 };
                 tempReal = sc_outReal[i];
                 if zeroRun > slowLookback {
                     zeroRun = slowLookback;
                     sc_outReal[i] = 0.0;
-                } else if !((tempReal).abs() < 1e-14) {
+                } else if !(tempReal.abs() < 1e-14) {
                     sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
                 } else {
                     sc_outReal[i] = 0.0;
@@ -830,9 +811,9 @@ impl Core {
             // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
+            while i < ((*outNBElement as usize) as usize) {
                 tempReal = sc_outReal[i];
-                if !((tempReal).abs() < 1e-14) {
+                if !(tempReal.abs() < 1e-14) {
                     sc_outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
                 } else {
                     sc_outReal[i] = 0.0;
@@ -847,9 +828,6 @@ impl Core {
         }
         let mut state = PvoStreamState {
             cur_outReal: 0.0_f64,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInMAType,
             sub0,
             sub1,
             slowLookback,
@@ -866,7 +844,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::pvo_open`] (composition seam).
     pub(crate) fn pvo_open_internal(
-        &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType,
+        &self, inVolume: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType,
     ) -> Result<(PvoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -939,7 +917,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_PVO_OpenAndFill")]
     pub fn pvo_open_and_fill(
-        &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
+        &self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(PvoStream, OutRange), RetCode> {
         if inVolume.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -958,7 +936,7 @@ impl Core {
     /// [`Core::pvo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn pvo_open_and_fill_internal(
-        &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inVolume: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PvoStream, RetCode> {
         self.pvo_open_impl(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1038,12 +1016,11 @@ impl PvoStream {
             let mut zeroRun: usize = sp.zeroRun;
             // Combine map (batch tail, per bar).
             if windowed != 0 {
-                zeroRun = (if (inVolume).abs() <= 0.0 { zeroRun + 1 } else { 0 });
+                zeroRun = if inVolume.abs() <= 0.0 { zeroRun + 1 } else { 0 };
                 tempReal = cur_outReal;
                 if zeroRun > slowLookback {
-                    zeroRun = slowLookback;
                     cur_outReal = 0.0;
-                } else if !((tempReal).abs() < 1e-14) {
+                } else if !(tempReal.abs() < 1e-14) {
                     cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
                 } else {
                     cur_outReal = 0.0;
@@ -1051,13 +1028,13 @@ impl PvoStream {
             } else {
                 // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
                 tempReal = cur_outReal;
-                if !((tempReal).abs() < 1e-14) {
+                if !(tempReal.abs() < 1e-14) {
                     cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
                 } else {
                     cur_outReal = 0.0;
                 }
             }
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

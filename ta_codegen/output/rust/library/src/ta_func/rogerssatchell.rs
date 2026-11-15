@@ -84,15 +84,13 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_ROGERSSATCHELL_Lookback")]
     #[inline]
-    pub fn rogerssatchell_lookback(&self, mut optInTimePeriod: i32, mut optInAnnualization: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn rogerssatchell_lookback(&self, mut optInTimePeriod: i32, optInAnnualization: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInAnnualization == Self::REAL_DEFAULT {
-            optInAnnualization = 2.52e2;
-        } else if !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
+        if optInAnnualization != Self::REAL_DEFAULT && !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -117,7 +115,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_ROGERSSATCHELL_DisplayShift")]
-    pub fn rogerssatchell_display_shift(&self, mut optInTimePeriod: i32, mut optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn rogerssatchell_display_shift(&self, optInTimePeriod: i32, optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.rogerssatchell_lookback(optInTimePeriod, optInAnnualization)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -147,9 +145,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInAnnualization == Self::REAL_DEFAULT {
@@ -194,8 +192,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inOpen = &inOpen[..=endIdx];
@@ -203,8 +201,8 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 32usize {
-            termRing = &mut local_termRing[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 32usize {
+            termRing = &mut local_termRing[..optInTimePeriod as usize];
         } else {
             heap_termRing = vec![0.0_f64; (optInTimePeriod) as usize];
             termRing = &mut heap_termRing;
@@ -220,7 +218,7 @@ impl Core {
         // Keep sqrt(A) a separate factor applied last: A = 1.0 is then an exact
         // identity and the annualised output is exactly sqrt(A) times the per-bar
         // one. Folding A under the root moves both by an ulp.
-        sqrtA = (optInAnnualization).sqrt();
+        sqrtA = optInAnnualization.sqrt();
         periodTotal = 0.0;
         // for( j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 )
         j = startIdx - nbInitialElementNeeded;
@@ -253,7 +251,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceRebuild = (32 * optInTimePeriod) as usize;
-        peakTotal = (periodTotal).abs();
+        peakTotal = periodTotal.abs();
         loop {
             o = inOpen[i];
             h = inHigh[i];
@@ -272,8 +270,8 @@ impl Core {
             termRing[termRing_Idx] = term;
             periodTotal += term;
             windowTotal = periodTotal;
-            windowMagnitude = (windowTotal).abs();
-            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
+            windowMagnitude = windowTotal.abs();
+            peakTotal = if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal };
             termRing_Idx += 1;
             if termRing_Idx >= termRing.len() { termRing_Idx = 0; }
             periodTotal -= termRing[termRing_Idx];
@@ -295,12 +293,11 @@ impl Core {
                 barsSinceRebuild = (32 * optInTimePeriod) as usize;
                 windowTotal = 0.0;
                 j = termRing_Idx;
-                if j < ((optInTimePeriod) as usize) {
+                if j < (optInTimePeriod as usize) {
                     let _wn: usize = (optInTimePeriod as usize) - j;
                     let _w0 = &termRing[j..][.._wn];
                     for _wk in 0.._wn {
                         windowTotal += _w0[_wk];
-                        j += 1;
                     }
                 }
                 j = 0;
@@ -312,7 +309,7 @@ impl Core {
                         j += 1;
                     }
                 }
-                peakTotal = (windowTotal).abs();
+                peakTotal = windowTotal.abs();
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
             }
@@ -329,8 +326,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Rogers-Satchell volatility: a range-based estimator that reads one bar's open, high, low and
@@ -506,14 +503,12 @@ pub struct RogerssatchellStream {
 #[allow(non_snake_case, dead_code)]
 struct RogerssatchellStreamState {
     optInTimePeriod: i32,
-    optInAnnualization: f64,
     periodTotal: f64,
     peakTotal: f64,
     sqrtA: f64,
     barsSinceRebuild: usize,
     termRing_Idx: usize,
     maxIdx_termRing: usize,
-    cbSize_termRing: usize,
     cb_termRing: Vec<f64>,
     cur_outReal: f64,
 }
@@ -552,8 +547,8 @@ impl Core {
         sp.cb_termRing[sp.termRing_Idx] = term;
         sp.periodTotal += term;
         windowTotal = sp.periodTotal;
-        windowMagnitude = (windowTotal).abs();
-        sp.peakTotal = (if windowMagnitude > sp.peakTotal { windowMagnitude } else { sp.peakTotal });
+        windowMagnitude = windowTotal.abs();
+        sp.peakTotal = if windowMagnitude > sp.peakTotal { windowMagnitude } else { sp.peakTotal };
         sp.termRing_Idx = sp.termRing_Idx + 1;
         if sp.termRing_Idx > sp.maxIdx_termRing {
             sp.termRing_Idx = 0;
@@ -578,7 +573,7 @@ impl Core {
             windowTotal = 0.0;
             // for( j = sp.termRing_Idx; j < ((sp.optInTimePeriod) as usize); j += 1 )
             j = sp.termRing_Idx;
-            while j < ((sp.optInTimePeriod) as usize) {
+            while j < (sp.optInTimePeriod as usize) {
                 windowTotal += sp.cb_termRing[j];
                 j += 1;
             }
@@ -588,7 +583,7 @@ impl Core {
                 windowTotal += sp.cb_termRing[j];
                 j += 1;
             }
-            sp.peakTotal = (windowTotal).abs();
+            sp.peakTotal = windowTotal.abs();
             sp.periodTotal = windowTotal;
             sp.periodTotal -= sp.cb_termRing[sp.termRing_Idx];
         }
@@ -597,11 +592,11 @@ impl Core {
         // strictly inside its open and close can make a fresh sum negative,
         // and the estimator is not defined on such a bar.
         if windowTotal > 0.0 {
-            (*outReal) = sp.sqrtA * (windowTotal / (sp.optInTimePeriod as f64)).sqrt();
+            *outReal = sp.sqrtA * (windowTotal / (sp.optInTimePeriod as f64)).sqrt();
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::rogerssatchell_open_internal`]
@@ -612,9 +607,9 @@ impl Core {
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInAnnualization == Self::REAL_DEFAULT {
@@ -627,14 +622,12 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut o: f64 = 0.0_f64;
         let mut h: f64 = 0.0_f64;
         let mut l: f64 = 0.0_f64;
@@ -663,13 +656,13 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         termRing = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_termRing = ((optInTimePeriod) as usize) - 1;
+        maxIdx_termRing = (optInTimePeriod as usize) - 1;
         termRing_Idx = 0;
         // Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
         // eq. (2): with the log price measured from the bar's open, S1 = ln(H/O),
@@ -681,7 +674,7 @@ impl Core {
         // Keep sqrt(A) a separate factor applied last: A = 1.0 is then an exact
         // identity and the annualised output is exactly sqrt(A) times the per-bar
         // one. Folding A under the root moves both by an ulp.
-        sqrtA = (optInAnnualization).sqrt();
+        sqrtA = optInAnnualization.sqrt();
         periodTotal = 0.0;
         // for( j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 )
         j = startIdx - nbInitialElementNeeded;
@@ -714,7 +707,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceRebuild = (32 * optInTimePeriod) as usize;
-        peakTotal = (periodTotal).abs();
+        peakTotal = periodTotal.abs();
         loop {
             o = inOpen[i];
             h = inHigh[i];
@@ -733,8 +726,8 @@ impl Core {
             termRing[termRing_Idx] = term;
             periodTotal += term;
             windowTotal = periodTotal;
-            windowMagnitude = (windowTotal).abs();
-            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
+            windowMagnitude = windowTotal.abs();
+            peakTotal = if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal };
             termRing_Idx += 1;
             if termRing_Idx > maxIdx_termRing { termRing_Idx = 0; }
             periodTotal -= termRing[termRing_Idx];
@@ -757,7 +750,7 @@ impl Core {
                 windowTotal = 0.0;
                 // for( j = termRing_Idx; j < ((optInTimePeriod) as usize); j += 1 )
                 j = termRing_Idx;
-                while j < ((optInTimePeriod) as usize) {
+                while j < (optInTimePeriod as usize) {
                     windowTotal += termRing[j];
                     j += 1;
                 }
@@ -767,7 +760,7 @@ impl Core {
                     windowTotal += termRing[j];
                     j += 1;
                 }
-                peakTotal = (windowTotal).abs();
+                peakTotal = windowTotal.abs();
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
             }
@@ -776,16 +769,16 @@ impl Core {
             // strictly inside its open and close can make a fresh sum negative,
             // and the estimator is not defined on such a bar.
             if windowTotal > 0.0 {
-                outReal[(outIdx * outStride) as usize] = sqrtA * (windowTotal / (optInTimePeriod as f64)).sqrt();
+                outReal[outIdx * outStride] = sqrtA * (windowTotal / (optInTimePeriod as f64)).sqrt();
             } else {
-                outReal[(outIdx * outStride) as usize] = 0.0;
+                outReal[outIdx * outStride] = 0.0;
             }
             outIdx = outIdx + 1;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_termRing: usize = maxIdx_termRing + 1;
@@ -794,7 +787,6 @@ impl Core {
         }
         let state = RogerssatchellStreamState {
             optInTimePeriod,
-            optInAnnualization,
             periodTotal,
             peakTotal,
             sqrtA,
@@ -802,7 +794,6 @@ impl Core {
             termRing_Idx,
             maxIdx_termRing,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_termRing: cbSize_termRing,
             cb_termRing: termRing,
         };
         Ok(RogerssatchellStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -810,7 +801,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::rogerssatchell_open`] (composition seam).
     pub(crate) fn rogerssatchell_open_internal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInAnnualization: f64,
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInAnnualization: f64,
     ) -> Result<(RogerssatchellStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -901,7 +892,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ROGERSSATCHELL_OpenAndFill")]
     pub fn rogerssatchell_open_and_fill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInAnnualization: f64, outReal: &mut [f64],
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInAnnualization: f64, outReal: &mut [f64],
     ) -> Result<(RogerssatchellStream, OutRange), RetCode> {
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -923,7 +914,7 @@ impl Core {
     /// [`Core::rogerssatchell_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn rogerssatchell_open_and_fill_internal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RogerssatchellStream, RetCode> {
         self.rogerssatchell_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1024,13 +1015,12 @@ impl RogerssatchellStream {
             pkVal0 = term;
             periodTotal += term;
             windowTotal = periodTotal;
-            windowMagnitude = (windowTotal).abs();
-            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
+            windowMagnitude = windowTotal.abs();
+            peakTotal = if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal };
             termRing_Idx = termRing_Idx + 1;
             if termRing_Idx > sp.maxIdx_termRing {
                 termRing_Idx = 0;
             }
-            periodTotal -= (if (termRing_Idx as usize) != pkSlot0 { sp.cb_termRing[termRing_Idx] } else { pkVal0 });
             // A running sum carries rounding at the scale of the largest window it
             // has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
             // that peak, and at least every 32 windows. Compare against the peak,
@@ -1046,32 +1036,28 @@ impl RogerssatchellStream {
             // the bars gives.
             barsSinceRebuild -= 1;
             if windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
-                barsSinceRebuild = (32 * sp.optInTimePeriod) as usize;
                 windowTotal = 0.0;
                 // for( j = termRing_Idx; j < ((sp.optInTimePeriod) as usize); j += 1 )
                 j = termRing_Idx;
-                while j < ((sp.optInTimePeriod) as usize) {
-                    windowTotal += (if (j as usize) != pkSlot0 { sp.cb_termRing[j] } else { pkVal0 });
+                while j < (sp.optInTimePeriod as usize) {
+                    windowTotal += if (j as usize) != pkSlot0 { sp.cb_termRing[j] } else { pkVal0 };
                     j += 1;
                 }
                 // for( j = 0; j < termRing_Idx; j += 1 )
                 j = 0;
                 while j < termRing_Idx {
-                    windowTotal += (if (j as usize) != pkSlot0 { sp.cb_termRing[j] } else { pkVal0 });
+                    windowTotal += if (j as usize) != pkSlot0 { sp.cb_termRing[j] } else { pkVal0 };
                     j += 1;
                 }
-                peakTotal = (windowTotal).abs();
-                periodTotal = windowTotal;
-                periodTotal -= (if (termRing_Idx as usize) != pkSlot0 { sp.cb_termRing[termRing_Idx] } else { pkVal0 });
             }
             // Divide, then root, then scale. A sum at or below zero answers 0.0
             // instead of reaching the root: only a bar whose high or low sits
             // strictly inside its open and close can make a fresh sum negative,
             // and the estimator is not defined on such a bar.
             if windowTotal > 0.0 {
-                (*outReal) = sp.sqrtA * (windowTotal / (sp.optInTimePeriod as f64)).sqrt();
+                *outReal = sp.sqrtA * (windowTotal / (sp.optInTimePeriod as f64)).sqrt();
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

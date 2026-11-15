@@ -89,9 +89,9 @@ impl Core {
     #[doc(alias = "TA_IMI_Lookback")]
     #[inline]
     pub fn imi_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -113,7 +113,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_IMI_DisplayShift")]
-    pub fn imi_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn imi_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.imi_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -140,9 +140,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.imi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -160,35 +160,33 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inOpen = &inOpen[..=endIdx];
         let inClose = &inClose[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         while startIdx <= endIdx {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
-            let mut i: usize = 0_usize;
-            for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut diff: f64 = inClose[i] - inOpen[i];
+            for i in ((startIdx - ((optInTimePeriod - 1) as usize)) as usize)..startIdx + 1 {
+                let diff: f64 = inClose[i] - inOpen[i];
                 // max(diff, 0) spelled with fabs is branch-free in every backend. Java
                 // compiles a ternary to a branch and gcc an if/else; either mispredicts
                 // on random data, though the if/else retires fewer instructions.
-                let mut up: f64 = (diff + (diff).abs()) * 0.5;
+                let up: f64 = (diff + diff.abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;
             }
-            i = (startIdx as usize) + 1;
             // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
             // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
             // oscillator, so no up/down bias returns its neutral center, 50.0.
-            outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+            outReal[outIdx] = if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) };
             startIdx += 1;
             outIdx += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of
@@ -348,11 +346,11 @@ impl Core {
         // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
         i = (sp.optInTimePeriod - 1) as usize;
         loop {
-            diff = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+            diff = sp.win_i_inClose[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] - sp.win_i_inOpen[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
             // max(diff, 0) spelled with fabs is branch-free in every backend. Java
             // compiles a ternary to a branch and gcc an if/else; either mispredicts
             // on random data, though the if/else retires fewer instructions.
-            up = (diff + (diff).abs()) * 0.5;
+            up = (diff + diff.abs()) * 0.5;
             upsum += up;
             downsum += up - diff;
             if i == 0 { break; }
@@ -361,8 +359,8 @@ impl Core {
         // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
         // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
         // oscillator, so no up/down bias returns its neutral center, 50.0.
-        (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
-        sp.cur_outReal = (*outReal);
+        *outReal = if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) };
+        sp.cur_outReal = *outReal;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -377,9 +375,9 @@ impl Core {
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inClose.len() != inOpen.len() {
@@ -387,14 +385,12 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
@@ -404,33 +400,31 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         while startIdx <= endIdx {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
-            let mut i: usize = 0_usize;
-            for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut diff: f64 = inClose[i] - inOpen[i];
+            for i in ((startIdx - ((optInTimePeriod - 1) as usize)) as usize)..startIdx + 1 {
+                let diff: f64 = inClose[i] - inOpen[i];
                 // max(diff, 0) spelled with fabs is branch-free in every backend. Java
                 // compiles a ternary to a branch and gcc an if/else; either mispredicts
                 // on random data, though the if/else retires fewer instructions.
-                let mut up: f64 = (diff + (diff).abs()) * 0.5;
+                let up: f64 = (diff + diff.abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;
             }
-            i = (startIdx as usize) + 1;
             // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
             // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
             // oscillator, so no up/down bias returns its neutral center, 50.0.
-            outReal[(outIdx * outStride) as usize] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+            outReal[outIdx * outStride] = if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) };
             startIdx += 1;
             outIdx += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_i: i64 = (optInTimePeriod - 1 + 1) as i64;
@@ -454,7 +448,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::imi_open`] (composition seam).
     pub(crate) fn imi_open_internal(
-        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(ImiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -533,7 +527,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_IMI_OpenAndFill")]
     pub fn imi_open_and_fill(
-        &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(ImiStream, OutRange), RetCode> {
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -555,7 +549,7 @@ impl Core {
     /// [`Core::imi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn imi_open_and_fill_internal(
-        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ImiStream, RetCode> {
         self.imi_open_impl(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -640,11 +634,11 @@ impl ImiStream {
             // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
             i = (sp.optInTimePeriod - 1) as usize;
             loop {
-                diff = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 }) - (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                diff = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal1 }) - (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 });
                 // max(diff, 0) spelled with fabs is branch-free in every backend. Java
                 // compiles a ternary to a branch and gcc an if/else; either mispredicts
                 // on random data, though the if/else retires fewer instructions.
-                up = (diff + (diff).abs()) * 0.5;
+                up = (diff + diff.abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;
                 if i == 0 { break; }
@@ -653,7 +647,7 @@ impl ImiStream {
             // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
             // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
             // oscillator, so no up/down bias returns its neutral center, 50.0.
-            (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+            *outReal = if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) };
         }
         Ok(outReal)
     }

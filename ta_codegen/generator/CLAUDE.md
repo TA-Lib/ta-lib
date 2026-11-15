@@ -80,6 +80,7 @@ that names no indicator.
 | `ir` | `FuncDef`, `ParamType`, `Statement`, `Expr` |
 | `backends/c.rs` | C indicators: guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared |
 | `backends/rust_lang.rs` | Rust indicators (concrete `f64`) |
+| `backends/rust_prune.rs` | Tidies each emitted Rust file; refuses one indented against its braces, so a multi-line emission must be re-indented to its depth |
 | `backends/java.rs`, `csharp.rs`, `ts.rs` | Java `Core` methods; one `Core_<NAME>.cs` per function; one ES module per function |
 | `backends/ctype.rs` | The C type pass behind TS integer semantics: every integer `/`, `%` and real-to-int conversion truncates with `\| 0` because this pass typed it, never because of a name |
 | `backends/go.rs`, `go_fmt.rs`, `go_prune.rs` | Go: one file per function, lowered at render time (steps, ternaries, `&&` operands needing statements); `go_fmt` prints gofmt's spacing; `go_prune` drops unread locals. Every real product is emitted as `float64(a*b)`, or Go may fuse it; a literal-only real operation takes `float64(lit)` operands, or Go folds it exactly where C rounds each step |

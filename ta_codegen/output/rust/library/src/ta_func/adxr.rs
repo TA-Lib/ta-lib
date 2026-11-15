@@ -86,15 +86,15 @@ impl Core {
     #[doc(alias = "TA_ADXR_Lookback")]
     #[inline]
     pub fn adxr_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((((optInTimePeriod) as usize) + self.adx_lookback(optInTimePeriod)? - 1) as usize);
+            return Ok(((optInTimePeriod as usize) + self.adx_lookback(optInTimePeriod)? - 1) as usize);
         } else {
-            return Ok((3) as usize);
+            return Ok(3 as usize);
         }
     }
     /// Display shift of one output of [`Core::adxr`]: how many bars ahead (positive) or behind
@@ -114,7 +114,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ADXR_DisplayShift")]
-    pub fn adxr_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn adxr_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.adxr_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -142,9 +142,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.adxr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -158,7 +158,6 @@ impl Core {
         let mut adxrLookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
         // Original implementation from Wilder's book was doing some integer
         // rounding in its calculations.
         //
@@ -179,41 +178,39 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        let _xr0 = match self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, &mut adx[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr0.beg_idx;
-        (*outNBElement) = _xr0.count;
-        retCode = RetCode::Success;
+        let _xr0 = match self.adx((startIdx - ((optInTimePeriod - 1) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, &mut adx[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        *outBegIdx = _xr0.beg_idx;
+        *outNBElement = _xr0.count;
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
+        nbElement = *outNBElement - ((optInTimePeriod - 1) as usize);
         outIdx = 0;
         if outIdx < nbElement {
             let _wn: usize = nbElement - outIdx;
-            if let (Some(_w0), Some(_w1), Some(_w2)) = (adx.get(outIdx..).and_then(|w| w.get(.._wn)), adx.get(outIdx.wrapping_add((optInTimePeriod) as usize).wrapping_sub(1)..).and_then(|w| w.get(.._wn)), outReal.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+            if let (Some(_w0), Some(_w1), Some(_w2)) = (adx.get(outIdx..).and_then(|w| w.get(.._wn)), adx.get(outIdx.wrapping_add(optInTimePeriod as usize).wrapping_sub(1)..).and_then(|w| w.get(.._wn)), outReal.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
                 let _w0 = &_w0[.._wn];
                 let _w1 = &_w1[.._wn];
                 let _w2 = &mut _w2[.._wn];
                 for _wk in 0.._wn {
-                    _w2[_wk] = ((((_w1[_wk] + _w0[_wk]) / 2.0)) as f64);
-                    outIdx += 1;
+                    _w2[_wk] = ((_w1[_wk] + _w0[_wk]) / 2.0) as f64;
                 }
             } else {
                 while outIdx < nbElement {
-                    outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
+                    outReal[outIdx] = ((adx[(outIdx + ((optInTimePeriod - 1) as usize)) as usize] + adx[outIdx]) / 2.0) as f64;
                     outIdx += 1;
                 }
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
+        *outBegIdx = startIdx;
+        *outNBElement = nbElement;
         return RetCode::Success;
     }
     /// Smoothed variant of ADX: the average of the current ADX value and the ADX value from
@@ -362,7 +359,6 @@ pub struct AdxrStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AdxrStreamState {
-    optInTimePeriod: i32,
     sub0: AdxStream,
     lagPos0: usize,
     lagCap0: usize,
@@ -389,7 +385,7 @@ impl Core {
         lagIn0 = cur_adx;
         // Combine map (batch tail, per bar).
         lagTap0_0 = sp.lagBuf0[sp.lagPos0];
-        cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+        cur_outReal = (cur_adx + lagTap0_0) / 2.0;
         lagCapL0 = sp.lagCap0;
         lagPosL0 = sp.lagPos0;
         sp.lagBuf0[lagPosL0] = lagIn0;
@@ -398,7 +394,7 @@ impl Core {
             lagPosL0 = 0;
         }
         sp.lagPos0 = lagPosL0;
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -410,9 +406,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -420,14 +416,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
@@ -441,7 +435,6 @@ impl Core {
         let mut adxrLookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
         // Original implementation from Wilder's book was doing some integer
         // rounding in its calculations.
         //
@@ -462,8 +455,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
@@ -471,13 +464,12 @@ impl Core {
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.adx_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut adx[..])?;
-        retCode = RetCode::Success;
-        lagNb0 = ((*outNBElement) as i64);
+        let sub0 = self.adx_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], &inClose[..(endIdx as usize) + 1], (startIdx as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut adx[..])?;
+        lagNb0 = *outNBElement as i64;
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
+        nbElement = *outNBElement - ((optInTimePeriod - 1) as usize);
         if (nbElement as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -498,11 +490,11 @@ impl Core {
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
-            sc_outReal[outIdx] = ((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0);
+            sc_outReal[outIdx] = (adx[(outIdx + ((optInTimePeriod - 1) as usize)) as usize] + adx[outIdx]) / 2.0;
             outIdx += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
+        *outBegIdx = startIdx;
+        *outNBElement = nbElement;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
@@ -510,7 +502,6 @@ impl Core {
         }
         let mut state = AdxrStreamState {
             cur_outReal: 0.0_f64,
-            optInTimePeriod,
             sub0,
             lagPos0,
             lagCap0,
@@ -526,7 +517,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::adxr_open`] (composition seam).
     pub(crate) fn adxr_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(AdxrStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -611,7 +602,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ADXR_OpenAndFill")]
     pub fn adxr_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(AdxrStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -633,7 +624,7 @@ impl Core {
     /// [`Core::adxr_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn adxr_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AdxrStream, RetCode> {
         self.adxr_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -709,8 +700,8 @@ impl AdxrStream {
             cur_adx = sp.sub0.peek(inHigh, inLow, inClose)?;
             // Combine map (batch tail, per bar).
             lagTap0_0 = sp.lagBuf0[sp.lagPos0];
-            cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
-            (*outReal) = cur_outReal;
+            cur_outReal = (cur_adx + lagTap0_0) / 2.0;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

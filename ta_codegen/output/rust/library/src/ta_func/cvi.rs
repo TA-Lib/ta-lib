@@ -81,14 +81,14 @@ impl Core {
     #[doc(alias = "TA_CVI_Lookback")]
     #[inline]
     pub fn cvi_lookback(&self, mut optInTimePeriod: i32, mut optInROCPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROCPeriod) as i32) == (i32::MIN) {
+        if optInROCPeriod == i32::MIN {
             optInROCPeriod = 10;
-        } else if (((optInROCPeriod) as i32) < 1) || (((optInROCPeriod) as i32) > 100000) {
+        } else if optInROCPeriod < 1 || optInROCPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((self.ema_lookback(optInTimePeriod)? + self.rocp_lookback(optInROCPeriod)?) as usize);
@@ -112,7 +112,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CVI_DisplayShift")]
-    pub fn cvi_display_shift(&self, mut optInTimePeriod: i32, mut optInROCPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cvi_display_shift(&self, optInTimePeriod: i32, optInROCPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cvi_lookback(optInTimePeriod, optInROCPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -174,14 +174,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROCPeriod) as i32) == (i32::MIN) {
+        if optInROCPeriod == i32::MIN {
             optInROCPeriod = 10;
-        } else if (((optInROCPeriod) as i32) < 1) || (((optInROCPeriod) as i32) > 100000) {
+        } else if optInROCPeriod < 1 || optInROCPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cvi_lookback(optInTimePeriod, optInROCPeriod).unwrap_or(usize::MAX);
@@ -215,8 +215,8 @@ impl Core {
         // guard stays an exact `!= 0.0` and never TA_IS_ZERO -- an epsilon band
         // carries the quote unit and would zero the indicator for anything priced
         // under it (issue #253).
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX) + self.rocp_lookback(optInROCPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -228,8 +228,8 @@ impl Core {
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         if optInROCPeriod < 1 { return RetCode::InternalError; }
-        if (optInROCPeriod) as usize <= 32usize {
-            emaRing = &mut local_emaRing[..(optInROCPeriod) as usize];
+        if optInROCPeriod as usize <= 32usize {
+            emaRing = &mut local_emaRing[..optInROCPeriod as usize];
         } else {
             heap_emaRing = vec![0.0_f64; (optInROCPeriod) as usize];
             emaRing = &mut heap_emaRing;
@@ -238,25 +238,21 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         today = startIdx - lookbackTotal;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inHigh[today..][.._wn];
             let _w1 = &inLow[today..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempReal += _w0[_wk] - _w1[_wk];
                 today += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevEMA = tempReal / ((optInTimePeriod) as f64);
+        prevEMA = tempReal / (optInTimePeriod as f64);
         // The ring keeps only the newest optInROCPeriod values, so pushing every EMA
         // value from the seed bar on leaves exactly the lagged terms the output
         // loop reads.
@@ -265,7 +261,7 @@ impl Core {
         if emaRing_Idx >= emaRing.len() { emaRing_Idx = 0; }
         while today < startIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta as f64, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
             today += 1;
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
@@ -276,7 +272,7 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta as f64, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
             today += 1;
             laggedEMA = emaRing[emaRing_Idx];
             emaRing[emaRing_Idx] = prevEMA;
@@ -290,8 +286,8 @@ impl Core {
                 outIdx += 1;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily trading range is
@@ -448,14 +444,11 @@ pub struct CviStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CviStreamState {
-    optInTimePeriod: i32,
-    optInROCPeriod: i32,
     prevEMA: f64,
     optInK_1: f64,
     emaBeta: f64,
     emaRing_Idx: usize,
     maxIdx_emaRing: usize,
-    cbSize_emaRing: usize,
     cb_emaRing: Vec<f64>,
     cur_outReal: f64,
 }
@@ -470,7 +463,7 @@ impl Core {
         let mut laggedEMA: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inHigh - inLow;
-        sp.prevEMA = fmadd!(sp.emaBeta as f64, sp.prevEMA, ((sp.optInK_1) as f64) * tempReal);
+        sp.prevEMA = fmadd!(sp.emaBeta, sp.prevEMA, ((sp.optInK_1) as f64) * tempReal);
         laggedEMA = sp.cb_emaRing[sp.emaRing_Idx];
         sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA;
         sp.emaRing_Idx = sp.emaRing_Idx + 1;
@@ -478,11 +471,11 @@ impl Core {
             sp.emaRing_Idx = 0;
         }
         if laggedEMA != 0.0 {
-            (*outReal) = 100.0 * ((sp.prevEMA - laggedEMA) / laggedEMA);
+            *outReal = 100.0 * ((sp.prevEMA - laggedEMA) / laggedEMA);
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cvi_open_internal`]
@@ -511,14 +504,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROCPeriod) as i32) == (i32::MIN) {
+        if optInROCPeriod == i32::MIN {
             optInROCPeriod = 10;
-        } else if (((optInROCPeriod) as i32) < 1) || (((optInROCPeriod) as i32) > 100000) {
+        } else if optInROCPeriod < 1 || optInROCPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -526,14 +519,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut prevEMA: f64 = 0.0_f64;
         let mut laggedEMA: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -558,8 +549,8 @@ impl Core {
         // guard stays an exact `!= 0.0` and never TA_IS_ZERO -- an epsilon band
         // carries the quote unit and would zero the indicator for anything priced
         // under it (issue #253).
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ema_lookback(optInTimePeriod)? + self.rocp_lookback(optInROCPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -570,21 +561,21 @@ impl Core {
         }
         if optInROCPeriod < 1 { return Err(RetCode::InternalError); }
         emaRing = vec![0.0_f64; (optInROCPeriod) as usize];
-        maxIdx_emaRing = ((optInROCPeriod) as usize) - 1;
+        maxIdx_emaRing = (optInROCPeriod as usize) - 1;
         emaRing_Idx = 0;
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         today = startIdx - lookbackTotal;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inHigh[today] - inLow[today];
             today += 1;
         }
-        prevEMA = tempReal / ((optInTimePeriod) as f64);
+        prevEMA = tempReal / (optInTimePeriod as f64);
         // The ring keeps only the newest optInROCPeriod values, so pushing every EMA
         // value from the seed bar on leaves exactly the lagged terms the output
         // loop reads.
@@ -593,7 +584,7 @@ impl Core {
         if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
         while today < startIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta as f64, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
             today += 1;
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
@@ -604,20 +595,20 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             tempReal = inHigh[today] - inLow[today];
-            prevEMA = fmadd!(emaBeta as f64, prevEMA, ((optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(emaBeta, prevEMA, ((optInK_1) as f64) * tempReal);
             today += 1;
             laggedEMA = emaRing[emaRing_Idx];
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
             if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
             if laggedEMA != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_emaRing: usize = maxIdx_emaRing + 1;
@@ -625,15 +616,12 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = CviStreamState {
-            optInTimePeriod,
-            optInROCPeriod,
             prevEMA,
             optInK_1,
             emaBeta,
             emaRing_Idx,
             maxIdx_emaRing,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_emaRing: cbSize_emaRing,
             cb_emaRing: emaRing,
         };
         Ok(CviStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -641,7 +629,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cvi_open`] (composition seam).
     pub(crate) fn cvi_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInROCPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInROCPeriod: i32,
     ) -> Result<(CviStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -720,7 +708,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CVI_OpenAndFill")]
     pub fn cvi_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, mut optInROCPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, optInROCPeriod: i32, outReal: &mut [f64],
     ) -> Result<(CviStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -742,7 +730,7 @@ impl Core {
     /// [`Core::cvi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cvi_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInROCPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInROCPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CviStream, RetCode> {
         self.cvi_open_impl(inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -811,19 +799,15 @@ impl CviStream {
             let outReal = &mut outReal;
             let mut laggedEMA: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut emaRing_Idx = sp.emaRing_Idx;
+            let emaRing_Idx = sp.emaRing_Idx;
             let mut prevEMA = sp.prevEMA;
             tempReal = inHigh - inLow;
-            prevEMA = fmadd!(sp.emaBeta as f64, prevEMA, ((sp.optInK_1) as f64) * tempReal);
+            prevEMA = fmadd!(sp.emaBeta, prevEMA, ((sp.optInK_1) as f64) * tempReal);
             laggedEMA = sp.cb_emaRing[emaRing_Idx];
-            emaRing_Idx = emaRing_Idx + 1;
-            if emaRing_Idx > sp.maxIdx_emaRing {
-                emaRing_Idx = 0;
-            }
             if laggedEMA != 0.0 {
-                (*outReal) = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
+                *outReal = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

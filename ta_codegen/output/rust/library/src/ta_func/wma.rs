@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_WMA_Lookback")]
     #[inline]
     pub fn wma_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -106,7 +106,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_WMA_DisplayShift")]
-    pub fn wma_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn wma_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.wma_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -132,9 +132,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.wma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -146,7 +146,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut rw: usize = 0_usize;
         let mut lookbackWin: usize = 0_usize;
         let mut barsSinceReseed: usize = 0_usize;
@@ -164,8 +163,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -174,28 +173,26 @@ impl Core {
         // In that case outputs equals inputs for the requested
         // range.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
-            (*outNBElement) = endIdx - startIdx + 1;
+            *outBegIdx = startIdx;
+            *outNBElement = endIdx - startIdx + 1;
             // Element loop, not a block copy: the C single-precision variant reads a
             // float array, so a double-sized byte copy would reinterpret and
             // over-read it (#137). Forward order keeps the in-place case correct (#94).
             inIdx = startIdx;
             i = 0;
-            if i < ((((*outNBElement) as usize)) as usize) {
-                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            if i < ((*outNBElement as usize) as usize) {
+                let _wn: usize = ((*outNBElement as usize) as usize) - i;
                 let _w0 = &inReal[inIdx..][.._wn];
                 let _w1 = &mut outReal[i..][.._wn];
                 for _wk in 0.._wn {
-                    _w1[_wk] = ((_w0[_wk]) as f64);
-                    inIdx += 1;
-                    i += 1;
+                    _w1[_wk] = _w0[_wk] as f64;
                 }
             }
             return RetCode::Success;
         }
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
-        divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
+        divider = (optInTimePeriod as f64) * ((optInTimePeriod + 1) as f64) / 2.0;
         // The algo used here use a very basic property of
         // multiplication/addition: (x*2) = x+x
         //
@@ -234,7 +231,7 @@ impl Core {
             tempReal = inReal[inIdx];
             inIdx += 1;
             periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
+            periodSum += tempReal * (i as f64);
             i += 1;
         }
         barsSinceReseed = (8 * optInTimePeriod) as usize;
@@ -246,7 +243,7 @@ impl Core {
             tempReal = inReal[inIdx];
             periodSub += tempReal;
             periodSub -= trailingValue;
-            periodSum += tempReal * ((optInTimePeriod) as f64);
+            periodSum += tempReal * (optInTimePeriod as f64);
             // Re-anchor: rebuild both totals from the window itself.
             //
             // periodSum and periodSub were running totals that were never
@@ -295,13 +292,12 @@ impl Core {
                 periodSub = 0.0 as f64;
                 periodSum = 0.0 as f64;
                 rw = 1;
-                for j in (inIdx - lookbackWin as usize)..(inIdx as usize) + 1 {
+                for j in inIdx - lookbackWin..inIdx + 1 {
                     tempReal = inReal[j];
                     periodSub += tempReal;
-                    periodSum += tempReal * ((rw) as f64);
+                    periodSum += tempReal * (rw as f64);
                     rw += 1;
                 }
-                j = (inIdx as usize) + 1;
             }
             // Save the trailing value for being substract at
             // the next iteration.
@@ -317,8 +313,8 @@ impl Core {
             inIdx += 1;
         }
         // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Linearly weighted moving average: each of the last N prices is weighted by its position,
@@ -472,8 +468,8 @@ impl Core {
         let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         sp.win_j_inReal[sp.winPos_j] = inReal;
@@ -482,7 +478,7 @@ impl Core {
         tempReal = inReal;
         sp.periodSub += tempReal;
         sp.periodSub -= sp.trailingValue;
-        sp.periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+        sp.periodSum += tempReal * (sp.optInTimePeriod as f64);
         // Re-anchor: rebuild both totals from the window itself.
         //
         // periodSum and periodSub were running totals that were never
@@ -534,9 +530,9 @@ impl Core {
             // for( j = sp.lookbackWin; j >= 0; j -= 1 )
             j = sp.lookbackWin;
             loop {
-                tempReal = sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize];
+                tempReal = sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize];
                 sp.periodSub += tempReal;
-                sp.periodSum += tempReal * ((rw) as f64);
+                sp.periodSum += tempReal * (rw as f64);
                 rw += 1;
                 if j == 0 { break; }
                 j -= 1;
@@ -548,10 +544,10 @@ impl Core {
         //  inReal are the same buffer).
         sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
         // Calculate the WMA for this price bar.
-        (*outReal) = sp.periodSum / sp.divider;
+        *outReal = sp.periodSum / sp.divider;
         // Prepare the periodSum for the next iteration.
         sp.periodSum -= sp.periodSub;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
@@ -575,7 +571,7 @@ impl Core {
         tempReal = inReal;
         sp.periodSub += tempReal;
         sp.periodSub -= sp.trailingValue;
-        sp.periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+        sp.periodSum += tempReal * (sp.optInTimePeriod as f64);
         // Re-anchor: rebuild both totals from the window itself.
         //
         // periodSum and periodSub were running totals that were never
@@ -629,7 +625,7 @@ impl Core {
             loop {
                 tempReal = tape[(tapeBase - j & tapeMask) as usize];
                 sp.periodSub += tempReal;
-                sp.periodSum += tempReal * ((rw) as f64);
+                sp.periodSum += tempReal * (rw as f64);
                 rw += 1;
                 if j == 0 { break; }
                 j -= 1;
@@ -641,10 +637,10 @@ impl Core {
         //  inReal are the same buffer).
         sp.trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
         // Calculate the WMA for this price bar.
-        (*outReal) = sp.periodSum / sp.divider;
+        *outReal = sp.periodSum / sp.divider;
         // Prepare the periodSum for the next iteration.
         sp.periodSum -= sp.periodSub;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::wma_open_internal`]
@@ -655,21 +651,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.wma_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -692,8 +686,8 @@ impl Core {
                 winCap_j: 1_usize,
                 win_j_inReal: vec![0.0_f64; 1],
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -709,7 +703,6 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        let mut j: usize = 0_usize;
         let mut rw: usize = 0_usize;
         let mut lookbackWin: usize = 0_usize;
         let mut barsSinceReseed: usize = 0_usize;
@@ -727,13 +720,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
-        divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
+        divider = (optInTimePeriod as f64) * ((optInTimePeriod + 1) as f64) / 2.0;
         // The algo used here use a very basic property of
         // multiplication/addition: (x*2) = x+x
         //
@@ -772,7 +765,7 @@ impl Core {
             tempReal = inReal[inIdx];
             inIdx += 1;
             periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
+            periodSum += tempReal * (i as f64);
             i += 1;
         }
         barsSinceReseed = (8 * optInTimePeriod) as usize;
@@ -784,7 +777,7 @@ impl Core {
             tempReal = inReal[inIdx];
             periodSub += tempReal;
             periodSub -= trailingValue;
-            periodSum += tempReal * ((optInTimePeriod) as f64);
+            periodSum += tempReal * (optInTimePeriod as f64);
             // Re-anchor: rebuild both totals from the window itself.
             //
             // periodSum and periodSub were running totals that were never
@@ -833,13 +826,12 @@ impl Core {
                 periodSub = 0.0 as f64;
                 periodSum = 0.0 as f64;
                 rw = 1;
-                for j in (inIdx - lookbackWin as usize)..(inIdx as usize) + 1 {
+                for j in inIdx - lookbackWin..inIdx + 1 {
                     tempReal = inReal[j];
                     periodSub += tempReal;
-                    periodSum += tempReal * ((rw) as f64);
+                    periodSum += tempReal * (rw as f64);
                     rw += 1;
                 }
-                j = (inIdx as usize) + 1;
             }
             // Save the trailing value for being substract at
             // the next iteration.
@@ -848,14 +840,14 @@ impl Core {
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
             // Calculate the WMA for this price bar.
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = periodSum / divider;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = periodSum / divider;
             // Prepare the periodSum for the next iteration.
             periodSum -= periodSub;
             inIdx += 1;
         }
         // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
@@ -893,7 +885,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::wma_open`] (composition seam).
     pub(crate) fn wma_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(WmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -966,7 +958,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_WMA_OpenAndFill")]
     pub fn wma_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(WmaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -985,7 +977,7 @@ impl Core {
     /// [`Core::wma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn wma_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<WmaStream, RetCode> {
         self.wma_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1056,23 +1048,19 @@ impl WmaStream {
             let mut rw: usize = 0_usize;
             let mut tempReal: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut periodSub = sp.periodSub;
             let mut periodSum = sp.periodSum;
-            let mut trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             pkSlot0 = sp.winPos_j as usize;
             pkVal0 = inReal;
             // Add the current price bar to the sum
             // who are carried through the iterations.
             tempReal = inReal;
-            periodSub += tempReal;
-            periodSub -= trailingValue;
-            periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+            periodSum += tempReal * (sp.optInTimePeriod as f64);
             // Re-anchor: rebuild both totals from the window itself.
             //
             // periodSum and periodSub were running totals that were never
@@ -1117,16 +1105,13 @@ impl WmaStream {
             // startIdx-lookbackTotal+outIdx, which is >= outIdx.
             barsSinceReseed -= 1;
             if barsSinceReseed <= 0 {
-                barsSinceReseed = (8 * sp.optInTimePeriod) as usize;
-                periodSub = 0.0 as f64;
                 periodSum = 0.0 as f64;
                 rw = 1;
                 // for( j = sp.lookbackWin; j >= 0; j -= 1 )
                 j = sp.lookbackWin;
                 loop {
-                    tempReal = (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal0 });
-                    periodSub += tempReal;
-                    periodSum += tempReal * ((rw) as f64);
+                    tempReal = if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot0 { sp.win_j_inReal[(if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize] } else { pkVal0 };
+                    periodSum += tempReal * (rw as f64);
                     rw += 1;
                     if j == 0 { break; }
                     j -= 1;
@@ -1136,9 +1121,8 @@ impl WmaStream {
             // the next iteration.
             // (must be saved here just in case outReal and
             //  inReal are the same buffer).
-            trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             // Calculate the WMA for this price bar.
-            (*outReal) = periodSum / sp.divider;
+            *outReal = periodSum / sp.divider;
         }
         Ok(outReal)
     }
@@ -1218,9 +1202,7 @@ impl WmaStream {
             let mut rw: usize = 0_usize;
             let mut tempReal: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut periodSub = sp.periodSub;
             let mut periodSum = sp.periodSum;
-            let mut trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (tapeBase & tapeMask) as usize;
@@ -1228,9 +1210,7 @@ impl WmaStream {
             // Add the current price bar to the sum
             // who are carried through the iterations.
             tempReal = inReal;
-            periodSub += tempReal;
-            periodSub -= trailingValue;
-            periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+            periodSum += tempReal * (sp.optInTimePeriod as f64);
             // Re-anchor: rebuild both totals from the window itself.
             //
             // periodSum and periodSub were running totals that were never
@@ -1275,16 +1255,13 @@ impl WmaStream {
             // startIdx-lookbackTotal+outIdx, which is >= outIdx.
             barsSinceReseed -= 1;
             if barsSinceReseed <= 0 {
-                barsSinceReseed = (8 * sp.optInTimePeriod) as usize;
-                periodSub = 0.0 as f64;
                 periodSum = 0.0 as f64;
                 rw = 1;
                 // for( j = sp.lookbackWin; j >= 0; j -= 1 )
                 j = sp.lookbackWin;
                 loop {
-                    tempReal = (if ((tapeBase - j & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - j & tapeMask) as usize] } else { pkVal0 });
-                    periodSub += tempReal;
-                    periodSum += tempReal * ((rw) as f64);
+                    tempReal = if ((tapeBase - j & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - j & tapeMask) as usize] } else { pkVal0 };
+                    periodSum += tempReal * (rw as f64);
                     rw += 1;
                     if j == 0 { break; }
                     j -= 1;
@@ -1294,9 +1271,8 @@ impl WmaStream {
             // the next iteration.
             // (must be saved here just in case outReal and
             //  inReal are the same buffer).
-            trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
             // Calculate the WMA for this price bar.
-            (*outReal) = periodSum / sp.divider;
+            *outReal = periodSum / sp.divider;
         }
         Ok(outReal)
     }

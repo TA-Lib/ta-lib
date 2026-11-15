@@ -3661,7 +3661,7 @@ fn every_cur_storage_a_step_uses_is_declared() {
     let rust = ta_codegen_lib::backends::rust_lang::generate(&f, &enums, lookup(), helpers);
     for (text, sig, heads) in [
         (&c, "TA_RetCode TA_APO_StepImpl( struct", &["double ", "int "][..]),
-        (&rust, "fn apo_step_impl(", &["let mut "][..]),
+        (&rust, "fn apo_step_impl(", &["let mut ", "let "][..]),
     ] {
         let body = fn_body(text, sig);
         let used = cur_uses(body);

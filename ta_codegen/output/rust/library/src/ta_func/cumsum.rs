@@ -67,7 +67,7 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_CUMSUM_Lookback")]
     pub fn cumsum_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::cumsum`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -111,7 +111,6 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut total: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -140,12 +139,11 @@ impl Core {
             for _wk in 0.._wn {
                 total += _w0[_wk];
                 _w1[_wk] = total;
-                i += 1;
                 outIdx += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Cumulative Sum: the running total of a series from the anchor bar forward. A math primitive
@@ -272,8 +270,8 @@ struct CumsumStreamState {
 impl Core {
     fn cumsum_step_impl(sp: &mut CumsumStreamState, inReal: f64, outReal: &mut f64) {
         sp.total += inReal;
-        (*outReal) = sp.total;
-        sp.cur_outReal = (*outReal);
+        *outReal = sp.total;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cumsum_open_internal`]
@@ -286,14 +284,11 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut total: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -317,12 +312,12 @@ impl Core {
         outIdx = 0;
         while i <= endIdx {
             total += inReal[i];
-            outReal[(outIdx * outStride) as usize] = total;
+            outReal[outIdx * outStride] = total;
             i += 1;
             outIdx += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = CumsumStreamState {
@@ -495,7 +490,7 @@ impl CumsumStream {
             let outReal = &mut outReal;
             let mut total = sp.total;
             total += inReal;
-            (*outReal) = total;
+            *outReal = total;
         }
         Ok(outReal)
     }

@@ -71,7 +71,7 @@ impl Core {
     #[doc(alias = "TA_WCLPRICE_Lookback")]
     pub fn wclprice_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::wclprice`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -151,7 +151,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let inHigh = &inHigh[..=endIdx];
@@ -167,13 +166,12 @@ impl Core {
             let _w2 = &inLow[i..][.._wn];
             let _w3 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                _w3[_wk] = (((fmadd!(_w0[_wk] as f64, 2.0, _w1[_wk] + _w2[_wk])) / 4.0) as f64);
+                _w3[_wk] = (fmadd!(_w0[_wk], 2.0, _w1[_wk] + _w2[_wk]) / 4.0) as f64;
                 outIdx += 1;
-                i += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Weighted Close Price: a per-bar price average giving the close double weight relative to
@@ -320,8 +318,8 @@ struct WclpriceStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn wclprice_step_impl(sp: &mut WclpriceStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
-        (*outReal) = (fmadd!(inClose as f64, 2.0, inHigh + inLow)) / 4.0;
-        sp.cur_outReal = (*outReal);
+        *outReal = fmadd!(inClose, 2.0, inHigh + inLow) / 4.0;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::wclprice_open_internal`]
@@ -337,24 +335,19 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         // Weighted Close Price = (High + Low + (Close*2) ) / 4
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((fmadd!(inClose[i] as f64, 2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
+        for i in startIdx..endIdx + 1 {
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (fmadd!(inClose[i], 2.0, inHigh[i] + inLow[i]) / 4.0) as f64;
         }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = WclpriceStreamState {
@@ -541,7 +534,7 @@ impl WclpriceStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = (fmadd!(inClose as f64, 2.0, inHigh + inLow)) / 4.0;
+            *outReal = fmadd!(inClose, 2.0, inHigh + inLow) / 4.0;
         }
         Ok(outReal)
     }

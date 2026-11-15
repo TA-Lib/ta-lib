@@ -71,7 +71,7 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_BOP_Lookback")]
     pub fn bop_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::bop`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,7 +121,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -146,13 +145,12 @@ impl Core {
                 // and that band zeroed the output for any instrument quoted below it
                 // (issue #253).
                 tempReal = _w1[_wk] - _w2[_wk];
-                _w4[_wk] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, (((_w0[_wk] - _w3[_wk]) / tempReal) as f64));
+                _w4[_wk] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, ((_w0[_wk] - _w3[_wk]) / tempReal) as f64);
                 outIdx += 1;
-                i += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Balance Of Power compares where the close sits relative to the open, normalized by the bar's
@@ -312,11 +310,11 @@ impl Core {
         // (issue #253).
         tempReal = inHigh - inLow;
         if tempReal <= 0.0 {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         } else {
-            (*outReal) = (inClose - inOpen) / tempReal;
+            *outReal = (inClose - inOpen) / tempReal;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::bop_open_internal`]
@@ -332,31 +330,26 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         // BOP = (Close - Open)/(High - Low)
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             // BOP is a fraction of the bar's own range, so it is scale-free and the
             // divisor only has to be positive. An exact test, not the fixed
             // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
             // and that band zeroed the output for any instrument quoted below it
             // (issue #253).
             tempReal = inHigh[i] - inLow[i];
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, (((inClose[i] - inOpen[i]) / tempReal) as f64));
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, ((inClose[i] - inOpen[i]) / tempReal) as f64);
         }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = BopStreamState {
@@ -557,9 +550,9 @@ impl BopStream {
             // (issue #253).
             tempReal = inHigh - inLow;
             if tempReal <= 0.0 {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             } else {
-                (*outReal) = (inClose - inOpen) / tempReal;
+                *outReal = (inClose - inOpen) / tempReal;
             }
         }
         Ok(outReal)

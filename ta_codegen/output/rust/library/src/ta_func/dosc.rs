@@ -87,24 +87,24 @@ impl Core {
     #[doc(alias = "TA_DOSC_Lookback")]
     #[inline]
     pub fn dosc_lookback(&self, mut optInTimePeriod: i32, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 5;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 3;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // Keep every term a callee's lookback call: that is how DOSC inherits
@@ -134,7 +134,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_DOSC_DisplayShift")]
-    pub fn dosc_display_shift(&self, mut optInTimePeriod: i32, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn dosc_display_shift(&self, optInTimePeriod: i32, optInFirstPeriod: i32, optInSecondPeriod: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -199,24 +199,24 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 5;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 3;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -282,14 +282,14 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         if optInSignalPeriod < 1 { return RetCode::InternalError; }
-        if (optInSignalPeriod) as usize <= 32usize {
-            dsBuffer = &mut local_dsBuffer[..(optInSignalPeriod) as usize];
+        if optInSignalPeriod as usize <= 32usize {
+            dsBuffer = &mut local_dsBuffer[..optInSignalPeriod as usize];
         } else {
             heap_dsBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
             dsBuffer = &mut heap_dsBuffer;
@@ -301,7 +301,7 @@ impl Core {
         // The RSI values the composed chain never publishes. Derive the count
         // from the lookback, never from TA_GetUnstablePeriod: under the Auto
         // levels it is a function of the period.
-        skipRSI = lookbackRSI - ((optInTimePeriod) as usize);
+        skipRSI = lookbackRSI - (optInTimePeriod as usize);
         // k and beta must sum to exactly 1.0, or a flat input drifts off its
         // level. Each subtraction is exact only from an operand in [0.5,1): at a
         // period of 2 that is k, above it beta. Above it beta stays as the divide
@@ -325,12 +325,12 @@ impl Core {
         nRsi = 0;
         invPeriod = 1.0 / (optInTimePeriod as f64);
         today = startIdx - lookbackTotal;
-        rsiBar = today + ((optInTimePeriod) as usize);
+        rsiBar = today + (optInTimePeriod as usize);
         prevValue = inReal[today];
         prevGain = 0.0;
         prevLoss = 0.0;
         today = today + 1;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
@@ -339,10 +339,9 @@ impl Core {
                 today = today + 1;
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
                 prevGain += gainDelta;
                 prevLoss += gainDelta - tempValue2;
-                i -= 1;
             }
         }
         prevLoss *= invPeriod;
@@ -360,23 +359,23 @@ impl Core {
         while rsiBar < startIdx {
             if nRsi >= skipRSI {
                 n1 = nRsi - skipRSI;
-                if n1 < ((optInFirstPeriod) as usize) {
+                if n1 < (optInFirstPeriod as usize) {
                     sum1 = sum1 + rsiValue;
                     if n1 == ((optInFirstPeriod - 1) as usize) {
-                        ema1 = sum1 / ((optInFirstPeriod) as f64);
+                        ema1 = sum1 / (optInFirstPeriod as f64);
                     }
                 } else {
-                    ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+                    ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
                 }
                 if n1 >= lookbackEMA1 {
                     n2 = n1 - lookbackEMA1;
-                    if n2 < ((optInSecondPeriod) as usize) {
+                    if n2 < (optInSecondPeriod as usize) {
                         sum2 = sum2 + ema1;
                         if n2 == ((optInSecondPeriod - 1) as usize) {
-                            ema2 = sum2 / ((optInSecondPeriod) as f64);
+                            ema2 = sum2 / (optInSecondPeriod as f64);
                         }
                     } else {
-                        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+                        ema2 = fmadd!(beta2, ema2, k2 * ema1);
                     }
                     if n2 >= lookbackEMA2 {
                         dsBuffer[dsBuffer_Idx] = ema2;
@@ -393,7 +392,7 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -410,8 +409,8 @@ impl Core {
         // 2/2/2/2, so the store below and the one in the stable loop are
         // unconditional. Keep them so: under a guard, the managed peek frames
         // seed a dead output local.
-        ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
-        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+        ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
+        ema2 = fmadd!(beta2, ema2, k2 * ema1);
         dsBuffer[dsBuffer_Idx] = ema2;
         sumSignal = sumSignal + ema2;
         outReal[0] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -427,7 +426,7 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -438,8 +437,8 @@ impl Core {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
-            ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+            ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
+            ema2 = fmadd!(beta2, ema2, k2 * ema1);
             dsBuffer[dsBuffer_Idx] = ema2;
             sumSignal = sumSignal + ema2;
             outReal[outIdx] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -448,8 +447,8 @@ impl Core {
             if dsBuffer_Idx >= dsBuffer.len() { dsBuffer_Idx = 0; }
             sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in series, with a
@@ -595,8 +594,6 @@ pub struct DoscStream {
 #[allow(non_snake_case, dead_code)]
 struct DoscStreamState {
     optInTimePeriod: i32,
-    optInFirstPeriod: i32,
-    optInSecondPeriod: i32,
     optInSignalPeriod: i32,
     k1: f64,
     beta1: f64,
@@ -611,7 +608,6 @@ struct DoscStreamState {
     sumSignal: f64,
     dsBuffer_Idx: usize,
     maxIdx_dsBuffer: usize,
-    cbSize_dsBuffer: usize,
     cb_dsBuffer: Vec<f64>,
     cur_outReal: f64,
 }
@@ -632,7 +628,7 @@ impl Core {
         sp.prevValue = tempValue1;
         sp.prevLoss *= (sp.optInTimePeriod - 1) as f64;
         sp.prevGain *= (sp.optInTimePeriod - 1) as f64;
-        gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+        gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
         sp.prevGain += gainDelta;
         sp.prevLoss += gainDelta - tempValue2;
         sp.prevLoss *= sp.invPeriod;
@@ -643,17 +639,17 @@ impl Core {
         } else {
             rsiValue = 50.0;
         }
-        sp.ema1 = fmadd!(sp.beta1 as f64, sp.ema1, sp.k1 * rsiValue);
-        sp.ema2 = fmadd!(sp.beta2 as f64, sp.ema2, sp.k2 * sp.ema1);
+        sp.ema1 = fmadd!(sp.beta1, sp.ema1, sp.k1 * rsiValue);
+        sp.ema2 = fmadd!(sp.beta2, sp.ema2, sp.k2 * sp.ema1);
         sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2;
         sp.sumSignal = sp.sumSignal + sp.ema2;
-        (*outReal) = sp.ema2 - sp.sumSignal / (sp.optInSignalPeriod as f64);
+        *outReal = sp.ema2 - sp.sumSignal / (sp.optInSignalPeriod as f64);
         sp.dsBuffer_Idx = sp.dsBuffer_Idx + 1;
         if sp.dsBuffer_Idx > sp.maxIdx_dsBuffer {
             sp.dsBuffer_Idx = 0;
         }
         sp.sumSignal = sp.sumSignal - sp.cb_dsBuffer[sp.dsBuffer_Idx];
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::dosc_open_internal`]
@@ -682,36 +678,34 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 5;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 3;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut k1: f64 = 0.0_f64;
         let mut beta1: f64 = 0.0_f64;
         let mut k2: f64 = 0.0_f64;
@@ -769,13 +763,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInSignalPeriod < 1 { return Err(RetCode::InternalError); }
         dsBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
-        maxIdx_dsBuffer = ((optInSignalPeriod) as usize) - 1;
+        maxIdx_dsBuffer = (optInSignalPeriod as usize) - 1;
         dsBuffer_Idx = 0;
         lookbackRSI = self.rsi_lookback(optInTimePeriod)?;
         lookbackEMA1 = self.ema_lookback(optInFirstPeriod)?;
@@ -783,7 +777,7 @@ impl Core {
         // The RSI values the composed chain never publishes. Derive the count
         // from the lookback, never from TA_GetUnstablePeriod: under the Auto
         // levels it is a function of the period.
-        skipRSI = lookbackRSI - ((optInTimePeriod) as usize);
+        skipRSI = lookbackRSI - (optInTimePeriod as usize);
         // k and beta must sum to exactly 1.0, or a flat input drifts off its
         // level. Each subtraction is exact only from an operand in [0.5,1): at a
         // period of 2 that is k, above it beta. Above it beta stays as the divide
@@ -807,19 +801,19 @@ impl Core {
         nRsi = 0;
         invPeriod = 1.0 / (optInTimePeriod as f64);
         today = startIdx - lookbackTotal;
-        rsiBar = today + ((optInTimePeriod) as usize);
+        rsiBar = today + (optInTimePeriod as usize);
         prevValue = inReal[today];
         prevGain = 0.0;
         prevLoss = 0.0;
         today = today + 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             tempValue1 = inReal[today];
             today = today + 1;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             i -= 1;
@@ -839,23 +833,23 @@ impl Core {
         while rsiBar < startIdx {
             if nRsi >= skipRSI {
                 n1 = nRsi - skipRSI;
-                if n1 < ((optInFirstPeriod) as usize) {
+                if n1 < (optInFirstPeriod as usize) {
                     sum1 = sum1 + rsiValue;
                     if n1 == ((optInFirstPeriod - 1) as usize) {
-                        ema1 = sum1 / ((optInFirstPeriod) as f64);
+                        ema1 = sum1 / (optInFirstPeriod as f64);
                     }
                 } else {
-                    ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+                    ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
                 }
                 if n1 >= lookbackEMA1 {
                     n2 = n1 - lookbackEMA1;
-                    if n2 < ((optInSecondPeriod) as usize) {
+                    if n2 < (optInSecondPeriod as usize) {
                         sum2 = sum2 + ema1;
                         if n2 == ((optInSecondPeriod - 1) as usize) {
-                            ema2 = sum2 / ((optInSecondPeriod) as f64);
+                            ema2 = sum2 / (optInSecondPeriod as f64);
                         }
                     } else {
-                        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+                        ema2 = fmadd!(beta2, ema2, k2 * ema1);
                     }
                     if n2 >= lookbackEMA2 {
                         dsBuffer[dsBuffer_Idx] = ema2;
@@ -872,7 +866,7 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -889,11 +883,11 @@ impl Core {
         // 2/2/2/2, so the store below and the one in the stable loop are
         // unconditional. Keep them so: under a guard, the managed peek frames
         // seed a dead output local.
-        ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
-        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+        ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
+        ema2 = fmadd!(beta2, ema2, k2 * ema1);
         dsBuffer[dsBuffer_Idx] = ema2;
         sumSignal = sumSignal + ema2;
-        outReal[(0 * outStride) as usize] = ema2 - sumSignal / (optInSignalPeriod as f64);
+        outReal[0] = ema2 - sumSignal / (optInSignalPeriod as f64);
         outIdx = 1;
         dsBuffer_Idx += 1;
         if dsBuffer_Idx > maxIdx_dsBuffer { dsBuffer_Idx = 0; }
@@ -906,7 +900,7 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -917,18 +911,18 @@ impl Core {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
-            ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
+            ema1 = fmadd!(beta1, ema1, k1 * rsiValue);
+            ema2 = fmadd!(beta2, ema2, k2 * ema1);
             dsBuffer[dsBuffer_Idx] = ema2;
             sumSignal = sumSignal + ema2;
-            outReal[(outIdx * outStride) as usize] = ema2 - sumSignal / (optInSignalPeriod as f64);
+            outReal[outIdx * outStride] = ema2 - sumSignal / (optInSignalPeriod as f64);
             outIdx = outIdx + 1;
             dsBuffer_Idx += 1;
             if dsBuffer_Idx > maxIdx_dsBuffer { dsBuffer_Idx = 0; }
             sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_dsBuffer: usize = maxIdx_dsBuffer + 1;
@@ -937,8 +931,6 @@ impl Core {
         }
         let state = DoscStreamState {
             optInTimePeriod,
-            optInFirstPeriod,
-            optInSecondPeriod,
             optInSignalPeriod,
             k1,
             beta1,
@@ -954,7 +946,6 @@ impl Core {
             dsBuffer_Idx,
             maxIdx_dsBuffer,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_dsBuffer: cbSize_dsBuffer,
             cb_dsBuffer: dsBuffer,
         };
         Ok(DoscStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -962,7 +953,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::dosc_open`] (composition seam).
     pub(crate) fn dosc_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, mut optInSignalPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInFirstPeriod: i32, optInSecondPeriod: i32, optInSignalPeriod: i32,
     ) -> Result<(DoscStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1035,7 +1026,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_DOSC_OpenAndFill")]
     pub fn dosc_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, mut optInSignalPeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInFirstPeriod: i32, optInSecondPeriod: i32, optInSignalPeriod: i32, outReal: &mut [f64],
     ) -> Result<(DoscStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1054,7 +1045,7 @@ impl Core {
     /// [`Core::dosc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn dosc_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInFirstPeriod: i32, optInSecondPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<DoscStream, RetCode> {
         self.dosc_open_impl(inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1129,14 +1120,13 @@ impl DoscStream {
             let mut ema2 = sp.ema2;
             let mut prevGain = sp.prevGain;
             let mut prevLoss = sp.prevLoss;
-            let mut prevValue = sp.prevValue;
+            let prevValue = sp.prevValue;
             let mut sumSignal = sp.sumSignal;
             tempValue1 = inReal;
             tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
             prevLoss *= (sp.optInTimePeriod - 1) as f64;
             prevGain *= (sp.optInTimePeriod - 1) as f64;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            gainDelta = if tempValue2 > 0.0 { tempValue2 } else { 0.0 };
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= sp.invPeriod;
@@ -1147,10 +1137,10 @@ impl DoscStream {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = fmadd!(sp.beta1 as f64, ema1, sp.k1 * rsiValue);
-            ema2 = fmadd!(sp.beta2 as f64, ema2, sp.k2 * ema1);
+            ema1 = fmadd!(sp.beta1, ema1, sp.k1 * rsiValue);
+            ema2 = fmadd!(sp.beta2, ema2, sp.k2 * ema1);
             sumSignal = sumSignal + ema2;
-            (*outReal) = ema2 - sumSignal / (sp.optInSignalPeriod as f64);
+            *outReal = ema2 - sumSignal / (sp.optInSignalPeriod as f64);
         }
         Ok(outReal)
     }

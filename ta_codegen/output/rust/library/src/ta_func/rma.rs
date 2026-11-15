@@ -79,12 +79,12 @@ impl Core {
     #[doc(alias = "TA_RMA_Lookback")]
     #[inline]
     pub fn rma_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::RMA, (if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }))) as usize);
+        return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::RMA, if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }, if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 })) as usize);
     }
     /// Display shift of one output of [`Core::rma`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_RMA_DisplayShift")]
-    pub fn rma_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn rma_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.rma_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -159,9 +159,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.rma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -178,8 +178,8 @@ impl Core {
         let mut periodTotal: f64 = 0.0_f64;
         let mut wAlpha: f64 = 0.0_f64;
         let mut wBeta: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackTotal = self.rma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
@@ -208,29 +208,24 @@ impl Core {
         today = startIdx - lookbackTotal;
         // Seed with a simple average of the first 'period' values.
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 periodTotal += _w0[_wk];
                 today += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevRMA = periodTotal / ((optInTimePeriod) as f64);
+        prevRMA = periodTotal / (optInTimePeriod as f64);
         // Skip the unstable period.
-        i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
+        i = lookbackTotal - ((optInTimePeriod - 1) as usize);
         if i != 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * _w0[_wk]);
+                prevRMA = fmadd!(wBeta, prevRMA, wAlpha * _w0[_wk]);
                 today += 1;
-                i -= 1;
             }
         }
         // Now start to write the final RMA in the caller
@@ -244,23 +239,20 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                nbRMA -= 1;
-                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * _w0[_wk]);
+                prevRMA = fmadd!(wBeta, prevRMA, wAlpha * _w0[_wk]);
                 _w1[_wk] = prevRMA;
                 outIdx += 1;
-                today += 1;
             }
-            nbRMA = nbRMA.wrapping_sub(1);
         } else {
             while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
-                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
+                prevRMA = fmadd!(wBeta, prevRMA, wAlpha * inReal[today]);
                 outReal[outIdx] = prevRMA;
                 outIdx += 1;
                 today += 1;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Wilder's smoothed moving average: an exponential average whose smoothing factor is the
@@ -416,7 +408,6 @@ pub struct RmaStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct RmaStreamState {
-    optInTimePeriod: i32,
     prevRMA: f64,
     wAlpha: f64,
     wBeta: f64,
@@ -430,9 +421,9 @@ struct RmaStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn rma_step_impl(sp: &mut RmaStreamState, inReal: f64, outReal: &mut f64) {
-        sp.prevRMA = fmadd!(sp.wBeta as f64, sp.prevRMA, sp.wAlpha * inReal);
-        (*outReal) = sp.prevRMA;
-        sp.cur_outReal = (*outReal);
+        sp.prevRMA = fmadd!(sp.wBeta, sp.prevRMA, sp.wAlpha * inReal);
+        *outReal = sp.prevRMA;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::rma_open_internal`]
@@ -461,21 +452,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -485,8 +474,8 @@ impl Core {
         let mut periodTotal: f64 = 0.0_f64;
         let mut wAlpha: f64 = 0.0_f64;
         let mut wBeta: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackTotal = self.rma_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
@@ -514,36 +503,35 @@ impl Core {
         today = startIdx - lookbackTotal;
         // Seed with a simple average of the first 'period' values.
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             periodTotal += inReal[today];
             today += 1;
         }
-        prevRMA = periodTotal / ((optInTimePeriod) as f64);
+        prevRMA = periodTotal / (optInTimePeriod as f64);
         // Skip the unstable period.
-        i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
+        i = lookbackTotal - ((optInTimePeriod - 1) as usize);
         while i != 0 {
-            prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
+            prevRMA = fmadd!(wBeta, prevRMA, wAlpha * inReal[today]);
             today += 1;
             i -= 1;
         }
         // Now start to write the final RMA in the caller
         // provided outReal.
         outIdx = 1;
-        outReal[(0 * outStride) as usize] = prevRMA;
+        outReal[0] = prevRMA;
         // Now do the number of requested RMA.
         nbRMA = endIdx - startIdx + 1;
         while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
-            prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevRMA;
+            prevRMA = fmadd!(wBeta, prevRMA, wAlpha * inReal[today]);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevRMA;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = RmaStreamState {
-            optInTimePeriod,
             prevRMA,
             wAlpha,
             wBeta,
@@ -554,7 +542,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::rma_open`] (composition seam).
     pub(crate) fn rma_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(RmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -627,7 +615,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_RMA_OpenAndFill")]
     pub fn rma_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(RmaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -646,7 +634,7 @@ impl Core {
     /// [`Core::rma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn rma_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RmaStream, RetCode> {
         self.rma_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -714,8 +702,8 @@ impl RmaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut prevRMA = sp.prevRMA;
-            prevRMA = fmadd!(sp.wBeta as f64, prevRMA, sp.wAlpha * inReal);
-            (*outReal) = prevRMA;
+            prevRMA = fmadd!(sp.wBeta, prevRMA, sp.wAlpha * inReal);
+            *outReal = prevRMA;
         }
         Ok(outReal)
     }
@@ -779,14 +767,14 @@ impl RmaStream {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl RmaStream {
-    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+    pub(crate) fn step_tape(&mut self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
         Core::rma_step_impl(&mut self.state, inReal, &mut outReal);
         self.out.count += 1;
         outReal
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
         self.peek(inReal)
     }
 

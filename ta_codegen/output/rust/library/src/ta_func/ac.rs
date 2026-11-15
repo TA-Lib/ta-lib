@@ -83,19 +83,19 @@ impl Core {
     #[doc(alias = "TA_AC_Lookback")]
     #[inline]
     pub fn ac_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 5;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The oscillator's own window, plus the simple moving average taken over
@@ -124,7 +124,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_AC_DisplayShift")]
-    pub fn ac_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn ac_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -153,19 +153,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 5;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -224,16 +224,16 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         // Allocate a circular buffer equal to the requested signal period.
         if optInSignalPeriod < 1 { return RetCode::InternalError; }
-        if (optInSignalPeriod) as usize <= 32usize {
-            oscBuffer = &mut local_oscBuffer[..(optInSignalPeriod) as usize];
+        if optInSignalPeriod as usize <= 32usize {
+            oscBuffer = &mut local_oscBuffer[..optInSignalPeriod as usize];
         } else {
             heap_oscBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
             oscBuffer = &mut heap_oscBuffer;
@@ -242,12 +242,12 @@ impl Core {
         // The first bar the oscillator is evaluated on for this call. It trails
         // the first output by the signal window, because that many oscillator
         // values have to exist before their average does.
-        oscStartIdx = startIdx - (((optInSignalPeriod - 1)) as usize);
+        oscStartIdx = startIdx - ((optInSignalPeriod - 1) as usize);
         sumFast = 0.0;
         sumSlow = 0.0;
         sumSignal = 0.0;
-        trailingFastIdx = oscStartIdx - (((optInFastPeriod - 1)) as usize);
-        trailingSlowIdx = oscStartIdx - (((optInSlowPeriod - 1)) as usize);
+        trailingFastIdx = oscStartIdx - ((optInFastPeriod - 1) as usize);
+        trailingSlowIdx = oscStartIdx - ((optInSlowPeriod - 1) as usize);
         // Add-up both initial periods, except for the last value.
         //
         // One pass over the longer warm-up window replaces two overlapping passes.
@@ -316,9 +316,6 @@ impl Core {
                 osc = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
                 sumFast -= (_w1[_wk] + _w4[_wk]) / 2.0;
                 sumSlow -= (_w2[_wk] + _w5[_wk]) / 2.0;
-                trailingFastIdx = trailingFastIdx + 1;
-                trailingSlowIdx = trailingSlowIdx + 1;
-                i = i + 1;
                 // Today's oscillator enters the signal window at its own slot, and the
                 // bar leaving that window is read only after the ring has advanced onto
                 // it -- writing first is what makes the slot the loop is about to
@@ -341,8 +338,8 @@ impl Core {
             }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading Dimensions*, 1998): the rate
@@ -524,7 +521,6 @@ struct AcStreamState {
     ringPos_trailingSlowIdx: usize,
     ringCap_trailingSlowIdx: usize,
     ring_trailingSlowIdx_derived: Vec<f64>,
-    cbSize_oscBuffer: usize,
     cb_oscBuffer: Vec<f64>,
     cur_outReal: f64,
 }
@@ -570,8 +566,8 @@ impl Core {
         // parameter makes them collide -- but the order is kept anyway, so
         // that admitting a signal period of 1 would not silently reintroduce
         // the collision ao.c has to guard against.
-        (*outReal) = tempReal;
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal;
+        sp.cur_outReal = *outReal;
         ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
         ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
         sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
@@ -598,19 +594,19 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 5;
-        } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 2 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -618,14 +614,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumFast: f64 = 0.0_f64;
         let mut sumSlow: f64 = 0.0_f64;
         let mut sumSignal: f64 = 0.0_f64;
@@ -675,24 +669,24 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Allocate a circular buffer equal to the requested signal period.
         if optInSignalPeriod < 1 { return Err(RetCode::InternalError); }
         oscBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
-        maxIdx_oscBuffer = ((optInSignalPeriod) as usize) - 1;
+        maxIdx_oscBuffer = (optInSignalPeriod as usize) - 1;
         oscBuffer_Idx = 0;
         // The first bar the oscillator is evaluated on for this call. It trails
         // the first output by the signal window, because that many oscillator
         // values have to exist before their average does.
-        oscStartIdx = startIdx - (((optInSignalPeriod - 1)) as usize);
+        oscStartIdx = startIdx - ((optInSignalPeriod - 1) as usize);
         sumFast = 0.0;
         sumSlow = 0.0;
         sumSignal = 0.0;
-        trailingFastIdx = oscStartIdx - (((optInFastPeriod - 1)) as usize);
-        trailingSlowIdx = oscStartIdx - (((optInSlowPeriod - 1)) as usize);
+        trailingFastIdx = oscStartIdx - ((optInFastPeriod - 1) as usize);
+        trailingSlowIdx = oscStartIdx - ((optInSlowPeriod - 1) as usize);
         // Add-up both initial periods, except for the last value.
         //
         // One pass over the longer warm-up window replaces two overlapping passes.
@@ -763,12 +757,12 @@ impl Core {
             // parameter makes them collide -- but the order is kept anyway, so
             // that admitting a signal period of 1 would not silently reintroduce
             // the collision ao.c has to guard against.
-            outReal[(outIdx * outStride) as usize] = tempReal;
+            outReal[outIdx * outStride] = tempReal;
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingFastIdx: i64 = (i as i64) - (trailingFastIdx as i64);
@@ -780,7 +774,7 @@ impl Core {
         {
             let mut fillJ: usize = historyLen - cap_trailingFastIdx as usize;
             while fillJ < historyLen {
-                ring_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                ring_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx as usize)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
                 fillJ += 1;
             }
         }
@@ -793,7 +787,7 @@ impl Core {
         {
             let mut fillJ: usize = historyLen - cap_trailingSlowIdx as usize;
             while fillJ < historyLen {
-                ring_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                ring_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx as usize)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
                 fillJ += 1;
             }
         }
@@ -817,7 +811,6 @@ impl Core {
             ringPos_trailingSlowIdx: 0_usize,
             ringCap_trailingSlowIdx: cap_trailingSlowIdx as usize,
             ring_trailingSlowIdx_derived,
-            cbSize_oscBuffer: cbSize_oscBuffer,
             cb_oscBuffer: oscBuffer,
         };
         Ok(AcStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -825,7 +818,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::ac_open`] (composition seam).
     pub(crate) fn ac_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32,
     ) -> Result<(AcStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -904,7 +897,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AC_OpenAndFill")]
     pub fn ac_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outReal: &mut [f64],
     ) -> Result<(AcStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -926,7 +919,7 @@ impl Core {
     /// [`Core::ac_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn ac_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AcStream, RetCode> {
         self.ac_open_impl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -996,33 +989,21 @@ impl AcStream {
             let mut medianPrice: f64 = 0.0_f64;
             let mut osc: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut oscBuffer_Idx = sp.oscBuffer_Idx;
             let mut sumFast = sp.sumFast;
             let mut sumSignal = sp.sumSignal;
             let mut sumSlow = sp.sumSlow;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             medianPrice = (inHigh + inLow) / 2.0;
             sumFast += medianPrice;
             sumSlow += medianPrice;
             // Snapshot the oscillator before either total drops its trailing bar,
             // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
             osc = sumFast / (sp.optInFastPeriod as f64) - sumSlow / (sp.optInSlowPeriod as f64);
-            sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
-            sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
             // Today's oscillator enters the signal window at its own slot, and the
             // bar leaving that window is read only after the ring has advanced onto
             // it -- writing first is what makes the slot the loop is about to
             // overwrite the newest value rather than the oldest one.
-            pkSlot0 = oscBuffer_Idx as usize;
-            pkVal0 = osc;
             sumSignal += osc;
             tempReal = osc - sumSignal / (sp.optInSignalPeriod as f64);
-            oscBuffer_Idx = oscBuffer_Idx + 1;
-            if oscBuffer_Idx > sp.maxIdx_oscBuffer {
-                oscBuffer_Idx = 0;
-            }
-            sumSignal -= (if (oscBuffer_Idx as usize) != pkSlot0 { sp.cb_oscBuffer[oscBuffer_Idx] } else { pkVal0 });
             // Every input read for this bar is done above, so the store is safe
             // when the caller aliases outReal over inHigh or inLow. Unlike ao.c
             // there is slack here -- the signal window puts both trailing indices
@@ -1030,7 +1011,7 @@ impl AcStream {
             // parameter makes them collide -- but the order is kept anyway, so
             // that admitting a signal period of 1 would not silently reintroduce
             // the collision ao.c has to guard against.
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         }
         Ok(outReal)
     }

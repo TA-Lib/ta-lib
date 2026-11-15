@@ -80,15 +80,15 @@ impl Core {
     #[doc(alias = "TA_MINUS_DM_Lookback")]
     #[inline]
     pub fn minus_dm_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::MINUS_DM, (if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 })) - 1) as usize);
+            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::MINUS_DM, if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }, if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }) - 1) as usize);
         } else {
-            return Ok((1) as usize);
+            return Ok(1 as usize);
         }
     }
     /// Display shift of one output of [`Core::minus_dm`]: how many bars ahead (positive) or behind
@@ -107,7 +107,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MINUS_DM_DisplayShift")]
-    pub fn minus_dm_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn minus_dm_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.minus_dm_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -134,9 +134,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.minus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -228,8 +228,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -241,7 +241,7 @@ impl Core {
         if optInTimePeriod <= 1 {
             // No smoothing needed. Just do a simple DM1
             // for each price bar.
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             today = startIdx - 1;
             prevHigh = inHigh[today];
             prevLow = inLow[today];
@@ -251,7 +251,6 @@ impl Core {
                 let _w1 = &inLow[today + 1..][.._wn];
                 let _w2 = &mut outReal[outIdx..][.._wn];
                 for _wk in 0.._wn {
-                    today += 1;
                     tempReal = _w0[_wk];
                     diffP = tempReal - prevHigh;
                     // Plus Delta
@@ -260,18 +259,18 @@ impl Core {
                     diffM = prevLow - tempReal;
                     // Minus Delta
                     prevLow = tempReal;
-                    minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
-                    minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
+                    minusDM1 = if diffM > 0.0 { diffM } else { 0.0 };
+                    minusDM1 = if diffP < diffM { minusDM1 } else { 0.0 };
                     _w2[_wk] = minusDM1;
                     outIdx += 1;
                 }
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
         invPeriod = 1.0 / (optInTimePeriod as f64);
         // Process the initial DM
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         prevMinusDM = 0.0;
         today = startIdx - lookbackTotal;
         prevHigh = inHigh[today];
@@ -282,7 +281,6 @@ impl Core {
             let _w0 = &inHigh[today + 1..][.._wn];
             let _w1 = &inLow[today + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 today += 1;
                 tempReal = _w0[_wk];
                 diffP = tempReal - prevHigh;
@@ -296,23 +294,19 @@ impl Core {
                 // first test and the max the second, as a non-positive delta cannot raise
                 // the sum. gcc keeps a branch if a select, not the max, ends the step.
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM + minusDM1;
-                prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
+                prevMinusDM = if prevMinusDM > tempReal { prevMinusDM } else { tempReal };
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
         // Process subsequent DM
         // Skip the unstable period.
-        i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
+        i = lookbackTotal - ((optInTimePeriod - 1) as usize);
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inHigh[today + 1..][.._wn];
             let _w1 = &inLow[today + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 today += 1;
                 tempReal = _w0[_wk];
                 diffP = tempReal - prevHigh;
@@ -323,14 +317,11 @@ impl Core {
                 // Minus Delta
                 prevLow = tempReal;
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM - prevMinusDM * invPeriod;
                 prevMinusDM = tempReal + minusDM1;
-                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+                prevMinusDM = if tempReal > prevMinusDM { tempReal } else { prevMinusDM };
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
         // Now start to write the output in
         // the caller provided outReal.
@@ -342,7 +333,6 @@ impl Core {
             let _w1 = &inLow[today + 1..][.._wn];
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                today += 1;
                 tempReal = _w0[_wk];
                 diffP = tempReal - prevHigh;
                 // Plus Delta
@@ -352,15 +342,15 @@ impl Core {
                 // Minus Delta
                 prevLow = tempReal;
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM - prevMinusDM * invPeriod;
                 prevMinusDM = tempReal + minusDM1;
-                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+                prevMinusDM = if tempReal > prevMinusDM { tempReal } else { prevMinusDM };
                 _w2[_wk] = prevMinusDM;
                 outIdx += 1;
             }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Minus Directional Movement, the downward component of Wilder's directional movement system.
@@ -528,10 +518,10 @@ impl Core {
             diffM = sp.prevLow - tempReal;
             // Minus Delta
             sp.prevLow = tempReal;
-            minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
-            minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
-            (*outReal) = minusDM1;
-            sp.cur_outReal = (*outReal);
+            minusDM1 = if diffM > 0.0 { diffM } else { 0.0 };
+            minusDM1 = if diffP < diffM { minusDM1 } else { 0.0 };
+            *outReal = minusDM1;
+            sp.cur_outReal = *outReal;
         } else {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
@@ -546,12 +536,12 @@ impl Core {
             // Minus Delta
             sp.prevLow = tempReal;
             tempReal = diffM - diffP;
-            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+            minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
             tempReal = sp.prevMinusDM - sp.prevMinusDM * sp.invPeriod;
             sp.prevMinusDM = tempReal + minusDM1;
-            sp.prevMinusDM = (if tempReal > sp.prevMinusDM { tempReal } else { sp.prevMinusDM });
-            (*outReal) = sp.prevMinusDM;
-            sp.cur_outReal = (*outReal);
+            sp.prevMinusDM = if tempReal > sp.prevMinusDM { tempReal } else { sp.prevMinusDM };
+            *outReal = sp.prevMinusDM;
+            sp.cur_outReal = *outReal;
         }
     }
 
@@ -563,9 +553,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -573,14 +563,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod <= 1 {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -588,12 +576,11 @@ impl Core {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut invPeriod: f64 = 0.0_f64;
-            let mut prevMinusDM: f64 = 0.0_f64;
+            let invPeriod: f64 = 0.0_f64;
+            let prevMinusDM: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
             let mut minusDM1: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
             //
             // The DM1 (one period) is base on the largest part of
             // today's range that is outside of yesterdays range.
@@ -665,8 +652,8 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
+                *outBegIdx = 0;
+                *outNBElement = 0;
                 return Err(RetCode::InsufficientHistory);
             }
             // Indicate where the next output should be put
@@ -675,7 +662,7 @@ impl Core {
             // Trap the case where no smoothing is needed.
             // No smoothing needed. Just do a simple DM1
             // for each price bar.
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             today = startIdx - 1;
             prevHigh = inHigh[today];
             prevLow = inLow[today];
@@ -689,11 +676,11 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
-                minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = minusDM1;
+                minusDM1 = if diffM > 0.0 { diffM } else { 0.0 };
+                minusDM1 = if diffP < diffM { minusDM1 } else { 0.0 };
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = minusDM1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
 
             // Capture the live batch state into the handle.
             let state = MinusDmStreamState {
@@ -789,17 +776,16 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
+                *outBegIdx = 0;
+                *outNBElement = 0;
                 return Err(RetCode::InsufficientHistory);
             }
             // Indicate where the next output should be put
             // in the outReal.
-            outIdx = 0;
             // Trap the case where no smoothing is needed.
             invPeriod = 1.0 / (optInTimePeriod as f64);
             // Process the initial DM
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             prevMinusDM = 0.0;
             today = startIdx - lookbackTotal;
             prevHigh = inHigh[today];
@@ -819,13 +805,13 @@ impl Core {
                 // first test and the max the second, as a non-positive delta cannot raise
                 // the sum. gcc keeps a branch if a select, not the max, ends the step.
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM + minusDM1;
-                prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
+                prevMinusDM = if prevMinusDM > tempReal { prevMinusDM } else { tempReal };
             }
             // Process subsequent DM
             // Skip the unstable period.
-            i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
+            i = lookbackTotal - ((optInTimePeriod - 1) as usize);
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 today += 1;
                 tempReal = inHigh[today];
@@ -837,14 +823,14 @@ impl Core {
                 // Minus Delta
                 prevLow = tempReal;
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM - prevMinusDM * invPeriod;
                 prevMinusDM = tempReal + minusDM1;
-                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+                prevMinusDM = if tempReal > prevMinusDM { tempReal } else { prevMinusDM };
             }
             // Now start to write the output in
             // the caller provided outReal.
-            outReal[(0 * outStride) as usize] = prevMinusDM;
+            outReal[0] = prevMinusDM;
             outIdx = 1;
             while today < endIdx {
                 today += 1;
@@ -857,13 +843,13 @@ impl Core {
                 // Minus Delta
                 prevLow = tempReal;
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM - prevMinusDM * invPeriod;
                 prevMinusDM = tempReal + minusDM1;
-                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMinusDM;
+                prevMinusDM = if tempReal > prevMinusDM { tempReal } else { prevMinusDM };
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevMinusDM;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
 
             // Capture the live batch state into the handle.
             let state = MinusDmStreamState {
@@ -880,7 +866,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::minus_dm_open`] (composition seam).
     pub(crate) fn minus_dm_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(MinusDmStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -959,7 +945,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MINUS_DM_OpenAndFill")]
     pub fn minus_dm_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(MinusDmStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -981,7 +967,7 @@ impl Core {
     /// [`Core::minus_dm_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn minus_dm_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MinusDmStream, RetCode> {
         self.minus_dm_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1053,41 +1039,37 @@ impl MinusDmStream {
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
                 let mut minusDM1: f64 = 0.0_f64;
-                let mut prevHigh = sp.prevHigh;
-                let mut prevLow = sp.prevLow;
+                let prevHigh = sp.prevHigh;
+                let prevLow = sp.prevLow;
                 tempReal = inHigh;
                 diffP = tempReal - prevHigh;
                 // Plus Delta
-                prevHigh = tempReal;
                 tempReal = inLow;
                 diffM = prevLow - tempReal;
                 // Minus Delta
-                prevLow = tempReal;
-                minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
-                minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
-                (*outReal) = minusDM1;
+                minusDM1 = if diffM > 0.0 { diffM } else { 0.0 };
+                minusDM1 = if diffP < diffM { minusDM1 } else { 0.0 };
+                *outReal = minusDM1;
             } else {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
                 let mut minusDM1: f64 = 0.0_f64;
-                let mut prevHigh = sp.prevHigh;
-                let mut prevLow = sp.prevLow;
+                let prevHigh = sp.prevHigh;
+                let prevLow = sp.prevLow;
                 let mut prevMinusDM = sp.prevMinusDM;
                 tempReal = inHigh;
                 diffP = tempReal - prevHigh;
                 // Plus Delta
-                prevHigh = tempReal;
                 tempReal = inLow;
                 diffM = prevLow - tempReal;
                 // Minus Delta
-                prevLow = tempReal;
                 tempReal = diffM - diffP;
-                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                minusDM1 = if tempReal > 0.0 { diffM } else { 0.0 };
                 tempReal = prevMinusDM - prevMinusDM * sp.invPeriod;
                 prevMinusDM = tempReal + minusDM1;
-                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
-                (*outReal) = prevMinusDM;
+                prevMinusDM = if tempReal > prevMinusDM { tempReal } else { prevMinusDM };
+                *outReal = prevMinusDM;
             }
         }
         Ok(outReal)

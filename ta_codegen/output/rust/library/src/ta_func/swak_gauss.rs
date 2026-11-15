@@ -82,16 +82,16 @@ impl Core {
     #[doc(alias = "TA_SWAK_GAUSS_Lookback")]
     #[inline]
     pub fn swak_gauss_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         // No structural lookback. Every term of the recurrence exists at the first
         // bar -- the two history slots are seeded from that bar rather than read
         // from before it -- and there is no callee whose lookback could be
         // inherited, so the function's own unstable period is the whole of it.
-        return Ok((self.unstable_count(FuncUnstId::SWAK_GAUSS, (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9))) as usize);
+        return Ok(self.unstable_count(FuncUnstId::SWAK_GAUSS, ((10 + 3) * (optInTimePeriod + 2) + 8) / 9, ((19 + 3) * (optInTimePeriod + 2) + 8) / 9) as usize);
     }
     /// Display shift of one output of [`Core::swak_gauss`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
@@ -110,7 +110,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SWAK_GAUSS_DisplayShift")]
-    pub fn swak_gauss_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn swak_gauss_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.swak_gauss_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -166,9 +166,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.swak_gauss_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -190,8 +190,8 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         let mut y1: f64 = 0.0_f64;
         let mut y2: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.swak_gauss_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -207,7 +207,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + fmadd!(b2p, b2p, 2.0 * b2p).sqrt();
         // The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
         // x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
         om = 1.0 - a2p;
@@ -227,11 +227,10 @@ impl Core {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * _w0[_wk]));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 today += 1;
-                i -= 1;
             }
         }
         outIdx = 0;
@@ -244,16 +243,15 @@ impl Core {
                 // rate is the latency of whatever y1 crosses to become y: outermost, that
                 // is one fused step. Nested inside, it is three, and every backend's last
                 // bit moves with it.
-                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * _w0[_wk]));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 _w1[_wk] = y;
                 outIdx = outIdx + 1;
-                today += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// The Gaussian row of John Ehlers' Swiss Army Knife filter: a two-pole low-pass smoother whose
@@ -393,7 +391,6 @@ pub struct SwakGaussStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SwakGaussStreamState {
-    optInTimePeriod: i32,
     c0: f64,
     a1: f64,
     a2: f64,
@@ -414,11 +411,11 @@ impl Core {
         // rate is the latency of whatever y1 crosses to become y: outermost, that
         // is one fused step. Nested inside, it is three, and every backend's last
         // bit moves with it.
-        y = fmadd!(sp.a1 as f64, sp.y1, fmadd!(sp.a2 as f64, sp.y2, sp.c0 * inReal));
+        y = fmadd!(sp.a1, sp.y1, fmadd!(sp.a2, sp.y2, sp.c0 * inReal));
         sp.y2 = sp.y1;
         sp.y1 = y;
-        (*outReal) = y;
-        sp.cur_outReal = (*outReal);
+        *outReal = y;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::swak_gauss_open_internal`]
@@ -447,21 +444,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -476,8 +471,8 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         let mut y1: f64 = 0.0_f64;
         let mut y2: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.swak_gauss_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -492,7 +487,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + fmadd!(b2p, b2p, 2.0 * b2p).sqrt();
         // The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
         // x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
         om = 1.0 - a2p;
@@ -509,7 +504,7 @@ impl Core {
         // Skip the unstable period: run the recurrence but publish nothing.
         i = lookbackTotal;
         while i != 0 {
-            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * inReal[today]));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
             today += 1;
@@ -521,19 +516,18 @@ impl Core {
             // rate is the latency of whatever y1 crosses to become y: outermost, that
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
-            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * inReal[today]));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
-            outReal[(outIdx * outStride) as usize] = y;
+            outReal[outIdx * outStride] = y;
             outIdx = outIdx + 1;
             today += 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = SwakGaussStreamState {
-            optInTimePeriod,
             c0,
             a1,
             a2,
@@ -546,7 +540,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::swak_gauss_open`] (composition seam).
     pub(crate) fn swak_gauss_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(SwakGaussStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -619,7 +613,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SWAK_GAUSS_OpenAndFill")]
     pub fn swak_gauss_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(SwakGaussStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -638,7 +632,7 @@ impl Core {
     /// [`Core::swak_gauss_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn swak_gauss_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SwakGaussStream, RetCode> {
         self.swak_gauss_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -706,16 +700,14 @@ impl SwakGaussStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut y: f64 = 0.0_f64;
-            let mut y1 = sp.y1;
-            let mut y2 = sp.y2;
+            let y1 = sp.y1;
+            let y2 = sp.y2;
             // a1*y1 stays the outermost term. y1 is the newest output, so the bar
             // rate is the latency of whatever y1 crosses to become y: outermost, that
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
-            y = fmadd!(sp.a1 as f64, y1, fmadd!(sp.a2 as f64, y2, sp.c0 * inReal));
-            y2 = y1;
-            y1 = y;
-            (*outReal) = y;
+            y = fmadd!(sp.a1, y1, fmadd!(sp.a2, y2, sp.c0 * inReal));
+            *outReal = y;
         }
         Ok(outReal)
     }

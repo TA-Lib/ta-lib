@@ -86,19 +86,19 @@ impl Core {
     #[doc(alias = "TA_WAVETREND_Lookback")]
     #[inline]
     pub fn wavetrend_lookback(&self, mut optInChannelPeriod: i32, mut optInAveragePeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInChannelPeriod) as i32) == (i32::MIN) {
+        if optInChannelPeriod == i32::MIN {
             optInChannelPeriod = 10;
-        } else if (((optInChannelPeriod) as i32) < 2) || (((optInChannelPeriod) as i32) > 100000) {
+        } else if optInChannelPeriod < 2 || optInChannelPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInAveragePeriod) as i32) == (i32::MIN) {
+        if optInAveragePeriod == i32::MIN {
             optInAveragePeriod = 21;
-        } else if (((optInAveragePeriod) as i32) < 1) || (((optInAveragePeriod) as i32) > 100000) {
+        } else if optInAveragePeriod < 1 || optInAveragePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 4;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // Keep every term a callee's own lookback: that is how WAVETREND inherits
@@ -125,7 +125,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_WAVETREND_DisplayShift")]
-    pub fn wavetrend_display_shift(&self, mut optInChannelPeriod: i32, mut optInAveragePeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn wavetrend_display_shift(&self, optInChannelPeriod: i32, optInAveragePeriod: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -196,19 +196,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInChannelPeriod) as i32) == (i32::MIN) {
+        if optInChannelPeriod == i32::MIN {
             optInChannelPeriod = 10;
-        } else if (((optInChannelPeriod) as i32) < 2) || (((optInChannelPeriod) as i32) > 100000) {
+        } else if optInChannelPeriod < 2 || optInChannelPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInAveragePeriod) as i32) == (i32::MIN) {
+        if optInAveragePeriod == i32::MIN {
             optInAveragePeriod = 21;
-        } else if (((optInAveragePeriod) as i32) < 1) || (((optInAveragePeriod) as i32) > 100000) {
+        } else if optInAveragePeriod < 1 || optInAveragePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 4;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -218,7 +218,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outWT1.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outWT2.len());
-        if (outWT1.as_ptr() == outWT2.as_ptr()) {
+        if outWT1.as_ptr() == outWT2.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -280,16 +280,16 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         if optInSignalPeriod < 1 { return RetCode::InternalError; }
-        if (optInSignalPeriod) as usize <= 32usize {
-            wtBuffer = &mut local_wtBuffer[..(optInSignalPeriod) as usize];
+        if optInSignalPeriod as usize <= 32usize {
+            wtBuffer = &mut local_wtBuffer[..optInSignalPeriod as usize];
         } else {
             heap_wtBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
             wtBuffer = &mut heap_wtBuffer;
@@ -329,13 +329,13 @@ impl Core {
         while today <= startIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             // Stage 1: the exponential average of the typical price.
-            if nAp < ((optInChannelPeriod) as usize) {
+            if nAp < (optInChannelPeriod as usize) {
                 sumEsa = sumEsa + ap;
                 if nAp == ((optInChannelPeriod - 1) as usize) {
-                    esa = sumEsa / ((optInChannelPeriod) as f64);
+                    esa = sumEsa / (optInChannelPeriod as f64);
                 }
             } else {
-                esa = fmadd!(beta1 as f64, esa, k1 * ap);
+                esa = fmadd!(beta1, esa, k1 * ap);
             }
             // Stage 2: the exponential average of the absolute distance, over what
             // stage 1 publishes. The counter is compared before it is subtracted,
@@ -356,17 +356,17 @@ impl Core {
                 // Only once prevEsa is an average: on the bar that seeds esa it is
                 // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 num = ap - esa;
-                if nAp >= ((optInChannelPeriod) as usize) && ap == prevAp && esa == prevEsa {
+                if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
                     num = 0.0;
                 }
-                dev = (num).abs();
-                if nDev < ((optInChannelPeriod) as usize) {
+                dev = num.abs();
+                if nDev < (optInChannelPeriod as usize) {
                     sumD = sumD + dev;
                     if nDev == ((optInChannelPeriod - 1) as usize) {
-                        d = sumD / ((optInChannelPeriod) as f64);
+                        d = sumD / (optInChannelPeriod as f64);
                     }
                 } else {
-                    d = fmadd!(beta1 as f64, d, k1 * dev);
+                    d = fmadd!(beta1, d, k1 * dev);
                 }
                 // Stage 3: the oscillator, then its own smoothing.
                 if nDev >= lookbackChannel {
@@ -382,13 +382,13 @@ impl Core {
                     } else {
                         ci = 0.0;
                     }
-                    if nCi < ((optInAveragePeriod) as usize) {
+                    if nCi < (optInAveragePeriod as usize) {
                         sumCi = sumCi + ci;
                         if nCi == ((optInAveragePeriod - 1) as usize) {
-                            wt1 = sumCi / ((optInAveragePeriod) as f64);
+                            wt1 = sumCi / (optInAveragePeriod as f64);
                         }
                     } else {
-                        wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
+                        wt1 = fmadd!(beta2, wt1, k2 * ci);
                     }
                     if nCi >= lookbackAverage {
                         wtBuffer[wtBuffer_Idx] = wt1;
@@ -417,20 +417,20 @@ impl Core {
         // frames from carrying a seeded output local.
         while today <= endIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            esa = fmadd!(beta1 as f64, esa, k1 * ap);
+            esa = fmadd!(beta1, esa, k1 * ap);
             num = ap - esa;
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
-            dev = (num).abs();
-            d = fmadd!(beta1 as f64, d, k1 * dev);
+            dev = num.abs();
+            d = fmadd!(beta1, d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
+            wt1 = fmadd!(beta2, wt1, k2 * ci);
             wtBuffer[wtBuffer_Idx] = wt1;
             sumSignal = sumSignal + wt1;
             outWT1[outIdx] = wt1;
@@ -443,8 +443,8 @@ impl Core {
             prevEsa = esa;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// WaveTrend Oscillator: how far the typical price sits from its own exponential average,
@@ -615,8 +615,6 @@ pub struct WavetrendStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct WavetrendStreamState {
-    optInChannelPeriod: i32,
-    optInAveragePeriod: i32,
     optInSignalPeriod: i32,
     k1: f64,
     beta1: f64,
@@ -630,7 +628,6 @@ struct WavetrendStreamState {
     sumSignal: f64,
     wtBuffer_Idx: usize,
     maxIdx_wtBuffer: usize,
-    cbSize_wtBuffer: usize,
     cb_wtBuffer: Vec<f64>,
     cur_outWT1: f64,
     cur_outWT2: f64,
@@ -650,24 +647,24 @@ impl Core {
         let mut num: f64 = 0.0_f64;
         let mut scaledDev: f64 = 0.0_f64;
         ap = (inHigh + inLow + inClose) / 3.0;
-        sp.esa = fmadd!(sp.beta1 as f64, sp.esa, sp.k1 * ap);
+        sp.esa = fmadd!(sp.beta1, sp.esa, sp.k1 * ap);
         num = ap - sp.esa;
         if ap == sp.prevAp && sp.esa == sp.prevEsa {
             num = 0.0;
         }
-        dev = (num).abs();
-        sp.d = fmadd!(sp.beta1 as f64, sp.d, sp.k1 * dev);
+        dev = num.abs();
+        sp.d = fmadd!(sp.beta1, sp.d, sp.k1 * dev);
         scaledDev = 0.015 * sp.d;
         if scaledDev > 0.0 {
             ci = num / scaledDev;
         } else {
             ci = 0.0;
         }
-        sp.wt1 = fmadd!(sp.beta2 as f64, sp.wt1, sp.k2 * ci);
+        sp.wt1 = fmadd!(sp.beta2, sp.wt1, sp.k2 * ci);
         sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1;
         sp.sumSignal = sp.sumSignal + sp.wt1;
-        (*outWT1) = sp.wt1;
-        (*outWT2) = sp.sumSignal / (sp.optInSignalPeriod as f64);
+        *outWT1 = sp.wt1;
+        *outWT2 = sp.sumSignal / (sp.optInSignalPeriod as f64);
         sp.wtBuffer_Idx = sp.wtBuffer_Idx + 1;
         if sp.wtBuffer_Idx > sp.maxIdx_wtBuffer {
             sp.wtBuffer_Idx = 0;
@@ -675,8 +672,8 @@ impl Core {
         sp.sumSignal = sp.sumSignal - sp.cb_wtBuffer[sp.wtBuffer_Idx];
         sp.prevAp = ap;
         sp.prevEsa = sp.esa;
-        sp.cur_outWT1 = (*outWT1);
-        sp.cur_outWT2 = (*outWT2);
+        sp.cur_outWT1 = *outWT1;
+        sp.cur_outWT2 = *outWT2;
     }
 
     /// The single whole-history transcription behind [`Core::wavetrend_open_internal`]
@@ -705,19 +702,19 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInChannelPeriod) as i32) == (i32::MIN) {
+        if optInChannelPeriod == i32::MIN {
             optInChannelPeriod = 10;
-        } else if (((optInChannelPeriod) as i32) < 2) || (((optInChannelPeriod) as i32) > 100000) {
+        } else if optInChannelPeriod < 2 || optInChannelPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInAveragePeriod) as i32) == (i32::MIN) {
+        if optInAveragePeriod == i32::MIN {
             optInAveragePeriod = 21;
-        } else if (((optInAveragePeriod) as i32) < 1) || (((optInAveragePeriod) as i32) > 100000) {
+        } else if optInAveragePeriod < 1 || optInAveragePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 4;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -725,14 +722,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut k1: f64 = 0.0_f64;
         let mut beta1: f64 = 0.0_f64;
         let mut k2: f64 = 0.0_f64;
@@ -790,13 +785,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInSignalPeriod < 1 { return Err(RetCode::InternalError); }
         wtBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
-        maxIdx_wtBuffer = ((optInSignalPeriod) as usize) - 1;
+        maxIdx_wtBuffer = (optInSignalPeriod as usize) - 1;
         wtBuffer_Idx = 0;
         lookbackChannel = self.ema_lookback(optInChannelPeriod)?;
         lookbackAverage = self.ema_lookback(optInAveragePeriod)?;
@@ -832,13 +827,13 @@ impl Core {
         while today <= startIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             // Stage 1: the exponential average of the typical price.
-            if nAp < ((optInChannelPeriod) as usize) {
+            if nAp < (optInChannelPeriod as usize) {
                 sumEsa = sumEsa + ap;
                 if nAp == ((optInChannelPeriod - 1) as usize) {
-                    esa = sumEsa / ((optInChannelPeriod) as f64);
+                    esa = sumEsa / (optInChannelPeriod as f64);
                 }
             } else {
-                esa = fmadd!(beta1 as f64, esa, k1 * ap);
+                esa = fmadd!(beta1, esa, k1 * ap);
             }
             // Stage 2: the exponential average of the absolute distance, over what
             // stage 1 publishes. The counter is compared before it is subtracted,
@@ -859,17 +854,17 @@ impl Core {
                 // Only once prevEsa is an average: on the bar that seeds esa it is
                 // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 num = ap - esa;
-                if nAp >= ((optInChannelPeriod) as usize) && ap == prevAp && esa == prevEsa {
+                if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
                     num = 0.0;
                 }
-                dev = (num).abs();
-                if nDev < ((optInChannelPeriod) as usize) {
+                dev = num.abs();
+                if nDev < (optInChannelPeriod as usize) {
                     sumD = sumD + dev;
                     if nDev == ((optInChannelPeriod - 1) as usize) {
-                        d = sumD / ((optInChannelPeriod) as f64);
+                        d = sumD / (optInChannelPeriod as f64);
                     }
                 } else {
-                    d = fmadd!(beta1 as f64, d, k1 * dev);
+                    d = fmadd!(beta1, d, k1 * dev);
                 }
                 // Stage 3: the oscillator, then its own smoothing.
                 if nDev >= lookbackChannel {
@@ -885,13 +880,13 @@ impl Core {
                     } else {
                         ci = 0.0;
                     }
-                    if nCi < ((optInAveragePeriod) as usize) {
+                    if nCi < (optInAveragePeriod as usize) {
                         sumCi = sumCi + ci;
                         if nCi == ((optInAveragePeriod - 1) as usize) {
-                            wt1 = sumCi / ((optInAveragePeriod) as f64);
+                            wt1 = sumCi / (optInAveragePeriod as f64);
                         }
                     } else {
-                        wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
+                        wt1 = fmadd!(beta2, wt1, k2 * ci);
                     }
                     if nCi >= lookbackAverage {
                         wtBuffer[wtBuffer_Idx] = wt1;
@@ -908,8 +903,8 @@ impl Core {
         }
         // The first output. The warm-up's last pass stored this bar's WT1 into the
         // ring and added it to the running sum, so the average is ready here.
-        outWT1[(0 * outStride) as usize] = wt1;
-        outWT2[(0 * outStride) as usize] = sumSignal / (optInSignalPeriod as f64);
+        outWT1[0] = wt1;
+        outWT2[0] = sumSignal / (optInSignalPeriod as f64);
         outIdx = 1;
         sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
         // Stable zone. One bar past the first output every stage is past its seed,
@@ -920,24 +915,24 @@ impl Core {
         // frames from carrying a seeded output local.
         while today <= endIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            esa = fmadd!(beta1 as f64, esa, k1 * ap);
+            esa = fmadd!(beta1, esa, k1 * ap);
             num = ap - esa;
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
-            dev = (num).abs();
-            d = fmadd!(beta1 as f64, d, k1 * dev);
+            dev = num.abs();
+            d = fmadd!(beta1, d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
+            wt1 = fmadd!(beta2, wt1, k2 * ci);
             wtBuffer[wtBuffer_Idx] = wt1;
             sumSignal = sumSignal + wt1;
-            outWT1[(outIdx * outStride) as usize] = wt1;
-            outWT2[(outIdx * outStride) as usize] = sumSignal / (optInSignalPeriod as f64);
+            outWT1[outIdx * outStride] = wt1;
+            outWT2[outIdx * outStride] = sumSignal / (optInSignalPeriod as f64);
             outIdx = outIdx + 1;
             wtBuffer_Idx += 1;
             if wtBuffer_Idx > maxIdx_wtBuffer { wtBuffer_Idx = 0; }
@@ -946,8 +941,8 @@ impl Core {
             prevEsa = esa;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_wtBuffer: usize = maxIdx_wtBuffer + 1;
@@ -955,8 +950,6 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = WavetrendStreamState {
-            optInChannelPeriod,
-            optInAveragePeriod,
             optInSignalPeriod,
             k1,
             beta1,
@@ -972,7 +965,6 @@ impl Core {
             maxIdx_wtBuffer,
             cur_outWT1: outWT1[(*outNBElement - 1) * outStride],
             cur_outWT2: outWT2[(*outNBElement - 1) * outStride],
-            cbSize_wtBuffer: cbSize_wtBuffer,
             cb_wtBuffer: wtBuffer,
         };
         Ok(WavetrendStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -980,7 +972,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::wavetrend_open`] (composition seam).
     pub(crate) fn wavetrend_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInChannelPeriod: i32, mut optInAveragePeriod: i32, mut optInSignalPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInChannelPeriod: i32, optInAveragePeriod: i32, optInSignalPeriod: i32,
     ) -> Result<(WavetrendStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1071,7 +1063,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_WAVETREND_OpenAndFill")]
     pub fn wavetrend_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInChannelPeriod: i32, mut optInAveragePeriod: i32, mut optInSignalPeriod: i32, outWT1: &mut [f64], outWT2: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInChannelPeriod: i32, optInAveragePeriod: i32, optInSignalPeriod: i32, outWT1: &mut [f64], outWT2: &mut [f64],
     ) -> Result<(WavetrendStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1096,7 +1088,7 @@ impl Core {
     /// [`Core::wavetrend_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn wavetrend_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInChannelPeriod: i32, mut optInAveragePeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outWT1: &mut [f64], outWT2: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInChannelPeriod: i32, optInAveragePeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outWT1: &mut [f64], outWT2: &mut [f64],
     ) -> Result<WavetrendStream, RetCode> {
         self.wavetrend_open_impl(inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2, 1)
     }
@@ -1190,23 +1182,23 @@ impl WavetrendStream {
             let mut sumSignal = sp.sumSignal;
             let mut wt1 = sp.wt1;
             ap = (inHigh + inLow + inClose) / 3.0;
-            esa = fmadd!(sp.beta1 as f64, esa, sp.k1 * ap);
+            esa = fmadd!(sp.beta1, esa, sp.k1 * ap);
             num = ap - esa;
             if ap == sp.prevAp && esa == sp.prevEsa {
                 num = 0.0;
             }
-            dev = (num).abs();
-            d = fmadd!(sp.beta1 as f64, d, sp.k1 * dev);
+            dev = num.abs();
+            d = fmadd!(sp.beta1, d, sp.k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = fmadd!(sp.beta2 as f64, wt1, sp.k2 * ci);
+            wt1 = fmadd!(sp.beta2, wt1, sp.k2 * ci);
             sumSignal = sumSignal + wt1;
-            (*outWT1) = wt1;
-            (*outWT2) = sumSignal / (sp.optInSignalPeriod as f64);
+            *outWT1 = wt1;
+            *outWT2 = sumSignal / (sp.optInSignalPeriod as f64);
         }
         Ok((outWT1, outWT2))
     }

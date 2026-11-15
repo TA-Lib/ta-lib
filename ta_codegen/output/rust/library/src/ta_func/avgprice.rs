@@ -71,7 +71,7 @@ impl Core {
     #[doc(alias = "TA_AVGPRICE_Lookback")]
     pub fn avgprice_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::avgprice`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,7 +121,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let inOpen = &inOpen[..=endIdx];
@@ -139,13 +138,12 @@ impl Core {
             let _w3 = &inOpen[i..][.._wn];
             let _w4 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                _w4[_wk] = (((_w1[_wk] + _w2[_wk] + _w0[_wk] + _w3[_wk]) / 4_f64) as f64);
+                _w4[_wk] = ((_w1[_wk] + _w2[_wk] + _w0[_wk] + _w3[_wk]) / 4_f64) as f64;
                 outIdx += 1;
-                i += 1;
             }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Average Price: the arithmetic mean of each bar's open, high, low, and close. A
@@ -301,8 +299,8 @@ struct AvgpriceStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn avgprice_step_impl(sp: &mut AvgpriceStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
-        (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
-        sp.cur_outReal = (*outReal);
+        *outReal = (inHigh + inLow + inClose + inOpen) / 4_f64;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::avgprice_open_internal`]
@@ -318,24 +316,19 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
         // Average price = (High + Low + Open + Close) / 4
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64) as f64);
+        for i in startIdx..endIdx + 1 {
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ((inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64) as f64;
         }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let state = AvgpriceStreamState {
@@ -528,7 +521,7 @@ impl AvgpriceStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
+            *outReal = (inHigh + inLow + inClose + inOpen) / 4_f64;
         }
         Ok(outReal)
     }

@@ -78,12 +78,12 @@ impl Core {
     #[doc(alias = "TA_CHOP_Lookback")]
     #[inline]
     pub fn chop_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::chop`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -101,7 +101,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CHOP_DisplayShift")]
-    pub fn chop_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn chop_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.chop_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -129,9 +129,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.chop_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -154,8 +154,8 @@ impl Core {
         let mut prevClose: f64 = 0.0_f64;
         let mut trueHigh: f64 = 0.0_f64;
         let mut trueLow: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.chop_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -179,9 +179,9 @@ impl Core {
             sumTR = 0.0;
             prevClose = 0.0;
             // for( i = optInTimePeriod; i >= 0; i -= 1 )
-            i = (optInTimePeriod) as usize;
+            i = optInTimePeriod as usize;
             loop {
-                if i < ((optInTimePeriod) as usize) {
+                if i < (optInTimePeriod as usize) {
                     tempHT = inHigh[today - i];
                     tempLT = inLow[today - i];
                     trueHigh = tempHT;
@@ -209,8 +209,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Choppiness Index: a trend-versus-consolidation gauge, the true range travelled over a window
@@ -400,11 +400,11 @@ impl Core {
         sumTR = 0.0;
         prevClose = 0.0;
         // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
-        i = (sp.optInTimePeriod) as usize;
+        i = sp.optInTimePeriod as usize;
         loop {
-            if i < ((sp.optInTimePeriod) as usize) {
-                tempHT = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-                tempLT = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+            if i < (sp.optInTimePeriod as usize) {
+                tempHT = sp.win_i_inHigh[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
+                tempLT = sp.win_i_inLow[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
                 trueHigh = tempHT;
                 trueHigh = c_max(prevClose, trueHigh);
                 trueLow = tempLT;
@@ -413,7 +413,7 @@ impl Core {
                 highest = c_max(tempHT, highest);
                 lowest = c_min(tempLT, lowest);
             }
-            prevClose = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+            prevClose = sp.win_i_inClose[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
             if i == 0 { break; }
             i -= 1;
         }
@@ -423,11 +423,11 @@ impl Core {
         // Keep the parenthesised quotient: it returns exactly 100 whenever the
         // computed ratio is exactly the period.
         if highest - lowest <= 0.0 || sumTR <= 0.0 {
-            (*outReal) = 100.0;
+            *outReal = 100.0;
         } else {
-            (*outReal) = 100.0 * ((sumTR / (highest - lowest)).log10() / sp.logPeriod);
+            *outReal = 100.0 * ((sumTR / (highest - lowest)).log10() / sp.logPeriod);
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -442,9 +442,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -452,14 +452,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -473,8 +471,8 @@ impl Core {
         let mut prevClose: f64 = 0.0_f64;
         let mut trueHigh: f64 = 0.0_f64;
         let mut trueLow: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.chop_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -495,9 +493,9 @@ impl Core {
             sumTR = 0.0;
             prevClose = 0.0;
             // for( i = optInTimePeriod; i >= 0; i -= 1 )
-            i = (optInTimePeriod) as usize;
+            i = optInTimePeriod as usize;
             loop {
-                if i < ((optInTimePeriod) as usize) {
+                if i < (optInTimePeriod as usize) {
                     tempHT = inHigh[today - i];
                     tempLT = inLow[today - i];
                     trueHigh = tempHT;
@@ -518,15 +516,15 @@ impl Core {
             // Keep the parenthesised quotient: it returns exactly 100 whenever the
             // computed ratio is exactly the period.
             if highest - lowest <= 0.0 || sumTR <= 0.0 {
-                outReal[(outIdx * outStride) as usize] = 100.0;
+                outReal[outIdx * outStride] = 100.0;
             } else {
-                outReal[(outIdx * outStride) as usize] = 100.0 * ((sumTR / (highest - lowest)).log10() / logPeriod);
+                outReal[outIdx * outStride] = 100.0 * ((sumTR / (highest - lowest)).log10() / logPeriod);
             }
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_i: i64 = (optInTimePeriod + 1) as i64;
@@ -554,7 +552,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::chop_open`] (composition seam).
     pub(crate) fn chop_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(ChopStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -639,7 +637,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CHOP_OpenAndFill")]
     pub fn chop_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(ChopStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -661,7 +659,7 @@ impl Core {
     /// [`Core::chop_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn chop_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ChopStream, RetCode> {
         self.chop_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -757,11 +755,11 @@ impl ChopStream {
             sumTR = 0.0;
             prevClose = 0.0;
             // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
-            i = (sp.optInTimePeriod) as usize;
+            i = sp.optInTimePeriod as usize;
             loop {
-                if i < ((sp.optInTimePeriod) as usize) {
-                    tempHT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                    tempLT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
+                if i < (sp.optInTimePeriod as usize) {
+                    tempHT = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inHigh[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 };
+                    tempLT = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inLow[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal1 };
                     trueHigh = tempHT;
                     trueHigh = c_max(prevClose, trueHigh);
                     trueLow = tempLT;
@@ -770,7 +768,7 @@ impl ChopStream {
                     highest = c_max(tempHT, highest);
                     lowest = c_min(tempLT, lowest);
                 }
-                prevClose = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot2 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal2 });
+                prevClose = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot2 { sp.win_i_inClose[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal2 };
                 if i == 0 { break; }
                 i -= 1;
             }
@@ -780,9 +778,9 @@ impl ChopStream {
             // Keep the parenthesised quotient: it returns exactly 100 whenever the
             // computed ratio is exactly the period.
             if highest - lowest <= 0.0 || sumTR <= 0.0 {
-                (*outReal) = 100.0;
+                *outReal = 100.0;
             } else {
-                (*outReal) = 100.0 * ((sumTR / (highest - lowest)).log10() / sp.logPeriod);
+                *outReal = 100.0 * ((sumTR / (highest - lowest)).log10() / sp.logPeriod);
             }
         }
         Ok(outReal)

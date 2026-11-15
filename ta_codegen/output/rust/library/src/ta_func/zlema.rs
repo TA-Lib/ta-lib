@@ -79,9 +79,9 @@ impl Core {
     #[doc(alias = "TA_ZLEMA_Lookback")]
     #[inline]
     pub fn zlema_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // ZLEMA owns no TA_FUNC_UNST_ id. It borrows EMA's through this call, which
@@ -105,7 +105,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ZLEMA_DisplayShift")]
-    pub fn zlema_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn zlema_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.zlema_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -161,9 +161,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.zlema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -184,7 +184,7 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
@@ -202,8 +202,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -213,45 +213,41 @@ impl Core {
         // not keep the sign of a -0.0 input. The unstable period still delays the
         // first output.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             while today <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = today; today += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // In-place safe (outReal == inReal): both of a bar's reads precede its
         // write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
         // read never reaches a slot already written.
         trailingIdx = startIdx - lookbackTotal;
         today = trailingIdx + lag;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &inReal[trailingIdx..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempReal += 2.0 * _w0[_wk] - _w1[_wk];
                 today += 1;
                 trailingIdx += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevMA = tempReal / ((optInTimePeriod) as f64);
+        prevMA = tempReal / (optInTimePeriod as f64);
         if today <= startIdx {
             let _wn: usize = startIdx - today + 1;
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &inReal[trailingIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
+                prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 today += 1;
                 trailingIdx += 1;
             }
@@ -264,14 +260,12 @@ impl Core {
             let _w1 = &inReal[trailingIdx..][.._wn];
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
-                today += 1;
-                trailingIdx += 1;
+                prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 _w2[_wk] = prevMA;
                 outIdx += 1;
             }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Zero-Lag Exponential Moving Average: an [`EMA`](https://ta-lib.org/functions/ema) applied
@@ -434,16 +428,16 @@ impl Core {
     fn zlema_step_impl(sp: &mut ZlemaStreamState, inReal: f64, outReal: &mut f64) {
         let mut ringPosL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
-        sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
-        (*outReal) = sp.prevMA;
-        sp.cur_outReal = (*outReal);
+        sp.prevMA = fmadd!(sp.emaBeta, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
+        *outReal = sp.prevMA;
+        sp.cur_outReal = *outReal;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
@@ -454,9 +448,9 @@ impl Core {
     }
 
     fn zlema_step_tape_impl(sp: &mut ZlemaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
-        sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize]));
-        (*outReal) = sp.prevMA;
-        sp.cur_outReal = (*outReal);
+        sp.prevMA = fmadd!(sp.emaBeta, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize]));
+        *outReal = sp.prevMA;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::zlema_open_internal`]
@@ -485,21 +479,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.zlema_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -516,8 +508,8 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -542,7 +534,7 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
@@ -560,38 +552,38 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // In-place safe (outReal == inReal): both of a bar's reads precede its
         // write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
         // read never reaches a slot already written.
         trailingIdx = startIdx - lookbackTotal;
         today = trailingIdx + lag;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
             today += 1;
             trailingIdx += 1;
         }
-        prevMA = tempReal / ((optInTimePeriod) as f64);
+        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
-            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
+            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
         }
-        outReal[(0 * outStride) as usize] = prevMA;
+        outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
+            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMA;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevMA;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -617,7 +609,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::zlema_open`] (composition seam).
     pub(crate) fn zlema_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(ZlemaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -690,7 +682,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ZLEMA_OpenAndFill")]
     pub fn zlema_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(ZlemaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -709,7 +701,7 @@ impl Core {
     /// [`Core::zlema_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn zlema_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ZlemaStream, RetCode> {
         self.zlema_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -780,15 +772,15 @@ impl ZlemaStream {
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
             if sp.ringCap_trailingIdx == 0 {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 })));
-            (*outReal) = prevMA;
+            prevMA = fmadd!(sp.emaBeta, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 })));
+            *outReal = prevMA;
         }
         Ok(outReal)
     }
@@ -869,8 +861,8 @@ impl ZlemaStream {
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (tapeBase & tapeMask) as usize;
             pkVal0 = inReal;
-            prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 })));
-            (*outReal) = prevMA;
+            prevMA = fmadd!(sp.emaBeta, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 })));
+            *outReal = prevMA;
         }
         Ok(outReal)
     }

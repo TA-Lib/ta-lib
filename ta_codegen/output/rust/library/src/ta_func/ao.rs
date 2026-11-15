@@ -81,20 +81,20 @@ impl Core {
     #[doc(alias = "TA_AO_Lookback")]
     #[inline]
     pub fn ao_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The longer of the two windows drives the lookback, and it is the lookback
         // of that window's SMA. There is no swap of an inverted pair, so the max is
         // taken over the periods exactly as the caller gave them.
-        return Ok(self.sma_lookback((optInFastPeriod).max(optInSlowPeriod))?);
+        return Ok(self.sma_lookback(optInFastPeriod.max(optInSlowPeriod))?);
     }
     /// Display shift of one output of [`Core::ao`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -115,7 +115,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_AO_DisplayShift")]
-    pub fn ao_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn ao_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.ao_lookback(optInFastPeriod, optInSlowPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -143,14 +143,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.ao_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
@@ -204,8 +204,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -249,7 +249,6 @@ impl Core {
                 medianPrice = (_w0[_wk] + _w3[_wk]) / 2.0;
                 sumFast += medianPrice;
                 sumSlow += medianPrice;
-                i = i + 1;
                 // Snapshot the oscillator before either total drops its trailing bar,
                 // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
                 tempReal = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
@@ -260,15 +259,13 @@ impl Core {
                 // over inHigh or inLow.
                 sumFast -= (_w1[_wk] + _w4[_wk]) / 2.0;
                 sumSlow -= (_w2[_wk] + _w5[_wk]) / 2.0;
-                trailingFastIdx = trailingFastIdx + 1;
-                trailingSlowIdx = trailingSlowIdx + 1;
                 _w6[_wk] = tempReal;
                 outIdx = outIdx + 1;
             }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market momentum read as
@@ -465,8 +462,8 @@ impl Core {
         // over inHigh or inLow.
         sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
         sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-        (*outReal) = tempReal;
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal;
+        sp.cur_outReal = *outReal;
         ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
         ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
         sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
@@ -493,14 +490,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 5;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 34;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -508,14 +505,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut sumFast: f64 = 0.0_f64;
         let mut sumSlow: f64 = 0.0_f64;
         let mut medianPrice: f64 = 0.0_f64;
@@ -561,8 +556,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         sumFast = 0.0;
@@ -608,12 +603,12 @@ impl Core {
             sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
             trailingFastIdx = trailingFastIdx + 1;
             trailingSlowIdx = trailingSlowIdx + 1;
-            outReal[(outIdx * outStride) as usize] = tempReal;
+            outReal[outIdx * outStride] = tempReal;
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingFastIdx: i64 = (i as i64) - (trailingFastIdx as i64);
@@ -625,7 +620,7 @@ impl Core {
         {
             let mut fillJ: usize = historyLen - cap_trailingFastIdx as usize;
             while fillJ < historyLen {
-                ring_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                ring_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx as usize)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
                 fillJ += 1;
             }
         }
@@ -638,7 +633,7 @@ impl Core {
         {
             let mut fillJ: usize = historyLen - cap_trailingSlowIdx as usize;
             while fillJ < historyLen {
-                ring_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                ring_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx as usize)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
                 fillJ += 1;
             }
         }
@@ -660,7 +655,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::ao_open`] (composition seam).
     pub(crate) fn ao_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32,
     ) -> Result<(AoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -739,7 +734,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AO_OpenAndFill")]
     pub fn ao_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, outReal: &mut [f64],
     ) -> Result<(AoStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -761,7 +756,7 @@ impl Core {
     /// [`Core::ao_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn ao_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AoStream, RetCode> {
         self.ao_open_impl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -843,9 +838,7 @@ impl AoStream {
             // outIdx exactly, so a store hoisted above this would read back the
             // value it had just overwritten whenever the caller aliases outReal
             // over inHigh or inLow.
-            sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
-            sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         }
         Ok(outReal)
     }

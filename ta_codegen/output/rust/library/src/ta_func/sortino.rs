@@ -83,23 +83,19 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_SORTINO_Lookback")]
     #[inline]
-    pub fn sortino_lookback(&self, mut optInTimePeriod: i32, mut optInMAR: f64, mut optInAnnualization: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn sortino_lookback(&self, mut optInTimePeriod: i32, optInMAR: f64, optInAnnualization: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInMAR == Self::REAL_DEFAULT {
-            optInMAR = 0e0;
-        } else if !((optInMAR >= Self::REAL_MIN) && (optInMAR <= Self::REAL_MAX)) {
+        if optInMAR != Self::REAL_DEFAULT && !((optInMAR >= Self::REAL_MIN) && (optInMAR <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAnnualization == Self::REAL_DEFAULT {
-            optInAnnualization = 2.52e2;
-        } else if !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
+        if optInAnnualization != Self::REAL_DEFAULT && !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::sortino`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -123,7 +119,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_SORTINO_DisplayShift")]
-    pub fn sortino_display_shift(&self, mut optInTimePeriod: i32, mut optInMAR: f64, mut optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn sortino_display_shift(&self, optInTimePeriod: i32, optInMAR: f64, optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.sortino_lookback(optInTimePeriod, optInMAR, optInAnnualization)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -151,9 +147,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMAR == Self::REAL_DEFAULT {
@@ -199,24 +195,24 @@ impl Core {
         let mut nbAbove: usize = 0_usize;
         let mut windowBelow: usize = 0_usize;
         let mut windowAbove: usize = 0_usize;
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         invPeriod = 1.0 / (optInTimePeriod as f64);
-        sqrtAnnual = (optInAnnualization).sqrt();
+        sqrtAnnual = optInAnnualization.sqrt();
         // The window holds the returns of the bars after trailingIdx up to i; a
         // bar's return reads the price before it. A return needs a non-zero base
         // price and nothing more: a zero base gives a zero return.
         //
         // The counts of returns below and above the MAR are exact, so they, not
         // the running sums, decide when the window has no downside.
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         prevPrice = inReal[trailingIdx];
         periodTotal = 0.0;
         downTotal = 0.0;
@@ -235,8 +231,8 @@ impl Core {
             }
             prevPrice = price;
             periodTotal += ret;
-            absTotal += (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal += ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal += dev * dev;
                 nbBelow += 1;
@@ -260,16 +256,16 @@ impl Core {
             }
             prevPrice = price;
             periodTotal += ret;
-            absTotal += (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal += ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal += dev * dev;
                 nbBelow += 1;
             } else if dev > 0.0 {
                 nbAbove += 1;
             }
-            peakDown = (if downTotal > peakDown { downTotal } else { peakDown });
-            peakAbs = (if absTotal > peakAbs { absTotal } else { peakAbs });
+            peakDown = if downTotal > peakDown { downTotal } else { peakDown };
+            peakAbs = if absTotal > peakAbs { absTotal } else { peakAbs };
             windowTotal = periodTotal;
             windowDown = downTotal;
             windowAbs = absTotal;
@@ -288,8 +284,8 @@ impl Core {
                 cold_arm();
             }
             periodTotal -= ret;
-            absTotal -= (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal -= ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal -= dev * dev;
                 nbBelow -= 1;
@@ -304,12 +300,12 @@ impl Core {
             barsSinceReseed -= 1;
             if windowDown < 0.01 * peakDown || windowAbs < 0.01 * peakAbs || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
-                windowStart = i - ((optInTimePeriod) as usize) + 1;
+                windowStart = i - (optInTimePeriod as usize) + 1;
                 windowPrevPrice = inReal[windowStart - 1];
                 windowTotal = 0.0;
                 windowDown = 0.0;
                 windowAbs = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -319,13 +315,12 @@ impl Core {
                     }
                     windowPrevPrice = price;
                     windowTotal += ret;
-                    windowAbs += (ret).abs();
-                    dev = ret - ((optInMAR) as f64);
+                    windowAbs += ret.abs();
+                    dev = ret - (optInMAR as f64);
                     if dev < 0.0 {
                         windowDown += dev * dev;
                     }
                 }
-                j = (i as usize) + 1;
                 peakDown = windowDown;
                 peakAbs = windowAbs;
                 // Re-remove the trailing return so the carried state matches the
@@ -336,9 +331,9 @@ impl Core {
                     ret = (price - inReal[windowStart - 1]) / inReal[windowStart - 1];
                 }
                 periodTotal = windowTotal - ret;
-                absTotal = windowAbs - (ret).abs();
+                absTotal = windowAbs - ret.abs();
                 downTotal = windowDown;
-                dev = ret - ((optInMAR) as f64);
+                dev = ret - (optInMAR as f64);
                 if dev < 0.0 {
                     downTotal -= dev * dev;
                 }
@@ -349,7 +344,7 @@ impl Core {
             // stands in for the mean so rounding cannot flip either case.
             // Annualize the per-bar ratio last, so an annualization of 1 is that
             // ratio bit for bit.
-            excess = windowTotal * invPeriod - ((optInMAR) as f64);
+            excess = windowTotal * invPeriod - (optInMAR as f64);
             if windowBelow == 0 {
                 windowDown = 0.0;
                 excess = windowAbove as f64;
@@ -360,8 +355,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// The rolling Sortino ratio: the mean return in excess of a minimum acceptable return (MAR),
@@ -509,7 +504,6 @@ pub struct SortinoStream {
 struct SortinoStreamState {
     optInTimePeriod: i32,
     optInMAR: f64,
-    optInAnnualization: f64,
     periodTotal: f64,
     downTotal: f64,
     absTotal: f64,
@@ -559,16 +553,16 @@ impl Core {
         }
         sp.prevPrice = price;
         sp.periodTotal += ret;
-        sp.absTotal += (ret).abs();
-        dev = ret - ((sp.optInMAR) as f64);
+        sp.absTotal += ret.abs();
+        dev = ret - (sp.optInMAR as f64);
         if dev < 0.0 {
             sp.downTotal += dev * dev;
             sp.nbBelow += 1;
         } else if dev > 0.0 {
             sp.nbAbove += 1;
         }
-        sp.peakDown = (if sp.downTotal > sp.peakDown { sp.downTotal } else { sp.peakDown });
-        sp.peakAbs = (if sp.absTotal > sp.peakAbs { sp.absTotal } else { sp.peakAbs });
+        sp.peakDown = if sp.downTotal > sp.peakDown { sp.downTotal } else { sp.peakDown };
+        sp.peakAbs = if sp.absTotal > sp.peakAbs { sp.absTotal } else { sp.peakAbs };
         windowTotal = sp.periodTotal;
         windowDown = sp.downTotal;
         windowAbs = sp.absTotal;
@@ -587,8 +581,8 @@ impl Core {
             cold_arm();
         }
         sp.periodTotal -= ret;
-        sp.absTotal -= (ret).abs();
-        dev = ret - ((sp.optInMAR) as f64);
+        sp.absTotal -= ret.abs();
+        dev = ret - (sp.optInMAR as f64);
         if dev < 0.0 {
             sp.downTotal -= dev * dev;
             sp.nbBelow -= 1;
@@ -620,8 +614,8 @@ impl Core {
                 }
                 windowPrevPrice = price;
                 windowTotal += ret;
-                windowAbs += (ret).abs();
-                dev = ret - ((sp.optInMAR) as f64);
+                windowAbs += ret.abs();
+                dev = ret - (sp.optInMAR as f64);
                 if dev < 0.0 {
                     windowDown += dev * dev;
                 }
@@ -637,9 +631,9 @@ impl Core {
                 ret = (price - sp.x_inReal[(sp.windowStart - 1 & sp.xMask) as usize]) / sp.x_inReal[(sp.windowStart - 1 & sp.xMask) as usize];
             }
             sp.periodTotal = windowTotal - ret;
-            sp.absTotal = windowAbs - (ret).abs();
+            sp.absTotal = windowAbs - ret.abs();
             sp.downTotal = windowDown;
-            dev = ret - ((sp.optInMAR) as f64);
+            dev = ret - (sp.optInMAR as f64);
             if dev < 0.0 {
                 sp.downTotal -= dev * dev;
             }
@@ -650,15 +644,15 @@ impl Core {
         // stands in for the mean so rounding cannot flip either case.
         // Annualize the per-bar ratio last, so an annualization of 1 is that
         // ratio bit for bit.
-        excess = windowTotal * sp.invPeriod - ((sp.optInMAR) as f64);
+        excess = windowTotal * sp.invPeriod - (sp.optInMAR as f64);
         if windowBelow == 0 {
             windowDown = 0.0;
             excess = windowAbove as f64;
         }
         ratio = excess / (windowDown * sp.invPeriod).sqrt();
-        (*outReal) = sp.sqrtAnnual * ratio;
+        *outReal = sp.sqrtAnnual * ratio;
         sp.i += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::sortino_open_internal`]
@@ -669,9 +663,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAR == Self::REAL_DEFAULT {
@@ -686,14 +680,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
         let mut downTotal: f64 = 0.0_f64;
         let mut absTotal: f64 = 0.0_f64;
@@ -722,23 +714,23 @@ impl Core {
         let mut nbAbove: usize = 0_usize;
         let mut windowBelow: usize = 0_usize;
         let mut windowAbove: usize = 0_usize;
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         invPeriod = 1.0 / (optInTimePeriod as f64);
-        sqrtAnnual = (optInAnnualization).sqrt();
+        sqrtAnnual = optInAnnualization.sqrt();
         // The window holds the returns of the bars after trailingIdx up to i; a
         // bar's return reads the price before it. A return needs a non-zero base
         // price and nothing more: a zero base gives a zero return.
         //
         // The counts of returns below and above the MAR are exact, so they, not
         // the running sums, decide when the window has no downside.
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         prevPrice = inReal[trailingIdx];
         periodTotal = 0.0;
         downTotal = 0.0;
@@ -757,8 +749,8 @@ impl Core {
             }
             prevPrice = price;
             periodTotal += ret;
-            absTotal += (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal += ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal += dev * dev;
                 nbBelow += 1;
@@ -782,16 +774,16 @@ impl Core {
             }
             prevPrice = price;
             periodTotal += ret;
-            absTotal += (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal += ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal += dev * dev;
                 nbBelow += 1;
             } else if dev > 0.0 {
                 nbAbove += 1;
             }
-            peakDown = (if downTotal > peakDown { downTotal } else { peakDown });
-            peakAbs = (if absTotal > peakAbs { absTotal } else { peakAbs });
+            peakDown = if downTotal > peakDown { downTotal } else { peakDown };
+            peakAbs = if absTotal > peakAbs { absTotal } else { peakAbs };
             windowTotal = periodTotal;
             windowDown = downTotal;
             windowAbs = absTotal;
@@ -810,8 +802,8 @@ impl Core {
                 cold_arm();
             }
             periodTotal -= ret;
-            absTotal -= (ret).abs();
-            dev = ret - ((optInMAR) as f64);
+            absTotal -= ret.abs();
+            dev = ret - (optInMAR as f64);
             if dev < 0.0 {
                 downTotal -= dev * dev;
                 nbBelow -= 1;
@@ -826,12 +818,12 @@ impl Core {
             barsSinceReseed -= 1;
             if windowDown < 0.01 * peakDown || windowAbs < 0.01 * peakAbs || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
-                windowStart = i - ((optInTimePeriod) as usize) + 1;
+                windowStart = i - (optInTimePeriod as usize) + 1;
                 windowPrevPrice = inReal[windowStart - 1];
                 windowTotal = 0.0;
                 windowDown = 0.0;
                 windowAbs = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -841,13 +833,13 @@ impl Core {
                     }
                     windowPrevPrice = price;
                     windowTotal += ret;
-                    windowAbs += (ret).abs();
-                    dev = ret - ((optInMAR) as f64);
+                    windowAbs += ret.abs();
+                    dev = ret - (optInMAR as f64);
                     if dev < 0.0 {
                         windowDown += dev * dev;
                     }
                 }
-                j = (i as usize) + 1;
+                j = i + 1;
                 peakDown = windowDown;
                 peakAbs = windowAbs;
                 // Re-remove the trailing return so the carried state matches the
@@ -858,9 +850,9 @@ impl Core {
                     ret = (price - inReal[windowStart - 1]) / inReal[windowStart - 1];
                 }
                 periodTotal = windowTotal - ret;
-                absTotal = windowAbs - (ret).abs();
+                absTotal = windowAbs - ret.abs();
                 downTotal = windowDown;
-                dev = ret - ((optInMAR) as f64);
+                dev = ret - (optInMAR as f64);
                 if dev < 0.0 {
                     downTotal -= dev * dev;
                 }
@@ -871,18 +863,18 @@ impl Core {
             // stands in for the mean so rounding cannot flip either case.
             // Annualize the per-bar ratio last, so an annualization of 1 is that
             // ratio bit for bit.
-            excess = windowTotal * invPeriod - ((optInMAR) as f64);
+            excess = windowTotal * invPeriod - (optInMAR as f64);
             if windowBelow == 0 {
                 windowDown = 0.0;
                 excess = windowAbove as f64;
             }
             ratio = excess / (windowDown * invPeriod).sqrt();
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sqrtAnnual * ratio;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sqrtAnnual * ratio;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -904,7 +896,6 @@ impl Core {
         let state = SortinoStreamState {
             optInTimePeriod,
             optInMAR,
-            optInAnnualization,
             periodTotal,
             downTotal,
             absTotal,
@@ -913,13 +904,13 @@ impl Core {
             prevPrice,
             invPeriod,
             sqrtAnnual,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             barsSinceReseed,
             nbBelow,
             nbAbove,
-            j: (j) as i32,
-            windowStart: (windowStart) as i32,
-            i: (i) as i32,
+            j: j as i32,
+            windowStart: windowStart as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -929,7 +920,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::sortino_open`] (composition seam).
     pub(crate) fn sortino_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAR: f64, mut optInAnnualization: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInMAR: f64, optInAnnualization: f64,
     ) -> Result<(SortinoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1002,7 +993,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SORTINO_OpenAndFill")]
     pub fn sortino_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAR: f64, mut optInAnnualization: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInMAR: f64, optInAnnualization: f64, outReal: &mut [f64],
     ) -> Result<(SortinoStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1021,7 +1012,7 @@ impl Core {
     /// [`Core::sortino_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn sortino_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAR: f64, mut optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInMAR: f64, optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SortinoStream, RetCode> {
         self.sortino_open_impl(inReal, startIdx, optInTimePeriod, optInMAR, optInAnnualization, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1109,32 +1100,31 @@ impl SortinoStream {
             let mut peakAbs = sp.peakAbs;
             let mut peakDown = sp.peakDown;
             let mut periodTotal = sp.periodTotal;
-            let mut prevPrice = sp.prevPrice;
+            let prevPrice = sp.prevPrice;
             let mut trailingIdx = sp.trailingIdx;
             let mut windowStart = sp.windowStart;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.i & sp.xMask) as usize;
             pkVal0 = inReal;
-            price = (if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 });
+            price = if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 };
             ret = 0.0;
             if prevPrice != 0.0 {
                 ret = (price - prevPrice) / prevPrice;
             } else {
                 cold_arm();
             }
-            prevPrice = price;
             periodTotal += ret;
-            absTotal += (ret).abs();
-            dev = ret - ((sp.optInMAR) as f64);
+            absTotal += ret.abs();
+            dev = ret - (sp.optInMAR as f64);
             if dev < 0.0 {
                 downTotal += dev * dev;
                 nbBelow += 1;
             } else if dev > 0.0 {
                 nbAbove += 1;
             }
-            peakDown = (if downTotal > peakDown { downTotal } else { peakDown });
-            peakAbs = (if absTotal > peakAbs { absTotal } else { peakAbs });
+            peakDown = if downTotal > peakDown { downTotal } else { peakDown };
+            peakAbs = if absTotal > peakAbs { absTotal } else { peakAbs };
             windowTotal = periodTotal;
             windowDown = downTotal;
             windowAbs = absTotal;
@@ -1143,23 +1133,18 @@ impl SortinoStream {
             // inReal and outReal may be the same buffer, and the trailing prices
             // sit in slots the output reaches: every read of the window happens
             // before this bar's write.
-            trailingPrevPrice = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
+            trailingPrevPrice = if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 };
             trailingIdx += 1;
-            price = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
+            price = if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 };
             ret = 0.0;
             if trailingPrevPrice != 0.0 {
                 ret = (price - trailingPrevPrice) / trailingPrevPrice;
             } else {
                 cold_arm();
             }
-            periodTotal -= ret;
-            absTotal -= (ret).abs();
-            dev = ret - ((sp.optInMAR) as f64);
+            dev = ret - (sp.optInMAR as f64);
             if dev < 0.0 {
-                downTotal -= dev * dev;
-                nbBelow -= 1;
             } else if dev > 0.0 {
-                nbAbove -= 1;
             }
             // Rebuild when the downside sum, or the sum of absolute returns, has
             // shrunk below 1% of the largest one held since the last rebuild, or at
@@ -1168,16 +1153,14 @@ impl SortinoStream {
             // divisor can be all rounding.
             barsSinceReseed -= 1;
             if windowDown < 0.01 * peakDown || windowAbs < 0.01 * peakAbs || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
                 windowStart = sp.i - sp.optInTimePeriod + 1;
-                windowPrevPrice = (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
+                windowPrevPrice = if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 };
                 windowTotal = 0.0;
                 windowDown = 0.0;
-                windowAbs = 0.0;
                 // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
                 while j <= sp.i {
-                    price = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    price = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
                         ret = (price - windowPrevPrice) / windowPrevPrice;
@@ -1186,29 +1169,14 @@ impl SortinoStream {
                     }
                     windowPrevPrice = price;
                     windowTotal += ret;
-                    windowAbs += (ret).abs();
-                    dev = ret - ((sp.optInMAR) as f64);
+                    dev = ret - (sp.optInMAR as f64);
                     if dev < 0.0 {
                         windowDown += dev * dev;
                     }
                     j += 1;
                 }
-                peakDown = windowDown;
-                peakAbs = windowAbs;
                 // Re-remove the trailing return so the carried state matches the
                 // path without a rebuild; the counts never drift.
-                price = (if ((windowStart & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart & sp.xMask) as usize] } else { pkVal0 });
-                ret = 0.0;
-                if (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 }) != 0.0 {
-                    ret = (price - (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 })) / (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
-                }
-                periodTotal = windowTotal - ret;
-                absTotal = windowAbs - (ret).abs();
-                downTotal = windowDown;
-                dev = ret - ((sp.optInMAR) as f64);
-                if dev < 0.0 {
-                    downTotal -= dev * dev;
-                }
             }
             // No downside is the plain quotient (ruled on #572): the mean excess
             // is then positive exactly when some return beats the MAR, giving
@@ -1216,13 +1184,13 @@ impl SortinoStream {
             // stands in for the mean so rounding cannot flip either case.
             // Annualize the per-bar ratio last, so an annualization of 1 is that
             // ratio bit for bit.
-            excess = windowTotal * sp.invPeriod - ((sp.optInMAR) as f64);
+            excess = windowTotal * sp.invPeriod - (sp.optInMAR as f64);
             if windowBelow == 0 {
                 windowDown = 0.0;
                 excess = windowAbove as f64;
             }
             ratio = excess / (windowDown * sp.invPeriod).sqrt();
-            (*outReal) = sp.sqrtAnnual * ratio;
+            *outReal = sp.sqrtAnnual * ratio;
         }
         Ok(outReal)
     }

@@ -93,21 +93,21 @@ impl Core {
     #[doc(alias = "TA_APO_Lookback")]
     #[inline]
     pub fn apo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
         // The slow MA is the key factor determining the lookback period.
-        return Ok(self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
+        return Ok(self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType)?);
     }
     /// Display shift of one output of [`Core::apo`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -129,7 +129,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_APO_DisplayShift")]
-    pub fn apo_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn apo_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -191,14 +191,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -208,11 +208,8 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut tempInteger: usize = 0_usize;
-        let mut fastBeg: usize = 0_usize;
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
         let mut i: usize = 0_usize;
@@ -227,9 +224,9 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+        if self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         if optInMAType == MAType::SMA {
@@ -269,9 +266,9 @@ impl Core {
             let mut _slowTrailing: usize = 0_usize;
             // Make sure slow is really slower than the fast period! if not, swap...
             if optInSlowPeriod < optInFastPeriod {
-                tempInteger = (optInSlowPeriod) as usize;
+                tempInteger = optInSlowPeriod as usize;
                 optInSlowPeriod = optInFastPeriod;
-                optInFastPeriod = (tempInteger) as i32;
+                optInFastPeriod = tempInteger as i32;
             }
             _fastStart = (optInFastPeriod - 1) as usize;
             if _fastStart < startIdx {
@@ -281,7 +278,7 @@ impl Core {
             if _slowStart < startIdx {
                 _slowStart = startIdx;
             }
-            _fastTrailing = _fastStart - (((optInFastPeriod - 1)) as usize);
+            _fastTrailing = _fastStart - ((optInFastPeriod - 1) as usize);
             _fastTotal = 0.0;
             _j = _fastTrailing;
             if _j < _fastStart {
@@ -289,10 +286,9 @@ impl Core {
                 let _w0 = &inReal[_j..][.._wn];
                 for _wk in 0.._wn {
                     _fastTotal += _w0[_wk];
-                    _j += 1;
                 }
             }
-            _slowTrailing = _slowStart - (((optInSlowPeriod - 1)) as usize);
+            _slowTrailing = _slowStart - ((optInSlowPeriod - 1) as usize);
             _slowTotal = 0.0;
             _j = _slowTrailing;
             if _j < _slowStart {
@@ -300,7 +296,6 @@ impl Core {
                 let _w0 = &inReal[_j..][.._wn];
                 for _wk in 0.._wn {
                     _slowTotal += _w0[_wk];
-                    _j += 1;
                 }
             }
             // The bars the fast MA has and the slow one does not: advance the fast sum
@@ -315,7 +310,6 @@ impl Core {
                     _fastTotal += _w1[_wk];
                     _fastTotal -= _w0[_wk];
                     _fastTrailing += 1;
-                    _i += 1;
                 }
             }
             _outIdx = 0;
@@ -330,18 +324,15 @@ impl Core {
                     _fastTotal += _w1[_wk];
                     _fastValue = _fastTotal;
                     _fastTotal -= _w0[_wk];
-                    _fastTrailing += 1;
                     _slowTotal += _w1[_wk];
                     _slowValue = _slowTotal;
                     _slowTotal -= _w2[_wk];
-                    _slowTrailing += 1;
                     _w3[_wk] = _fastValue / (optInFastPeriod as f64) - _slowValue / (optInSlowPeriod as f64);
                     _outIdx += 1;
-                    _i += 1;
                 }
             }
-            (*outBegIdx) = _slowStart;
-            (*outNBElement) = _outIdx;
+            *outBegIdx = _slowStart;
+            *outNBElement = _outIdx;
             return RetCode::Success;
         }
         if optInMAType == MAType::EMA {
@@ -363,9 +354,9 @@ impl Core {
             let mut _eSlowStart: usize = 0_usize;
             let mut _eOutIdx: usize = 0_usize;
             if optInSlowPeriod < optInFastPeriod {
-                tempInteger = (optInSlowPeriod) as usize;
+                tempInteger = optInSlowPeriod as usize;
                 optInSlowPeriod = optInFastPeriod;
-                optInFastPeriod = (tempInteger) as i32;
+                optInFastPeriod = tempInteger as i32;
             }
             _eFastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
             _eFastK = 1.0 - _eFastBeta;
@@ -390,24 +381,24 @@ impl Core {
             _eFast = 0.0;
             // for( _eN = 0; _eN < ((optInFastPeriod) as usize); _eN += 1 )
             _eN = 0;
-            while _eN < ((optInFastPeriod) as usize) {
+            while _eN < (optInFastPeriod as usize) {
                 _eFast += inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }];
                 _eN += 1;
             }
-            _eFast = _eFast / ((optInFastPeriod) as f64);
+            _eFast = _eFast / (optInFastPeriod as f64);
             while _eFastToday <= _eSlowStart {
-                _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
+                _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
             }
             _eSlow = 0.0;
             // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
             _eN = 0;
-            while _eN < ((optInSlowPeriod) as usize) {
+            while _eN < (optInSlowPeriod as usize) {
                 _eSlow += inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }];
                 _eN += 1;
             }
-            _eSlow = _eSlow / ((optInSlowPeriod) as f64);
+            _eSlow = _eSlow / (optInSlowPeriod as f64);
             while _eSlowToday <= _eSlowStart {
-                _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
+                _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
             }
             _eOutIdx = 0;
             outReal[_eOutIdx] = _eFast - _eSlow;
@@ -419,15 +410,14 @@ impl Core {
                 let _w1 = &mut outReal[_eOutIdx..][.._wn];
                 for _wk in 0.._wn {
                     _eX = _w0[_wk];
-                    _eToday += 1;
-                    _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * _eX);
-                    _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * _eX);
+                    _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * _eX);
+                    _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * _eX);
                     _w1[_wk] = _eFast - _eSlow;
                     _eOutIdx += 1;
                 }
             }
-            (*outBegIdx) = _eSlowStart;
-            (*outNBElement) = _eOutIdx;
+            *outBegIdx = _eSlowStart;
+            *outNBElement = _eOutIdx;
             return RetCode::Success;
         }
         // Allocate an intermediate buffer.
@@ -436,33 +426,29 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // Calculate the fast MA into the tempBuffer.
         let _xr0 = match self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        fastBeg = _xr0.beg_idx;
         fastNb = _xr0.count;
-        retCode = RetCode::Success;
         // Calculate the slow MA into the output.
         let _xr1 = match self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr1.beg_idx;
-        (*outNBElement) = _xr1.count;
-        retCode = RetCode::Success;
+        *outBegIdx = _xr1.beg_idx;
+        *outNBElement = _xr1.count;
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
-        offset = fastNb - (*outNBElement);
+        offset = fastNb - *outNBElement;
         // Calculate (fast MA)-(slow MA) in the output.
         i = 0;
-        if i < ((((*outNBElement) as usize)) as usize) {
-            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+        if i < ((*outNBElement as usize) as usize) {
+            let _wn: usize = ((*outNBElement as usize) as usize) - i;
             let _w0 = &mut outReal[i..][.._wn];
             let _w1 = &tempBuffer[i + offset..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = ((_w1[_wk] - _w0[_wk]) as f64);
-                i += 1;
+                _w0[_wk] = (_w1[_wk] - _w0[_wk]) as f64;
             }
         }
         return RetCode::Success;
@@ -602,9 +588,6 @@ pub struct ApoStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ApoStreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
-    optInMAType: MAType,
     sub0: MaStream,
     sub1: MaStream,
     cur_outReal: f64,
@@ -625,7 +608,7 @@ impl Core {
         cur_outReal = sp.sub1.update(inReal)?;
         // Combine map (batch tail, per bar).
         cur_outReal = cur_tempBuffer - cur_outReal;
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -637,14 +620,14 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -652,20 +635,16 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut tempInteger: usize = 0_usize;
         let mut fastBeg: usize = 0_usize;
         let mut fastNb: usize = 0_usize;
@@ -682,9 +661,9 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+        if self.ma_lookback(optInSlowPeriod.max(optInFastPeriod), optInMAType)? > endIdx {
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Allocate an intermediate buffer.
@@ -693,28 +672,26 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.ma_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], startIdx as usize, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
+        let sub1 = self.ma_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], startIdx as usize, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
-        offset = fastNb - (*outNBElement);
+        offset = fastNb - *outNBElement;
         // Calculate (fast MA)-(slow MA) in the output.
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
+        while i < ((*outNBElement as usize) as usize) {
             sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
             i += 1;
         }
@@ -725,9 +702,6 @@ impl Core {
         }
         let mut state = ApoStreamState {
             cur_outReal: 0.0_f64,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInMAType,
             sub0,
             sub1,
         };
@@ -741,7 +715,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::apo_open`] (composition seam).
     pub(crate) fn apo_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType,
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType,
     ) -> Result<(ApoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -814,7 +788,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_APO_OpenAndFill")]
     pub fn apo_open_and_fill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
+        &self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(ApoStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -833,7 +807,7 @@ impl Core {
     /// [`Core::apo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn apo_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ApoStream, RetCode> {
         self.apo_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
@@ -909,7 +883,7 @@ impl ApoStream {
             cur_outReal = sp.sub1.peek(inReal)?;
             // Combine map (batch tail, per bar).
             cur_outReal = cur_tempBuffer - cur_outReal;
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

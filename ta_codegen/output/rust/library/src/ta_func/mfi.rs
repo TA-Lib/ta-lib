@@ -62,7 +62,7 @@
  *               term (and the now-dead unstable-skip loop) so
  *               TA_SetUnstablePeriod is a no-op for it.
  *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
- *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
+ *               dead-zone TA_IS_ZERO_SCALED, not an exact sign test, so an
  *               epsilon-flat typical price is "no movement", not a spurious move.
  *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
  *               testing the money-flow sum against a literal 1.0; classify
@@ -96,12 +96,12 @@ impl Core {
     #[doc(alias = "TA_MFI_Lookback")]
     #[inline]
     pub fn mfi_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::mfi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -120,7 +120,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MFI_DisplayShift")]
-    pub fn mfi_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn mfi_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.mfi_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -149,9 +149,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.mfi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -185,10 +185,10 @@ impl Core {
         let mut mflow_negative: &mut [f64] = &mut [];
         let mut mflow_Idx: usize = 0;
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (optInTimePeriod) as usize;
+        lookbackTotal = optInTimePeriod as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -201,9 +201,9 @@ impl Core {
         let inClose = &inClose[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 50usize {
-            mflow_positive = &mut local_mflow_positive[..(optInTimePeriod) as usize];
-            mflow_negative = &mut local_mflow_negative[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 50usize {
+            mflow_positive = &mut local_mflow_positive[..optInTimePeriod as usize];
+            mflow_negative = &mut local_mflow_negative[..optInTimePeriod as usize];
         } else {
             heap_mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
             mflow_positive = &mut heap_mflow_positive;
@@ -227,13 +227,13 @@ impl Core {
         nullRun = 0;
         today += 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            tempValue3 = tempValue1.abs() + prevValue.abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
             // This bar's money flow, and its split into the positive and negative
@@ -242,8 +242,8 @@ impl Core {
             // every other bar and dominated the cost of the function.  Adding the
             // unused side's 0.0 to a sum is an exact no-op, so this reproduces the
             // branching form bit for bit.
-            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+            posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
             negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
@@ -253,10 +253,10 @@ impl Core {
             // when it moved but carried no volume.  Once a whole period of those
             // has gone by, every slot of the ring is 0.0, so the sums are known to
             // be exactly zero and the residue can be dropped.
-            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
+            nullRun = if moneyFlow == 0.0 { nullRun + 1 } else { 0 };
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 posSumMF = 0.0;
                 negSumMF = 0.0;
             }
@@ -282,7 +282,7 @@ impl Core {
         // The first full window is complete: emit its output for startIdx here,
         // then slide the window over the remaining bars below.
         tempValue1 = posSumMF + negSumMF;
-        posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+        posClamped = if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) };
         if tempValue1 <= 0.0 {
             outReal[outIdx] = 0.0;
             outIdx += 1;
@@ -298,25 +298,25 @@ impl Core {
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            tempValue3 = tempValue1.abs() + prevValue.abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+            posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
             negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
             negSumMF += negFlow;
-            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
+            nullRun = if moneyFlow == 0.0 { nullRun + 1 } else { 0 };
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 posSumMF = 0.0;
                 negSumMF = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
-            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            posClamped = if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) };
             if tempValue1 <= 0.0 {
                 outReal[outIdx] = 0.0;
                 outIdx += 1;
@@ -327,8 +327,8 @@ impl Core {
             mflow_Idx += 1;
             if mflow_Idx >= mflow_positive.len() { mflow_Idx = 0; }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs
@@ -493,7 +493,6 @@ struct MfiStreamState {
     nullRun: usize,
     mflow_Idx: usize,
     maxIdx_mflow: usize,
-    cbSize_mflow: usize,
     cb_mflow_positive: Vec<f64>,
     cb_mflow_negative: Vec<f64>,
     cur_outReal: f64,
@@ -519,35 +518,35 @@ impl Core {
         tempValue2 = tempValue1 - sp.prevValue;
         // Dead-zone scaled to the two typical prices being compared (issue #107).
         // Captured before prevValue/tempValue1 are repurposed below.
-        tempValue3 = (tempValue1).abs() + (sp.prevValue).abs();
+        tempValue3 = tempValue1.abs() + sp.prevValue.abs();
         sp.prevValue = tempValue1;
         tempValue1 *= inVolume;
-        moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-        posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+        moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+        posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
         negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
         sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
         sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
         sp.posSumMF += posFlow;
         sp.negSumMF += negFlow;
-        sp.nullRun = (if moneyFlow == 0.0 { sp.nullRun + 1 } else { 0 });
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        sp.nullRun = if moneyFlow == 0.0 { sp.nullRun + 1 } else { 0 };
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.posSumMF = 0.0;
             sp.negSumMF = 0.0;
         }
         tempValue1 = sp.posSumMF + sp.negSumMF;
-        posClamped = (if sp.posSumMF < 0.0 { 0.0 } else { (if sp.posSumMF > tempValue1 { tempValue1 } else { sp.posSumMF }) });
+        posClamped = if sp.posSumMF < 0.0 { 0.0 } else { (if sp.posSumMF > tempValue1 { tempValue1 } else { sp.posSumMF }) };
         if tempValue1 <= 0.0 {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         } else {
-            (*outReal) = 100.0 * (posClamped / tempValue1);
+            *outReal = 100.0 * (posClamped / tempValue1);
         }
         sp.mflow_Idx = sp.mflow_Idx + 1;
         if sp.mflow_Idx > sp.maxIdx_mflow {
             sp.mflow_Idx = 0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::mfi_open_internal`]
@@ -558,9 +557,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -568,14 +567,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut posSumMF: f64 = 0.0_f64;
         let mut negSumMF: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
@@ -596,10 +593,10 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (optInTimePeriod) as usize;
+        lookbackTotal = optInTimePeriod as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -610,7 +607,7 @@ impl Core {
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
         mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
+        maxIdx_mflow = (optInTimePeriod as usize) - 1;
         mflow_Idx = 0;
         outIdx = 0;
         // Index into the output.
@@ -628,13 +625,13 @@ impl Core {
         nullRun = 0;
         today += 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while i > 0 {
             tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            tempValue3 = tempValue1.abs() + prevValue.abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
             // This bar's money flow, and its split into the positive and negative
@@ -643,8 +640,8 @@ impl Core {
             // every other bar and dominated the cost of the function.  Adding the
             // unused side's 0.0 to a sum is an exact no-op, so this reproduces the
             // branching form bit for bit.
-            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+            posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
             negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
@@ -654,10 +651,10 @@ impl Core {
             // when it moved but carried no volume.  Once a whole period of those
             // has gone by, every slot of the ring is 0.0, so the sums are known to
             // be exactly zero and the residue can be dropped.
-            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
+            nullRun = if moneyFlow == 0.0 { nullRun + 1 } else { 0 };
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 posSumMF = 0.0;
                 negSumMF = 0.0;
             }
@@ -683,11 +680,11 @@ impl Core {
         // The first full window is complete: emit its output for startIdx here,
         // then slide the window over the remaining bars below.
         tempValue1 = posSumMF + negSumMF;
-        posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+        posClamped = if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) };
         if tempValue1 <= 0.0 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
         } else {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posClamped / tempValue1);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * (posClamped / tempValue1);
         }
         // Now continue processing the remaining bars.
         while today <= endIdx {
@@ -697,35 +694,35 @@ impl Core {
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            tempValue3 = tempValue1.abs() + prevValue.abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+            posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
             negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
             negSumMF += negFlow;
-            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
+            nullRun = if moneyFlow == 0.0 { nullRun + 1 } else { 0 };
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 posSumMF = 0.0;
                 negSumMF = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
-            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            posClamped = if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) };
             if tempValue1 <= 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posClamped / tempValue1);
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 100.0 * (posClamped / tempValue1);
             }
             mflow_Idx += 1;
             if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_mflow: usize = maxIdx_mflow + 1;
@@ -741,7 +738,6 @@ impl Core {
             mflow_Idx,
             maxIdx_mflow,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_mflow: cbSize_mflow,
             cb_mflow_positive: mflow_positive,
             cb_mflow_negative: mflow_negative,
         };
@@ -750,7 +746,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::mfi_open`] (composition seam).
     pub(crate) fn mfi_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(MfiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -841,7 +837,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MFI_OpenAndFill")]
     pub fn mfi_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(MfiStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -863,7 +859,7 @@ impl Core {
     /// [`Core::mfi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn mfi_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MfiStream, RetCode> {
         self.mfi_open_impl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -940,33 +936,31 @@ impl MfiStream {
             let mut negSumMF = sp.negSumMF;
             let mut nullRun = sp.nullRun;
             let mut posSumMF = sp.posSumMF;
-            let mut prevValue = sp.prevValue;
+            let prevValue = sp.prevValue;
             posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
             negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
             tempValue1 = (inHigh + inLow + inClose) / 3.0;
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
-            prevValue = tempValue1;
+            tempValue3 = tempValue1.abs() + prevValue.abs();
             tempValue1 *= inVolume;
-            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
-            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            moneyFlow = if tempValue2.abs() <= 1e-14 * tempValue3 { 0.0 } else { tempValue1 };
+            posFlow = if tempValue2 < 0.0 { 0.0 } else { moneyFlow };
             negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             posSumMF += posFlow;
             negSumMF += negFlow;
-            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
+            nullRun = if moneyFlow == 0.0 { nullRun + 1 } else { 0 };
+            if nullRun >= (sp.optInTimePeriod as usize) {
                 posSumMF = 0.0;
                 negSumMF = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
-            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            posClamped = if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) };
             if tempValue1 <= 0.0 {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             } else {
-                (*outReal) = 100.0 * (posClamped / tempValue1);
+                *outReal = 100.0 * (posClamped / tempValue1);
             }
         }
         Ok(outReal)

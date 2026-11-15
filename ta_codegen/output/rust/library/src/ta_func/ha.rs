@@ -71,7 +71,7 @@ impl Core {
     pub fn ha_lookback(&self) -> Result<usize, RetCode> {
         // 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
         // the whole first difference at its first bar.
-        return Ok((self.unstable_count(FuncUnstId::HA, (13 * 10 + 8) / 9, (13 * 19 + 8) / 9)) as usize);
+        return Ok(self.unstable_count(FuncUnstId::HA, (13 * 10 + 8) / 9, (13 * 19 + 8) / 9) as usize);
     }
     /// Display shift of one output of [`Core::ha`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -143,8 +143,8 @@ impl Core {
         let mut tempHigh: f64 = 0.0_f64;
         let mut tempLow: f64 = 0.0_f64;
         let mut tempClose: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ha_lookback().unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -180,7 +180,6 @@ impl Core {
                 haOpen = (haOpen + haClose) / 2.0;
                 haClose = (_w3[_wk] + _w1[_wk] + _w2[_wk] + _w0[_wk]) / 4.0;
                 today += 1;
-                i -= 1;
             }
         }
         tempHigh = inHigh[startIdx];
@@ -232,11 +231,10 @@ impl Core {
                 _w6[_wk] = haLow;
                 _w4[_wk] = haClose;
                 outIdx += 1;
-                today += 1;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with a smoothed
@@ -464,14 +462,14 @@ impl Core {
         haLow = tempLow;
         haLow = c_min(sp.haOpen, haLow);
         haLow = c_min(sp.haClose, haLow);
-        (*outHAOpen) = sp.haOpen;
-        (*outHAHigh) = haHigh;
-        (*outHALow) = haLow;
-        (*outHAClose) = sp.haClose;
-        sp.cur_outHAOpen = (*outHAOpen);
-        sp.cur_outHAHigh = (*outHAHigh);
-        sp.cur_outHALow = (*outHALow);
-        sp.cur_outHAClose = (*outHAClose);
+        *outHAOpen = sp.haOpen;
+        *outHAHigh = haHigh;
+        *outHALow = haLow;
+        *outHAClose = sp.haClose;
+        sp.cur_outHAOpen = *outHAOpen;
+        sp.cur_outHAHigh = *outHAHigh;
+        sp.cur_outHALow = *outHALow;
+        sp.cur_outHAClose = *outHAClose;
     }
 
     /// The single whole-history transcription behind [`Core::ha_open_internal`]
@@ -487,14 +485,12 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -507,8 +503,8 @@ impl Core {
         let mut tempHigh: f64 = 0.0_f64;
         let mut tempLow: f64 = 0.0_f64;
         let mut tempClose: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ha_lookback()?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -549,10 +545,10 @@ impl Core {
         haLow = tempLow;
         haLow = c_min(haOpen, haLow);
         haLow = c_min(haClose, haLow);
-        outHAOpen[(0 * outStride) as usize] = haOpen;
-        outHAHigh[(0 * outStride) as usize] = haHigh;
-        outHALow[(0 * outStride) as usize] = haLow;
-        outHAClose[(0 * outStride) as usize] = haClose;
+        outHAOpen[0] = haOpen;
+        outHAHigh[0] = haHigh;
+        outHALow[0] = haLow;
+        outHAClose[0] = haClose;
         outIdx = 1;
         while today <= endIdx {
             // Every price of the bar is read into a local before any output is
@@ -570,15 +566,15 @@ impl Core {
             haLow = tempLow;
             haLow = c_min(haOpen, haLow);
             haLow = c_min(haClose, haLow);
-            outHAOpen[(outIdx * outStride) as usize] = haOpen;
-            outHAHigh[(outIdx * outStride) as usize] = haHigh;
-            outHALow[(outIdx * outStride) as usize] = haLow;
-            outHAClose[(outIdx * outStride) as usize] = haClose;
+            outHAOpen[outIdx * outStride] = haOpen;
+            outHAHigh[outIdx * outStride] = haHigh;
+            outHALow[outIdx * outStride] = haLow;
+            outHAClose[outIdx * outStride] = haClose;
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = HaStreamState {
@@ -833,10 +829,10 @@ impl HaStream {
             haLow = tempLow;
             haLow = c_min(haOpen, haLow);
             haLow = c_min(haClose, haLow);
-            (*outHAOpen) = haOpen;
-            (*outHAHigh) = haHigh;
-            (*outHALow) = haLow;
-            (*outHAClose) = haClose;
+            *outHAOpen = haOpen;
+            *outHAHigh = haHigh;
+            *outHALow = haLow;
+            *outHAClose = haClose;
         }
         Ok((outHAOpen, outHAHigh, outHALow, outHAClose))
     }

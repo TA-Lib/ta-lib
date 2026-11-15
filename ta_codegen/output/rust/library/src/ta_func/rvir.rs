@@ -80,14 +80,14 @@ impl Core {
     #[doc(alias = "TA_RVIR_Lookback")]
     #[inline]
     pub fn rvir_lookback(&self, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInStdDevPeriod) as i32) == (i32::MIN) {
+        if optInStdDevPeriod == i32::MIN {
             optInStdDevPeriod = 10;
-        } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
+        } else if optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // Both legs are the shipped TA_RVI at the same parameters, so they warm on
@@ -115,7 +115,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_RVIR_DisplayShift")]
-    pub fn rvir_display_shift(&self, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn rvir_display_shift(&self, optInTimePeriod: i32, optInStdDevPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -143,14 +143,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInStdDevPeriod) as i32) == (i32::MIN) {
+        if optInStdDevPeriod == i32::MIN {
             optInStdDevPeriod = 10;
-        } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
+        } else if optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
@@ -160,13 +160,10 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut tempHigh: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
-        let mut tempNbElement: usize = 0_usize;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
         // Nothing is allocated and no input is read when the range cannot produce a
         // value, so a caller-supplied input that stops short of endIdx is never
@@ -198,13 +195,9 @@ impl Core {
         // leaves every value identical, which is why the aliasing test earns its
         // keep against the scratch buffer's extent rather than against this order.
         let _xr0 = match self.rvi(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, &mut tempHigh[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
         let _xr1 = match self.rvi(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr1.beg_idx;
-        (*outNBElement) = _xr1.count;
-        retCode = RetCode::Success;
+        *outBegIdx = _xr1.beg_idx;
+        *outNBElement = _xr1.count;
         // Each leg has already resolved its own zero-total case to TA_RVI's neutral
         // 50 before the average is taken, so a tie in one series never drags the
         // other. Scaling by one half is exact, so the spelling of the average is
@@ -212,8 +205,8 @@ impl Core {
         // 0.5*a + 0.5*b.
         // for( i = 0; i < (*outNBElement); i += 1 )
         i = 0;
-        while i < (*outNBElement) {
-            outReal[i] = ((0.5 * (tempHigh[i] + outReal[i])) as f64);
+        while i < *outNBElement {
+            outReal[i] = (0.5 * (tempHigh[i] + outReal[i])) as f64;
             i += 1;
         }
         return RetCode::Success;
@@ -362,8 +355,6 @@ pub struct RvirStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct RvirStreamState {
-    optInTimePeriod: i32,
-    optInStdDevPeriod: i32,
     sub0: RviStream,
     sub1: RviStream,
     cur_outReal: f64,
@@ -384,7 +375,7 @@ impl Core {
         cur_outReal = sp.sub1.update(inLow)?;
         // Combine map (batch tail, per bar).
         cur_outReal = 0.5 * (cur_tempHigh + cur_outReal);
-        (*outReal) = cur_outReal;
+        *outReal = cur_outReal;
         Ok(())
     }
 
@@ -396,14 +387,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInStdDevPeriod) as i32) == (i32::MIN) {
+        if optInStdDevPeriod == i32::MIN {
             optInStdDevPeriod = 10;
-        } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
+        } else if optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -411,26 +402,23 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outReal: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut tempHigh: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut tempBegIdx: usize = 0_usize;
         let mut tempNbElement: usize = 0_usize;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
         // Nothing is allocated and no input is read when the range cannot produce a
         // value, so a caller-supplied input that stops short of endIdx is never
@@ -463,12 +451,10 @@ impl Core {
         // keep against the scratch buffer's extent rather than against this order.
         // Sub-stream 0: rvi over `inHigh`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.rvi_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInStdDevPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempHigh[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.rvi_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], startIdx as usize, optInTimePeriod, optInStdDevPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempHigh[..])?;
         // Sub-stream 1: rvi over `inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.rvi_open_and_fill_internal(&inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, &mut sc_outReal[..])?;
-        retCode = RetCode::Success;
+        let sub1 = self.rvi_open_and_fill_internal(&inLow[..(endIdx as usize) + 1], startIdx as usize, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         // Each leg has already resolved its own zero-total case to TA_RVI's neutral
         // 50 before the average is taken, so a tie in one series never drags the
         // other. Scaling by one half is exact, so the spelling of the average is
@@ -476,7 +462,7 @@ impl Core {
         // 0.5*a + 0.5*b.
         // for( i = 0; i < (*outNBElement); i += 1 )
         i = 0;
-        while i < (*outNBElement) {
+        while i < *outNBElement {
             sc_outReal[i] = 0.5 * (tempHigh[i] + sc_outReal[i]);
             i += 1;
         }
@@ -487,8 +473,6 @@ impl Core {
         }
         let mut state = RvirStreamState {
             cur_outReal: 0.0_f64,
-            optInTimePeriod,
-            optInStdDevPeriod,
             sub0,
             sub1,
         };
@@ -502,7 +486,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::rvir_open`] (composition seam).
     pub(crate) fn rvir_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInStdDevPeriod: i32,
     ) -> Result<(RvirStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -581,7 +565,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_RVIR_OpenAndFill")]
     pub fn rvir_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, mut optInStdDevPeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, optInStdDevPeriod: i32, outReal: &mut [f64],
     ) -> Result<(RvirStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -603,7 +587,7 @@ impl Core {
     /// [`Core::rvir_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn rvir_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInStdDevPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RvirStream, RetCode> {
         self.rvir_open_impl(inHigh, inLow, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -679,7 +663,7 @@ impl RvirStream {
             cur_outReal = sp.sub1.peek(inLow)?;
             // Combine map (batch tail, per bar).
             cur_outReal = 0.5 * (cur_tempHigh + cur_outReal);
-            (*outReal) = cur_outReal;
+            *outReal = cur_outReal;
         }
         Ok(outReal)
     }

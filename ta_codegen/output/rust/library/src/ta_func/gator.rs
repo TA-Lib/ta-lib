@@ -89,34 +89,34 @@ impl Core {
     #[doc(alias = "TA_GATOR_Lookback")]
     #[inline]
     pub fn gator_lookback(&self, mut optInJawPeriod: i32, mut optInJawShift: i32, mut optInTeethPeriod: i32, mut optInTeethShift: i32, mut optInLipsPeriod: i32, mut optInLipsShift: i32) -> Result<usize, RetCode> {
-        if ((optInJawPeriod) as i32) == (i32::MIN) {
+        if optInJawPeriod == i32::MIN {
             optInJawPeriod = 13;
-        } else if (((optInJawPeriod) as i32) < 1) || (((optInJawPeriod) as i32) > 100000) {
+        } else if optInJawPeriod < 1 || optInJawPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInJawShift) as i32) == (i32::MIN) {
+        if optInJawShift == i32::MIN {
             optInJawShift = 8;
-        } else if (((optInJawShift) as i32) < 0) || (((optInJawShift) as i32) > 100000) {
+        } else if optInJawShift < 0 || optInJawShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethPeriod) as i32) == (i32::MIN) {
+        if optInTeethPeriod == i32::MIN {
             optInTeethPeriod = 8;
-        } else if (((optInTeethPeriod) as i32) < 1) || (((optInTeethPeriod) as i32) > 100000) {
+        } else if optInTeethPeriod < 1 || optInTeethPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethShift) as i32) == (i32::MIN) {
+        if optInTeethShift == i32::MIN {
             optInTeethShift = 5;
-        } else if (((optInTeethShift) as i32) < 0) || (((optInTeethShift) as i32) > 100000) {
+        } else if optInTeethShift < 0 || optInTeethShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsPeriod) as i32) == (i32::MIN) {
+        if optInLipsPeriod == i32::MIN {
             optInLipsPeriod = 5;
-        } else if (((optInLipsPeriod) as i32) < 1) || (((optInLipsPeriod) as i32) > 100000) {
+        } else if optInLipsPeriod < 1 || optInLipsPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsShift) as i32) == (i32::MIN) {
+        if optInLipsShift == i32::MIN {
             optInLipsShift = 3;
-        } else if (((optInLipsShift) as i32) < 0) || (((optInLipsShift) as i32) > 100000) {
+        } else if optInLipsShift < 0 || optInLipsShift > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut backJaw: usize = 0_usize;
@@ -183,36 +183,30 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_GATOR_DisplayShift")]
-    pub fn gator_display_shift(&self, mut optInJawPeriod: i32, mut optInJawShift: i32, mut optInTeethPeriod: i32, mut optInTeethShift: i32, mut optInLipsPeriod: i32, mut optInLipsShift: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn gator_display_shift(&self, optInJawPeriod: i32, mut optInJawShift: i32, optInTeethPeriod: i32, mut optInTeethShift: i32, optInLipsPeriod: i32, mut optInLipsShift: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.gator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift)?;
-        if ((optInJawPeriod) as i32) == (i32::MIN) {
-            optInJawPeriod = 13;
-        } else if (((optInJawPeriod) as i32) < 1) || (((optInJawPeriod) as i32) > 100000) {
+        if optInJawPeriod != i32::MIN && (optInJawPeriod < 1 || optInJawPeriod > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInJawShift) as i32) == (i32::MIN) {
+        if optInJawShift == i32::MIN {
             optInJawShift = 8;
-        } else if (((optInJawShift) as i32) < 0) || (((optInJawShift) as i32) > 100000) {
+        } else if optInJawShift < 0 || optInJawShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethPeriod) as i32) == (i32::MIN) {
-            optInTeethPeriod = 8;
-        } else if (((optInTeethPeriod) as i32) < 1) || (((optInTeethPeriod) as i32) > 100000) {
+        if optInTeethPeriod != i32::MIN && (optInTeethPeriod < 1 || optInTeethPeriod > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethShift) as i32) == (i32::MIN) {
+        if optInTeethShift == i32::MIN {
             optInTeethShift = 5;
-        } else if (((optInTeethShift) as i32) < 0) || (((optInTeethShift) as i32) > 100000) {
+        } else if optInTeethShift < 0 || optInTeethShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsPeriod) as i32) == (i32::MIN) {
-            optInLipsPeriod = 5;
-        } else if (((optInLipsPeriod) as i32) < 1) || (((optInLipsPeriod) as i32) > 100000) {
+        if optInLipsPeriod != i32::MIN && (optInLipsPeriod < 1 || optInLipsPeriod > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsShift) as i32) == (i32::MIN) {
+        if optInLipsShift == i32::MIN {
             optInLipsShift = 3;
-        } else if (((optInLipsShift) as i32) < 0) || (((optInLipsShift) as i32) > 100000) {
+        } else if optInLipsShift < 0 || optInLipsShift > 100000 {
             return Err(RetCode::BadParam);
         }
         if outputIdx >= 2 {
@@ -220,9 +214,9 @@ impl Core {
         }
         let outputIdx: i32 = outputIdx as i32;
         if outputIdx == 0 {
-            return Ok((if optInJawShift < optInTeethShift { optInJawShift } else { optInTeethShift }));
+            return Ok(if optInJawShift < optInTeethShift { optInJawShift } else { optInTeethShift });
         }
-        return Ok((if optInTeethShift < optInLipsShift { optInTeethShift } else { optInLipsShift }));
+        return Ok(if optInTeethShift < optInLipsShift { optInTeethShift } else { optInLipsShift });
     }
     /// C-shaped body behind [`Core::gator`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
@@ -250,34 +244,34 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInJawPeriod) as i32) == (i32::MIN) {
+        if optInJawPeriod == i32::MIN {
             optInJawPeriod = 13;
-        } else if (((optInJawPeriod) as i32) < 1) || (((optInJawPeriod) as i32) > 100000) {
+        } else if optInJawPeriod < 1 || optInJawPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInJawShift) as i32) == (i32::MIN) {
+        if optInJawShift == i32::MIN {
             optInJawShift = 8;
-        } else if (((optInJawShift) as i32) < 0) || (((optInJawShift) as i32) > 100000) {
+        } else if optInJawShift < 0 || optInJawShift > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInTeethPeriod) as i32) == (i32::MIN) {
+        if optInTeethPeriod == i32::MIN {
             optInTeethPeriod = 8;
-        } else if (((optInTeethPeriod) as i32) < 1) || (((optInTeethPeriod) as i32) > 100000) {
+        } else if optInTeethPeriod < 1 || optInTeethPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInTeethShift) as i32) == (i32::MIN) {
+        if optInTeethShift == i32::MIN {
             optInTeethShift = 5;
-        } else if (((optInTeethShift) as i32) < 0) || (((optInTeethShift) as i32) > 100000) {
+        } else if optInTeethShift < 0 || optInTeethShift > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInLipsPeriod) as i32) == (i32::MIN) {
+        if optInLipsPeriod == i32::MIN {
             optInLipsPeriod = 5;
-        } else if (((optInLipsPeriod) as i32) < 1) || (((optInLipsPeriod) as i32) > 100000) {
+        } else if optInLipsPeriod < 1 || optInLipsPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInLipsShift) as i32) == (i32::MIN) {
+        if optInLipsShift == i32::MIN {
             optInLipsShift = 3;
-        } else if (((optInLipsShift) as i32) < 0) || (((optInLipsShift) as i32) > 100000) {
+        } else if optInLipsShift < 0 || optInLipsShift > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.gator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift).unwrap_or(usize::MAX);
@@ -286,11 +280,10 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outUpper.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLower.len());
-        if (outUpper.as_ptr() == outLower.as_ptr()) {
+        if outUpper.as_ptr() == outLower.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
         let mut maxBack: usize = 0_usize;
@@ -302,8 +295,6 @@ impl Core {
         let mut backTeethUpper: usize = 0_usize;
         let mut backTeethLower: usize = 0_usize;
         let mut backLips: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
-        let mut tempNbElement: usize = 0_usize;
         let mut tempMP: Vec<f64> = Vec::new();
         let mut tempA: Vec<f64> = Vec::new();
         let mut tempB: Vec<f64> = Vec::new();
@@ -311,8 +302,8 @@ impl Core {
         // Return before touching anything, so that an input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         if startIdx < lookbackTotal {
@@ -346,9 +337,6 @@ impl Core {
         // Every price is consumed here, before any output is written: an output
         // may be aliased onto inHigh or inLow.
         let _xr0 = match self.medprice(mpStartIdx, endIdx, inHigh, inLow, &mut tempMP[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
         // Each leg is its own rma call starting at its read-back bar and seeded at
         // its own lookback before that, so from a given first output bar neither
         // histogram depends on the line it does not read; the teeth is therefore
@@ -356,13 +344,7 @@ impl Core {
         // many bars early, so element i of its buffer is the bar the output's
         // element i pairs it with.
         let _xr1 = match self.rma(localStart - backJaw, localEnd, &tempMP, optInJawPeriod, &mut tempA[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
-        tempNbElement = _xr1.count;
-        retCode = RetCode::Success;
         let _xr2 = match self.rma(localStart - backTeethUpper, localEnd, &tempMP, optInTeethPeriod, &mut tempB[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
-        retCode = RetCode::Success;
         i = 0;
         if i < nbElement {
             let _wn: usize = nbElement - i;
@@ -370,18 +352,11 @@ impl Core {
             let _w1 = &tempA[i..][.._wn];
             let _w2 = &tempB[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (((_w1[_wk] - _w2[_wk]).abs()) as f64);
-                i += 1;
+                _w0[_wk] = ((_w1[_wk] - _w2[_wk]).abs()) as f64;
             }
         }
         let _xr3 = match self.rma(localStart - backTeethLower, localEnd, &tempMP, optInTeethPeriod, &mut tempA[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr3.beg_idx;
-        tempNbElement = _xr3.count;
-        retCode = RetCode::Success;
         let _xr4 = match self.rma(localStart - backLips, localEnd, &tempMP, optInLipsPeriod, &mut tempB[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr4.beg_idx;
-        tempNbElement = _xr4.count;
-        retCode = RetCode::Success;
         // A zero spread must come out +0.0. Keep the select: gcc folds the literal
         // 0.0 - fabs(x) into -fabs(x), which is -0.0 there.
         i = 0;
@@ -391,12 +366,11 @@ impl Core {
             let _w1 = &tempA[i..][.._wn];
             let _w2 = &tempB[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (((if _w1[_wk] < _w2[_wk] { _w1[_wk] - _w2[_wk] } else { _w2[_wk] - _w1[_wk] })) as f64);
-                i += 1;
+                _w0[_wk] = (if _w1[_wk] < _w2[_wk] { _w1[_wk] - _w2[_wk] } else { _w2[_wk] - _w1[_wk] }) as f64;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
+        *outBegIdx = startIdx;
+        *outNBElement = nbElement;
         return RetCode::Success;
     }
     /// Bill Williams' Gator Oscillator: how far apart the three Alligator lines are, as two
@@ -568,12 +542,6 @@ pub struct GatorStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct GatorStreamState {
-    optInJawPeriod: i32,
-    optInJawShift: i32,
-    optInTeethPeriod: i32,
-    optInTeethShift: i32,
-    optInLipsPeriod: i32,
-    optInLipsShift: i32,
     sub0: MedpriceStream,
     sub1: RmaStream,
     sub2: RmaStream,
@@ -632,9 +600,9 @@ impl Core {
         lagIn1 = cur_tempB;
         // Combine map (batch tail, per bar).
         lagTap0_0 = sp.lagBuf0[sp.lagPos0];
-        lagTap0_0 = (if sp.lagCap0 == 0 { lagIn0 } else { lagTap0_0 });
+        lagTap0_0 = if sp.lagCap0 == 0 { lagIn0 } else { lagTap0_0 };
         lagTap1_0 = sp.lagBuf1[sp.lagPos1];
-        lagTap1_0 = (if sp.lagCap1 == 0 { lagIn1 } else { lagTap1_0 });
+        lagTap1_0 = if sp.lagCap1 == 0 { lagIn1 } else { lagTap1_0 };
         cur_outUpper = (lagTap0_0 - lagTap1_0).abs();
         cur_tempA = sp.sub3.update(cur_tempMP)?;
         lagIn2 = cur_tempA;
@@ -642,10 +610,10 @@ impl Core {
         lagIn3 = cur_tempB;
         // Combine map (batch tail, per bar).
         lagTap2_0 = sp.lagBuf2[sp.lagPos2];
-        lagTap2_0 = (if sp.lagCap2 == 0 { lagIn2 } else { lagTap2_0 });
+        lagTap2_0 = if sp.lagCap2 == 0 { lagIn2 } else { lagTap2_0 };
         lagTap3_0 = sp.lagBuf3[sp.lagPos3];
-        lagTap3_0 = (if sp.lagCap3 == 0 { lagIn3 } else { lagTap3_0 });
-        cur_outLower = (if lagTap2_0 < lagTap3_0 { lagTap2_0 - lagTap3_0 } else { lagTap3_0 - lagTap2_0 });
+        lagTap3_0 = if sp.lagCap3 == 0 { lagIn3 } else { lagTap3_0 };
+        cur_outLower = if lagTap2_0 < lagTap3_0 { lagTap2_0 - lagTap3_0 } else { lagTap3_0 - lagTap2_0 };
         lagCapL0 = sp.lagCap0;
         lagPosL0 = sp.lagPos0;
         sp.lagBuf0[lagPosL0] = lagIn0;
@@ -678,8 +646,8 @@ impl Core {
             lagPosL3 = 0;
         }
         sp.lagPos3 = lagPosL3;
-        (*outUpper) = cur_outUpper;
-        (*outLower) = cur_outLower;
+        *outUpper = cur_outUpper;
+        *outLower = cur_outLower;
         Ok(())
     }
 
@@ -691,34 +659,34 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInJawPeriod) as i32) == (i32::MIN) {
+        if optInJawPeriod == i32::MIN {
             optInJawPeriod = 13;
-        } else if (((optInJawPeriod) as i32) < 1) || (((optInJawPeriod) as i32) > 100000) {
+        } else if optInJawPeriod < 1 || optInJawPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInJawShift) as i32) == (i32::MIN) {
+        if optInJawShift == i32::MIN {
             optInJawShift = 8;
-        } else if (((optInJawShift) as i32) < 0) || (((optInJawShift) as i32) > 100000) {
+        } else if optInJawShift < 0 || optInJawShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethPeriod) as i32) == (i32::MIN) {
+        if optInTeethPeriod == i32::MIN {
             optInTeethPeriod = 8;
-        } else if (((optInTeethPeriod) as i32) < 1) || (((optInTeethPeriod) as i32) > 100000) {
+        } else if optInTeethPeriod < 1 || optInTeethPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInTeethShift) as i32) == (i32::MIN) {
+        if optInTeethShift == i32::MIN {
             optInTeethShift = 5;
-        } else if (((optInTeethShift) as i32) < 0) || (((optInTeethShift) as i32) > 100000) {
+        } else if optInTeethShift < 0 || optInTeethShift > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsPeriod) as i32) == (i32::MIN) {
+        if optInLipsPeriod == i32::MIN {
             optInLipsPeriod = 5;
-        } else if (((optInLipsPeriod) as i32) < 1) || (((optInLipsPeriod) as i32) > 100000) {
+        } else if optInLipsPeriod < 1 || optInLipsPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInLipsShift) as i32) == (i32::MIN) {
+        if optInLipsShift == i32::MIN {
             optInLipsShift = 3;
-        } else if (((optInLipsShift) as i32) < 0) || (((optInLipsShift) as i32) > 100000) {
+        } else if optInLipsShift < 0 || optInLipsShift > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -726,14 +694,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outUpper: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outUpper: &mut [f64] =
@@ -762,7 +728,6 @@ impl Core {
         let mut lagNb1: i64 = 0;
         let mut lagNb2: i64 = 0;
         let mut lagNb3: i64 = 0;
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut nbElement: usize = 0_usize;
         let mut maxBack: usize = 0_usize;
@@ -783,8 +748,8 @@ impl Core {
         // Return before touching anything, so that an input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if startIdx < lookbackTotal {
@@ -819,8 +784,7 @@ impl Core {
         // may be aliased onto inHigh or inLow.
         // Sub-stream 0: medprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.medprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((mpStartIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempMP[..])?;
-        retCode = RetCode::Success;
+        let sub0 = self.medprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], mpStartIdx as usize, &mut tempBegIdx, &mut tempNbElement, &mut tempMP[..])?;
         // Each leg is its own rma call starting at its read-back bar and seeded at
         // its own lookback before that, so from a given first output bar neither
         // histogram depends on the line it does not read; the teeth is therefore
@@ -829,14 +793,12 @@ impl Core {
         // element i pairs it with.
         // Sub-stream 1: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.rma_open_and_fill_internal(&tempMP[..((localEnd) as usize) + 1], ((localStart) as usize).saturating_sub((backJaw) as usize), optInJawPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempA[..])?;
-        retCode = RetCode::Success;
-        lagNb0 = (tempNbElement as i64);
+        let sub1 = self.rma_open_and_fill_internal(&tempMP[..(localEnd as usize) + 1], (localStart as usize).saturating_sub(backJaw as usize), optInJawPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempA[..])?;
+        lagNb0 = tempNbElement as i64;
         // Sub-stream 2: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.rma_open_and_fill_internal(&tempMP[..((localEnd) as usize) + 1], ((localStart) as usize).saturating_sub((backTeethUpper) as usize), optInTeethPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempB[..])?;
-        retCode = RetCode::Success;
-        lagNb1 = (tempNbElement as i64);
+        let sub2 = self.rma_open_and_fill_internal(&tempMP[..(localEnd as usize) + 1], (localStart as usize).saturating_sub(backTeethUpper as usize), optInTeethPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempB[..])?;
+        lagNb1 = tempNbElement as i64;
         if (nbElement as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -876,14 +838,12 @@ impl Core {
         }
         // Sub-stream 3: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub3 = self.rma_open_and_fill_internal(&tempMP[..((localEnd) as usize) + 1], ((localStart) as usize).saturating_sub((backTeethLower) as usize), optInTeethPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempA[..])?;
-        retCode = RetCode::Success;
-        lagNb2 = (tempNbElement as i64);
+        let sub3 = self.rma_open_and_fill_internal(&tempMP[..(localEnd as usize) + 1], (localStart as usize).saturating_sub(backTeethLower as usize), optInTeethPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempA[..])?;
+        lagNb2 = tempNbElement as i64;
         // Sub-stream 4: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub4 = self.rma_open_and_fill_internal(&tempMP[..((localEnd) as usize) + 1], ((localStart) as usize).saturating_sub((backLips) as usize), optInLipsPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempB[..])?;
-        retCode = RetCode::Success;
-        lagNb3 = (tempNbElement as i64);
+        let sub4 = self.rma_open_and_fill_internal(&tempMP[..(localEnd as usize) + 1], (localStart as usize).saturating_sub(backLips as usize), optInLipsPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempB[..])?;
+        lagNb3 = tempNbElement as i64;
         // A zero spread must come out +0.0. Keep the select: gcc folds the literal
         // 0.0 - fabs(x) into -fabs(x), which is -0.0 there.
         if (nbElement as i64) < 1 {
@@ -920,11 +880,11 @@ impl Core {
         // for( i = 0; i < nbElement; i += 1 )
         i = 0;
         while i < nbElement {
-            sc_outLower[i] = (if tempA[i] < tempB[i] { tempA[i] - tempB[i] } else { tempB[i] - tempA[i] });
+            sc_outLower[i] = if tempA[i] < tempB[i] { tempA[i] - tempB[i] } else { tempB[i] - tempA[i] };
             i += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
+        *outBegIdx = startIdx;
+        *outNBElement = nbElement;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
@@ -933,12 +893,6 @@ impl Core {
         let mut state = GatorStreamState {
             cur_outUpper: 0.0_f64,
             cur_outLower: 0.0_f64,
-            optInJawPeriod,
-            optInJawShift,
-            optInTeethPeriod,
-            optInTeethShift,
-            optInLipsPeriod,
-            optInLipsShift,
             sub0,
             sub1,
             sub2,
@@ -972,7 +926,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::gator_open`] (composition seam).
     pub(crate) fn gator_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInJawPeriod: i32, mut optInJawShift: i32, mut optInTeethPeriod: i32, mut optInTeethShift: i32, mut optInLipsPeriod: i32, mut optInLipsShift: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInJawPeriod: i32, optInJawShift: i32, optInTeethPeriod: i32, optInTeethShift: i32, optInLipsPeriod: i32, optInLipsShift: i32,
     ) -> Result<(GatorStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1057,7 +1011,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_GATOR_OpenAndFill")]
     pub fn gator_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInJawPeriod: i32, mut optInJawShift: i32, mut optInTeethPeriod: i32, mut optInTeethShift: i32, mut optInLipsPeriod: i32, mut optInLipsShift: i32, outUpper: &mut [f64], outLower: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInJawPeriod: i32, optInJawShift: i32, optInTeethPeriod: i32, optInTeethShift: i32, optInLipsPeriod: i32, optInLipsShift: i32, outUpper: &mut [f64], outLower: &mut [f64],
     ) -> Result<(GatorStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1082,7 +1036,7 @@ impl Core {
     /// [`Core::gator_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn gator_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInJawPeriod: i32, mut optInJawShift: i32, mut optInTeethPeriod: i32, mut optInTeethShift: i32, mut optInLipsPeriod: i32, mut optInLipsShift: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outUpper: &mut [f64], outLower: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInJawPeriod: i32, optInJawShift: i32, optInTeethPeriod: i32, optInTeethShift: i32, optInLipsPeriod: i32, optInLipsShift: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outUpper: &mut [f64], outLower: &mut [f64],
     ) -> Result<GatorStream, RetCode> {
         self.gator_open_impl(inHigh, inLow, startIdx, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outBegIdx, outNBElement, outUpper, outLower, 1)
     }
@@ -1176,9 +1130,9 @@ impl GatorStream {
             lagIn1 = cur_tempB;
             // Combine map (batch tail, per bar).
             lagTap0_0 = sp.lagBuf0[sp.lagPos0];
-            lagTap0_0 = (if sp.lagCap0 == 0 { lagIn0 } else { lagTap0_0 });
+            lagTap0_0 = if sp.lagCap0 == 0 { lagIn0 } else { lagTap0_0 };
             lagTap1_0 = sp.lagBuf1[sp.lagPos1];
-            lagTap1_0 = (if sp.lagCap1 == 0 { lagIn1 } else { lagTap1_0 });
+            lagTap1_0 = if sp.lagCap1 == 0 { lagIn1 } else { lagTap1_0 };
             cur_outUpper = (lagTap0_0 - lagTap1_0).abs();
             cur_tempA = sp.sub3.peek(cur_tempMP)?;
             lagIn2 = cur_tempA;
@@ -1186,12 +1140,12 @@ impl GatorStream {
             lagIn3 = cur_tempB;
             // Combine map (batch tail, per bar).
             lagTap2_0 = sp.lagBuf2[sp.lagPos2];
-            lagTap2_0 = (if sp.lagCap2 == 0 { lagIn2 } else { lagTap2_0 });
+            lagTap2_0 = if sp.lagCap2 == 0 { lagIn2 } else { lagTap2_0 };
             lagTap3_0 = sp.lagBuf3[sp.lagPos3];
-            lagTap3_0 = (if sp.lagCap3 == 0 { lagIn3 } else { lagTap3_0 });
-            cur_outLower = (if lagTap2_0 < lagTap3_0 { lagTap2_0 - lagTap3_0 } else { lagTap3_0 - lagTap2_0 });
-            (*outUpper) = cur_outUpper;
-            (*outLower) = cur_outLower;
+            lagTap3_0 = if sp.lagCap3 == 0 { lagIn3 } else { lagTap3_0 };
+            cur_outLower = if lagTap2_0 < lagTap3_0 { lagTap2_0 - lagTap3_0 } else { lagTap3_0 - lagTap2_0 };
+            *outUpper = cur_outUpper;
+            *outLower = cur_outLower;
         }
         Ok((outUpper, outLower))
     }

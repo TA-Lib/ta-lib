@@ -409,6 +409,18 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    super::rust_prune::tidy(&generate_untidied(func, enums, registry, helpers))
+}
+
+/// [`generate`] before its locals are tidied: what a test of an emitter sees
+/// when its fixture declares locals it never reads.
+#[allow(clippy::implicit_hasher)]
+pub fn generate_untidied(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
     // Resolve `PRAGMA TA_ALT` for this language (ir::FuncDef::resolved_for).
     let resolved = func.resolved_for(crate::ir::Lang::Rust);
     let func: &FuncDef = &resolved;
@@ -1893,14 +1905,14 @@ pub(crate) fn gen_opt_param_validation_with(
         }
         ParamType::Integer => {
             if let Some(default) = opt.default {
-                out.push_str(&format!("{pad}if (({name}) as i32) == (i32::MIN) {{\n"));
+                out.push_str(&format!("{pad}if {name} == i32::MIN {{\n"));
                 #[allow(clippy::cast_possible_truncation)]
                 let default_i64 = default as i64;
                 out.push_str(&format!("{pad}    {name} = {default_i64};\n"));
 
                 if let Some((lo, hi)) = opt.range {
                     out.push_str(&format!(
-                        "{pad}}} else if ((({name}) as i32) < {lo}) || ((({name}) as i32) > {hi}) {{\n"
+                        "{pad}}} else if {name} < {lo} || {name} > {hi} {{\n"
                     ));
                     out.push_str(&format!("{pad}    {err_return}\n"));
                 }
@@ -3721,7 +3733,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             if rendered.is_empty() {
                 return String::new();
             }
-            return format!("{pad}{rendered};\n");
+            return format!("{pad}{};\n", reindent_tail(&rendered, indent));
         }
         String::new()
     }
@@ -3740,9 +3752,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
                         iter_name.clone()
                     };
                     let end_expr = render_expr(right, self.ctx, self.opt_real_params, self.registry, self.helpers);
-                    let mut out = format!(
-                        "{pad}for {iter_name} in ({start_expr} as usize)..({end_expr} as usize) + 1 {{\n"
-                    );
+                    let start_e = self.var_inits.get(iter_name).map_or_else(|| Expr::Var(iter_name.clone()), |e| (*e).clone());
+                    let start = as_index(&start_e, start_expr, self.ctx);
+                    let end = as_index(right, end_expr, self.ctx);
+                    let mut out = format!("{pad}for {iter_name} in {start}..{end} + 1 {{\n");
                     for s in &while_body[..while_body.len() - 1] {
                         out.push_str(&self.walk_stmt(s, indent + 4));
                     }
@@ -3965,9 +3978,9 @@ impl StatementEmitter for RustStmt<'_, '_> {
                     if is_simple_increment(update, iter_name) {
                         let start_str = render_expr(start_expr, self.ctx, self.opt_real_params, self.registry, self.helpers);
                         let end_str = render_expr(cond_right, self.ctx, self.opt_real_params, self.registry, self.helpers);
-                        let mut out = format!(
-                            "{pad}for {iter_name} in ({start_str} as usize)..({end_str} as usize) + 1 {{\n"
-                        );
+                        let start = as_index(start_expr, start_str, self.ctx);
+                        let end = as_index(cond_right, end_str.clone(), self.ctx);
+                        let mut out = format!("{pad}for {iter_name} in {start}..{end} + 1 {{\n");
                         for s in for_body {
                             out.push_str(&self.walk_stmt(s, indent + 4));
                         }
@@ -3976,7 +3989,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                         // Rust's for-in leaves the variable at the last iteration value.
                         // Fixup so downstream code sees the same post-loop value.
                         out.push_str(&format!(
-                            "{pad}{iter_name} = ({end_str} as usize) + 1;\n"
+                            "{pad}{iter_name} = {end} + 1;\n"
                         ));
                         return out;
                     }
@@ -4607,7 +4620,12 @@ fn render_binop(
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
             let c_str = render_expr(c, ctx, opt_real_params, registry, helpers);
-            return format!("{FMA_CALL}{a_str} as f64, {b_str}, {c_str})");
+            // `fmadd!` calls a method on its first operand, which a literal-only
+            // operand gives no concrete type.
+            let mut named = false;
+            crate::streaming::walk_expr(a, &mut |x| named |= matches!(x, Expr::Var(_) | Expr::ArrayAccess(..)));
+            let a_str = if named && expr_is_float_typed_ctx(a, Some(ctx)) { a_str } else { format!("{a_str} as f64") };
+            return format!("{FMA_CALL}{a_str}, {b_str}, {c_str})");
         }
     }
     // C pointer-identity buffer comparisons (BBANDS' `inReal == outRealUpperBand`,
@@ -5069,6 +5087,11 @@ pub(crate) fn expr_is_untyped_integer(expr: &Expr) -> bool {
         }
         _ => false,
     }
+}
+
+/// A range bound: `rendered` as it stands when `expr` is already a `usize`.
+fn as_index(expr: &Expr, rendered: String, ctx: &RustRenderCtx) -> String {
+    if expr_is_usize(expr, ctx) { rendered } else { format!("(({rendered}) as usize)") }
 }
 
 /// Check if an expression is already usize-typed (to avoid redundant `as usize` casts).
@@ -5780,6 +5803,23 @@ fn render_func_call(
             .collect();
         format!("{}({})", fname, rendered_args.join(", "))
     }
+}
+
+/// A multi-line rendering moved to `indent`: its last line there, the lines
+/// between kept where they sit relative to it. The tidy pass scopes locals by
+/// indentation, so a block written at a fixed depth would misplace them.
+fn reindent_tail(rendered: &str, indent: usize) -> String {
+    let lines: Vec<&str> = rendered.lines().collect();
+    let Some(last) = lines.last().filter(|_| lines.len() > 1) else { return rendered.to_string() };
+    let base = last.len() - last.trim_start().len();
+    let mut out = lines[0].to_string();
+    for l in &lines[1..] {
+        let own = l.len() - l.trim_start().len();
+        out.push('\n');
+        out.push_str(&" ".repeat((own + indent).saturating_sub(base)));
+        out.push_str(l.trim_start());
+    }
+    out
 }
 
 /// Emit a cross-indicator call to the callee's PUBLIC entry point (#267).

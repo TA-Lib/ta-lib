@@ -95,49 +95,49 @@ impl Core {
     #[doc(alias = "TA_KST_Lookback")]
     #[inline]
     pub fn kst_lookback(&self, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA1Period) as i32) == (i32::MIN) {
+        if optInSMA1Period == i32::MIN {
             optInSMA1Period = 10;
-        } else if (((optInSMA1Period) as i32) < 1) || (((optInSMA1Period) as i32) > 100000) {
+        } else if optInSMA1Period < 1 || optInSMA1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA2Period) as i32) == (i32::MIN) {
+        if optInSMA2Period == i32::MIN {
             optInSMA2Period = 10;
-        } else if (((optInSMA2Period) as i32) < 1) || (((optInSMA2Period) as i32) > 100000) {
+        } else if optInSMA2Period < 1 || optInSMA2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA3Period) as i32) == (i32::MIN) {
+        if optInSMA3Period == i32::MIN {
             optInSMA3Period = 10;
-        } else if (((optInSMA3Period) as i32) < 1) || (((optInSMA3Period) as i32) > 100000) {
+        } else if optInSMA3Period < 1 || optInSMA3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA4Period) as i32) == (i32::MIN) {
+        if optInSMA4Period == i32::MIN {
             optInSMA4Period = 15;
-        } else if (((optInSMA4Period) as i32) < 1) || (((optInSMA4Period) as i32) > 100000) {
+        } else if optInSMA4Period < 1 || optInSMA4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut legMax: usize = 0_usize;
@@ -155,7 +155,7 @@ impl Core {
         if leg > legMax {
             legMax = leg;
         }
-        return Ok((legMax + ((optInSignalPeriod) as usize) - 1) as usize);
+        return Ok((legMax + (optInSignalPeriod as usize) - 1) as usize);
     }
     /// Display shift of one output of [`Core::kst`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -190,7 +190,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_KST_DisplayShift")]
-    pub fn kst_display_shift(&self, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn kst_display_shift(&self, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -273,49 +273,49 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSMA1Period) as i32) == (i32::MIN) {
+        if optInSMA1Period == i32::MIN {
             optInSMA1Period = 10;
-        } else if (((optInSMA1Period) as i32) < 1) || (((optInSMA1Period) as i32) > 100000) {
+        } else if optInSMA1Period < 1 || optInSMA1Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSMA2Period) as i32) == (i32::MIN) {
+        if optInSMA2Period == i32::MIN {
             optInSMA2Period = 10;
-        } else if (((optInSMA2Period) as i32) < 1) || (((optInSMA2Period) as i32) > 100000) {
+        } else if optInSMA2Period < 1 || optInSMA2Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSMA3Period) as i32) == (i32::MIN) {
+        if optInSMA3Period == i32::MIN {
             optInSMA3Period = 10;
-        } else if (((optInSMA3Period) as i32) < 1) || (((optInSMA3Period) as i32) > 100000) {
+        } else if optInSMA3Period < 1 || optInSMA3Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSMA4Period) as i32) == (i32::MIN) {
+        if optInSMA4Period == i32::MIN {
             optInSMA4Period = 15;
-        } else if (((optInSMA4Period) as i32) < 1) || (((optInSMA4Period) as i32) > 100000) {
+        } else if optInSMA4Period < 1 || optInSMA4Period > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -323,7 +323,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outKST.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outKSTSignal.len());
-        if (outKST.as_ptr() == outKSTSignal.as_ptr()) {
+        if outKST.as_ptr() == outKSTSignal.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -380,59 +380,59 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         if optInSMA1Period < 1 { return RetCode::InternalError; }
-        if (optInSMA1Period) as usize <= 30usize {
-            ring1 = &mut local_ring1[..(optInSMA1Period) as usize];
+        if optInSMA1Period as usize <= 30usize {
+            ring1 = &mut local_ring1[..optInSMA1Period as usize];
         } else {
             heap_ring1 = vec![0.0_f64; (optInSMA1Period) as usize];
             ring1 = &mut heap_ring1;
         }
         ring1_Idx = 0;
         if optInSMA2Period < 1 { return RetCode::InternalError; }
-        if (optInSMA2Period) as usize <= 30usize {
-            ring2 = &mut local_ring2[..(optInSMA2Period) as usize];
+        if optInSMA2Period as usize <= 30usize {
+            ring2 = &mut local_ring2[..optInSMA2Period as usize];
         } else {
             heap_ring2 = vec![0.0_f64; (optInSMA2Period) as usize];
             ring2 = &mut heap_ring2;
         }
         ring2_Idx = 0;
         if optInSMA3Period < 1 { return RetCode::InternalError; }
-        if (optInSMA3Period) as usize <= 30usize {
-            ring3 = &mut local_ring3[..(optInSMA3Period) as usize];
+        if optInSMA3Period as usize <= 30usize {
+            ring3 = &mut local_ring3[..optInSMA3Period as usize];
         } else {
             heap_ring3 = vec![0.0_f64; (optInSMA3Period) as usize];
             ring3 = &mut heap_ring3;
         }
         ring3_Idx = 0;
         if optInSMA4Period < 1 { return RetCode::InternalError; }
-        if (optInSMA4Period) as usize <= 30usize {
-            ring4 = &mut local_ring4[..(optInSMA4Period) as usize];
+        if optInSMA4Period as usize <= 30usize {
+            ring4 = &mut local_ring4[..optInSMA4Period as usize];
         } else {
             heap_ring4 = vec![0.0_f64; (optInSMA4Period) as usize];
             ring4 = &mut heap_ring4;
         }
         ring4_Idx = 0;
         if optInSignalPeriod < 1 { return RetCode::InternalError; }
-        if (optInSignalPeriod) as usize <= 30usize {
-            sigRing = &mut local_sigRing[..(optInSignalPeriod) as usize];
+        if optInSignalPeriod as usize <= 30usize {
+            sigRing = &mut local_sigRing[..optInSignalPeriod as usize];
         } else {
             heap_sigRing = vec![0.0_f64; (optInSignalPeriod) as usize];
             sigRing = &mut heap_sigRing;
         }
         sigRing_Idx = 0;
-        sigStart = startIdx - (((optInSignalPeriod - 1)) as usize);
+        sigStart = startIdx - ((optInSignalPeriod - 1) as usize);
         sigTotal = 0.0;
         total4 = sigTotal;
         total3 = total4;
         total2 = total3;
         total1 = total2;
-        inIdx = sigStart - (((optInSMA1Period - 1)) as usize);
-        den1 = inIdx - ((optInROC1Period) as usize);
+        inIdx = sigStart - ((optInSMA1Period - 1) as usize);
+        den1 = inIdx - (optInROC1Period as usize);
         if inIdx < sigStart {
             let _wn: usize = sigStart - inIdx;
             if let (Some(_w0), Some(_w1)) = (inReal.get(den1..).and_then(|w| w.get(.._wn)), inReal.get(inIdx..).and_then(|w| w.get(.._wn))) {
@@ -441,18 +441,17 @@ impl Core {
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
                     den1 += 1;
-                    roc = (if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     ring1[ring1_Idx] = roc;
                     ring1_Idx += 1;
                     if ring1_Idx >= ring1.len() { ring1_Idx = 0; }
-                    inIdx += 1;
                 }
             } else {
                 while inIdx < sigStart {
                     prior = inReal[den1];
                     den1 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     ring1[ring1_Idx] = roc;
                     ring1_Idx += 1;
@@ -461,8 +460,8 @@ impl Core {
                 }
             }
         }
-        inIdx = sigStart - (((optInSMA2Period - 1)) as usize);
-        den2 = inIdx - ((optInROC2Period) as usize);
+        inIdx = sigStart - ((optInSMA2Period - 1) as usize);
+        den2 = inIdx - (optInROC2Period as usize);
         if inIdx < sigStart {
             let _wn: usize = sigStart - inIdx;
             if let (Some(_w0), Some(_w1)) = (inReal.get(den2..).and_then(|w| w.get(.._wn)), inReal.get(inIdx..).and_then(|w| w.get(.._wn))) {
@@ -471,18 +470,17 @@ impl Core {
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
                     den2 += 1;
-                    roc = (if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     ring2[ring2_Idx] = roc;
                     ring2_Idx += 1;
                     if ring2_Idx >= ring2.len() { ring2_Idx = 0; }
-                    inIdx += 1;
                 }
             } else {
                 while inIdx < sigStart {
                     prior = inReal[den2];
                     den2 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     ring2[ring2_Idx] = roc;
                     ring2_Idx += 1;
@@ -491,8 +489,8 @@ impl Core {
                 }
             }
         }
-        inIdx = sigStart - (((optInSMA3Period - 1)) as usize);
-        den3 = inIdx - ((optInROC3Period) as usize);
+        inIdx = sigStart - ((optInSMA3Period - 1) as usize);
+        den3 = inIdx - (optInROC3Period as usize);
         if inIdx < sigStart {
             let _wn: usize = sigStart - inIdx;
             if let (Some(_w0), Some(_w1)) = (inReal.get(den3..).and_then(|w| w.get(.._wn)), inReal.get(inIdx..).and_then(|w| w.get(.._wn))) {
@@ -501,18 +499,17 @@ impl Core {
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
                     den3 += 1;
-                    roc = (if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     ring3[ring3_Idx] = roc;
                     ring3_Idx += 1;
                     if ring3_Idx >= ring3.len() { ring3_Idx = 0; }
-                    inIdx += 1;
                 }
             } else {
                 while inIdx < sigStart {
                     prior = inReal[den3];
                     den3 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     ring3[ring3_Idx] = roc;
                     ring3_Idx += 1;
@@ -521,8 +518,8 @@ impl Core {
                 }
             }
         }
-        inIdx = sigStart - (((optInSMA4Period - 1)) as usize);
-        den4 = inIdx - ((optInROC4Period) as usize);
+        inIdx = sigStart - ((optInSMA4Period - 1) as usize);
+        den4 = inIdx - (optInROC4Period as usize);
         if inIdx < sigStart {
             let _wn: usize = sigStart - inIdx;
             if let (Some(_w0), Some(_w1)) = (inReal.get(den4..).and_then(|w| w.get(.._wn)), inReal.get(inIdx..).and_then(|w| w.get(.._wn))) {
@@ -531,18 +528,17 @@ impl Core {
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
                     den4 += 1;
-                    roc = (if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w1[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     ring4[ring4_Idx] = roc;
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
-                    inIdx += 1;
                 }
             } else {
                 while inIdx < sigStart {
                     prior = inReal[den4];
                     den4 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     ring4[ring4_Idx] = roc;
                     ring4_Idx += 1;
@@ -563,7 +559,7 @@ impl Core {
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
                     den1 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     rcma1 = total1 / (optInSMA1Period as f64);
                     ring1[ring1_Idx] = roc;
@@ -572,7 +568,7 @@ impl Core {
                     total1 -= ring1[ring1_Idx];
                     prior = _w1[_wk];
                     den2 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     rcma2 = total2 / (optInSMA2Period as f64);
                     ring2[ring2_Idx] = roc;
@@ -581,7 +577,7 @@ impl Core {
                     total2 -= ring2[ring2_Idx];
                     prior = _w2[_wk];
                     den3 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     rcma3 = total3 / (optInSMA3Period as f64);
                     ring3[ring3_Idx] = roc;
@@ -590,7 +586,7 @@ impl Core {
                     total3 -= ring3[ring3_Idx];
                     prior = _w3[_wk];
                     den4 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     rcma4 = total4 / (optInSMA4Period as f64);
                     ring4[ring4_Idx] = roc;
@@ -608,7 +604,7 @@ impl Core {
                 while inIdx < startIdx {
                     prior = inReal[den1];
                     den1 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     rcma1 = total1 / (optInSMA1Period as f64);
                     ring1[ring1_Idx] = roc;
@@ -617,7 +613,7 @@ impl Core {
                     total1 -= ring1[ring1_Idx];
                     prior = inReal[den2];
                     den2 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     rcma2 = total2 / (optInSMA2Period as f64);
                     ring2[ring2_Idx] = roc;
@@ -626,7 +622,7 @@ impl Core {
                     total2 -= ring2[ring2_Idx];
                     prior = inReal[den3];
                     den3 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     rcma3 = total3 / (optInSMA3Period as f64);
                     ring3[ring3_Idx] = roc;
@@ -635,7 +631,7 @@ impl Core {
                     total3 -= ring3[ring3_Idx];
                     prior = inReal[den4];
                     den4 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     rcma4 = total4 / (optInSMA4Period as f64);
                     ring4[ring4_Idx] = roc;
@@ -664,8 +660,7 @@ impl Core {
                 let _w6 = &mut _w6[.._wn];
                 for _wk in 0.._wn {
                     prior = _w0[_wk];
-                    den1 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     rcma1 = total1 / (optInSMA1Period as f64);
                     ring1[ring1_Idx] = roc;
@@ -673,8 +668,7 @@ impl Core {
                     if ring1_Idx >= ring1.len() { ring1_Idx = 0; }
                     total1 -= ring1[ring1_Idx];
                     prior = _w1[_wk];
-                    den2 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     rcma2 = total2 / (optInSMA2Period as f64);
                     ring2[ring2_Idx] = roc;
@@ -682,8 +676,7 @@ impl Core {
                     if ring2_Idx >= ring2.len() { ring2_Idx = 0; }
                     total2 -= ring2[ring2_Idx];
                     prior = _w2[_wk];
-                    den3 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     rcma3 = total3 / (optInSMA3Period as f64);
                     ring3[ring3_Idx] = roc;
@@ -691,8 +684,7 @@ impl Core {
                     if ring3_Idx >= ring3.len() { ring3_Idx = 0; }
                     total3 -= ring3[ring3_Idx];
                     prior = _w3[_wk];
-                    den4 += 1;
-                    roc = (if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (_w4[_wk] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     rcma4 = total4 / (optInSMA4Period as f64);
                     ring4[ring4_Idx] = roc;
@@ -709,13 +701,12 @@ impl Core {
                     _w5[_wk] = kst;
                     _w6[_wk] = sig;
                     outIdx += 1;
-                    inIdx += 1;
                 }
             } else {
                 while inIdx <= endIdx {
                     prior = inReal[den1];
                     den1 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total1 += roc;
                     rcma1 = total1 / (optInSMA1Period as f64);
                     ring1[ring1_Idx] = roc;
@@ -724,7 +715,7 @@ impl Core {
                     total1 -= ring1[ring1_Idx];
                     prior = inReal[den2];
                     den2 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total2 += roc;
                     rcma2 = total2 / (optInSMA2Period as f64);
                     ring2[ring2_Idx] = roc;
@@ -733,7 +724,7 @@ impl Core {
                     total2 -= ring2[ring2_Idx];
                     prior = inReal[den3];
                     den3 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total3 += roc;
                     rcma3 = total3 / (optInSMA3Period as f64);
                     ring3[ring3_Idx] = roc;
@@ -742,7 +733,7 @@ impl Core {
                     total3 -= ring3[ring3_Idx];
                     prior = inReal[den4];
                     den4 += 1;
-                    roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+                    roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
                     total4 += roc;
                     rcma4 = total4 / (optInSMA4Period as f64);
                     ring4[ring4_Idx] = roc;
@@ -763,8 +754,8 @@ impl Core {
                 }
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four smoothed
@@ -947,10 +938,6 @@ pub struct KstStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct KstStreamState {
-    optInROC1Period: i32,
-    optInROC2Period: i32,
-    optInROC3Period: i32,
-    optInROC4Period: i32,
     optInSMA1Period: i32,
     optInSMA2Period: i32,
     optInSMA3Period: i32,
@@ -983,15 +970,10 @@ struct KstStreamState {
     ringPos_den4: usize,
     ringCap_den4: usize,
     ring_den4_inReal: Vec<f64>,
-    cbSize_ring1: usize,
     cb_ring1: Vec<f64>,
-    cbSize_ring2: usize,
     cb_ring2: Vec<f64>,
-    cbSize_ring3: usize,
     cb_ring3: Vec<f64>,
-    cbSize_ring4: usize,
     cb_ring4: Vec<f64>,
-    cbSize_sigRing: usize,
     cb_sigRing: Vec<f64>,
     cur_outKST: f64,
     cur_outKSTSignal: f64,
@@ -1030,7 +1012,7 @@ impl Core {
             sp.ring_den4_inReal[0] = inReal;
         }
         prior = sp.ring_den1_inReal[sp.ringPos_den1];
-        roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+        roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
         sp.total1 += roc;
         rcma1 = sp.total1 / (sp.optInSMA1Period as f64);
         sp.cb_ring1[sp.ring1_Idx] = roc;
@@ -1040,7 +1022,7 @@ impl Core {
         }
         sp.total1 -= sp.cb_ring1[sp.ring1_Idx];
         prior = sp.ring_den2_inReal[sp.ringPos_den2];
-        roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+        roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
         sp.total2 += roc;
         rcma2 = sp.total2 / (sp.optInSMA2Period as f64);
         sp.cb_ring2[sp.ring2_Idx] = roc;
@@ -1050,7 +1032,7 @@ impl Core {
         }
         sp.total2 -= sp.cb_ring2[sp.ring2_Idx];
         prior = sp.ring_den3_inReal[sp.ringPos_den3];
-        roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+        roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
         sp.total3 += roc;
         rcma3 = sp.total3 / (sp.optInSMA3Period as f64);
         sp.cb_ring3[sp.ring3_Idx] = roc;
@@ -1060,7 +1042,7 @@ impl Core {
         }
         sp.total3 -= sp.cb_ring3[sp.ring3_Idx];
         prior = sp.ring_den4_inReal[sp.ringPos_den4];
-        roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+        roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
         sp.total4 += roc;
         rcma4 = sp.total4 / (sp.optInSMA4Period as f64);
         sp.cb_ring4[sp.ring4_Idx] = roc;
@@ -1078,10 +1060,10 @@ impl Core {
             sp.sigRing_Idx = 0;
         }
         sp.sigTotal -= sp.cb_sigRing[sp.sigRing_Idx];
-        (*outKST) = kst;
-        (*outKSTSignal) = sig;
-        sp.cur_outKST = (*outKST);
-        sp.cur_outKSTSignal = (*outKSTSignal);
+        *outKST = kst;
+        *outKSTSignal = sig;
+        sp.cur_outKST = *outKST;
+        sp.cur_outKSTSignal = *outKSTSignal;
         ringPosL_den1 = sp.ringPos_den1;
         sp.ring_den1_inReal[ringPosL_den1] = inReal;
         ringPosL_den1 = ringPosL_den1 + 1;
@@ -1138,61 +1120,59 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInROC1Period) as i32) == (i32::MIN) {
+        if optInROC1Period == i32::MIN {
             optInROC1Period = 10;
-        } else if (((optInROC1Period) as i32) < 1) || (((optInROC1Period) as i32) > 100000) {
+        } else if optInROC1Period < 1 || optInROC1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC2Period) as i32) == (i32::MIN) {
+        if optInROC2Period == i32::MIN {
             optInROC2Period = 15;
-        } else if (((optInROC2Period) as i32) < 1) || (((optInROC2Period) as i32) > 100000) {
+        } else if optInROC2Period < 1 || optInROC2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC3Period) as i32) == (i32::MIN) {
+        if optInROC3Period == i32::MIN {
             optInROC3Period = 20;
-        } else if (((optInROC3Period) as i32) < 1) || (((optInROC3Period) as i32) > 100000) {
+        } else if optInROC3Period < 1 || optInROC3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInROC4Period) as i32) == (i32::MIN) {
+        if optInROC4Period == i32::MIN {
             optInROC4Period = 30;
-        } else if (((optInROC4Period) as i32) < 1) || (((optInROC4Period) as i32) > 100000) {
+        } else if optInROC4Period < 1 || optInROC4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA1Period) as i32) == (i32::MIN) {
+        if optInSMA1Period == i32::MIN {
             optInSMA1Period = 10;
-        } else if (((optInSMA1Period) as i32) < 1) || (((optInSMA1Period) as i32) > 100000) {
+        } else if optInSMA1Period < 1 || optInSMA1Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA2Period) as i32) == (i32::MIN) {
+        if optInSMA2Period == i32::MIN {
             optInSMA2Period = 10;
-        } else if (((optInSMA2Period) as i32) < 1) || (((optInSMA2Period) as i32) > 100000) {
+        } else if optInSMA2Period < 1 || optInSMA2Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA3Period) as i32) == (i32::MIN) {
+        if optInSMA3Period == i32::MIN {
             optInSMA3Period = 10;
-        } else if (((optInSMA3Period) as i32) < 1) || (((optInSMA3Period) as i32) > 100000) {
+        } else if optInSMA3Period < 1 || optInSMA3Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSMA4Period) as i32) == (i32::MIN) {
+        if optInSMA4Period == i32::MIN {
             optInSMA4Period = 15;
-        } else if (((optInSMA4Period) as i32) < 1) || (((optInSMA4Period) as i32) > 100000) {
+        } else if optInSMA4Period < 1 || optInSMA4Period > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut inIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -1241,78 +1221,78 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInSMA1Period < 1 { return Err(RetCode::InternalError); }
         ring1 = vec![0.0_f64; (optInSMA1Period) as usize];
-        maxIdx_ring1 = ((optInSMA1Period) as usize) - 1;
+        maxIdx_ring1 = (optInSMA1Period as usize) - 1;
         ring1_Idx = 0;
         if optInSMA2Period < 1 { return Err(RetCode::InternalError); }
         ring2 = vec![0.0_f64; (optInSMA2Period) as usize];
-        maxIdx_ring2 = ((optInSMA2Period) as usize) - 1;
+        maxIdx_ring2 = (optInSMA2Period as usize) - 1;
         ring2_Idx = 0;
         if optInSMA3Period < 1 { return Err(RetCode::InternalError); }
         ring3 = vec![0.0_f64; (optInSMA3Period) as usize];
-        maxIdx_ring3 = ((optInSMA3Period) as usize) - 1;
+        maxIdx_ring3 = (optInSMA3Period as usize) - 1;
         ring3_Idx = 0;
         if optInSMA4Period < 1 { return Err(RetCode::InternalError); }
         ring4 = vec![0.0_f64; (optInSMA4Period) as usize];
-        maxIdx_ring4 = ((optInSMA4Period) as usize) - 1;
+        maxIdx_ring4 = (optInSMA4Period as usize) - 1;
         ring4_Idx = 0;
         if optInSignalPeriod < 1 { return Err(RetCode::InternalError); }
         sigRing = vec![0.0_f64; (optInSignalPeriod) as usize];
-        maxIdx_sigRing = ((optInSignalPeriod) as usize) - 1;
+        maxIdx_sigRing = (optInSignalPeriod as usize) - 1;
         sigRing_Idx = 0;
-        sigStart = startIdx - (((optInSignalPeriod - 1)) as usize);
+        sigStart = startIdx - ((optInSignalPeriod - 1) as usize);
         sigTotal = 0.0;
         total4 = sigTotal;
         total3 = total4;
         total2 = total3;
         total1 = total2;
-        inIdx = sigStart - (((optInSMA1Period - 1)) as usize);
-        den1 = inIdx - ((optInROC1Period) as usize);
+        inIdx = sigStart - ((optInSMA1Period - 1) as usize);
+        den1 = inIdx - (optInROC1Period as usize);
         while inIdx < sigStart {
             prior = inReal[den1];
             den1 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total1 += roc;
             ring1[ring1_Idx] = roc;
             ring1_Idx += 1;
             if ring1_Idx > maxIdx_ring1 { ring1_Idx = 0; }
             inIdx += 1;
         }
-        inIdx = sigStart - (((optInSMA2Period - 1)) as usize);
-        den2 = inIdx - ((optInROC2Period) as usize);
+        inIdx = sigStart - ((optInSMA2Period - 1) as usize);
+        den2 = inIdx - (optInROC2Period as usize);
         while inIdx < sigStart {
             prior = inReal[den2];
             den2 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total2 += roc;
             ring2[ring2_Idx] = roc;
             ring2_Idx += 1;
             if ring2_Idx > maxIdx_ring2 { ring2_Idx = 0; }
             inIdx += 1;
         }
-        inIdx = sigStart - (((optInSMA3Period - 1)) as usize);
-        den3 = inIdx - ((optInROC3Period) as usize);
+        inIdx = sigStart - ((optInSMA3Period - 1) as usize);
+        den3 = inIdx - (optInROC3Period as usize);
         while inIdx < sigStart {
             prior = inReal[den3];
             den3 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total3 += roc;
             ring3[ring3_Idx] = roc;
             ring3_Idx += 1;
             if ring3_Idx > maxIdx_ring3 { ring3_Idx = 0; }
             inIdx += 1;
         }
-        inIdx = sigStart - (((optInSMA4Period - 1)) as usize);
-        den4 = inIdx - ((optInROC4Period) as usize);
+        inIdx = sigStart - ((optInSMA4Period - 1) as usize);
+        den4 = inIdx - (optInROC4Period as usize);
         while inIdx < sigStart {
             prior = inReal[den4];
             den4 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total4 += roc;
             ring4[ring4_Idx] = roc;
             ring4_Idx += 1;
@@ -1323,7 +1303,7 @@ impl Core {
         while inIdx < startIdx {
             prior = inReal[den1];
             den1 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total1 += roc;
             rcma1 = total1 / (optInSMA1Period as f64);
             ring1[ring1_Idx] = roc;
@@ -1332,7 +1312,7 @@ impl Core {
             total1 -= ring1[ring1_Idx];
             prior = inReal[den2];
             den2 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total2 += roc;
             rcma2 = total2 / (optInSMA2Period as f64);
             ring2[ring2_Idx] = roc;
@@ -1341,7 +1321,7 @@ impl Core {
             total2 -= ring2[ring2_Idx];
             prior = inReal[den3];
             den3 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total3 += roc;
             rcma3 = total3 / (optInSMA3Period as f64);
             ring3[ring3_Idx] = roc;
@@ -1350,7 +1330,7 @@ impl Core {
             total3 -= ring3[ring3_Idx];
             prior = inReal[den4];
             den4 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total4 += roc;
             rcma4 = total4 / (optInSMA4Period as f64);
             ring4[ring4_Idx] = roc;
@@ -1368,7 +1348,7 @@ impl Core {
         while inIdx <= endIdx {
             prior = inReal[den1];
             den1 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total1 += roc;
             rcma1 = total1 / (optInSMA1Period as f64);
             ring1[ring1_Idx] = roc;
@@ -1377,7 +1357,7 @@ impl Core {
             total1 -= ring1[ring1_Idx];
             prior = inReal[den2];
             den2 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total2 += roc;
             rcma2 = total2 / (optInSMA2Period as f64);
             ring2[ring2_Idx] = roc;
@@ -1386,7 +1366,7 @@ impl Core {
             total2 -= ring2[ring2_Idx];
             prior = inReal[den3];
             den3 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total3 += roc;
             rcma3 = total3 / (optInSMA3Period as f64);
             ring3[ring3_Idx] = roc;
@@ -1395,7 +1375,7 @@ impl Core {
             total3 -= ring3[ring3_Idx];
             prior = inReal[den4];
             den4 += 1;
-            roc = (if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 });
+            roc = if prior != 0.0 { (inReal[inIdx] / prior - 1.0) * 100.0 } else { 0.0 };
             total4 += roc;
             rcma4 = total4 / (optInSMA4Period as f64);
             ring4[ring4_Idx] = roc;
@@ -1409,13 +1389,13 @@ impl Core {
             sigRing_Idx += 1;
             if sigRing_Idx > maxIdx_sigRing { sigRing_Idx = 0; }
             sigTotal -= sigRing[sigRing_Idx];
-            outKST[(outIdx * outStride) as usize] = kst;
-            outKSTSignal[(outIdx * outStride) as usize] = sig;
+            outKST[outIdx * outStride] = kst;
+            outKSTSignal[outIdx * outStride] = sig;
             outIdx += 1;
             inIdx += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_den1: i64 = (inIdx as i64) - (den1 as i64);
@@ -1471,10 +1451,6 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = KstStreamState {
-            optInROC1Period,
-            optInROC2Period,
-            optInROC3Period,
-            optInROC4Period,
             optInSMA1Period,
             optInSMA2Period,
             optInSMA3Period,
@@ -1509,15 +1485,10 @@ impl Core {
             ringPos_den4: 0_usize,
             ringCap_den4: cap_den4 as usize,
             ring_den4_inReal,
-            cbSize_ring1: cbSize_ring1,
             cb_ring1: ring1,
-            cbSize_ring2: cbSize_ring2,
             cb_ring2: ring2,
-            cbSize_ring3: cbSize_ring3,
             cb_ring3: ring3,
-            cbSize_ring4: cbSize_ring4,
             cb_ring4: ring4,
-            cbSize_sigRing: cbSize_sigRing,
             cb_sigRing: sigRing,
         };
         Ok(KstStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -1525,7 +1496,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::kst_open`] (composition seam).
     pub(crate) fn kst_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32,
     ) -> Result<(KstStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1604,7 +1575,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KST_OpenAndFill")]
     pub fn kst_open_and_fill(
-        &self, inReal: &[f64], mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outKST: &mut [f64], outKSTSignal: &mut [f64],
+        &self, inReal: &[f64], optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<(KstStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1626,7 +1597,7 @@ impl Core {
     /// [`Core::kst_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn kst_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<KstStream, RetCode> {
         self.kst_open_impl(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal, 1)
     }
@@ -1718,11 +1689,6 @@ impl KstStream {
             let mut rcma2: f64 = 0.0_f64;
             let mut rcma3: f64 = 0.0_f64;
             let mut rcma4: f64 = 0.0_f64;
-            let mut ring1_Idx = sp.ring1_Idx;
-            let mut ring2_Idx = sp.ring2_Idx;
-            let mut ring3_Idx = sp.ring3_Idx;
-            let mut ring4_Idx = sp.ring4_Idx;
-            let mut sigRing_Idx = sp.sigRing_Idx;
             let mut sigTotal = sp.sigTotal;
             let mut total1 = sp.total1;
             let mut total2 = sp.total2;
@@ -1736,16 +1702,6 @@ impl KstStream {
             let mut pkVal2: f64 = 0.0_f64;
             let mut pkSlot3: usize = usize::MAX;
             let mut pkVal3: f64 = 0.0_f64;
-            let mut pkSlot4: usize = usize::MAX;
-            let mut pkVal4: f64 = 0.0_f64;
-            let mut pkSlot5: usize = usize::MAX;
-            let mut pkVal5: f64 = 0.0_f64;
-            let mut pkSlot6: usize = usize::MAX;
-            let mut pkVal6: f64 = 0.0_f64;
-            let mut pkSlot7: usize = usize::MAX;
-            let mut pkVal7: f64 = 0.0_f64;
-            let mut pkSlot8: usize = usize::MAX;
-            let mut pkVal8: f64 = 0.0_f64;
             if sp.ringCap_den1 == 0 {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
@@ -1762,62 +1718,27 @@ impl KstStream {
                 pkSlot3 = 0;
                 pkVal3 = inReal;
             }
-            prior = (if (sp.ringPos_den1 as usize) != pkSlot0 { sp.ring_den1_inReal[sp.ringPos_den1] } else { pkVal0 });
-            roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+            prior = if (sp.ringPos_den1 as usize) != pkSlot0 { sp.ring_den1_inReal[sp.ringPos_den1] } else { pkVal0 };
+            roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
             total1 += roc;
             rcma1 = total1 / (sp.optInSMA1Period as f64);
-            pkSlot4 = ring1_Idx as usize;
-            pkVal4 = roc;
-            ring1_Idx = ring1_Idx + 1;
-            if ring1_Idx > sp.maxIdx_ring1 {
-                ring1_Idx = 0;
-            }
-            total1 -= (if (ring1_Idx as usize) != pkSlot4 { sp.cb_ring1[ring1_Idx] } else { pkVal4 });
-            prior = (if (sp.ringPos_den2 as usize) != pkSlot1 { sp.ring_den2_inReal[sp.ringPos_den2] } else { pkVal1 });
-            roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+            prior = if (sp.ringPos_den2 as usize) != pkSlot1 { sp.ring_den2_inReal[sp.ringPos_den2] } else { pkVal1 };
+            roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
             total2 += roc;
             rcma2 = total2 / (sp.optInSMA2Period as f64);
-            pkSlot5 = ring2_Idx as usize;
-            pkVal5 = roc;
-            ring2_Idx = ring2_Idx + 1;
-            if ring2_Idx > sp.maxIdx_ring2 {
-                ring2_Idx = 0;
-            }
-            total2 -= (if (ring2_Idx as usize) != pkSlot5 { sp.cb_ring2[ring2_Idx] } else { pkVal5 });
-            prior = (if (sp.ringPos_den3 as usize) != pkSlot2 { sp.ring_den3_inReal[sp.ringPos_den3] } else { pkVal2 });
-            roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+            prior = if (sp.ringPos_den3 as usize) != pkSlot2 { sp.ring_den3_inReal[sp.ringPos_den3] } else { pkVal2 };
+            roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
             total3 += roc;
             rcma3 = total3 / (sp.optInSMA3Period as f64);
-            pkSlot6 = ring3_Idx as usize;
-            pkVal6 = roc;
-            ring3_Idx = ring3_Idx + 1;
-            if ring3_Idx > sp.maxIdx_ring3 {
-                ring3_Idx = 0;
-            }
-            total3 -= (if (ring3_Idx as usize) != pkSlot6 { sp.cb_ring3[ring3_Idx] } else { pkVal6 });
-            prior = (if (sp.ringPos_den4 as usize) != pkSlot3 { sp.ring_den4_inReal[sp.ringPos_den4] } else { pkVal3 });
-            roc = (if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 });
+            prior = if (sp.ringPos_den4 as usize) != pkSlot3 { sp.ring_den4_inReal[sp.ringPos_den4] } else { pkVal3 };
+            roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
             total4 += roc;
             rcma4 = total4 / (sp.optInSMA4Period as f64);
-            pkSlot7 = ring4_Idx as usize;
-            pkVal7 = roc;
-            ring4_Idx = ring4_Idx + 1;
-            if ring4_Idx > sp.maxIdx_ring4 {
-                ring4_Idx = 0;
-            }
-            total4 -= (if (ring4_Idx as usize) != pkSlot7 { sp.cb_ring4[ring4_Idx] } else { pkVal7 });
             kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sig = sigTotal / (sp.optInSignalPeriod as f64);
-            pkSlot8 = sigRing_Idx as usize;
-            pkVal8 = kst;
-            sigRing_Idx = sigRing_Idx + 1;
-            if sigRing_Idx > sp.maxIdx_sigRing {
-                sigRing_Idx = 0;
-            }
-            sigTotal -= (if (sigRing_Idx as usize) != pkSlot8 { sp.cb_sigRing[sigRing_Idx] } else { pkVal8 });
-            (*outKST) = kst;
-            (*outKSTSignal) = sig;
+            *outKST = kst;
+            *outKSTSignal = sig;
         }
         Ok((outKST, outKSTSignal))
     }

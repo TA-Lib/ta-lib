@@ -82,15 +82,13 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_EMV_Lookback")]
     #[inline]
-    pub fn emv_lookback(&self, mut optInTimePeriod: i32, mut optInVolumeDivisor: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn emv_lookback(&self, mut optInTimePeriod: i32, optInVolumeDivisor: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInVolumeDivisor == Self::REAL_DEFAULT {
-            optInVolumeDivisor = 1e4;
-        } else if !((optInVolumeDivisor >= 1e0) && (optInVolumeDivisor <= Self::REAL_MAX)) {
+        if optInVolumeDivisor != Self::REAL_DEFAULT && !((optInVolumeDivisor >= 1e0) && (optInVolumeDivisor <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         return Ok((1 + self.sma_lookback(optInTimePeriod)?) as usize);
@@ -115,7 +113,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_EMV_DisplayShift")]
-    pub fn emv_display_shift(&self, mut optInTimePeriod: i32, mut optInVolumeDivisor: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn emv_display_shift(&self, optInTimePeriod: i32, optInVolumeDivisor: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.emv_lookback(optInTimePeriod, optInVolumeDivisor)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -144,9 +142,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInVolumeDivisor == Self::REAL_DEFAULT {
@@ -183,16 +181,16 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 50usize {
-            rawBuffer = &mut local_rawBuffer[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 50usize {
+            rawBuffer = &mut local_rawBuffer[..optInTimePeriod as usize];
         } else {
             heap_rawBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
             rawBuffer = &mut heap_rawBuffer;
@@ -214,7 +212,7 @@ impl Core {
             range = inHigh[i] - inLow[i];
             raw = 0.0;
             if range != 0.0 {
-                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
+                boxRatio = inVolume[i] / (optInVolumeDivisor as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
@@ -236,7 +234,7 @@ impl Core {
             range = inHigh[i] - inLow[i];
             raw = 0.0;
             if range != 0.0 {
-                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
+                boxRatio = inVolume[i] / (optInVolumeDivisor as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
@@ -256,8 +254,8 @@ impl Core {
             outReal[outIdx] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Ease of Movement: the bar-to-bar move of the high-low midpoint divided by a box ratio of
@@ -431,7 +429,6 @@ struct EmvStreamState {
     prevMid: f64,
     rawBuffer_Idx: usize,
     maxIdx_rawBuffer: usize,
-    cbSize_rawBuffer: usize,
     cb_rawBuffer: Vec<f64>,
     cur_outReal: f64,
 }
@@ -452,7 +449,7 @@ impl Core {
         range = inHigh - inLow;
         raw = 0.0;
         if range != 0.0 {
-            boxRatio = inVolume / ((sp.optInVolumeDivisor) as f64) / range;
+            boxRatio = inVolume / (sp.optInVolumeDivisor as f64) / range;
             if boxRatio != 0.0 {
                 raw = (mid - sp.prevMid) / boxRatio;
             } else {
@@ -470,8 +467,8 @@ impl Core {
             sp.rawBuffer_Idx = 0;
         }
         sp.periodTotal -= sp.cb_rawBuffer[sp.rawBuffer_Idx];
-        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::emv_open_internal`]
@@ -482,9 +479,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInVolumeDivisor == Self::REAL_DEFAULT {
@@ -497,14 +494,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
         let mut prevMid: f64 = 0.0_f64;
         let mut mid: f64 = 0.0_f64;
@@ -526,13 +521,13 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         rawBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_rawBuffer = ((optInTimePeriod) as usize) - 1;
+        maxIdx_rawBuffer = (optInTimePeriod as usize) - 1;
         rawBuffer_Idx = 0;
         // Keep the operand order and sma.c's add / snapshot / subtract order: the
         // composite gate rebuilds this from MEDPRICE, MOM, SUB, DIV and SMA and
@@ -550,7 +545,7 @@ impl Core {
             range = inHigh[i] - inLow[i];
             raw = 0.0;
             if range != 0.0 {
-                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
+                boxRatio = inVolume[i] / (optInVolumeDivisor as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
@@ -572,7 +567,7 @@ impl Core {
             range = inHigh[i] - inLow[i];
             raw = 0.0;
             if range != 0.0 {
-                boxRatio = inVolume[i] / ((optInVolumeDivisor) as f64) / range;
+                boxRatio = inVolume[i] / (optInVolumeDivisor as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
@@ -589,11 +584,11 @@ impl Core {
             rawBuffer_Idx += 1;
             if rawBuffer_Idx > maxIdx_rawBuffer { rawBuffer_Idx = 0; }
             periodTotal -= rawBuffer[rawBuffer_Idx];
-            outReal[(outIdx * outStride) as usize] = tempReal / (optInTimePeriod as f64);
+            outReal[outIdx * outStride] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cbSize_rawBuffer: usize = maxIdx_rawBuffer + 1;
@@ -608,7 +603,6 @@ impl Core {
             rawBuffer_Idx,
             maxIdx_rawBuffer,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_rawBuffer: cbSize_rawBuffer,
             cb_rawBuffer: rawBuffer,
         };
         Ok(EmvStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -616,7 +610,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::emv_open`] (composition seam).
     pub(crate) fn emv_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVolumeDivisor: f64,
+        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, optInVolumeDivisor: f64,
     ) -> Result<(EmvStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -701,7 +695,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_EMV_OpenAndFill")]
     pub fn emv_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, mut optInVolumeDivisor: f64, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], optInTimePeriod: i32, optInVolumeDivisor: f64, outReal: &mut [f64],
     ) -> Result<(EmvStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -723,7 +717,7 @@ impl Core {
     /// [`Core::emv_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn emv_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVolumeDivisor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, optInVolumeDivisor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<EmvStream, RetCode> {
         self.emv_open_impl(inHigh, inLow, inVolume, startIdx, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal, 1)
     }
@@ -796,15 +790,12 @@ impl EmvStream {
             let mut raw: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut periodTotal = sp.periodTotal;
-            let mut prevMid = sp.prevMid;
-            let mut rawBuffer_Idx = sp.rawBuffer_Idx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
+            let prevMid = sp.prevMid;
             mid = (inHigh + inLow) / 2.0;
             range = inHigh - inLow;
             raw = 0.0;
             if range != 0.0 {
-                boxRatio = inVolume / ((sp.optInVolumeDivisor) as f64) / range;
+                boxRatio = inVolume / (sp.optInVolumeDivisor as f64) / range;
                 if boxRatio != 0.0 {
                     raw = (mid - prevMid) / boxRatio;
                 } else {
@@ -813,17 +804,9 @@ impl EmvStream {
             } else {
                 cold_arm();
             }
-            prevMid = mid;
-            pkSlot0 = rawBuffer_Idx as usize;
-            pkVal0 = raw;
             periodTotal += raw;
             tempReal = periodTotal;
-            rawBuffer_Idx = rawBuffer_Idx + 1;
-            if rawBuffer_Idx > sp.maxIdx_rawBuffer {
-                rawBuffer_Idx = 0;
-            }
-            periodTotal -= (if (rawBuffer_Idx as usize) != pkSlot0 { sp.cb_rawBuffer[rawBuffer_Idx] } else { pkVal0 });
-            (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+            *outReal = tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)
     }

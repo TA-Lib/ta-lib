@@ -81,31 +81,28 @@ impl Core {
     #[doc(alias = "TA_MACDV_Lookback")]
     #[inline]
     pub fn macdv_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        let mut tempInteger: usize = 0_usize;
         let mut lookbackLine: usize = 0_usize;
         let mut lookbackATR: usize = 0_usize;
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
         }
         // The line needs the slow EMA and the Average True Range on the same bar,
         // so its first bar is the later of their two lookbacks. Each term is
@@ -138,7 +135,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MACDV_DisplayShift")]
-    pub fn macdv_display_shift(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn macdv_display_shift(&self, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.macdv_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if outputIdx >= 3 {
             return Err(RetCode::BadParam);
@@ -212,19 +209,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.macdv_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -277,9 +274,9 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // ema.c's k and beta for the three EMA, macd.c's spelling.
         slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
@@ -320,8 +317,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -358,38 +355,37 @@ impl Core {
         // Slow EMA.
         today = lineIdx - lookbackSlow;
         tempReal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inClose[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         // Fast EMA.
         today = lineIdx - lookbackFast;
         tempReal = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inClose[{ let _v = today; today += 1; _v }];
         }
-        prevFast = tempReal / ((optInFastPeriod) as f64);
+        prevFast = tempReal / (optInFastPeriod as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
         periodTotal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
             let _w1 = &inHigh[today - 1 + 1..][.._wn];
             let _w2 = &inLow[today - 1 + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempLT = _w2[_wk];
                 tempHT = _w1[_wk];
                 tempCY = _w0[_wk];
@@ -402,11 +398,8 @@ impl Core {
                 periodTotal += greatest;
                 today += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevATR = periodTotal / ((optInSlowPeriod) as f64);
+        prevATR = periodTotal / (optInSlowPeriod as f64);
         if today <= lineIdx {
             let _wn: usize = lineIdx - today + 1;
             let _w0 = &inClose[today - 1..][.._wn];
@@ -422,7 +415,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
                 today += 1;
             }
         }
@@ -434,13 +427,13 @@ impl Core {
         // also bounds |line| for any finite input, which a scale taken from the
         // close cannot, since a close may lie outside its bar and be zero.
         spread = prevFast - prevSlow;
-        bandScale = (prevFast).abs();
-        if (prevSlow).abs() > bandScale {
-            bandScale = (prevSlow).abs();
+        bandScale = prevFast.abs();
+        if prevSlow.abs() > bandScale {
+            bandScale = prevSlow.abs();
         }
         bandScale = bandScale * periodScale;
         lineValue = 0.0;
-        if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+        if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
             lineValue = spread / prevATR * 100.0;
         }
         // Seed the signal EMA with a simple average of the first 'signal period'
@@ -459,23 +452,23 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             prevSignal += lineValue;
             today += 1;
         }
-        prevSignal = prevSignal / ((optInSignalPeriod) as f64);
+        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period of the
         // signal EMA, up to the first output bar.
         while today <= startIdx {
@@ -489,23 +482,23 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * lineValue);
             }
             today += 1;
         }
@@ -525,23 +518,23 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * lineValue);
             }
             outMACDV[outIdx] = lineValue;
             outMACDVSignal[outIdx] = prevSignal;
@@ -550,8 +543,8 @@ impl Core {
             today += 1;
         }
         // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a slow EMA of
@@ -733,8 +726,6 @@ pub struct MacdvStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MacdvStreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
     optInSignalPeriod: i32,
     prevFast: f64,
     prevSlow: f64,
@@ -783,30 +774,30 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
-        sp.prevFast = fmadd!(sp.fastBeta as f64, sp.prevFast, sp.fastK * tempReal);
-        sp.prevSlow = fmadd!(sp.slowBeta as f64, sp.prevSlow, sp.slowK * tempReal);
+        sp.prevATR = fmadd!(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
+        sp.prevFast = fmadd!(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = fmadd!(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
         spread = sp.prevFast - sp.prevSlow;
-        bandScale = (sp.prevFast).abs();
-        if (sp.prevSlow).abs() > bandScale {
-            bandScale = (sp.prevSlow).abs();
+        bandScale = sp.prevFast.abs();
+        if sp.prevSlow.abs() > bandScale {
+            bandScale = sp.prevSlow.abs();
         }
         bandScale = bandScale * sp.periodScale;
         lineValue = 0.0;
-        if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((sp.prevATR).abs() <= 1e-14 * (bandScale))) && sp.prevATR >= 2.2250738585072014e-308 {
+        if !(spread.abs() <= 1e-14 * bandScale) && !(sp.prevATR.abs() <= 1e-14 * bandScale) && sp.prevATR >= 2.2250738585072014e-308 {
             lineValue = spread / sp.prevATR * 100.0;
         }
         if sp.optInSignalPeriod == 1 {
             sp.prevSignal = lineValue;
         } else {
-            sp.prevSignal = fmadd!(sp.signalBeta as f64, sp.prevSignal, sp.signalK * lineValue);
+            sp.prevSignal = fmadd!(sp.signalBeta, sp.prevSignal, sp.signalK * lineValue);
         }
-        (*outMACDV) = lineValue;
-        (*outMACDVSignal) = sp.prevSignal;
-        (*outMACDVHist) = lineValue - sp.prevSignal;
-        sp.cur_outMACDV = (*outMACDV);
-        sp.cur_outMACDVSignal = (*outMACDVSignal);
-        sp.cur_outMACDVHist = (*outMACDVHist);
+        *outMACDV = lineValue;
+        *outMACDVSignal = sp.prevSignal;
+        *outMACDVHist = lineValue - sp.prevSignal;
+        sp.cur_outMACDV = *outMACDV;
+        sp.cur_outMACDVSignal = *outMACDVSignal;
+        sp.cur_outMACDVHist = *outMACDVHist;
         sp.lag1_inClose = inClose;
     }
 
@@ -836,19 +827,19 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
+        if optInFastPeriod == i32::MIN {
             optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
+        } else if optInFastPeriod < 2 || optInFastPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
+        if optInSlowPeriod == i32::MIN {
             optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
+        } else if optInSlowPeriod < 2 || optInSlowPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -856,14 +847,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut prevFast: f64 = 0.0_f64;
         let mut prevSlow: f64 = 0.0_f64;
         let mut prevATR: f64 = 0.0_f64;
@@ -902,9 +891,9 @@ impl Core {
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
             // swap
-            tempInteger = (optInSlowPeriod) as usize;
+            tempInteger = optInSlowPeriod as usize;
             optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
+            optInFastPeriod = tempInteger as i32;
         }
         // ema.c's k and beta for the three EMA, macd.c's spelling.
         slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
@@ -945,8 +934,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Everything is computed in a single lockstep pass: each bar advances the
@@ -980,31 +969,31 @@ impl Core {
         // Slow EMA.
         today = lineIdx - lookbackSlow;
         tempReal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inClose[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         // Fast EMA.
         today = lineIdx - lookbackFast;
         tempReal = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal += inClose[{ let _v = today; today += 1; _v }];
         }
-        prevFast = tempReal / ((optInFastPeriod) as f64);
+        prevFast = tempReal / (optInFastPeriod as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
         periodTotal = 0.0;
-        i = (optInSlowPeriod) as usize;
+        i = optInSlowPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -1018,7 +1007,7 @@ impl Core {
             periodTotal += greatest;
             today += 1;
         }
-        prevATR = periodTotal / ((optInSlowPeriod) as f64);
+        prevATR = periodTotal / (optInSlowPeriod as f64);
         while today <= lineIdx {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -1029,7 +1018,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             today += 1;
         }
         // Without price movement the line answers its neutral point, 0.0 (#570).
@@ -1040,13 +1029,13 @@ impl Core {
         // also bounds |line| for any finite input, which a scale taken from the
         // close cannot, since a close may lie outside its bar and be zero.
         spread = prevFast - prevSlow;
-        bandScale = (prevFast).abs();
-        if (prevSlow).abs() > bandScale {
-            bandScale = (prevSlow).abs();
+        bandScale = prevFast.abs();
+        if prevSlow.abs() > bandScale {
+            bandScale = prevSlow.abs();
         }
         bandScale = bandScale * periodScale;
         lineValue = 0.0;
-        if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+        if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
             lineValue = spread / prevATR * 100.0;
         }
         // Seed the signal EMA with a simple average of the first 'signal period'
@@ -1065,23 +1054,23 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             prevSignal += lineValue;
             today += 1;
         }
-        prevSignal = prevSignal / ((optInSignalPeriod) as f64);
+        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period of the
         // signal EMA, up to the first output bar.
         while today <= startIdx {
@@ -1095,30 +1084,30 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * lineValue);
             }
             today += 1;
         }
         // Stable zone: keep advancing in lockstep and write the three outputs.
-        outMACDV[(0 * outStride) as usize] = lineValue;
-        outMACDVSignal[(0 * outStride) as usize] = prevSignal;
-        outMACDVHist[(0 * outStride) as usize] = lineValue - prevSignal;
+        outMACDV[0] = lineValue;
+        outMACDVSignal[0] = prevSignal;
+        outMACDVHist[0] = lineValue - prevSignal;
         outIdx = 1;
         while today <= endIdx {
             tempLT = inLow[today];
@@ -1131,38 +1120,36 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * lineValue);
             }
-            outMACDV[(outIdx * outStride) as usize] = lineValue;
-            outMACDVSignal[(outIdx * outStride) as usize] = prevSignal;
-            outMACDVHist[(outIdx * outStride) as usize] = lineValue - prevSignal;
+            outMACDV[outIdx * outStride] = lineValue;
+            outMACDVSignal[outIdx * outStride] = prevSignal;
+            outMACDVHist[outIdx * outStride] = lineValue - prevSignal;
             outIdx += 1;
             today += 1;
         }
         // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = MacdvStreamState {
-            optInFastPeriod,
-            optInSlowPeriod,
             optInSignalPeriod,
             prevFast,
             prevSlow,
@@ -1187,7 +1174,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::macdv_open`] (composition seam).
     pub(crate) fn macdv_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32,
     ) -> Result<(MacdvStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1284,7 +1271,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MACDV_OpenAndFill")]
     pub fn macdv_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outMACDV: &mut [f64], outMACDVSignal: &mut [f64], outMACDVHist: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outMACDV: &mut [f64], outMACDVSignal: &mut [f64], outMACDVHist: &mut [f64],
     ) -> Result<(MacdvStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1312,7 +1299,7 @@ impl Core {
     /// [`Core::macdv_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn macdv_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACDV: &mut [f64], outMACDVSignal: &mut [f64], outMACDVHist: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACDV: &mut [f64], outMACDVSignal: &mut [f64], outMACDVHist: &mut [f64],
     ) -> Result<MacdvStream, RetCode> {
         self.macdv_open_impl(inHigh, inLow, inClose, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist, 1)
     }
@@ -1423,27 +1410,27 @@ impl MacdvStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
-            prevFast = fmadd!(sp.fastBeta as f64, prevFast, sp.fastK * tempReal);
-            prevSlow = fmadd!(sp.slowBeta as f64, prevSlow, sp.slowK * tempReal);
+            prevATR = fmadd!(sp.wBeta, prevATR, sp.wAlpha * greatest);
+            prevFast = fmadd!(sp.fastBeta, prevFast, sp.fastK * tempReal);
+            prevSlow = fmadd!(sp.slowBeta, prevSlow, sp.slowK * tempReal);
             spread = prevFast - prevSlow;
-            bandScale = (prevFast).abs();
-            if (prevSlow).abs() > bandScale {
-                bandScale = (prevSlow).abs();
+            bandScale = prevFast.abs();
+            if prevSlow.abs() > bandScale {
+                bandScale = prevSlow.abs();
             }
             bandScale = bandScale * sp.periodScale;
             lineValue = 0.0;
-            if !(((spread).abs() <= 1e-14 * (bandScale))) && !(((prevATR).abs() <= 1e-14 * (bandScale))) && prevATR >= 2.2250738585072014e-308 {
+            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
                 lineValue = spread / prevATR * 100.0;
             }
             if sp.optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = fmadd!(sp.signalBeta as f64, prevSignal, sp.signalK * lineValue);
+                prevSignal = fmadd!(sp.signalBeta, prevSignal, sp.signalK * lineValue);
             }
-            (*outMACDV) = lineValue;
-            (*outMACDVSignal) = prevSignal;
-            (*outMACDVHist) = lineValue - prevSignal;
+            *outMACDV = lineValue;
+            *outMACDVSignal = prevSignal;
+            *outMACDVHist = lineValue - prevSignal;
         }
         Ok((outMACDV, outMACDVSignal, outMACDVHist))
     }

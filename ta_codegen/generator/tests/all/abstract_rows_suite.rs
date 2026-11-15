@@ -245,10 +245,10 @@ TA_RetCode max( int    startIdx,
 
     // The whole cast is wrapped, in every position.
     for needle in [
-        "((dqI[hd]) as usize) < trailingIdx",
-        "trailingIdx + ((dqI[hd]) as usize) < today",
-        "trailingIdx < ((dqI[hd]) as usize)",
-        "highestIdx < ((trailingIdx) as i32)",
+        "(dqI[hd] as usize) < trailingIdx",
+        "trailingIdx + (dqI[hd] as usize) < today",
+        "trailingIdx < (dqI[hd] as usize)",
+        "highestIdx < (trailingIdx as i32)",
     ] {
         assert!(
             out.rust.contains(needle),
@@ -384,7 +384,7 @@ TA_RetCode max( int    startIdx,
     }
 
     // The two that already worked are untouched — no cast appears on either.
-    for needle in ["if hd + 1 < today {", "if trailingIdx + ((dqI[hd]) as usize) < today {"] {
+    for needle in ["if hd + 1 < today {", "if trailingIdx + (dqI[hd] as usize) < today {"] {
         assert!(
             out.rust.contains(needle),
             "Rust output should leave `{needle}` unchanged:\n{}",
@@ -544,7 +544,7 @@ TA_RetCode max( int    startIdx,
          hits += 1;
       kk += (kk & 65535) | (hits << 16);
 
-      outReal[outIdx] = barVal;
+      outReal[outIdx] = barVal + kk;
       outIdx++;
       trailingIdx++;
       today++;

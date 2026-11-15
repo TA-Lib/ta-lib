@@ -82,15 +82,13 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_SUPERTREND_Lookback")]
     #[inline]
-    pub fn supertrend_lookback(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn supertrend_lookback(&self, mut optInTimePeriod: i32, optInMultiplier: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInMultiplier == Self::REAL_DEFAULT {
-            optInMultiplier = 3e0;
-        } else if !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
+        if optInMultiplier != Self::REAL_DEFAULT && !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         // Every output bar needs the Average True Range at the same bar, and nothing
@@ -118,7 +116,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_SUPERTREND_DisplayShift")]
-    pub fn supertrend_display_shift(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn supertrend_display_shift(&self, optInTimePeriod: i32, optInMultiplier: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -186,9 +184,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMultiplier == Self::REAL_DEFAULT {
@@ -227,8 +225,8 @@ impl Core {
         let mut finalLower: f64 = 0.0_f64;
         let mut closeToday: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.supertrend_lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -253,14 +251,13 @@ impl Core {
         wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
             let _w1 = &inHigh[today - 1 + 1..][.._wn];
             let _w2 = &inLow[today - 1 + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempLT = _w2[_wk];
                 tempHT = _w1[_wk];
                 tempCY = _w0[_wk];
@@ -273,14 +270,11 @@ impl Core {
                 periodTotal += greatest;
                 today += 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        prevATR = periodTotal / (optInTimePeriod as f64);
         // Skip the Average True Range's unstable period. Taking the count from the
         // lookback rather than naming the setting keeps the two from disagreeing.
-        i = lookbackTotal - ((optInTimePeriod) as usize);
+        i = lookbackTotal - (optInTimePeriod as usize);
         if i != 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
@@ -296,9 +290,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
-                today += 1;
-                i -= 1;
+                prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             }
         }
         // The first bar has no band to ratchet against and no trend to carry, so
@@ -308,7 +300,7 @@ impl Core {
         // it stays visible for as long as the first trend lasts, and on a series
         // whose close never leaves the band it never washes out at all.
         medianPrice = (inHigh[startIdx] + inLow[startIdx]) / 2.0;
-        band = ((optInMultiplier) as f64) * prevATR;
+        band = (optInMultiplier as f64) * prevATR;
         finalUpper = medianPrice + band;
         finalLower = medianPrice - band;
         isUptrend = 1;
@@ -327,9 +319,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             basicUpper = medianPrice + band;
             basicLower = medianPrice - band;
             // Each band ratchets toward price and is released only by a close on its
@@ -370,8 +362,8 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// An ATR-scaled trailing band that follows price on one side at a time and flips to the other
@@ -544,7 +536,6 @@ pub struct SupertrendStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SupertrendStreamState {
-    optInTimePeriod: i32,
     optInMultiplier: f64,
     isUptrend: usize,
     prevATR: f64,
@@ -585,9 +576,9 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
+        sp.prevATR = fmadd!(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
         medianPrice = (tempHT + tempLT) / 2.0;
-        band = ((sp.optInMultiplier) as f64) * sp.prevATR;
+        band = (sp.optInMultiplier as f64) * sp.prevATR;
         basicUpper = medianPrice + band;
         basicLower = medianPrice - band;
         // Each band ratchets toward price and is released only by a close on its
@@ -618,15 +609,15 @@ impl Core {
             sp.isUptrend = 1;
         }
         if sp.isUptrend != 0 {
-            (*outSupertrend) = sp.finalLower;
-            (*outTrend) = 1;
+            *outSupertrend = sp.finalLower;
+            *outTrend = 1;
         } else {
-            (*outSupertrend) = sp.finalUpper;
-            (*outTrend) = -1;
+            *outSupertrend = sp.finalUpper;
+            *outTrend = -1;
         }
         sp.prevClose = closeToday;
-        sp.cur_outSupertrend = (*outSupertrend);
-        sp.cur_outTrend = (*outTrend);
+        sp.cur_outSupertrend = *outSupertrend;
+        sp.cur_outTrend = *outTrend;
         sp.lag1_inClose = inClose;
     }
 
@@ -656,9 +647,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMultiplier == Self::REAL_DEFAULT {
@@ -671,14 +662,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -702,8 +691,8 @@ impl Core {
         let mut finalLower: f64 = 0.0_f64;
         let mut closeToday: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -725,7 +714,7 @@ impl Core {
         wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -739,10 +728,10 @@ impl Core {
             periodTotal += greatest;
             today += 1;
         }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
+        prevATR = periodTotal / (optInTimePeriod as f64);
         // Skip the Average True Range's unstable period. Taking the count from the
         // lookback rather than naming the setting keeps the two from disagreeing.
-        i = lookbackTotal - ((optInTimePeriod) as usize);
+        i = lookbackTotal - (optInTimePeriod as usize);
         while i != 0 {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -753,7 +742,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -764,13 +753,13 @@ impl Core {
         // it stays visible for as long as the first trend lasts, and on a series
         // whose close never leaves the band it never washes out at all.
         medianPrice = (inHigh[startIdx] + inLow[startIdx]) / 2.0;
-        band = ((optInMultiplier) as f64) * prevATR;
+        band = (optInMultiplier as f64) * prevATR;
         finalUpper = medianPrice + band;
         finalLower = medianPrice - band;
         isUptrend = 1;
         prevClose = inClose[startIdx];
-        outSupertrend[(0 * outStride) as usize] = finalLower;
-        outTrend[(0 * outStride) as usize] = 1;
+        outSupertrend[0] = finalLower;
+        outTrend[0] = 1;
         outIdx = 1;
         today = startIdx + 1;
         while today <= endIdx {
@@ -783,9 +772,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
-            band = ((optInMultiplier) as f64) * prevATR;
+            band = (optInMultiplier as f64) * prevATR;
             basicUpper = medianPrice + band;
             basicLower = medianPrice - band;
             // Each band ratchets toward price and is released only by a close on its
@@ -816,22 +805,21 @@ impl Core {
                 isUptrend = 1;
             }
             if isUptrend != 0 {
-                outSupertrend[(outIdx * outStride) as usize] = finalLower;
-                outTrend[(outIdx * outStride) as usize] = 1;
+                outSupertrend[outIdx * outStride] = finalLower;
+                outTrend[outIdx * outStride] = 1;
             } else {
-                outSupertrend[(outIdx * outStride) as usize] = finalUpper;
-                outTrend[(outIdx * outStride) as usize] = -1;
+                outSupertrend[outIdx * outStride] = finalUpper;
+                outTrend[outIdx * outStride] = -1;
             }
             prevClose = closeToday;
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = SupertrendStreamState {
-            optInTimePeriod,
             optInMultiplier,
             isUptrend,
             prevATR,
@@ -849,7 +837,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::supertrend_open`] (composition seam).
     pub(crate) fn supertrend_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64,
     ) -> Result<(SupertrendStream, (f64, i32)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -939,7 +927,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SUPERTREND_OpenAndFill")]
     pub fn supertrend_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInMultiplier: f64, outSupertrend: &mut [f64], outTrend: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInMultiplier: f64, outSupertrend: &mut [f64], outTrend: &mut [i32],
     ) -> Result<(SupertrendStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -964,7 +952,7 @@ impl Core {
     /// [`Core::supertrend_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn supertrend_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32],
     ) -> Result<SupertrendStream, RetCode> {
         self.supertrend_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1)
     }
@@ -1058,9 +1046,9 @@ impl SupertrendStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
+            prevATR = fmadd!(sp.wBeta, prevATR, sp.wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
-            band = ((sp.optInMultiplier) as f64) * prevATR;
+            band = (sp.optInMultiplier as f64) * prevATR;
             basicUpper = medianPrice + band;
             basicLower = medianPrice - band;
             // Each band ratchets toward price and is released only by a close on its
@@ -1091,11 +1079,11 @@ impl SupertrendStream {
                 isUptrend = 1;
             }
             if isUptrend != 0 {
-                (*outSupertrend) = finalLower;
-                (*outTrend) = 1;
+                *outSupertrend = finalLower;
+                *outTrend = 1;
             } else {
-                (*outSupertrend) = finalUpper;
-                (*outTrend) = -1;
+                *outSupertrend = finalUpper;
+                *outTrend = -1;
             }
         }
         Ok((outSupertrend, outTrend))

@@ -79,9 +79,9 @@ impl Core {
     #[doc(alias = "TA_SKEW_Lookback")]
     #[inline]
     pub fn skew_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 3) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 3 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SKEW_DisplayShift")]
-    pub fn skew_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn skew_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.skew_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -159,9 +159,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 3) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 3 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.skew_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -199,8 +199,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -244,7 +244,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
@@ -253,26 +253,24 @@ impl Core {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 total1 = 0.0;
                 total2 = 0.0;
                 total3 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     dev = inReal[j] - shift;
                     dev2 = dev * dev;
                     total1 += dev;
                     total2 += dev2;
                     total3 += dev2 * dev;
                 }
-                j = (i as usize) + 1;
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -283,18 +281,17 @@ impl Core {
                     total1 = 0.0;
                     total2 = 0.0;
                     total3 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         dev = inReal[j] - shift;
                         dev2 = dev * dev;
                         total1 += dev;
                         total2 += dev2;
                         total3 += dev2 * dev;
                     }
-                    j = (i as usize) + 1;
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 }
                 peak2 = total2;
             }
@@ -302,7 +299,7 @@ impl Core {
             // deviation exactly 0. The bound is the smallest normal double, not a
             // scale: a denominator under it comes with cubed deviations that have
             // lost their precision in the subnormals.
-            denominator = moment2 * (moment2).sqrt();
+            denominator = moment2 * moment2.sqrt();
             if denominator < 2.2250738585072014e-308 {
                 skewness = 0.0;
             } else {
@@ -321,8 +318,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// An estimate, from the trailing window, of the skewness of the distribution its values come
@@ -459,7 +456,6 @@ pub struct SkewStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SkewStreamState {
-    optInTimePeriod: i32,
     shift: f64,
     total1: f64,
     total2: f64,
@@ -506,17 +502,17 @@ impl Core {
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
-        moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
+        moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
         // Each bar rounds the cubic sum by at most eps times the peak second
         // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
         // 1000x before the rebuild at 1% of the peak.
         sp.barsSinceReseed -= 1;
         if moment2 < 0.01 * sp.peak2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = sp.reseedPeriod;
-            windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
+            windowStart = (sp.i - (sp.nbInitialElementNeeded as i32)) as usize;
             tempReal = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.i {
                 tempReal += sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
@@ -526,7 +522,7 @@ impl Core {
             sp.total2 = 0.0;
             sp.total3 = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.i {
                 dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                 dev2 = dev * dev;
@@ -538,7 +534,7 @@ impl Core {
             residue = sp.total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = sp.total2 - sp.dPeriod * residueSq;
-            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
+            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
             // The left-to-right sum can miss the mean by more than the window's
             // spread, and the trigger would then fire again on every bar. Adding
             // the measured miss back lands within about an ulp of the mean, where
@@ -550,7 +546,7 @@ impl Core {
                 sp.total2 = 0.0;
                 sp.total3 = 0.0;
                 // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-                sp.j = (windowStart) as i32;
+                sp.j = windowStart as i32;
                 while sp.j <= sp.i {
                     dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                     dev2 = dev * dev;
@@ -562,7 +558,7 @@ impl Core {
                 residue = sp.total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = sp.total2 - sp.dPeriod * residueSq;
-                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
+                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
             }
             sp.peak2 = sp.total2;
         }
@@ -570,7 +566,7 @@ impl Core {
         // deviation exactly 0. The bound is the smallest normal double, not a
         // scale: a denominator under it comes with cubed deviations that have
         // lost their precision in the subnormals.
-        denominator = moment2 * (moment2).sqrt();
+        denominator = moment2 * moment2.sqrt();
         if denominator < 2.2250738585072014e-308 {
             skewness = 0.0;
         } else {
@@ -584,9 +580,9 @@ impl Core {
         sp.total2 -= dev2;
         sp.total3 -= dev2 * dev;
         sp.trailingIdx += 1;
-        (*outReal) = skewness;
+        *outReal = skewness;
         sp.i += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::skew_open_internal`]
@@ -615,21 +611,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 3) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 3 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
         let mut shift: f64 = 0.0_f64;
         let mut total1: f64 = 0.0_f64;
@@ -660,8 +654,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // G1 = n*sqrt(n-1)/(n-2) * M3 / M2^(3/2), over the central sums M2 and
@@ -704,7 +698,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
@@ -713,26 +707,25 @@ impl Core {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 total1 = 0.0;
                 total2 = 0.0;
                 total3 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     dev = inReal[j] - shift;
                     dev2 = dev * dev;
                     total1 += dev;
                     total2 += dev2;
                     total3 += dev2 * dev;
                 }
-                j = (i as usize) + 1;
+                j = i + 1;
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -743,18 +736,18 @@ impl Core {
                     total1 = 0.0;
                     total2 = 0.0;
                     total3 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         dev = inReal[j] - shift;
                         dev2 = dev * dev;
                         total1 += dev;
                         total2 += dev2;
                         total3 += dev2 * dev;
                     }
-                    j = (i as usize) + 1;
+                    j = i + 1;
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 }
                 peak2 = total2;
             }
@@ -762,7 +755,7 @@ impl Core {
             // deviation exactly 0. The bound is the smallest normal double, not a
             // scale: a denominator under it comes with cubed deviations that have
             // lost their precision in the subnormals.
-            denominator = moment2 * (moment2).sqrt();
+            denominator = moment2 * moment2.sqrt();
             if denominator < 2.2250738585072014e-308 {
                 skewness = 0.0;
             } else {
@@ -776,12 +769,12 @@ impl Core {
             total2 -= dev2;
             total3 -= dev2 * dev;
             trailingIdx += 1;
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = skewness;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = skewness;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -801,7 +794,6 @@ impl Core {
             }
         }
         let state = SkewStreamState {
-            optInTimePeriod,
             shift,
             total1,
             total2,
@@ -810,12 +802,12 @@ impl Core {
             coef,
             invPeriod,
             peak2,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
             reseedPeriod,
-            j: (j) as i32,
-            i: (i) as i32,
+            j: j as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -825,7 +817,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::skew_open`] (composition seam).
     pub(crate) fn skew_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(SkewStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -898,7 +890,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SKEW_OpenAndFill")]
     pub fn skew_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(SkewStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -917,7 +909,7 @@ impl Core {
     /// [`Core::skew_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn skew_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SkewStream, RetCode> {
         self.skew_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1001,7 +993,6 @@ impl SkewStream {
             let mut total1 = sp.total1;
             let mut total2 = sp.total2;
             let mut total3 = sp.total3;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.i & sp.xMask) as usize;
@@ -1015,19 +1006,18 @@ impl SkewStream {
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;
-            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
             barsSinceReseed -= 1;
             if moment2 < 0.01 * peak2 || barsSinceReseed <= 0 {
-                barsSinceReseed = sp.reseedPeriod;
-                windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
+                windowStart = (sp.i - (sp.nbInitialElementNeeded as i32)) as usize;
                 tempReal = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.i {
-                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempReal += if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
@@ -1035,7 +1025,7 @@ impl SkewStream {
                 total2 = 0.0;
                 total3 = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.i {
                     dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     dev2 = dev * dev;
@@ -1047,7 +1037,7 @@ impl SkewStream {
                 residue = total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - sp.dPeriod * residueSq;
-                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -1059,7 +1049,7 @@ impl SkewStream {
                     total2 = 0.0;
                     total3 = 0.0;
                     // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                    j = (windowStart) as i32;
+                    j = windowStart as i32;
                     while j <= sp.i {
                         dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                         dev2 = dev * dev;
@@ -1071,15 +1061,14 @@ impl SkewStream {
                     residue = total1 * sp.invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - sp.dPeriod * residueSq;
-                    moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
                 }
-                peak2 = total2;
             }
             // A window of equal values is symmetric, and reaches here with every
             // deviation exactly 0. The bound is the smallest normal double, not a
             // scale: a denominator under it comes with cubed deviations that have
             // lost their precision in the subnormals.
-            denominator = moment2 * (moment2).sqrt();
+            denominator = moment2 * moment2.sqrt();
             if denominator < 2.2250738585072014e-308 {
                 skewness = 0.0;
             } else {
@@ -1087,13 +1076,7 @@ impl SkewStream {
             }
             // inReal and outReal may be the same buffer: read the trailing value
             // before the output write.
-            dev = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shift;
-            dev2 = dev * dev;
-            total1 -= dev;
-            total2 -= dev2;
-            total3 -= dev2 * dev;
-            trailingIdx += 1;
-            (*outReal) = skewness;
+            *outReal = skewness;
         }
         Ok(outReal)
     }

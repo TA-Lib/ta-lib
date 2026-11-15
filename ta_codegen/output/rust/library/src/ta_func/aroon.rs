@@ -80,12 +80,12 @@ impl Core {
     #[doc(alias = "TA_AROON_Lookback")]
     #[inline]
     pub fn aroon_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::aroon`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_AROON_DisplayShift")]
-    pub fn aroon_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn aroon_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.aroon_lookback(optInTimePeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -131,9 +131,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.aroon_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -142,7 +142,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonDown.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonUp.len());
-        if (outAroonDown.as_ptr() == outAroonUp.as_ptr()) {
+        if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -163,13 +163,13 @@ impl Core {
         // and this function will become easier to understand.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -179,7 +179,7 @@ impl Core {
         // output to be the same buffer.
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         lowestIdx = -1;
         highestIdx = -1;
         lowest = 0.0;
@@ -188,50 +188,50 @@ impl Core {
         while today <= endIdx {
             // Keep track of the lowestIdx
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp <= lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Keep track of the highestIdx
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp >= highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             // Note: Do not forget that input and output buffer can be the same,
             //       so writing to the output is the last thing being done here.
-            outAroonUp[outIdx] = factor * (((optInTimePeriod - (((today) as i32) - highestIdx))) as f64);
-            outAroonDown[outIdx] = factor * (((optInTimePeriod - (((today) as i32) - lowestIdx))) as f64);
+            outAroonUp[outIdx] = factor * ((optInTimePeriod - ((today as i32) - highestIdx)) as f64);
+            outAroonDown[outIdx] = factor * ((optInTimePeriod - ((today as i32) - lowestIdx)) as f64);
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Aroon reports how recently the highest high and lowest low occurred within a rolling window
@@ -441,12 +441,12 @@ impl Core {
         }
         // Note: Do not forget that input and output buffer can be the same,
         //       so writing to the output is the last thing being done here.
-        (*outAroonUp) = sp.factor * (((sp.optInTimePeriod - (sp.today - sp.highestIdx))) as f64);
-        (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (sp.today - sp.lowestIdx))) as f64);
+        *outAroonUp = sp.factor * ((sp.optInTimePeriod - (sp.today - sp.highestIdx)) as f64);
+        *outAroonDown = sp.factor * ((sp.optInTimePeriod - (sp.today - sp.lowestIdx)) as f64);
         sp.trailingIdx += 1;
         sp.today += 1;
-        sp.cur_outAroonDown = (*outAroonDown);
-        sp.cur_outAroonUp = (*outAroonUp);
+        sp.cur_outAroonDown = *outAroonDown;
+        sp.cur_outAroonUp = *outAroonUp;
     }
 
     /// The single whole-history transcription behind [`Core::aroon_open_internal`]
@@ -457,9 +457,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -467,14 +467,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
@@ -492,13 +490,13 @@ impl Core {
         // and this function will become easier to understand.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
@@ -506,7 +504,7 @@ impl Core {
         // output to be the same buffer.
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         lowestIdx = -1;
         highestIdx = -1;
         lowest = 0.0;
@@ -515,50 +513,50 @@ impl Core {
         while today <= endIdx {
             // Keep track of the lowestIdx
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp <= lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Keep track of the highestIdx
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp >= highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             // Note: Do not forget that input and output buffer can be the same,
             //       so writing to the output is the last thing being done here.
-            outAroonUp[(outIdx * outStride) as usize] = factor * (((optInTimePeriod - (((today) as i32) - highestIdx))) as f64);
-            outAroonDown[(outIdx * outStride) as usize] = factor * (((optInTimePeriod - (((today) as i32) - lowestIdx))) as f64);
+            outAroonUp[outIdx * outStride] = factor * ((optInTimePeriod - ((today as i32) - highestIdx)) as f64);
+            outAroonDown[outIdx * outStride] = factor * ((optInTimePeriod - ((today as i32) - lowestIdx)) as f64);
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -584,11 +582,11 @@ impl Core {
             lowest,
             highest,
             factor,
-            trailingIdx: (trailingIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            highestIdx: highestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outAroonDown: outAroonDown[(*outNBElement - 1) * outStride],
             cur_outAroonUp: outAroonUp[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
@@ -600,7 +598,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::aroon_open`] (composition seam).
     pub(crate) fn aroon_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(AroonStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -685,7 +683,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AROON_OpenAndFill")]
     pub fn aroon_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<(AroonStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -710,7 +708,7 @@ impl Core {
     /// [`Core::aroon_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn aroon_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<AroonStream, RetCode> {
         self.aroon_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
     }
@@ -795,13 +793,13 @@ impl AroonStream {
             pkSlot1 = (sp.today & sp.xMask) as usize;
             pkVal1 = inLow;
             // Keep track of the lowestIdx
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 };
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     if tmp <= lowest {
                         lowestIdx = i;
                         lowest = tmp;
@@ -809,16 +807,15 @@ impl AroonStream {
                 }
             } else if tmp <= lowest {
                 lowestIdx = sp.today;
-                lowest = tmp;
             }
             // Keep track of the highestIdx
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmp >= highest {
                         highestIdx = i;
                         highest = tmp;
@@ -826,12 +823,11 @@ impl AroonStream {
                 }
             } else if tmp >= highest {
                 highestIdx = sp.today;
-                highest = tmp;
             }
             // Note: Do not forget that input and output buffer can be the same,
             //       so writing to the output is the last thing being done here.
-            (*outAroonUp) = sp.factor * (((sp.optInTimePeriod - (sp.today - highestIdx))) as f64);
-            (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (sp.today - lowestIdx))) as f64);
+            *outAroonUp = sp.factor * ((sp.optInTimePeriod - (sp.today - highestIdx)) as f64);
+            *outAroonDown = sp.factor * ((sp.optInTimePeriod - (sp.today - lowestIdx)) as f64);
         }
         Ok((outAroonDown, outAroonUp))
     }

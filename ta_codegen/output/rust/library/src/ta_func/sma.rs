@@ -80,9 +80,9 @@ impl Core {
     #[doc(alias = "TA_SMA_Lookback")]
     #[inline]
     pub fn sma_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -104,7 +104,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SMA_DisplayShift")]
-    pub fn sma_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn sma_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.sma_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -130,9 +130,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.sma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -156,8 +156,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -183,17 +183,15 @@ impl Core {
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
                 periodTotal += _w0[_wk] as f64;
-                i = i + 1;
                 tempReal = periodTotal;
                 periodTotal -= _w1[_wk] as f64;
-                trailingIdx = trailingIdx + 1;
                 _w2[_wk] = tempReal / (optInTimePeriod as f64);
                 outIdx = outIdx + 1;
             }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to
@@ -339,8 +337,8 @@ impl Core {
         sp.periodTotal += inReal as f64;
         tempReal = sp.periodTotal;
         sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] as f64;
-        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = *outReal;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
@@ -355,8 +353,8 @@ impl Core {
         sp.periodTotal += inReal as f64;
         tempReal = sp.periodTotal;
         sp.periodTotal -= tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] as f64;
-        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
-        sp.cur_outReal = (*outReal);
+        *outReal = tempReal / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::sma_open_internal`]
@@ -367,21 +365,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -398,8 +394,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Do the MA calculation using tight loops.
@@ -423,12 +419,12 @@ impl Core {
             tempReal = periodTotal;
             periodTotal -= inReal[trailingIdx] as f64;
             trailingIdx = trailingIdx + 1;
-            outReal[(outIdx * outStride) as usize] = tempReal / (optInTimePeriod as f64);
+            outReal[outIdx * outStride] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
@@ -452,7 +448,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::sma_open`] (composition seam).
     pub(crate) fn sma_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(SmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -525,7 +521,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SMA_OpenAndFill")]
     pub fn sma_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(SmaStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -544,7 +540,7 @@ impl Core {
     /// [`Core::sma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn sma_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SmaStream, RetCode> {
         self.sma_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -613,16 +609,9 @@ impl SmaStream {
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
             let mut periodTotal = sp.periodTotal;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            if sp.ringCap_trailingIdx == 0 {
-                pkSlot0 = 0;
-                pkVal0 = inReal;
-            }
             periodTotal += inReal as f64;
             tempReal = periodTotal;
-            periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
-            (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+            *outReal = tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)
     }
@@ -693,21 +682,16 @@ impl SmaStream {
         outReal
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
         let mut outReal: f64 = 0.0_f64;
         {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
             let mut periodTotal = sp.periodTotal;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            pkSlot0 = (tapeBase & tapeMask) as usize;
-            pkVal0 = inReal;
             periodTotal += inReal as f64;
             tempReal = periodTotal;
-            periodTotal -= (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 }) as f64;
-            (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+            *outReal = tempReal / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)
     }

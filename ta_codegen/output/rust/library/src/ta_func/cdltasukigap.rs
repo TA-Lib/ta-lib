@@ -72,12 +72,7 @@ impl Core {
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDLTASUKIGAP_Lookback")]
     pub fn cdltasukigap_lookback(&self) -> Result<usize, RetCode> {
-        #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
         return Ok((Near_avgPeriod + 2) as usize);
     }
     /// Display shift of one output of [`Core::cdltasukigap`]: how many bars ahead (positive) or
@@ -134,11 +129,8 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut NearTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
@@ -150,8 +142,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inOpen = &inOpen[..=endIdx];
@@ -162,7 +154,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -172,7 +164,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 0 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -188,11 +180,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 0 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -234,22 +225,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -258,28 +249,27 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
-                        NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) + // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -288,7 +278,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -296,22 +286,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -320,21 +310,21 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else if Near_rangeType == 1 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -344,7 +334,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 1 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -360,11 +350,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 1 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -406,22 +395,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -430,28 +419,27 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
-                        NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) + // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -460,7 +448,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -468,22 +456,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -492,21 +480,21 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else if Near_rangeType == 2 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -516,7 +504,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match 2 {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -532,11 +520,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match 2 {
                             0 => {
                                 _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -578,22 +565,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -602,28 +589,27 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
-                        NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) + // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -632,7 +618,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -640,22 +626,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -664,21 +650,21 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         } else {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -688,7 +674,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_0: f64;
+                        let _candlerange_0: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_0 = (_w0[_wk] - _w3[_wk]).abs();
@@ -704,11 +690,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_0;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_1: f64;
+                        let _candlerange_1: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -750,22 +735,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -774,28 +759,27 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
-                        NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) + // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -804,7 +788,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -812,22 +796,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -836,15 +820,15 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         }
     }
@@ -1022,13 +1006,10 @@ struct CdltasukigapStreamState {
 impl Core {
     fn cdltasukigap_step_impl(sp: &mut CdltasukigapStreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut ringPosL_NearTrailingIdx: usize = 0_usize;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = cs_near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = cs_near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = cs_near.factor;
-        let mut _candlerange_0: f64;
+        let _candlerange_0: f64;
         match Near_rangeType {
             0 => {
                 _candlerange_0 = (inClose - inOpen).abs();
@@ -1052,11 +1033,11 @@ impl Core {
                inOpen > sp.lag1_inOpen &&                          // that opens within the white rb
                inClose < sp.lag1_inOpen &&                         // and closes under the white rb
                inClose > c_max(sp.lag2_inClose, sp.lag2_inOpen) && // inside the gap
-               ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
+               ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => sp.lag1_inHigh - sp.lag1_inLow, 2 => (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
             {
-                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+                *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         } else if ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // downside gap
            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // 1st: black
@@ -1066,18 +1047,18 @@ impl Core {
                inOpen > sp.lag1_inClose &&                         // that opens within the black rb
                inClose > sp.lag1_inOpen &&                         // and closes above the black rb
                inClose < c_min(sp.lag2_inClose, sp.lag2_inOpen) && // inside the gap
-               ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
+               ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => sp.lag1_inHigh - sp.lag1_inLow, 2 => (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
             {
-                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+                *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         } else {
-            (*outInteger) = 0;
+            *outInteger = 0;
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        let mut _candlerange_1: f64;
+        let _candlerange_1: f64;
         match Near_rangeType {
             0 => {
                 _candlerange_1 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
@@ -1093,7 +1074,7 @@ impl Core {
             }
         }
         sp.NearPeriodTotal += _candlerange_1 - sp.ring_NearTrailingIdx_derived[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) as usize];
-        sp.cur_outInteger = (*outInteger);
+        sp.cur_outInteger = *outInteger;
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
@@ -1122,8 +1103,8 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if outStride == 0 {
@@ -1141,18 +1122,13 @@ impl Core {
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut NearPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut NearTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
@@ -1164,15 +1140,15 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if Near_rangeType == 0 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -1182,7 +1158,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_2: f64;
+                        let _candlerange_2: f64;
                         match 0 {
                             0 => {
                                 _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1198,11 +1174,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_2;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_3: f64;
+                        let _candlerange_3: f64;
                         match 0 {
                             0 => {
                                 _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -1247,7 +1222,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
@@ -1256,28 +1231,28 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 }
             }
-            if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+            if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                     (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                    (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-            } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+            } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                     (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                    (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
             } else {
@@ -1286,12 +1261,12 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+            NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
             i += 1;
             NearTrailingIdx += 1;
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1304,7 +1279,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1327,7 +1302,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -1337,7 +1312,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_2: f64;
+                        let _candlerange_2: f64;
                         match 1 {
                             0 => {
                                 _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1353,11 +1328,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_2;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_3: f64;
+                        let _candlerange_3: f64;
                         match 1 {
                             0 => {
                                 _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -1402,7 +1376,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
@@ -1411,28 +1385,28 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 }
             }
-            if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+            if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                     (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                    (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-            } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+            } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                     (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                    (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
             } else {
@@ -1441,12 +1415,12 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+            NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
             i += 1;
             NearTrailingIdx += 1;
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1459,7 +1433,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1482,7 +1456,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -1492,7 +1466,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_2: f64;
+                        let _candlerange_2: f64;
                         match 2 {
                             0 => {
                                 _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1508,11 +1482,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_2;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_3: f64;
+                        let _candlerange_3: f64;
                         match 2 {
                             0 => {
                                 _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -1557,7 +1530,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
@@ -1566,28 +1539,28 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 }
             }
-            if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+            if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                     (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                    (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-            } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+            } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                     (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                    (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
             } else {
@@ -1596,12 +1569,12 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+            NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
             i += 1;
             NearTrailingIdx += 1;
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1614,7 +1587,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1637,7 +1610,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -1647,7 +1620,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_2: f64;
+                        let _candlerange_2: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1663,11 +1636,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_2;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_3: f64;
+                        let _candlerange_3: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -1712,7 +1684,7 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((_w1[_wk] - _w7[_wk]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk]), (_w7[_wk]))) + (c_color_min!((_w1[_wk]), (_w7[_wk])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
@@ -1721,28 +1693,28 @@ impl Core {
                         outIdx += 1;
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 }
             }
-            if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+            if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                     (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                    (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-            } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+            } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                 outInteger[0] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                     (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                    (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                    ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                    (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                     ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
             } else {
@@ -1751,12 +1723,12 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+            NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
             i += 1;
             NearTrailingIdx += 1;
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -1769,7 +1741,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -1798,18 +1770,13 @@ impl Core {
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut NearPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut NearTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
-        #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
@@ -1821,15 +1788,15 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if Near_rangeType == 0 {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -1839,7 +1806,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_4: f64;
+                        let _candlerange_4: f64;
                         match 0 {
                             0 => {
                                 _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
@@ -1855,11 +1822,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_4;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_5: f64;
+                        let _candlerange_5: f64;
                         match 0 {
                             0 => {
                                 _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -1901,22 +1867,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -1925,28 +1891,28 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -1955,7 +1921,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -1963,22 +1929,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 0 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 0 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -1987,15 +1953,15 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 0 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2008,7 +1974,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2031,7 +1997,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -2041,7 +2007,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_4: f64;
+                        let _candlerange_4: f64;
                         match 1 {
                             0 => {
                                 _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
@@ -2057,11 +2023,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_4;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_5: f64;
+                        let _candlerange_5: f64;
                         match 1 {
                             0 => {
                                 _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -2103,22 +2068,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2127,28 +2092,28 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2157,7 +2122,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -2165,22 +2130,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 1 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 1 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -2189,15 +2154,15 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 1 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2210,7 +2175,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2233,7 +2198,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -2243,7 +2208,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_4: f64;
+                        let _candlerange_4: f64;
                         match 2 {
                             0 => {
                                 _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
@@ -2259,11 +2224,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_4;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_5: f64;
+                        let _candlerange_5: f64;
                         match 2 {
                             0 => {
                                 _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -2305,22 +2269,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2329,28 +2293,28 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2359,7 +2323,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -2367,22 +2331,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match 2 { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if 2 == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -2391,15 +2355,15 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match 2 { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2412,7 +2376,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2435,7 +2399,7 @@ impl Core {
             // Do the calculation using tight loops.
             // Add-up the initial period, except for the last value.
             NearPeriodTotal = 0.0;
-            NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+            NearTrailingIdx = startIdx - (Near_avgPeriod as usize);
             i = NearTrailingIdx;
             if i < startIdx {
                 let _wn: usize = startIdx - i;
@@ -2445,7 +2409,7 @@ impl Core {
                     let _w2 = &_w2[.._wn];
                     let _w3 = &_w3[.._wn];
                     for _wk in 0.._wn {
-                        let mut _candlerange_4: f64;
+                        let _candlerange_4: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
@@ -2461,11 +2425,10 @@ impl Core {
                             }
                         }
                         NearPeriodTotal += _candlerange_4;
-                        i += 1;
                     }
                 } else {
                     while i < startIdx {
-                        let mut _candlerange_5: f64;
+                        let _candlerange_5: f64;
                         match Near_rangeType {
                             0 => {
                                 _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
@@ -2507,22 +2470,22 @@ impl Core {
                     let _w6 = &_w6[.._wn];
                     let _w7 = &_w7[.._wn + 2];
                     for _wk in 0.._wn {
-                        if ((u32::from((((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])))) + // upside gap
-                            u32::from((_w1[_wk + 1] >= _w7[_wk + 1])) + // 1st: white
-                            u32::from((!(_w1[_wk + 2] >= _w7[_wk + 2])))) == 3) { // 2nd: black
+                        if ((u32::from((_w7[_wk + 1] > _w7[_wk]) & (_w7[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w7[_wk]) & (_w1[_wk + 1] > _w1[_wk])) + // upside gap
+                            u32::from(_w1[_wk + 1] >= _w7[_wk + 1]) + // 1st: white
+                            u32::from(!(_w1[_wk + 2] >= _w7[_wk + 2]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2531,28 +2494,28 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((_w1[_wk + 1]) - (_w7[_wk + 1])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - (_w5[_wk]))) - (((_w2[_wk]) - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - (_w4[_wk]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((_w1[_wk + 1] - _w7[_wk + 1]).abs()) - ((_w0[_wk] - _w6[_wk]).abs()), 1 => (_w3[_wk] - _w5[_wk]) - (_w2[_wk] - _w4[_wk]), 2 => ((_w3[_wk] - c_color_max!((_w1[_wk + 1]), (_w7[_wk + 1]))) + (c_color_min!((_w1[_wk + 1]), (_w7[_wk + 1])) - _w5[_wk])) - ((_w2[_wk] - c_color_max!((_w0[_wk]), (_w6[_wk]))) + (c_color_min!((_w0[_wk]), (_w6[_wk])) - _w4[_wk])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                     }
                 } else {
                     loop {
-                        if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                            u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                            u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                        if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                            u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                            u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                                 (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                                (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
-                        } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                            u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                            u32::from((inClose[i] >= inOpen[i]))) == 3) { // 2nd: white
+                        } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                            u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                            u32::from(inClose[i] >= inOpen[i])) == 3) { // 2nd: white
                             outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                                 (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                                (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                                ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                                (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                                 ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                             outIdx += 1;
                         } else {
@@ -2561,7 +2524,7 @@ impl Core {
                         }
                         // add the current range and subtract the first range: this is done after the pattern recognition
                         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                        NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                        NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                         i += 1;
                         NearTrailingIdx += 1;
                         if !(i <= endIdx) { break; }
@@ -2569,22 +2532,22 @@ impl Core {
                 }
             } else {
                 loop {
-                    if ((u32::from((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) + // upside gap
-                        u32::from((inClose[i - 1] >= inOpen[i - 1])) +   // 1st: white
-                        u32::from((!(inClose[i] >= inOpen[i])))) == 3) { // 2nd: black
+                    if ((u32::from((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])) + // upside gap
+                        u32::from(inClose[i - 1] >= inOpen[i - 1]) +   // 1st: white
+                        u32::from(!(inClose[i] >= inOpen[i]))) == 3) { // 2nd: black
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & // that opens within the white rb
                             (inClose[i] < inOpen[i - 1]) & // and closes under the white rb
-                            (((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
-                    } else if ((u32::from((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) + // downside gap
-                        u32::from((!(inClose[i - 1] >= inOpen[i - 1]))) + // 1st: black
-                        u32::from((inClose[i] >= inOpen[i]))) == 3) {     // 2nd: white
+                    } else if ((u32::from((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])) + // downside gap
+                        u32::from(!(inClose[i - 1] >= inOpen[i - 1])) + // 1st: black
+                        u32::from(inClose[i] >= inOpen[i])) == 3) {     // 2nd: white
                         outInteger[outIdx] = std::hint::select_unpredictable(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & // that opens within the black rb
                             (inClose[i] > inOpen[i - 1]) & // and closes above the black rb
-                            (((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2]))) & // inside the gap
-                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1])), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
+                            ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & // inside the gap
+                            (((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => inHigh[i - 1] - inLow[i - 1], 2 => (inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1]), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })))), // size of 2 rb near the same
                             ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
                         outIdx += 1;
                     } else {
@@ -2593,15 +2556,15 @@ impl Core {
                     }
                     // add the current range and subtract the first range: this is done after the pattern recognition
                     // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                    NearPeriodTotal += (match Near_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[NearTrailingIdx - 1]) - (inOpen[NearTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1]) - (inLow[NearTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - (inLow[i - 1]))) - (((inHigh[NearTrailingIdx - 1]) - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - (inLow[NearTrailingIdx - 1]))), _ => 0.0 });
+                    NearPeriodTotal += match Near_rangeType { 0 => ((inClose[i - 1] - inOpen[i - 1]).abs()) - ((inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs()), 1 => (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]), 2 => ((inHigh[i - 1] - c_color_max!((inClose[i - 1]), (inOpen[i - 1]))) + (c_color_min!((inClose[i - 1]), (inOpen[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - c_color_max!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1]))) + (c_color_min!((inClose[NearTrailingIdx - 1]), (inOpen[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])), _ => 0.0 };
                     i += 1;
                     NearTrailingIdx += 1;
                     if !(i <= endIdx) { break; }
                 }
             }
             // All done. Indicate the output limits and return.
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
+            *outNBElement = outIdx;
+            *outBegIdx = startIdx;
 
             // Capture the live batch state into the handle.
             let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
@@ -2614,7 +2577,7 @@ impl Core {
             {
                 let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
                 while fillJ < historyLen {
-                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - c_color_max!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize]))) + (c_color_min!((inClose[(fillJ) as usize]), (inOpen[(fillJ) as usize])) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = match Near_rangeType { 0 => (inClose[fillJ] - inOpen[fillJ]).abs(), 1 => inHigh[fillJ] - inLow[fillJ], 2 => (inHigh[fillJ] - c_color_max!((inClose[fillJ]), (inOpen[fillJ]))) + (c_color_min!((inClose[fillJ]), (inOpen[fillJ])) - inLow[fillJ]), _ => 0.0 };
                     fillJ += 1;
                 }
             }
@@ -2817,11 +2780,8 @@ impl CdltasukigapStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            #[allow(non_snake_case)]
             let Near_rangeType: i32 = self.cs_near.range_type as i32;
-            #[allow(non_snake_case)]
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
-            #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
             if ((if c_min(sp.lag1_inOpen, sp.lag1_inClose) > c_max(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // upside gap
                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == 1 && // 1st: white
@@ -2831,11 +2791,11 @@ impl CdltasukigapStream {
                    inOpen > sp.lag1_inOpen &&                          // that opens within the white rb
                    inClose < sp.lag1_inOpen &&                         // and closes under the white rb
                    inClose > c_max(sp.lag2_inClose, sp.lag2_inOpen) && // inside the gap
-                   ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
+                   ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => sp.lag1_inHigh - sp.lag1_inLow, 2 => (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
                 {
-                    (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+                    *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
                 } else {
-                    (*outInteger) = 0;
+                    *outInteger = 0;
                 }
             } else if ((if c_max(sp.lag1_inOpen, sp.lag1_inClose) < c_min(sp.lag2_inOpen, sp.lag2_inClose) { 1 } else { 0 }) != 0) && // downside gap
                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) == -1 && // 1st: black
@@ -2845,14 +2805,14 @@ impl CdltasukigapStream {
                    inOpen > sp.lag1_inClose &&                         // that opens within the black rb
                    inClose > sp.lag1_inOpen &&                         // and closes above the black rb
                    inClose < c_min(sp.lag2_inClose, sp.lag2_inOpen) && // inside the gap
-                   ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (Near_rangeType) == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
+                   ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < (Near_factor * (if Near_avgPeriod != 0 { sp.NearPeriodTotal / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => sp.lag1_inHigh - sp.lag1_inLow, 2 => (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow), _ => 0.0 } }) * (if Near_rangeType == 2 { 0.5 } else { 1.0 })) // size of 2 rb near the same
                 {
-                    (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
+                    *outInteger = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { -1 }) * 100) as i32;
                 } else {
-                    (*outInteger) = 0;
+                    *outInteger = 0;
                 }
             } else {
-                (*outInteger) = 0;
+                *outInteger = 0;
             }
         }
         Ok(outInteger)

@@ -316,6 +316,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
     index_vars.insert("startIdx".to_string());
     index_vars.insert("endIdx".to_string());
     index_vars.insert("historyLen".to_string());
+    index_vars.insert("outStride".to_string());
     let mut sentinel_vars = HashSet::new();
     collect_sentinel_vars(body, &mut sentinel_vars);
     collect_signed_int_vars(body, &index_vars, &real_vars, &mut sentinel_vars);
@@ -1007,6 +1008,9 @@ enum OutMode {
 /// `<idx>` -> `<idx> * outStride`, as IR. Applied to every output subscript in
 /// the transcribed body so the one body serves both entry points.
 fn scale_by_stride(idx: Expr) -> Expr {
+    if matches!(idx, Expr::IntLiteral(0)) {
+        return idx;
+    }
     Expr::BinOp(
         Box::new(idx),
         crate::ir::BinOp::Mul,
@@ -2809,9 +2813,11 @@ fn derived_fill_expr_rust(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    let mut ctx = typing.ctx.clone();
+    ctx.index_vars.insert(idx_var.to_string());
     render_expr(
         &streaming::derived_fill_value(dr, idx_var),
-        &typing.ctx,
+        &ctx,
         opt_real_params,
         registry,
         helpers,

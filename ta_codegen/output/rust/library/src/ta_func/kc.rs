@@ -82,20 +82,18 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_KC_Lookback")]
     #[inline]
-    pub fn kc_lookback(&self, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn kc_lookback(&self, mut optInTimePeriod: i32, mut optInATRPeriod: i32, optInNbDev: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInATRPeriod) as i32) == (i32::MIN) {
+        if optInATRPeriod == i32::MIN {
             optInATRPeriod = 10;
-        } else if (((optInATRPeriod) as i32) < 1) || (((optInATRPeriod) as i32) > 100000) {
+        } else if optInATRPeriod < 1 || optInATRPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == Self::REAL_DEFAULT {
-            optInNbDev = 2e0;
-        } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
+        if optInNbDev != Self::REAL_DEFAULT && !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let mut emaLookback: usize = 0_usize;
@@ -108,7 +106,7 @@ impl Core {
         // which streaming's Open depends on.
         emaLookback = self.ema_lookback(optInTimePeriod)?;
         atrLookback = self.atr_lookback(optInATRPeriod)?;
-        return Ok(((if emaLookback > atrLookback { emaLookback } else { atrLookback })) as usize);
+        return Ok((if emaLookback > atrLookback { emaLookback } else { atrLookback }) as usize);
     }
     /// Display shift of one output of [`Core::kc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -131,7 +129,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_KC_DisplayShift")]
-    pub fn kc_display_shift(&self, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn kc_display_shift(&self, optInTimePeriod: i32, optInATRPeriod: i32, optInNbDev: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
         if outputIdx >= 3 {
             return Err(RetCode::BadParam);
@@ -163,14 +161,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInATRPeriod) as i32) == (i32::MIN) {
+        if optInATRPeriod == i32::MIN {
             optInATRPeriod = 10;
-        } else if (((optInATRPeriod) as i32) < 1) || (((optInATRPeriod) as i32) > 100000) {
+        } else if optInATRPeriod < 1 || optInATRPeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -195,8 +193,6 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut emaLookback: usize = 0_usize;
         let mut tpStartIdx: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
-        let mut tempNbElement: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut middle: f64 = 0.0_f64;
         let mut tempTP: Vec<f64> = Vec::new();
@@ -207,8 +203,8 @@ impl Core {
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         if startIdx < lookbackTotal {
@@ -223,29 +219,23 @@ impl Core {
         tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
         tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         let _xr0 = match self.typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
         // The ATR consumes the price inputs before the moving average below writes
         // the middle band, which may be aliased onto one of them.
         let _xr1 = match self.atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
-        tempNbElement = _xr1.count;
-        retCode = RetCode::Success;
         // tempTP is bar-tpStartIdx relative, so entering the moving average at its
         // own lookback puts its first output on startIdx, where the ATR's already is.
         let _xr2 = match self.ema(emaLookback, endIdx - tpStartIdx, &tempTP, optInTimePeriod, outRealMiddleBand) { Ok(_r) => _r, Err(_e) => return _e };
-        (*outBegIdx) = _xr2.beg_idx;
-        (*outNBElement) = _xr2.count;
+        *outBegIdx = _xr2.beg_idx;
+        *outNBElement = _xr2.count;
         retCode = RetCode::Success;
-        if ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
+        if (*outNBElement as usize) == 0 {
+            *outNBElement = 0;
             return retCode;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         i = 0;
-        if i < ((((*outNBElement) as usize)) as usize) {
-            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+        if i < ((*outNBElement as usize) as usize) {
+            let _wn: usize = ((*outNBElement as usize) as usize) - i;
             let _w0 = &mut outRealLowerBand[i..][.._wn];
             let _w1 = &outRealMiddleBand[i..][.._wn];
             let _w2 = &mut outRealUpperBand[i..][.._wn];
@@ -255,7 +245,6 @@ impl Core {
                 tempReal = _w3[_wk] * optInNbDev;
                 _w2[_wk] = middle + tempReal;
                 _w0[_wk] = middle - tempReal;
-                i += 1;
             }
         }
         return RetCode::Success;
@@ -434,8 +423,6 @@ pub struct KcStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct KcStreamState {
-    optInTimePeriod: i32,
-    optInATRPeriod: i32,
     optInNbDev: f64,
     sub0: TyppriceStream,
     sub1: AtrStream,
@@ -469,9 +456,9 @@ impl Core {
         tempReal = cur_tempATR * sp.optInNbDev;
         cur_outRealUpperBand = middle + tempReal;
         cur_outRealLowerBand = middle - tempReal;
-        (*outRealUpperBand) = cur_outRealUpperBand;
-        (*outRealMiddleBand) = cur_outRealMiddleBand;
-        (*outRealLowerBand) = cur_outRealLowerBand;
+        *outRealUpperBand = cur_outRealUpperBand;
+        *outRealMiddleBand = cur_outRealMiddleBand;
+        *outRealLowerBand = cur_outRealLowerBand;
         Ok(())
     }
 
@@ -483,14 +470,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInATRPeriod) as i32) == (i32::MIN) {
+        if optInATRPeriod == i32::MIN {
             optInATRPeriod = 10;
-        } else if (((optInATRPeriod) as i32) < 1) || (((optInATRPeriod) as i32) > 100000) {
+        } else if optInATRPeriod < 1 || optInATRPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInNbDev == Self::REAL_DEFAULT {
@@ -503,14 +490,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outRealUpperBand: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outRealUpperBand: &mut [f64] =
@@ -525,7 +510,6 @@ impl Core {
             if outStride == 1 { &mut *outRealLowerBand } else { &mut owned_sc_outRealLowerBand };
         let mut lagNb0: i64 = 0;
         let mut lagNb1: i64 = 0;
-        let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut emaLookback: usize = 0_usize;
@@ -542,8 +526,8 @@ impl Core {
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         if startIdx < lookbackTotal {
@@ -559,39 +543,36 @@ impl Core {
         tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.typprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((tpStartIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempTP[..])?;
-        retCode = RetCode::Success;
-        lagNb0 = (tempNbElement as i64);
+        let sub0 = self.typprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], &inClose[..(endIdx as usize) + 1], tpStartIdx as usize, &mut tempBegIdx, &mut tempNbElement, &mut tempTP[..])?;
+        lagNb0 = tempNbElement as i64;
         // The ATR consumes the price inputs before the moving average below writes
         // the middle band, which may be aliased onto one of them.
         // Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.atr_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
-        retCode = RetCode::Success;
-        lagNb1 = (tempNbElement as i64);
+        let sub1 = self.atr_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], &inClose[..(endIdx as usize) + 1], startIdx as usize, optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
+        lagNb1 = tempNbElement as i64;
         // tempTP is bar-tpStartIdx relative, so entering the moving average at its
         // own lookback puts its first output on startIdx, where the ATR's already is.
         // Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - tpStartIdx) as usize) + 1], ((emaLookback) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut sc_outRealMiddleBand[..])?;
-        retCode = RetCode::Success;
+        let sub2 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - tpStartIdx) as usize) + 1], emaLookback as usize, optInTimePeriod, outBegIdx, outNBElement, &mut sc_outRealMiddleBand[..])?;
         if lagNb0 - 1 - ((endIdx - tpStartIdx) as i64) != 0 {
             return Err(RetCode::InternalError);
         }
-        if ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
+        if (*outNBElement as usize) == 0 {
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
-        if (((*outNBElement) as usize) as i64) < 1 {
+        *outBegIdx = startIdx;
+        if ((*outNBElement as usize) as i64) < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        if lagNb1 - (((*outNBElement) as usize) as i64) != 0 {
+        if lagNb1 - ((*outNBElement as usize) as i64) != 0 {
             return Err(RetCode::InternalError);
         }
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
+        while i < ((*outNBElement as usize) as usize) {
             middle = sc_outRealMiddleBand[i];
             tempReal = tempATR[i] * optInNbDev;
             sc_outRealUpperBand[i] = middle + tempReal;
@@ -607,8 +588,6 @@ impl Core {
             cur_outRealUpperBand: 0.0_f64,
             cur_outRealMiddleBand: 0.0_f64,
             cur_outRealLowerBand: 0.0_f64,
-            optInTimePeriod,
-            optInATRPeriod,
             optInNbDev,
             sub0,
             sub1,
@@ -634,7 +613,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::kc_open`] (composition seam).
     pub(crate) fn kc_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInATRPeriod: i32, optInNbDev: f64,
     ) -> Result<(KcStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -731,7 +710,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KC_OpenAndFill")]
     pub fn kc_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInATRPeriod: i32, optInNbDev: f64, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<(KcStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -759,7 +738,7 @@ impl Core {
     /// [`Core::kc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn kc_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInATRPeriod: i32, optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<KcStream, RetCode> {
         self.kc_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
@@ -852,9 +831,9 @@ impl KcStream {
             tempReal = cur_tempATR * sp.optInNbDev;
             cur_outRealUpperBand = middle + tempReal;
             cur_outRealLowerBand = middle - tempReal;
-            (*outRealUpperBand) = cur_outRealUpperBand;
-            (*outRealMiddleBand) = cur_outRealMiddleBand;
-            (*outRealLowerBand) = cur_outRealLowerBand;
+            *outRealUpperBand = cur_outRealUpperBand;
+            *outRealMiddleBand = cur_outRealMiddleBand;
+            *outRealLowerBand = cur_outRealLowerBand;
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }

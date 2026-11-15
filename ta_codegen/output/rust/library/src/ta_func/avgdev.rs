@@ -77,9 +77,9 @@ impl Core {
     #[doc(alias = "TA_AVGDEV_Lookback")]
     #[inline]
     pub fn avgdev_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -100,7 +100,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_AVGDEV_DisplayShift")]
-    pub fn avgdev_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn avgdev_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.avgdev_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -126,9 +126,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.avgdev_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -146,12 +146,12 @@ impl Core {
         today = startIdx;
         // Make sure there is still something to evaluate.
         if today > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         // Process the initial DM and TR
-        (*outBegIdx) = today;
+        *outBegIdx = today;
         outIdx = 0;
         while today <= endIdx {
             let mut todaySum: f64 = 0.0_f64;
@@ -160,22 +160,22 @@ impl Core {
             todaySum = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((optInTimePeriod) as usize) {
+            while i < (optInTimePeriod as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((optInTimePeriod) as usize) {
-                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
+            while i < (optInTimePeriod as usize) {
+                todayDev += (inReal[today - i] - todaySum / (optInTimePeriod as f64)).abs();
                 i += 1;
             }
-            outReal[outIdx] = todayDev / ((optInTimePeriod) as f64);
+            outReal[outIdx] = todayDev / (optInTimePeriod as f64);
             outIdx += 1;
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Rolling average absolute deviation of a series from its own simple moving average over the
@@ -320,19 +320,19 @@ impl Core {
         todaySum = 0.0;
         // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < ((sp.optInTimePeriod) as usize) {
-            todaySum += sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+        while i < (sp.optInTimePeriod as usize) {
+            todaySum += sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
             i += 1;
         }
         todayDev = 0.0;
         // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < ((sp.optInTimePeriod) as usize) {
-            todayDev += (sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - todaySum / ((sp.optInTimePeriod) as f64)).abs();
+        while i < (sp.optInTimePeriod as usize) {
+            todayDev += (sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] - todaySum / (sp.optInTimePeriod as f64)).abs();
             i += 1;
         }
-        (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
-        sp.cur_outReal = (*outReal);
+        *outReal = todayDev / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = *outReal;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -347,21 +347,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookback: usize = 0_usize;
@@ -372,12 +370,12 @@ impl Core {
         today = startIdx;
         // Make sure there is still something to evaluate.
         if today > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Process the initial DM and TR
-        (*outBegIdx) = today;
+        *outBegIdx = today;
         outIdx = 0;
         while today <= endIdx {
             let mut todaySum: f64 = 0.0_f64;
@@ -386,25 +384,25 @@ impl Core {
             todaySum = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((optInTimePeriod) as usize) {
+            while i < (optInTimePeriod as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((optInTimePeriod) as usize) {
-                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
+            while i < (optInTimePeriod as usize) {
+                todayDev += (inReal[today - i] - todaySum / (optInTimePeriod as f64)).abs();
                 i += 1;
             }
-            outReal[(outIdx * outStride) as usize] = todayDev / ((optInTimePeriod) as f64);
+            outReal[outIdx * outStride] = todayDev / (optInTimePeriod as f64);
             outIdx += 1;
             today += 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let cap_i: i64 = (optInTimePeriod) as i64;
+        let cap_i: i64 = optInTimePeriod as i64;
         if cap_i < 1 || cap_i > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
@@ -422,7 +420,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::avgdev_open`] (composition seam).
     pub(crate) fn avgdev_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(AvgdevStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -495,7 +493,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AVGDEV_OpenAndFill")]
     pub fn avgdev_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(AvgdevStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -514,7 +512,7 @@ impl Core {
     /// [`Core::avgdev_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn avgdev_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AvgdevStream, RetCode> {
         self.avgdev_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -591,18 +589,18 @@ impl AvgdevStream {
             todaySum = 0.0;
             // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((sp.optInTimePeriod) as usize) {
-                todaySum += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+            while i < (sp.optInTimePeriod as usize) {
+                todaySum += if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 };
                 i += 1;
             }
             todayDev = 0.0;
             // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < ((sp.optInTimePeriod) as usize) {
-                todayDev += ((if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 }) - todaySum / ((sp.optInTimePeriod) as f64)).abs();
+            while i < (sp.optInTimePeriod as usize) {
+                todayDev += ((if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 }) - todaySum / (sp.optInTimePeriod as f64)).abs();
                 i += 1;
             }
-            (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
+            *outReal = todayDev / (sp.optInTimePeriod as f64);
         }
         Ok(outReal)
     }

@@ -91,9 +91,9 @@ impl Core {
     #[doc(alias = "TA_ACCBANDS_Lookback")]
     #[inline]
     pub fn accbands_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok(self.sma_lookback(optInTimePeriod)?);
@@ -115,7 +115,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ACCBANDS_DisplayShift")]
-    pub fn accbands_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn accbands_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.accbands_lookback(optInTimePeriod)?;
         if outputIdx >= 3 {
             return Err(RetCode::BadParam);
@@ -145,9 +145,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.accbands_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -183,8 +183,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -218,7 +218,7 @@ impl Core {
             // every band it touched (issue #253). Same test on all three sites, so
             // the bar that enters a running sum is the one that later leaves it.
             tempReal = inHigh[i] + inLow[i];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[i]).abs() + (inLow[i]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[i].abs() + inLow[i].abs())) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
                 periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
                 periodTotalLower += inLow[i] * (1_f64 - tempReal);
@@ -236,7 +236,7 @@ impl Core {
         while i <= endIdx {
             // Add the incoming bar to each running sum.
             tempReal = inHigh[i] + inLow[i];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[i]).abs() + (inLow[i]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[i].abs() + inLow[i].abs())) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
                 periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
                 periodTotalLower += inLow[i] * (1_f64 - tempReal);
@@ -252,7 +252,7 @@ impl Core {
             tempLower = periodTotalLower;
             // Remove the trailing bar from each running sum.
             tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[trailingIdx]).abs() + (inLow[trailingIdx]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[trailingIdx].abs() + inLow[trailingIdx].abs())) {
                 tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
                 periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
                 periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
@@ -268,8 +268,8 @@ impl Core {
             outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Acceleration Bands: three overlap lines around price. The middle band is an SMA of the
@@ -459,7 +459,7 @@ impl Core {
         let mut ringCapL_trailingIdx: usize = 0_usize;
         // Add the incoming bar to each running sum.
         tempReal = inHigh + inLow;
-        if !(((tempReal).abs() <= 1e-14 * ((inHigh).abs() + (inLow).abs()))) {
+        if !(tempReal.abs() <= 1e-14 * (inHigh.abs() + inLow.abs())) {
             tempReal = 4_f64 * (inHigh - inLow) / tempReal;
             sp.periodTotalUpper += inHigh * (1_f64 + tempReal);
             sp.periodTotalLower += inLow * (1_f64 - tempReal);
@@ -474,7 +474,7 @@ impl Core {
         tempLower = sp.periodTotalLower;
         // Remove the trailing bar from each running sum.
         tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
-        if !(((tempReal).abs() <= 1e-14 * ((sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]).abs() + (sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]).abs()))) {
+        if !(tempReal.abs() <= 1e-14 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx].abs() + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx].abs())) {
             tempReal = 4_f64 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
             sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1_f64 + tempReal);
             sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1_f64 - tempReal);
@@ -484,12 +484,12 @@ impl Core {
         }
         sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
         // Write the three bands.
-        (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
-        (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
-        (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
-        sp.cur_outRealUpperBand = (*outRealUpperBand);
-        sp.cur_outRealMiddleBand = (*outRealMiddleBand);
-        sp.cur_outRealLowerBand = (*outRealLowerBand);
+        *outRealUpperBand = tempUpper / (sp.optInTimePeriod as f64);
+        *outRealMiddleBand = tempMiddle / (sp.optInTimePeriod as f64);
+        *outRealLowerBand = tempLower / (sp.optInTimePeriod as f64);
+        sp.cur_outRealUpperBand = *outRealUpperBand;
+        sp.cur_outRealMiddleBand = *outRealMiddleBand;
+        sp.cur_outRealLowerBand = *outRealLowerBand;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
         sp.ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh;
@@ -510,9 +510,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -520,14 +520,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut periodTotalUpper: f64 = 0.0_f64;
         let mut periodTotalMiddle: f64 = 0.0_f64;
         let mut periodTotalLower: f64 = 0.0_f64;
@@ -549,8 +547,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Each band is a simple moving average maintained as a running sum over a
@@ -581,7 +579,7 @@ impl Core {
             // every band it touched (issue #253). Same test on all three sites, so
             // the bar that enters a running sum is the one that later leaves it.
             tempReal = inHigh[i] + inLow[i];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[i]).abs() + (inLow[i]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[i].abs() + inLow[i].abs())) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
                 periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
                 periodTotalLower += inLow[i] * (1_f64 - tempReal);
@@ -599,7 +597,7 @@ impl Core {
         while i <= endIdx {
             // Add the incoming bar to each running sum.
             tempReal = inHigh[i] + inLow[i];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[i]).abs() + (inLow[i]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[i].abs() + inLow[i].abs())) {
                 tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
                 periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
                 periodTotalLower += inLow[i] * (1_f64 - tempReal);
@@ -615,7 +613,7 @@ impl Core {
             tempLower = periodTotalLower;
             // Remove the trailing bar from each running sum.
             tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh[trailingIdx]).abs() + (inLow[trailingIdx]).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh[trailingIdx].abs() + inLow[trailingIdx].abs())) {
                 tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
                 periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
                 periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
@@ -626,13 +624,13 @@ impl Core {
             periodTotalMiddle -= inClose[trailingIdx];
             trailingIdx = trailingIdx + 1;
             // Write the three bands.
-            outRealUpperBand[(outIdx * outStride) as usize] = tempUpper / (optInTimePeriod as f64);
-            outRealMiddleBand[(outIdx * outStride) as usize] = tempMiddle / (optInTimePeriod as f64);
-            outRealLowerBand[(outIdx * outStride) as usize] = tempLower / (optInTimePeriod as f64);
+            outRealUpperBand[outIdx * outStride] = tempUpper / (optInTimePeriod as f64);
+            outRealMiddleBand[outIdx * outStride] = tempMiddle / (optInTimePeriod as f64);
+            outRealLowerBand[outIdx * outStride] = tempLower / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
@@ -668,7 +666,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::accbands_open`] (composition seam).
     pub(crate) fn accbands_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(AccbandsStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -765,7 +763,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ACCBANDS_OpenAndFill")]
     pub fn accbands_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<(AccbandsStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -793,7 +791,7 @@ impl Core {
     /// [`Core::accbands_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn accbands_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<AccbandsStream, RetCode> {
         self.accbands_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
@@ -875,7 +873,7 @@ impl AccbandsStream {
             let mut periodTotalUpper = sp.periodTotalUpper;
             // Add the incoming bar to each running sum.
             tempReal = inHigh + inLow;
-            if !(((tempReal).abs() <= 1e-14 * ((inHigh).abs() + (inLow).abs()))) {
+            if !(tempReal.abs() <= 1e-14 * (inHigh.abs() + inLow.abs())) {
                 tempReal = 4_f64 * (inHigh - inLow) / tempReal;
                 periodTotalUpper += inHigh * (1_f64 + tempReal);
                 periodTotalLower += inLow * (1_f64 - tempReal);
@@ -889,20 +887,10 @@ impl AccbandsStream {
             tempMiddle = periodTotalMiddle;
             tempLower = periodTotalLower;
             // Remove the trailing bar from each running sum.
-            tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
-            if !(((tempReal).abs() <= 1e-14 * ((sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]).abs() + (sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]).abs()))) {
-                tempReal = 4_f64 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
-                periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1_f64 + tempReal);
-                periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1_f64 - tempReal);
-            } else {
-                periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx];
-                periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
-            }
-            periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
             // Write the three bands.
-            (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
-            (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
-            (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
+            *outRealUpperBand = tempUpper / (sp.optInTimePeriod as f64);
+            *outRealMiddleBand = tempMiddle / (sp.optInTimePeriod as f64);
+            *outRealLowerBand = tempLower / (sp.optInTimePeriod as f64);
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }

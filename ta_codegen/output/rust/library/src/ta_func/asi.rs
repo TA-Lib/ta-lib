@@ -78,13 +78,11 @@ impl Core {
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ASI_Lookback")]
     #[inline]
-    pub fn asi_lookback(&self, mut optInLimitMove: f64) -> Result<usize, RetCode> {
-        if optInLimitMove == Self::REAL_DEFAULT {
-            optInLimitMove = 3e0;
-        } else if !((optInLimitMove >= 1e-8) && (optInLimitMove <= Self::REAL_MAX)) {
+    pub fn asi_lookback(&self, optInLimitMove: f64) -> Result<usize, RetCode> {
+        if optInLimitMove != Self::REAL_DEFAULT && !((optInLimitMove >= 1e-8) && (optInLimitMove <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::asi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -103,7 +101,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Real
     /// parameters accept [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ASI_DisplayShift")]
-    pub fn asi_display_shift(&self, mut optInLimitMove: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn asi_display_shift(&self, optInLimitMove: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.asi_lookback(optInLimitMove)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -144,8 +142,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevClose: f64 = 0.0_f64;
         let mut prevBody: f64 = 0.0_f64;
@@ -174,7 +170,7 @@ impl Core {
         sum = 0.0;
         outReal[0] = sum;
         outIdx = 1;
-        for i in (startIdx + 1 as usize)..(endIdx as usize) + 1 {
+        for i in startIdx + 1..endIdx + 1 {
             tempOpen = inOpen[i];
             tempHigh = inHigh[i];
             tempLow = inLow[i];
@@ -189,11 +185,11 @@ impl Core {
             k = c_max(up, dn);
             r = c_max(up - 0.5 * dn, dn - 0.5 * up);
             r = c_max(r, rg);
-            r += 0.25 * (prevBody).abs();
+            r += 0.25 * prevBody.abs();
             if r == 0.0 {
                 swing = 0.0;
             } else {
-                swing = 50.0 * (n / r) * (k / ((optInLimitMove) as f64));
+                swing = 50.0 * (n / r) * (k / (optInLimitMove as f64));
             }
             sum += swing;
             outReal[outIdx] = sum;
@@ -201,9 +197,8 @@ impl Core {
             prevClose = tempClose;
             prevBody = body;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Wilder's Accumulative Swing Index: the running total of the Swing Index (SI), a line meant
@@ -404,17 +399,17 @@ impl Core {
         k = c_max(up, dn);
         r = c_max(up - 0.5 * dn, dn - 0.5 * up);
         r = c_max(r, rg);
-        r += 0.25 * (sp.prevBody).abs();
+        r += 0.25 * sp.prevBody.abs();
         if r == 0.0 {
             swing = 0.0;
         } else {
-            swing = 50.0 * (n / r) * (k / ((sp.optInLimitMove) as f64));
+            swing = 50.0 * (n / r) * (k / (sp.optInLimitMove as f64));
         }
         sp.sum += swing;
-        (*outReal) = sp.sum;
+        *outReal = sp.sum;
         sp.prevClose = tempClose;
         sp.prevBody = body;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::asi_open_internal`]
@@ -435,15 +430,11 @@ impl Core {
         }
         let historyLen: usize = inOpen.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevClose: f64 = 0.0_f64;
         let mut prevBody: f64 = 0.0_f64;
@@ -466,9 +457,9 @@ impl Core {
         prevClose = inClose[startIdx];
         prevBody = prevClose - inOpen[startIdx];
         sum = 0.0;
-        outReal[(0 * outStride) as usize] = sum;
+        outReal[0] = sum;
         outIdx = 1;
-        for i in (startIdx + 1 as usize)..(endIdx as usize) + 1 {
+        for i in startIdx + 1..endIdx + 1 {
             tempOpen = inOpen[i];
             tempHigh = inHigh[i];
             tempLow = inLow[i];
@@ -483,21 +474,20 @@ impl Core {
             k = c_max(up, dn);
             r = c_max(up - 0.5 * dn, dn - 0.5 * up);
             r = c_max(r, rg);
-            r += 0.25 * (prevBody).abs();
+            r += 0.25 * prevBody.abs();
             if r == 0.0 {
                 swing = 0.0;
             } else {
-                swing = 50.0 * (n / r) * (k / ((optInLimitMove) as f64));
+                swing = 50.0 * (n / r) * (k / (optInLimitMove as f64));
             }
             sum += swing;
-            outReal[(outIdx * outStride) as usize] = sum;
+            outReal[outIdx * outStride] = sum;
             outIdx += 1;
             prevClose = tempClose;
             prevBody = body;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = AsiStreamState {
@@ -512,7 +502,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::asi_open`] (composition seam).
     pub(crate) fn asi_open_internal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInLimitMove: f64,
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInLimitMove: f64,
     ) -> Result<(AsiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -603,7 +593,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ASI_OpenAndFill")]
     pub fn asi_open_and_fill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInLimitMove: f64, outReal: &mut [f64],
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInLimitMove: f64, outReal: &mut [f64],
     ) -> Result<(AsiStream, OutRange), RetCode> {
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -625,7 +615,7 @@ impl Core {
     /// [`Core::asi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn asi_open_and_fill_internal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInLimitMove: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInLimitMove: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AsiStream, RetCode> {
         self.asi_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInLimitMove, outBegIdx, outNBElement, outReal, 1)
     }
@@ -719,14 +709,14 @@ impl AsiStream {
             k = c_max(up, dn);
             r = c_max(up - 0.5 * dn, dn - 0.5 * up);
             r = c_max(r, rg);
-            r += 0.25 * (sp.prevBody).abs();
+            r += 0.25 * sp.prevBody.abs();
             if r == 0.0 {
                 swing = 0.0;
             } else {
-                swing = 50.0 * (n / r) * (k / ((sp.optInLimitMove) as f64));
+                swing = 50.0 * (n / r) * (k / (sp.optInLimitMove as f64));
             }
             sum += swing;
-            (*outReal) = sum;
+            *outReal = sum;
         }
         Ok(outReal)
     }

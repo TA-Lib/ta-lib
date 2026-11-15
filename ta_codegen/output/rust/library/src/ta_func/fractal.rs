@@ -82,14 +82,14 @@ impl Core {
     #[doc(alias = "TA_FRACTAL_Lookback")]
     #[inline]
     pub fn fractal_lookback(&self, mut optInLeftBars: i32, mut optInRightBars: i32) -> Result<usize, RetCode> {
-        if ((optInLeftBars) as i32) == (i32::MIN) {
+        if optInLeftBars == i32::MIN {
             optInLeftBars = 2;
-        } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
+        } else if optInLeftBars < 1 || optInLeftBars > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInRightBars) as i32) == (i32::MIN) {
+        if optInRightBars == i32::MIN {
             optInRightBars = 2;
-        } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
+        } else if optInRightBars < 1 || optInRightBars > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInLeftBars + optInRightBars) as usize);
@@ -111,22 +111,19 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FRACTAL_DisplayShift")]
-    pub fn fractal_display_shift(&self, mut optInLeftBars: i32, mut optInRightBars: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn fractal_display_shift(&self, optInLeftBars: i32, mut optInRightBars: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.fractal_lookback(optInLeftBars, optInRightBars)?;
-        if ((optInLeftBars) as i32) == (i32::MIN) {
-            optInLeftBars = 2;
-        } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
+        if optInLeftBars != i32::MIN && (optInLeftBars < 1 || optInLeftBars > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInRightBars) as i32) == (i32::MIN) {
+        if optInRightBars == i32::MIN {
             optInRightBars = 2;
-        } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
+        } else if optInRightBars < 1 || optInRightBars > 100000 {
             return Err(RetCode::BadParam);
         }
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
         }
-        let outputIdx: i32 = outputIdx as i32;
         // The flag written at a bar names the pivot this many bars back, which is
         // where a chart draws it.
         return Ok(-optInRightBars);
@@ -153,14 +150,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInLeftBars) as i32) == (i32::MIN) {
+        if optInLeftBars == i32::MIN {
             optInLeftBars = 2;
-        } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
+        } else if optInLeftBars < 1 || optInLeftBars > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInRightBars) as i32) == (i32::MIN) {
+        if optInRightBars == i32::MIN {
             optInRightBars = 2;
-        } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
+        } else if optInRightBars < 1 || optInRightBars > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
@@ -169,7 +166,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSwingHigh.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSwingLow.len());
-        if (outSwingHigh.as_ptr() == outSwingLow.as_ptr()) {
+        if outSwingHigh.as_ptr() == outSwingLow.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -183,8 +180,8 @@ impl Core {
         let mut otherLow: f64 = 0.0_f64;
         let mut tempHigh: f64 = 0.0_f64;
         let mut tempLow: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -207,7 +204,7 @@ impl Core {
             loop {
                 tempHigh = inHigh[today - i];
                 tempLow = inLow[today - i];
-                if i == ((optInRightBars) as usize) {
+                if i == (optInRightBars as usize) {
                     pivotHigh = tempHigh;
                     pivotLow = tempLow;
                 } else if i == ((optInLeftBars + optInRightBars) as usize) {
@@ -222,13 +219,13 @@ impl Core {
                 if i == 0 { break; }
                 i -= 1;
             }
-            outSwingHigh[outIdx] = (if pivotHigh > otherHigh { 100 } else { 0 });
-            outSwingLow[outIdx] = (if pivotLow < otherLow { 100 } else { 0 });
+            outSwingHigh[outIdx] = if pivotHigh > otherHigh { 100 } else { 0 };
+            outSwingLow[outIdx] = if pivotLow < otherLow { 100 } else { 0 };
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Williams Fractal: a causal swing-pivot detector. A bar is a swing high when its high
@@ -436,9 +433,9 @@ impl Core {
         // for( i = sp.optInLeftBars + sp.optInRightBars; i >= 0; i -= 1 )
         i = (sp.optInLeftBars + sp.optInRightBars) as usize;
         loop {
-            tempHigh = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            tempLow = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            if i == ((sp.optInRightBars) as usize) {
+            tempHigh = sp.win_i_inHigh[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
+            tempLow = sp.win_i_inLow[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
+            if i == (sp.optInRightBars as usize) {
                 pivotHigh = tempHigh;
                 pivotLow = tempLow;
             } else if i == ((sp.optInLeftBars + sp.optInRightBars) as usize) {
@@ -454,17 +451,17 @@ impl Core {
             i -= 1;
         }
         if pivotHigh > otherHigh {
-            (*outSwingHigh) = 100;
+            *outSwingHigh = 100;
         } else {
-            (*outSwingHigh) = 0;
+            *outSwingHigh = 0;
         }
         if pivotLow < otherLow {
-            (*outSwingLow) = 100;
+            *outSwingLow = 100;
         } else {
-            (*outSwingLow) = 0;
+            *outSwingLow = 0;
         }
-        sp.cur_outSwingHigh = (*outSwingHigh);
-        sp.cur_outSwingLow = (*outSwingLow);
+        sp.cur_outSwingHigh = *outSwingHigh;
+        sp.cur_outSwingLow = *outSwingLow;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -479,14 +476,14 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInLeftBars) as i32) == (i32::MIN) {
+        if optInLeftBars == i32::MIN {
             optInLeftBars = 2;
-        } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
+        } else if optInLeftBars < 1 || optInLeftBars > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInRightBars) as i32) == (i32::MIN) {
+        if optInRightBars == i32::MIN {
             optInRightBars = 2;
-        } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
+        } else if optInRightBars < 1 || optInRightBars > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -494,14 +491,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -512,8 +507,8 @@ impl Core {
         let mut otherLow: f64 = 0.0_f64;
         let mut tempHigh: f64 = 0.0_f64;
         let mut tempLow: f64 = 0.0_f64;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.fractal_lookback(optInLeftBars, optInRightBars)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -534,7 +529,7 @@ impl Core {
             loop {
                 tempHigh = inHigh[today - i];
                 tempLow = inLow[today - i];
-                if i == ((optInRightBars) as usize) {
+                if i == (optInRightBars as usize) {
                     pivotHigh = tempHigh;
                     pivotLow = tempLow;
                 } else if i == ((optInLeftBars + optInRightBars) as usize) {
@@ -549,13 +544,13 @@ impl Core {
                 if i == 0 { break; }
                 i -= 1;
             }
-            outSwingHigh[(outIdx * outStride) as usize] = (if pivotHigh > otherHigh { 100 } else { 0 });
-            outSwingLow[(outIdx * outStride) as usize] = (if pivotLow < otherLow { 100 } else { 0 });
+            outSwingHigh[outIdx * outStride] = if pivotHigh > otherHigh { 100 } else { 0 };
+            outSwingLow[outIdx * outStride] = if pivotLow < otherLow { 100 } else { 0 };
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_i: i64 = (optInLeftBars + optInRightBars + 1) as i64;
@@ -581,7 +576,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::fractal_open`] (composition seam).
     pub(crate) fn fractal_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInLeftBars: i32, mut optInRightBars: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInLeftBars: i32, optInRightBars: i32,
     ) -> Result<(FractalStream, (i32, i32)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -664,7 +659,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_FRACTAL_OpenAndFill")]
     pub fn fractal_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInLeftBars: i32, mut optInRightBars: i32, outSwingHigh: &mut [i32], outSwingLow: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], optInLeftBars: i32, optInRightBars: i32, outSwingHigh: &mut [i32], outSwingLow: &mut [i32],
     ) -> Result<(FractalStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -689,7 +684,7 @@ impl Core {
     /// [`Core::fractal_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn fractal_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInLeftBars: i32, mut optInRightBars: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSwingHigh: &mut [i32], outSwingLow: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInLeftBars: i32, optInRightBars: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSwingHigh: &mut [i32], outSwingLow: &mut [i32],
     ) -> Result<FractalStream, RetCode> {
         self.fractal_open_impl(inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow, 1)
     }
@@ -781,9 +776,9 @@ impl FractalStream {
             // for( i = sp.optInLeftBars + sp.optInRightBars; i >= 0; i -= 1 )
             i = (sp.optInLeftBars + sp.optInRightBars) as usize;
             loop {
-                tempHigh = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                tempLow = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
-                if i == ((sp.optInRightBars) as usize) {
+                tempHigh = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inHigh[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 };
+                tempLow = if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inLow[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal1 };
+                if i == (sp.optInRightBars as usize) {
                     pivotHigh = tempHigh;
                     pivotLow = tempLow;
                 } else if i == ((sp.optInLeftBars + sp.optInRightBars) as usize) {
@@ -799,14 +794,14 @@ impl FractalStream {
                 i -= 1;
             }
             if pivotHigh > otherHigh {
-                (*outSwingHigh) = 100;
+                *outSwingHigh = 100;
             } else {
-                (*outSwingHigh) = 0;
+                *outSwingHigh = 0;
             }
             if pivotLow < otherLow {
-                (*outSwingLow) = 100;
+                *outSwingLow = 100;
             } else {
-                (*outSwingLow) = 0;
+                *outSwingLow = 0;
             }
         }
         Ok((outSwingHigh, outSwingLow))

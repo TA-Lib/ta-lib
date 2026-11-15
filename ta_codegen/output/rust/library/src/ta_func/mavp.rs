@@ -93,14 +93,14 @@ impl Core {
     #[doc(alias = "TA_MAVP_Lookback")]
     #[inline]
     pub fn mavp_lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInMinPeriod) as i32) == (i32::MIN) {
+        if optInMinPeriod == i32::MIN {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
+        } else if optInMinPeriod < 1 || optInMinPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+        if optInMaxPeriod == i32::MIN {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
+        } else if optInMaxPeriod < 1 || optInMaxPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -134,7 +134,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MAVP_DisplayShift")]
-    pub fn mavp_display_shift(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn mavp_display_shift(&self, optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -163,14 +163,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInMinPeriod) as i32) == (i32::MIN) {
+        if optInMinPeriod == i32::MIN {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
+        } else if optInMinPeriod < 1 || optInMinPeriod > 10000 {
             return RetCode::BadParam;
         }
-        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+        if optInMaxPeriod == i32::MIN {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
+        } else if optInMaxPeriod < 1 || optInMaxPeriod > 10000 {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -201,10 +201,6 @@ impl Core {
         let mut sortedIdx: Vec<i32> = Vec::new();
         let mut bucketOfs: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
-        let mut finalIsAllocated: usize = 0_usize;
-        let mut localBegIdx: usize = 0_usize;
-        let mut localNbElement: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
         // An inverted period window (min above max) is an invalid parameter
         // combination: the per-bar clamp below would push a period above
         // optInMaxPeriod, exceeding the lookback and reading uninitialized
@@ -222,8 +218,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inPeriods = &inPeriods[..=endIdx];
@@ -237,8 +233,8 @@ impl Core {
         }
         if firstOut > endIdx {
             // No output
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         outputSize = endIdx - firstOut + 1;
@@ -247,7 +243,6 @@ impl Core {
         // the full range, so with outReal==inReal the results are staged in a
         // scratch buffer and copied once at the end. A regular call writes
         // straight to outReal and skips both the allocation and the copy.
-        finalIsAllocated = 0;
         // Rust: C's pointer election here is a rename, so the calculation runs
         // directly in the caller's slices:
         //   C's `localFinalArray` is `outReal`
@@ -262,15 +257,15 @@ impl Core {
         // it is kept because this file is the source of truth for four
         // backends and it makes the shared source safe by construction rather than
         // by trusting each backend's prologue to be identical.
-        minUsed = (optInMaxPeriod) as usize;
+        minUsed = optInMaxPeriod as usize;
         if minUsed < 1 {
             minUsed = 1;
         }
         maxUsed = 1;
         // Both bounds widened once, outside the loop. In the C backend, left to the
         // compiler, only the first of the two is hoisted.
-        minPeriodReal = ((optInMinPeriod) as f64);
-        maxPeriodReal = ((optInMaxPeriod) as f64);
+        minPeriodReal = optInMinPeriod as f64;
+        maxPeriodReal = optInMaxPeriod as f64;
         // Equal bounds clamp every period to the same value, so the period array
         // is left unwritten: only the multi-period path may read it.
         if optInMinPeriod == optInMaxPeriod {
@@ -293,17 +288,17 @@ impl Core {
                 } else if tempPeriod > maxPeriodReal {
                     tempInt = optInMaxPeriod;
                 } else {
-                    tempInt = (tempPeriod) as i32;
+                    tempInt = tempPeriod as i32;
                 }
                 if tempInt < 1 {
                     tempInt = 1;
                 }
-                localPeriodArray[i] = (tempInt) as i32;
-                if tempInt < ((minUsed) as i32) {
-                    minUsed = (tempInt) as usize;
+                localPeriodArray[i] = tempInt as i32;
+                if tempInt < (minUsed as i32) {
+                    minUsed = tempInt as usize;
                 }
-                if tempInt > ((maxUsed) as i32) {
-                    maxUsed = (tempInt) as usize;
+                if tempInt > (maxUsed as i32) {
+                    maxUsed = tempInt as usize;
                 }
                 i += 1;
             }
@@ -332,10 +327,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-            localBegIdx = _xr0.beg_idx;
-            localNbElement = _xr0.count;
-            retCode = RetCode::Success;
+            let _xr0 = match self.ma(startIdx, endIdx, inReal, minUsed as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         } else {
             localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
             sortedIdx = vec![0_i32; (outputSize * 1) as usize];
@@ -349,7 +341,6 @@ impl Core {
                 let _w0 = &mut bucketOfs[curPeriod - minUsed..][.._wn];
                 for _wk in 0.._wn {
                     _w0[_wk] = 0;
-                    curPeriod += 1;
                 }
             }
             i = 0;
@@ -362,8 +353,7 @@ impl Core {
                     // operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
                     // i32 with usize and fail to compile.
                     tempInt = _w0[_wk];
-                    bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] + 1) as i32;
-                    i += 1;
+                    bucketOfs[(tempInt + 1 - (minUsed as i32)) as usize] = (bucketOfs[(tempInt + 1 - (minUsed as i32)) as usize] + 1) as i32;
                 }
             }
             curPeriod = minUsed;
@@ -372,7 +362,6 @@ impl Core {
                 let _w0 = &mut bucketOfs[curPeriod - minUsed..][.._wn + 1];
                 for _wk in 0.._wn {
                     _w0[_wk + 1] = (_w0[_wk + 1] + _w0[_wk]) as i32;
-                    curPeriod += 1;
                 }
             }
             i = 0;
@@ -381,8 +370,8 @@ impl Core {
                 let _w0 = &localPeriodArray[i..][.._wn];
                 for _wk in 0.._wn {
                     tempInt = _w0[_wk];
-                    sortedIdx[(bucketOfs[(tempInt - ((minUsed) as i32)) as usize]) as usize] = (i) as i32;
-                    bucketOfs[(tempInt - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt - ((minUsed) as i32)) as usize] + 1) as i32;
+                    sortedIdx[bucketOfs[(tempInt - (minUsed as i32)) as usize] as usize] = i as i32;
+                    bucketOfs[(tempInt - (minUsed as i32)) as usize] = (bucketOfs[(tempInt - (minUsed as i32)) as usize] + 1) as i32;
                     i += 1;
                 }
             }
@@ -398,24 +387,21 @@ impl Core {
             // its own start up. Both properties are pinned by the MAVP/GROUPING
             // regression test.
             bucketStart = 0;
-            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
-                bucketEnd = (bucketOfs[curPeriod - minUsed]) as usize;
+            for curPeriod in minUsed..maxUsed + 1 {
+                bucketEnd = bucketOfs[curPeriod - minUsed] as usize;
                 if bucketEnd > bucketStart {
-                    firstOccurrence = (sortedIdx[bucketStart]) as usize;
-                    lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
+                    firstOccurrence = sortedIdx[bucketStart] as usize;
+                    lastOccurrence = sortedIdx[bucketEnd - 1] as usize;
                     // Calculation of the MA required.
-                    let _xr1 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
-                    localBegIdx = _xr1.beg_idx;
-                    localNbElement = _xr1.count;
-                    retCode = RetCode::Success;
+                    let _xr1 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
                     if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
                         // The period's outputs form one contiguous run: block copy.
                         {
-            let _n = ((bucketEnd - bucketStart) * 1) as usize;
-            let _di = (firstOccurrence) as usize;
-            let _si = (firstOccurrence) as usize;
-            outReal[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
-        };
+                            let _n = ((bucketEnd - bucketStart) * 1) as usize;
+                            let _di = firstOccurrence as usize;
+                            let _si = firstOccurrence as usize;
+                            outReal[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
+                        };
                     } else {
                         i = bucketStart;
                         if i < bucketEnd {
@@ -423,7 +409,7 @@ impl Core {
                             let _w0 = &sortedIdx[i..][.._wn];
                             for _wk in 0.._wn {
                                 tempInt = _w0[_wk];
-                                outReal[(tempInt) as usize] = ((localOutputArray[(tempInt) as usize]) as f64);
+                                outReal[tempInt as usize] = localOutputArray[tempInt as usize] as f64;
                                 i += 1;
                             }
                         }
@@ -431,11 +417,10 @@ impl Core {
                 }
                 bucketStart = bucketEnd;
             }
-            curPeriod = (maxUsed as usize) + 1;
         }
         // Done. Inform the caller of the success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outputSize;
+        *outBegIdx = startIdx;
+        *outNBElement = outputSize;
         return RetCode::Success;
     }
     /// Moving average whose period varies per bar, driven by a companion period series. For each
@@ -605,10 +590,10 @@ impl Core {
         for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {
             let subValue = sub.step_tape(&sp.tape, tapeBase, sp.tapeMask, inReal);
             if bankIdx == slot {
-                (*outReal) = subValue;
+                *outReal = subValue;
             }
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     fn mavp_tape_open(inReal: &[f64], reach: usize) -> (Vec<f64>, usize, usize) {
@@ -659,7 +644,7 @@ impl Core {
         let v = Core::mavp_eval_window(sp, inReal, cp)?;
         sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
         sp.tape[sp.tapePos] = inReal;
-        (*outReal) = v;
+        *outReal = v;
         sp.cur_outReal = v;
         Ok(())
     }
@@ -671,14 +656,14 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInMinPeriod) as i32) == (i32::MIN) {
+        if optInMinPeriod == i32::MIN {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
+        } else if optInMinPeriod < 1 || optInMinPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+        if optInMaxPeriod == i32::MIN {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
+        } else if optInMaxPeriod < 1 || optInMaxPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -824,14 +809,14 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInMinPeriod) as i32) == (i32::MIN) {
+        if optInMinPeriod == i32::MIN {
             optInMinPeriod = 2;
-        } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 10000) {
+        } else if optInMinPeriod < 1 || optInMinPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInMaxPeriod) as i32) == (i32::MIN) {
+        if optInMaxPeriod == i32::MIN {
             optInMaxPeriod = 30;
-        } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 10000) {
+        } else if optInMaxPeriod < 1 || optInMaxPeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {

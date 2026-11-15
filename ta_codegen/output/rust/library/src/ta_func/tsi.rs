@@ -81,14 +81,14 @@ impl Core {
     #[doc(alias = "TA_TSI_Lookback")]
     #[inline]
     pub fn tsi_lookback(&self, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 25;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 13;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // One bar forms the first close-to-close change, then the two EMA warm-ups
@@ -116,7 +116,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_TSI_DisplayShift")]
-    pub fn tsi_display_shift(&self, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn tsi_display_shift(&self, optInFirstPeriod: i32, optInSecondPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.tsi_lookback(optInFirstPeriod, optInSecondPeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -175,14 +175,14 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 25;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 13;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
@@ -217,12 +217,12 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Blau's double smoothing in one pass: the signed momentum and its
         // magnitude are carried through the same two EMA stages, then divided.
         //
@@ -268,18 +268,18 @@ impl Core {
         while today <= startIdx {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
-            absMom = (mom).abs();
+            absMom = mom.abs();
             // Stage 1: the first EMA, over the raw momentum and its magnitude.
-            if nBar < ((optInFirstPeriod) as usize) {
+            if nBar < (optInFirstPeriod as usize) {
                 sumFirstNum = sumFirstNum + mom;
                 sumFirstDen = sumFirstDen + absMom;
                 if nBar == ((optInFirstPeriod - 1) as usize) {
-                    emaFirstNum = sumFirstNum / ((optInFirstPeriod) as f64);
-                    emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
+                    emaFirstNum = sumFirstNum / (optInFirstPeriod as f64);
+                    emaFirstDen = sumFirstDen / (optInFirstPeriod as f64);
                 }
             } else {
-                emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
-                emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
+                emaFirstNum = fmadd!(betaFirst, emaFirstNum, kFirst * mom);
+                emaFirstDen = fmadd!(betaFirst, emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -294,16 +294,16 @@ impl Core {
             // both accumulators are still 0.0. smi.c states the same rule.
             if nBar >= lookbackFirst {
                 nSecond = nBar - lookbackFirst;
-                if nSecond < ((optInSecondPeriod) as usize) {
+                if nSecond < (optInSecondPeriod as usize) {
                     sumSecondNum = sumSecondNum + emaFirstNum;
                     sumSecondDen = sumSecondDen + emaFirstDen;
                     if nSecond == ((optInSecondPeriod - 1) as usize) {
-                        emaSecondNum = sumSecondNum / ((optInSecondPeriod) as f64);
-                        emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
+                        emaSecondNum = sumSecondNum / (optInSecondPeriod as f64);
+                        emaSecondDen = sumSecondDen / (optInSecondPeriod as f64);
                     }
                 } else {
-                    emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
-                    emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
+                    emaSecondNum = fmadd!(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = fmadd!(betaSecond, emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -327,11 +327,11 @@ impl Core {
         while today <= endIdx {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
-            absMom = (mom).abs();
-            emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
-            emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
-            emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
-            emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
+            absMom = mom.abs();
+            emaFirstNum = fmadd!(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = fmadd!(betaFirst, emaFirstDen, kFirst * absMom);
+            emaSecondNum = fmadd!(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
@@ -341,7 +341,7 @@ impl Core {
             outIdx = outIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// True Strength Index: William Blau's double-smoothed momentum oscillator. The one-bar price
@@ -486,8 +486,6 @@ pub struct TsiStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TsiStreamState {
-    optInFirstPeriod: i32,
-    optInSecondPeriod: i32,
     kFirst: f64,
     kSecond: f64,
     betaFirst: f64,
@@ -513,18 +511,18 @@ impl Core {
         let mut tsiValue: f64 = 0.0_f64;
         mom = inReal - sp.prevClose;
         sp.prevClose = inReal;
-        absMom = (mom).abs();
-        sp.emaFirstNum = fmadd!(sp.betaFirst as f64, sp.emaFirstNum, sp.kFirst * mom);
-        sp.emaFirstDen = fmadd!(sp.betaFirst as f64, sp.emaFirstDen, sp.kFirst * absMom);
-        sp.emaSecondNum = fmadd!(sp.betaSecond as f64, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
-        sp.emaSecondDen = fmadd!(sp.betaSecond as f64, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
+        absMom = mom.abs();
+        sp.emaFirstNum = fmadd!(sp.betaFirst, sp.emaFirstNum, sp.kFirst * mom);
+        sp.emaFirstDen = fmadd!(sp.betaFirst, sp.emaFirstDen, sp.kFirst * absMom);
+        sp.emaSecondNum = fmadd!(sp.betaSecond, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+        sp.emaSecondDen = fmadd!(sp.betaSecond, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
         if sp.emaSecondDen > 0.0 {
             tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
         } else {
             tsiValue = 0.0;
         }
-        (*outReal) = tsiValue;
-        sp.cur_outReal = (*outReal);
+        *outReal = tsiValue;
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::tsi_open_internal`]
@@ -553,26 +551,24 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInFirstPeriod) as i32) == (i32::MIN) {
+        if optInFirstPeriod == i32::MIN {
             optInFirstPeriod = 25;
-        } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
+        } else if optInFirstPeriod < 2 || optInFirstPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSecondPeriod) as i32) == (i32::MIN) {
+        if optInSecondPeriod == i32::MIN {
             optInSecondPeriod = 13;
-        } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
+        } else if optInSecondPeriod < 2 || optInSecondPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut kFirst: f64 = 0.0_f64;
         let mut kSecond: f64 = 0.0_f64;
         let mut betaFirst: f64 = 0.0_f64;
@@ -600,11 +596,11 @@ impl Core {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // Blau's double smoothing in one pass: the signed momentum and its
         // magnitude are carried through the same two EMA stages, then divided.
         //
@@ -650,18 +646,18 @@ impl Core {
         while today <= startIdx {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
-            absMom = (mom).abs();
+            absMom = mom.abs();
             // Stage 1: the first EMA, over the raw momentum and its magnitude.
-            if nBar < ((optInFirstPeriod) as usize) {
+            if nBar < (optInFirstPeriod as usize) {
                 sumFirstNum = sumFirstNum + mom;
                 sumFirstDen = sumFirstDen + absMom;
                 if nBar == ((optInFirstPeriod - 1) as usize) {
-                    emaFirstNum = sumFirstNum / ((optInFirstPeriod) as f64);
-                    emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
+                    emaFirstNum = sumFirstNum / (optInFirstPeriod as f64);
+                    emaFirstDen = sumFirstDen / (optInFirstPeriod as f64);
                 }
             } else {
-                emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
-                emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
+                emaFirstNum = fmadd!(betaFirst, emaFirstNum, kFirst * mom);
+                emaFirstDen = fmadd!(betaFirst, emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -676,16 +672,16 @@ impl Core {
             // both accumulators are still 0.0. smi.c states the same rule.
             if nBar >= lookbackFirst {
                 nSecond = nBar - lookbackFirst;
-                if nSecond < ((optInSecondPeriod) as usize) {
+                if nSecond < (optInSecondPeriod as usize) {
                     sumSecondNum = sumSecondNum + emaFirstNum;
                     sumSecondDen = sumSecondDen + emaFirstDen;
                     if nSecond == ((optInSecondPeriod - 1) as usize) {
-                        emaSecondNum = sumSecondNum / ((optInSecondPeriod) as f64);
-                        emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
+                        emaSecondNum = sumSecondNum / (optInSecondPeriod as f64);
+                        emaSecondDen = sumSecondDen / (optInSecondPeriod as f64);
                     }
                 } else {
-                    emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
-                    emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
+                    emaSecondNum = fmadd!(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = fmadd!(betaSecond, emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -703,32 +699,30 @@ impl Core {
         } else {
             tsiValue = 0.0;
         }
-        outReal[(0 * outStride) as usize] = tsiValue;
+        outReal[0] = tsiValue;
         outIdx = 1;
         // Stable zone. Both stages are a pure recursion from here on.
         while today <= endIdx {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
-            absMom = (mom).abs();
-            emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
-            emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
-            emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
-            emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
+            absMom = mom.abs();
+            emaFirstNum = fmadd!(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = fmadd!(betaFirst, emaFirstDen, kFirst * absMom);
+            emaSecondNum = fmadd!(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
                 tsiValue = 0.0;
             }
-            outReal[(outIdx * outStride) as usize] = tsiValue;
+            outReal[outIdx * outStride] = tsiValue;
             outIdx = outIdx + 1;
             today = today + 1;
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = TsiStreamState {
-            optInFirstPeriod,
-            optInSecondPeriod,
             kFirst,
             kSecond,
             betaFirst,
@@ -745,7 +739,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::tsi_open`] (composition seam).
     pub(crate) fn tsi_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInFirstPeriod: i32, optInSecondPeriod: i32,
     ) -> Result<(TsiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -818,7 +812,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_TSI_OpenAndFill")]
     pub fn tsi_open_and_fill(
-        &self, inReal: &[f64], mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInFirstPeriod: i32, optInSecondPeriod: i32, outReal: &mut [f64],
     ) -> Result<(TsiStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -837,7 +831,7 @@ impl Core {
     /// [`Core::tsi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn tsi_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInFirstPeriod: i32, optInSecondPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TsiStream, RetCode> {
         self.tsi_open_impl(inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -925,20 +919,19 @@ impl TsiStream {
             let mut emaFirstNum = sp.emaFirstNum;
             let mut emaSecondDen = sp.emaSecondDen;
             let mut emaSecondNum = sp.emaSecondNum;
-            let mut prevClose = sp.prevClose;
+            let prevClose = sp.prevClose;
             mom = inReal - prevClose;
-            prevClose = inReal;
-            absMom = (mom).abs();
-            emaFirstNum = fmadd!(sp.betaFirst as f64, emaFirstNum, sp.kFirst * mom);
-            emaFirstDen = fmadd!(sp.betaFirst as f64, emaFirstDen, sp.kFirst * absMom);
-            emaSecondNum = fmadd!(sp.betaSecond as f64, emaSecondNum, sp.kSecond * emaFirstNum);
-            emaSecondDen = fmadd!(sp.betaSecond as f64, emaSecondDen, sp.kSecond * emaFirstDen);
+            absMom = mom.abs();
+            emaFirstNum = fmadd!(sp.betaFirst, emaFirstNum, sp.kFirst * mom);
+            emaFirstDen = fmadd!(sp.betaFirst, emaFirstDen, sp.kFirst * absMom);
+            emaSecondNum = fmadd!(sp.betaSecond, emaSecondNum, sp.kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(sp.betaSecond, emaSecondDen, sp.kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
                 tsiValue = 0.0;
             }
-            (*outReal) = tsiValue;
+            *outReal = tsiValue;
         }
         Ok(outReal)
     }

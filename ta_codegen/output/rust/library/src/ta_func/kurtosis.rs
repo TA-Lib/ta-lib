@@ -81,9 +81,9 @@ impl Core {
     #[doc(alias = "TA_KURTOSIS_Lookback")]
     #[inline]
     pub fn kurtosis_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 4 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -105,7 +105,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_KURTOSIS_DisplayShift")]
-    pub fn kurtosis_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn kurtosis_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.kurtosis_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -161,9 +161,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 4 || optInTimePeriod > 10000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.kurtosis_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -205,8 +205,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -263,7 +263,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -275,16 +275,15 @@ impl Core {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 total1 = 0.0;
                 total2 = 0.0;
                 total3 = 0.0;
                 total4 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     dev = inReal[j] - shift;
                     dev2 = dev * dev;
                     total1 += dev;
@@ -292,11 +291,10 @@ impl Core {
                     total3 += dev2 * dev;
                     total4 += dev2 * dev2;
                 }
-                j = (i as usize) + 1;
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -308,7 +306,7 @@ impl Core {
                     total2 = 0.0;
                     total3 = 0.0;
                     total4 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         dev = inReal[j] - shift;
                         dev2 = dev * dev;
                         total1 += dev;
@@ -316,11 +314,10 @@ impl Core {
                         total3 += dev2 * dev;
                         total4 += dev2 * dev2;
                     }
-                    j = (i as usize) + 1;
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 }
                 peak2 = total2;
                 peak4 = total4;
@@ -346,8 +343,8 @@ impl Core {
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// An estimate, from the trailing window, of the excess kurtosis of the distribution its values
@@ -487,7 +484,6 @@ pub struct KurtosisStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct KurtosisStreamState {
-    optInTimePeriod: i32,
     shift: f64,
     total1: f64,
     total2: f64,
@@ -540,7 +536,7 @@ impl Core {
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
-        moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+        moment4 = fmadd!(6.0 * residueSq, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
         // Rebuild once either central moment falls below 1% of the largest
         // shifted sum of its power held since the last rebuild. That catches a
         // shift several sigma stale, where the expansion above cancels as
@@ -550,10 +546,10 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if moment2 < 0.01 * sp.peak2 || moment4 < 0.01 * sp.peak4 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = sp.reseedPeriod;
-            windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
+            windowStart = (sp.i - (sp.nbInitialElementNeeded as i32)) as usize;
             tempReal = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.i {
                 tempReal += sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
@@ -564,7 +560,7 @@ impl Core {
             sp.total3 = 0.0;
             sp.total4 = 0.0;
             // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-            sp.j = (windowStart) as i32;
+            sp.j = windowStart as i32;
             while sp.j <= sp.i {
                 dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                 dev2 = dev * dev;
@@ -577,7 +573,7 @@ impl Core {
             residue = sp.total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = sp.total2 - sp.dPeriod * residueSq;
-            moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             // The left-to-right sum misses the mean by many ulps at a long
             // period, and a window whose spread is under that miss would fire a
             // trigger again on every bar. The residue just measured is the
@@ -590,7 +586,7 @@ impl Core {
                 sp.total3 = 0.0;
                 sp.total4 = 0.0;
                 // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
-                sp.j = (windowStart) as i32;
+                sp.j = windowStart as i32;
                 while sp.j <= sp.i {
                     dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                     dev2 = dev * dev;
@@ -603,7 +599,7 @@ impl Core {
                 residue = sp.total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = sp.total2 - sp.dPeriod * residueSq;
-                moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             }
             sp.peak2 = sp.total2;
             sp.peak4 = sp.total4;
@@ -624,9 +620,9 @@ impl Core {
         sp.total3 -= dev2 * dev;
         sp.total4 -= dev2 * dev2;
         sp.trailingIdx += 1;
-        (*outReal) = kurt;
+        *outReal = kurt;
         sp.i += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::kurtosis_open_internal`]
@@ -655,21 +651,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
+        } else if optInTimePeriod < 4 || optInTimePeriod > 10000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
         let mut shift: f64 = 0.0_f64;
         let mut total1: f64 = 0.0_f64;
@@ -704,8 +698,8 @@ impl Core {
             startIdx = nbInitialElementNeeded;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
@@ -761,7 +755,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -773,16 +767,15 @@ impl Core {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     tempReal += inReal[j];
                 }
-                j = (i as usize) + 1;
                 shift = tempReal * invPeriod;
                 total1 = 0.0;
                 total2 = 0.0;
                 total3 = 0.0;
                 total4 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     dev = inReal[j] - shift;
                     dev2 = dev * dev;
                     total1 += dev;
@@ -790,11 +783,11 @@ impl Core {
                     total3 += dev2 * dev;
                     total4 += dev2 * dev2;
                 }
-                j = (i as usize) + 1;
+                j = i + 1;
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -806,7 +799,7 @@ impl Core {
                     total2 = 0.0;
                     total3 = 0.0;
                     total4 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         dev = inReal[j] - shift;
                         dev2 = dev * dev;
                         total1 += dev;
@@ -814,11 +807,11 @@ impl Core {
                         total3 += dev2 * dev;
                         total4 += dev2 * dev2;
                     }
-                    j = (i as usize) + 1;
+                    j = i + 1;
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 }
                 peak2 = total2;
                 peak4 = total4;
@@ -839,12 +832,12 @@ impl Core {
             total3 -= dev2 * dev;
             total4 -= dev2 * dev2;
             trailingIdx += 1;
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = kurt;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = kurt;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -864,7 +857,6 @@ impl Core {
             }
         }
         let state = KurtosisStreamState {
-            optInTimePeriod,
             shift,
             total1,
             total2,
@@ -876,12 +868,12 @@ impl Core {
             invPeriod,
             peak2,
             peak4,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
             reseedPeriod,
-            j: (j) as i32,
-            i: (i) as i32,
+            j: j as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -891,7 +883,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::kurtosis_open`] (composition seam).
     pub(crate) fn kurtosis_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(KurtosisStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -964,7 +956,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KURTOSIS_OpenAndFill")]
     pub fn kurtosis_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(KurtosisStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -983,7 +975,7 @@ impl Core {
     /// [`Core::kurtosis_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn kurtosis_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<KurtosisStream, RetCode> {
         self.kurtosis_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1070,7 +1062,6 @@ impl KurtosisStream {
             let mut total2 = sp.total2;
             let mut total3 = sp.total3;
             let mut total4 = sp.total4;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.i & sp.xMask) as usize;
@@ -1086,7 +1077,7 @@ impl KurtosisStream {
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;
-            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -1095,13 +1086,12 @@ impl KurtosisStream {
             // that scales with the peaks.
             barsSinceReseed -= 1;
             if moment2 < 0.01 * peak2 || moment4 < 0.01 * peak4 || barsSinceReseed <= 0 {
-                barsSinceReseed = sp.reseedPeriod;
-                windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
+                windowStart = (sp.i - (sp.nbInitialElementNeeded as i32)) as usize;
                 tempReal = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.i {
-                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    tempReal += if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
@@ -1110,7 +1100,7 @@ impl KurtosisStream {
                 total3 = 0.0;
                 total4 = 0.0;
                 // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                j = (windowStart) as i32;
+                j = windowStart as i32;
                 while j <= sp.i {
                     dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     dev2 = dev * dev;
@@ -1123,7 +1113,7 @@ impl KurtosisStream {
                 residue = total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - sp.dPeriod * residueSq;
-                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -1136,7 +1126,7 @@ impl KurtosisStream {
                     total3 = 0.0;
                     total4 = 0.0;
                     // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
-                    j = (windowStart) as i32;
+                    j = windowStart as i32;
                     while j <= sp.i {
                         dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                         dev2 = dev * dev;
@@ -1149,10 +1139,8 @@ impl KurtosisStream {
                     residue = total1 * sp.invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - sp.dPeriod * residueSq;
-                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
                 }
-                peak2 = total2;
-                peak4 = total4;
             }
             // No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
             // A flat window reaches here with every deviation exactly 0, so this is
@@ -1163,14 +1151,7 @@ impl KurtosisStream {
             kurt = sp.coefA * (moment4 / varSquared) - sp.coefB;
             // inReal and outReal may be the same buffer: read the trailing value
             // before the output write.
-            dev = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shift;
-            dev2 = dev * dev;
-            total1 -= dev;
-            total2 -= dev2;
-            total3 -= dev2 * dev;
-            total4 -= dev2 * dev2;
-            trailingIdx += 1;
-            (*outReal) = kurt;
+            *outReal = kurt;
         }
         Ok(outReal)
     }

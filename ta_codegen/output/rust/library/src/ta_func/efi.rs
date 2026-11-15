@@ -78,9 +78,9 @@ impl Core {
     #[doc(alias = "TA_EFI_Lookback")]
     #[inline]
     pub fn efi_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // One bar forms the first close-to-close change.
@@ -103,7 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_EFI_DisplayShift")]
-    pub fn efi_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn efi_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.efi_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -162,9 +162,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -217,7 +217,7 @@ impl Core {
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
         if emaBeta < 0.5 {
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            emaBeta = 1.0 - (optInK_1 as f64);
         }
         // Move up the start index if there is not
         // enough initial data.
@@ -226,8 +226,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inClose = &inClose[..=endIdx];
@@ -236,7 +236,7 @@ impl Core {
         // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
         // not keep the sign of a -0.0 force: a down bar on zero volume.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             prevClose = inClose[today - 1];
@@ -250,40 +250,35 @@ impl Core {
                     prevClose = _w0[_wk];
                     _w2[_wk] = force;
                     outIdx = outIdx + 1;
-                    today = today + 1;
                 }
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         // The first EMA value is a simple average of the first 'period' force
         // values; it then seeds the recursion. This is ema.c's seeding applied
         // to the force series rather than to the input array.
         today = startIdx - lookbackTotal + 1;
         prevClose = inClose[today - 1];
-        i = (optInTimePeriod) as usize;
+        i = optInTimePeriod as usize;
         tempReal = 0.0;
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today..][.._wn];
             let _w1 = &inVolume[today..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 force = (_w0[_wk] - prevClose) * _w1[_wk];
                 prevClose = _w0[_wk];
                 tempReal += force;
                 today = today + 1;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevMA = tempReal / ((optInTimePeriod) as f64);
+        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
-            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
+            prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * force);
             today = today + 1;
         }
         outReal[0] = prevMA;
@@ -296,13 +291,12 @@ impl Core {
             for _wk in 0.._wn {
                 force = (_w0[_wk] - prevClose) * _w1[_wk];
                 prevClose = _w0[_wk];
-                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
+                prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * force);
                 _w2[_wk] = prevMA;
                 outIdx = outIdx + 1;
-                today = today + 1;
             }
         }
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted momentum. Each
@@ -470,15 +464,15 @@ impl Core {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
-            (*outReal) = force;
-            sp.cur_outReal = (*outReal);
+            *outReal = force;
+            sp.cur_outReal = *outReal;
         } else {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
-            sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * force);
-            (*outReal) = sp.prevMA;
-            sp.cur_outReal = (*outReal);
+            sp.prevMA = fmadd!(sp.emaBeta, sp.prevMA, ((sp.optInK_1) as f64) * force);
+            *outReal = sp.prevMA;
+            sp.cur_outReal = *outReal;
         }
     }
 
@@ -508,9 +502,9 @@ impl Core {
         if inClose.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 13;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inVolume.len() != inClose.len() {
@@ -518,22 +512,18 @@ impl Core {
         }
         let historyLen: usize = inClose.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let mut emaBeta: f64 = 0.0_f64;
             let mut optInK_1: f64 = 0.0_f64;
-            let mut tempReal: f64 = 0.0_f64;
-            let mut prevMA: f64 = 0.0_f64;
+            let prevMA: f64 = 0.0_f64;
             let mut prevClose: f64 = 0.0_f64;
             let mut force: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -571,7 +561,7 @@ impl Core {
             emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
             optInK_1 = 1.0 - emaBeta;
             if emaBeta < 0.5 {
-                emaBeta = 1.0 - ((optInK_1) as f64);
+                emaBeta = 1.0 - (optInK_1 as f64);
             }
             // Move up the start index if there is not
             // enough initial data.
@@ -580,25 +570,25 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
+                *outBegIdx = 0;
+                *outNBElement = 0;
                 return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
             // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
             // not keep the sign of a -0.0 force: a down bar on zero volume.
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             prevClose = inClose[today - 1];
             while today <= endIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                outReal[(outIdx * outStride) as usize] = force;
+                outReal[outIdx * outStride] = force;
                 outIdx = outIdx + 1;
                 today = today + 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
 
             // Capture the live batch state into the handle.
             let state = EfiStreamState {
@@ -655,7 +645,7 @@ impl Core {
             emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
             optInK_1 = 1.0 - emaBeta;
             if emaBeta < 0.5 {
-                emaBeta = 1.0 - ((optInK_1) as f64);
+                emaBeta = 1.0 - (optInK_1 as f64);
             }
             // Move up the start index if there is not
             // enough initial data.
@@ -664,20 +654,20 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
+                *outBegIdx = 0;
+                *outNBElement = 0;
                 return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
             // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
             // not keep the sign of a -0.0 force: a down bar on zero volume.
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             // The first EMA value is a simple average of the first 'period' force
             // values; it then seeds the recursion. This is ema.c's seeding applied
             // to the force series rather than to the input array.
             today = startIdx - lookbackTotal + 1;
             prevClose = inClose[today - 1];
-            i = (optInTimePeriod) as usize;
+            i = optInTimePeriod as usize;
             tempReal = 0.0;
             while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
                 force = (inClose[today] - prevClose) * inVolume[today];
@@ -685,24 +675,24 @@ impl Core {
                 tempReal += force;
                 today = today + 1;
             }
-            prevMA = tempReal / ((optInTimePeriod) as f64);
+            prevMA = tempReal / (optInTimePeriod as f64);
             while today <= startIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
+                prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * force);
                 today = today + 1;
             }
-            outReal[(0 * outStride) as usize] = prevMA;
+            outReal[0] = prevMA;
             outIdx = 1;
             while today <= endIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
-                outReal[(outIdx * outStride) as usize] = prevMA;
+                prevMA = fmadd!(emaBeta, prevMA, ((optInK_1) as f64) * force);
+                outReal[outIdx * outStride] = prevMA;
                 outIdx = outIdx + 1;
                 today = today + 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
 
             // Capture the live batch state into the handle.
             let state = EfiStreamState {
@@ -719,7 +709,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::efi_open`] (composition seam).
     pub(crate) fn efi_open_internal(
-        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(EfiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -798,7 +788,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_EFI_OpenAndFill")]
     pub fn efi_open_and_fill(
-        &self, inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(EfiStream, OutRange), RetCode> {
         if inClose.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -820,7 +810,7 @@ impl Core {
     /// [`Core::efi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn efi_open_and_fill_internal(
-        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<EfiStream, RetCode> {
         self.efi_open_impl(inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -889,18 +879,16 @@ impl EfiStream {
             let outReal = &mut outReal;
             if sp.optInTimePeriod == 1 {
                 let mut force: f64 = 0.0_f64;
-                let mut prevClose = sp.prevClose;
+                let prevClose = sp.prevClose;
                 force = (inClose - prevClose) * inVolume;
-                prevClose = inClose;
-                (*outReal) = force;
+                *outReal = force;
             } else {
                 let mut force: f64 = 0.0_f64;
-                let mut prevClose = sp.prevClose;
+                let prevClose = sp.prevClose;
                 let mut prevMA = sp.prevMA;
                 force = (inClose - prevClose) * inVolume;
-                prevClose = inClose;
-                prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * force);
-                (*outReal) = prevMA;
+                prevMA = fmadd!(sp.emaBeta, prevMA, ((sp.optInK_1) as f64) * force);
+                *outReal = prevMA;
             }
         }
         Ok(outReal)

@@ -84,16 +84,16 @@ impl Core {
     #[doc(alias = "TA_VORTEX_Lookback")]
     #[inline]
     pub fn vortex_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // Every per-bar term (TR, |H-prevL|, |L-prevH|) needs the prior bar, so
         // bar 0 is consumed exactly as TA_TRANGE consumes it, and the window then
         // needs optInTimePeriod terms: 1 + (optInTimePeriod - 1) = optInTimePeriod.
         // First valid output index is n, not n-1.
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::vortex`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -111,7 +111,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_VORTEX_DisplayShift")]
-    pub fn vortex_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn vortex_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.vortex_lookback(optInTimePeriod)?;
         if outputIdx >= 2 {
             return Err(RetCode::BadParam);
@@ -140,9 +140,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.vortex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -152,7 +152,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outPlusVI.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMinusVI.len());
-        if (outPlusVI.as_ptr() == outMinusVI.as_ptr()) {
+        if outPlusVI.as_ptr() == outMinusVI.as_ptr() {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -204,8 +204,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -219,7 +219,7 @@ impl Core {
         sVMP = 0.0;
         sVMM = 0.0;
         nullRun = 0;
-        i = startIdx - ((optInTimePeriod) as usize) + 1;
+        i = startIdx - (optInTimePeriod as usize) + 1;
         if i < startIdx {
             let _wn: usize = startIdx - i;
             let _w0 = &inClose[i - 1..][.._wn];
@@ -237,14 +237,13 @@ impl Core {
                 sTR += trueRange;
                 sVMP += (_w1[_wk + 1] - _w2[_wk]).abs();
                 sVMM += (_w2[_wk + 1] - _w1[_wk]).abs();
-                live = (if trueRange <= 0.0 { 0 } else { 1 });
+                live = if trueRange <= 0.0 { 0 } else { 1 };
                 nullRun = nullRun + 1 & live.wrapping_sub(1);
-                i += 1;
             }
         }
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize) + 1;
+        trailingIdx = startIdx - (optInTimePeriod as usize) + 1;
         while today <= endIdx {
             // Add on today's terms.
             tempLT = inLow[today];
@@ -258,7 +257,7 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            live = (if trueRange <= 0.0 { 0 } else { 1 });
+            live = if trueRange <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
@@ -271,9 +270,9 @@ impl Core {
             // would poison both lines permanently (an unreachable negative -VI).
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sTR = 0.0;
             }
             // Record the current window sums, then retire the trailing bar's
@@ -337,7 +336,7 @@ impl Core {
                 sVMP = 0.0;
                 sVMM = 0.0;
                 seeded = 0;
-                for i in (today - ((optInTimePeriod) as usize) as usize)..(today as usize) + 1 {
+                for i in ((today - (optInTimePeriod as usize)) as usize)..today + 1 {
                     if seeded > 1 {
                         tempLT = inLow[i];
                         tempHT = inHigh[i];
@@ -355,13 +354,12 @@ impl Core {
                     prevClose = inClose[i];
                     seeded += 1;
                 }
-                i = (today as usize) + 1;
             }
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend indicator (*Technical
@@ -577,7 +575,7 @@ impl Core {
         sp.sTR += trueRange;
         sp.sVMP += (inHigh - sp.lag1_inLow).abs();
         sp.sVMM += (inLow - sp.lag1_inHigh).abs();
-        live = (if trueRange <= 0.0 { 0 } else { 1 });
+        live = if trueRange <= 0.0 { 0 } else { 1 };
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         // Once the whole window is flat, every TRUE-RANGE term in it is
         // provably zero (nullRun counts exactly that), so sTR's only content
@@ -590,9 +588,9 @@ impl Core {
         // would poison both lines permanently (an unreachable negative -VI).
         // ULTOSC can reseed all its totals because its predicate covers both
         // of its per-bar terms; VORTEX's covers only the denominator's.
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+        if sp.nullRun >= (sp.optInTimePeriod as usize) {
             cold_arm();
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.nullRun = sp.optInTimePeriod as usize;
             sp.sTR = 0.0;
         }
         // Record the current window sums, then retire the trailing bar's
@@ -631,11 +629,11 @@ impl Core {
         // instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
         // rejects it (VORTEX is homogeneous of degree 0).
         if curTR > 0.0 {
-            (*outPlusVI) = curVMP / curTR;
-            (*outMinusVI) = curVMM / curTR;
+            *outPlusVI = curVMP / curTR;
+            *outMinusVI = curVMM / curTR;
         } else {
-            (*outPlusVI) = 0.0;
-            (*outMinusVI) = 0.0;
+            *outPlusVI = 0.0;
+            *outMinusVI = 0.0;
         }
         // Every term is non-negative, so a sum below zero is the residue a
         // term far larger than the rest of the window left when it retired.
@@ -656,11 +654,11 @@ impl Core {
             sp.sVMM = 0.0;
             seeded = 0;
             // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
-            i = (sp.optInTimePeriod) as usize;
+            i = sp.optInTimePeriod as usize;
             loop {
                 if seeded > 1 {
-                    tempLT = sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
-                    tempHT = sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
+                    tempLT = sp.ring_trailingIdx_inLow[(if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize];
+                    tempHT = sp.ring_trailingIdx_inHigh[(if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize];
                     trueRange = tempHT - tempLT;
                     tempDouble = (sp.prevClose - tempHT).abs();
                     trueRange = c_max(tempDouble, trueRange);
@@ -670,16 +668,16 @@ impl Core {
                     sp.sVMP += (tempHT - sp.prevLow).abs();
                     sp.sVMM += (tempLT - sp.prevHigh).abs();
                 }
-                sp.prevHigh = sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
-                sp.prevLow = sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
-                sp.prevClose = sp.ring_trailingIdx_inClose[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
+                sp.prevHigh = sp.ring_trailingIdx_inHigh[(if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize];
+                sp.prevLow = sp.ring_trailingIdx_inLow[(if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize];
+                sp.prevClose = sp.ring_trailingIdx_inClose[(if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize];
                 seeded += 1;
                 if i == 0 { break; }
                 i -= 1;
             }
         }
-        sp.cur_outPlusVI = (*outPlusVI);
-        sp.cur_outMinusVI = (*outMinusVI);
+        sp.cur_outPlusVI = *outPlusVI;
+        sp.cur_outMinusVI = *outMinusVI;
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
         sp.lag1_inClose = inClose;
@@ -699,9 +697,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -709,14 +707,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
@@ -765,8 +761,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Prime the three window sums over the optInTimePeriod-1 terms before the
@@ -778,7 +774,7 @@ impl Core {
         sVMM = 0.0;
         nullRun = 0;
         // for( i = startIdx - ((optInTimePeriod) as usize) + 1; i < startIdx; i += 1 )
-        i = startIdx - ((optInTimePeriod) as usize) + 1;
+        i = startIdx - (optInTimePeriod as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -791,13 +787,13 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[i] - inLow[i - 1]).abs();
             sVMM += (inLow[i] - inHigh[i - 1]).abs();
-            live = (if trueRange <= 0.0 { 0 } else { 1 });
+            live = if trueRange <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             i += 1;
         }
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize) + 1;
+        trailingIdx = startIdx - (optInTimePeriod as usize) + 1;
         while today <= endIdx {
             // Add on today's terms.
             tempLT = inLow[today];
@@ -811,7 +807,7 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            live = (if trueRange <= 0.0 { 0 } else { 1 });
+            live = if trueRange <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
@@ -824,9 +820,9 @@ impl Core {
             // would poison both lines permanently (an unreachable negative -VI).
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
-            if nullRun >= ((optInTimePeriod) as usize) {
+            if nullRun >= (optInTimePeriod as usize) {
                 cold_arm();
-                nullRun = (optInTimePeriod) as usize;
+                nullRun = optInTimePeriod as usize;
                 sTR = 0.0;
             }
             // Record the current window sums, then retire the trailing bar's
@@ -866,11 +862,11 @@ impl Core {
             // instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
             // rejects it (VORTEX is homogeneous of degree 0).
             if curTR > 0.0 {
-                outPlusVI[(outIdx * outStride) as usize] = curVMP / curTR;
-                outMinusVI[(outIdx * outStride) as usize] = curVMM / curTR;
+                outPlusVI[outIdx * outStride] = curVMP / curTR;
+                outMinusVI[outIdx * outStride] = curVMM / curTR;
             } else {
-                outPlusVI[(outIdx * outStride) as usize] = 0.0;
-                outMinusVI[(outIdx * outStride) as usize] = 0.0;
+                outPlusVI[outIdx * outStride] = 0.0;
+                outMinusVI[outIdx * outStride] = 0.0;
             }
             // Every term is non-negative, so a sum below zero is the residue a
             // term far larger than the rest of the window left when it retired.
@@ -890,7 +886,7 @@ impl Core {
                 sVMP = 0.0;
                 sVMM = 0.0;
                 seeded = 0;
-                for i in (today - ((optInTimePeriod) as usize) as usize)..(today as usize) + 1 {
+                for i in ((today - (optInTimePeriod as usize)) as usize)..today + 1 {
                     if seeded > 1 {
                         tempLT = inLow[i];
                         tempHT = inHigh[i];
@@ -908,13 +904,12 @@ impl Core {
                     prevClose = inClose[i];
                     seeded += 1;
                 }
-                i = (today as usize) + 1;
             }
             outIdx += 1;
             today += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capLag_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
@@ -976,7 +971,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::vortex_open`] (composition seam).
     pub(crate) fn vortex_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(VortexStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1067,7 +1062,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VORTEX_OpenAndFill")]
     pub fn vortex_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outPlusVI: &mut [f64], outMinusVI: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outPlusVI: &mut [f64], outMinusVI: &mut [f64],
     ) -> Result<(VortexStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1092,7 +1087,7 @@ impl Core {
     /// [`Core::vortex_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn vortex_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outPlusVI: &mut [f64], outMinusVI: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outPlusVI: &mut [f64], outMinusVI: &mut [f64],
     ) -> Result<VortexStream, RetCode> {
         self.vortex_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI, 1)
     }
@@ -1199,7 +1194,7 @@ impl VortexStream {
             sTR += trueRange;
             sVMP += (inHigh - sp.lag1_inLow).abs();
             sVMM += (inLow - sp.lag1_inHigh).abs();
-            live = (if trueRange <= 0.0 { 0 } else { 1 });
+            live = if trueRange <= 0.0 { 0 } else { 1 };
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
@@ -1212,8 +1207,7 @@ impl VortexStream {
             // would poison both lines permanently (an unreachable negative -VI).
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
+            if nullRun >= (sp.optInTimePeriod as usize) {
                 sTR = 0.0;
             }
             // Record the current window sums, then retire the trailing bar's
@@ -1221,17 +1215,14 @@ impl VortexStream {
             curTR = sTR;
             curVMP = sVMP;
             curVMM = sVMM;
-            tempLT = (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 });
-            tempHT = (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 });
-            tempCY = (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal2 });
+            tempLT = if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 };
+            tempHT = if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 };
+            tempCY = if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal2 };
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
             trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
             trueRange = c_max(tempDouble, trueRange);
-            sTR -= trueRange;
-            sVMP -= ((if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 }) - (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 })).abs();
-            sVMM -= ((if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 }) - (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 })).abs();
             // Last operation is to write the outputs. Must be done after the
             // trailing bar has been fully consumed: the caller is allowed to pass
             // an output buffer aliasing any input, and the trailing reads above
@@ -1252,11 +1243,11 @@ impl VortexStream {
             // instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
             // rejects it (VORTEX is homogeneous of degree 0).
             if curTR > 0.0 {
-                (*outPlusVI) = curVMP / curTR;
-                (*outMinusVI) = curVMM / curTR;
+                *outPlusVI = curVMP / curTR;
+                *outMinusVI = curVMM / curTR;
             } else {
-                (*outPlusVI) = 0.0;
-                (*outMinusVI) = 0.0;
+                *outPlusVI = 0.0;
+                *outMinusVI = 0.0;
             }
         }
         Ok((outPlusVI, outMinusVI))

@@ -83,29 +83,29 @@ impl Core {
     #[doc(alias = "TA_ICHIMOKU_Lookback")]
     #[inline]
     pub fn ichimoku_lookback(&self, mut optInTenkanPeriod: i32, mut optInKijunPeriod: i32, mut optInSenkouBPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTenkanPeriod) as i32) == (i32::MIN) {
+        if optInTenkanPeriod == i32::MIN {
             optInTenkanPeriod = 9;
-        } else if (((optInTenkanPeriod) as i32) < 2) || (((optInTenkanPeriod) as i32) > 100000) {
+        } else if optInTenkanPeriod < 2 || optInTenkanPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInKijunPeriod) as i32) == (i32::MIN) {
+        if optInKijunPeriod == i32::MIN {
             optInKijunPeriod = 26;
-        } else if (((optInKijunPeriod) as i32) < 2) || (((optInKijunPeriod) as i32) > 100000) {
+        } else if optInKijunPeriod < 2 || optInKijunPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSenkouBPeriod) as i32) == (i32::MIN) {
+        if optInSenkouBPeriod == i32::MIN {
             optInSenkouBPeriod = 52;
-        } else if (((optInSenkouBPeriod) as i32) < 2) || (((optInSenkouBPeriod) as i32) > 100000) {
+        } else if optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let mut longest: usize = 0_usize;
         // Nothing orders the three periods: any of them can be the longest.
-        longest = (optInTenkanPeriod) as usize;
-        if ((optInKijunPeriod) as usize) > longest {
-            longest = (optInKijunPeriod) as usize;
+        longest = optInTenkanPeriod as usize;
+        if (optInKijunPeriod as usize) > longest {
+            longest = optInKijunPeriod as usize;
         }
-        if ((optInSenkouBPeriod) as usize) > longest {
-            longest = (optInSenkouBPeriod) as usize;
+        if (optInSenkouBPeriod as usize) > longest {
+            longest = optInSenkouBPeriod as usize;
         }
         return Ok(longest - 1);
     }
@@ -126,21 +126,17 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ICHIMOKU_DisplayShift")]
-    pub fn ichimoku_display_shift(&self, mut optInTenkanPeriod: i32, mut optInKijunPeriod: i32, mut optInSenkouBPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn ichimoku_display_shift(&self, optInTenkanPeriod: i32, mut optInKijunPeriod: i32, optInSenkouBPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod)?;
-        if ((optInTenkanPeriod) as i32) == (i32::MIN) {
-            optInTenkanPeriod = 9;
-        } else if (((optInTenkanPeriod) as i32) < 2) || (((optInTenkanPeriod) as i32) > 100000) {
+        if optInTenkanPeriod != i32::MIN && (optInTenkanPeriod < 2 || optInTenkanPeriod > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInKijunPeriod) as i32) == (i32::MIN) {
+        if optInKijunPeriod == i32::MIN {
             optInKijunPeriod = 26;
-        } else if (((optInKijunPeriod) as i32) < 2) || (((optInKijunPeriod) as i32) > 100000) {
+        } else if optInKijunPeriod < 2 || optInKijunPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSenkouBPeriod) as i32) == (i32::MIN) {
-            optInSenkouBPeriod = 52;
-        } else if (((optInSenkouBPeriod) as i32) < 2) || (((optInSenkouBPeriod) as i32) > 100000) {
+        if optInSenkouBPeriod != i32::MIN && (optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000) {
             return Err(RetCode::BadParam);
         }
         if outputIdx >= 4 {
@@ -181,19 +177,19 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTenkanPeriod) as i32) == (i32::MIN) {
+        if optInTenkanPeriod == i32::MIN {
             optInTenkanPeriod = 9;
-        } else if (((optInTenkanPeriod) as i32) < 2) || (((optInTenkanPeriod) as i32) > 100000) {
+        } else if optInTenkanPeriod < 2 || optInTenkanPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInKijunPeriod) as i32) == (i32::MIN) {
+        if optInKijunPeriod == i32::MIN {
             optInKijunPeriod = 26;
-        } else if (((optInKijunPeriod) as i32) < 2) || (((optInKijunPeriod) as i32) > 100000) {
+        } else if optInKijunPeriod < 2 || optInKijunPeriod > 100000 {
             return RetCode::BadParam;
         }
-        if ((optInSenkouBPeriod) as i32) == (i32::MIN) {
+        if optInSenkouBPeriod == i32::MIN {
             optInSenkouBPeriod = 52;
-        } else if (((optInSenkouBPeriod) as i32) < 2) || (((optInSenkouBPeriod) as i32) > 100000) {
+        } else if optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).unwrap_or(usize::MAX);
@@ -208,16 +204,13 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut n: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut tempBegIdx: usize = 0_usize;
-        let mut tempNbElement: usize = 0_usize;
         let mut tempT: Vec<f64> = Vec::new();
         let mut tempK: Vec<f64> = Vec::new();
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -231,23 +224,11 @@ impl Core {
         // An output may alias inHigh or inLow: no output is written before the
         // last midprice call, which is the last read of either input.
         let _xr0 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, &mut tempT[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
         let _xr1 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInKijunPeriod, &mut tempK[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr1.beg_idx;
-        tempNbElement = _xr1.count;
-        retCode = RetCode::Success;
         let _xr2 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
-        retCode = RetCode::Success;
         // Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
         // double in the last bit.
         let _xr3 = match self.medprice(0, n - 1, &tempT, &tempK, outSenkouSpanA) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr3.beg_idx;
-        tempNbElement = _xr3.count;
-        retCode = RetCode::Success;
         i = 0;
         if i < n {
             let _wn: usize = n - i;
@@ -256,13 +237,12 @@ impl Core {
             let _w2 = &tempK[i..][.._wn];
             let _w3 = &tempT[i..][.._wn];
             for _wk in 0.._wn {
-                _w1[_wk] = ((_w3[_wk]) as f64);
-                _w0[_wk] = ((_w2[_wk]) as f64);
-                i += 1;
+                _w1[_wk] = _w3[_wk] as f64;
+                _w0[_wk] = _w2[_wk] as f64;
             }
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = n;
+        *outBegIdx = startIdx;
+        *outNBElement = n;
         return RetCode::Success;
     }
     /// Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs and lows
@@ -439,9 +419,6 @@ pub struct IchimokuStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct IchimokuStreamState {
-    optInTenkanPeriod: i32,
-    optInKijunPeriod: i32,
-    optInSenkouBPeriod: i32,
     sub0: MidpriceStream,
     sub1: MidpriceStream,
     sub2: MidpriceStream,
@@ -474,10 +451,10 @@ impl Core {
         // Combine map (batch tail, per bar).
         cur_outTenkanSen = cur_tempT;
         cur_outKijunSen = cur_tempK;
-        (*outTenkanSen) = cur_outTenkanSen;
-        (*outKijunSen) = cur_outKijunSen;
-        (*outSenkouSpanA) = cur_outSenkouSpanA;
-        (*outSenkouSpanB) = cur_outSenkouSpanB;
+        *outTenkanSen = cur_outTenkanSen;
+        *outKijunSen = cur_outKijunSen;
+        *outSenkouSpanA = cur_outSenkouSpanA;
+        *outSenkouSpanB = cur_outSenkouSpanB;
         Ok(())
     }
 
@@ -489,19 +466,19 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTenkanPeriod) as i32) == (i32::MIN) {
+        if optInTenkanPeriod == i32::MIN {
             optInTenkanPeriod = 9;
-        } else if (((optInTenkanPeriod) as i32) < 2) || (((optInTenkanPeriod) as i32) > 100000) {
+        } else if optInTenkanPeriod < 2 || optInTenkanPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInKijunPeriod) as i32) == (i32::MIN) {
+        if optInKijunPeriod == i32::MIN {
             optInKijunPeriod = 26;
-        } else if (((optInKijunPeriod) as i32) < 2) || (((optInKijunPeriod) as i32) > 100000) {
+        } else if optInKijunPeriod < 2 || optInKijunPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if ((optInSenkouBPeriod) as i32) == (i32::MIN) {
+        if optInSenkouBPeriod == i32::MIN {
             optInSenkouBPeriod = 52;
-        } else if (((optInSenkouBPeriod) as i32) < 2) || (((optInSenkouBPeriod) as i32) > 100000) {
+        } else if optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() {
@@ -509,14 +486,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut owned_sc_outTenkanSen: Vec<f64> =
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outTenkanSen: &mut [f64] =
@@ -536,7 +511,6 @@ impl Core {
         let mut lagNb0: i64 = 0;
         let mut lagNb1: i64 = 0;
         let mut lagNb2: i64 = 0;
-        let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut n: usize = 0_usize;
         let mut i: usize = 0_usize;
@@ -544,8 +518,8 @@ impl Core {
         let mut tempNbElement: usize = 0_usize;
         let mut tempT: Vec<f64> = Vec::new();
         let mut tempK: Vec<f64> = Vec::new();
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -560,25 +534,21 @@ impl Core {
         // last midprice call, which is the last read of either input.
         // Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTenkanPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempT[..])?;
-        retCode = RetCode::Success;
-        lagNb0 = (tempNbElement as i64);
+        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], startIdx as usize, optInTenkanPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempT[..])?;
+        lagNb0 = tempNbElement as i64;
         // Sub-stream 1: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInKijunPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempK[..])?;
-        retCode = RetCode::Success;
-        lagNb1 = (tempNbElement as i64);
+        let sub1 = self.midprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], startIdx as usize, optInKijunPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempK[..])?;
+        lagNb1 = tempNbElement as i64;
         // Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSenkouBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanB[..])?;
-        retCode = RetCode::Success;
-        lagNb2 = (tempNbElement as i64);
+        let sub2 = self.midprice_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], startIdx as usize, optInSenkouBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanB[..])?;
+        lagNb2 = tempNbElement as i64;
         // Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
         // double in the last bit.
         // Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub3 = self.medprice_open_and_fill_internal(&tempT[..((n - 1) as usize) + 1], &tempK[..((n - 1) as usize) + 1], ((0) as usize), &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanA[..])?;
-        retCode = RetCode::Success;
+        let sub3 = self.medprice_open_and_fill_internal(&tempT[..((n - 1) as usize) + 1], &tempK[..((n - 1) as usize) + 1], 0 as usize, &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanA[..])?;
         if lagNb0 - 1 - ((n - 1) as i64) != 0 {
             return Err(RetCode::InternalError);
         }
@@ -601,14 +571,14 @@ impl Core {
             sc_outKijunSen[i] = tempK[i];
             i += 1;
         }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = n;
+        *outBegIdx = startIdx;
+        *outNBElement = n;
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        if lagNb2 - ((*outNBElement) as i64) != 0 {
+        if lagNb2 - (*outNBElement as i64) != 0 {
             return Err(RetCode::InternalError);
         }
         let mut state = IchimokuStreamState {
@@ -616,9 +586,6 @@ impl Core {
             cur_outKijunSen: 0.0_f64,
             cur_outSenkouSpanA: 0.0_f64,
             cur_outSenkouSpanB: 0.0_f64,
-            optInTenkanPeriod,
-            optInKijunPeriod,
-            optInSenkouBPeriod,
             sub0,
             sub1,
             sub2,
@@ -649,7 +616,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::ichimoku_open`] (composition seam).
     pub(crate) fn ichimoku_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTenkanPeriod: i32, mut optInKijunPeriod: i32, mut optInSenkouBPeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTenkanPeriod: i32, optInKijunPeriod: i32, optInSenkouBPeriod: i32,
     ) -> Result<(IchimokuStream, (f64, f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -746,7 +713,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ICHIMOKU_OpenAndFill")]
     pub fn ichimoku_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInTenkanPeriod: i32, mut optInKijunPeriod: i32, mut optInSenkouBPeriod: i32, outTenkanSen: &mut [f64], outKijunSen: &mut [f64], outSenkouSpanA: &mut [f64], outSenkouSpanB: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], optInTenkanPeriod: i32, optInKijunPeriod: i32, optInSenkouBPeriod: i32, outTenkanSen: &mut [f64], outKijunSen: &mut [f64], outSenkouSpanA: &mut [f64], outSenkouSpanB: &mut [f64],
     ) -> Result<(IchimokuStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -777,7 +744,7 @@ impl Core {
     /// [`Core::ichimoku_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn ichimoku_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTenkanPeriod: i32, mut optInKijunPeriod: i32, mut optInSenkouBPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outTenkanSen: &mut [f64], outKijunSen: &mut [f64], outSenkouSpanA: &mut [f64], outSenkouSpanB: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTenkanPeriod: i32, optInKijunPeriod: i32, optInSenkouBPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outTenkanSen: &mut [f64], outKijunSen: &mut [f64], outSenkouSpanA: &mut [f64], outSenkouSpanB: &mut [f64],
     ) -> Result<IchimokuStream, RetCode> {
         self.ichimoku_open_impl(inHigh, inLow, startIdx, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB, 1)
     }
@@ -872,10 +839,10 @@ impl IchimokuStream {
             // Combine map (batch tail, per bar).
             cur_outTenkanSen = cur_tempT;
             cur_outKijunSen = cur_tempK;
-            (*outTenkanSen) = cur_outTenkanSen;
-            (*outKijunSen) = cur_outKijunSen;
-            (*outSenkouSpanA) = cur_outSenkouSpanA;
-            (*outSenkouSpanB) = cur_outSenkouSpanB;
+            *outTenkanSen = cur_outTenkanSen;
+            *outKijunSen = cur_outKijunSen;
+            *outSenkouSpanA = cur_outSenkouSpanA;
+            *outSenkouSpanB = cur_outSenkouSpanB;
         }
         Ok((outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB))
     }

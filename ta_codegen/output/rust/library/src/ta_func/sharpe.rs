@@ -82,23 +82,19 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_SHARPE_Lookback")]
     #[inline]
-    pub fn sharpe_lookback(&self, mut optInTimePeriod: i32, mut optInRiskFreeRate: f64, mut optInAnnualization: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn sharpe_lookback(&self, mut optInTimePeriod: i32, optInRiskFreeRate: f64, optInAnnualization: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInRiskFreeRate == Self::REAL_DEFAULT {
-            optInRiskFreeRate = 0e0;
-        } else if !((optInRiskFreeRate >= Self::REAL_MIN) && (optInRiskFreeRate <= Self::REAL_MAX)) {
+        if optInRiskFreeRate != Self::REAL_DEFAULT && !((optInRiskFreeRate >= Self::REAL_MIN) && (optInRiskFreeRate <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAnnualization == Self::REAL_DEFAULT {
-            optInAnnualization = 2.52e2;
-        } else if !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
+        if optInAnnualization != Self::REAL_DEFAULT && !((optInAnnualization >= 0e0) && (optInAnnualization <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod) as usize);
+        return Ok(optInTimePeriod as usize);
     }
     /// Display shift of one output of [`Core::sharpe`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -121,7 +117,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_SHARPE_DisplayShift")]
-    pub fn sharpe_display_shift(&self, mut optInTimePeriod: i32, mut optInRiskFreeRate: f64, mut optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn sharpe_display_shift(&self, optInTimePeriod: i32, optInRiskFreeRate: f64, optInAnnualization: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.sharpe_lookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -149,9 +145,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInRiskFreeRate == Self::REAL_DEFAULT {
@@ -192,18 +188,18 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut windowStart: usize = 0_usize;
         let mut barsSinceReseed: usize = 0_usize;
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
         dPeriod = optInTimePeriod as f64;
         invPeriod = 1.0 / dPeriod;
-        sqrtAnnual = (optInAnnualization).sqrt();
+        sqrtAnnual = optInAnnualization.sqrt();
         // The window holds the returns of the bars after trailingIdx up to i; a
         // bar's return reads the price before it.
         //
@@ -211,7 +207,7 @@ impl Core {
         // the risk-free rate enters only the mean. That keeps the sums at return
         // scale whatever the rate, and lets a flat price window reach an exact
         // zero spread.
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         prevPrice = inReal[trailingIdx];
         // A return needs a non-zero base price and nothing more: the test is
         // exact, never a band, since a price carries the quote unit. A zero base
@@ -258,7 +254,7 @@ impl Core {
             dev = ret - shift;
             periodTotal1 += dev;
             periodTotal2 += dev * dev;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanDev = periodTotal1 * invPeriod;
             moment2 = periodTotal2 - meanDev * periodTotal1;
             // inReal and outReal may be the same buffer, and the trailing prices
@@ -286,10 +282,10 @@ impl Core {
             barsSinceReseed -= 1;
             if moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
-                windowStart = i - ((optInTimePeriod) as usize) + 1;
+                windowStart = i - (optInTimePeriod as usize) + 1;
                 windowPrevPrice = inReal[windowStart - 1];
                 dev = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -300,12 +296,11 @@ impl Core {
                     windowPrevPrice = price;
                     dev += ret;
                 }
-                j = (i as usize) + 1;
                 shift = dev * invPeriod;
                 windowPrevPrice = inReal[windowStart - 1];
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -318,7 +313,6 @@ impl Core {
                     periodTotal1 += dev;
                     periodTotal2 += dev * dev;
                 }
-                j = (i as usize) + 1;
                 meanDev = periodTotal1 * invPeriod;
                 moment2 = periodTotal2 - meanDev * periodTotal1;
                 // A window of equal returns can sit off this mean by rounding, which
@@ -330,7 +324,7 @@ impl Core {
                     windowPrevPrice = inReal[windowStart - 1];
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         price = inReal[j];
                         ret = 0.0;
                         if windowPrevPrice != 0.0 {
@@ -343,7 +337,6 @@ impl Core {
                         periodTotal1 += dev;
                         periodTotal2 += dev * dev;
                     }
-                    j = (i as usize) + 1;
                     meanDev = periodTotal1 * invPeriod;
                     moment2 = periodTotal2 - meanDev * periodTotal1;
                 }
@@ -363,15 +356,15 @@ impl Core {
             // mean, NaN when it is exactly zero (ruled on #571). Annualize the
             // per-bar ratio last, so an annualization of 1 is that ratio bit for
             // bit.
-            excess = shift + meanDev - ((optInRiskFreeRate) as f64);
+            excess = shift + meanDev - (optInRiskFreeRate as f64);
             ratio = excess / (moment2 / (dPeriod - 1.0)).sqrt();
             outReal[outIdx] = sqrtAnnual * ratio;
             outIdx += 1;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         return RetCode::Success;
     }
     /// The rolling Sharpe ratio: the mean return in excess of a risk-free rate, divided by the
@@ -514,7 +507,6 @@ pub struct SharpeStream {
 struct SharpeStreamState {
     optInTimePeriod: i32,
     optInRiskFreeRate: f64,
-    optInAnnualization: f64,
     shift: f64,
     periodTotal1: f64,
     periodTotal2: f64,
@@ -561,7 +553,7 @@ impl Core {
         dev = ret - sp.shift;
         sp.periodTotal1 += dev;
         sp.periodTotal2 += dev * dev;
-        sp.peakTotal2 = (if sp.periodTotal2 > sp.peakTotal2 { sp.periodTotal2 } else { sp.peakTotal2 });
+        sp.peakTotal2 = if sp.periodTotal2 > sp.peakTotal2 { sp.periodTotal2 } else { sp.peakTotal2 };
         meanDev = sp.periodTotal1 * sp.invPeriod;
         moment2 = sp.periodTotal2 - meanDev * sp.periodTotal1;
         // inReal and outReal may be the same buffer, and the trailing prices
@@ -672,11 +664,11 @@ impl Core {
         // mean, NaN when it is exactly zero (ruled on #571). Annualize the
         // per-bar ratio last, so an annualization of 1 is that ratio bit for
         // bit.
-        excess = sp.shift + meanDev - ((sp.optInRiskFreeRate) as f64);
+        excess = sp.shift + meanDev - (sp.optInRiskFreeRate as f64);
         ratio = excess / (moment2 / (sp.dPeriod - 1.0)).sqrt();
-        (*outReal) = sp.sqrtAnnual * ratio;
+        *outReal = sp.sqrtAnnual * ratio;
         sp.i += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::sharpe_open_internal`]
@@ -687,9 +679,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInRiskFreeRate == Self::REAL_DEFAULT {
@@ -704,14 +696,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut shift: f64 = 0.0_f64;
         let mut periodTotal1: f64 = 0.0_f64;
         let mut periodTotal2: f64 = 0.0_f64;
@@ -735,17 +725,17 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut windowStart: usize = 0_usize;
         let mut barsSinceReseed: usize = 0_usize;
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
+        if startIdx < (optInTimePeriod as usize) {
+            startIdx = optInTimePeriod as usize;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         dPeriod = optInTimePeriod as f64;
         invPeriod = 1.0 / dPeriod;
-        sqrtAnnual = (optInAnnualization).sqrt();
+        sqrtAnnual = optInAnnualization.sqrt();
         // The window holds the returns of the bars after trailingIdx up to i; a
         // bar's return reads the price before it.
         //
@@ -753,7 +743,7 @@ impl Core {
         // the risk-free rate enters only the mean. That keeps the sums at return
         // scale whatever the rate, and lets a flat price window reach an exact
         // zero spread.
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
+        trailingIdx = startIdx - (optInTimePeriod as usize);
         prevPrice = inReal[trailingIdx];
         // A return needs a non-zero base price and nothing more: the test is
         // exact, never a band, since a price carries the quote unit. A zero base
@@ -800,7 +790,7 @@ impl Core {
             dev = ret - shift;
             periodTotal1 += dev;
             periodTotal2 += dev * dev;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanDev = periodTotal1 * invPeriod;
             moment2 = periodTotal2 - meanDev * periodTotal1;
             // inReal and outReal may be the same buffer, and the trailing prices
@@ -828,10 +818,10 @@ impl Core {
             barsSinceReseed -= 1;
             if moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
-                windowStart = i - ((optInTimePeriod) as usize) + 1;
+                windowStart = i - (optInTimePeriod as usize) + 1;
                 windowPrevPrice = inReal[windowStart - 1];
                 dev = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -842,12 +832,11 @@ impl Core {
                     windowPrevPrice = price;
                     dev += ret;
                 }
-                j = (i as usize) + 1;
                 shift = dev * invPeriod;
                 windowPrevPrice = inReal[windowStart - 1];
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
+                for j in windowStart..i + 1 {
                     price = inReal[j];
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
@@ -860,7 +849,7 @@ impl Core {
                     periodTotal1 += dev;
                     periodTotal2 += dev * dev;
                 }
-                j = (i as usize) + 1;
+                j = i + 1;
                 meanDev = periodTotal1 * invPeriod;
                 moment2 = periodTotal2 - meanDev * periodTotal1;
                 // A window of equal returns can sit off this mean by rounding, which
@@ -872,7 +861,7 @@ impl Core {
                     windowPrevPrice = inReal[windowStart - 1];
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
-                    for j in (windowStart as usize)..(i as usize) + 1 {
+                    for j in windowStart..i + 1 {
                         price = inReal[j];
                         ret = 0.0;
                         if windowPrevPrice != 0.0 {
@@ -885,7 +874,7 @@ impl Core {
                         periodTotal1 += dev;
                         periodTotal2 += dev * dev;
                     }
-                    j = (i as usize) + 1;
+                    j = i + 1;
                     meanDev = periodTotal1 * invPeriod;
                     moment2 = periodTotal2 - meanDev * periodTotal1;
                 }
@@ -905,14 +894,14 @@ impl Core {
             // mean, NaN when it is exactly zero (ruled on #571). Annualize the
             // per-bar ratio last, so an annualization of 1 is that ratio bit for
             // bit.
-            excess = shift + meanDev - ((optInRiskFreeRate) as f64);
+            excess = shift + meanDev - (optInRiskFreeRate as f64);
             ratio = excess / (moment2 / (dPeriod - 1.0)).sqrt();
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sqrtAnnual * ratio;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = sqrtAnnual * ratio;
             i += 1;
             if !(i <= endIdx) { break; }
         }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (i as i64) - (trailingIdx as i64) + 1;
@@ -934,7 +923,6 @@ impl Core {
         let state = SharpeStreamState {
             optInTimePeriod,
             optInRiskFreeRate,
-            optInAnnualization,
             shift,
             periodTotal1,
             periodTotal2,
@@ -943,11 +931,11 @@ impl Core {
             dPeriod,
             invPeriod,
             sqrtAnnual,
-            trailingIdx: (trailingIdx) as i32,
+            trailingIdx: trailingIdx as i32,
             barsSinceReseed,
-            j: (j) as i32,
-            windowStart: (windowStart) as i32,
-            i: (i) as i32,
+            j: j as i32,
+            windowStart: windowStart as i32,
+            i: i as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -957,7 +945,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::sharpe_open`] (composition seam).
     pub(crate) fn sharpe_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInRiskFreeRate: f64, mut optInAnnualization: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInRiskFreeRate: f64, optInAnnualization: f64,
     ) -> Result<(SharpeStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -1030,7 +1018,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SHARPE_OpenAndFill")]
     pub fn sharpe_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInRiskFreeRate: f64, mut optInAnnualization: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInRiskFreeRate: f64, optInAnnualization: f64, outReal: &mut [f64],
     ) -> Result<(SharpeStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1049,7 +1037,7 @@ impl Core {
     /// [`Core::sharpe_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn sharpe_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInRiskFreeRate: f64, mut optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInRiskFreeRate: f64, optInAnnualization: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SharpeStream, RetCode> {
         self.sharpe_open_impl(inReal, startIdx, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1130,7 +1118,7 @@ impl SharpeStream {
             let mut peakTotal2 = sp.peakTotal2;
             let mut periodTotal1 = sp.periodTotal1;
             let mut periodTotal2 = sp.periodTotal2;
-            let mut prevPrice = sp.prevPrice;
+            let prevPrice = sp.prevPrice;
             let mut shift = sp.shift;
             let mut trailingIdx = sp.trailingIdx;
             let mut windowStart = sp.windowStart;
@@ -1138,27 +1126,26 @@ impl SharpeStream {
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.i & sp.xMask) as usize;
             pkVal0 = inReal;
-            price = (if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 });
+            price = if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 };
             ret = 0.0;
             if prevPrice != 0.0 {
                 ret = (price - prevPrice) / prevPrice;
             } else {
                 cold_arm();
             }
-            prevPrice = price;
             dev = ret - shift;
             periodTotal1 += dev;
             periodTotal2 += dev * dev;
-            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
+            peakTotal2 = if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 };
             meanDev = periodTotal1 * sp.invPeriod;
             moment2 = periodTotal2 - meanDev * periodTotal1;
             // inReal and outReal may be the same buffer, and the trailing prices
             // sit in slots the output reaches: every read of the window happens
             // before this bar's write. The oldest price read is the trailing
             // return's base, so the index stays on it.
-            trailingPrevPrice = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
+            trailingPrevPrice = if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 };
             trailingIdx += 1;
-            price = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
+            price = if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 };
             ret = 0.0;
             if trailingPrevPrice != 0.0 {
                 ret = (price - trailingPrevPrice) / trailingPrevPrice;
@@ -1176,14 +1163,13 @@ impl SharpeStream {
             // The spread is a divisor, so its relative error reaches the ratio.
             barsSinceReseed -= 1;
             if moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
                 windowStart = sp.i - sp.optInTimePeriod + 1;
-                windowPrevPrice = (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
+                windowPrevPrice = if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 };
                 dev = 0.0;
                 // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
                 while j <= sp.i {
-                    price = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    price = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
                         ret = (price - windowPrevPrice) / windowPrevPrice;
@@ -1195,13 +1181,13 @@ impl SharpeStream {
                     j += 1;
                 }
                 shift = dev * sp.invPeriod;
-                windowPrevPrice = (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
+                windowPrevPrice = if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 };
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
                 // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
                 while j <= sp.i {
-                    price = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                    price = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                     ret = 0.0;
                     if windowPrevPrice != 0.0 {
                         ret = (price - windowPrevPrice) / windowPrevPrice;
@@ -1222,13 +1208,13 @@ impl SharpeStream {
                 // one of its own returns, its deviations are exactly zero.
                 if moment2 < 0.000001 * periodTotal2 {
                     shift = ret;
-                    windowPrevPrice = (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
+                    windowPrevPrice = if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 };
                     periodTotal1 = 0.0;
                     periodTotal2 = 0.0;
                     // for( j = windowStart; j <= sp.i; j += 1 )
                     j = windowStart;
                     while j <= sp.i {
-                        price = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
+                        price = if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 };
                         ret = 0.0;
                         if windowPrevPrice != 0.0 {
                             ret = (price - windowPrevPrice) / windowPrevPrice;
@@ -1244,25 +1230,16 @@ impl SharpeStream {
                     meanDev = periodTotal1 * sp.invPeriod;
                     moment2 = periodTotal2 - meanDev * periodTotal1;
                 }
-                peakTotal2 = periodTotal2;
                 // Re-remove the trailing return under the new shift so the carried
                 // state matches the path without a rebuild.
-                price = (if ((windowStart & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart & sp.xMask) as usize] } else { pkVal0 });
-                ret = 0.0;
-                if (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 }) != 0.0 {
-                    ret = (price - (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 })) / (if ((windowStart - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart - 1 & sp.xMask) as usize] } else { pkVal0 });
-                }
-                dev = ret - shift;
-                periodTotal1 -= dev;
-                periodTotal2 -= dev * dev;
             }
             // No spread is the plain quotient: +/-Inf by the sign of the excess
             // mean, NaN when it is exactly zero (ruled on #571). Annualize the
             // per-bar ratio last, so an annualization of 1 is that ratio bit for
             // bit.
-            excess = shift + meanDev - ((sp.optInRiskFreeRate) as f64);
+            excess = shift + meanDev - (sp.optInRiskFreeRate as f64);
             ratio = excess / (moment2 / (sp.dPeriod - 1.0)).sqrt();
-            (*outReal) = sp.sqrtAnnual * ratio;
+            *outReal = sp.sqrtAnnual * ratio;
         }
         Ok(outReal)
     }

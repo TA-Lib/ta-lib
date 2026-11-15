@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_MIDPOINT_Lookback")]
     #[inline]
     pub fn midpoint_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -105,7 +105,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MIDPOINT_DisplayShift")]
-    pub fn midpoint_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn midpoint_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.midpoint_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -131,9 +131,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.midpoint_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -182,8 +182,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -208,29 +208,29 @@ impl Core {
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..optInTimePeriod as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preHighest = &mut local_preHighest[..optInTimePeriod as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..optInTimePeriod as usize];
         } else {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preLowest = &mut local_preLowest[..optInTimePeriod as usize];
         } else {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
@@ -242,7 +242,7 @@ impl Core {
             // Scanning backward while keeping the incumbent on a tie
             // leaves the later element holding a tie, which is what lets this
             // compile to a single min/max instruction.
-            i = blockStart + ((optInTimePeriod) as usize) - 1;
+            i = blockStart + (optInTimePeriod as usize) - 1;
             highest = inReal[i];
             lowest = highest;
             sufHighest[(optInTimePeriod - 1) as usize] = highest;
@@ -261,16 +261,16 @@ impl Core {
                     _w2[_wk] = lowest;
                 }
             }
-            outReal[outIdx] = (((sufHighest[0] + sufLowest[0]) / 2.0) as f64);
+            outReal[outIdx] = ((sufHighest[0] + sufLowest[0]) / 2.0) as f64;
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
             if today > endIdx {
-                blockStart = blockStart + ((optInTimePeriod) as usize);
+                blockStart = blockStart + (optInTimePeriod as usize);
             } else {
                 // Prefix extrema of the next block, clamped to what remains.
                 // Forward, keeping the incumbent on a tie: earliest wins again.
-                blockNext = blockStart + ((optInTimePeriod) as usize);
+                blockNext = blockStart + (optInTimePeriod as usize);
                 nAvail = endIdx - blockNext + 1;
                 if nAvail > ((optInTimePeriod - 1) as usize) {
                     nAvail = (optInTimePeriod - 1) as usize;
@@ -316,13 +316,13 @@ impl Core {
                 }
                 trailingIdx = trailingIdx + nAvail;
                 today = today + nAvail;
-                blockStart = blockStart + ((optInTimePeriod) as usize);
+                blockStart = blockStart + (optInTimePeriod as usize);
             }
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Midpoint over a period: the average of the highest and lowest input values within the
@@ -446,7 +446,6 @@ pub struct MidpointStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MidpointStreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
     trailingIdx: i32,
@@ -501,10 +500,10 @@ impl Core {
             sp.lowestIdx = sp.today;
             sp.lowest = tmpLow;
         }
-        (*outReal) = (sp.highest + sp.lowest) / 2.0;
+        *outReal = (sp.highest + sp.lowest) / 2.0;
         sp.trailingIdx += 1;
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::midpoint_open_internal`]
@@ -515,21 +514,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
@@ -558,8 +555,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
@@ -592,44 +589,44 @@ impl Core {
         while today <= endIdx {
             tmpHigh = inReal[today];
             tmpLow = tmpHigh;
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inReal[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inReal[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpHigh = inReal[i];
                     if tmpHigh > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmpHigh;
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmpHigh;
             }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inReal[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inReal[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmpLow = inReal[i];
                     if tmpLow < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmpLow;
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmpLow;
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (highest + lowest) / 2.0;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (highest + lowest) / 2.0;
             trailingIdx += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -649,14 +646,13 @@ impl Core {
             }
         }
         let state = MidpointStreamState {
-            optInTimePeriod,
             lowest,
             highest,
-            trailingIdx: (trailingIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            highestIdx: highestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
@@ -666,7 +662,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::midpoint_open`] (composition seam).
     pub(crate) fn midpoint_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(MidpointStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -739,7 +735,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MIDPOINT_OpenAndFill")]
     pub fn midpoint_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(MidpointStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -758,7 +754,7 @@ impl Core {
     /// [`Core::midpoint_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn midpoint_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MidpointStream, RetCode> {
         self.midpoint_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -836,39 +832,35 @@ impl MidpointStream {
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inReal;
-            tmpHigh = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            tmpHigh = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             tmpLow = tmpHigh;
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmpHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmpHigh = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmpHigh > highest {
-                        highestIdx = i;
                         highest = tmpHigh;
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = sp.today;
                 highest = tmpHigh;
             }
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(lowestIdx & sp.xMask) as usize] } else { pkVal0 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(lowestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmpLow = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmpLow = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmpLow < lowest {
-                        lowestIdx = i;
                         lowest = tmpLow;
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = sp.today;
                 lowest = tmpLow;
             }
-            (*outReal) = (highest + lowest) / 2.0;
+            *outReal = (highest + lowest) / 2.0;
         }
         Ok(outReal)
     }

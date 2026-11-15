@@ -69,7 +69,7 @@ impl Core {
     #[doc(alias = "TA_PVT_Lookback")]
     pub fn pvt_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return Ok((0) as usize);
+        return Ok(0 as usize);
     }
     /// Display shift of one output of [`Core::pvt`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -115,8 +115,6 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevPVT: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
@@ -126,7 +124,7 @@ impl Core {
         prevPVT = 0.0;
         prevClose = inClose[startIdx];
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             tempClose = inClose[i];
             // Exact test, never an epsilon band: a band carries the quote unit and
             // would zero the indicator for every instrument priced under it (#253).
@@ -140,9 +138,8 @@ impl Core {
             outIdx += 1;
             prevClose = tempClose;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Price Volume Trend: a running cumulative total of each bar's volume weighted by that bar's
@@ -304,9 +301,9 @@ impl Core {
         } else {
             cold_arm();
         }
-        (*outReal) = sp.prevPVT;
+        *outReal = sp.prevPVT;
         sp.prevClose = tempClose;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::pvt_open_internal`]
@@ -322,15 +319,11 @@ impl Core {
         }
         let historyLen: usize = inClose.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevPVT: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
@@ -338,7 +331,7 @@ impl Core {
         prevPVT = 0.0;
         prevClose = inClose[startIdx];
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
+        for i in startIdx..endIdx + 1 {
             tempClose = inClose[i];
             // Exact test, never an epsilon band: a band carries the quote unit and
             // would zero the indicator for every instrument priced under it (#253).
@@ -348,12 +341,11 @@ impl Core {
             } else {
                 cold_arm();
             }
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevPVT;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevPVT;
             prevClose = tempClose;
         }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = PvtStreamState {
@@ -545,7 +537,7 @@ impl PvtStream {
             } else {
                 cold_arm();
             }
-            (*outReal) = prevPVT;
+            *outReal = prevPVT;
         }
         Ok(outReal)
     }

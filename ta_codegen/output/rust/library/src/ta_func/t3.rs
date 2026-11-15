@@ -94,22 +94,20 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_T3_Lookback")]
     #[inline]
-    pub fn t3_lookback(&self, mut optInTimePeriod: i32, mut optInVFactor: f64) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+    pub fn t3_lookback(&self, mut optInTimePeriod: i32, optInVFactor: f64) -> Result<usize, RetCode> {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
-        if optInVFactor == Self::REAL_DEFAULT {
-            optInVFactor = 7e-1;
-        } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
+        if optInVFactor != Self::REAL_DEFAULT && !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return Err(RetCode::BadParam);
         }
         // Sized by measurement on price series; it is not a bound. The six stages
         // share the pole (n-1)/(n+1) and are stepped together, so a seed can cancel
         // itself in the early outputs and show late: such a seed needs up to
         // 13*n bars at PREC_4 and 18.5*n at PREC_8.
-        return Ok((6 * (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::T3, (if optInTimePeriod > 1 { (11 * (4 + 4) * optInTimePeriod + 7) / 8 } else { 0 }), (if optInTimePeriod > 1 { (11 * (8 + 4) * optInTimePeriod + 7) / 8 } else { 0 }))) as usize);
+        return Ok((6 * (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::T3, if optInTimePeriod > 1 { (11 * (4 + 4) * optInTimePeriod + 7) / 8 } else { 0 }, if optInTimePeriod > 1 { (11 * (8 + 4) * optInTimePeriod + 7) / 8 } else { 0 })) as usize);
     }
     /// Display shift of one output of [`Core::t3`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -130,7 +128,7 @@ impl Core {
     /// parameters accept [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to
     /// select their default value.
     #[doc(alias = "TA_T3_DisplayShift")]
-    pub fn t3_display_shift(&self, mut optInTimePeriod: i32, mut optInVFactor: f64, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn t3_display_shift(&self, optInTimePeriod: i32, optInVFactor: f64, outputIdx: usize) -> Result<i32, RetCode> {
         self.t3_lookback(optInTimePeriod, optInVFactor)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -189,9 +187,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInVFactor == Self::REAL_DEFAULT {
@@ -242,8 +240,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
+            *outNBElement = 0;
+            *outBegIdx = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -252,19 +250,19 @@ impl Core {
         // coefficients below sum to 1 only in real arithmetic; going through
         // the math would leave ~1e-14 floating-point drift on every value.
         if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             outIdx = 0;
             today = startIdx;
             while today <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outReal[outIdx] = inReal[{ let _v = today; today += 1; _v }] as f64;
                 outIdx += 1;
             }
-            (*outNBElement) = outIdx;
+            *outNBElement = outIdx;
             return RetCode::Success;
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         today = startIdx - lookbackTotal;
-        k = 2.0 / (((optInTimePeriod) as f64) + 1.0);
+        k = 2.0 / ((optInTimePeriod as f64) + 1.0);
         one_minus_k = 1.0 - k;
         // Initialize e1
         tempReal = inReal[{ let _v = today; today += 1; _v }];
@@ -274,76 +272,76 @@ impl Core {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
             i -= 1;
         }
-        e1 = tempReal / ((optInTimePeriod) as f64);
+        e1 = tempReal / (optInTimePeriod as f64);
         // Initialize e2
         tempReal = e1;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += e1;
             i -= 1;
         }
-        e2 = tempReal / ((optInTimePeriod) as f64);
+        e2 = tempReal / (optInTimePeriod as f64);
         // Initialize e3
         tempReal = e2;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
             tempReal += e2;
             i -= 1;
         }
-        e3 = tempReal / ((optInTimePeriod) as f64);
+        e3 = tempReal / (optInTimePeriod as f64);
         // Initialize e4
         tempReal = e3;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
             tempReal += e3;
             i -= 1;
         }
-        e4 = tempReal / ((optInTimePeriod) as f64);
+        e4 = tempReal / (optInTimePeriod as f64);
         // Initialize e5
         tempReal = e4;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
             tempReal += e4;
             i -= 1;
         }
-        e5 = tempReal / ((optInTimePeriod) as f64);
+        e5 = tempReal / (optInTimePeriod as f64);
         // Initialize e6
         tempReal = e5;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
             tempReal += e5;
             i -= 1;
         }
-        e6 = tempReal / ((optInTimePeriod) as f64);
+        e6 = tempReal / (optInTimePeriod as f64);
         // Skip the unstable period
         while today <= startIdx {
             // Do the calculation but do not write the output
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
-            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
+            e6 = fmadd!(one_minus_k, e6, k * e5);
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
@@ -353,22 +351,22 @@ impl Core {
         c4 = fmadd!(3.0 as f64, tempReal, fmadd!(3.0 as f64, optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
-        outReal[outIdx] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
+        outReal[outIdx] = fmadd!(c4, e3, fmadd!(c3, e4, fmadd!(c1, e6, c2 * e5)));
         outIdx += 1;
         // Calculate and output the remaining of the range.
         while today <= endIdx {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
-            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
-            outReal[outIdx] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
+            e6 = fmadd!(one_minus_k, e6, k * e5);
+            outReal[outIdx] = fmadd!(c4, e3, fmadd!(c3, e4, fmadd!(c1, e6, c2 * e5)));
             outIdx += 1;
         }
         // Indicates to the caller the number of output
         // successfully calculated.
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Tillson's T3: a low-lag moving average built from six chained EMAs, combined via
@@ -502,7 +500,6 @@ pub struct T3Stream {
 #[allow(non_snake_case, dead_code)]
 struct T3StreamState {
     optInTimePeriod: i32,
-    optInVFactor: f64,
     k: f64,
     one_minus_k: f64,
     e1: f64,
@@ -527,18 +524,18 @@ impl Core {
     #[inline(always)]
     fn t3_step_impl(sp: &mut T3StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
-            (*outReal) = inReal;
-            sp.cur_outReal = (*outReal);
+            *outReal = inReal;
+            sp.cur_outReal = *outReal;
             return;
         }
-        sp.e1 = fmadd!(sp.one_minus_k as f64, sp.e1, sp.k * inReal);
-        sp.e2 = fmadd!(sp.one_minus_k as f64, sp.e2, sp.k * sp.e1);
-        sp.e3 = fmadd!(sp.one_minus_k as f64, sp.e3, sp.k * sp.e2);
-        sp.e4 = fmadd!(sp.one_minus_k as f64, sp.e4, sp.k * sp.e3);
-        sp.e5 = fmadd!(sp.one_minus_k as f64, sp.e5, sp.k * sp.e4);
-        sp.e6 = fmadd!(sp.one_minus_k as f64, sp.e6, sp.k * sp.e5);
-        (*outReal) = fmadd!(sp.c4 as f64, sp.e3, fmadd!(sp.c3 as f64, sp.e4, fmadd!(sp.c1 as f64, sp.e6, sp.c2 * sp.e5)));
-        sp.cur_outReal = (*outReal);
+        sp.e1 = fmadd!(sp.one_minus_k, sp.e1, sp.k * inReal);
+        sp.e2 = fmadd!(sp.one_minus_k, sp.e2, sp.k * sp.e1);
+        sp.e3 = fmadd!(sp.one_minus_k, sp.e3, sp.k * sp.e2);
+        sp.e4 = fmadd!(sp.one_minus_k, sp.e4, sp.k * sp.e3);
+        sp.e5 = fmadd!(sp.one_minus_k, sp.e5, sp.k * sp.e4);
+        sp.e6 = fmadd!(sp.one_minus_k, sp.e6, sp.k * sp.e5);
+        *outReal = fmadd!(sp.c4, sp.e3, fmadd!(sp.c3, sp.e4, fmadd!(sp.c1, sp.e6, sp.c2 * sp.e5)));
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::t3_open_internal`]
@@ -567,9 +564,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInVFactor == Self::REAL_DEFAULT {
@@ -579,14 +576,12 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             let fillLb: usize = self.t3_lookback(optInTimePeriod, optInVFactor)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
@@ -596,7 +591,6 @@ impl Core {
             let state = T3StreamState {
                 cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
-                optInVFactor: optInVFactor,
                 k: 0.0_f64,
                 one_minus_k: 0.0_f64,
                 e1: 0.0_f64,
@@ -610,8 +604,8 @@ impl Core {
                 c3: 0.0_f64,
                 c4: 0.0_f64,
             };
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             if outStride == 0 {
                 outReal[0] = inReal[historyLen - 1];
             } else {
@@ -661,13 +655,13 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outNBElement) = 0;
-            (*outBegIdx) = 0;
+            *outNBElement = 0;
+            *outBegIdx = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        (*outBegIdx) = startIdx;
+        *outBegIdx = startIdx;
         today = startIdx - lookbackTotal;
-        k = 2.0 / (((optInTimePeriod) as f64) + 1.0);
+        k = 2.0 / ((optInTimePeriod as f64) + 1.0);
         one_minus_k = 1.0 - k;
         // Initialize e1
         tempReal = inReal[{ let _v = today; today += 1; _v }];
@@ -677,76 +671,76 @@ impl Core {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
             i -= 1;
         }
-        e1 = tempReal / ((optInTimePeriod) as f64);
+        e1 = tempReal / (optInTimePeriod as f64);
         // Initialize e2
         tempReal = e1;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += e1;
             i -= 1;
         }
-        e2 = tempReal / ((optInTimePeriod) as f64);
+        e2 = tempReal / (optInTimePeriod as f64);
         // Initialize e3
         tempReal = e2;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
             tempReal += e2;
             i -= 1;
         }
-        e3 = tempReal / ((optInTimePeriod) as f64);
+        e3 = tempReal / (optInTimePeriod as f64);
         // Initialize e4
         tempReal = e3;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
             tempReal += e3;
             i -= 1;
         }
-        e4 = tempReal / ((optInTimePeriod) as f64);
+        e4 = tempReal / (optInTimePeriod as f64);
         // Initialize e5
         tempReal = e4;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
             tempReal += e4;
             i -= 1;
         }
-        e5 = tempReal / ((optInTimePeriod) as f64);
+        e5 = tempReal / (optInTimePeriod as f64);
         // Initialize e6
         tempReal = e5;
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
             tempReal += e5;
             i -= 1;
         }
-        e6 = tempReal / ((optInTimePeriod) as f64);
+        e6 = tempReal / (optInTimePeriod as f64);
         // Skip the unstable period
         while today <= startIdx {
             // Do the calculation but do not write the output
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
-            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
+            e6 = fmadd!(one_minus_k, e6, k * e5);
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
@@ -756,25 +750,24 @@ impl Core {
         c4 = fmadd!(3.0 as f64, tempReal, fmadd!(3.0 as f64, optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
-        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
+        outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = fmadd!(c4, e3, fmadd!(c3, e4, fmadd!(c1, e6, c2 * e5)));
         // Calculate and output the remaining of the range.
         while today <= endIdx {
-            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
-            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
-            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
-            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
-            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
+            e1 = fmadd!(one_minus_k, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k, e2, k * e1);
+            e3 = fmadd!(one_minus_k, e3, k * e2);
+            e4 = fmadd!(one_minus_k, e4, k * e3);
+            e5 = fmadd!(one_minus_k, e5, k * e4);
+            e6 = fmadd!(one_minus_k, e6, k * e5);
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = fmadd!(c4, e3, fmadd!(c3, e4, fmadd!(c1, e6, c2 * e5)));
         }
         // Indicates to the caller the number of output
         // successfully calculated.
-        (*outNBElement) = outIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = T3StreamState {
             optInTimePeriod,
-            optInVFactor,
             k,
             one_minus_k,
             e1,
@@ -794,7 +787,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::t3_open`] (composition seam).
     pub(crate) fn t3_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64,
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInVFactor: f64,
     ) -> Result<(T3Stream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -867,7 +860,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_T3_OpenAndFill")]
     pub fn t3_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInVFactor: f64, outReal: &mut [f64],
+        &self, inReal: &[f64], optInTimePeriod: i32, optInVFactor: f64, outReal: &mut [f64],
     ) -> Result<(T3Stream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -886,7 +879,7 @@ impl Core {
     /// [`Core::t3_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn t3_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<T3Stream, RetCode> {
         self.t3_open_impl(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
     }
@@ -974,16 +967,16 @@ impl T3Stream {
             let mut e5 = sp.e5;
             let mut e6 = sp.e6;
             if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return Ok((*outReal));
+                *outReal = inReal;
+                return Ok(*outReal);
             }
-            e1 = fmadd!(sp.one_minus_k as f64, e1, sp.k * inReal);
-            e2 = fmadd!(sp.one_minus_k as f64, e2, sp.k * e1);
-            e3 = fmadd!(sp.one_minus_k as f64, e3, sp.k * e2);
-            e4 = fmadd!(sp.one_minus_k as f64, e4, sp.k * e3);
-            e5 = fmadd!(sp.one_minus_k as f64, e5, sp.k * e4);
-            e6 = fmadd!(sp.one_minus_k as f64, e6, sp.k * e5);
-            (*outReal) = fmadd!(sp.c4 as f64, e3, fmadd!(sp.c3 as f64, e4, fmadd!(sp.c1 as f64, e6, sp.c2 * e5)));
+            e1 = fmadd!(sp.one_minus_k, e1, sp.k * inReal);
+            e2 = fmadd!(sp.one_minus_k, e2, sp.k * e1);
+            e3 = fmadd!(sp.one_minus_k, e3, sp.k * e2);
+            e4 = fmadd!(sp.one_minus_k, e4, sp.k * e3);
+            e5 = fmadd!(sp.one_minus_k, e5, sp.k * e4);
+            e6 = fmadd!(sp.one_minus_k, e6, sp.k * e5);
+            *outReal = fmadd!(sp.c4, e3, fmadd!(sp.c3, e4, fmadd!(sp.c1, e6, sp.c2 * e5)));
         }
         Ok(outReal)
     }
@@ -1047,14 +1040,14 @@ impl T3Stream {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl T3Stream {
-    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+    pub(crate) fn step_tape(&mut self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
         Core::t3_step_impl(&mut self.state, inReal, &mut outReal);
         self.out.count += 1;
         outReal
     }
 
-    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+    pub(crate) fn peek_tape(&self, _tape: &[f64], _tapeBase: usize, _tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
         self.peek(inReal)
     }
 

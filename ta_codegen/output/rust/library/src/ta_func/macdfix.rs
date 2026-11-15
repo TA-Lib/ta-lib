@@ -82,9 +82,9 @@ impl Core {
     #[doc(alias = "TA_MACDFIX_Lookback")]
     #[inline]
     pub fn macdfix_lookback(&self, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         // The lookback is driven by the signal line output.
@@ -109,7 +109,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MACDFIX_DisplayShift")]
-    pub fn macdfix_display_shift(&self, mut optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn macdfix_display_shift(&self, optInSignalPeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.macdfix_lookback(optInSignalPeriod)?;
         if outputIdx >= 3 {
             return Err(RetCode::BadParam);
@@ -171,9 +171,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.macdfix_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
@@ -238,8 +238,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
@@ -271,19 +271,19 @@ impl Core {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
-        prevFast = prevFast / ((optInFastPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
+        prevFast = prevFast / (optInFastPeriod as f64);
         // Advance both EMA through their unstable period, up to the
         // first MACD-line bar.
         while today <= startIdx - lookbackSignal {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         macdValue = prevFast - prevSlow;
         // Seed the signal EMA with a simple average of the first
@@ -296,30 +296,26 @@ impl Core {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 tempReal = _w0[_wk];
                 today += 1;
-                prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-                prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
                 macdValue = prevFast - prevSlow;
                 prevSignal += macdValue;
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
-        prevSignal = prevSignal / ((optInSignalPeriod) as f64);
+        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period
         // of the signal EMA, up to the first output bar.
         while today <= startIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             macdValue = prevFast - prevSlow;
             if optInSignalPeriod == 1 {
                 prevSignal = macdValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * macdValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * macdValue);
             }
         }
         // Stable zone: keep advancing in lockstep and write the three
@@ -336,14 +332,13 @@ impl Core {
             let _w3 = &mut outMACDSignal[outIdx..][.._wn];
             for _wk in 0.._wn {
                 tempReal = _w0[_wk];
-                today += 1;
-                prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-                prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
                 macdValue = prevFast - prevSlow;
                 if optInSignalPeriod == 1 {
                     prevSignal = macdValue;
                 } else {
-                    prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * macdValue);
+                    prevSignal = fmadd!(signalBeta, prevSignal, signalK * macdValue);
                 }
                 _w1[_wk] = macdValue;
                 _w3[_wk] = prevSignal;
@@ -352,8 +347,8 @@ impl Core {
             }
         }
         // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed
@@ -521,20 +516,20 @@ impl Core {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
-        sp.prevFast = fmadd!(sp.fastBeta as f64, sp.prevFast, sp.fastK * tempReal);
-        sp.prevSlow = fmadd!(sp.slowBeta as f64, sp.prevSlow, sp.slowK * tempReal);
+        sp.prevFast = fmadd!(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = fmadd!(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
         macdValue = sp.prevFast - sp.prevSlow;
         if sp.optInSignalPeriod == 1 {
             sp.prevSignal = macdValue;
         } else {
-            sp.prevSignal = fmadd!(sp.signalBeta as f64, sp.prevSignal, sp.signalK * macdValue);
+            sp.prevSignal = fmadd!(sp.signalBeta, sp.prevSignal, sp.signalK * macdValue);
         }
-        (*outMACD) = macdValue;
-        (*outMACDSignal) = sp.prevSignal;
-        (*outMACDHist) = macdValue - sp.prevSignal;
-        sp.cur_outMACD = (*outMACD);
-        sp.cur_outMACDSignal = (*outMACDSignal);
-        sp.cur_outMACDHist = (*outMACDHist);
+        *outMACD = macdValue;
+        *outMACDSignal = sp.prevSignal;
+        *outMACDHist = macdValue - sp.prevSignal;
+        sp.cur_outMACD = *outMACD;
+        sp.cur_outMACDSignal = *outMACDSignal;
+        sp.cur_outMACDHist = *outMACDHist;
     }
 
     /// The single whole-history transcription behind [`Core::macdfix_open_internal`]
@@ -563,21 +558,19 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
+        if optInSignalPeriod == i32::MIN {
             optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
+        } else if optInSignalPeriod < 1 || optInSignalPeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut prevFast: f64 = 0.0_f64;
         let mut prevSlow: f64 = 0.0_f64;
         let mut prevSignal: f64 = 0.0_f64;
@@ -630,8 +623,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Everything is computed in a single lockstep pass: each bar
@@ -662,19 +655,19 @@ impl Core {
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
+        i = optInFastPeriod as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
-        prevSlow = tempReal / ((optInSlowPeriod) as f64);
-        prevFast = prevFast / ((optInFastPeriod) as f64);
+        prevSlow = tempReal / (optInSlowPeriod as f64);
+        prevFast = prevFast / (optInFastPeriod as f64);
         // Advance both EMA through their unstable period, up to the
         // first MACD-line bar.
         while today <= startIdx - lookbackSignal {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
         }
         macdValue = prevFast - prevSlow;
         // Seed the signal EMA with a simple average of the first
@@ -685,49 +678,49 @@ impl Core {
         i = (optInSignalPeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             macdValue = prevFast - prevSlow;
             prevSignal += macdValue;
         }
-        prevSignal = prevSignal / ((optInSignalPeriod) as f64);
+        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period
         // of the signal EMA, up to the first output bar.
         while today <= startIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             macdValue = prevFast - prevSlow;
             if optInSignalPeriod == 1 {
                 prevSignal = macdValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * macdValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * macdValue);
             }
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
-        outMACD[(0 * outStride) as usize] = macdValue;
-        outMACDSignal[(0 * outStride) as usize] = prevSignal;
-        outMACDHist[(0 * outStride) as usize] = macdValue - prevSignal;
+        outMACD[0] = macdValue;
+        outMACDSignal[0] = prevSignal;
+        outMACDHist[0] = macdValue - prevSignal;
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
             macdValue = prevFast - prevSlow;
             if optInSignalPeriod == 1 {
                 prevSignal = macdValue;
             } else {
-                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * macdValue);
+                prevSignal = fmadd!(signalBeta, prevSignal, signalK * macdValue);
             }
-            outMACD[(outIdx * outStride) as usize] = macdValue;
-            outMACDSignal[(outIdx * outStride) as usize] = prevSignal;
-            outMACDHist[(outIdx * outStride) as usize] = macdValue - prevSignal;
+            outMACD[outIdx * outStride] = macdValue;
+            outMACDSignal[outIdx * outStride] = prevSignal;
+            outMACDHist[outIdx * outStride] = macdValue - prevSignal;
             outIdx += 1;
         }
         // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let state = MacdfixStreamState {
@@ -750,7 +743,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::macdfix_open`] (composition seam).
     pub(crate) fn macdfix_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32,
+        &self, inReal: &[f64], startIdx: usize, optInSignalPeriod: i32,
     ) -> Result<(MacdfixStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -835,7 +828,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MACDFIX_OpenAndFill")]
     pub fn macdfix_open_and_fill(
-        &self, inReal: &[f64], mut optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+        &self, inReal: &[f64], optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<(MacdfixStream, OutRange), RetCode> {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -860,7 +853,7 @@ impl Core {
     /// [`Core::macdfix_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn macdfix_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MacdfixStream, RetCode> {
         self.macdfix_open_impl(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
@@ -953,17 +946,17 @@ impl MacdfixStream {
             let mut prevSignal = sp.prevSignal;
             let mut prevSlow = sp.prevSlow;
             tempReal = inReal;
-            prevFast = fmadd!(sp.fastBeta as f64, prevFast, sp.fastK * tempReal);
-            prevSlow = fmadd!(sp.slowBeta as f64, prevSlow, sp.slowK * tempReal);
+            prevFast = fmadd!(sp.fastBeta, prevFast, sp.fastK * tempReal);
+            prevSlow = fmadd!(sp.slowBeta, prevSlow, sp.slowK * tempReal);
             macdValue = prevFast - prevSlow;
             if sp.optInSignalPeriod == 1 {
                 prevSignal = macdValue;
             } else {
-                prevSignal = fmadd!(sp.signalBeta as f64, prevSignal, sp.signalK * macdValue);
+                prevSignal = fmadd!(sp.signalBeta, prevSignal, sp.signalK * macdValue);
             }
-            (*outMACD) = macdValue;
-            (*outMACDSignal) = prevSignal;
-            (*outMACDHist) = macdValue - prevSignal;
+            *outMACD = macdValue;
+            *outMACDSignal = prevSignal;
+            *outMACDHist = macdValue - prevSignal;
         }
         Ok((outMACD, outMACDSignal, outMACDHist))
     }

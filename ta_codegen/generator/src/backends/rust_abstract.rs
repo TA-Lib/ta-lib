@@ -1345,7 +1345,7 @@ fn emit_call_arm(
         };
         let _ = writeln!(
             o,
-            "                let mut o{k} = self.{arr}[{k}].take().ok_or(RetCode::OutputNotAllInitialize)?;"
+            "                let o{k} = self.{arr}[{k}].take().ok_or(RetCode::OutputNotAllInitialize)?;"
         );
         args.push(format!("&mut *o{k}"));
     }

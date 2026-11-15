@@ -93,9 +93,9 @@ impl Core {
     #[doc(alias = "TA_MA_Lookback")]
     #[inline]
     pub fn ma_lookback(&self, mut optInTimePeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -103,7 +103,7 @@ impl Core {
         }
         let mut retValue: usize = 0_usize;
         if optInTimePeriod <= 1 || optInMAType == MAType::DISABLED {
-            return Ok((0) as usize);
+            return Ok(0 as usize);
         }
         match optInMAType {
             MAType::SMA => {
@@ -173,7 +173,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MA_DisplayShift")]
-    pub fn ma_display_shift(&self, mut optInTimePeriod: i32, mut optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn ma_display_shift(&self, optInTimePeriod: i32, optInMAType: MAType, outputIdx: usize) -> Result<i32, RetCode> {
         self.ma_lookback(optInTimePeriod, optInMAType)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -200,9 +200,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -212,7 +212,6 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut startIdx = startIdx;
         let mut famaScratch: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
         let mut nbElement: usize = 0_usize;
@@ -243,15 +242,15 @@ impl Core {
         // the switch and still answers TA_BAD_PARAM. The identity path below is out
         // of the guard's reach for the same reason - its lookback is 0.
         if self.ma_lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX) > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         // No-smoothing identity: period 1 (every MA type) or the explicit
         // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             nbElement = endIdx - startIdx + 1;
-            (*outNBElement) = nbElement;
+            *outNBElement = nbElement;
             todayIdx = startIdx;
             outIdx = 0;
             if outIdx < nbElement {
@@ -259,102 +258,100 @@ impl Core {
                 let _w0 = &inReal[todayIdx..][.._wn];
                 let _w1 = &mut outReal[outIdx..][.._wn];
                 for _wk in 0.._wn {
-                    _w1[_wk] = ((_w0[_wk]) as f64);
-                    outIdx += 1;
-                    todayIdx += 1;
+                    _w1[_wk] = _w0[_wk] as f64;
                 }
             }
-            (*outBegIdx) = startIdx;
+            *outBegIdx = startIdx;
             return RetCode::Success;
         }
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
             MAType::SMA => {
                 let _xr0 = match self.sma(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr0.beg_idx;
-                (*outNBElement) = _xr0.count;
+                *outBegIdx = _xr0.beg_idx;
+                *outNBElement = _xr0.count;
                 retCode = RetCode::Success;
             }
             MAType::EMA => {
                 let _xr1 = match self.ema(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr1.beg_idx;
-                (*outNBElement) = _xr1.count;
+                *outBegIdx = _xr1.beg_idx;
+                *outNBElement = _xr1.count;
                 retCode = RetCode::Success;
             }
             MAType::WMA => {
                 let _xr2 = match self.wma(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr2.beg_idx;
-                (*outNBElement) = _xr2.count;
+                *outBegIdx = _xr2.beg_idx;
+                *outNBElement = _xr2.count;
                 retCode = RetCode::Success;
             }
             MAType::DEMA => {
                 let _xr3 = match self.dema(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr3.beg_idx;
-                (*outNBElement) = _xr3.count;
+                *outBegIdx = _xr3.beg_idx;
+                *outNBElement = _xr3.count;
                 retCode = RetCode::Success;
             }
             MAType::TEMA => {
                 let _xr4 = match self.tema(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr4.beg_idx;
-                (*outNBElement) = _xr4.count;
+                *outBegIdx = _xr4.beg_idx;
+                *outNBElement = _xr4.count;
                 retCode = RetCode::Success;
             }
             MAType::TRIMA => {
                 let _xr5 = match self.trima(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr5.beg_idx;
-                (*outNBElement) = _xr5.count;
+                *outBegIdx = _xr5.beg_idx;
+                *outNBElement = _xr5.count;
                 retCode = RetCode::Success;
             }
             MAType::KAMA => {
                 let _xr6 = match self.kama(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr6.beg_idx;
-                (*outNBElement) = _xr6.count;
+                *outBegIdx = _xr6.beg_idx;
+                *outNBElement = _xr6.count;
                 retCode = RetCode::Success;
             }
             MAType::MAMA => {
                 // The optInTimePeriod is ignored.
                 famaScratch = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
                 let _xr7 = match self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, &mut famaScratch[..]) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr7.beg_idx;
-                (*outNBElement) = _xr7.count;
+                *outBegIdx = _xr7.beg_idx;
+                *outNBElement = _xr7.count;
                 retCode = RetCode::Success;
             }
             MAType::T3 => {
                 let _xr8 = match self.t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr8.beg_idx;
-                (*outNBElement) = _xr8.count;
+                *outBegIdx = _xr8.beg_idx;
+                *outNBElement = _xr8.count;
                 retCode = RetCode::Success;
             }
             MAType::HMA => {
                 let _xr9 = match self.hma(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr9.beg_idx;
-                (*outNBElement) = _xr9.count;
+                *outBegIdx = _xr9.beg_idx;
+                *outNBElement = _xr9.count;
                 retCode = RetCode::Success;
             }
             MAType::ZLEMA => {
                 let _xr10 = match self.zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr10.beg_idx;
-                (*outNBElement) = _xr10.count;
+                *outBegIdx = _xr10.beg_idx;
+                *outNBElement = _xr10.count;
                 retCode = RetCode::Success;
             }
             MAType::RMA => {
                 let _xr11 = match self.rma(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr11.beg_idx;
-                (*outNBElement) = _xr11.count;
+                *outBegIdx = _xr11.beg_idx;
+                *outNBElement = _xr11.count;
                 retCode = RetCode::Success;
             }
             MAType::VIDYA => {
                 // The one period is the EMA length; the CMO period is round(3n/4),
                 // Chande's 12:9 ratio.
                 let _xr12 = match self.vidya(startIdx, endIdx, inReal, optInTimePeriod, (3 * optInTimePeriod + 2) / 4, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr12.beg_idx;
-                (*outNBElement) = _xr12.count;
+                *outBegIdx = _xr12.beg_idx;
+                *outNBElement = _xr12.count;
                 retCode = RetCode::Success;
             }
             MAType::ALMA => {
                 let _xr13 = match self.alma(startIdx, endIdx, inReal, optInTimePeriod, 6.0, 0.85, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-                (*outBegIdx) = _xr13.beg_idx;
-                (*outNBElement) = _xr13.count;
+                *outBegIdx = _xr13.beg_idx;
+                *outNBElement = _xr13.count;
                 retCode = RetCode::Success;
             }
             _ => {
@@ -523,55 +520,55 @@ enum MaSub {
 impl Core {
     fn ma_step_impl(sp: &mut MaStreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
-            (*outReal) = inReal;
+            *outReal = inReal;
             return Ok(());
         }
         match &mut sp.sub {
             MaSub::Identity => {
-                (*outReal) = inReal;
+                *outReal = inReal;
             }
             MaSub::Sma(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Ema(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Wma(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Dema(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Tema(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Trima(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Kama(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Mama(sub) => {
                 let subValue = sub.update(inReal)?;
-                (*outReal) = subValue.0;
+                *outReal = subValue.0;
             }
             MaSub::T3(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Hma(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Zlema(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Rma(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Vidya(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
             MaSub::Alma(sub) => {
-                (*outReal) = sub.update(inReal)?;
+                *outReal = sub.update(inReal)?;
             }
         }
         Ok(())
@@ -579,55 +576,55 @@ impl Core {
 
     fn ma_step_tape_impl(sp: &mut MaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
-            (*outReal) = inReal;
+            *outReal = inReal;
             return;
         }
         match &mut sp.sub {
             MaSub::Identity => {
-                (*outReal) = inReal;
+                *outReal = inReal;
             }
             MaSub::Sma(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Ema(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Wma(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Dema(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Tema(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Trima(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Kama(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Mama(sub) => {
                 let subValue = sub.step_tape(tape, tapeBase, tapeMask, inReal);
-                (*outReal) = subValue.0;
+                *outReal = subValue.0;
             }
             MaSub::T3(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Hma(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Zlema(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Rma(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Vidya(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
             MaSub::Alma(sub) => {
-                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                *outReal = sub.step_tape(tape, tapeBase, tapeMask, inReal);
             }
         }
     }
@@ -639,9 +636,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -806,9 +803,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -904,9 +901,9 @@ impl Core {
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 1 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
@@ -922,8 +919,8 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
+            *outBegIdx = fillLb;
+            *outNBElement = historyLen - fillLb;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];

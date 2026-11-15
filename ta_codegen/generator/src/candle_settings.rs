@@ -219,7 +219,6 @@ pub fn emit_c_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
 /// Emit Rust unpacking lines for the given candle settings.
 ///
 /// ```rust,ignore
-/// #[allow(non_snake_case)]
 /// let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
 /// ```
 ///
@@ -250,18 +249,9 @@ pub fn emit_rust_unpacking_from(
     let mut out = String::new();
     for setting in settings {
         let src = source(setting);
-        out.push_str(&format!(
-            "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_rangeType: i32 = {src}.range_type as i32;\n"
-        ));
-        out.push_str(&format!(
-            "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_avgPeriod: i32 = {src}.avg_period;\n"
-        ));
-        out.push_str(&format!(
-            "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_factor: f64 = {src}.factor;\n"
-        ));
+        out.push_str(&format!("{pad}let {setting}_rangeType: i32 = {src}.range_type as i32;\n"));
+        out.push_str(&format!("{pad}let {setting}_avgPeriod: i32 = {src}.avg_period;\n"));
+        out.push_str(&format!("{pad}let {setting}_factor: f64 = {src}.factor;\n"));
     }
     out
 }
@@ -456,7 +446,6 @@ mod tests {
         ));
         assert!(code.contains("self.candle_settings.body_long.avg_period"));
         assert!(code.contains("self.candle_settings.body_long.factor"));
-        assert!(code.contains("#[allow(non_snake_case)]"));
     }
 
     #[test]

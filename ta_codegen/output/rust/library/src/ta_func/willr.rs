@@ -84,9 +84,9 @@ impl Core {
     #[doc(alias = "TA_WILLR_Lookback")]
     #[inline]
     pub fn willr_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -107,7 +107,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_WILLR_DisplayShift")]
-    pub fn willr_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn willr_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.willr_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -135,9 +135,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.willr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -183,8 +183,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -211,29 +211,29 @@ impl Core {
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..optInTimePeriod as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preHighest = &mut local_preHighest[..optInTimePeriod as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..optInTimePeriod as usize];
         } else {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
         }
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            preLowest = &mut local_preLowest[..optInTimePeriod as usize];
         } else {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
@@ -245,7 +245,7 @@ impl Core {
             // Scanning backward while keeping the incumbent on a tie
             // leaves the later element holding a tie, which is what lets this
             // compile to a single min/max instruction.
-            i = blockStart + ((optInTimePeriod) as usize) - 1;
+            i = blockStart + (optInTimePeriod as usize) - 1;
             highest = inHigh[i];
             lowest = inLow[i];
             sufHighest[(optInTimePeriod - 1) as usize] = highest;
@@ -282,7 +282,7 @@ impl Core {
             // The clamp is unreachable while lowest <= close <= highest -- the
             // quotient is <= 1 under any rounding mode. Its domain is the close
             // outside its own bar, which nothing here validates.
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
@@ -298,11 +298,11 @@ impl Core {
             trailingIdx += 1;
             today += 1;
             if today > endIdx {
-                blockStart = blockStart + ((optInTimePeriod) as usize);
+                blockStart = blockStart + (optInTimePeriod as usize);
             } else {
                 // Prefix extrema of the next block, clamped to what remains.
                 // Forward, keeping the incumbent on a tie: earliest wins again.
-                blockNext = blockStart + ((optInTimePeriod) as usize);
+                blockNext = blockStart + (optInTimePeriod as usize);
                 nAvail = endIdx - blockNext + 1;
                 if nAvail > ((optInTimePeriod - 1) as usize) {
                     nAvail = (optInTimePeriod - 1) as usize;
@@ -338,7 +338,7 @@ impl Core {
                     highest = c_max(preHighest[m - 1], highest);
                     lowest = sufLowest[m];
                     lowest = c_min(preLowest[m - 1], lowest);
-                    if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                    if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                         tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * -100.0;
                         if tempReal > 0.0 {
                             tempReal = 0.0;
@@ -355,13 +355,13 @@ impl Core {
                 }
                 trailingIdx = trailingIdx + nAvail;
                 today = today + nAvail;
-                blockStart = blockStart + ((optInTimePeriod) as usize);
+                blockStart = blockStart + (optInTimePeriod as usize);
             }
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
         return RetCode::Success;
     }
     /// Williams' %R momentum oscillator over a rolling period, bounded in \[-100, 0]. Measures
@@ -507,7 +507,6 @@ pub struct WillrStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct WillrStreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
     trailingIdx: i32,
@@ -569,20 +568,20 @@ impl Core {
             sp.highest = tmp;
         }
         // Same rule, band and clamp as the block scan above.
-        if !(((sp.highest - sp.lowest).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
+        if !((sp.highest - sp.lowest).abs() <= 1e-14 * (sp.highest.abs() + sp.lowest.abs())) {
             tempReal = (sp.highest - sp.x_inClose[(sp.today & sp.xMask) as usize]) / (sp.highest - sp.lowest) * -100.0;
             if tempReal > 0.0 {
                 tempReal = 0.0;
             } else if tempReal < -100.0 {
                 tempReal = -100.0;
             }
-            (*outReal) = tempReal;
+            *outReal = tempReal;
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         sp.trailingIdx += 1;
         sp.today += 1;
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::willr_open_internal`]
@@ -593,9 +592,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -603,14 +602,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
@@ -633,8 +630,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
@@ -667,57 +664,57 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
+            if lowestIdx < (trailingIdx as i32) {
+                lowestIdx = trailingIdx as i32;
+                lowest = inLow[lowestIdx as usize];
+                i = lowestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inLow[i];
                     if tmp < lowest {
-                        lowestIdx = (i) as i32;
+                        lowestIdx = i as i32;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
+                lowestIdx = today as i32;
                 lowest = tmp;
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
+            if highestIdx < (trailingIdx as i32) {
+                highestIdx = trailingIdx as i32;
+                highest = inHigh[highestIdx as usize];
+                i = highestIdx as usize;
                 while { i += 1; i } <= today {
                     tmp = inHigh[i];
                     if tmp > highest {
-                        highestIdx = (i) as i32;
+                        highestIdx = i as i32;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = (today) as i32;
+                highestIdx = today as i32;
                 highest = tmp;
             }
             // Same rule, band and clamp as the block scan above.
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 tempReal = (highest - inClose[today]) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
                 } else if tempReal < -100.0 {
                     tempReal = -100.0;
                 }
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = tempReal;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             trailingIdx += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        *outBegIdx = startIdx;
+        *outNBElement = outIdx;
 
         // Capture the live batch state into the handle.
         let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
@@ -741,14 +738,13 @@ impl Core {
             }
         }
         let state = WillrStreamState {
-            optInTimePeriod,
             lowest,
             highest,
-            trailingIdx: (trailingIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
+            trailingIdx: trailingIdx as i32,
+            lowestIdx: lowestIdx as i32,
+            highestIdx: highestIdx as i32,
+            i: i as i32,
+            today: today as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inHigh,
@@ -760,7 +756,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::willr_open`] (composition seam).
     pub(crate) fn willr_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(WillrStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -845,7 +841,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_WILLR_OpenAndFill")]
     pub fn willr_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(WillrStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -867,7 +863,7 @@ impl Core {
     /// [`Core::willr_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn willr_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<WillrStream, RetCode> {
         self.willr_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -954,50 +950,46 @@ impl WillrStream {
             pkSlot2 = (sp.today & sp.xMask) as usize;
             pkVal2 = inClose;
             // Set the lowest low
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 };
             if lowestIdx < sp.trailingIdx {
                 lowestIdx = sp.trailingIdx;
-                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                lowest = if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 };
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 };
                     if tmp < lowest {
-                        lowestIdx = i;
                         lowest = tmp;
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = sp.today;
                 lowest = tmp;
             }
             // Set the highest high
-            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            tmp = if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 };
             if highestIdx < sp.trailingIdx {
                 highestIdx = sp.trailingIdx;
-                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                highest = if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 };
                 i = highestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
-                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    tmp = if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 };
                     if tmp > highest {
-                        highestIdx = i;
                         highest = tmp;
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = sp.today;
                 highest = tmp;
             }
             // Same rule, band and clamp as the block scan above.
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
                 tempReal = (highest - (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 })) / (highest - lowest) * -100.0;
                 if tempReal > 0.0 {
                     tempReal = 0.0;
                 } else if tempReal < -100.0 {
                     tempReal = -100.0;
                 }
-                (*outReal) = tempReal;
+                *outReal = tempReal;
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)

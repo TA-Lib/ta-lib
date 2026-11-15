@@ -102,9 +102,9 @@ impl Core {
     #[doc(alias = "TA_CCI_Lookback")]
     #[inline]
     pub fn cci_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -126,7 +126,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range or the index names no output. Integer
     /// parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CCI_DisplayShift")]
-    pub fn cci_display_shift(&self, mut optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
+    pub fn cci_display_shift(&self, optInTimePeriod: i32, outputIdx: usize) -> Result<i32, RetCode> {
         self.cci_lookback(optInTimePeriod)?;
         if outputIdx >= 1 {
             return Err(RetCode::BadParam);
@@ -154,9 +154,9 @@ impl Core {
         if endIdx > Self::INDEX_MAX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return RetCode::BadParam;
         }
         let _assertLb = self.cci_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -197,8 +197,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return RetCode::Success;
         }
         let inHigh = &inHigh[..=endIdx];
@@ -207,8 +207,8 @@ impl Core {
         // Allocate a circular buffer equal to the requested
         // period.
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
-            circBuffer = &mut local_circBuffer[..(optInTimePeriod) as usize];
+        if optInTimePeriod as usize <= 30usize {
+            circBuffer = &mut local_circBuffer[..optInTimePeriod as usize];
         } else {
             heap_circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
             circBuffer = &mut heap_circBuffer;
@@ -245,7 +245,7 @@ impl Core {
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
             if lastValue == prevValue {
-                if flatRun < ((optInTimePeriod) as usize) {
+                if flatRun < (optInTimePeriod as usize) {
                     flatRun += 1;
                 }
             } else {
@@ -264,8 +264,8 @@ impl Core {
                 sumDirty = 1;
             }
             circBuffer[circBuffer_Idx] = lastValue;
-            tempReal = (periodTotal).abs();
-            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            tempReal = periodTotal.abs();
+            periodPeak = if tempReal > periodPeak { tempReal } else { periodPeak };
             if circBuffer_Idx == ((optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((optInTimePeriod - 1) as usize) {
                 tempReal = 0.0;
                 j = 0;
@@ -274,24 +274,22 @@ impl Core {
                     let _w0 = &circBuffer[j..][.._wn];
                     for _wk in 0.._wn {
                         tempReal += _w0[_wk];
-                        j += 1;
                     }
                 }
                 tempReal += lastValue;
                 j = circBuffer_Idx + 1;
-                if j < ((optInTimePeriod) as usize) {
+                if j < (optInTimePeriod as usize) {
                     let _wn: usize = (optInTimePeriod as usize) - j;
                     let _w0 = &circBuffer[j..][.._wn];
                     for _wk in 0.._wn {
                         tempReal += _w0[_wk];
-                        j += 1;
                     }
                 }
                 periodTotal = tempReal;
-                periodPeak = (tempReal).abs();
+                periodPeak = tempReal.abs();
                 sumDirty = 0;
             }
-            theAverage = periodTotal / ((optInTimePeriod) as f64);
+            theAverage = periodTotal / (optInTimePeriod as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
@@ -301,12 +299,11 @@ impl Core {
                 let _w0 = &circBuffer[j..][.._wn];
                 for _wk in 0.._wn {
                     tempReal2 += (_w0[_wk] - theAverage).abs();
-                    j += 1;
                 }
             }
             tempReal2 += (lastValue - theAverage).abs();
             j = circBuffer_Idx + 1;
-            if j < ((optInTimePeriod) as usize) {
+            if j < (optInTimePeriod as usize) {
                 let _wn: usize = (optInTimePeriod as usize) - j;
                 let _w0 = &circBuffer[j..][.._wn];
                 for _wk in 0.._wn {
@@ -314,7 +311,7 @@ impl Core {
                     j += 1;
                 }
             }
-            tempReal2 /= ((optInTimePeriod) as f64);
+            tempReal2 /= optInTimePeriod as f64;
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
             // The third test is the divisor itself, and it is not implied by the
@@ -332,8 +329,8 @@ impl Core {
             // output. The band is still wide enough (~90 ulp of the average) to
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
-            tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
+            tempReal3 = theAverage.abs();
+            if !(tempReal.abs() <= 1e-14 * tempReal3) && !(tempReal2.abs() <= 1e-14 * tempReal3) && 0.015 * tempReal2 != 0.0 {
                 outReal[outIdx] = tempReal / (0.015 * tempReal2);
                 outIdx += 1;
             } else {
@@ -347,8 +344,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         // Free the circular buffer if it was dynamically allocated.
         return RetCode::Success;
     }
@@ -504,7 +501,6 @@ struct CciStreamState {
     flatRun: usize,
     circBuffer_Idx: usize,
     maxIdx_circBuffer: usize,
-    cbSize_circBuffer: usize,
     cb_circBuffer: Vec<f64>,
     cur_outReal: f64,
 }
@@ -524,7 +520,7 @@ impl Core {
         let mut j: usize = 0_usize;
         lastValue = (inHigh + inLow + inClose) / 3_f64;
         if lastValue == sp.prevValue {
-            if sp.flatRun < ((sp.optInTimePeriod) as usize) {
+            if sp.flatRun < (sp.optInTimePeriod as usize) {
                 sp.flatRun += 1;
             }
         } else {
@@ -543,8 +539,8 @@ impl Core {
             sp.sumDirty = 1;
         }
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
-        tempReal = (sp.periodTotal).abs();
-        sp.periodPeak = (if tempReal > sp.periodPeak { tempReal } else { sp.periodPeak });
+        tempReal = sp.periodTotal.abs();
+        sp.periodPeak = if tempReal > sp.periodPeak { tempReal } else { sp.periodPeak };
         if sp.circBuffer_Idx == ((sp.optInTimePeriod - 1) as usize) || sp.periodPeak > 1.5 * tempReal || sp.sumDirty != 0 && sp.flatRun >= ((sp.optInTimePeriod - 1) as usize) {
             tempReal = 0.0;
             // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
@@ -556,15 +552,15 @@ impl Core {
             tempReal += lastValue;
             // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
             j = sp.circBuffer_Idx + 1;
-            while j < ((sp.optInTimePeriod) as usize) {
+            while j < (sp.optInTimePeriod as usize) {
                 tempReal += sp.cb_circBuffer[j];
                 j += 1;
             }
             sp.periodTotal = tempReal;
-            sp.periodPeak = (tempReal).abs();
+            sp.periodPeak = tempReal.abs();
             sp.sumDirty = 0;
         }
-        theAverage = sp.periodTotal / ((sp.optInTimePeriod) as f64);
+        theAverage = sp.periodTotal / (sp.optInTimePeriod as f64);
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period, then its mean.
         tempReal2 = 0.0;
@@ -577,11 +573,11 @@ impl Core {
         tempReal2 += (lastValue - theAverage).abs();
         // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
         j = sp.circBuffer_Idx + 1;
-        while j < ((sp.optInTimePeriod) as usize) {
+        while j < (sp.optInTimePeriod as usize) {
             tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
             j += 1;
         }
-        tempReal2 /= ((sp.optInTimePeriod) as f64);
+        tempReal2 /= sp.optInTimePeriod as f64;
         // And finally, the CCI...
         tempReal = lastValue - theAverage;
         // The third test is the divisor itself, and it is not implied by the
@@ -599,18 +595,18 @@ impl Core {
         // output. The band is still wide enough (~90 ulp of the average) to
         // absorb the sub-epsilon residue an identical-price window leaves in the
         // average, which is what it was widened for in the first place (#7).
-        tempReal3 = (theAverage).abs();
-        if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
-            (*outReal) = tempReal / (0.015 * tempReal2);
+        tempReal3 = theAverage.abs();
+        if !(tempReal.abs() <= 1e-14 * tempReal3) && !(tempReal2.abs() <= 1e-14 * tempReal3) && 0.015 * tempReal2 != 0.0 {
+            *outReal = tempReal / (0.015 * tempReal2);
         } else {
-            (*outReal) = 0.0;
+            *outReal = 0.0;
         }
         // Move forward the circular buffer indexes.
         sp.circBuffer_Idx = sp.circBuffer_Idx + 1;
         if sp.circBuffer_Idx > sp.maxIdx_circBuffer {
             sp.circBuffer_Idx = 0;
         }
-        sp.cur_outReal = (*outReal);
+        sp.cur_outReal = *outReal;
     }
 
     /// The single whole-history transcription behind [`Core::cci_open_internal`]
@@ -621,9 +617,9 @@ impl Core {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
+        if optInTimePeriod == i32::MIN {
             optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if optInTimePeriod < 2 || optInTimePeriod > 100000 {
             return Err(RetCode::BadParam);
         }
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -631,14 +627,12 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         if startIdx >= historyLen {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempReal3: f64 = 0.0_f64;
@@ -669,15 +663,15 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
+            *outBegIdx = 0;
+            *outNBElement = 0;
             return Err(RetCode::InsufficientHistory);
         }
         // Allocate a circular buffer equal to the requested
         // period.
         if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_circBuffer = ((optInTimePeriod) as usize) - 1;
+        maxIdx_circBuffer = (optInTimePeriod as usize) - 1;
         circBuffer_Idx = 0;
         // Do the MA calculation using tight loops.
         // Add-up the initial period, except for the last value.
@@ -710,7 +704,7 @@ impl Core {
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
             if lastValue == prevValue {
-                if flatRun < ((optInTimePeriod) as usize) {
+                if flatRun < (optInTimePeriod as usize) {
                     flatRun += 1;
                 }
             } else {
@@ -729,8 +723,8 @@ impl Core {
                 sumDirty = 1;
             }
             circBuffer[circBuffer_Idx] = lastValue;
-            tempReal = (periodTotal).abs();
-            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            tempReal = periodTotal.abs();
+            periodPeak = if tempReal > periodPeak { tempReal } else { periodPeak };
             if circBuffer_Idx == ((optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((optInTimePeriod - 1) as usize) {
                 tempReal = 0.0;
                 // for( j = 0; j < circBuffer_Idx; j += 1 )
@@ -742,15 +736,15 @@ impl Core {
                 tempReal += lastValue;
                 // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
                 j = circBuffer_Idx + 1;
-                while j < ((optInTimePeriod) as usize) {
+                while j < (optInTimePeriod as usize) {
                     tempReal += circBuffer[j];
                     j += 1;
                 }
                 periodTotal = tempReal;
-                periodPeak = (tempReal).abs();
+                periodPeak = tempReal.abs();
                 sumDirty = 0;
             }
-            theAverage = periodTotal / ((optInTimePeriod) as f64);
+            theAverage = periodTotal / (optInTimePeriod as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
@@ -763,11 +757,11 @@ impl Core {
             tempReal2 += (lastValue - theAverage).abs();
             // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
             j = circBuffer_Idx + 1;
-            while j < ((optInTimePeriod) as usize) {
+            while j < (optInTimePeriod as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
-            tempReal2 /= ((optInTimePeriod) as f64);
+            tempReal2 /= optInTimePeriod as f64;
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
             // The third test is the divisor itself, and it is not implied by the
@@ -785,11 +779,11 @@ impl Core {
             // output. The band is still wide enough (~90 ulp of the average) to
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
-            tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / (0.015 * tempReal2);
+            tempReal3 = theAverage.abs();
+            if !(tempReal.abs() <= 1e-14 * tempReal3) && !(tempReal2.abs() <= 1e-14 * tempReal3) && 0.015 * tempReal2 != 0.0 {
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = tempReal / (0.015 * tempReal2);
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
+                outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = 0.0;
             }
             // Move forward the circular buffer indexes.
             circBuffer_Idx += 1;
@@ -798,8 +792,8 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
+        *outNBElement = outIdx;
+        *outBegIdx = startIdx;
         // Free the circular buffer if it was dynamically allocated.
 
         // Capture the live batch state into the handle.
@@ -817,7 +811,6 @@ impl Core {
             circBuffer_Idx,
             maxIdx_circBuffer,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
         Ok(CciStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -825,7 +818,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::cci_open`] (composition seam).
     pub(crate) fn cci_open_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32,
     ) -> Result<(CciStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
@@ -910,7 +903,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CCI_OpenAndFill")]
     pub fn cci_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CciStream, OutRange), RetCode> {
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -932,7 +925,7 @@ impl Core {
     /// [`Core::cci_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn cci_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CciStream, RetCode> {
         self.cci_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
@@ -1008,17 +1001,16 @@ impl CciStream {
             let mut flatRun = sp.flatRun;
             let mut periodPeak = sp.periodPeak;
             let mut periodTotal = sp.periodTotal;
-            let mut prevValue = sp.prevValue;
+            let prevValue = sp.prevValue;
             let mut sumDirty = sp.sumDirty;
             lastValue = (inHigh + inLow + inClose) / 3_f64;
             if lastValue == prevValue {
-                if flatRun < ((sp.optInTimePeriod) as usize) {
+                if flatRun < (sp.optInTimePeriod as usize) {
                     flatRun += 1;
                 }
             } else {
                 flatRun = 0;
             }
-            prevValue = lastValue;
             // A running sum carries the rounding of every bar it took and gave
             // back, at the scale of the sum when it did. The full pass on the bar
             // that stores into the last slot, and whenever the sum falls below 2/3
@@ -1030,8 +1022,8 @@ impl CciStream {
                 periodTotal += lastValue - sp.cb_circBuffer[sp.circBuffer_Idx];
                 sumDirty = 1;
             }
-            tempReal = (periodTotal).abs();
-            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            tempReal = periodTotal.abs();
+            periodPeak = if tempReal > periodPeak { tempReal } else { periodPeak };
             if sp.circBuffer_Idx == ((sp.optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((sp.optInTimePeriod - 1) as usize) {
                 tempReal = 0.0;
                 // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
@@ -1043,15 +1035,13 @@ impl CciStream {
                 tempReal += lastValue;
                 // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
                 j = sp.circBuffer_Idx + 1;
-                while j < ((sp.optInTimePeriod) as usize) {
+                while j < (sp.optInTimePeriod as usize) {
                     tempReal += sp.cb_circBuffer[j];
                     j += 1;
                 }
                 periodTotal = tempReal;
-                periodPeak = (tempReal).abs();
-                sumDirty = 0;
             }
-            theAverage = periodTotal / ((sp.optInTimePeriod) as f64);
+            theAverage = periodTotal / (sp.optInTimePeriod as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
@@ -1064,11 +1054,11 @@ impl CciStream {
             tempReal2 += (lastValue - theAverage).abs();
             // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
             j = sp.circBuffer_Idx + 1;
-            while j < ((sp.optInTimePeriod) as usize) {
+            while j < (sp.optInTimePeriod as usize) {
                 tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
                 j += 1;
             }
-            tempReal2 /= ((sp.optInTimePeriod) as f64);
+            tempReal2 /= sp.optInTimePeriod as f64;
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
             // The third test is the divisor itself, and it is not implied by the
@@ -1086,11 +1076,11 @@ impl CciStream {
             // output. The band is still wide enough (~90 ulp of the average) to
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
-            tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
-                (*outReal) = tempReal / (0.015 * tempReal2);
+            tempReal3 = theAverage.abs();
+            if !(tempReal.abs() <= 1e-14 * tempReal3) && !(tempReal2.abs() <= 1e-14 * tempReal3) && 0.015 * tempReal2 != 0.0 {
+                *outReal = tempReal / (0.015 * tempReal2);
             } else {
-                (*outReal) = 0.0;
+                *outReal = 0.0;
             }
         }
         Ok(outReal)
