@@ -19,7 +19,7 @@ on:
         type: boolean
         default: false
       perf_mode:
-        description: "Instruction counts. gate: fail above 10% and lower any row today beat. accept: additionally RAISE the rows named below. measure: report only, commit nothing."
+        description: "Instruction counts, advisory. gate: warn above 10% and lower any row today beat. accept: additionally RAISE the rows named below. measure: report only, commit nothing."
         type: choice
         options: [gate, accept, measure]
         default: gate
@@ -31,7 +31,7 @@ on:
         type: boolean
         default: true
       perf_threshold:
-        description: "Fractional growth that fails one entry point (default 0.10)."
+        description: "Fractional growth that flags one entry point (default 0.10)."
         default: "0.10"
 
 jobs:

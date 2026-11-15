@@ -119,7 +119,11 @@ C entry point once under callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`,
 `_Peek`) and compares the retired-instruction count against
 `.github/perf/icount-baseline-<arch>.tsv`, then again on `--shape=peg` against
 `icount-baseline-<arch>-peg.tsv`: held levels are where the rolling-variance
-family rebuilds, and the walk never reaches them.
+family rebuilds, and the walk never reaches them. The job is advisory
+(`--advisory`): a row over the threshold is a warning in the run summary of
+every run that measures it until accepted (dev skips an unchanged tree; main
+measures nightly), but never turns the nightly red, because a count can move
+~10% between two hosted runners on one tree.
 
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)

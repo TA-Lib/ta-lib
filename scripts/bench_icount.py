@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Instruction-count regression gate for every C entry point (issue #412).
+"""Instruction-count regression check for every C entry point (issue #412).
 
 Runs `bin/ta_bench_icount` under callgrind and compares each entry point's
 retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
@@ -10,11 +10,21 @@ retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
     scripts/bench_icount.py --accept=SMA/batch  # ... and only that one tier
     scripts/bench_icount.py --no-build --function=RSI,SMA
     scripts/bench_icount.py --shape=peg         # held levels, against its own baseline
+    scripts/bench_icount.py --advisory          # warn above the threshold, exit 0
 
 The counts are EXACT, not sampled: the same binary on the same input returns the
 same number on a loaded runner and an idle one. That is the only reason a 10%
 threshold means anything here, and the reason nothing in this file averages,
-repeats or discards a measurement.
+repeats or discards a measurement. Exact on one host only: a row can move ~10%
+between two hosted runners on one tree, so the nightly passes `--advisory`, and
+a row lowered on one runner type can warn on every run on another.
+
+`--advisory` lists a row over the threshold as a warning, exits 0, and still
+writes what `--update-baseline` or `--accept` would: every row it beat lowered,
+the rows over the threshold held at their previous count, so every later run
+that measures lists them again until someone accepts them. Keep that write: an
+advisory run that wrote nothing would let one unaccepted row stop the baseline
+from ever moving again.
 
 The number is not a time. Valgrind charges every instruction the same, so
 out-of-order execution, port pressure and dependency-chain latency are all
@@ -23,17 +33,18 @@ rewrite can read here as a regression. Use it for the algorithmic class (a lost
 fast path, an extra pass over the window, an un-inlined call); never quote a
 percentage from it.
 
-The baseline only ever moves DOWN. A passing run lowers a row it beat and leaves
+The baseline only ever moves DOWN. A writing run lowers a row it beat and leaves
 every row it did not, so a regression under the threshold is never absorbed:
-three nights of +9% is +30% against a baseline that never moved, and the gate
-catches it, where a wholesale nightly rewrite would have read green three times
+three nights of +9% is +30% against a baseline that never moved, and the check
+flags it, where a wholesale nightly rewrite would have read green three times
 and lost the drift.
 
 Raising a row takes `--accept`, and `--accept` NAMES the rows. Accepting one
 deliberate regression must not re-baseline the corpus: every row not named keeps
 the monotone rule, so the drift accumulated against the other thousand entry
-points survives. A failure on a row nobody accepted still fails the run, so
-`--accept=SMA` cannot paper over a regression in RSI. `--accept=ALL` exists for
+points survives. A row nobody accepted stays over the threshold (failing the
+run, or warning under `--advisory`), so `--accept=SMA` cannot paper over a
+regression in RSI. `--accept=ALL` exists for
 a toolchain change and says what it does.
 
 A baseline is only comparable within one (architecture, compiler) pair. On a
@@ -250,7 +261,7 @@ def accepts(tokens, name, kind):
 
 
 def ratchet(measured, base_rows, tokens=frozenset()):
-    """The rows a passing run should write: each at its lowest observed count.
+    """The rows a run should write: each at its lowest observed count.
 
     Load-bearing. A run may lower a row and never raise one, which is what keeps
     a sub-threshold regression from being absorbed one green night at a time.
@@ -285,7 +296,7 @@ def write_baseline(path, measured, meta, toolchain, commit, policy, prev_rows=No
     with open(path, "w") as f:
         f.write("# Instruction counts per C entry point, from scripts/bench_icount.py.\n")
         f.write("# A count is comparable only against the same toolchain line.\n")
-        f.write("# policy=monotone: a passing run lowers a row it beat and holds every\n")
+        f.write("# policy=monotone: a run lowers a row it beat and holds every\n")
         f.write("# other, so a row may predate the commit below. Raising one is a human\n")
         f.write("# decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.\n")
         f.write(f"#policy\t{policy}\n")
@@ -320,7 +331,7 @@ def read_baseline(path):
 # ---------------------------------------------------------------- reporting
 
 def report(measured, base_rows, threshold, report_threshold, filtered):
-    """Returns (failures, moved, structural). `failures` is what fails the gate;
+    """Returns (failures, moved, structural). `failures` is every row over `threshold`;
     `moved` is every row past `report_threshold`, failures included, so the
     nightly summary reads as a list of what the day's commits changed.
 
@@ -390,15 +401,21 @@ def main():
     ap.add_argument("--no-build", action="store_true",
                     help="measure bin/ta_bench_icount as it stands")
     ap.add_argument("--update-baseline", action="store_true",
-                    help="rewrite the baseline when the run does not regress")
+                    help="lower every row this run beat, unless a row over the "
+                         "threshold fails the run (see --advisory)")
     ap.add_argument("--accept", default=None, metavar="NAME[/KIND],...",
                     help="raise these rows to today's count, and only these: "
                          "SMA for every tier of a function, SMA/batch for one, "
                          "ALL for the whole run. Every row not named keeps the "
-                         "monotone rule, and a failure on a row nobody named "
-                         "still fails the run")
+                         "monotone rule, and a row over the threshold that "
+                         "nobody named still fails the run, or warns under "
+                         "--advisory")
+    ap.add_argument("--advisory", action="store_true",
+                    help="list rows over the threshold as warnings and exit 0; "
+                         "the baseline is still written, holding those rows")
     ap.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
-                    help=f"fractional growth that FAILS a row (default {DEFAULT_THRESHOLD})")
+                    help=f"fractional growth that FAILS a row, or warns under "
+                         f"--advisory (default {DEFAULT_THRESHOLD})")
     ap.add_argument("--report-threshold", type=float, default=REPORT_THRESHOLD,
                     help=f"absolute change a row must reach to be LISTED "
                          f"(default {REPORT_THRESHOLD})")
@@ -503,7 +520,8 @@ def main():
 
     summary = [f"{suite}\n",
                f"\n`{toolchain}` · {len(measured)} entry points · "
-               f"fails above {args.threshold:.0%} · baseline commit "
+               f"{'warns' if args.advisory else 'fails'} above "
+               f"{args.threshold:.0%} · baseline commit "
                f"`{head.get('commit', '?')[:12]}`\n"]
     if filtered:
         summary.append(f"\n_Narrowed to `{args.function}`: report only, "
@@ -520,7 +538,7 @@ def main():
             f"- `{n}` {k}: {w} {d}".rstrip() for n, k, w, d in structural[:40]) + "\n")
     emit_github_summary("".join(summary))
 
-    # A failure the caller named is accepted; one it did not still fails, so
+    # A failure the caller named is accepted; one it did not is still reported, so
     # --accept=SMA cannot quietly absorb a regression in RSI.
     unaccepted = [f for f in failures if not accepts(accept_tokens, f[0], f[1])]
     if failures and accept_tokens and not unaccepted and not filtered:
@@ -545,22 +563,31 @@ def main():
         if filtered:
             print(f"\n{len(failures)} entry point(s) over {args.threshold:.0%}, "
                   "but --function makes this run report-only. Re-run whole-corpus "
-                  "to gate on it.")
+                  "to judge it.")
             return 0
-        print(f"\nFAIL: {len(failures)} entry point(s) grew more than "
-              f"{args.threshold:.0%}. The baseline is NOT updated.")
-        return 1
-
-    print(f"\nPASS: no entry point grew more than {args.threshold:.0%}.")
+        if not args.advisory:
+            print(f"\nFAIL: {len(failures)} entry point(s) grew more than "
+                  f"{args.threshold:.0%}. The baseline is NOT updated.")
+            return 1
+        print(f"\nADVISORY: {len(failures)} entry point(s) grew more than "
+              f"{args.threshold:.0%}; their baseline rows hold the previous count.")
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            listed = ", ".join(f"{n}/{k} {d:+.1%}" for n, k, _b, _i, d in failures[:12])
+            more = f" and {len(failures) - 12} more" if len(failures) > 12 else ""
+            print(f"::warning title=Instruction counts{' (' + args.shape + ')' if args.shape else ''}"
+                  f"::{len(failures)} entry point(s) over {args.threshold:.0%}: "
+                  f"{listed}{more}")
+    else:
+        print(f"\nPASS: no entry point grew more than {args.threshold:.0%}.")
     if not filtered and (args.update_baseline or accept_tokens):
         rows, held = ratchet(measured, base_rows, accept_tokens)
         wrote = write_baseline(baseline_path, rows, meta, toolchain, commit,
                                "accepted" if accept_tokens else "monotone",
                                base_rows)
         if held:
-            print(f"{held} row(s) came in above the baseline but under the "
-                  "threshold; the baseline holds the lower count, so the drift "
-                  "keeps accumulating against it rather than being absorbed.")
+            print(f"{held} row(s) came in above the baseline; it holds the "
+                  "lower count, so the drift keeps accumulating against it "
+                  "rather than being absorbed.")
         print(f"baseline written: {baseline_file}" if wrote
               else "baseline unchanged: no count moved, nothing to commit.")
     return 0

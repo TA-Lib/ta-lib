@@ -1927,10 +1927,15 @@ jobs:
   # threshold mean anything on a shared vCPU. It is blind to out-of-order
   # execution and to what a mispredicted branch costs, so a percentage from it
   # is never a quoted performance figure.
+  #
+  # Advisory: a row over the threshold is a warning in the run summary, and
+  # nothing in this job turns the nightly red. Counts are exact on one host
+  # only, and a hosted runner's hardware is not ours to pick.
   icount:
     name: Instruction counts (x86_64)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    continue-on-error: true
     env:
       MODE: ${{ inputs.perf_mode || 'gate' }}
       THRESHOLD: ${{ inputs.perf_threshold || '0.10' }}
@@ -2077,14 +2082,14 @@ jobs:
           for shape in randwalk peg; do
             python3 scripts/bench_icount.py --no-build --shape="$shape" \
               --out-file="temp/callgrind.icount.$shape.out" \
-              --threshold="$THRESHOLD" "${flags[@]}" || rc=1
+              --threshold="$THRESHOLD" --advisory "${flags[@]}" || rc=1
           done
           exit $rc
 
       # Reached only when the step above exited 0, and in `gate` mode
-      # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
-      # here one green night at a time; raising a row needs mode=accept naming
-      # that row, which is a person deciding to.
+      # bench_icount.py only ever LOWERS a row: one over the threshold is
+      # held, not absorbed. Raising a row needs mode=accept naming that row,
+      # which is a person deciding to.
       - name: Commit the lowered baseline
         if: success() && steps.decide.outputs.measure == 'true' && env.IS_MAIN != '1'
         run: |
