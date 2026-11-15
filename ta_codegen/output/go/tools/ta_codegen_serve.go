@@ -63,23 +63,43 @@ const tailI32 = 0x5eadbeef
 
 type params map[string]json.RawMessage
 
-func (p params) i64(name string, def int64) int64 {
-	if v, err := strconv.ParseInt(string(p[name]), 10, 64); err == nil {
-		return v
+// intText is what the C server's strtoll reads from a present value: its
+// leading integer, and 0 when it has none. Only an absent field is a default.
+func intText(raw json.RawMessage) string {
+	n := 0
+	if n < len(raw) && raw[n] == '-' {
+		n++
 	}
-	return def
+	digits := n
+	for n < len(raw) && raw[n] >= '0' && raw[n] <= '9' {
+		n++
+	}
+	if n == digits {
+		return "0"
+	}
+	return string(raw[:n])
+}
+
+func (p params) i64(name string, def int64) int64 {
+	raw, ok := p[name]
+	if !ok {
+		return def
+	}
+	v, _ := strconv.ParseInt(intText(raw), 10, 64)
+	return v
 }
 
 // A value outside int32 saturates, as the C server's does. Never down to
 // MinInt32: that is IntegerDefault, and would turn the request into "use the
 // default".
 func (p params) i32(name string, def int32) int32 {
-	v, err := strconv.ParseInt(string(p[name]), 10, 32)
-	if errors.Is(err, strconv.ErrRange) {
-		return max(int32(v), math.MinInt32+1)
-	}
-	if err != nil {
+	raw, ok := p[name]
+	if !ok {
 		return def
+	}
+	v, err := strconv.ParseInt(intText(raw), 10, 32)
+	if err != nil {
+		return max(int32(v), math.MinInt32+1)
 	}
 	return int32(v)
 }
