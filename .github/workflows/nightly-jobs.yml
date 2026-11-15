@@ -354,12 +354,10 @@ jobs:
         shell: bash
         run: python scripts/check_dll_exports.py
 
-  # Cross-language codegen verification — runs AFTER the C tests (needs: test).
-  # C is the hero: the 'test' job above validates the C library with a C-only
-  # toolchain (CMake/autotools never invoke cargo, so ta_regtest needs no Rust
-  # toolchain). Only this job adds the Rust/Java/.NET toolchains, builds the
-  # JSON-RPC language servers, and runs ta_regtest --codegen: every function x
-  # 4 languages diffed against the in-process library, including the
+  # Cross-language codegen verification. No `needs: test`: it builds all it
+  # uses, so waiting on the packaging job only lengthens the run. It runs
+  # ta_regtest --codegen: every function in every language server diffed
+  # against the in-process library, including the
   # non-default-parameter sweep. POSIX-only (the server harness uses
   # fork/exec), hence no Windows leg.
   #
@@ -370,11 +368,8 @@ jobs:
   # tier a cross-language check.
   cross-language:
     name: "xlang: all langs vs in-process C"
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    # The bounds-checked TypeScript leg roughly doubles the job.
-    timeout-minutes: 75
+    timeout-minutes: 45
     permissions:
       contents: read
 
@@ -415,10 +410,46 @@ jobs:
       - name: Check the function pages' reference data
         run: python3 scripts/build.py refdata --check
 
-      # A JS typed array reads undefined past its end and drops the store, so the
-      # leg above cannot see an off-by-one the JVM, the CLR and safe Rust throw
-      # on. Here every typed array the TS server and library build is
-      # bounds-checked; the log proves the servers really loaded the preload.
+      # The benchmark CORPUS, not the benchmark. --verify-corpus checks every
+      # shape is reproducible and produces valid OHLC — deterministic, so unlike
+      # the timings it belongs in CI. It rides this job because regtest.py's
+      # build step already put ta_bench in bin/. A shape that stops generating
+      # valid data silently changes what every bench measures (#147).
+      - name: Verify the benchmark input corpus
+        shell: bash
+        run: cd bin && ./ta_bench --verify-corpus --points=100000
+
+  # A JS typed array reads undefined past its end and drops the store, so the
+  # cross-language job cannot see an off-by-one the JVM, the CLR and safe Rust
+  # throw on. Here every typed array the TS server and library build is
+  # bounds-checked; the log proves the servers really loaded the preload. Its
+  # own job because the checked server roughly doubles the TS sweep.
+  cross-language-ts-checked:
+    name: "xlang: TypeScript with bounds-checked typed arrays"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build the C and TypeScript servers
+        run: python3 scripts/build.py servers --language=c,ts
+
       - name: TypeScript with bounds-checked typed arrays
         shell: bash
         run: |
@@ -435,15 +466,6 @@ jobs:
             exit 1
           fi
 
-      # The benchmark CORPUS, not the benchmark. --verify-corpus checks every
-      # shape is reproducible and produces valid OHLC — deterministic, so unlike
-      # the timings it belongs in CI. It rides this job because regtest.py's
-      # build step already put ta_bench in bin/. A shape that stops generating
-      # valid data silently changes what every bench measures (#147).
-      - name: Verify the benchmark input corpus
-        shell: bash
-        run: cd bin && ./ta_bench --verify-corpus --points=100000
-
   # Synthetic-function gate. The cross-language job above verifies the SHIPPED
   # functions; this one verifies generator surface no shipped function uses
   # (bitwise operators, integer truthiness, do-while, switch-on-expression, ...).
@@ -458,7 +480,6 @@ jobs:
   # empty run. Nothing synthetic ever lands in the shipped tree.
   synth-gate:
     name: "synth-gate: unshipped generator surface, all langs"
-    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
@@ -1510,8 +1531,6 @@ jobs:
   # JDK and the managed C# server needs the .NET SDK (both set up below).
   xlang-hash:
     name: xlang matching (C vs Rust + Java + C#, seed/hex+hash)
-    needs: test
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
