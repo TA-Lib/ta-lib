@@ -59,6 +59,8 @@ assets, kept out of `input/` (indicator definitions only) and out of `output/`
 - `templates/c/ta_abstract_serve.c` — abstract-serve handlers `#include`d into
   the C server.
 - `templates/go/fuzz.go` — the Go server's port of `fuzz_data.h`.
+- `templates/go/bench_stream.go`, `bench_corpus.go` — the Go server's
+  `--bench-stream` mode, `ta_bench_stream`'s method, and its port of `bench_corpus.h`.
 
 Every Rust template is listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (test-only
 ones also in `RUST_TEST_ONLY_MODULES`) and in `RustBackend::clean_keep`, so

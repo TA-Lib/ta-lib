@@ -6142,8 +6142,10 @@ const GO_SERVER_PRELUDE: &str = r#"import (
 	"io"
 	"math"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	talib "ta-lib.github.io/go"
@@ -6555,6 +6557,9 @@ func (s *server) handle(line []byte) (reply string) {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "--bench-stream" {
+		os.Exit(benchStream(os.Args[2:]))
+	}
 	s := &server{core: talib.NewCore()}
 	for k := range s.ref {
 		s.ref[k] = make([]float64, maxArraySize)
@@ -6989,6 +6994,10 @@ pub fn generate_go_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str(&crate::ride_gen::go::generate_go_ridealong(funcs));
     s.push('\n');
     s.push_str(GO_FUZZ);
+    s.push('\n');
+    s.push_str(&crate::bench_gen::generate_go_stream_bench(funcs, |f| {
+        crate::backends::go_stream::emits_stream(f, &lookup)
+    }));
     s
 }
 

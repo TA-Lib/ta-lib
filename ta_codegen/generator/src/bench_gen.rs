@@ -1281,3 +1281,163 @@ pub fn write_c_icount_bench(funcs: &[FuncDef], output_dir: &Path) {
     });
     eprintln!("  C icount bench -> {}", path.display());
 }
+
+// =====================================================================
+// Go streaming benchmark (`ta_codegen_serve_go --bench-stream`)
+// =====================================================================
+
+/// The corpus series a bench slot reads, as an index into the Go tool's
+/// open/high/low/close/volume/oi/periods arrays.
+fn go_bench_slot(global: &str) -> usize {
+    match global {
+        "g_open" => 0,
+        "g_high" => 1,
+        "g_low" => 2,
+        "g_close" => 3,
+        "g_volume" => 4,
+        "g_oi" => 5,
+        "g_periods" => 6,
+        other => unreachable!("no bench series {other}"),
+    }
+}
+
+/// One `bs<NAME>`, timing the public API only: `Core.<N>` for batch@last,
+/// `Core.<N>Open`, then `Update` and `Peek` on the handle.
+#[allow(clippy::too_many_lines)]
+fn go_stream_bench_func(s: &mut String, func: &FuncDef) {
+    let name = &func.name;
+    let periods = periods_slots(func);
+    let mut slots = Vec::new();
+    let mut real_idx = 0usize;
+    for (k, inp) in expand_input_names(&func.inputs).iter().enumerate() {
+        slots.push(go_bench_slot(&input_slot_to_global(inp, real_idx, periods.get(k).copied().unwrap_or(false))));
+        if !matches!(inp.as_str(), "inOpen" | "inHigh" | "inLow" | "inClose" | "inVolume" | "inOpenInterest") {
+            real_idx += 1;
+        }
+    }
+    let _ = writeln!(s, "func bs{name}(r *benchRun) {{");
+    let mut params = Vec::new();
+    for (opt, default) in func.optional_inputs.iter().zip(stream_opt_args(func)) {
+        let value = match &opt.param_type {
+            ParamType::Real => format!("benchReal({default})"),
+            ParamType::Enum(e) => format!("talib.{e}(benchInt({default}))"),
+            _ if is_period_opt(opt) => format!("benchInt(r.periodOr({default}))"),
+            _ => format!("benchInt({default})"),
+        };
+        let _ = writeln!(s, "\t{} := {value}", opt.name);
+        params.push(opt.name.clone());
+    }
+    let _ = writeln!(s, "\tlb, err := r.core.{name}Lookback({})", params.join(", "));
+    s.push_str("\tif err != nil {\n\t\tlb = -1\n\t}\n");
+    s.push_str("\titers := r.iters\n");
+    s.push_str("\tr.reserve(lb + iters)\n");
+    for (k, slot) in slots.iter().enumerate() {
+        let _ = writeln!(s, "\trt{k}, f{k} := r.rt[{slot}], &r.feed[{slot}]");
+    }
+    let (mut nr, mut ni) = (0usize, 0usize);
+    let mut batch_outs = Vec::new();
+    let mut observe = Vec::new();
+    let mut vals = Vec::new();
+    for out in &func.outputs {
+        if out.param_type == ParamType::Integer {
+            batch_outs.push(format!("r.outI[{ni}]"));
+            observe.push(format!("float64(r.outI[{ni}][0])"));
+            vals.push((format!("iv{ni}"), true));
+            ni += 1;
+        } else {
+            batch_outs.push(format!("r.outR[{nr}]"));
+            observe.push(format!("r.outR[{nr}][0]"));
+            vals.push((format!("v{nr}"), false));
+            nr += 1;
+        }
+    }
+    let rt_args: Vec<String> = (0..slots.len()).map(|k| format!("rt{k}")).collect();
+    let mut batch_args = vec!["t".to_string(), "t".to_string()];
+    batch_args.extend(rt_args.iter().cloned());
+    batch_args.extend(params.iter().cloned());
+    batch_args.extend(batch_outs);
+    s.push_str("\tacc, nb := 0.0, 0\n");
+    s.push_str("\tfor pass := range r.tb {\n");
+    s.push_str("\t\tt := max(lb, 0)\n");
+    s.push_str("\t\tt0 := time.Now()\n");
+    s.push_str("\t\tfor it := 0; it < iters; it++ {\n");
+    for k in 0..slots.len() {
+        let _ = writeln!(s, "\t\t\trt{k}[t] = f{k}[it&benchMask]");
+    }
+    let _ = writeln!(s, "\t\t\to, _ := r.core.{name}({})", batch_args.join(", "));
+    s.push_str("\t\t\tnb = o.NBElement\n");
+    for o in &observe {
+        let _ = writeln!(s, "\t\t\tacc += {o}");
+    }
+    s.push_str("\t\t\tt++\n\t\t}\n");
+    s.push_str("\t\tr.tb[pass] = time.Since(t0)\n\t}\n");
+
+    let mut open_args: Vec<String> = slots.iter().map(|slot| format!("r.in[{slot}]")).collect();
+    open_args.extend(params.iter().cloned());
+    let blanks = vec!["_"; func.outputs.len()].join(", ");
+    s.push_str("\tr.trackStart()\n");
+    let _ = writeln!(s, "\tst, {blanks}, err := r.core.{name}Open({})", open_args.join(", "));
+    s.push_str("\thb := r.trackEnd()\n");
+    s.push_str("\tif err != nil {\n");
+    let _ = writeln!(s, "\t\tr.row(\"{name}\", err, lb, 0, acc+float64(nb))");
+    s.push_str("\t\treturn\n\t}\n");
+
+    let bar: Vec<String> = (0..slots.len()).map(|k| format!("f{k}[it&benchMask]")).collect();
+    let lhs: Vec<&str> = vals.iter().map(|(v, _)| v.as_str()).chain(std::iter::once("_")).collect();
+    let call = |s: &mut String, method: &str, ind: &str| {
+        let _ = writeln!(s, "{ind}{} := st.{method}({})", lhs.join(", "), bar.join(", "));
+        for (v, is_int) in &vals {
+            if *is_int {
+                let _ = writeln!(s, "{ind}acc += float64({v})");
+            } else {
+                let _ = writeln!(s, "{ind}acc += {v}");
+            }
+        }
+    };
+    s.push_str("\tfor pass := range r.tu {\n");
+    s.push_str("\t\tt0 := time.Now()\n");
+    s.push_str("\t\tfor it := 0; it < iters; it++ {\n");
+    call(s, "Update", "\t\t\t");
+    s.push_str("\t\t}\n");
+    s.push_str("\t\tr.tu[pass] = time.Since(t0)\n\t}\n");
+    s.push_str("\tblk := r.blk\n");
+    s.push_str("\tfor pass := range r.tp {\n");
+    s.push_str("\t\tvar tp time.Duration\n");
+    s.push_str("\t\tfor b := 0; b < r.nblk; b++ {\n");
+    s.push_str("\t\t\tt0 := time.Now()\n");
+    s.push_str("\t\t\tfor it := b * blk; it < (b+1)*blk; it++ {\n");
+    call(s, "Peek", "\t\t\t\t");
+    s.push_str("\t\t\t}\n");
+    s.push_str("\t\t\ttp += time.Since(t0)\n");
+    s.push_str("\t\t\tfor it := b * blk; it < (b+1)*blk; it++ {\n");
+    call(s, "Update", "\t\t\t\t");
+    s.push_str("\t\t\t}\n\t\t}\n");
+    s.push_str("\t\tr.tp[pass] = tp\n\t}\n");
+    let _ = writeln!(s, "\tr.row(\"{name}\", nil, lb, hb, acc+float64(nb))");
+    s.push_str("}\n\n");
+}
+
+/// The per-function half of the Go server's `--bench-stream`; the rest is
+/// `templates/go/bench_stream.go`. `funcs` is the Go resolution.
+#[must_use]
+pub fn generate_go_stream_bench(funcs: &[FuncDef], streams: impl Fn(&FuncDef) -> bool) -> String {
+    let mut s = String::new();
+    let (n_out_real, n_out_int) = crate::backends::common::max_output_arity(funcs);
+    let _ = write!(s, "const (\n\tbenchOutReal = {n_out_real}\n\tbenchOutInt  = {n_out_int}\n)\n\n");
+    let streamed: Vec<&FuncDef> = funcs.iter().filter(|f| streams(f)).collect();
+    for func in &streamed {
+        go_stream_bench_func(&mut s, func);
+    }
+    s.push_str("func benchStreamAll(r *benchRun, filter string) {\n");
+    for func in &streamed {
+        let _ = writeln!(s, "\tif benchMatches(filter, \"{0}\") {{\n\t\tbs{0}(r)\n\t}}", func.name);
+    }
+    s.push_str("}\n\n");
+    s.push_str(GO_BENCH_STREAM);
+    s.push('\n');
+    s.push_str(GO_BENCH_CORPUS);
+    s
+}
+
+const GO_BENCH_STREAM: &str = include_str!("../templates/go/bench_stream.go");
+const GO_BENCH_CORPUS: &str = include_str!("../templates/go/bench_corpus.go");
