@@ -142,11 +142,12 @@ jobs:
 
   # Every other run of the Rust, Java and C# servers against the C library is on
   # Linux. Here the C side is AppleClang with libSystem's math, and the JVM and
-  # the .NET JIT are the macOS arm64 ones.
+  # the .NET JIT are the macOS arm64 ones. The three jobs below run in parallel,
+  # so each builds what it uses.
   macos-cross-language:
     name: macOS arm64 (all langs vs in-process C)
     runs-on: macos-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     permissions:
       contents: read
 
@@ -180,11 +181,76 @@ jobs:
         shell: bash
         run: python3 scripts/build.py regtest
 
+  macos-xlang-hash:
+    name: macOS arm64 (bitwise parity vs in-process C)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      # /usr/bin/java is a stub on macOS, so the JDK has to be named.
+      - name: Select the JDK 21 of the runner image
+        uses: ./.github/actions/image-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
       - name: Bitwise parity of each language server vs the in-process C library
         shell: bash
         run: python3 scripts/build.py xlang-hash
 
-      - name: Run the Java and C# suites
+  macos-libraries:
+    name: macOS arm64 (library suites, frozen releases)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # the release tags the ta_ref members pin
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      # /usr/bin/java is a stub on macOS, so the JDK has to be named.
+      - name: Select the JDK 21 of the runner image
+        uses: ./.github/actions/image-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build each library and run its suites
         shell: bash
         run: python3 scripts/build.py libraries
 
