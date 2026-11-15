@@ -15,14 +15,10 @@ never change.
 
 Before the first Go tag of any kind, release candidates included:
 
-1. Finish step 3 of TA-Lib/ta-lib#173 (the history rewrite) first. A Go version tagged before
-   it would have to be re-pointed afterwards ([below](#if-the-history-is-rewritten-again)), and
-   any untagged fetch made before it stops resolving, since its pseudo-version names a commit
-   SHA the rewrite drops.
-2. The import-path page must serve the go-import tag. This prints one line, which must contain
+1. The import-path page must serve the go-import tag. This prints one line, which must contain
    `ta-lib.github.io/go git https://github.com/TA-Lib/ta-lib ta_codegen/output/go`:
    `curl -s 'https://ta-lib.github.io/go?go-get=1' | grep go-import`
-3. After the first tag, GP2 is the first fetch of this subdirectory module through
+2. After the first tag, GP2 is the first fetch of this subdirectory module through
    proxy.golang.org. Do not announce the version until it passes.
 
 ## Release candidate
@@ -82,10 +78,11 @@ retract vX.Y.Z
 `go.mod` is generated: add the directive to `GO_MOD` in `ta_codegen/generator/src/backends/go.rs`
 and regenerate. It takes effect when that later version is tagged.
 
-## If the history is rewritten again
+## If the history is rewritten
 
-Re-point each `ta_codegen/output/go/v*` tag to its rewritten commit, after checking the module's
-content did not change:
+A version fetched untagged stops resolving: its pseudo-version names a commit the rewrite
+drops. Re-point each `ta_codegen/output/go/v*` tag to its rewritten commit, after checking the
+module's content did not change:
 
 ```bash
 git diff <old commit>:ta_codegen/output/go <new commit>:ta_codegen/output/go   # must print nothing
