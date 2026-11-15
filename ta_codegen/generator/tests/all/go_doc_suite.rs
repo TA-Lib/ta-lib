@@ -155,7 +155,7 @@ fn go_docs_claim_the_checks_the_code_makes() {
         clipped += usize::from(claims);
         opens += 1;
     }
-    assert!(opens > 200 && clipped > 200, "only {opens} openers, {clipped} sharing claims");
+    assert!(common::sweep_filtered() || (opens > 200 && clipped > 200), "only {opens} openers, {clipped} sharing claims");
 }
 
 /// A Go doc comment is plain text: Markdown reaches the reader as punctuation.

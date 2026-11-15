@@ -891,7 +891,7 @@ fn go_metadata_calls_the_public_tier() {
         }
     }
     assert!(!out.contains("Impl("), "a thunk calls an unexported body");
-    assert!(funcs.len() >= 200, "only {} functions", funcs.len());
+    assert!(common::sweep_filtered() || funcs.len() >= 200, "only {} functions", funcs.len());
 }
 
 /// Rust's transcribed bodies call their callee's PUBLIC entry point, as C, Java

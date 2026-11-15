@@ -91,8 +91,10 @@ fn a_go_candlestick_open_internal_calls_its_sink_frame() {
         );
         assert!(!go_body(&src, &frame).contains("outStride"), "{name}: the frame has its stride built in");
     }
-    assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
-    assert!(framed >= 50, "only {framed} candlestick openers split");
+    if !common::sweep_filtered() {
+        assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
+        assert!(framed >= 50, "only {framed} candlestick openers split");
+    }
 }
 
 /// A candle's colour is a coin flip on real bars: the batch and open bodies
@@ -124,5 +126,8 @@ fn go_candle_bodies_fold_the_range_type_and_take_no_colour_branch() {
         assert_eq!(go_folds, c_folds, "{name}: Go and C disagree on folding the range type");
         folded += usize::from(go_folds);
     }
-    assert!(bodies >= 270 && selects >= 150 && folded >= 40 && frames >= 40, "{bodies} bodies, {selects} selects, {folded} folded, {frames} stream frames selecting");
+    assert!(
+        common::sweep_filtered() || (bodies >= 270 && selects >= 150 && folded >= 40 && frames >= 40),
+        "{bodies} bodies, {selects} selects, {folded} folded, {frames} stream frames selecting"
+    );
 }
