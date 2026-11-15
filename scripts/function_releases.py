@@ -68,8 +68,7 @@ def release_tags():
 
 
 def registered(tag):
-    if subprocess.run(["git", "-C", str(REPO), "cat-file", "-e", f"{tag}:ta_func_list.txt"],
-                      capture_output=True).returncode == 0:
+    if git("ls-tree", "--name-only", tag, "ta_func_list.txt").strip():
         return {line.split()[0] for line in git("show", f"{tag}:ta_func_list.txt").splitlines()
                 if line.strip()}
     files = git("ls-tree", "--name-only", tag, TABLES).split()

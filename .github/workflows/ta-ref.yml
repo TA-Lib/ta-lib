@@ -30,6 +30,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0 # the release tags the members pin
+          filter: blob:none
 
       - name: Install Python
         uses: actions/setup-python@v7

@@ -227,9 +227,19 @@ def _git(root, *args):
 
 
 def _git_blob(root, commit, path):
+    # A partial clone fetches what it reads here: a failed fetch must not read as
+    # an absent path, which selects another library without a word.
+    listed = _git(root, 'ls-tree', commit, '--', path)
+    if listed.returncode != 0:
+        raise RefError(f"cannot list {path} at {commit[:12]}: {listed.stderr.strip()}")
+    if not listed.stdout:
+        return None
     r = subprocess.run(['git', 'cat-file', 'blob', f'{commit}:{path}'], cwd=root,
                        capture_output=True)
-    return r.stdout if r.returncode == 0 else None
+    if r.returncode != 0:
+        raise RefError(f"cannot read {path} at {commit[:12]}: "
+                       f"{r.stderr.decode(errors='replace').strip()}")
+    return r.stdout
 
 
 def _verify_tag(root, v, commit):

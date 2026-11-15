@@ -34,6 +34,7 @@ jobs:
           # shallow clone `git log -1 -- <file>` yields the tip commit for
           # every file, stamping all pages with the same deploy-time date.
           fetch-depth: 0
+          filter: blob:none
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6

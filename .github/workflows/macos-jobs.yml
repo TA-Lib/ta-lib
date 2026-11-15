@@ -157,6 +157,7 @@ jobs:
         with:
           ref: ${{ job.workflow_sha }}
           fetch-depth: 0 # the release tags the ta_ref members pin
+          filter: blob:none
 
       - name: Install Python
         uses: actions/setup-python@v7
@@ -230,6 +231,7 @@ jobs:
         with:
           ref: ${{ job.workflow_sha }}
           fetch-depth: 0 # the release tags the ta_ref members pin
+          filter: blob:none
 
       - name: Install Python
         uses: actions/setup-python@v7

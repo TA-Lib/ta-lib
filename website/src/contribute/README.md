@@ -42,13 +42,15 @@ Any of Linux, macOS, Windows or WSL2. You need:
 - Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band, Node.js 22.18 or later with npm, and Go 1.22 or later (the build scripts fetch a pinned Go when none is installed); `scripts/build.py libraries`, which builds the publishable Java, C#, TypeScript and Go packages, also needs `unzip` for the committed Maven wrapper. Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
 
 ```bash
-git clone https://github.com/TA-Lib/ta-lib.git
+git clone --filter=blob:none https://github.com/TA-Lib/ta-lib.git
 cd ta-lib
 git switch dev              # contributions branch from and merge into dev
 scripts/build.py            # build the C library + tools
 scripts/build.py test       # run the C regression tests (confirms your setup works)
 scripts/build.py servers    # build the generator + the per-language test servers
 ```
+
+`--filter=blob:none` leaves old versions of files on GitHub and fetches one when a command reads it (`git log -p`, `git blame`, checking out an old commit). Omit it for a clone that works offline.
 
 `scripts/build.py` checks prerequisites per target and configures CMake automatically on first run.
 
