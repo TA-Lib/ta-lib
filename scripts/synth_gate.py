@@ -27,22 +27,23 @@ the SYNTH family:
 
 Leg 0 is the generator's own `cargo test` on the injected tree — the static
 sweeps that read emitted text for structural properties, the class no value leg
-below can see. Added in #327; before it, every sweep claiming to hold "over the
-whole corpus" had only ever seen the 177 shipped functions.
+below can see.
 
 Anti-vacuity: the script asserts from the gate output that EXACTLY the
 expected number of SYNTH functions were exercised by each leg in each
 language. A refactor that silently stops enumerating them fails the gate
 rather than passing an empty run.
 
-No flags, no modes. Local runs snapshot your dirty tree (git stash create),
-CI runs test HEAD — same script, byte-for-byte. Runs nightly from
-.github/workflows/nightly-jobs.yml (job: synth-gate).
+Local runs snapshot your dirty tree (git stash create), CI runs test HEAD.
+With no flag every leg runs. `--part=generator` runs Leg 0 alone, over a plain
+generate; `--part=languages` runs Legs 1-4. The nightly runs one job per part,
+so a leg added here belongs to one of the parts or no job runs it.
 
 On failure the worktree is kept for inspection (path printed); remove it with
 `git worktree remove --force <path>`.
 """
 
+import argparse
 import fcntl
 import os
 import re
@@ -145,6 +146,15 @@ def run(cmd, cwd, capture=False, env=None):
 
 
 def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--part", choices=("all", "generator", "languages"),
+                    default="all",
+                    help="generator: Leg 0 only; languages: Legs 1-4 (default: all)")
+    args = ap.parse_args()
+    run_generator = args.part in ("all", "generator")
+    run_languages = args.part in ("all", "languages")
+
     root = find_repo_root()
     synth_src = os.path.join(root, "ta_codegen", "generator", "input_synth")
 
@@ -165,7 +175,8 @@ def main():
 
     # Up front, because the leg that needs these runs last: the worktree build
     # checks only what the SERVERS need.
-    check_prerequisites([t for tools in LIBRARY_PREREQS.values() for t in tools])
+    if run_languages:
+        check_prerequisites([t for tools in LIBRARY_PREREQS.values() for t in tools])
 
     # Snapshot the CURRENT tree: dirty local changes are included (stash
     # create); a clean tree (CI) resolves to HEAD.
@@ -207,50 +218,58 @@ def main():
         # a --function-scoped generate skips the full-registry surfaces
         # (Core.java, metadata registry), which would leave the synthetic
         # functions unregistered in some backends. regtest.py here is the
-        # builder only (--no-regtest); the scoped gates run below.
-        rc, _ = run([sys.executable, os.path.join(wt, "scripts", "regtest.py"),
-                     "--no-regtest", "--no-perftest", "--no-direct-bench"],
-                    cwd=wt, capture=True)
-        if rc != 0:
-            sys.exit(f"synth_gate: FAIL — worktree build exited {rc}")
+        # builder only (--no-regtest); the scoped gates run below. Leg 0 alone
+        # needs only the generate, which is unfiltered as well.
+        if run_languages:
+            rc, _ = run([sys.executable, os.path.join(wt, "scripts", "regtest.py"),
+                         "--no-regtest", "--no-perftest", "--no-direct-bench"],
+                        cwd=wt, capture=True)
+            if rc != 0:
+                sys.exit(f"synth_gate: FAIL — worktree build exited {rc}")
+        else:
+            rc, _ = run([sys.executable, os.path.join(wt, "scripts", "build.py"),
+                         "generate"], cwd=wt, capture=True)
+            if rc != 0:
+                sys.exit(f"synth_gate: FAIL — worktree generate exited {rc}")
 
-        # Leg 0: the generator's OWN test suite, against the injected tree.
-        #
-        # Placed here rather than at the end because it needs nothing the
-        # build above has not already produced -- just the generate -- so a
-        # break skips the post-generate C rebuild and all three value legs
-        # below. It cannot come earlier: the build IS what generates.
-        #
-        # These are the STATIC sweeps: they read emitted text for structural
-        # properties, which is the class of defect no value gate below can see
-        # (a peek that copies the handle and then writes the copy still answers
-        # correctly). They ran only against the shipped corpus until #327, so
-        # every sweep claiming to hold "over the whole corpus" had never seen a
-        # fixture.
-        #
-        # TA_SWEEP_FUNCS narrows the corpus sweeps to the fixtures: the PR gate
-        # already sweeps the shipped corpus with the same tests.
-        rc, out0 = run(["cargo", "test", "--no-fail-fast",
-                        "--manifest-path",
-                        os.path.join(wt, "ta_codegen", "generator", "Cargo.toml")],
-                       cwd=wt, capture=True,
-                       env={**os.environ, "TA_SWEEP_FUNCS": "synth"})
-        if rc != 0:
-            sys.exit(f"synth_gate: FAIL — the generator's test suite exited {rc} "
-                     f"on the injected tree")
+        if run_generator:
+            # Leg 0: the generator's OWN test suite, against the injected tree.
+            # It reads only what generate writes, never a build product.
+            #
+            # These are the STATIC sweeps: they read emitted text for structural
+            # properties, which is the class of defect no value gate below can see
+            # (a peek that copies the handle and then writes the copy still answers
+            # correctly).
+            #
+            # TA_SWEEP_FUNCS narrows the corpus sweeps to the fixtures: the PR gate
+            # already sweeps the shipped corpus with the same tests.
+            rc, out0 = run(["cargo", "test", "--no-fail-fast",
+                            "--manifest-path",
+                            os.path.join(wt, "ta_codegen", "generator", "Cargo.toml")],
+                           cwd=wt, capture=True,
+                           env={**os.environ, "TA_SWEEP_FUNCS": "synth"})
+            if rc != 0:
+                sys.exit(f"synth_gate: FAIL — the generator's test suite exited {rc} "
+                         f"on the injected tree")
 
-        # Anti-vacuity for this leg, in the same spirit as the per-leg sweep
-        # counts below: a suite that compiled and ran nothing would exit 0. The
-        # floor is on tests EXECUTED, not on fixtures, because the sweeps that
-        # care about fixtures carry their own conditional assertions (the
-        # bounded-accumulator copy is asserted non-empty only when fixtures are
-        # present, so it is those sweeps that prove the corpus was seen).
-        ran = sum(int(m) for m in re.findall(r"^test result: ok\. (\d+) passed",
-                                             out0, re.M))
-        if ran < 500:
-            sys.exit(f"synth_gate: VACUOUS — the generator suite ran {ran} test(s), "
-                     f"expected at least 500; it did not sweep the injected tree")
-        print(f"synth_gate: generator suite OK ({ran} tests on the injected tree)")
+            # Anti-vacuity for this leg, in the same spirit as the per-leg sweep
+            # counts below: a suite that compiled and ran nothing would exit 0. The
+            # floor is on tests EXECUTED, not on fixtures, because the sweeps that
+            # care about fixtures carry their own conditional assertions (the
+            # bounded-accumulator copy is asserted non-empty only when fixtures are
+            # present, so it is those sweeps that prove the corpus was seen).
+            ran = sum(int(m) for m in re.findall(r"^test result: ok\. (\d+) passed",
+                                                 out0, re.M))
+            if ran < 500:
+                sys.exit(f"synth_gate: VACUOUS — the generator suite ran {ran} test(s), "
+                         f"expected at least 500; it did not sweep the injected tree")
+            print(f"synth_gate: generator suite OK ({ran} tests on the injected tree)")
+
+        if not run_languages:
+            ok = True
+            print(f"\nsynth_gate: PASS — the generator suite over {nfix} synthetic "
+                  "function(s); Legs 1-4 are --part=languages")
+            return
 
         # regtest.py builds the C library BEFORE generating (the generated C is
         # normally committed, so that order is fine for real functions). The

@@ -22,8 +22,8 @@ conditions, do-while, switch-on-expression, `PRAGMA TA_ALT` alternates, ...)
 that no shipped indicator uses,
 with the same end-to-end machinery real functions get — without a fake function
 ever appearing in the shipped API. The gate runs nightly in CI
-(`nightly-jobs.yml`, job `synth-gate`) and locally via
-`python3 scripts/synth_gate.py` (no flags; snapshots your dirty tree).
+(`nightly-jobs.yml`, jobs `synth-gate-generator` and `synth-gate`) and locally
+via `python3 scripts/synth_gate.py` (every leg; snapshots your dirty tree).
 
 Two mechanics worth knowing before touching the script:
 

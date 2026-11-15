@@ -479,6 +479,32 @@ jobs:
   # asserts the SYNTH functions were actually swept in every leg, so a
   # refactor that silently stops enumerating them fails instead of passing an
   # empty run. Nothing synthetic ever lands in the shipped tree.
+  #
+  # Two jobs, one per --part, run in parallel. Together they are the whole gate.
+  synth-gate-generator:
+    name: "synth-gate: the generator suite over the fixtures"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Run the generator suite on the injected tree
+        shell: bash
+        run: |
+          # Rust toolchain is preinstalled on ubuntu-latest.
+          python3 scripts/synth_gate.py --part=generator
+
   synth-gate:
     name: "synth-gate: unshipped generator surface, all langs"
     runs-on: ubuntu-latest
@@ -515,7 +541,7 @@ jobs:
         shell: bash
         run: |
           # Rust toolchain and cmake are preinstalled on ubuntu-latest.
-          python3 scripts/synth_gate.py
+          python3 scripts/synth_gate.py --part=languages
 
   # The publishable Java jars, built with the committed Maven wrapper and tested
   # AS THE ARTIFACT (#428).

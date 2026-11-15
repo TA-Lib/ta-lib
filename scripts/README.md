@@ -22,7 +22,7 @@ Pass/fail only — build something, drive it, exit non-zero. Each is one nightly
 
 | Script | Nightly job | Gates |
 |---|---|---|
-| `synth_gate.py` | `synth-gate` | Generator surface no shipped indicator uses, via synthetic functions injected into a throwaway worktree (`ta_codegen/generator/input_synth/`) |
+| `synth_gate.py` | `synth-gate-generator`, `synth-gate` | Generator surface no shipped indicator uses, via synthetic functions injected into a throwaway worktree (`ta_codegen/generator/input_synth/`) |
 | `stream_sanitize.py` | `stream-sanitizers` | The C streaming API under ASan/UBSan/LSan — paths the batch sanitizer job never calls |
 | `thread_sanitize.py` | `stream-sanitizers` | The C library on several threads under ThreadSanitizer (clang); its driver is `thread_sanitize.c` |
 | `rust_stream_debug.py` | `cross-language-rust-debug` | The Rust streaming API under debug overflow checks; reuses the request generator from `stream_sanitize.py` |
