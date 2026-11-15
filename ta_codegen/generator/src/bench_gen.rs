@@ -333,6 +333,16 @@ fn is_period_opt(opt: &OptInput) -> bool {
     opt.param_type == ParamType::Integer && opt.name == "optInTimePeriod"
 }
 
+/// The bar feed: Update, Peek and batch@last read bar `it & (feed - 1)`, and
+/// every pass restarts at bar 0. The default 4096 bars is short enough for a
+/// branch predictor to learn, which makes a data-dependent branch read as
+/// free and a branch-free pick as a loss; `--feed-bars` walks a longer one.
+const STREAM_FEED: &str = r"#define BENCH_FEED_DEFAULT 4096
+#define BENCH_FEED_MAX 131072
+static int g_feed_bars = BENCH_FEED_DEFAULT;
+
+";
+
 /// `--context[=N]`: N read-modify-write stores, cycling over 256 L1-resident
 /// cache lines, after every timed call; stand-in for the work a caller does
 /// between two calls. Out of line so the compiler cannot interleave it with
@@ -445,8 +455,11 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef], ctx: bool) {
     };
     let fn_name = if ctx { "bench_stream_all_ctx" } else { "bench_stream_all" };
     let _ = writeln!(s, "static void {fn_name}(const char *filter, int iters) {{");
+    s.push_str("    const int feed_mask = g_feed_bars - 1;\n");
     s.push_str("    if( g_period > 0 )\n");
     s.push_str("        printf(\"# --period=%d: every optInTimePeriod; all other params at their defaults\\n\", g_period);\n");
+    s.push_str("    if( g_feed_bars != BENCH_FEED_DEFAULT )\n");
+    s.push_str("        printf(\"# --feed-bars=%d: every pass walks that many distinct bars\\n\", g_feed_bars);\n");
     if ctx {
         s.push_str("    printf(\"# --context=%d: every ns column and speedup include the caller-work step after each timed call\\n\", g_context);\n");
     }
@@ -472,7 +485,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef], ctx: bool) {
         for (k, inp) in input_names.iter().enumerate() {
             let g = input_slot_to_global(inp, real_idx, periods.get(k).copied().unwrap_or(false));
             in_arrays.push(g.clone());
-            bar_scalars.push(format!("{g}[it & BENCH_MASK]"));
+            bar_scalars.push(format!("{g}[it & feed_mask]"));
             if !matches!(
                 inp.as_str(),
                 "inOpen" | "inHigh" | "inLow" | "inClose" | "inVolume" | "inOpenInterest"
@@ -525,7 +538,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef], ctx: bool) {
         s.push_str("            long long t0 = get_nanotime();\n");
         s.push_str("            for( int it = 0; it < iters; it++ ) {\n");
         for (k, rt) in rt_arrays.iter().enumerate() {
-            s.push_str(&format!("                {rt}[t] = {}[it & BENCH_MASK];\n", in_arrays[k]));
+            s.push_str(&format!("                {rt}[t] = {}[it & feed_mask];\n", in_arrays[k]));
         }
         {
             let mut a = vec!["t".to_string(), "t".to_string()];
@@ -576,7 +589,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef], ctx: bool) {
         s.push_str("            int blk = (iters >= 64) ? 32 : 1;\n");
         s.push_str("            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;\n");
         // update: pure committing-transition loop on the steady-state handle
-        // (input rotates over the first BENCH_MASK+1 bars; state evolves, so the
+        // (input rotates over the first --feed-bars bars; state evolves, so the
         // amortised cost of any data-dependent branch — extrema rescans — shows).
         // Throughput, like batch@last: both write one bar and compute per call.
         s.push_str("            for( int pass = 0; pass < 3; pass++ ) {\n");
@@ -712,7 +725,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
 
     s.push_str(FUNC_MATCHES);
     s.push_str("static volatile double g_sink = 0.0;\n\n");
-    s.push_str("#define BENCH_MASK 4095\n\n");
+    s.push_str(STREAM_FEED);
     s.push_str(STREAM_ROW_HELPER);
     s.push_str(STREAM_CONTEXT_HELPER);
     generate_stream_bench_func(&mut s, funcs, false);
@@ -783,6 +796,14 @@ int main(int argc, char *argv[]) {
            of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
         else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
         else if( strncmp(argv[i], "--period=", 9) == 0 ) g_period = atoi(argv[i]+9);
+        else if( strncmp(argv[i], "--feed-bars=", 12) == 0 ) {
+            g_feed_bars = atoi(argv[i]+12);
+            if( g_feed_bars < BENCH_FEED_DEFAULT || g_feed_bars > BENCH_FEED_MAX || (g_feed_bars & (g_feed_bars - 1)) ) {
+                fprintf(stderr, "%s: --feed-bars=N needs a power of two from %d to %d, got '%s'\n",
+                        argv[0], BENCH_FEED_DEFAULT, BENCH_FEED_MAX, argv[i]+12);
+                return 2;
+            }
+        }
         else if( strcmp(argv[i], "--context") == 0 ) g_context = 32;
         else if( strncmp(argv[i], "--context=", 10) == 0 ) {
             char *end = NULL;
@@ -797,7 +818,7 @@ int main(int argc, char *argv[]) {
         }
 __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
-    if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
+    if( n_points < g_feed_bars ) n_points = g_feed_bars; /* the bar feed indexes it & (feed bars - 1) */
     if( n_iters < 1 ) n_iters = 1;
     if( g_context > 0 && g_min_ratio > 0.0 ) {
         /* The step is added to both batch@last and update, which pulls every
@@ -1329,7 +1350,7 @@ fn go_stream_bench_func(s: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(s, "\tlb, err := r.core.{name}Lookback({})", params.join(", "));
     s.push_str("\tif err != nil {\n\t\tlb = -1\n\t}\n");
-    s.push_str("\titers := r.iters\n");
+    s.push_str("\titers, mask := r.iters, r.mask&(benchFeedMax-1)\n");
     s.push_str("\tr.reserve(lb + iters)\n");
     for (k, slot) in slots.iter().enumerate() {
         let _ = writeln!(s, "\trt{k}, f{k} := r.rt[{slot}], &r.feed[{slot}]");
@@ -1362,7 +1383,7 @@ fn go_stream_bench_func(s: &mut String, func: &FuncDef) {
     s.push_str("\t\tt0 := time.Now()\n");
     s.push_str("\t\tfor it := 0; it < iters; it++ {\n");
     for k in 0..slots.len() {
-        let _ = writeln!(s, "\t\t\trt{k}[t] = f{k}[it&benchMask]");
+        let _ = writeln!(s, "\t\t\trt{k}[t] = f{k}[it&mask]");
     }
     let _ = writeln!(s, "\t\t\to, _ := r.core.{name}({})", batch_args.join(", "));
     s.push_str("\t\t\tnb = o.NBElement\n");
@@ -1382,7 +1403,7 @@ fn go_stream_bench_func(s: &mut String, func: &FuncDef) {
     let _ = writeln!(s, "\t\tr.row(\"{name}\", err, lb, 0, acc+float64(nb))");
     s.push_str("\t\treturn\n\t}\n");
 
-    let bar: Vec<String> = (0..slots.len()).map(|k| format!("f{k}[it&benchMask]")).collect();
+    let bar: Vec<String> = (0..slots.len()).map(|k| format!("f{k}[it&mask]")).collect();
     let lhs: Vec<&str> = vals.iter().map(|(v, _)| v.as_str()).chain(std::iter::once("_")).collect();
     let call = |s: &mut String, method: &str, ind: &str| {
         let _ = writeln!(s, "{ind}{} := st.{method}({})", lhs.join(", "), bar.join(", "));

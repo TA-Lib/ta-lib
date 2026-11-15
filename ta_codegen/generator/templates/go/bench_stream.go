@@ -3,7 +3,14 @@
 // bench_gen.rs's C tool: corpus, defaults, the batch@last history, the 32-call
 // peek blocks between untimed updates, and the best pass of each column.
 
-const benchMask = 4095
+// The bar feed: Update, Peek and batch@last read bar it&(feed-1), and every
+// pass restarts at bar 0. The default 4096 bars is short enough for a branch
+// predictor to learn, which makes a data-dependent branch read as free and a
+// branch-free pick as a loss; --feed-bars walks a longer one.
+const (
+	benchFeedDefault = 4096
+	benchFeedMax     = 131072
+)
 
 var (
 	benchSinkI int
@@ -32,7 +39,8 @@ type benchRun struct {
 	passes int
 	n      int
 	in     [7][]float64
-	feed   [7][benchMask + 1]float64
+	feed   [7][benchFeedMax]float64
+	mask   int
 	rt     [7][]float64
 	outR   [][]float64
 	outI   [][]int32
@@ -221,7 +229,7 @@ func benchCorpusHash(in *[7][]float64) uint64 {
 }
 
 func benchStream(args []string) int {
-	points, iters, passes := 100000, 500, 3
+	points, iters, passes, feed := 100000, 500, 3, benchFeedDefault
 	filter, jsonl, shapeName := "", "", "randwalk"
 	corpusHash := false
 	cfg := benchCorpusCfg{shape: 0, seed: benchCorpusSeed, refPeriod: 0, trendStrength: benchCorpusTrend}
@@ -230,6 +238,7 @@ func benchStream(args []string) int {
 		switch {
 		case benchIntArg(a, "--points=", &points), benchIntArg(a, "--iters=", &iters),
 			benchIntArg(a, "--passes=", &passes), benchIntArg(a, "--period=", &r.period),
+			benchIntArg(a, "--feed-bars=", &feed),
 			benchIntArg(a, "--seed=", &cfg.seed), benchIntArg(a, "--regime-period=", &cfg.refPeriod),
 			benchRealArg(a, "--trend-strength=", &cfg.trendStrength), benchRealArg(a, "--min-ratio=", &r.minRatio):
 		case strings.HasPrefix(a, "--function="):
@@ -253,7 +262,12 @@ func benchStream(args []string) int {
 			return 2
 		}
 	}
-	points = min(max(points, benchMask+1), maxArraySize)
+	if feed < benchFeedDefault || feed > benchFeedMax || feed&(feed-1) != 0 {
+		fmt.Fprintf(os.Stderr, "--bench-stream: --feed-bars=N needs a power of two from %d to %d, got %d\n", benchFeedDefault, benchFeedMax, feed)
+		return 2
+	}
+	r.mask = feed - 1
+	points = min(max(points, feed), maxArraySize)
 	iters = max(iters, 1)
 	passes = max(passes, 1)
 	if cfg.refPeriod <= 0 {
@@ -288,8 +302,8 @@ func benchStream(args []string) int {
 	}
 	r.nblk = iters / r.blk
 	r.npk = max(r.nblk*r.blk, 1)
-	r.header = fmt.Sprintf(`"points":%d,"iters":%d,"passes":%d,"period":%d,"shape":%q,"seed":%d,"go":%q,"goarch":%q`,
-		points, iters, passes, r.period, benchShapes[cfg.shape].name, cfg.seed, runtime.Version(), runtime.GOARCH)
+	r.header = fmt.Sprintf(`"points":%d,"iters":%d,"passes":%d,"period":%d,"feed_bars":%d,"shape":%q,"seed":%d,"go":%q,"goarch":%q`,
+		points, iters, passes, r.period, feed, benchShapes[cfg.shape].name, cfg.seed, runtime.Version(), runtime.GOARCH)
 	if jsonl != "" {
 		f, err := os.OpenFile(jsonl, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -303,6 +317,9 @@ func benchStream(args []string) int {
 		points, iters, passes, benchShapes[cfg.shape].name, cfg.seed, runtime.Version())
 	if r.period > 0 {
 		fmt.Printf("# --period=%d: every optInTimePeriod; all other params at their defaults\n", r.period)
+	}
+	if feed != benchFeedDefault {
+		fmt.Printf("# --feed-bars=%d: every pass walks that many distinct bars\n", feed)
 	}
 	fmt.Println("# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup batch_spread_pct update_spread_pct peek_spread_pct")
 	benchStreamAll(r, filter)

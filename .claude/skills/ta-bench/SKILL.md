@@ -202,7 +202,13 @@ with-context difference in ns, not a ratio of the totals. Confirm such a claim
 on the shipped build, as in the A/B section, with the same step after each
 call. A change that only removes work needs no context run.
 
-`ta_bench_stream` is **C only**. For the Rust, Java, C# and TypeScript streaming tiers,
+`ta_bench_stream` is **C only**; `bin/ta_codegen_serve_go --bench-stream` prints
+the same rows for Go by the same method, so the two join on the function name.
+Both replay a 4096-bar feed by default, which the branch predictor learns: a
+data-dependent branch then reads as free and a branch-free pick as a loss. For a
+branch-versus-select question walk a long feed in both, e.g.
+`--points=200000 --feed-bars=131072 --iters=131072`.
+For the Rust, Java, C# and TypeScript streaming tiers,
 `scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
 the whole warm-up instead of one bar — between the working tree
 and a git revision — same generated harness compiled against two copies of the

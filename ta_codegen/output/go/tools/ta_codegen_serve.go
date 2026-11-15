@@ -140034,7 +140034,7 @@ func bsAC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140043,8 +140043,8 @@ func bsAC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.AC(t, t, rt0, rt1, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140062,7 +140062,7 @@ func bsAC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140073,12 +140073,12 @@ func bsAC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -140093,7 +140093,7 @@ func bsACCBANDS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140103,9 +140103,9 @@ func bsACCBANDS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ACCBANDS(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140125,7 +140125,7 @@ func bsACCBANDS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -140138,14 +140138,14 @@ func bsACCBANDS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -140161,7 +140161,7 @@ func bsACOS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -140169,7 +140169,7 @@ func bsACOS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ACOS(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140187,7 +140187,7 @@ func bsACOS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140198,12 +140198,12 @@ func bsACOS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -140217,7 +140217,7 @@ func bsAD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140228,10 +140228,10 @@ func bsAD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.AD(t, t, rt0, rt1, rt2, rt3, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140249,7 +140249,7 @@ func bsAD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140260,12 +140260,12 @@ func bsAD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -140279,7 +140279,7 @@ func bsADD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -140288,8 +140288,8 @@ func bsADD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.ADD(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140307,7 +140307,7 @@ func bsADD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140318,12 +140318,12 @@ func bsADD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -140339,7 +140339,7 @@ func bsADOSC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140350,10 +140350,10 @@ func bsADOSC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.ADOSC(t, t, rt0, rt1, rt2, rt3, optInFastPeriod, optInSlowPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140371,7 +140371,7 @@ func bsADOSC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140382,12 +140382,12 @@ func bsADOSC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -140402,7 +140402,7 @@ func bsADR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140411,8 +140411,8 @@ func bsADR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.ADR(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140430,7 +140430,7 @@ func bsADR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140441,12 +140441,12 @@ func bsADR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -140461,7 +140461,7 @@ func bsADX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140471,9 +140471,9 @@ func bsADX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ADX(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140491,7 +140491,7 @@ func bsADX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140502,12 +140502,12 @@ func bsADX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -140522,7 +140522,7 @@ func bsADXR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140532,9 +140532,9 @@ func bsADXR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ADXR(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140552,7 +140552,7 @@ func bsADXR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140563,12 +140563,12 @@ func bsADXR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -140588,7 +140588,7 @@ func bsALLIGATOR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140597,8 +140597,8 @@ func bsALLIGATOR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.ALLIGATOR(t, t, rt0, rt1, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140618,7 +140618,7 @@ func bsALLIGATOR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -140631,14 +140631,14 @@ func bsALLIGATOR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -140657,7 +140657,7 @@ func bsALMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -140665,7 +140665,7 @@ func bsALMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ALMA(t, t, rt0, optInTimePeriod, optInSigma, optInOffset, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140683,7 +140683,7 @@ func bsALMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140694,12 +140694,12 @@ func bsALMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -140715,7 +140715,7 @@ func bsAO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140724,8 +140724,8 @@ func bsAO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.AO(t, t, rt0, rt1, optInFastPeriod, optInSlowPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140743,7 +140743,7 @@ func bsAO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140754,12 +140754,12 @@ func bsAO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -140776,7 +140776,7 @@ func bsAPO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -140784,7 +140784,7 @@ func bsAPO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.APO(t, t, rt0, optInFastPeriod, optInSlowPeriod, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140802,7 +140802,7 @@ func bsAPO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140813,12 +140813,12 @@ func bsAPO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -140833,7 +140833,7 @@ func bsAROON(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140842,8 +140842,8 @@ func bsAROON(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.AROON(t, t, rt0, rt1, optInTimePeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140862,7 +140862,7 @@ func bsAROON(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -140874,13 +140874,13 @@ func bsAROON(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -140896,7 +140896,7 @@ func bsAROONOSC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -140905,8 +140905,8 @@ func bsAROONOSC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.AROONOSC(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140924,7 +140924,7 @@ func bsAROONOSC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140935,12 +140935,12 @@ func bsAROONOSC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -140955,7 +140955,7 @@ func bsASI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -140966,10 +140966,10 @@ func bsASI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.ASI(t, t, rt0, rt1, rt2, rt3, optInLimitMove, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -140987,7 +140987,7 @@ func bsASI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -140998,12 +140998,12 @@ func bsASI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -141017,7 +141017,7 @@ func bsASIN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -141025,7 +141025,7 @@ func bsASIN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ASIN(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141043,7 +141043,7 @@ func bsASIN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141054,12 +141054,12 @@ func bsASIN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -141073,7 +141073,7 @@ func bsATAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -141081,7 +141081,7 @@ func bsATAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ATAN(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141099,7 +141099,7 @@ func bsATAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141110,12 +141110,12 @@ func bsATAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -141130,7 +141130,7 @@ func bsATR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -141140,9 +141140,9 @@ func bsATR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ATR(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141160,7 +141160,7 @@ func bsATR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141171,12 +141171,12 @@ func bsATR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -141191,7 +141191,7 @@ func bsAVGDEV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -141199,7 +141199,7 @@ func bsAVGDEV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.AVGDEV(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141217,7 +141217,7 @@ func bsAVGDEV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141228,12 +141228,12 @@ func bsAVGDEV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -141247,7 +141247,7 @@ func bsAVGPRICE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141258,10 +141258,10 @@ func bsAVGPRICE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.AVGPRICE(t, t, rt0, rt1, rt2, rt3, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141279,7 +141279,7 @@ func bsAVGPRICE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141290,12 +141290,12 @@ func bsAVGPRICE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -141313,7 +141313,7 @@ func bsBBANDS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -141321,7 +141321,7 @@ func bsBBANDS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.BBANDS(t, t, rt0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141341,7 +141341,7 @@ func bsBBANDS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -141354,14 +141354,14 @@ func bsBBANDS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -141381,7 +141381,7 @@ func bsBBW(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -141389,7 +141389,7 @@ func bsBBW(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.BBW(t, t, rt0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141407,7 +141407,7 @@ func bsBBW(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141418,12 +141418,12 @@ func bsBBW(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -141438,7 +141438,7 @@ func bsBETA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141447,8 +141447,8 @@ func bsBETA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.BETA(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141466,7 +141466,7 @@ func bsBETA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141477,12 +141477,12 @@ func bsBETA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -141496,7 +141496,7 @@ func bsBOP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141507,10 +141507,10 @@ func bsBOP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.BOP(t, t, rt0, rt1, rt2, rt3, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141528,7 +141528,7 @@ func bsBOP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141539,12 +141539,12 @@ func bsBOP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -141559,7 +141559,7 @@ func bsCCI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -141569,9 +141569,9 @@ func bsCCI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.CCI(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -141589,7 +141589,7 @@ func bsCCI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141600,12 +141600,12 @@ func bsCCI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -141619,7 +141619,7 @@ func bsCDL2CROWS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141630,10 +141630,10 @@ func bsCDL2CROWS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL2CROWS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141651,7 +141651,7 @@ func bsCDL2CROWS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141662,12 +141662,12 @@ func bsCDL2CROWS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141681,7 +141681,7 @@ func bsCDL3BLACKCROWS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141692,10 +141692,10 @@ func bsCDL3BLACKCROWS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3BLACKCROWS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141713,7 +141713,7 @@ func bsCDL3BLACKCROWS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141724,12 +141724,12 @@ func bsCDL3BLACKCROWS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141743,7 +141743,7 @@ func bsCDL3INSIDE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141754,10 +141754,10 @@ func bsCDL3INSIDE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3INSIDE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141775,7 +141775,7 @@ func bsCDL3INSIDE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141786,12 +141786,12 @@ func bsCDL3INSIDE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141805,7 +141805,7 @@ func bsCDL3LINESTRIKE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141816,10 +141816,10 @@ func bsCDL3LINESTRIKE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3LINESTRIKE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141837,7 +141837,7 @@ func bsCDL3LINESTRIKE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141848,12 +141848,12 @@ func bsCDL3LINESTRIKE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141867,7 +141867,7 @@ func bsCDL3OUTSIDE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141878,10 +141878,10 @@ func bsCDL3OUTSIDE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3OUTSIDE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141899,7 +141899,7 @@ func bsCDL3OUTSIDE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141910,12 +141910,12 @@ func bsCDL3OUTSIDE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141929,7 +141929,7 @@ func bsCDL3STARSINSOUTH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -141940,10 +141940,10 @@ func bsCDL3STARSINSOUTH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3STARSINSOUTH(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -141961,7 +141961,7 @@ func bsCDL3STARSINSOUTH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -141972,12 +141972,12 @@ func bsCDL3STARSINSOUTH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -141991,7 +141991,7 @@ func bsCDL3WHITESOLDIERS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142002,10 +142002,10 @@ func bsCDL3WHITESOLDIERS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDL3WHITESOLDIERS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142023,7 +142023,7 @@ func bsCDL3WHITESOLDIERS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142034,12 +142034,12 @@ func bsCDL3WHITESOLDIERS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142054,7 +142054,7 @@ func bsCDLABANDONEDBABY(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142065,10 +142065,10 @@ func bsCDLABANDONEDBABY(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLABANDONEDBABY(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142086,7 +142086,7 @@ func bsCDLABANDONEDBABY(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142097,12 +142097,12 @@ func bsCDLABANDONEDBABY(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142116,7 +142116,7 @@ func bsCDLADVANCEBLOCK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142127,10 +142127,10 @@ func bsCDLADVANCEBLOCK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLADVANCEBLOCK(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142148,7 +142148,7 @@ func bsCDLADVANCEBLOCK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142159,12 +142159,12 @@ func bsCDLADVANCEBLOCK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142178,7 +142178,7 @@ func bsCDLBELTHOLD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142189,10 +142189,10 @@ func bsCDLBELTHOLD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLBELTHOLD(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142210,7 +142210,7 @@ func bsCDLBELTHOLD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142221,12 +142221,12 @@ func bsCDLBELTHOLD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142240,7 +142240,7 @@ func bsCDLBREAKAWAY(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142251,10 +142251,10 @@ func bsCDLBREAKAWAY(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLBREAKAWAY(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142272,7 +142272,7 @@ func bsCDLBREAKAWAY(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142283,12 +142283,12 @@ func bsCDLBREAKAWAY(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142302,7 +142302,7 @@ func bsCDLCLOSINGMARUBOZU(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142313,10 +142313,10 @@ func bsCDLCLOSINGMARUBOZU(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLCLOSINGMARUBOZU(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142334,7 +142334,7 @@ func bsCDLCLOSINGMARUBOZU(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142345,12 +142345,12 @@ func bsCDLCLOSINGMARUBOZU(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142364,7 +142364,7 @@ func bsCDLCONCEALBABYSWALL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142375,10 +142375,10 @@ func bsCDLCONCEALBABYSWALL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLCONCEALBABYSWALL(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142396,7 +142396,7 @@ func bsCDLCONCEALBABYSWALL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142407,12 +142407,12 @@ func bsCDLCONCEALBABYSWALL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142426,7 +142426,7 @@ func bsCDLCOUNTERATTACK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142437,10 +142437,10 @@ func bsCDLCOUNTERATTACK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLCOUNTERATTACK(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142458,7 +142458,7 @@ func bsCDLCOUNTERATTACK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142469,12 +142469,12 @@ func bsCDLCOUNTERATTACK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142489,7 +142489,7 @@ func bsCDLDARKCLOUDCOVER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142500,10 +142500,10 @@ func bsCDLDARKCLOUDCOVER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLDARKCLOUDCOVER(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142521,7 +142521,7 @@ func bsCDLDARKCLOUDCOVER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142532,12 +142532,12 @@ func bsCDLDARKCLOUDCOVER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142551,7 +142551,7 @@ func bsCDLDOJI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142562,10 +142562,10 @@ func bsCDLDOJI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLDOJI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142583,7 +142583,7 @@ func bsCDLDOJI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142594,12 +142594,12 @@ func bsCDLDOJI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142613,7 +142613,7 @@ func bsCDLDOJISTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142624,10 +142624,10 @@ func bsCDLDOJISTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLDOJISTAR(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142645,7 +142645,7 @@ func bsCDLDOJISTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142656,12 +142656,12 @@ func bsCDLDOJISTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142675,7 +142675,7 @@ func bsCDLDRAGONFLYDOJI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142686,10 +142686,10 @@ func bsCDLDRAGONFLYDOJI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLDRAGONFLYDOJI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142707,7 +142707,7 @@ func bsCDLDRAGONFLYDOJI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142718,12 +142718,12 @@ func bsCDLDRAGONFLYDOJI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142737,7 +142737,7 @@ func bsCDLENGULFING(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142748,10 +142748,10 @@ func bsCDLENGULFING(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLENGULFING(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142769,7 +142769,7 @@ func bsCDLENGULFING(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142780,12 +142780,12 @@ func bsCDLENGULFING(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142800,7 +142800,7 @@ func bsCDLEVENINGDOJISTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142811,10 +142811,10 @@ func bsCDLEVENINGDOJISTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLEVENINGDOJISTAR(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142832,7 +142832,7 @@ func bsCDLEVENINGDOJISTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142843,12 +142843,12 @@ func bsCDLEVENINGDOJISTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142863,7 +142863,7 @@ func bsCDLEVENINGSTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142874,10 +142874,10 @@ func bsCDLEVENINGSTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLEVENINGSTAR(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142895,7 +142895,7 @@ func bsCDLEVENINGSTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142906,12 +142906,12 @@ func bsCDLEVENINGSTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142925,7 +142925,7 @@ func bsCDLGAPSIDESIDEWHITE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142936,10 +142936,10 @@ func bsCDLGAPSIDESIDEWHITE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLGAPSIDESIDEWHITE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -142957,7 +142957,7 @@ func bsCDLGAPSIDESIDEWHITE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -142968,12 +142968,12 @@ func bsCDLGAPSIDESIDEWHITE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -142987,7 +142987,7 @@ func bsCDLGRAVESTONEDOJI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -142998,10 +142998,10 @@ func bsCDLGRAVESTONEDOJI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLGRAVESTONEDOJI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143019,7 +143019,7 @@ func bsCDLGRAVESTONEDOJI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143030,12 +143030,12 @@ func bsCDLGRAVESTONEDOJI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143049,7 +143049,7 @@ func bsCDLHAMMER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143060,10 +143060,10 @@ func bsCDLHAMMER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHAMMER(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143081,7 +143081,7 @@ func bsCDLHAMMER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143092,12 +143092,12 @@ func bsCDLHAMMER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143111,7 +143111,7 @@ func bsCDLHANGINGMAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143122,10 +143122,10 @@ func bsCDLHANGINGMAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHANGINGMAN(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143143,7 +143143,7 @@ func bsCDLHANGINGMAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143154,12 +143154,12 @@ func bsCDLHANGINGMAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143173,7 +143173,7 @@ func bsCDLHARAMI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143184,10 +143184,10 @@ func bsCDLHARAMI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHARAMI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143205,7 +143205,7 @@ func bsCDLHARAMI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143216,12 +143216,12 @@ func bsCDLHARAMI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143235,7 +143235,7 @@ func bsCDLHARAMICROSS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143246,10 +143246,10 @@ func bsCDLHARAMICROSS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHARAMICROSS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143267,7 +143267,7 @@ func bsCDLHARAMICROSS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143278,12 +143278,12 @@ func bsCDLHARAMICROSS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143297,7 +143297,7 @@ func bsCDLHIGHWAVE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143308,10 +143308,10 @@ func bsCDLHIGHWAVE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHIGHWAVE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143329,7 +143329,7 @@ func bsCDLHIGHWAVE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143340,12 +143340,12 @@ func bsCDLHIGHWAVE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143359,7 +143359,7 @@ func bsCDLHIKKAKE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143370,10 +143370,10 @@ func bsCDLHIKKAKE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHIKKAKE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143391,7 +143391,7 @@ func bsCDLHIKKAKE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143402,12 +143402,12 @@ func bsCDLHIKKAKE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143421,7 +143421,7 @@ func bsCDLHIKKAKEMOD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143432,10 +143432,10 @@ func bsCDLHIKKAKEMOD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHIKKAKEMOD(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143453,7 +143453,7 @@ func bsCDLHIKKAKEMOD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143464,12 +143464,12 @@ func bsCDLHIKKAKEMOD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143483,7 +143483,7 @@ func bsCDLHOMINGPIGEON(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143494,10 +143494,10 @@ func bsCDLHOMINGPIGEON(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLHOMINGPIGEON(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143515,7 +143515,7 @@ func bsCDLHOMINGPIGEON(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143526,12 +143526,12 @@ func bsCDLHOMINGPIGEON(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143545,7 +143545,7 @@ func bsCDLIDENTICAL3CROWS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143556,10 +143556,10 @@ func bsCDLIDENTICAL3CROWS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLIDENTICAL3CROWS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143577,7 +143577,7 @@ func bsCDLIDENTICAL3CROWS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143588,12 +143588,12 @@ func bsCDLIDENTICAL3CROWS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143607,7 +143607,7 @@ func bsCDLINNECK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143618,10 +143618,10 @@ func bsCDLINNECK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLINNECK(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143639,7 +143639,7 @@ func bsCDLINNECK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143650,12 +143650,12 @@ func bsCDLINNECK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143669,7 +143669,7 @@ func bsCDLINVERTEDHAMMER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143680,10 +143680,10 @@ func bsCDLINVERTEDHAMMER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLINVERTEDHAMMER(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143701,7 +143701,7 @@ func bsCDLINVERTEDHAMMER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143712,12 +143712,12 @@ func bsCDLINVERTEDHAMMER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143731,7 +143731,7 @@ func bsCDLKICKING(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143742,10 +143742,10 @@ func bsCDLKICKING(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLKICKING(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143763,7 +143763,7 @@ func bsCDLKICKING(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143774,12 +143774,12 @@ func bsCDLKICKING(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143793,7 +143793,7 @@ func bsCDLKICKINGBYLENGTH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143804,10 +143804,10 @@ func bsCDLKICKINGBYLENGTH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLKICKINGBYLENGTH(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143825,7 +143825,7 @@ func bsCDLKICKINGBYLENGTH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143836,12 +143836,12 @@ func bsCDLKICKINGBYLENGTH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143855,7 +143855,7 @@ func bsCDLLADDERBOTTOM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143866,10 +143866,10 @@ func bsCDLLADDERBOTTOM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLLADDERBOTTOM(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143887,7 +143887,7 @@ func bsCDLLADDERBOTTOM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143898,12 +143898,12 @@ func bsCDLLADDERBOTTOM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143917,7 +143917,7 @@ func bsCDLLONGLEGGEDDOJI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143928,10 +143928,10 @@ func bsCDLLONGLEGGEDDOJI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLLONGLEGGEDDOJI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -143949,7 +143949,7 @@ func bsCDLLONGLEGGEDDOJI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -143960,12 +143960,12 @@ func bsCDLLONGLEGGEDDOJI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -143979,7 +143979,7 @@ func bsCDLLONGLINE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -143990,10 +143990,10 @@ func bsCDLLONGLINE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLLONGLINE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144011,7 +144011,7 @@ func bsCDLLONGLINE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144022,12 +144022,12 @@ func bsCDLLONGLINE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144041,7 +144041,7 @@ func bsCDLMARUBOZU(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144052,10 +144052,10 @@ func bsCDLMARUBOZU(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLMARUBOZU(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144073,7 +144073,7 @@ func bsCDLMARUBOZU(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144084,12 +144084,12 @@ func bsCDLMARUBOZU(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144103,7 +144103,7 @@ func bsCDLMATCHINGLOW(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144114,10 +144114,10 @@ func bsCDLMATCHINGLOW(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLMATCHINGLOW(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144135,7 +144135,7 @@ func bsCDLMATCHINGLOW(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144146,12 +144146,12 @@ func bsCDLMATCHINGLOW(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144166,7 +144166,7 @@ func bsCDLMATHOLD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144177,10 +144177,10 @@ func bsCDLMATHOLD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLMATHOLD(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144198,7 +144198,7 @@ func bsCDLMATHOLD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144209,12 +144209,12 @@ func bsCDLMATHOLD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144229,7 +144229,7 @@ func bsCDLMORNINGDOJISTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144240,10 +144240,10 @@ func bsCDLMORNINGDOJISTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLMORNINGDOJISTAR(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144261,7 +144261,7 @@ func bsCDLMORNINGDOJISTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144272,12 +144272,12 @@ func bsCDLMORNINGDOJISTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144292,7 +144292,7 @@ func bsCDLMORNINGSTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144303,10 +144303,10 @@ func bsCDLMORNINGSTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLMORNINGSTAR(t, t, rt0, rt1, rt2, rt3, optInPenetration, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144324,7 +144324,7 @@ func bsCDLMORNINGSTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144335,12 +144335,12 @@ func bsCDLMORNINGSTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144354,7 +144354,7 @@ func bsCDLONNECK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144365,10 +144365,10 @@ func bsCDLONNECK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLONNECK(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144386,7 +144386,7 @@ func bsCDLONNECK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144397,12 +144397,12 @@ func bsCDLONNECK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144416,7 +144416,7 @@ func bsCDLPIERCING(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144427,10 +144427,10 @@ func bsCDLPIERCING(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLPIERCING(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144448,7 +144448,7 @@ func bsCDLPIERCING(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144459,12 +144459,12 @@ func bsCDLPIERCING(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144478,7 +144478,7 @@ func bsCDLRICKSHAWMAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144489,10 +144489,10 @@ func bsCDLRICKSHAWMAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLRICKSHAWMAN(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144510,7 +144510,7 @@ func bsCDLRICKSHAWMAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144521,12 +144521,12 @@ func bsCDLRICKSHAWMAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144540,7 +144540,7 @@ func bsCDLRISEFALL3METHODS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144551,10 +144551,10 @@ func bsCDLRISEFALL3METHODS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLRISEFALL3METHODS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144572,7 +144572,7 @@ func bsCDLRISEFALL3METHODS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144583,12 +144583,12 @@ func bsCDLRISEFALL3METHODS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144602,7 +144602,7 @@ func bsCDLSEPARATINGLINES(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144613,10 +144613,10 @@ func bsCDLSEPARATINGLINES(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSEPARATINGLINES(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144634,7 +144634,7 @@ func bsCDLSEPARATINGLINES(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144645,12 +144645,12 @@ func bsCDLSEPARATINGLINES(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144664,7 +144664,7 @@ func bsCDLSHOOTINGSTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144675,10 +144675,10 @@ func bsCDLSHOOTINGSTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSHOOTINGSTAR(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144696,7 +144696,7 @@ func bsCDLSHOOTINGSTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144707,12 +144707,12 @@ func bsCDLSHOOTINGSTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144726,7 +144726,7 @@ func bsCDLSHORTLINE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144737,10 +144737,10 @@ func bsCDLSHORTLINE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSHORTLINE(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144758,7 +144758,7 @@ func bsCDLSHORTLINE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144769,12 +144769,12 @@ func bsCDLSHORTLINE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144788,7 +144788,7 @@ func bsCDLSPINNINGTOP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144799,10 +144799,10 @@ func bsCDLSPINNINGTOP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSPINNINGTOP(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144820,7 +144820,7 @@ func bsCDLSPINNINGTOP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144831,12 +144831,12 @@ func bsCDLSPINNINGTOP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144850,7 +144850,7 @@ func bsCDLSTALLEDPATTERN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144861,10 +144861,10 @@ func bsCDLSTALLEDPATTERN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSTALLEDPATTERN(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144882,7 +144882,7 @@ func bsCDLSTALLEDPATTERN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144893,12 +144893,12 @@ func bsCDLSTALLEDPATTERN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144912,7 +144912,7 @@ func bsCDLSTICKSANDWICH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144923,10 +144923,10 @@ func bsCDLSTICKSANDWICH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLSTICKSANDWICH(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -144944,7 +144944,7 @@ func bsCDLSTICKSANDWICH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -144955,12 +144955,12 @@ func bsCDLSTICKSANDWICH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -144974,7 +144974,7 @@ func bsCDLTAKURI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -144985,10 +144985,10 @@ func bsCDLTAKURI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLTAKURI(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145006,7 +145006,7 @@ func bsCDLTAKURI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145017,12 +145017,12 @@ func bsCDLTAKURI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145036,7 +145036,7 @@ func bsCDLTASUKIGAP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145047,10 +145047,10 @@ func bsCDLTASUKIGAP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLTASUKIGAP(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145068,7 +145068,7 @@ func bsCDLTASUKIGAP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145079,12 +145079,12 @@ func bsCDLTASUKIGAP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145098,7 +145098,7 @@ func bsCDLTHRUSTING(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145109,10 +145109,10 @@ func bsCDLTHRUSTING(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLTHRUSTING(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145130,7 +145130,7 @@ func bsCDLTHRUSTING(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145141,12 +145141,12 @@ func bsCDLTHRUSTING(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145160,7 +145160,7 @@ func bsCDLTRISTAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145171,10 +145171,10 @@ func bsCDLTRISTAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLTRISTAR(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145192,7 +145192,7 @@ func bsCDLTRISTAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145203,12 +145203,12 @@ func bsCDLTRISTAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145222,7 +145222,7 @@ func bsCDLUNIQUE3RIVER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145233,10 +145233,10 @@ func bsCDLUNIQUE3RIVER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLUNIQUE3RIVER(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145254,7 +145254,7 @@ func bsCDLUNIQUE3RIVER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145265,12 +145265,12 @@ func bsCDLUNIQUE3RIVER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145284,7 +145284,7 @@ func bsCDLUPSIDEGAP2CROWS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145295,10 +145295,10 @@ func bsCDLUPSIDEGAP2CROWS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLUPSIDEGAP2CROWS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145316,7 +145316,7 @@ func bsCDLUPSIDEGAP2CROWS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145327,12 +145327,12 @@ func bsCDLUPSIDEGAP2CROWS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145346,7 +145346,7 @@ func bsCDLXSIDEGAP3METHODS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -145357,10 +145357,10 @@ func bsCDLXSIDEGAP3METHODS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CDLXSIDEGAP3METHODS(t, t, rt0, rt1, rt2, rt3, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -145378,7 +145378,7 @@ func bsCDLXSIDEGAP3METHODS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145389,12 +145389,12 @@ func bsCDLXSIDEGAP3METHODS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -145410,7 +145410,7 @@ func bsCE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -145420,9 +145420,9 @@ func bsCE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.CE(t, t, rt0, rt1, rt2, optInTimePeriod, optInMultiplier, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145441,7 +145441,7 @@ func bsCE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -145453,13 +145453,13 @@ func bsCE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -145474,7 +145474,7 @@ func bsCEIL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -145482,7 +145482,7 @@ func bsCEIL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CEIL(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145500,7 +145500,7 @@ func bsCEIL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145511,12 +145511,12 @@ func bsCEIL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -145531,7 +145531,7 @@ func bsCG(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -145539,7 +145539,7 @@ func bsCG(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CG(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145557,7 +145557,7 @@ func bsCG(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145568,12 +145568,12 @@ func bsCG(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -145588,7 +145588,7 @@ func bsCHOP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -145598,9 +145598,9 @@ func bsCHOP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.CHOP(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145618,7 +145618,7 @@ func bsCHOP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145629,12 +145629,12 @@ func bsCHOP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -145649,7 +145649,7 @@ func bsCHOPTR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -145659,9 +145659,9 @@ func bsCHOPTR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.CHOPTR(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145679,7 +145679,7 @@ func bsCHOPTR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145690,12 +145690,12 @@ func bsCHOPTR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -145712,7 +145712,7 @@ func bsCKSP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -145722,9 +145722,9 @@ func bsCKSP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.CKSP(t, t, rt0, rt1, rt2, optInTimePeriod, optInMultiplier, optInStopPeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145743,7 +145743,7 @@ func bsCKSP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -145755,13 +145755,13 @@ func bsCKSP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -145777,7 +145777,7 @@ func bsCMF(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -145788,10 +145788,10 @@ func bsCMF(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.CMF(t, t, rt0, rt1, rt2, rt3, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145809,7 +145809,7 @@ func bsCMF(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145820,12 +145820,12 @@ func bsCMF(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -145840,7 +145840,7 @@ func bsCMO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -145848,7 +145848,7 @@ func bsCMO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CMO(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145866,7 +145866,7 @@ func bsCMO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145877,12 +145877,12 @@ func bsCMO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -145897,7 +145897,7 @@ func bsCMOU(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -145905,7 +145905,7 @@ func bsCMOU(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CMOU(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145923,7 +145923,7 @@ func bsCMOU(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145934,12 +145934,12 @@ func bsCMOU(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -145956,7 +145956,7 @@ func bsCOPPOCK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -145964,7 +145964,7 @@ func bsCOPPOCK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.COPPOCK(t, t, rt0, optInWMAPeriod, optInROC1Period, optInROC2Period, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -145982,7 +145982,7 @@ func bsCOPPOCK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -145993,12 +145993,12 @@ func bsCOPPOCK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146013,7 +146013,7 @@ func bsCORREL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -146022,8 +146022,8 @@ func bsCORREL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.CORREL(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146041,7 +146041,7 @@ func bsCORREL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146052,12 +146052,12 @@ func bsCORREL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -146071,7 +146071,7 @@ func bsCOS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146079,7 +146079,7 @@ func bsCOS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.COS(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146097,7 +146097,7 @@ func bsCOS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146108,12 +146108,12 @@ func bsCOS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146127,7 +146127,7 @@ func bsCOSH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146135,7 +146135,7 @@ func bsCOSH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.COSH(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146153,7 +146153,7 @@ func bsCOSH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146164,12 +146164,12 @@ func bsCOSH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146186,7 +146186,7 @@ func bsCRSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146194,7 +146194,7 @@ func bsCRSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CRSI(t, t, rt0, optInTimePeriod, optInStreakPeriod, optInRankPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146212,7 +146212,7 @@ func bsCRSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146223,12 +146223,12 @@ func bsCRSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146243,7 +146243,7 @@ func bsCTI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146251,7 +146251,7 @@ func bsCTI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CTI(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146269,7 +146269,7 @@ func bsCTI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146280,12 +146280,12 @@ func bsCTI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146299,7 +146299,7 @@ func bsCUMSUM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146307,7 +146307,7 @@ func bsCUMSUM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.CUMSUM(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146325,7 +146325,7 @@ func bsCUMSUM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146336,12 +146336,12 @@ func bsCUMSUM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146357,7 +146357,7 @@ func bsCVI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -146366,8 +146366,8 @@ func bsCVI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.CVI(t, t, rt0, rt1, optInTimePeriod, optInROCPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146385,7 +146385,7 @@ func bsCVI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146396,12 +146396,12 @@ func bsCVI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -146416,7 +146416,7 @@ func bsDEMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146424,7 +146424,7 @@ func bsDEMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.DEMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146442,7 +146442,7 @@ func bsDEMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146453,12 +146453,12 @@ func bsDEMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146472,7 +146472,7 @@ func bsDIV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -146481,8 +146481,8 @@ func bsDIV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.DIV(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146500,7 +146500,7 @@ func bsDIV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146511,12 +146511,12 @@ func bsDIV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -146531,7 +146531,7 @@ func bsDONCHIAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -146540,8 +146540,8 @@ func bsDONCHIAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.DONCHIAN(t, t, rt0, rt1, optInTimePeriod, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146561,7 +146561,7 @@ func bsDONCHIAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -146574,14 +146574,14 @@ func bsDONCHIAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -146601,7 +146601,7 @@ func bsDOSC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146609,7 +146609,7 @@ func bsDOSC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.DOSC(t, t, rt0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146627,7 +146627,7 @@ func bsDOSC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146638,12 +146638,12 @@ func bsDOSC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146658,7 +146658,7 @@ func bsDPO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146666,7 +146666,7 @@ func bsDPO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.DPO(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146684,7 +146684,7 @@ func bsDPO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146695,12 +146695,12 @@ func bsDPO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146715,7 +146715,7 @@ func bsDX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -146725,9 +146725,9 @@ func bsDX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.DX(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146745,7 +146745,7 @@ func bsDX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146756,12 +146756,12 @@ func bsDX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -146776,7 +146776,7 @@ func bsEFI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -146785,8 +146785,8 @@ func bsEFI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.EFI(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146804,7 +146804,7 @@ func bsEFI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146815,12 +146815,12 @@ func bsEFI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -146835,7 +146835,7 @@ func bsEMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146843,7 +146843,7 @@ func bsEMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.EMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146861,7 +146861,7 @@ func bsEMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146872,12 +146872,12 @@ func bsEMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -146893,7 +146893,7 @@ func bsEMV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -146903,9 +146903,9 @@ func bsEMV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.EMV(t, t, rt0, rt1, rt2, optInTimePeriod, optInVolumeDivisor, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146923,7 +146923,7 @@ func bsEMV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146934,12 +146934,12 @@ func bsEMV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -146954,7 +146954,7 @@ func bsER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -146962,7 +146962,7 @@ func bsER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ER(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -146980,7 +146980,7 @@ func bsER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -146991,12 +146991,12 @@ func bsER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147011,7 +147011,7 @@ func bsERI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147021,9 +147021,9 @@ func bsERI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ERI(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147042,7 +147042,7 @@ func bsERI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -147054,13 +147054,13 @@ func bsERI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -147075,7 +147075,7 @@ func bsEXP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147083,7 +147083,7 @@ func bsEXP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.EXP(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147101,7 +147101,7 @@ func bsEXP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147112,12 +147112,12 @@ func bsEXP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147132,7 +147132,7 @@ func bsFISHER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147141,8 +147141,8 @@ func bsFISHER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.FISHER(t, t, rt0, rt1, optInTimePeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147161,7 +147161,7 @@ func bsFISHER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -147173,13 +147173,13 @@ func bsFISHER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -147194,7 +147194,7 @@ func bsFLOOR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147202,7 +147202,7 @@ func bsFLOOR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.FLOOR(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147220,7 +147220,7 @@ func bsFLOOR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147231,12 +147231,12 @@ func bsFLOOR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147251,7 +147251,7 @@ func bsFOSC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147259,7 +147259,7 @@ func bsFOSC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.FOSC(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147277,7 +147277,7 @@ func bsFOSC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147288,12 +147288,12 @@ func bsFOSC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147309,7 +147309,7 @@ func bsFRACTAL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147318,8 +147318,8 @@ func bsFRACTAL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.FRACTAL(t, t, rt0, rt1, optInLeftBars, optInRightBars, r.outI[0], r.outI[1])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -147338,7 +147338,7 @@ func bsFRACTAL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, iv1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			iv0, iv1, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += float64(iv0)
 			acc += float64(iv1)
 		}
@@ -147350,13 +147350,13 @@ func bsFRACTAL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, iv1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				iv0, iv1, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += float64(iv0)
 				acc += float64(iv1)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, iv1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				iv0, iv1, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += float64(iv0)
 				acc += float64(iv1)
 			}
@@ -147372,7 +147372,7 @@ func bsFRAMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147381,8 +147381,8 @@ func bsFRAMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.FRAMA(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147400,7 +147400,7 @@ func bsFRAMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147411,12 +147411,12 @@ func bsFRAMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -147436,7 +147436,7 @@ func bsGATOR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147445,8 +147445,8 @@ func bsGATOR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.GATOR(t, t, rt0, rt1, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147465,7 +147465,7 @@ func bsGATOR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -147477,13 +147477,13 @@ func bsGATOR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -147498,7 +147498,7 @@ func bsHA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -147509,10 +147509,10 @@ func bsHA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.HA(t, t, rt0, rt1, rt2, rt3, r.outR[0], r.outR[1], r.outR[2], r.outR[3])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147533,7 +147533,7 @@ func bsHA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, v3, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, v1, v2, v3, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -147547,7 +147547,7 @@ func bsHA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, v3, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, v1, v2, v3, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -147555,7 +147555,7 @@ func bsHA(r *benchRun) {
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, v3, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, v1, v2, v3, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -147573,7 +147573,7 @@ func bsHMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147581,7 +147581,7 @@ func bsHMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147599,7 +147599,7 @@ func bsHMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147610,12 +147610,12 @@ func bsHMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147629,7 +147629,7 @@ func bsHT_DCPERIOD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147637,7 +147637,7 @@ func bsHT_DCPERIOD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_DCPERIOD(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147655,7 +147655,7 @@ func bsHT_DCPERIOD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147666,12 +147666,12 @@ func bsHT_DCPERIOD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147685,7 +147685,7 @@ func bsHT_DCPHASE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147693,7 +147693,7 @@ func bsHT_DCPHASE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_DCPHASE(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147711,7 +147711,7 @@ func bsHT_DCPHASE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147722,12 +147722,12 @@ func bsHT_DCPHASE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147741,7 +147741,7 @@ func bsHT_PHASOR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147749,7 +147749,7 @@ func bsHT_PHASOR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_PHASOR(t, t, rt0, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147768,7 +147768,7 @@ func bsHT_PHASOR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -147780,13 +147780,13 @@ func bsHT_PHASOR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -147801,7 +147801,7 @@ func bsHT_SINE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147809,7 +147809,7 @@ func bsHT_SINE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_SINE(t, t, rt0, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147828,7 +147828,7 @@ func bsHT_SINE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -147840,13 +147840,13 @@ func bsHT_SINE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -147861,7 +147861,7 @@ func bsHT_TRENDLINE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147869,7 +147869,7 @@ func bsHT_TRENDLINE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_TRENDLINE(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -147887,7 +147887,7 @@ func bsHT_TRENDLINE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147898,12 +147898,12 @@ func bsHT_TRENDLINE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -147917,7 +147917,7 @@ func bsHT_TRENDMODE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -147925,7 +147925,7 @@ func bsHT_TRENDMODE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.HT_TRENDMODE(t, t, rt0, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -147943,7 +147943,7 @@ func bsHT_TRENDMODE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -147954,12 +147954,12 @@ func bsHT_TRENDMODE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -147973,7 +147973,7 @@ func bsIBS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -147983,9 +147983,9 @@ func bsIBS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.IBS(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148003,7 +148003,7 @@ func bsIBS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148014,12 +148014,12 @@ func bsIBS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -148036,7 +148036,7 @@ func bsICHIMOKU(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -148045,8 +148045,8 @@ func bsICHIMOKU(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.ICHIMOKU(t, t, rt0, rt1, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, r.outR[0], r.outR[1], r.outR[2], r.outR[3])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148067,7 +148067,7 @@ func bsICHIMOKU(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, v3, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, v1, v2, v3, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -148081,7 +148081,7 @@ func bsICHIMOKU(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, v3, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, v3, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -148089,7 +148089,7 @@ func bsICHIMOKU(r *benchRun) {
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, v3, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, v1, v2, v3, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -148107,7 +148107,7 @@ func bsIMI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[3], &r.feed[3]
@@ -148116,8 +148116,8 @@ func bsIMI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.IMI(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148135,7 +148135,7 @@ func bsIMI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148146,12 +148146,12 @@ func bsIMI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -148166,7 +148166,7 @@ func bsKAMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148174,7 +148174,7 @@ func bsKAMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.KAMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148192,7 +148192,7 @@ func bsKAMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148203,12 +148203,12 @@ func bsKAMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148225,7 +148225,7 @@ func bsKC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -148235,9 +148235,9 @@ func bsKC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.KC(t, t, rt0, rt1, rt2, optInTimePeriod, optInATRPeriod, optInNbDev, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148257,7 +148257,7 @@ func bsKC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -148270,14 +148270,14 @@ func bsKC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -148298,7 +148298,7 @@ func bsKDJ(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -148308,9 +148308,9 @@ func bsKDJ(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.KDJ(t, t, rt0, rt1, rt2, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148330,7 +148330,7 @@ func bsKDJ(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -148343,14 +148343,14 @@ func bsKDJ(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -148375,7 +148375,7 @@ func bsKST(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148383,7 +148383,7 @@ func bsKST(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.KST(t, t, rt0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148402,7 +148402,7 @@ func bsKST(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -148414,13 +148414,13 @@ func bsKST(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -148446,7 +148446,7 @@ func bsKSTEXT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148454,7 +148454,7 @@ func bsKSTEXT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.KSTEXT(t, t, rt0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148473,7 +148473,7 @@ func bsKSTEXT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -148485,13 +148485,13 @@ func bsKSTEXT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -148507,7 +148507,7 @@ func bsKURTOSIS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148515,7 +148515,7 @@ func bsKURTOSIS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.KURTOSIS(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148533,7 +148533,7 @@ func bsKURTOSIS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148544,12 +148544,12 @@ func bsKURTOSIS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148566,7 +148566,7 @@ func bsKVO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -148577,10 +148577,10 @@ func bsKVO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.KVO(t, t, rt0, rt1, rt2, rt3, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148599,7 +148599,7 @@ func bsKVO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -148611,13 +148611,13 @@ func bsKVO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -148633,7 +148633,7 @@ func bsLINEARREG(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148641,7 +148641,7 @@ func bsLINEARREG(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LINEARREG(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148659,7 +148659,7 @@ func bsLINEARREG(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148670,12 +148670,12 @@ func bsLINEARREG(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148690,7 +148690,7 @@ func bsLINEARREG_ANGLE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148698,7 +148698,7 @@ func bsLINEARREG_ANGLE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LINEARREG_ANGLE(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148716,7 +148716,7 @@ func bsLINEARREG_ANGLE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148727,12 +148727,12 @@ func bsLINEARREG_ANGLE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148747,7 +148747,7 @@ func bsLINEARREG_INTERCEPT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148755,7 +148755,7 @@ func bsLINEARREG_INTERCEPT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LINEARREG_INTERCEPT(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148773,7 +148773,7 @@ func bsLINEARREG_INTERCEPT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148784,12 +148784,12 @@ func bsLINEARREG_INTERCEPT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148804,7 +148804,7 @@ func bsLINEARREG_SLOPE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148812,7 +148812,7 @@ func bsLINEARREG_SLOPE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LINEARREG_SLOPE(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148830,7 +148830,7 @@ func bsLINEARREG_SLOPE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148841,12 +148841,12 @@ func bsLINEARREG_SLOPE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148860,7 +148860,7 @@ func bsLN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148868,7 +148868,7 @@ func bsLN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LN(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148886,7 +148886,7 @@ func bsLN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148897,12 +148897,12 @@ func bsLN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148916,7 +148916,7 @@ func bsLOG10(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148924,7 +148924,7 @@ func bsLOG10(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.LOG10(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -148942,7 +148942,7 @@ func bsLOG10(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -148953,12 +148953,12 @@ func bsLOG10(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -148974,7 +148974,7 @@ func bsMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -148982,7 +148982,7 @@ func bsMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MA(t, t, rt0, optInTimePeriod, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149000,7 +149000,7 @@ func bsMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149011,12 +149011,12 @@ func bsMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -149033,7 +149033,7 @@ func bsMACD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149041,7 +149041,7 @@ func bsMACD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MACD(t, t, rt0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149061,7 +149061,7 @@ func bsMACD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -149074,14 +149074,14 @@ func bsMACD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -149103,7 +149103,7 @@ func bsMACDEXT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149111,7 +149111,7 @@ func bsMACDEXT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MACDEXT(t, t, rt0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149131,7 +149131,7 @@ func bsMACDEXT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -149144,14 +149144,14 @@ func bsMACDEXT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -149168,7 +149168,7 @@ func bsMACDFIX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149176,7 +149176,7 @@ func bsMACDFIX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MACDFIX(t, t, rt0, optInSignalPeriod, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149196,7 +149196,7 @@ func bsMACDFIX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -149209,14 +149209,14 @@ func bsMACDFIX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -149235,7 +149235,7 @@ func bsMACDV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149245,9 +149245,9 @@ func bsMACDV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.MACDV(t, t, rt0, rt1, rt2, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r.outR[0], r.outR[1], r.outR[2])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149267,7 +149267,7 @@ func bsMACDV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 			acc += v2
@@ -149280,14 +149280,14 @@ func bsMACDV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, v2, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, v2, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 				acc += v2
@@ -149305,7 +149305,7 @@ func bsMAMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149313,7 +149313,7 @@ func bsMAMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MAMA(t, t, rt0, optInFastLimit, optInSlowLimit, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149332,7 +149332,7 @@ func bsMAMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -149344,13 +149344,13 @@ func bsMAMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -149365,7 +149365,7 @@ func bsMARKETFI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149375,9 +149375,9 @@ func bsMARKETFI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.MARKETFI(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149395,7 +149395,7 @@ func bsMARKETFI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149406,12 +149406,12 @@ func bsMARKETFI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -149427,7 +149427,7 @@ func bsMASSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149436,8 +149436,8 @@ func bsMASSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MASSI(t, t, rt0, rt1, optInFastPeriod, optInSlowPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149455,7 +149455,7 @@ func bsMASSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149466,12 +149466,12 @@ func bsMASSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -149488,7 +149488,7 @@ func bsMAVP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[6], &r.feed[6]
@@ -149497,8 +149497,8 @@ func bsMAVP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MAVP(t, t, rt0, rt1, optInMinPeriod, optInMaxPeriod, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149516,7 +149516,7 @@ func bsMAVP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149527,12 +149527,12 @@ func bsMAVP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -149547,7 +149547,7 @@ func bsMAX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149555,7 +149555,7 @@ func bsMAX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MAX(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149573,7 +149573,7 @@ func bsMAX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149584,12 +149584,12 @@ func bsMAX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -149604,7 +149604,7 @@ func bsMAXINDEX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149612,7 +149612,7 @@ func bsMAXINDEX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MAXINDEX(t, t, rt0, optInTimePeriod, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -149630,7 +149630,7 @@ func bsMAXINDEX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149641,12 +149641,12 @@ func bsMAXINDEX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -149661,7 +149661,7 @@ func bsMCGD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149669,7 +149669,7 @@ func bsMCGD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MCGD(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149687,7 +149687,7 @@ func bsMCGD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149698,12 +149698,12 @@ func bsMCGD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -149718,7 +149718,7 @@ func bsMEDIAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149726,7 +149726,7 @@ func bsMEDIAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MEDIAN(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149744,7 +149744,7 @@ func bsMEDIAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149755,12 +149755,12 @@ func bsMEDIAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -149774,7 +149774,7 @@ func bsMEDPRICE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149783,8 +149783,8 @@ func bsMEDPRICE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MEDPRICE(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149802,7 +149802,7 @@ func bsMEDPRICE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149813,12 +149813,12 @@ func bsMEDPRICE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -149833,7 +149833,7 @@ func bsMFI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149844,10 +149844,10 @@ func bsMFI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.MFI(t, t, rt0, rt1, rt2, rt3, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149865,7 +149865,7 @@ func bsMFI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149876,12 +149876,12 @@ func bsMFI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -149896,7 +149896,7 @@ func bsMIDPOINT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -149904,7 +149904,7 @@ func bsMIDPOINT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MIDPOINT(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149922,7 +149922,7 @@ func bsMIDPOINT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149933,12 +149933,12 @@ func bsMIDPOINT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -149953,7 +149953,7 @@ func bsMIDPRICE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -149962,8 +149962,8 @@ func bsMIDPRICE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MIDPRICE(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -149981,7 +149981,7 @@ func bsMIDPRICE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -149992,12 +149992,12 @@ func bsMIDPRICE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150012,7 +150012,7 @@ func bsMIN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150020,7 +150020,7 @@ func bsMIN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MIN(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150038,7 +150038,7 @@ func bsMIN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150049,12 +150049,12 @@ func bsMIN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -150069,7 +150069,7 @@ func bsMININDEX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150077,7 +150077,7 @@ func bsMININDEX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MININDEX(t, t, rt0, optInTimePeriod, r.outI[0])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -150095,7 +150095,7 @@ func bsMININDEX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, _ := st.Update(f0[it&benchMask])
+			iv0, _ := st.Update(f0[it&mask])
 			acc += float64(iv0)
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150106,12 +150106,12 @@ func bsMININDEX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Peek(f0[it&benchMask])
+				iv0, _ := st.Peek(f0[it&mask])
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, _ := st.Update(f0[it&benchMask])
+				iv0, _ := st.Update(f0[it&mask])
 				acc += float64(iv0)
 			}
 		}
@@ -150126,7 +150126,7 @@ func bsMINMAX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150134,7 +150134,7 @@ func bsMINMAX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MINMAX(t, t, rt0, optInTimePeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150153,7 +150153,7 @@ func bsMINMAX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -150165,13 +150165,13 @@ func bsMINMAX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -150187,7 +150187,7 @@ func bsMINMAXINDEX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150195,7 +150195,7 @@ func bsMINMAXINDEX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MINMAXINDEX(t, t, rt0, optInTimePeriod, r.outI[0], r.outI[1])
 			nb = o.NBElement
 			acc += float64(r.outI[0][0])
@@ -150214,7 +150214,7 @@ func bsMINMAXINDEX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			iv0, iv1, _ := st.Update(f0[it&benchMask])
+			iv0, iv1, _ := st.Update(f0[it&mask])
 			acc += float64(iv0)
 			acc += float64(iv1)
 		}
@@ -150226,13 +150226,13 @@ func bsMINMAXINDEX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, iv1, _ := st.Peek(f0[it&benchMask])
+				iv0, iv1, _ := st.Peek(f0[it&mask])
 				acc += float64(iv0)
 				acc += float64(iv1)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				iv0, iv1, _ := st.Update(f0[it&benchMask])
+				iv0, iv1, _ := st.Update(f0[it&mask])
 				acc += float64(iv0)
 				acc += float64(iv1)
 			}
@@ -150248,7 +150248,7 @@ func bsMINUS_DI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -150258,9 +150258,9 @@ func bsMINUS_DI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.MINUS_DI(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150278,7 +150278,7 @@ func bsMINUS_DI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150289,12 +150289,12 @@ func bsMINUS_DI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -150309,7 +150309,7 @@ func bsMINUS_DM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -150318,8 +150318,8 @@ func bsMINUS_DM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MINUS_DM(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150337,7 +150337,7 @@ func bsMINUS_DM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150348,12 +150348,12 @@ func bsMINUS_DM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150368,7 +150368,7 @@ func bsMOM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150376,7 +150376,7 @@ func bsMOM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.MOM(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150394,7 +150394,7 @@ func bsMOM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150405,12 +150405,12 @@ func bsMOM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -150424,7 +150424,7 @@ func bsMULT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -150433,8 +150433,8 @@ func bsMULT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.MULT(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150452,7 +150452,7 @@ func bsMULT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150463,12 +150463,12 @@ func bsMULT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150483,7 +150483,7 @@ func bsNATR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -150493,9 +150493,9 @@ func bsNATR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.NATR(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150513,7 +150513,7 @@ func bsNATR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150524,12 +150524,12 @@ func bsNATR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -150543,7 +150543,7 @@ func bsNVI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -150552,8 +150552,8 @@ func bsNVI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.NVI(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150571,7 +150571,7 @@ func bsNVI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150582,12 +150582,12 @@ func bsNVI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150601,7 +150601,7 @@ func bsOBV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -150610,8 +150610,8 @@ func bsOBV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.OBV(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150629,7 +150629,7 @@ func bsOBV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150640,12 +150640,12 @@ func bsOBV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150663,7 +150663,7 @@ func bsPERCENTB(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150671,7 +150671,7 @@ func bsPERCENTB(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.PERCENTB(t, t, rt0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150689,7 +150689,7 @@ func bsPERCENTB(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150700,12 +150700,12 @@ func bsPERCENTB(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -150721,7 +150721,7 @@ func bsPERCENTILE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150729,7 +150729,7 @@ func bsPERCENTILE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.PERCENTILE(t, t, rt0, optInTimePeriod, optInPercentile, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150747,7 +150747,7 @@ func bsPERCENTILE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150758,12 +150758,12 @@ func bsPERCENTILE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -150778,7 +150778,7 @@ func bsPERCENTRANK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150786,7 +150786,7 @@ func bsPERCENTRANK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.PERCENTRANK(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150804,7 +150804,7 @@ func bsPERCENTRANK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150815,12 +150815,12 @@ func bsPERCENTRANK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -150835,7 +150835,7 @@ func bsPLUS_DI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -150845,9 +150845,9 @@ func bsPLUS_DI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.PLUS_DI(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150865,7 +150865,7 @@ func bsPLUS_DI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150876,12 +150876,12 @@ func bsPLUS_DI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -150896,7 +150896,7 @@ func bsPLUS_DM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -150905,8 +150905,8 @@ func bsPLUS_DM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.PLUS_DM(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150924,7 +150924,7 @@ func bsPLUS_DM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150935,12 +150935,12 @@ func bsPLUS_DM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -150957,7 +150957,7 @@ func bsPPO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -150965,7 +150965,7 @@ func bsPPO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.PPO(t, t, rt0, optInFastPeriod, optInSlowPeriod, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -150983,7 +150983,7 @@ func bsPPO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -150994,12 +150994,12 @@ func bsPPO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151015,7 +151015,7 @@ func bsPSO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -151025,9 +151025,9 @@ func bsPSO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.PSO(t, t, rt0, rt1, rt2, optInFastK_Period, optInEMAPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151045,7 +151045,7 @@ func bsPSO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151056,12 +151056,12 @@ func bsPSO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -151075,7 +151075,7 @@ func bsPVI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -151084,8 +151084,8 @@ func bsPVI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.PVI(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151103,7 +151103,7 @@ func bsPVI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151114,12 +151114,12 @@ func bsPVI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -151136,7 +151136,7 @@ func bsPVO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[4], &r.feed[4]
 	acc, nb := 0.0, 0
@@ -151144,7 +151144,7 @@ func bsPVO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.PVO(t, t, rt0, optInFastPeriod, optInSlowPeriod, optInMAType, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151162,7 +151162,7 @@ func bsPVO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151173,12 +151173,12 @@ func bsPVO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151192,7 +151192,7 @@ func bsPVT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -151201,8 +151201,8 @@ func bsPVT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.PVT(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151220,7 +151220,7 @@ func bsPVT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151231,12 +151231,12 @@ func bsPVT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -151251,7 +151251,7 @@ func bsQSTICK(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[3], &r.feed[3]
@@ -151260,8 +151260,8 @@ func bsQSTICK(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.QSTICK(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151279,7 +151279,7 @@ func bsQSTICK(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151290,12 +151290,12 @@ func bsQSTICK(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -151310,7 +151310,7 @@ func bsRMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151318,7 +151318,7 @@ func bsRMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.RMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151336,7 +151336,7 @@ func bsRMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151347,12 +151347,12 @@ func bsRMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151367,7 +151367,7 @@ func bsROC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151375,7 +151375,7 @@ func bsROC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ROC(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151393,7 +151393,7 @@ func bsROC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151404,12 +151404,12 @@ func bsROC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151424,7 +151424,7 @@ func bsROCP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151432,7 +151432,7 @@ func bsROCP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ROCP(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151450,7 +151450,7 @@ func bsROCP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151461,12 +151461,12 @@ func bsROCP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151481,7 +151481,7 @@ func bsROCR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151489,7 +151489,7 @@ func bsROCR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ROCR(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151507,7 +151507,7 @@ func bsROCR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151518,12 +151518,12 @@ func bsROCR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151538,7 +151538,7 @@ func bsROCR100(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151546,7 +151546,7 @@ func bsROCR100(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ROCR100(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151564,7 +151564,7 @@ func bsROCR100(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151575,12 +151575,12 @@ func bsROCR100(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151596,7 +151596,7 @@ func bsROGERSSATCHELL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -151607,10 +151607,10 @@ func bsROGERSSATCHELL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.ROGERSSATCHELL(t, t, rt0, rt1, rt2, rt3, optInTimePeriod, optInAnnualization, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151628,7 +151628,7 @@ func bsROGERSSATCHELL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151639,12 +151639,12 @@ func bsROGERSSATCHELL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -151659,7 +151659,7 @@ func bsRSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151667,7 +151667,7 @@ func bsRSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.RSI(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151685,7 +151685,7 @@ func bsRSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151696,12 +151696,12 @@ func bsRSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151717,7 +151717,7 @@ func bsRVI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -151725,7 +151725,7 @@ func bsRVI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.RVI(t, t, rt0, optInTimePeriod, optInStdDevPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151743,7 +151743,7 @@ func bsRVI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151754,12 +151754,12 @@ func bsRVI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151775,7 +151775,7 @@ func bsRVIR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -151784,8 +151784,8 @@ func bsRVIR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.RVIR(t, t, rt0, rt1, optInTimePeriod, optInStdDevPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151803,7 +151803,7 @@ func bsRVIR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151814,12 +151814,12 @@ func bsRVIR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -151834,7 +151834,7 @@ func bsRVOL(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[4], &r.feed[4]
 	acc, nb := 0.0, 0
@@ -151842,7 +151842,7 @@ func bsRVOL(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.RVOL(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151860,7 +151860,7 @@ func bsRVOL(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151871,12 +151871,12 @@ func bsRVOL(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -151892,7 +151892,7 @@ func bsSAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -151901,8 +151901,8 @@ func bsSAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.SAR(t, t, rt0, rt1, optInAcceleration, optInMaximum, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151920,7 +151920,7 @@ func bsSAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151931,12 +151931,12 @@ func bsSAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -151958,7 +151958,7 @@ func bsSAREXT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -151967,8 +151967,8 @@ func bsSAREXT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.SAREXT(t, t, rt0, rt1, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -151986,7 +151986,7 @@ func bsSAREXT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -151997,12 +151997,12 @@ func bsSAREXT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -152019,7 +152019,7 @@ func bsSHARPE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152027,7 +152027,7 @@ func bsSHARPE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SHARPE(t, t, rt0, optInTimePeriod, optInRiskFreeRate, optInAnnualization, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152045,7 +152045,7 @@ func bsSHARPE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152056,12 +152056,12 @@ func bsSHARPE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152076,7 +152076,7 @@ func bsSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[0], &r.feed[0]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -152087,10 +152087,10 @@ func bsSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.SI(t, t, rt0, rt1, rt2, rt3, optInLimitMove, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152108,7 +152108,7 @@ func bsSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152119,12 +152119,12 @@ func bsSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -152138,7 +152138,7 @@ func bsSIN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152146,7 +152146,7 @@ func bsSIN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SIN(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152164,7 +152164,7 @@ func bsSIN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152175,12 +152175,12 @@ func bsSIN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152194,7 +152194,7 @@ func bsSINH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152202,7 +152202,7 @@ func bsSINH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SINH(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152220,7 +152220,7 @@ func bsSINH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152231,12 +152231,12 @@ func bsSINH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152251,7 +152251,7 @@ func bsSKEW(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152259,7 +152259,7 @@ func bsSKEW(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SKEW(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152277,7 +152277,7 @@ func bsSKEW(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152288,12 +152288,12 @@ func bsSKEW(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152308,7 +152308,7 @@ func bsSMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152316,7 +152316,7 @@ func bsSMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152334,7 +152334,7 @@ func bsSMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152345,12 +152345,12 @@ func bsSMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152368,7 +152368,7 @@ func bsSMI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -152378,9 +152378,9 @@ func bsSMI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.SMI(t, t, rt0, rt1, rt2, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152399,7 +152399,7 @@ func bsSMI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -152411,13 +152411,13 @@ func bsSMI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -152435,7 +152435,7 @@ func bsSORTINO(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152443,7 +152443,7 @@ func bsSORTINO(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SORTINO(t, t, rt0, optInTimePeriod, optInMAR, optInAnnualization, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152461,7 +152461,7 @@ func bsSORTINO(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152472,12 +152472,12 @@ func bsSORTINO(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152491,7 +152491,7 @@ func bsSQRT(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152499,7 +152499,7 @@ func bsSQRT(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SQRT(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152517,7 +152517,7 @@ func bsSQRT(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152528,12 +152528,12 @@ func bsSQRT(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152553,7 +152553,7 @@ func bsSQZMOM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -152563,9 +152563,9 @@ func bsSQZMOM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.SQZMOM(t, t, rt0, rt1, rt2, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, r.outR[0], r.outI[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152584,7 +152584,7 @@ func bsSQZMOM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += float64(iv0)
 		}
@@ -152596,13 +152596,13 @@ func bsSQZMOM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += float64(iv0)
 			}
@@ -152620,7 +152620,7 @@ func bsSTC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152628,7 +152628,7 @@ func bsSTC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.STC(t, t, rt0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152646,7 +152646,7 @@ func bsSTC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152657,12 +152657,12 @@ func bsSTC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152678,7 +152678,7 @@ func bsSTDDEV(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152686,7 +152686,7 @@ func bsSTDDEV(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.STDDEV(t, t, rt0, optInTimePeriod, optInNbDev, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152704,7 +152704,7 @@ func bsSTDDEV(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152715,12 +152715,12 @@ func bsSTDDEV(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -152739,7 +152739,7 @@ func bsSTOCH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -152749,9 +152749,9 @@ func bsSTOCH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.STOCH(t, t, rt0, rt1, rt2, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152770,7 +152770,7 @@ func bsSTOCH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -152782,13 +152782,13 @@ func bsSTOCH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -152806,7 +152806,7 @@ func bsSTOCHF(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -152816,9 +152816,9 @@ func bsSTOCHF(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.STOCHF(t, t, rt0, rt1, rt2, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152837,7 +152837,7 @@ func bsSTOCHF(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -152849,13 +152849,13 @@ func bsSTOCHF(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -152874,7 +152874,7 @@ func bsSTOCHRSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -152882,7 +152882,7 @@ func bsSTOCHRSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.STOCHRSI(t, t, rt0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152901,7 +152901,7 @@ func bsSTOCHRSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -152913,13 +152913,13 @@ func bsSTOCHRSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -152934,7 +152934,7 @@ func bsSUB(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[1], &r.feed[1]
@@ -152943,8 +152943,8 @@ func bsSUB(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.SUB(t, t, rt0, rt1, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -152962,7 +152962,7 @@ func bsSUB(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -152973,12 +152973,12 @@ func bsSUB(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -152993,7 +152993,7 @@ func bsSUM(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153001,7 +153001,7 @@ func bsSUM(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SUM(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153019,7 +153019,7 @@ func bsSUM(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153030,12 +153030,12 @@ func bsSUM(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153051,7 +153051,7 @@ func bsSUPERTREND(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -153061,9 +153061,9 @@ func bsSUPERTREND(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.SUPERTREND(t, t, rt0, rt1, rt2, optInTimePeriod, optInMultiplier, r.outR[0], r.outI[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153082,7 +153082,7 @@ func bsSUPERTREND(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += float64(iv0)
 		}
@@ -153094,13 +153094,13 @@ func bsSUPERTREND(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, iv0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += float64(iv0)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, iv0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += float64(iv0)
 			}
@@ -153116,7 +153116,7 @@ func bsSWAK_2PHP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153124,7 +153124,7 @@ func bsSWAK_2PHP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SWAK_2PHP(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153142,7 +153142,7 @@ func bsSWAK_2PHP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153153,12 +153153,12 @@ func bsSWAK_2PHP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153174,7 +153174,7 @@ func bsSWAK_BP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153182,7 +153182,7 @@ func bsSWAK_BP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SWAK_BP(t, t, rt0, optInTimePeriod, optInDelta, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153200,7 +153200,7 @@ func bsSWAK_BP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153211,12 +153211,12 @@ func bsSWAK_BP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153231,7 +153231,7 @@ func bsSWAK_BUTTER(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153239,7 +153239,7 @@ func bsSWAK_BUTTER(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SWAK_BUTTER(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153257,7 +153257,7 @@ func bsSWAK_BUTTER(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153268,12 +153268,12 @@ func bsSWAK_BUTTER(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153288,7 +153288,7 @@ func bsSWAK_GAUSS(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153296,7 +153296,7 @@ func bsSWAK_GAUSS(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SWAK_GAUSS(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153314,7 +153314,7 @@ func bsSWAK_GAUSS(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153325,12 +153325,12 @@ func bsSWAK_GAUSS(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153345,7 +153345,7 @@ func bsSWAK_HP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153353,7 +153353,7 @@ func bsSWAK_HP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.SWAK_HP(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153371,7 +153371,7 @@ func bsSWAK_HP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153382,12 +153382,12 @@ func bsSWAK_HP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153403,7 +153403,7 @@ func bsT3(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153411,7 +153411,7 @@ func bsT3(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.T3(t, t, rt0, optInTimePeriod, optInVFactor, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153429,7 +153429,7 @@ func bsT3(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153440,12 +153440,12 @@ func bsT3(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153459,7 +153459,7 @@ func bsTAN(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153467,7 +153467,7 @@ func bsTAN(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TAN(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153485,7 +153485,7 @@ func bsTAN(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153496,12 +153496,12 @@ func bsTAN(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153515,7 +153515,7 @@ func bsTANH(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153523,7 +153523,7 @@ func bsTANH(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TANH(t, t, rt0, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153541,7 +153541,7 @@ func bsTANH(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153552,12 +153552,12 @@ func bsTANH(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153572,7 +153572,7 @@ func bsTEMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153580,7 +153580,7 @@ func bsTEMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TEMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153598,7 +153598,7 @@ func bsTEMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153609,12 +153609,12 @@ func bsTEMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153628,7 +153628,7 @@ func bsTRANGE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -153638,9 +153638,9 @@ func bsTRANGE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.TRANGE(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153658,7 +153658,7 @@ func bsTRANGE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153669,12 +153669,12 @@ func bsTRANGE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -153689,7 +153689,7 @@ func bsTRIMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153697,7 +153697,7 @@ func bsTRIMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TRIMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153715,7 +153715,7 @@ func bsTRIMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153726,12 +153726,12 @@ func bsTRIMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153746,7 +153746,7 @@ func bsTRIX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153754,7 +153754,7 @@ func bsTRIX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TRIX(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153772,7 +153772,7 @@ func bsTRIX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153783,12 +153783,12 @@ func bsTRIX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153803,7 +153803,7 @@ func bsTSF(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153811,7 +153811,7 @@ func bsTSF(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TSF(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153829,7 +153829,7 @@ func bsTSF(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153840,12 +153840,12 @@ func bsTSF(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153861,7 +153861,7 @@ func bsTSI(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -153869,7 +153869,7 @@ func bsTSI(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.TSI(t, t, rt0, optInFirstPeriod, optInSecondPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153887,7 +153887,7 @@ func bsTSI(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153898,12 +153898,12 @@ func bsTSI(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -153917,7 +153917,7 @@ func bsTYPPRICE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -153927,9 +153927,9 @@ func bsTYPPRICE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.TYPPRICE(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -153947,7 +153947,7 @@ func bsTYPPRICE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -153958,12 +153958,12 @@ func bsTYPPRICE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -153980,7 +153980,7 @@ func bsULTOSC(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -153990,9 +153990,9 @@ func bsULTOSC(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.ULTOSC(t, t, rt0, rt1, rt2, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154010,7 +154010,7 @@ func bsULTOSC(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154021,12 +154021,12 @@ func bsULTOSC(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -154042,7 +154042,7 @@ func bsVAR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -154050,7 +154050,7 @@ func bsVAR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.VAR(t, t, rt0, optInTimePeriod, optInNbDev, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154068,7 +154068,7 @@ func bsVAR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154079,12 +154079,12 @@ func bsVAR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -154099,7 +154099,7 @@ func bsVHF(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -154107,7 +154107,7 @@ func bsVHF(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.VHF(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154125,7 +154125,7 @@ func bsVHF(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154136,12 +154136,12 @@ func bsVHF(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -154157,7 +154157,7 @@ func bsVIDYA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -154165,7 +154165,7 @@ func bsVIDYA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.VIDYA(t, t, rt0, optInTimePeriod, optInCMOPeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154183,7 +154183,7 @@ func bsVIDYA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154194,12 +154194,12 @@ func bsVIDYA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -154214,7 +154214,7 @@ func bsVORTEX(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154224,9 +154224,9 @@ func bsVORTEX(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.VORTEX(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154245,7 +154245,7 @@ func bsVORTEX(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -154257,13 +154257,13 @@ func bsVORTEX(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -154278,7 +154278,7 @@ func bsVWAP(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154289,10 +154289,10 @@ func bsVWAP(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
-			rt3[t] = f3[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
+			rt3[t] = f3[it&mask]
 			o, _ := r.core.VWAP(t, t, rt0, rt1, rt2, rt3, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154310,7 +154310,7 @@ func bsVWAP(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154321,12 +154321,12 @@ func bsVWAP(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask], f3[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask], f3[it&mask])
 				acc += v0
 			}
 		}
@@ -154341,7 +154341,7 @@ func bsVWMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	rt1, f1 := r.rt[4], &r.feed[4]
@@ -154350,8 +154350,8 @@ func bsVWMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.VWMA(t, t, rt0, rt1, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154369,7 +154369,7 @@ func bsVWMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154380,12 +154380,12 @@ func bsVWMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 			}
 		}
@@ -154399,7 +154399,7 @@ func bsWAD(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154409,9 +154409,9 @@ func bsWAD(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.WAD(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154429,7 +154429,7 @@ func bsWAD(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154440,12 +154440,12 @@ func bsWAD(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -154462,7 +154462,7 @@ func bsWAVETREND(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154472,9 +154472,9 @@ func bsWAVETREND(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.WAVETREND(t, t, rt0, rt1, rt2, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, r.outR[0], r.outR[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154493,7 +154493,7 @@ func bsWAVETREND(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 			acc += v1
 		}
@@ -154505,13 +154505,13 @@ func bsWAVETREND(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, v1, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, v1, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 				acc += v1
 			}
@@ -154526,7 +154526,7 @@ func bsWCLPRICE(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154536,9 +154536,9 @@ func bsWCLPRICE(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.WCLPRICE(t, t, rt0, rt1, rt2, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154556,7 +154556,7 @@ func bsWCLPRICE(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154567,12 +154567,12 @@ func bsWCLPRICE(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -154587,7 +154587,7 @@ func bsWILLR(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154597,9 +154597,9 @@ func bsWILLR(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
-			rt2[t] = f2[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
+			rt2[t] = f2[it&mask]
 			o, _ := r.core.WILLR(t, t, rt0, rt1, rt2, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154617,7 +154617,7 @@ func bsWILLR(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+			v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154628,12 +154628,12 @@ func bsWILLR(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask], f1[it&benchMask], f2[it&benchMask])
+				v0, _ := st.Update(f0[it&mask], f1[it&mask], f2[it&mask])
 				acc += v0
 			}
 		}
@@ -154648,7 +154648,7 @@ func bsWMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -154656,7 +154656,7 @@ func bsWMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.WMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154674,7 +154674,7 @@ func bsWMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154685,12 +154685,12 @@ func bsWMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -154706,7 +154706,7 @@ func bsZIGZAG(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[1], &r.feed[1]
 	rt1, f1 := r.rt[2], &r.feed[2]
@@ -154715,8 +154715,8 @@ func bsZIGZAG(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
-			rt1[t] = f1[it&benchMask]
+			rt0[t] = f0[it&mask]
+			rt1[t] = f1[it&mask]
 			o, _ := r.core.ZIGZAG(t, t, rt0, rt1, optInSensitivity, optInMinTrendLength, r.outR[0], r.outI[0], r.outI[1])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154736,7 +154736,7 @@ func bsZIGZAG(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, iv0, iv1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+			v0, iv0, iv1, _ := st.Update(f0[it&mask], f1[it&mask])
 			acc += v0
 			acc += float64(iv0)
 			acc += float64(iv1)
@@ -154749,14 +154749,14 @@ func bsZIGZAG(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, iv1, _ := st.Peek(f0[it&benchMask], f1[it&benchMask])
+				v0, iv0, iv1, _ := st.Peek(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += float64(iv0)
 				acc += float64(iv1)
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, iv0, iv1, _ := st.Update(f0[it&benchMask], f1[it&benchMask])
+				v0, iv0, iv1, _ := st.Update(f0[it&mask], f1[it&mask])
 				acc += v0
 				acc += float64(iv0)
 				acc += float64(iv1)
@@ -154773,7 +154773,7 @@ func bsZLEMA(r *benchRun) {
 	if err != nil {
 		lb = -1
 	}
-	iters := r.iters
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
 	r.reserve(lb + iters)
 	rt0, f0 := r.rt[3], &r.feed[3]
 	acc, nb := 0.0, 0
@@ -154781,7 +154781,7 @@ func bsZLEMA(r *benchRun) {
 		t := max(lb, 0)
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			rt0[t] = f0[it&benchMask]
+			rt0[t] = f0[it&mask]
 			o, _ := r.core.ZLEMA(t, t, rt0, optInTimePeriod, r.outR[0])
 			nb = o.NBElement
 			acc += r.outR[0][0]
@@ -154799,7 +154799,7 @@ func bsZLEMA(r *benchRun) {
 	for pass := range r.tu {
 		t0 := time.Now()
 		for it := 0; it < iters; it++ {
-			v0, _ := st.Update(f0[it&benchMask])
+			v0, _ := st.Update(f0[it&mask])
 			acc += v0
 		}
 		r.tu[pass] = time.Since(t0)
@@ -154810,12 +154810,12 @@ func bsZLEMA(r *benchRun) {
 		for b := 0; b < r.nblk; b++ {
 			t0 := time.Now()
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Peek(f0[it&benchMask])
+				v0, _ := st.Peek(f0[it&mask])
 				acc += v0
 			}
 			tp += time.Since(t0)
 			for it := b * blk; it < (b+1)*blk; it++ {
-				v0, _ := st.Update(f0[it&benchMask])
+				v0, _ := st.Update(f0[it&mask])
 				acc += v0
 			}
 		}
@@ -155564,7 +155564,14 @@ func benchStreamAll(r *benchRun, filter string) {
 // bench_gen.rs's C tool: corpus, defaults, the batch@last history, the 32-call
 // peek blocks between untimed updates, and the best pass of each column.
 
-const benchMask = 4095
+// The bar feed: Update, Peek and batch@last read bar it&(feed-1), and every
+// pass restarts at bar 0. The default 4096 bars is short enough for a branch
+// predictor to learn, which makes a data-dependent branch read as free and a
+// branch-free pick as a loss; --feed-bars walks a longer one.
+const (
+	benchFeedDefault = 4096
+	benchFeedMax     = 131072
+)
 
 var (
 	benchSinkI int
@@ -155593,7 +155600,8 @@ type benchRun struct {
 	passes int
 	n      int
 	in     [7][]float64
-	feed   [7][benchMask + 1]float64
+	feed   [7][benchFeedMax]float64
+	mask   int
 	rt     [7][]float64
 	outR   [][]float64
 	outI   [][]int32
@@ -155782,7 +155790,7 @@ func benchCorpusHash(in *[7][]float64) uint64 {
 }
 
 func benchStream(args []string) int {
-	points, iters, passes := 100000, 500, 3
+	points, iters, passes, feed := 100000, 500, 3, benchFeedDefault
 	filter, jsonl, shapeName := "", "", "randwalk"
 	corpusHash := false
 	cfg := benchCorpusCfg{shape: 0, seed: benchCorpusSeed, refPeriod: 0, trendStrength: benchCorpusTrend}
@@ -155791,6 +155799,7 @@ func benchStream(args []string) int {
 		switch {
 		case benchIntArg(a, "--points=", &points), benchIntArg(a, "--iters=", &iters),
 			benchIntArg(a, "--passes=", &passes), benchIntArg(a, "--period=", &r.period),
+			benchIntArg(a, "--feed-bars=", &feed),
 			benchIntArg(a, "--seed=", &cfg.seed), benchIntArg(a, "--regime-period=", &cfg.refPeriod),
 			benchRealArg(a, "--trend-strength=", &cfg.trendStrength), benchRealArg(a, "--min-ratio=", &r.minRatio):
 		case strings.HasPrefix(a, "--function="):
@@ -155814,7 +155823,12 @@ func benchStream(args []string) int {
 			return 2
 		}
 	}
-	points = min(max(points, benchMask+1), maxArraySize)
+	if feed < benchFeedDefault || feed > benchFeedMax || feed&(feed-1) != 0 {
+		fmt.Fprintf(os.Stderr, "--bench-stream: --feed-bars=N needs a power of two from %d to %d, got %d\n", benchFeedDefault, benchFeedMax, feed)
+		return 2
+	}
+	r.mask = feed - 1
+	points = min(max(points, feed), maxArraySize)
 	iters = max(iters, 1)
 	passes = max(passes, 1)
 	if cfg.refPeriod <= 0 {
@@ -155849,8 +155863,8 @@ func benchStream(args []string) int {
 	}
 	r.nblk = iters / r.blk
 	r.npk = max(r.nblk*r.blk, 1)
-	r.header = fmt.Sprintf(`"points":%d,"iters":%d,"passes":%d,"period":%d,"shape":%q,"seed":%d,"go":%q,"goarch":%q`,
-		points, iters, passes, r.period, benchShapes[cfg.shape].name, cfg.seed, runtime.Version(), runtime.GOARCH)
+	r.header = fmt.Sprintf(`"points":%d,"iters":%d,"passes":%d,"period":%d,"feed_bars":%d,"shape":%q,"seed":%d,"go":%q,"goarch":%q`,
+		points, iters, passes, r.period, feed, benchShapes[cfg.shape].name, cfg.seed, runtime.Version(), runtime.GOARCH)
 	if jsonl != "" {
 		f, err := os.OpenFile(jsonl, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -155864,6 +155878,9 @@ func benchStream(args []string) int {
 		points, iters, passes, benchShapes[cfg.shape].name, cfg.seed, runtime.Version())
 	if r.period > 0 {
 		fmt.Printf("# --period=%d: every optInTimePeriod; all other params at their defaults\n", r.period)
+	}
+	if feed != benchFeedDefault {
+		fmt.Printf("# --feed-bars=%d: every pass walks that many distinct bars\n", feed)
 	}
 	fmt.Println("# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup batch_spread_pct update_spread_pct peek_spread_pct")
 	benchStreamAll(r, filter)
