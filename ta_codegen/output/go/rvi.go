@@ -298,13 +298,7 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		periodTotal1 += tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 += tempReal
-		var _T3 float64
-		if periodTotal2 > peakTotal2 {
-			_T3 = periodTotal2
-		} else {
-			_T3 = peakTotal2
-		}
-		peakTotal2 = _T3
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanValue1 = float64(periodTotal1 * invPeriod)
 		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 		tempReal = inReal[trailingIdx] - shift
@@ -365,13 +359,13 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
 		prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
 		total = prevUp + prevDn
-		var _T4 float64
+		var _T3 float64
 		if total == 0.0 {
-			_T4 = 50.0
+			_T3 = 50.0
 		} else {
-			_T4 = float64(100.0 * (prevUp / total))
+			_T3 = float64(100.0 * (prevUp / total))
 		}
-		outReal[outIdx] = _T4
+		outReal[outIdx] = _T3
 		outIdx++
 		today += 1
 	}
@@ -1097,13 +1091,7 @@ func (c *Core) rviOpenImpl(sp *RVIStream, inReal []float64, startIdx, optInTimeP
 		periodTotal1 += tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 += tempReal
-		var _T14 float64
-		if periodTotal2 > peakTotal2 {
-			_T14 = periodTotal2
-		} else {
-			_T14 = peakTotal2
-		}
-		peakTotal2 = _T14
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanValue1 = float64(periodTotal1 * invPeriod)
 		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 		tempReal = inReal[trailingIdx] - shift
@@ -1164,13 +1152,13 @@ func (c *Core) rviOpenImpl(sp *RVIStream, inReal []float64, startIdx, optInTimeP
 		prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
 		prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
 		total = prevUp + prevDn
-		var _T15 float64
+		var _T14 float64
 		if total == 0.0 {
-			_T15 = 50.0
+			_T14 = 50.0
 		} else {
-			_T15 = float64(100.0 * (prevUp / total))
+			_T14 = float64(100.0 * (prevUp / total))
 		}
-		outReal[outIdx*outStride] = _T15
+		outReal[outIdx*outStride] = _T14
 		outIdx++
 		today += 1
 	}

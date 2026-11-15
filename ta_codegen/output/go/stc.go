@@ -289,13 +289,9 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		lowest = lineLo
 		if nLine >= optInCyclePeriod && lineRing_Idx < lastIdx {
 			tempReal = lineSufHi[lineRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lineSufLo[lineRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		lineRing_Idx++
 		if lineRing_Idx > maxIdx_lineRing {
@@ -347,13 +343,9 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 			lowest = pfLo
 			if nPF >= optInCyclePeriod && pfRing_Idx < lastIdx {
 				tempReal = pfSufHi[pfRing_Idx+1]
-				if tempReal > highest {
-					highest = tempReal
-				}
+				highest = selF(tempReal > highest, tempReal, highest)
 				tempReal = pfSufLo[pfRing_Idx+1]
-				if tempReal < lowest {
-					lowest = tempReal
-				}
+				lowest = selF(tempReal < lowest, tempReal, lowest)
 			}
 			pfRing_Idx++
 			if pfRing_Idx > maxIdx_pfRing {
@@ -404,24 +396,16 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 			lineHi = lineValue
 			lineLo = lineValue
 		} else {
-			if lineValue > lineHi {
-				lineHi = lineValue
-			}
-			if lineValue < lineLo {
-				lineLo = lineValue
-			}
+			lineHi = selF(lineValue > lineHi, lineValue, lineHi)
+			lineLo = selF(lineValue < lineLo, lineValue, lineLo)
 		}
 		highest = lineHi
 		lowest = lineLo
 		if lineRing_Idx < lastIdx {
 			tempReal = lineSufHi[lineRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lineSufLo[lineRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		lineRing_Idx++
 		if lineRing_Idx > maxIdx_lineRing {
@@ -456,24 +440,16 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 			pfHi = pf
 			pfLo = pf
 		} else {
-			if pf > pfHi {
-				pfHi = pf
-			}
-			if pf < pfLo {
-				pfLo = pf
-			}
+			pfHi = selF(pf > pfHi, pf, pfHi)
+			pfLo = selF(pf < pfLo, pf, pfLo)
 		}
 		highest = pfHi
 		lowest = pfLo
 		if pfRing_Idx < lastIdx {
 			tempReal = pfSufHi[pfRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = pfSufLo[pfRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		pfRing_Idx++
 		if pfRing_Idx > maxIdx_pfRing {
@@ -1216,13 +1192,9 @@ func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastP
 		lowest = lineLo
 		if nLine >= optInCyclePeriod && lineRing_Idx < lastIdx {
 			tempReal = lineSufHi[lineRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lineSufLo[lineRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		lineRing_Idx++
 		if lineRing_Idx > maxIdx_lineRing {
@@ -1274,13 +1246,9 @@ func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastP
 			lowest = pfLo
 			if nPF >= optInCyclePeriod && pfRing_Idx < lastIdx {
 				tempReal = pfSufHi[pfRing_Idx+1]
-				if tempReal > highest {
-					highest = tempReal
-				}
+				highest = selF(tempReal > highest, tempReal, highest)
 				tempReal = pfSufLo[pfRing_Idx+1]
-				if tempReal < lowest {
-					lowest = tempReal
-				}
+				lowest = selF(tempReal < lowest, tempReal, lowest)
 			}
 			pfRing_Idx++
 			if pfRing_Idx > maxIdx_pfRing {
@@ -1331,24 +1299,16 @@ func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastP
 			lineHi = lineValue
 			lineLo = lineValue
 		} else {
-			if lineValue > lineHi {
-				lineHi = lineValue
-			}
-			if lineValue < lineLo {
-				lineLo = lineValue
-			}
+			lineHi = selF(lineValue > lineHi, lineValue, lineHi)
+			lineLo = selF(lineValue < lineLo, lineValue, lineLo)
 		}
 		highest = lineHi
 		lowest = lineLo
 		if lineRing_Idx < lastIdx {
 			tempReal = lineSufHi[lineRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lineSufLo[lineRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		lineRing_Idx++
 		if lineRing_Idx > maxIdx_lineRing {
@@ -1383,24 +1343,16 @@ func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastP
 			pfHi = pf
 			pfLo = pf
 		} else {
-			if pf > pfHi {
-				pfHi = pf
-			}
-			if pf < pfLo {
-				pfLo = pf
-			}
+			pfHi = selF(pf > pfHi, pf, pfHi)
+			pfLo = selF(pf < pfLo, pf, pfLo)
 		}
 		highest = pfHi
 		lowest = pfLo
 		if pfRing_Idx < lastIdx {
 			tempReal = pfSufHi[pfRing_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = pfSufLo[pfRing_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		pfRing_Idx++
 		if pfRing_Idx > maxIdx_pfRing {

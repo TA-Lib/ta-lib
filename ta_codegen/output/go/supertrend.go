@@ -389,9 +389,13 @@ func (sp *SUPERTRENDStream) Update(inHigh, inLow, inClose float64) (float64, int
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	greatest = selF(val2 > greatest, val2, greatest)
+	if val2 > greatest {
+		greatest = val2
+	}
 	val3 = math.Abs(tempCY - tempLT)
-	greatest = selF(val3 > greatest, val3, greatest)
+	if val3 > greatest {
+		greatest = val3
+	}
 	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
 	medianPrice = (tempHT + tempLT) / 2.0
 	band = float64(sp.optInMultiplier * sp.prevATR)

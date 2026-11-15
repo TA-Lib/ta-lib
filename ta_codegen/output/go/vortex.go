@@ -406,9 +406,13 @@ func (sp *VORTEXStream) Update(inHigh, inLow, inClose float64) (float64, float64
 	tempCY = sp.lag1_inClose
 	trueRange = tempHT - tempLT
 	tempDouble = math.Abs(tempCY - tempHT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	tempDouble = math.Abs(tempCY - tempLT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	sp.sTR += trueRange
 	sp.sVMP += math.Abs(inHigh - sp.lag1_inLow)
 	sp.sVMM += math.Abs(inLow - sp.lag1_inHigh)
@@ -426,9 +430,13 @@ func (sp *VORTEXStream) Update(inHigh, inLow, inClose float64) (float64, float64
 	tempCY = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx+sp.ringCap_trailingIdx-sp.ringLag_trailingIdx-1)%sp.ringCap_trailingIdx]
 	trueRange = tempHT - tempLT
 	tempDouble = math.Abs(tempCY - tempHT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	tempDouble = math.Abs(tempCY - tempLT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	sp.sTR -= trueRange
 	sp.sVMP -= math.Abs(sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx+sp.ringCap_trailingIdx-sp.ringLag_trailingIdx)%sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx+sp.ringCap_trailingIdx-sp.ringLag_trailingIdx-1)%sp.ringCap_trailingIdx])
 	sp.sVMM -= math.Abs(sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx+sp.ringCap_trailingIdx-sp.ringLag_trailingIdx)%sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx+sp.ringCap_trailingIdx-sp.ringLag_trailingIdx-1)%sp.ringCap_trailingIdx])

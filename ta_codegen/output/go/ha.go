@@ -110,19 +110,11 @@ func (c *Core) haImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inClose []f
 		haOpen = (haOpen + haClose) / 2.0
 		haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0
 		haHigh = tempHigh
-		if haOpen > haHigh {
-			haHigh = haOpen
-		}
-		if haClose > haHigh {
-			haHigh = haClose
-		}
+		haHigh = selF(haOpen > haHigh, haOpen, haHigh)
+		haHigh = selF(haClose > haHigh, haClose, haHigh)
 		haLow = tempLow
-		if haOpen < haLow {
-			haLow = haOpen
-		}
-		if haClose < haLow {
-			haLow = haClose
-		}
+		haLow = selF(haOpen < haLow, haOpen, haLow)
+		haLow = selF(haClose < haLow, haClose, haLow)
 		outHAOpen[outIdx] = haOpen
 		outHAHigh[outIdx] = haHigh
 		outHALow[outIdx] = haLow
@@ -444,19 +436,11 @@ func (c *Core) haOpenImpl(sp *HAStream, inOpen, inHigh, inLow, inClose []float64
 		haOpen = (haOpen + haClose) / 2.0
 		haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0
 		haHigh = tempHigh
-		if haOpen > haHigh {
-			haHigh = haOpen
-		}
-		if haClose > haHigh {
-			haHigh = haClose
-		}
+		haHigh = selF(haOpen > haHigh, haOpen, haHigh)
+		haHigh = selF(haClose > haHigh, haClose, haHigh)
 		haLow = tempLow
-		if haOpen < haLow {
-			haLow = haOpen
-		}
-		if haClose < haLow {
-			haLow = haClose
-		}
+		haLow = selF(haOpen < haLow, haOpen, haLow)
+		haLow = selF(haClose < haLow, haClose, haLow)
 		outHAOpen[outIdx*outStride] = haOpen
 		outHAHigh[outIdx*outStride] = haHigh
 		outHALow[outIdx*outStride] = haLow

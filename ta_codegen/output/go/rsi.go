@@ -100,13 +100,7 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		today = today + 1
 		tempValue2 = tempValue1 - prevValue
 		prevValue = tempValue1
-		var _T0 float64
-		if tempValue2 > 0.0 {
-			_T0 = tempValue2
-		} else {
-			_T0 = 0.0
-		}
-		gainDelta = _T0
+		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 	}
@@ -128,13 +122,7 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			prevValue = tempValue1
 			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 			prevGain = float64(prevGain * float64(optInTimePeriod-1))
-			var _T1 float64
-			if tempValue2 > 0.0 {
-				_T1 = tempValue2
-			} else {
-				_T1 = 0.0
-			}
-			gainDelta = _T1
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevGain += gainDelta
 			prevLoss += gainDelta - tempValue2
 			prevLoss = float64(prevLoss * invPeriod)
@@ -149,13 +137,7 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		prevValue = tempValue1
 		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		var _T2 float64
-		if tempValue2 > 0.0 {
-			_T2 = tempValue2
-		} else {
-			_T2 = 0.0
-		}
-		gainDelta = _T2
+		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 		prevLoss = float64(prevLoss * invPeriod)
@@ -436,13 +418,7 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 		today = today + 1
 		tempValue2 = tempValue1 - prevValue
 		prevValue = tempValue1
-		var _T0 float64
-		if tempValue2 > 0.0 {
-			_T0 = tempValue2
-		} else {
-			_T0 = 0.0
-		}
-		gainDelta = _T0
+		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 	}
@@ -464,13 +440,7 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 			prevValue = tempValue1
 			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 			prevGain = float64(prevGain * float64(optInTimePeriod-1))
-			var _T1 float64
-			if tempValue2 > 0.0 {
-				_T1 = tempValue2
-			} else {
-				_T1 = 0.0
-			}
-			gainDelta = _T1
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevGain += gainDelta
 			prevLoss += gainDelta - tempValue2
 			prevLoss = float64(prevLoss * invPeriod)
@@ -485,13 +455,7 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 		prevValue = tempValue1
 		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		var _T2 float64
-		if tempValue2 > 0.0 {
-			_T2 = tempValue2
-		} else {
-			_T2 = 0.0
-		}
-		gainDelta = _T2
+		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 		prevLoss = float64(prevLoss * invPeriod)

@@ -97,6 +97,49 @@ fn a_go_candlestick_open_internal_calls_its_sink_frame() {
     }
 }
 
+/// A batch body's real picks are selects only in its outermost loops, the bars;
+/// a true range's raises stay branches there and in Update, not in Peek.
+#[test]
+fn go_batch_bodies_select_only_in_bar_loops() {
+    let colour = regex::Regex::new(r"selF\([^,]*[Cc]lose[^,]* >= [^,]*[Oo]pen").unwrap();
+    let impl_decl = regex::Regex::new(r"(?m)^func \(c \*Core\) (\w+)Impl\(").unwrap();
+    let (registry, helpers) = (common::make_registry(), common::make_helpers());
+    let mut bar_loop = 0usize;
+    let mut named = Vec::new();
+    for name in common::discover_indicators() {
+        let (func, enums) = common::load_indicator(&name);
+        let src = backends::go::generate(&func, &enums, registry, helpers);
+        for cap in impl_decl.captures_iter(&src).filter(|c| !c[1].ends_with("Open") && !c[1].ends_with("Step")) {
+            let (mut fors, mut stack) = (0usize, Vec::new());
+            for line in go_body(&src, &cap[0]).lines().skip(1).map(str::trim) {
+                if line.starts_with('}') && stack.pop() == Some(true) {
+                    fors -= 1;
+                }
+                let picks = line.matches("selF(").count() - colour.find_iter(line).count();
+                assert!(picks == 0 || fors == 1, "{name}: {picks} select(s) at loop depth {fors}: {line}");
+                bar_loop += picks;
+                if line.ends_with('{') {
+                    stack.push(line.starts_with("for "));
+                    fors += usize::from(line.starts_with("for "));
+                }
+            }
+        }
+        if name == "rsi" || name == "atr" {
+            named.push((name, src));
+        }
+    }
+    if !common::sweep_filtered() {
+        named.sort();
+        let [(_, atr), (_, rsi)] = &named[..] else { panic!("no ATR or RSI") };
+        assert!(go_body(rsi, "func (c *Core) rsiImpl(").contains("gainDelta = selF(tempValue2 > 0.0"), "RSI's gain pick is a branch");
+        let count = |decl: &str| go_body(atr, decl).matches("selF(").count();
+        assert_eq!(count("func (c *Core) atrImpl("), 0, "ATR's batch true range selects");
+        assert_eq!(count("func (sp *ATRStream) Update("), 0, "ATR's Update true range selects");
+        assert_eq!(count("func (sp *ATRStream) Peek("), 2, "ATR's Peek true range branches");
+    }
+    assert!(common::sweep_filtered() || bar_loop >= 110, "only {bar_loop} selects in bar loops");
+}
+
 /// A candle's colour is a coin flip on real bars: the batch and open bodies
 /// pick each colour bound through `selF`, and the stream step keeps the
 /// branch. A range type is folded where C folds it.

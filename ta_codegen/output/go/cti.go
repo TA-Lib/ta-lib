@@ -112,13 +112,7 @@ func (c *Core) ctiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		x = inReal[today] - shift
 		sumX += x
 		sumX2 += float64(x * x)
-		var _T0 float64
-		if sumX2 > peakX2 {
-			_T0 = sumX2
-		} else {
-			_T0 = peakX2
-		}
-		peakX2 = _T0
+		peakX2 = selF(sumX2 > peakX2, sumX2, peakX2)
 		ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 		spXY = sumXY - float64(float64(sumX*sumY)*invPeriod)
 		barsSinceReseed -= 1
@@ -646,13 +640,7 @@ func (c *Core) ctiOpenImpl(sp *CTIStream, inReal []float64, startIdx, optInTimeP
 		x = inReal[today] - shift
 		sumX += x
 		sumX2 += float64(x * x)
-		var _T5 float64
-		if sumX2 > peakX2 {
-			_T5 = sumX2
-		} else {
-			_T5 = peakX2
-		}
-		peakX2 = _T5
+		peakX2 = selF(sumX2 > peakX2, sumX2, peakX2)
 		ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 		spXY = sumXY - float64(float64(sumX*sumY)*invPeriod)
 		barsSinceReseed -= 1

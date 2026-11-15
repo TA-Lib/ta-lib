@@ -125,31 +125,19 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 			_T0 = tempValue1
 		}
 		moneyFlow = _T0
-		var _T1 float64
-		if tempValue2 < 0.0 {
-			_T1 = 0.0
-		} else {
-			_T1 = moneyFlow
-		}
-		posFlow = _T1
-		var _T2 float64
-		if tempValue2 < 0.0 {
-			_T2 = moneyFlow
-		} else {
-			_T2 = 0.0
-		}
-		negFlow = _T2
+		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
 		mflow_positive[mflow_Idx] = posFlow
 		mflow_negative[mflow_Idx] = negFlow
 		posSumMF += posFlow
 		negSumMF += negFlow
-		var _T3 int32
+		var _T1 int32
 		if moneyFlow == 0.0 {
-			_T3 = nullRun + 1
+			_T1 = nullRun + 1
 		} else {
-			_T3 = 0
+			_T1 = 0
 		}
-		nullRun = _T3
+		nullRun = _T1
 		if nullRun >= optInTimePeriod {
 			nullRun = optInTimePeriod
 			posSumMF = 0.0
@@ -161,19 +149,19 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		}
 	}
 	tempValue1 = posSumMF + negSumMF
-	var _T5 float64
+	var _T3 float64
 	if posSumMF < 0.0 {
-		_T5 = 0.0
+		_T3 = 0.0
 	} else {
-		var _T4 float64
+		var _T2 float64
 		if posSumMF > tempValue1 {
-			_T4 = tempValue1
+			_T2 = tempValue1
 		} else {
-			_T4 = posSumMF
+			_T2 = posSumMF
 		}
-		_T5 = _T4
+		_T3 = _T2
 	}
-	posClamped = _T5
+	posClamped = _T3
 	if tempValue1 <= 0.0 {
 		outReal[outIdx] = 0.0
 		outIdx++
@@ -190,57 +178,39 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		prevValue = tempValue1
 		tempValue1 = float64(tempValue1 * inVolume[today])
 		today++
-		var _T6 float64
+		var _T4 float64
 		if isZeroScaled(tempValue2, tempValue3) {
-			_T6 = 0.0
+			_T4 = 0.0
 		} else {
-			_T6 = tempValue1
+			_T4 = tempValue1
 		}
-		moneyFlow = _T6
-		var _T7 float64
-		if tempValue2 < 0.0 {
-			_T7 = 0.0
-		} else {
-			_T7 = moneyFlow
-		}
-		posFlow = _T7
-		var _T8 float64
-		if tempValue2 < 0.0 {
-			_T8 = moneyFlow
-		} else {
-			_T8 = 0.0
-		}
-		negFlow = _T8
+		moneyFlow = _T4
+		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
 		mflow_positive[mflow_Idx] = posFlow
 		mflow_negative[mflow_Idx] = negFlow
 		posSumMF += posFlow
 		negSumMF += negFlow
-		var _T9 int32
+		var _T5 int32
 		if moneyFlow == 0.0 {
-			_T9 = nullRun + 1
+			_T5 = nullRun + 1
 		} else {
-			_T9 = 0
+			_T5 = 0
 		}
-		nullRun = _T9
+		nullRun = _T5
 		if nullRun >= optInTimePeriod {
 			nullRun = optInTimePeriod
 			posSumMF = 0.0
 			negSumMF = 0.0
 		}
 		tempValue1 = posSumMF + negSumMF
-		var _T11 float64
+		var _T6 float64
 		if posSumMF < 0.0 {
-			_T11 = 0.0
+			_T6 = 0.0
 		} else {
-			var _T10 float64
-			if posSumMF > tempValue1 {
-				_T10 = tempValue1
-			} else {
-				_T10 = posSumMF
-			}
-			_T11 = _T10
+			_T6 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
 		}
-		posClamped = _T11
+		posClamped = _T6
 		if tempValue1 <= 0.0 {
 			outReal[outIdx] = 0.0
 			outIdx++
@@ -632,31 +602,19 @@ func (c *Core) mfiOpenImpl(sp *MFIStream, inHigh, inLow, inClose, inVolume []flo
 			_T6 = tempValue1
 		}
 		moneyFlow = _T6
-		var _T7 float64
-		if tempValue2 < 0.0 {
-			_T7 = 0.0
-		} else {
-			_T7 = moneyFlow
-		}
-		posFlow = _T7
-		var _T8 float64
-		if tempValue2 < 0.0 {
-			_T8 = moneyFlow
-		} else {
-			_T8 = 0.0
-		}
-		negFlow = _T8
+		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
 		mflow_positive[mflow_Idx] = posFlow
 		mflow_negative[mflow_Idx] = negFlow
 		posSumMF += posFlow
 		negSumMF += negFlow
-		var _T9 int32
+		var _T7 int32
 		if moneyFlow == 0.0 {
-			_T9 = nullRun + 1
+			_T7 = nullRun + 1
 		} else {
-			_T9 = 0
+			_T7 = 0
 		}
-		nullRun = _T9
+		nullRun = _T7
 		if nullRun >= optInTimePeriod {
 			nullRun = optInTimePeriod
 			posSumMF = 0.0
@@ -668,19 +626,19 @@ func (c *Core) mfiOpenImpl(sp *MFIStream, inHigh, inLow, inClose, inVolume []flo
 		}
 	}
 	tempValue1 = posSumMF + negSumMF
-	var _T11 float64
+	var _T9 float64
 	if posSumMF < 0.0 {
-		_T11 = 0.0
+		_T9 = 0.0
 	} else {
-		var _T10 float64
+		var _T8 float64
 		if posSumMF > tempValue1 {
-			_T10 = tempValue1
+			_T8 = tempValue1
 		} else {
-			_T10 = posSumMF
+			_T8 = posSumMF
 		}
-		_T11 = _T10
+		_T9 = _T8
 	}
-	posClamped = _T11
+	posClamped = _T9
 	if tempValue1 <= 0.0 {
 		outReal[outIdx*outStride] = 0.0
 		outIdx++
@@ -697,57 +655,39 @@ func (c *Core) mfiOpenImpl(sp *MFIStream, inHigh, inLow, inClose, inVolume []flo
 		prevValue = tempValue1
 		tempValue1 = float64(tempValue1 * inVolume[today])
 		today++
-		var _T12 float64
+		var _T10 float64
 		if isZeroScaled(tempValue2, tempValue3) {
-			_T12 = 0.0
+			_T10 = 0.0
 		} else {
-			_T12 = tempValue1
+			_T10 = tempValue1
 		}
-		moneyFlow = _T12
-		var _T13 float64
-		if tempValue2 < 0.0 {
-			_T13 = 0.0
-		} else {
-			_T13 = moneyFlow
-		}
-		posFlow = _T13
-		var _T14 float64
-		if tempValue2 < 0.0 {
-			_T14 = moneyFlow
-		} else {
-			_T14 = 0.0
-		}
-		negFlow = _T14
+		moneyFlow = _T10
+		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
 		mflow_positive[mflow_Idx] = posFlow
 		mflow_negative[mflow_Idx] = negFlow
 		posSumMF += posFlow
 		negSumMF += negFlow
-		var _T15 int32
+		var _T11 int32
 		if moneyFlow == 0.0 {
-			_T15 = nullRun + 1
+			_T11 = nullRun + 1
 		} else {
-			_T15 = 0
+			_T11 = 0
 		}
-		nullRun = _T15
+		nullRun = _T11
 		if nullRun >= optInTimePeriod {
 			nullRun = optInTimePeriod
 			posSumMF = 0.0
 			negSumMF = 0.0
 		}
 		tempValue1 = posSumMF + negSumMF
-		var _T17 float64
+		var _T12 float64
 		if posSumMF < 0.0 {
-			_T17 = 0.0
+			_T12 = 0.0
 		} else {
-			var _T16 float64
-			if posSumMF > tempValue1 {
-				_T16 = tempValue1
-			} else {
-				_T16 = posSumMF
-			}
-			_T17 = _T16
+			_T12 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
 		}
-		posClamped = _T17
+		posClamped = _T12
 		if tempValue1 <= 0.0 {
 			outReal[outIdx*outStride] = 0.0
 			outIdx++

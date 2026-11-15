@@ -130,13 +130,7 @@ func (c *Core) cciImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 		}
 		circBuffer[circBuffer_Idx] = lastValue
 		tempReal = math.Abs(periodTotal)
-		var _T0 float64
-		if tempReal > periodPeak {
-			_T0 = tempReal
-		} else {
-			_T0 = periodPeak
-		}
-		periodPeak = _T0
+		periodPeak = selF(tempReal > periodPeak, tempReal, periodPeak)
 		if circBuffer_Idx == optInTimePeriod-1 || periodPeak > float64(1.5*tempReal) || sumDirty != 0 && flatRun >= optInTimePeriod-1 {
 			tempReal = 0.0
 			for j = 0; j < circBuffer_Idx; j += 1 {
@@ -596,13 +590,7 @@ func (c *Core) cciOpenImpl(sp *CCIStream, inHigh, inLow, inClose []float64, star
 		}
 		circBuffer[circBuffer_Idx] = lastValue
 		tempReal = math.Abs(periodTotal)
-		var _T0 float64
-		if tempReal > periodPeak {
-			_T0 = tempReal
-		} else {
-			_T0 = periodPeak
-		}
-		periodPeak = _T0
+		periodPeak = selF(tempReal > periodPeak, tempReal, periodPeak)
 		if circBuffer_Idx == optInTimePeriod-1 || periodPeak > float64(1.5*tempReal) || sumDirty != 0 && flatRun >= optInTimePeriod-1 {
 			tempReal = 0.0
 			for j = 0; j < circBuffer_Idx; j += 1 {

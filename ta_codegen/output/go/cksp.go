@@ -268,12 +268,8 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -282,13 +278,9 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT
@@ -366,12 +358,8 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -380,13 +368,9 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT
@@ -399,12 +383,8 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		lowStop = lowest + band
 		highest = hsPre
 		lowest = lsPre
-		if highStop > highest {
-			highest = highStop
-		}
-		if lowStop < lowest {
-			lowest = lowStop
-		}
+		highest = selF(highStop > highest, highStop, highest)
+		lowest = selF(lowStop < lowest, lowStop, lowest)
 		if hsBuf_Idx == 0 {
 			highest = highStop
 			lowest = lowStop
@@ -413,13 +393,9 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 		lsPre = lowest
 		if hsBuf_Idx < lastQ {
 			tempReal = hsBuf[hsBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lsBuf[hsBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hsBuf[hsBuf_Idx] = highStop
 		lsBuf[hsBuf_Idx] = lowStop
@@ -694,9 +670,13 @@ func (sp *CKSPStream) Update(inHigh, inLow, inClose float64) (float64, float64, 
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	greatest = selF(val2 > greatest, val2, greatest)
+	if val2 > greatest {
+		greatest = val2
+	}
 	val3 = math.Abs(tempCY - tempLT)
-	greatest = selF(val3 > greatest, val3, greatest)
+	if val3 > greatest {
+		greatest = val3
+	}
 	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
 	highest = sp.hhPre
 	lowest = sp.llPre
@@ -1095,12 +1075,8 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -1109,13 +1085,9 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT
@@ -1193,12 +1165,8 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -1207,13 +1175,9 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT
@@ -1226,12 +1190,8 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		lowStop = lowest + band
 		highest = hsPre
 		lowest = lsPre
-		if highStop > highest {
-			highest = highStop
-		}
-		if lowStop < lowest {
-			lowest = lowStop
-		}
+		highest = selF(highStop > highest, highStop, highest)
+		lowest = selF(lowStop < lowest, lowStop, lowest)
 		if hsBuf_Idx == 0 {
 			highest = highStop
 			lowest = lowStop
@@ -1240,13 +1200,9 @@ func (c *Core) ckspOpenImpl(sp *CKSPStream, inHigh, inLow, inClose []float64, st
 		lsPre = lowest
 		if hsBuf_Idx < lastQ {
 			tempReal = hsBuf[hsBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = lsBuf[hsBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hsBuf[hsBuf_Idx] = highStop
 		lsBuf[hsBuf_Idx] = lowStop

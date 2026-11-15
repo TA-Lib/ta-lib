@@ -484,6 +484,7 @@ impl<'a> Em<'a> {
         let ctx = self.ctx(open_body, Ret::Code);
         ctx.env.seed_signature(self.func);
         ctx.colour_selects.set(true);
+        ctx.loop_selects.set(true);
         ctx.env.seed_candles(&detect_candle_settings(open_body));
         for n in ["outStride", "historyLen", "fillJ", "fillLb", "fillIdx"] {
             ctx.env.declare(n, CType::Int32);
@@ -1001,6 +1002,7 @@ fn step_body(
         out.push(format!("var {} {}", go_ident(name), types[name.as_str()].go_ty));
     }
     let ctx = em.frame_ctx(&transition, fields, Some(model), step_settings, tape.is_some(), Ret::Code);
+    ctx.update_frame.set(true);
     out.extend(render(&ctx, &transition));
     out
 }
@@ -2098,6 +2100,7 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
     let mut b = B::default();
     {
         let ctx = em.frame_ctx(&[], &fields, Some(ma), &step_settings, false, Ret::Code);
+        ctx.update_frame.set(true);
         if let Some(s) = streaming::identity_step_branch(ma, &GoNames) {
             b.extend(render(&ctx, std::slice::from_ref(&s)));
         }
@@ -2931,6 +2934,7 @@ fn composed_step(
             b.extend(settings_snapshot(step_settings));
             let transition = streaming::build_transition(model, &names).unwrap_or_else(|e| panic!("streaming transition: {e}"));
             let ctx = em.frame_ctx(&transition, fields, Some(model), step_settings, false, ret);
+            ctx.update_frame.set(!frame);
             declare_composed(&ctx);
             b.extend(render(&ctx, &transition));
         }
@@ -2940,6 +2944,7 @@ fn composed_step(
     let lag_names = GoComposedNames { series: cp.series.clone().unwrap_or_default() };
     let render_all = |b: &mut B, stmts: &[Statement]| {
         let ctx = em.frame_ctx(stmts, fields, cp.producer.as_ref(), step_settings, false, ret);
+        ctx.update_frame.set(!frame);
         declare_composed(&ctx);
         b.extend(render(&ctx, stmts));
     };
@@ -2968,6 +2973,7 @@ fn composed_step(
                 }
                 let stmts = streaming::lower_map_step(cp, si, &lag_names);
                 let ctx = em.frame_ctx(&stmts, fields, cp.producer.as_ref(), step_settings, false, ret);
+                ctx.update_frame.set(!frame);
                 declare_composed(&ctx);
                 b.extend(render(&ctx, &stmts));
             }

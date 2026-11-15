@@ -293,20 +293,8 @@ func (c *Core) ultoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 			trailingPos3 = 0
 		}
 		outReal[outIdx] = float64(100.0 * (output / 7.0))
-		var _T0 float64
-		if a1Total < a2Total {
-			_T0 = a1Total
-		} else {
-			_T0 = a2Total
-		}
-		lowest = _T0
-		var _T1 float64
-		if a3Total < lowest {
-			_T1 = a3Total
-		} else {
-			_T1 = lowest
-		}
-		lowest = _T1
+		lowest = selF(a1Total < a2Total, a1Total, a2Total)
+		lowest = selF(a3Total < lowest, a3Total, lowest)
 		if lowest < 0.0 && (negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0) {
 			a1Total = 0.0
 			b1Total = 0.0
@@ -559,9 +547,13 @@ func (sp *ULTOSCStream) Update(inHigh, inLow, inClose float64) (float64, error) 
 	closeMinusTrueLow = inClose - trueLow
 	trueRange = tempHT - tempLT
 	tempDouble = math.Abs(tempCY - tempHT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	tempDouble = math.Abs(tempCY - tempLT)
-	trueRange = selF(tempDouble > trueRange, tempDouble, trueRange)
+	if tempDouble > trueRange {
+		trueRange = tempDouble
+	}
 	sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow
 	sp.cb_term_trueRange[sp.term_Idx] = trueRange
 	live = b2i(!(trueRange+math.Abs(closeMinusTrueLow) <= 0.0))
@@ -1062,20 +1054,8 @@ func (c *Core) ultoscOpenImpl(sp *ULTOSCStream, inHigh, inLow, inClose []float64
 			trailingPos3 = 0
 		}
 		outReal[outIdx*outStride] = float64(100.0 * (output / 7.0))
-		var _T6 float64
-		if a1Total < a2Total {
-			_T6 = a1Total
-		} else {
-			_T6 = a2Total
-		}
-		lowest = _T6
-		var _T7 float64
-		if a3Total < lowest {
-			_T7 = a3Total
-		} else {
-			_T7 = lowest
-		}
-		lowest = _T7
+		lowest = selF(a1Total < a2Total, a1Total, a2Total)
+		lowest = selF(a3Total < lowest, a3Total, lowest)
 		if lowest < 0.0 && (negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0) {
 			a1Total = 0.0
 			b1Total = 0.0

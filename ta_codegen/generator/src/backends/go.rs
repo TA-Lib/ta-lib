@@ -239,10 +239,18 @@ pub(super) struct Ctx<'a> {
     /// A batch or open body, whose candle colour bounds take no branch.
     pub(super) colour_selects: Cell<bool>,
     /// A stream frame: a real pick outside a loop may take no branch (`selF`),
-    /// by the rule in [`super::go_select`]. Inside a loop it stays a branch,
-    /// which a reduction predicts and a select would put on its chain.
+    /// by the rule in [`super::go_select`]. Inside a stream frame's loop it
+    /// stays a branch, which a reduction predicts and a select would put on
+    /// its chain; a batch body's bar loops select through the loop scan.
     pub(super) float_selects: Cell<bool>,
+    /// A stream Update frame, as against a Peek.
+    pub(super) update_frame: Cell<bool>,
+    /// A batch or open body: a real pick in an outermost loop may take no
+    /// branch, by the rule in [`super::go_select`].
+    pub(super) loop_selects: Cell<bool>,
     loop_depth: Cell<usize>,
+    /// The outermost loop being rendered writes an output.
+    loop_out: Cell<bool>,
     /// The handle's fields, by both spellings.
     pub(super) carried: std::cell::RefCell<HashSet<String>>,
     /// The variable the statement being rendered assigns.
@@ -388,7 +396,10 @@ impl<'a> Ctx<'a> {
             ret,
             colour_selects: Cell::new(false),
             float_selects: Cell::new(false),
+            update_frame: Cell::new(false),
+            loop_selects: Cell::new(false),
             loop_depth: Cell::new(0),
+            loop_out: Cell::new(false),
             carried: std::cell::RefCell::new(HashSet::new()),
             store_target: std::cell::RefCell::new(None),
             scan: std::cell::RefCell::default(),
@@ -426,7 +437,10 @@ impl<'a> Ctx<'a> {
             ret,
             colour_selects: Cell::new(false),
             float_selects: Cell::new(false),
+            update_frame: Cell::new(false),
+            loop_selects: Cell::new(false),
             loop_depth: Cell::new(0),
+            loop_out: Cell::new(false),
             carried: std::cell::RefCell::new(HashSet::new()),
             store_target: std::cell::RefCell::new(None),
             scan: std::cell::RefCell::default(),
@@ -503,6 +517,12 @@ impl<'a> Ctx<'a> {
 
     pub(super) fn render_hoisted(&self, hoisted: &[(String, VarType, Vec<Statement>)], out: &mut Vec<String>) {
         for (temp, vt, body) in hoisted {
+            if self.update_frame.get() || (self.loop_selects.get() && self.loop_depth.get() > 0) {
+                let inner = super::go_select::scan(body);
+                let mut scan = self.scan.borrow_mut();
+                scan.around.extend(inner.around);
+                scan.chains.extend(inner.chains);
+            }
             out.push(format!("var {} {}", go_ident(temp), var_go_type(vt)));
             for s in body {
                 if let Statement::VarDecl { var_type, name, init } = s {
@@ -1091,7 +1111,7 @@ impl<'a> Ctx<'a> {
             self.stmt(s, out);
         }
         self.stmt_depth.set(self.stmt_depth.get() - 1);
-        if self.stmt_depth.get() == 0 {
+        if self.float_selects.get() && self.stmt_depth.get() == 0 {
             self.scan.take();
         }
     }
@@ -1107,6 +1127,14 @@ impl<'a> Ctx<'a> {
             s,
             Statement::While { .. } | Statement::DoWhile { .. } | Statement::For { .. } | Statement::ForC { .. }
         );
+        let body = super::go_select::loop_body(s);
+        let outer_scan = match body {
+            Some(b) if self.loop_selects.get() && self.loop_depth.get() == 0 => {
+                self.loop_out.set(super::go_select::stores_output(b));
+                Some(self.scan.replace(super::go_select::scan_loop(b)))
+            }
+            _ => None,
+        };
         if in_loop {
             self.loop_depth.set(self.loop_depth.get() + 1);
         }
@@ -1115,6 +1143,9 @@ impl<'a> Ctx<'a> {
         self.cur_stmt.set(outer);
         if in_loop {
             self.loop_depth.set(self.loop_depth.get() - 1);
+        }
+        if let Some(sc) = outer_scan {
+            *self.scan.borrow_mut() = sc;
         }
     }
 
@@ -1126,14 +1157,23 @@ impl<'a> Ctx<'a> {
     /// Whether the real pick `cond ? t : f`, stored to `target`, renders
     /// through `selF`, by the rule in [`super::go_select`].
     fn pick_free(&self, cond: &Expr, t: &Expr, f: &Expr, target: Option<&str>) -> bool {
-        if !self.float_selects.get() || self.loop_depth.get() > 0 || !super::go_select::data_driven(cond) {
+        let frame = self.float_selects.get() && self.loop_depth.get() == 0;
+        let bar_loop = self.loop_selects.get() && self.loop_depth.get() == 1;
+        if !(frame || bar_loop) || !super::go_select::data_driven(cond) {
             return false;
         }
         let scan = self.scan.borrow();
-        if target.is_some_and(|v| self.carried.borrow().contains(v) && scan.chains.get(v) != Some(&1)) {
+        let around = scan.around.get(&self.cur_stmt.get());
+        if around.is_some_and(|a| {
+            a.guard(cond, t, f, target) || a.retest(cond) || (bar_loop && scan.true_extreme(a, cond, t, f, target)) || ((bar_loop || (frame && self.update_frame.get())) && a.true_range(cond, t, f, target))
+        }) {
             return false;
         }
-        !scan.around.get(&self.cur_stmt.get()).is_some_and(|a| a.guard(cond, t, f, target) || a.retest(cond))
+        let one = |v: &str| scan.chains.get(v) == Some(&1);
+        if frame {
+            return !target.is_some_and(|v| self.carried.borrow().contains(v) && !one(v));
+        }
+        around.is_some() && !target.is_some_and(|v| scan.live_in.contains(v) && !(one(v) && self.loop_out.get()))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -2252,6 +2292,7 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
     let ctx = Ctx::new(svc, &func.name, body, &func.outputs, true, Ret::Code);
     ctx.env.seed_signature(func);
     ctx.colour_selects.set(true);
+    ctx.loop_selects.set(true);
 
     let mut params = vec![("startIdx".to_string(), "int32".to_string()), ("endIdx".to_string(), "int32".to_string())];
     for i in &func.inputs {

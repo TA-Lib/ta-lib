@@ -107,20 +107,8 @@ func (c *Core) plusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 			tempReal = inLow[today]
 			diffM = prevLow - tempReal
 			prevLow = tempReal
-			var _T0 float64
-			if diffP > 0.0 {
-				_T0 = diffP
-			} else {
-				_T0 = 0.0
-			}
-			plusDM1 = _T0
-			var _T1 float64
-			if diffP > diffM {
-				_T1 = plusDM1
-			} else {
-				_T1 = 0.0
-			}
-			plusDM1 = _T1
+			plusDM1 = selF(diffP > 0.0, diffP, 0.0)
+			plusDM1 = selF(diffP > diffM, plusDM1, 0.0)
 			outReal[outIdx] = plusDM1
 			outIdx++
 		}
@@ -135,9 +123,9 @@ func (c *Core) plusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 	prevLow = inLow[today]
 	i = optInTimePeriod - 1
 	for {
-		_C4 := i > 0
+		_C1 := i > 0
 		i--
-		if !_C4 {
+		if !_C1 {
 			break
 		}
 		today += 1
@@ -148,27 +136,21 @@ func (c *Core) plusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 		diffM = prevLow - tempReal
 		prevLow = tempReal
 		tempReal = diffP - diffM
-		var _T2 float64
-		if tempReal > 0.0 {
-			_T2 = diffP
-		} else {
-			_T2 = 0.0
-		}
-		plusDM1 = _T2
+		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 		tempReal = prevPlusDM + plusDM1
-		var _T3 float64
+		var _T0 float64
 		if prevPlusDM > tempReal {
-			_T3 = prevPlusDM
+			_T0 = prevPlusDM
 		} else {
-			_T3 = tempReal
+			_T0 = tempReal
 		}
-		prevPlusDM = _T3
+		prevPlusDM = _T0
 	}
 	i = lookbackTotal - (optInTimePeriod - 1)
 	for {
-		_C7 := i != 0
+		_C3 := i != 0
 		i--
-		if !_C7 {
+		if !_C3 {
 			break
 		}
 		today += 1
@@ -179,22 +161,16 @@ func (c *Core) plusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 		diffM = prevLow - tempReal
 		prevLow = tempReal
 		tempReal = diffP - diffM
-		var _T5 float64
-		if tempReal > 0.0 {
-			_T5 = diffP
-		} else {
-			_T5 = 0.0
-		}
-		plusDM1 = _T5
+		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 		tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
 		prevPlusDM = tempReal + plusDM1
-		var _T6 float64
+		var _T2 float64
 		if tempReal > prevPlusDM {
-			_T6 = tempReal
+			_T2 = tempReal
 		} else {
-			_T6 = prevPlusDM
+			_T2 = prevPlusDM
 		}
-		prevPlusDM = _T6
+		prevPlusDM = _T2
 	}
 	outReal[0] = prevPlusDM
 	outIdx = 1
@@ -207,22 +183,10 @@ func (c *Core) plusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 		diffM = prevLow - tempReal
 		prevLow = tempReal
 		tempReal = diffP - diffM
-		var _T8 float64
-		if tempReal > 0.0 {
-			_T8 = diffP
-		} else {
-			_T8 = 0.0
-		}
-		plusDM1 = _T8
+		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 		tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
 		prevPlusDM = tempReal + plusDM1
-		var _T9 float64
-		if tempReal > prevPlusDM {
-			_T9 = tempReal
-		} else {
-			_T9 = prevPlusDM
-		}
-		prevPlusDM = _T9
+		prevPlusDM = selF(tempReal > prevPlusDM, tempReal, prevPlusDM)
 		outReal[outIdx] = prevPlusDM
 		outIdx++
 	}
@@ -528,20 +492,8 @@ func (c *Core) plusDmOpenImpl(sp *PLUS_DMStream, inHigh, inLow []float64, startI
 			tempReal = inLow[today]
 			diffM = prevLow - tempReal
 			prevLow = tempReal
-			var _T0 float64
-			if diffP > 0.0 {
-				_T0 = diffP
-			} else {
-				_T0 = 0.0
-			}
-			plusDM1 = _T0
-			var _T1 float64
-			if diffP > diffM {
-				_T1 = plusDM1
-			} else {
-				_T1 = 0.0
-			}
-			plusDM1 = _T1
+			plusDM1 = selF(diffP > 0.0, diffP, 0.0)
+			plusDM1 = selF(diffP > diffM, plusDM1, 0.0)
 			outReal[outIdx*outStride] = plusDM1
 			outIdx++
 		}
@@ -584,9 +536,9 @@ func (c *Core) plusDmOpenImpl(sp *PLUS_DMStream, inHigh, inLow []float64, startI
 		prevLow = inLow[today]
 		i = optInTimePeriod - 1
 		for {
-			_C4 := i > 0
+			_C1 := i > 0
 			i--
-			if !_C4 {
+			if !_C1 {
 				break
 			}
 			today += 1
@@ -597,27 +549,21 @@ func (c *Core) plusDmOpenImpl(sp *PLUS_DMStream, inHigh, inLow []float64, startI
 			diffM = prevLow - tempReal
 			prevLow = tempReal
 			tempReal = diffP - diffM
-			var _T2 float64
-			if tempReal > 0.0 {
-				_T2 = diffP
-			} else {
-				_T2 = 0.0
-			}
-			plusDM1 = _T2
+			plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 			tempReal = prevPlusDM + plusDM1
-			var _T3 float64
+			var _T0 float64
 			if prevPlusDM > tempReal {
-				_T3 = prevPlusDM
+				_T0 = prevPlusDM
 			} else {
-				_T3 = tempReal
+				_T0 = tempReal
 			}
-			prevPlusDM = _T3
+			prevPlusDM = _T0
 		}
 		i = lookbackTotal - (optInTimePeriod - 1)
 		for {
-			_C7 := i != 0
+			_C3 := i != 0
 			i--
-			if !_C7 {
+			if !_C3 {
 				break
 			}
 			today += 1
@@ -628,22 +574,16 @@ func (c *Core) plusDmOpenImpl(sp *PLUS_DMStream, inHigh, inLow []float64, startI
 			diffM = prevLow - tempReal
 			prevLow = tempReal
 			tempReal = diffP - diffM
-			var _T5 float64
-			if tempReal > 0.0 {
-				_T5 = diffP
-			} else {
-				_T5 = 0.0
-			}
-			plusDM1 = _T5
+			plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 			tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
 			prevPlusDM = tempReal + plusDM1
-			var _T6 float64
+			var _T2 float64
 			if tempReal > prevPlusDM {
-				_T6 = tempReal
+				_T2 = tempReal
 			} else {
-				_T6 = prevPlusDM
+				_T2 = prevPlusDM
 			}
-			prevPlusDM = _T6
+			prevPlusDM = _T2
 		}
 		outReal[0*outStride] = prevPlusDM
 		outIdx = 1
@@ -656,22 +596,10 @@ func (c *Core) plusDmOpenImpl(sp *PLUS_DMStream, inHigh, inLow []float64, startI
 			diffM = prevLow - tempReal
 			prevLow = tempReal
 			tempReal = diffP - diffM
-			var _T8 float64
-			if tempReal > 0.0 {
-				_T8 = diffP
-			} else {
-				_T8 = 0.0
-			}
-			plusDM1 = _T8
+			plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 			tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
 			prevPlusDM = tempReal + plusDM1
-			var _T9 float64
-			if tempReal > prevPlusDM {
-				_T9 = tempReal
-			} else {
-				_T9 = prevPlusDM
-			}
-			prevPlusDM = _T9
+			prevPlusDM = selF(tempReal > prevPlusDM, tempReal, prevPlusDM)
 			outReal[outIdx*outStride] = prevPlusDM
 			outIdx++
 		}

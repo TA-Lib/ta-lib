@@ -215,12 +215,8 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -229,13 +225,9 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT
@@ -468,9 +460,13 @@ func (sp *CEStream) Update(inHigh, inLow, inClose float64) (float64, float64, er
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	greatest = selF(val2 > greatest, val2, greatest)
+	if val2 > greatest {
+		greatest = val2
+	}
 	val3 = math.Abs(tempCY - tempLT)
-	greatest = selF(val3 > greatest, val3, greatest)
+	if val3 > greatest {
+		greatest = val3
+	}
 	sp.prevATR = math.FMA(sp.wBeta, sp.prevATR, float64(sp.wAlpha*greatest))
 	highest = sp.hhPre
 	lowest = sp.llPre
@@ -757,12 +753,8 @@ func (c *Core) ceOpenImpl(sp *CEStream, inHigh, inLow, inClose []float64, startI
 		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		highest = hhPre
 		lowest = llPre
-		if tempHT > highest {
-			highest = tempHT
-		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
+		highest = selF(tempHT > highest, tempHT, highest)
+		lowest = selF(tempLT < lowest, tempLT, lowest)
 		if hhBuf_Idx == 0 {
 			highest = tempHT
 			lowest = tempLT
@@ -771,13 +763,9 @@ func (c *Core) ceOpenImpl(sp *CEStream, inHigh, inLow, inClose []float64, startI
 		llPre = lowest
 		if hhBuf_Idx < lastP {
 			tempReal = hhBuf[hhBuf_Idx+1]
-			if tempReal > highest {
-				highest = tempReal
-			}
+			highest = selF(tempReal > highest, tempReal, highest)
 			tempReal = llBuf[hhBuf_Idx+1]
-			if tempReal < lowest {
-				lowest = tempReal
-			}
+			lowest = selF(tempReal < lowest, tempReal, lowest)
 		}
 		hhBuf[hhBuf_Idx] = tempHT
 		llBuf[hhBuf_Idx] = tempLT

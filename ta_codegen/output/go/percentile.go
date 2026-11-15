@@ -384,22 +384,10 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 		newValue = inReal[i]
 		result = newValue
 		if rank <= lookbackTotal {
-			var _T4 float64
-			if result < hiV {
-				_T4 = result
-			} else {
-				_T4 = hiV
-			}
-			result = _T4
+			result = selF(result < hiV, result, hiV)
 		}
 		if rank > 1 {
-			var _T5 float64
-			if result < loV {
-				_T5 = loV
-			} else {
-				_T5 = result
-			}
-			result = _T5
+			result = selF(result < loV, loV, result)
 		}
 		outReal[outIdx] = result
 		outIdx += 1
@@ -428,26 +416,26 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 						if jh >= optInTimePeriod {
 							jh -= optInTimePeriod
 						}
-						var _T6 int32
+						var _T4 int32
 						if jh == 0 {
-							_T6 = lookbackTotal
+							_T4 = lookbackTotal
 						} else {
-							_T6 = jh - 1
+							_T4 = jh - 1
 						}
-						jl = _T6
+						jl = _T4
 					} else {
 						trend = 2
 						jh = ring_Idx + (optInTimePeriod - rank)
 						if jh >= optInTimePeriod {
 							jh -= optInTimePeriod
 						}
-						var _T7 int32
+						var _T5 int32
 						if jh == lookbackTotal {
-							_T7 = 0
+							_T5 = 0
 						} else {
-							_T7 = jh + 1
+							_T5 = jh + 1
 						}
-						jl = _T7
+						jl = _T5
 					}
 					if rank <= lookbackTotal {
 						hiV = ring[jh]
@@ -462,13 +450,13 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 							k = 0
 							for k < lookbackTotal {
 								sorted[k] = ring[j]
-								var _T8 int32
+								var _T6 int32
 								if j == lookbackTotal {
-									_T8 = 0
+									_T6 = 0
 								} else {
-									_T8 = j + 1
+									_T6 = j + 1
 								}
-								j = _T8
+								j = _T6
 								k += 1
 							}
 						} else {
@@ -479,13 +467,13 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 							k = 0
 							for k < lookbackTotal {
 								sorted[k] = ring[j]
-								var _T9 int32
+								var _T7 int32
 								if j == 0 {
-									_T9 = lookbackTotal
+									_T7 = lookbackTotal
 								} else {
-									_T9 = j - 1
+									_T7 = j - 1
 								}
-								j = _T9
+								j = _T7
 								k += 1
 							}
 						}
@@ -493,59 +481,53 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 					}
 					sorted[lookbackTotal] = newValue
 					cur = sorted[0]
-					var _T10 float64
-					if newValue < cur {
-						_T10 = newValue
-					} else {
-						_T10 = cur
-					}
-					prv = _T10
+					prv = selF(newValue < cur, newValue, cur)
 					k = 0
 					for {
 						nxt = sorted[k+1]
 						nx2 = sorted[k+2]
-						var _T11 float64
+						var _T8 float64
 						if cur < oldValue {
-							_T11 = cur
+							_T8 = cur
 						} else {
-							_T11 = nxt
+							_T8 = nxt
 						}
-						ins = _T11
-						var _T12 float64
+						ins = _T8
+						var _T9 float64
 						if nxt < oldValue {
-							_T12 = nxt
+							_T9 = nxt
 						} else {
-							_T12 = nx2
+							_T9 = nx2
 						}
-						in2 = _T12
-						var _T13 float64
+						in2 = _T9
+						var _T10 float64
 						if newValue < ins {
-							_T13 = newValue
+							_T10 = newValue
 						} else {
-							_T13 = ins
+							_T10 = ins
 						}
-						res = _T13
-						var _T14 float64
+						res = _T10
+						var _T11 float64
 						if prv > res {
-							_T14 = prv
+							_T11 = prv
 						} else {
-							_T14 = res
+							_T11 = res
 						}
-						sorted[k] = _T14
-						var _T15 float64
+						sorted[k] = _T11
+						var _T12 float64
 						if newValue < in2 {
-							_T15 = newValue
+							_T12 = newValue
 						} else {
-							_T15 = in2
+							_T12 = in2
 						}
-						res = _T15
-						var _T16 float64
+						res = _T12
+						var _T13 float64
 						if ins > res {
-							_T16 = ins
+							_T13 = ins
 						} else {
-							_T16 = res
+							_T13 = res
 						}
-						sorted[k+1] = _T16
+						sorted[k+1] = _T13
 						prv = in2
 						cur = nx2
 						k += 2
@@ -553,13 +535,7 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 							break
 						}
 					}
-					var _T17 float64
-					if prv > newValue {
-						_T17 = prv
-					} else {
-						_T17 = newValue
-					}
-					sorted[tail] = _T17
+					sorted[tail] = selF(prv > newValue, prv, newValue)
 					if rank <= lookbackTotal {
 						hiV = sorted[hiRank]
 					}
@@ -588,36 +564,36 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 					}
 					layout = 1
 				}
-				var _T18 int32
+				var _T14 int32
 				if head == 0 {
-					_T18 = lookbackTotal
+					_T14 = lookbackTotal
 				} else {
-					_T18 = head - 1
+					_T14 = head - 1
 				}
-				freeSlot = _T18
-				var _T19 int32
+				freeSlot = _T14
+				var _T15 int32
 				if freeSlot == 0 {
-					_T19 = lookbackTotal
+					_T15 = lookbackTotal
 				} else {
-					_T19 = freeSlot - 1
+					_T15 = freeSlot - 1
 				}
-				maxSlot = _T19
-				var _T20 int32
+				maxSlot = _T15
+				var _T16 int32
 				if maxSlot == 0 {
-					_T20 = lookbackTotal
+					_T16 = lookbackTotal
 				} else {
-					_T20 = maxSlot - 1
+					_T16 = maxSlot - 1
 				}
-				nextSlot = _T20
+				nextSlot = _T16
 				if newValue >= sorted[maxSlot] && oldValue <= sorted[head] {
 					sorted[freeSlot] = newValue
-					var _T21 int32
+					var _T17 int32
 					if head == lookbackTotal {
-						_T21 = 0
+						_T17 = 0
 					} else {
-						_T21 = head + 1
+						_T17 = head + 1
 					}
-					head = _T21
+					head = _T17
 				} else if newValue < sorted[head] && oldValue > sorted[nextSlot] {
 					sorted[freeSlot] = newValue
 					head = freeSlot
@@ -629,158 +605,158 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 						half = (len_ + 3) / 4
 						o3 = len_ - half
 						o2 = half + half
-						var _T22 int32
+						var _T18 int32
 						if bp < optInTimePeriod-half {
-							_T22 = bp + half
+							_T18 = bp + half
 						} else {
-							_T22 = bp + half - optInTimePeriod
+							_T18 = bp + half - optInTimePeriod
 						}
-						q1 = _T22
-						var _T23 int32
+						q1 = _T18
+						var _T19 int32
 						if bp < optInTimePeriod-o2 {
-							_T23 = bp + o2
+							_T19 = bp + o2
 						} else {
-							_T23 = bp + o2 - optInTimePeriod
+							_T19 = bp + o2 - optInTimePeriod
 						}
-						q2 = _T23
-						var _T24 int32
+						q2 = _T19
+						var _T20 int32
 						if bp < optInTimePeriod-o3 {
-							_T24 = bp + o3
+							_T20 = bp + o3
 						} else {
-							_T24 = bp + o3 - optInTimePeriod
+							_T20 = bp + o3 - optInTimePeriod
 						}
-						q3 = _T24
-						var _T25 int32
+						q3 = _T20
+						var _T21 int32
 						if bq < optInTimePeriod-half {
-							_T25 = bq + half
+							_T21 = bq + half
 						} else {
-							_T25 = bq + half - optInTimePeriod
+							_T21 = bq + half - optInTimePeriod
 						}
-						p1 = _T25
-						var _T26 int32
+						p1 = _T21
+						var _T22 int32
 						if bq < optInTimePeriod-o2 {
-							_T26 = bq + o2
+							_T22 = bq + o2
 						} else {
-							_T26 = bq + o2 - optInTimePeriod
+							_T22 = bq + o2 - optInTimePeriod
 						}
-						p2 = _T26
-						var _T27 int32
+						p2 = _T22
+						var _T23 int32
 						if bq < optInTimePeriod-o3 {
-							_T27 = bq + o3
+							_T23 = bq + o3
 						} else {
-							_T27 = bq + o3 - optInTimePeriod
+							_T23 = bq + o3 - optInTimePeriod
 						}
-						p3 = _T27
-						var _T28 int32
+						p3 = _T23
+						var _T24 int32
 						if sorted[q1] <= newValue {
-							_T28 = q1
+							_T24 = q1
 						} else {
-							_T28 = bp
+							_T24 = bp
 						}
-						bp = _T28
-						var _T29 int32
+						bp = _T24
+						var _T25 int32
 						if sorted[q2] <= newValue {
-							_T29 = q2
+							_T25 = q2
 						} else {
-							_T29 = bp
+							_T25 = bp
 						}
-						bp = _T29
-						var _T30 int32
+						bp = _T25
+						var _T26 int32
 						if sorted[q3] <= newValue {
-							_T30 = q3
+							_T26 = q3
 						} else {
-							_T30 = bp
+							_T26 = bp
 						}
-						bp = _T30
-						var _T31 int32
+						bp = _T26
+						var _T27 int32
 						if sorted[p1] < oldValue {
-							_T31 = p1
+							_T27 = p1
 						} else {
-							_T31 = bq
+							_T27 = bq
 						}
-						bq = _T31
-						var _T32 int32
+						bq = _T27
+						var _T28 int32
 						if sorted[p2] < oldValue {
-							_T32 = p2
+							_T28 = p2
 						} else {
-							_T32 = bq
+							_T28 = bq
 						}
-						bq = _T32
-						var _T33 int32
+						bq = _T28
+						var _T29 int32
 						if sorted[p3] < oldValue {
-							_T33 = p3
+							_T29 = p3
+						} else {
+							_T29 = bq
+						}
+						bq = _T29
+						len_ = half
+					}
+					if len_ > 1 {
+						var _T30 int32
+						if bp < lookbackTotal {
+							_T30 = bp + 1
+						} else {
+							_T30 = 0
+						}
+						sP = _T30
+						var _T31 int32
+						if bq < lookbackTotal {
+							_T31 = bq + 1
+						} else {
+							_T31 = 0
+						}
+						sQ = _T31
+						var _T32 int32
+						if sorted[sP] <= newValue {
+							_T32 = sP
+						} else {
+							_T32 = bp
+						}
+						bp = _T32
+						var _T33 int32
+						if sorted[sQ] < oldValue {
+							_T33 = sQ
 						} else {
 							_T33 = bq
 						}
 						bq = _T33
-						len_ = half
 					}
-					if len_ > 1 {
-						var _T34 int32
-						if bp < lookbackTotal {
-							_T34 = bp + 1
-						} else {
-							_T34 = 0
-						}
-						sP = _T34
-						var _T35 int32
-						if bq < lookbackTotal {
-							_T35 = bq + 1
-						} else {
-							_T35 = 0
-						}
-						sQ = _T35
-						var _T36 int32
-						if sorted[sP] <= newValue {
-							_T36 = sP
-						} else {
-							_T36 = bp
-						}
-						bp = _T36
-						var _T37 int32
-						if sorted[sQ] < oldValue {
-							_T37 = sQ
-						} else {
-							_T37 = bq
-						}
-						bq = _T37
-					}
-					var _T38 int32
+					var _T34 int32
 					if bp >= freeSlot {
-						_T38 = bp - freeSlot
+						_T34 = bp - freeSlot
 					} else {
-						_T38 = bp + optInTimePeriod - freeSlot
+						_T34 = bp + optInTimePeriod - freeSlot
 					}
-					pos = _T38
-					var _T39 int32
+					pos = _T34
+					var _T35 int32
 					if bq >= freeSlot {
-						_T39 = bq - freeSlot
+						_T35 = bq - freeSlot
 					} else {
-						_T39 = bq + optInTimePeriod - freeSlot
+						_T35 = bq + optInTimePeriod - freeSlot
 					}
-					del = _T39
-					var _T40 int32
+					del = _T35
+					var _T36 int32
 					if del < pos {
-						_T40 = pos - 1 - del
+						_T36 = pos - 1 - del
 					} else {
-						_T40 = del - pos
+						_T36 = del - pos
 					}
-					gain = _T40
+					gain = _T36
 					seg = lookbackTotal + lookbackTotal/4*3
-					var _T41 int32
+					var _T37 int32
 					if saving+gain+gain > seg {
-						_T41 = saving + gain + gain - seg
+						_T37 = saving + gain + gain - seg
 					} else {
-						_T41 = 0
+						_T37 = 0
 					}
-					saving = _T41
-					var _T42 int32
+					saving = _T37
+					var _T38 int32
 					if saving < lookbackTotal*16 {
-						_T42 = saving
+						_T38 = saving
 					} else {
-						_T42 = lookbackTotal * 16
+						_T38 = lookbackTotal * 16
 					}
-					saving = _T42
+					saving = _T38
 					slot = head + del
 					if slot >= optInTimePeriod {
 						slot -= optInTimePeriod
@@ -798,13 +774,13 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 						if dn == 1 {
 							head = freeSlot
 						} else {
-							var _T43 int32
+							var _T39 int32
 							if head == lookbackTotal {
-								_T43 = 0
+								_T39 = 0
 							} else {
-								_T43 = head + 1
+								_T39 = head + 1
 							}
-							head = _T43
+							head = _T39
 						}
 					}
 					if dn == 1 {
@@ -910,48 +886,48 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 					u1 = del + half
 					u2 = del + o2
 					u3 = del + o3
-					var _T44 int32
+					var _T40 int32
 					if sorted[t1-1] <= newValue {
-						_T44 = t1
+						_T40 = t1
 					} else {
-						_T44 = pos
+						_T40 = pos
 					}
-					pos = _T44
-					var _T45 int32
+					pos = _T40
+					var _T41 int32
 					if sorted[t2-1] <= newValue {
-						_T45 = t2
+						_T41 = t2
 					} else {
-						_T45 = pos
+						_T41 = pos
 					}
-					pos = _T45
-					var _T46 int32
+					pos = _T41
+					var _T42 int32
 					if sorted[t3-1] <= newValue {
-						_T46 = t3
+						_T42 = t3
 					} else {
-						_T46 = pos
+						_T42 = pos
 					}
-					pos = _T46
-					var _T47 int32
+					pos = _T42
+					var _T43 int32
 					if sorted[u1-1] < oldValue {
-						_T47 = u1
+						_T43 = u1
 					} else {
-						_T47 = del
+						_T43 = del
 					}
-					del = _T47
-					var _T48 int32
+					del = _T43
+					var _T44 int32
 					if sorted[u2-1] < oldValue {
-						_T48 = u2
+						_T44 = u2
 					} else {
-						_T48 = del
+						_T44 = del
 					}
-					del = _T48
-					var _T49 int32
+					del = _T44
+					var _T45 int32
 					if sorted[u3-1] < oldValue {
-						_T49 = u3
+						_T45 = u3
 					} else {
-						_T49 = del
+						_T45 = del
 					}
-					del = _T49
+					del = _T45
 					len_ = half
 				}
 				if len_ > 1 {
@@ -962,34 +938,34 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 				del += b2i(pendNew < oldValue)
 				dp = b2i(pendOld <= newValue)
 				dq = b2i(pendOld < oldValue)
-				var _T50 int32
+				var _T46 int32
 				if pos > dp {
-					_T50 = pos - dp
+					_T46 = pos - dp
 				} else {
-					_T50 = 0
+					_T46 = 0
 				}
-				pos = _T50
-				var _T51 int32
+				pos = _T46
+				var _T47 int32
 				if del > dq {
-					_T51 = del - dq
+					_T47 = del - dq
 				} else {
-					_T51 = 0
+					_T47 = 0
 				}
-				del = _T51
-				var _T52 int32
+				del = _T47
+				var _T48 int32
 				if pos < lookbackTotal {
-					_T52 = pos
+					_T48 = pos
 				} else {
-					_T52 = lookbackTotal
+					_T48 = lookbackTotal
 				}
-				pos = _T52
-				var _T53 int32
+				pos = _T48
+				var _T49 int32
 				if del < lookbackTotal {
-					_T53 = del
+					_T49 = del
 				} else {
-					_T53 = lookbackTotal
+					_T49 = lookbackTotal
 				}
-				del = _T53
+				del = _T49
 				if pendDel < pendPos {
 					k = pendDel
 					if k < pendPos-1 {
@@ -1010,84 +986,84 @@ func (c *Core) percentileImpl(startIdx, endIdx int32, inReal []float64, optInTim
 				pendDel = del
 				pendNew = newValue
 				pendOld = oldValue
-				var _T54 int32
+				var _T50 int32
 				if pos == del+lookbackTotal || del == pos+lookbackTotal-1 {
-					_T54 = runLen + 1
+					_T50 = runLen + 1
 				} else {
-					_T54 = 0
+					_T50 = 0
 				}
-				runLen = _T54
+				runLen = _T50
 				if lookbackTotal >= 300 {
-					var _T55 int32
+					var _T51 int32
 					if del < pos {
-						_T55 = pos - 1 - del
+						_T51 = pos - 1 - del
 					} else {
-						_T55 = del - pos
+						_T51 = del - pos
 					}
-					gain = _T55
+					gain = _T51
 					seg = lookbackTotal + lookbackTotal/4*3
-					var _T56 int32
+					var _T52 int32
 					if saving+gain+gain > seg {
-						_T56 = saving + gain + gain - seg
+						_T52 = saving + gain + gain - seg
 					} else {
-						_T56 = 0
+						_T52 = 0
 					}
-					saving = _T56
+					saving = _T52
 				}
 				if runLen >= 4 || saving > lookbackTotal*8 {
 					layout = 2
 				}
 			}
 			if layout != 1 {
-				var _T57 int32
+				var _T53 int32
 				if pendDel < pendPos {
-					_T57 = pendPos - 1
+					_T53 = pendPos - 1
 				} else {
-					_T57 = pendPos
+					_T53 = pendPos
 				}
-				pp = _T57
-				var _T58 int32
+				pp = _T53
+				var _T54 int32
 				if hiRank > pp {
-					_T58 = hiRank - 1
+					_T54 = hiRank - 1
 				} else {
-					_T58 = hiRank
+					_T54 = hiRank
 				}
-				hiSlot = _T58
+				hiSlot = _T54
 				hiSlot += b2i(hiSlot >= pendDel)
-				var _T59 int32
+				var _T55 int32
 				if hiRank == pp {
-					_T59 = lookbackTotal
+					_T55 = lookbackTotal
 				} else {
-					_T59 = hiSlot
+					_T55 = hiSlot
 				}
-				hiSlot = _T59
-				var _T60 int32
+				hiSlot = _T55
+				var _T56 int32
 				if loRank > pp {
-					_T60 = loRank - 1
+					_T56 = loRank - 1
 				} else {
-					_T60 = loRank
+					_T56 = loRank
 				}
-				loSlot = _T60
+				loSlot = _T56
 				loSlot += b2i(loSlot >= pendDel)
-				var _T61 int32
+				var _T57 int32
 				if loRank == pp {
-					_T61 = lookbackTotal
+					_T57 = lookbackTotal
 				} else {
-					_T61 = loSlot
+					_T57 = loSlot
 				}
-				loSlot = _T61
+				loSlot = _T57
 			} else {
 				hiSlot = head + hiRank
 				if hiSlot >= optInTimePeriod {
 					hiSlot -= optInTimePeriod
 				}
-				var _T62 int32
+				var _T58 int32
 				if hiSlot == 0 {
-					_T62 = lookbackTotal
+					_T58 = lookbackTotal
 				} else {
-					_T62 = hiSlot - 1
+					_T58 = hiSlot - 1
 				}
-				loSlot = _T62
+				loSlot = _T58
 			}
 			if rank <= lookbackTotal {
 				hiV = sorted[hiSlot]
@@ -2438,22 +2414,10 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 		newValue = inReal[i]
 		result = newValue
 		if rank <= lookbackTotal {
-			var _T59 float64
-			if result < hiV {
-				_T59 = result
-			} else {
-				_T59 = hiV
-			}
-			result = _T59
+			result = selF(result < hiV, result, hiV)
 		}
 		if rank > 1 {
-			var _T60 float64
-			if result < loV {
-				_T60 = loV
-			} else {
-				_T60 = result
-			}
-			result = _T60
+			result = selF(result < loV, loV, result)
 		}
 		outReal[outIdx*outStride] = result
 		outIdx += 1
@@ -2482,26 +2446,26 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 						if jh >= optInTimePeriod {
 							jh -= optInTimePeriod
 						}
-						var _T61 int32
+						var _T59 int32
 						if jh == 0 {
-							_T61 = lookbackTotal
+							_T59 = lookbackTotal
 						} else {
-							_T61 = jh - 1
+							_T59 = jh - 1
 						}
-						jl = _T61
+						jl = _T59
 					} else {
 						trend = 2
 						jh = ring_Idx + (optInTimePeriod - rank)
 						if jh >= optInTimePeriod {
 							jh -= optInTimePeriod
 						}
-						var _T62 int32
+						var _T60 int32
 						if jh == lookbackTotal {
-							_T62 = 0
+							_T60 = 0
 						} else {
-							_T62 = jh + 1
+							_T60 = jh + 1
 						}
-						jl = _T62
+						jl = _T60
 					}
 					if rank <= lookbackTotal {
 						hiV = ring[jh]
@@ -2516,13 +2480,13 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 							k = 0
 							for k < lookbackTotal {
 								sorted[k] = ring[j]
-								var _T63 int32
+								var _T61 int32
 								if j == lookbackTotal {
-									_T63 = 0
+									_T61 = 0
 								} else {
-									_T63 = j + 1
+									_T61 = j + 1
 								}
-								j = _T63
+								j = _T61
 								k += 1
 							}
 						} else {
@@ -2533,13 +2497,13 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 							k = 0
 							for k < lookbackTotal {
 								sorted[k] = ring[j]
-								var _T64 int32
+								var _T62 int32
 								if j == 0 {
-									_T64 = lookbackTotal
+									_T62 = lookbackTotal
 								} else {
-									_T64 = j - 1
+									_T62 = j - 1
 								}
-								j = _T64
+								j = _T62
 								k += 1
 							}
 						}
@@ -2547,59 +2511,53 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 					}
 					sorted[lookbackTotal] = newValue
 					cur = sorted[0]
-					var _T65 float64
-					if newValue < cur {
-						_T65 = newValue
-					} else {
-						_T65 = cur
-					}
-					prv = _T65
+					prv = selF(newValue < cur, newValue, cur)
 					k = 0
 					for {
 						nxt = sorted[k+1]
 						nx2 = sorted[k+2]
-						var _T66 float64
+						var _T63 float64
 						if cur < oldValue {
-							_T66 = cur
+							_T63 = cur
 						} else {
-							_T66 = nxt
+							_T63 = nxt
 						}
-						ins = _T66
-						var _T67 float64
+						ins = _T63
+						var _T64 float64
 						if nxt < oldValue {
-							_T67 = nxt
+							_T64 = nxt
 						} else {
-							_T67 = nx2
+							_T64 = nx2
 						}
-						in2 = _T67
-						var _T68 float64
+						in2 = _T64
+						var _T65 float64
 						if newValue < ins {
-							_T68 = newValue
+							_T65 = newValue
 						} else {
-							_T68 = ins
+							_T65 = ins
 						}
-						res = _T68
-						var _T69 float64
+						res = _T65
+						var _T66 float64
 						if prv > res {
-							_T69 = prv
+							_T66 = prv
 						} else {
-							_T69 = res
+							_T66 = res
 						}
-						sorted[k] = _T69
-						var _T70 float64
+						sorted[k] = _T66
+						var _T67 float64
 						if newValue < in2 {
-							_T70 = newValue
+							_T67 = newValue
 						} else {
-							_T70 = in2
+							_T67 = in2
 						}
-						res = _T70
-						var _T71 float64
+						res = _T67
+						var _T68 float64
 						if ins > res {
-							_T71 = ins
+							_T68 = ins
 						} else {
-							_T71 = res
+							_T68 = res
 						}
-						sorted[k+1] = _T71
+						sorted[k+1] = _T68
 						prv = in2
 						cur = nx2
 						k += 2
@@ -2607,13 +2565,7 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 							break
 						}
 					}
-					var _T72 float64
-					if prv > newValue {
-						_T72 = prv
-					} else {
-						_T72 = newValue
-					}
-					sorted[tail] = _T72
+					sorted[tail] = selF(prv > newValue, prv, newValue)
 					if rank <= lookbackTotal {
 						hiV = sorted[hiRank]
 					}
@@ -2642,36 +2594,36 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 					}
 					layout = 1
 				}
-				var _T73 int32
+				var _T69 int32
 				if head == 0 {
-					_T73 = lookbackTotal
+					_T69 = lookbackTotal
 				} else {
-					_T73 = head - 1
+					_T69 = head - 1
 				}
-				freeSlot = _T73
-				var _T74 int32
+				freeSlot = _T69
+				var _T70 int32
 				if freeSlot == 0 {
-					_T74 = lookbackTotal
+					_T70 = lookbackTotal
 				} else {
-					_T74 = freeSlot - 1
+					_T70 = freeSlot - 1
 				}
-				maxSlot = _T74
-				var _T75 int32
+				maxSlot = _T70
+				var _T71 int32
 				if maxSlot == 0 {
-					_T75 = lookbackTotal
+					_T71 = lookbackTotal
 				} else {
-					_T75 = maxSlot - 1
+					_T71 = maxSlot - 1
 				}
-				nextSlot = _T75
+				nextSlot = _T71
 				if newValue >= sorted[maxSlot] && oldValue <= sorted[head] {
 					sorted[freeSlot] = newValue
-					var _T76 int32
+					var _T72 int32
 					if head == lookbackTotal {
-						_T76 = 0
+						_T72 = 0
 					} else {
-						_T76 = head + 1
+						_T72 = head + 1
 					}
-					head = _T76
+					head = _T72
 				} else if newValue < sorted[head] && oldValue > sorted[nextSlot] {
 					sorted[freeSlot] = newValue
 					head = freeSlot
@@ -2683,158 +2635,158 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 						half = (len_ + 3) / 4
 						o3 = len_ - half
 						o2 = half + half
-						var _T77 int32
+						var _T73 int32
 						if bp < optInTimePeriod-half {
-							_T77 = bp + half
+							_T73 = bp + half
 						} else {
-							_T77 = bp + half - optInTimePeriod
+							_T73 = bp + half - optInTimePeriod
 						}
-						q1 = _T77
-						var _T78 int32
+						q1 = _T73
+						var _T74 int32
 						if bp < optInTimePeriod-o2 {
-							_T78 = bp + o2
+							_T74 = bp + o2
 						} else {
-							_T78 = bp + o2 - optInTimePeriod
+							_T74 = bp + o2 - optInTimePeriod
 						}
-						q2 = _T78
-						var _T79 int32
+						q2 = _T74
+						var _T75 int32
 						if bp < optInTimePeriod-o3 {
-							_T79 = bp + o3
+							_T75 = bp + o3
 						} else {
-							_T79 = bp + o3 - optInTimePeriod
+							_T75 = bp + o3 - optInTimePeriod
 						}
-						q3 = _T79
-						var _T80 int32
+						q3 = _T75
+						var _T76 int32
 						if bq < optInTimePeriod-half {
-							_T80 = bq + half
+							_T76 = bq + half
 						} else {
-							_T80 = bq + half - optInTimePeriod
+							_T76 = bq + half - optInTimePeriod
 						}
-						p1 = _T80
-						var _T81 int32
+						p1 = _T76
+						var _T77 int32
 						if bq < optInTimePeriod-o2 {
-							_T81 = bq + o2
+							_T77 = bq + o2
 						} else {
-							_T81 = bq + o2 - optInTimePeriod
+							_T77 = bq + o2 - optInTimePeriod
 						}
-						p2 = _T81
-						var _T82 int32
+						p2 = _T77
+						var _T78 int32
 						if bq < optInTimePeriod-o3 {
-							_T82 = bq + o3
+							_T78 = bq + o3
 						} else {
-							_T82 = bq + o3 - optInTimePeriod
+							_T78 = bq + o3 - optInTimePeriod
 						}
-						p3 = _T82
-						var _T83 int32
+						p3 = _T78
+						var _T79 int32
 						if sorted[q1] <= newValue {
-							_T83 = q1
+							_T79 = q1
 						} else {
-							_T83 = bp
+							_T79 = bp
 						}
-						bp = _T83
-						var _T84 int32
+						bp = _T79
+						var _T80 int32
 						if sorted[q2] <= newValue {
-							_T84 = q2
+							_T80 = q2
 						} else {
-							_T84 = bp
+							_T80 = bp
 						}
-						bp = _T84
-						var _T85 int32
+						bp = _T80
+						var _T81 int32
 						if sorted[q3] <= newValue {
-							_T85 = q3
+							_T81 = q3
 						} else {
-							_T85 = bp
+							_T81 = bp
 						}
-						bp = _T85
-						var _T86 int32
+						bp = _T81
+						var _T82 int32
 						if sorted[p1] < oldValue {
-							_T86 = p1
+							_T82 = p1
 						} else {
-							_T86 = bq
+							_T82 = bq
 						}
-						bq = _T86
-						var _T87 int32
+						bq = _T82
+						var _T83 int32
 						if sorted[p2] < oldValue {
-							_T87 = p2
+							_T83 = p2
 						} else {
-							_T87 = bq
+							_T83 = bq
 						}
-						bq = _T87
-						var _T88 int32
+						bq = _T83
+						var _T84 int32
 						if sorted[p3] < oldValue {
-							_T88 = p3
+							_T84 = p3
+						} else {
+							_T84 = bq
+						}
+						bq = _T84
+						len_ = half
+					}
+					if len_ > 1 {
+						var _T85 int32
+						if bp < lookbackTotal {
+							_T85 = bp + 1
+						} else {
+							_T85 = 0
+						}
+						sP = _T85
+						var _T86 int32
+						if bq < lookbackTotal {
+							_T86 = bq + 1
+						} else {
+							_T86 = 0
+						}
+						sQ = _T86
+						var _T87 int32
+						if sorted[sP] <= newValue {
+							_T87 = sP
+						} else {
+							_T87 = bp
+						}
+						bp = _T87
+						var _T88 int32
+						if sorted[sQ] < oldValue {
+							_T88 = sQ
 						} else {
 							_T88 = bq
 						}
 						bq = _T88
-						len_ = half
 					}
-					if len_ > 1 {
-						var _T89 int32
-						if bp < lookbackTotal {
-							_T89 = bp + 1
-						} else {
-							_T89 = 0
-						}
-						sP = _T89
-						var _T90 int32
-						if bq < lookbackTotal {
-							_T90 = bq + 1
-						} else {
-							_T90 = 0
-						}
-						sQ = _T90
-						var _T91 int32
-						if sorted[sP] <= newValue {
-							_T91 = sP
-						} else {
-							_T91 = bp
-						}
-						bp = _T91
-						var _T92 int32
-						if sorted[sQ] < oldValue {
-							_T92 = sQ
-						} else {
-							_T92 = bq
-						}
-						bq = _T92
-					}
-					var _T93 int32
+					var _T89 int32
 					if bp >= freeSlot {
-						_T93 = bp - freeSlot
+						_T89 = bp - freeSlot
 					} else {
-						_T93 = bp + optInTimePeriod - freeSlot
+						_T89 = bp + optInTimePeriod - freeSlot
 					}
-					pos = _T93
-					var _T94 int32
+					pos = _T89
+					var _T90 int32
 					if bq >= freeSlot {
-						_T94 = bq - freeSlot
+						_T90 = bq - freeSlot
 					} else {
-						_T94 = bq + optInTimePeriod - freeSlot
+						_T90 = bq + optInTimePeriod - freeSlot
 					}
-					del = _T94
-					var _T95 int32
+					del = _T90
+					var _T91 int32
 					if del < pos {
-						_T95 = pos - 1 - del
+						_T91 = pos - 1 - del
 					} else {
-						_T95 = del - pos
+						_T91 = del - pos
 					}
-					gain = _T95
+					gain = _T91
 					seg = lookbackTotal + lookbackTotal/4*3
-					var _T96 int32
+					var _T92 int32
 					if saving+gain+gain > seg {
-						_T96 = saving + gain + gain - seg
+						_T92 = saving + gain + gain - seg
 					} else {
-						_T96 = 0
+						_T92 = 0
 					}
-					saving = _T96
-					var _T97 int32
+					saving = _T92
+					var _T93 int32
 					if saving < lookbackTotal*16 {
-						_T97 = saving
+						_T93 = saving
 					} else {
-						_T97 = lookbackTotal * 16
+						_T93 = lookbackTotal * 16
 					}
-					saving = _T97
+					saving = _T93
 					slot = head + del
 					if slot >= optInTimePeriod {
 						slot -= optInTimePeriod
@@ -2852,13 +2804,13 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 						if dn == 1 {
 							head = freeSlot
 						} else {
-							var _T98 int32
+							var _T94 int32
 							if head == lookbackTotal {
-								_T98 = 0
+								_T94 = 0
 							} else {
-								_T98 = head + 1
+								_T94 = head + 1
 							}
-							head = _T98
+							head = _T94
 						}
 					}
 					if dn == 1 {
@@ -2964,48 +2916,48 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 					u1 = del + half
 					u2 = del + o2
 					u3 = del + o3
-					var _T99 int32
+					var _T95 int32
 					if sorted[t1-1] <= newValue {
-						_T99 = t1
+						_T95 = t1
 					} else {
-						_T99 = pos
+						_T95 = pos
 					}
-					pos = _T99
-					var _T100 int32
+					pos = _T95
+					var _T96 int32
 					if sorted[t2-1] <= newValue {
-						_T100 = t2
+						_T96 = t2
 					} else {
-						_T100 = pos
+						_T96 = pos
 					}
-					pos = _T100
-					var _T101 int32
+					pos = _T96
+					var _T97 int32
 					if sorted[t3-1] <= newValue {
-						_T101 = t3
+						_T97 = t3
 					} else {
-						_T101 = pos
+						_T97 = pos
 					}
-					pos = _T101
-					var _T102 int32
+					pos = _T97
+					var _T98 int32
 					if sorted[u1-1] < oldValue {
-						_T102 = u1
+						_T98 = u1
 					} else {
-						_T102 = del
+						_T98 = del
 					}
-					del = _T102
-					var _T103 int32
+					del = _T98
+					var _T99 int32
 					if sorted[u2-1] < oldValue {
-						_T103 = u2
+						_T99 = u2
 					} else {
-						_T103 = del
+						_T99 = del
 					}
-					del = _T103
-					var _T104 int32
+					del = _T99
+					var _T100 int32
 					if sorted[u3-1] < oldValue {
-						_T104 = u3
+						_T100 = u3
 					} else {
-						_T104 = del
+						_T100 = del
 					}
-					del = _T104
+					del = _T100
 					len_ = half
 				}
 				if len_ > 1 {
@@ -3016,34 +2968,34 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 				del += b2i(pendNew < oldValue)
 				dp = b2i(pendOld <= newValue)
 				dq = b2i(pendOld < oldValue)
-				var _T105 int32
+				var _T101 int32
 				if pos > dp {
-					_T105 = pos - dp
+					_T101 = pos - dp
 				} else {
-					_T105 = 0
+					_T101 = 0
 				}
-				pos = _T105
-				var _T106 int32
+				pos = _T101
+				var _T102 int32
 				if del > dq {
-					_T106 = del - dq
+					_T102 = del - dq
 				} else {
-					_T106 = 0
+					_T102 = 0
 				}
-				del = _T106
-				var _T107 int32
+				del = _T102
+				var _T103 int32
 				if pos < lookbackTotal {
-					_T107 = pos
+					_T103 = pos
 				} else {
-					_T107 = lookbackTotal
+					_T103 = lookbackTotal
 				}
-				pos = _T107
-				var _T108 int32
+				pos = _T103
+				var _T104 int32
 				if del < lookbackTotal {
-					_T108 = del
+					_T104 = del
 				} else {
-					_T108 = lookbackTotal
+					_T104 = lookbackTotal
 				}
-				del = _T108
+				del = _T104
 				if pendDel < pendPos {
 					k = pendDel
 					if k < pendPos-1 {
@@ -3064,84 +3016,84 @@ func (c *Core) percentileOpenImpl(sp *PERCENTILEStream, inReal []float64, startI
 				pendDel = del
 				pendNew = newValue
 				pendOld = oldValue
-				var _T109 int32
+				var _T105 int32
 				if pos == del+lookbackTotal || del == pos+lookbackTotal-1 {
-					_T109 = runLen + 1
+					_T105 = runLen + 1
 				} else {
-					_T109 = 0
+					_T105 = 0
 				}
-				runLen = _T109
+				runLen = _T105
 				if lookbackTotal >= 300 {
-					var _T110 int32
+					var _T106 int32
 					if del < pos {
-						_T110 = pos - 1 - del
+						_T106 = pos - 1 - del
 					} else {
-						_T110 = del - pos
+						_T106 = del - pos
 					}
-					gain = _T110
+					gain = _T106
 					seg = lookbackTotal + lookbackTotal/4*3
-					var _T111 int32
+					var _T107 int32
 					if saving+gain+gain > seg {
-						_T111 = saving + gain + gain - seg
+						_T107 = saving + gain + gain - seg
 					} else {
-						_T111 = 0
+						_T107 = 0
 					}
-					saving = _T111
+					saving = _T107
 				}
 				if runLen >= 4 || saving > lookbackTotal*8 {
 					layout = 2
 				}
 			}
 			if layout != 1 {
-				var _T112 int32
+				var _T108 int32
 				if pendDel < pendPos {
-					_T112 = pendPos - 1
+					_T108 = pendPos - 1
 				} else {
-					_T112 = pendPos
+					_T108 = pendPos
 				}
-				pp = _T112
-				var _T113 int32
+				pp = _T108
+				var _T109 int32
 				if hiRank > pp {
-					_T113 = hiRank - 1
+					_T109 = hiRank - 1
 				} else {
-					_T113 = hiRank
+					_T109 = hiRank
 				}
-				hiSlot = _T113
+				hiSlot = _T109
 				hiSlot += b2i(hiSlot >= pendDel)
-				var _T114 int32
+				var _T110 int32
 				if hiRank == pp {
-					_T114 = lookbackTotal
+					_T110 = lookbackTotal
 				} else {
-					_T114 = hiSlot
+					_T110 = hiSlot
 				}
-				hiSlot = _T114
-				var _T115 int32
+				hiSlot = _T110
+				var _T111 int32
 				if loRank > pp {
-					_T115 = loRank - 1
+					_T111 = loRank - 1
 				} else {
-					_T115 = loRank
+					_T111 = loRank
 				}
-				loSlot = _T115
+				loSlot = _T111
 				loSlot += b2i(loSlot >= pendDel)
-				var _T116 int32
+				var _T112 int32
 				if loRank == pp {
-					_T116 = lookbackTotal
+					_T112 = lookbackTotal
 				} else {
-					_T116 = loSlot
+					_T112 = loSlot
 				}
-				loSlot = _T116
+				loSlot = _T112
 			} else {
 				hiSlot = head + hiRank
 				if hiSlot >= optInTimePeriod {
 					hiSlot -= optInTimePeriod
 				}
-				var _T117 int32
+				var _T113 int32
 				if hiSlot == 0 {
-					_T117 = lookbackTotal
+					_T113 = lookbackTotal
 				} else {
-					_T117 = hiSlot - 1
+					_T113 = hiSlot - 1
 				}
-				loSlot = _T117
+				loSlot = _T113
 			}
 			if rank <= lookbackTotal {
 				hiV = sorted[hiSlot]

@@ -110,13 +110,7 @@ func (c *Core) varImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		periodTotal1 += tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 += tempReal
-		var _T0 float64
-		if periodTotal2 > peakTotal2 {
-			_T0 = periodTotal2
-		} else {
-			_T0 = peakTotal2
-		}
-		peakTotal2 = _T0
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanValue1 = float64(periodTotal1 * invPeriod)
 		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 		tempReal = inReal[trailingIdx] - shift
@@ -157,9 +151,7 @@ func (c *Core) varImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 			}
 			peakTotal2 = periodTotal2
-			if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
-				variance = 0.0
-			}
+			variance = selF(variance < float64(1e-12*float64(periodTotal2*invPeriod)), 0.0, variance)
 			tempReal = inReal[windowStart] - shift
 			periodTotal1 -= tempReal
 			tempReal = float64(tempReal * tempReal)
@@ -636,13 +628,7 @@ func (c *Core) varOpenImpl(sp *VARStream, inReal []float64, startIdx, optInTimeP
 		periodTotal1 += tempReal
 		tempReal = float64(tempReal * tempReal)
 		periodTotal2 += tempReal
-		var _T7 float64
-		if periodTotal2 > peakTotal2 {
-			_T7 = periodTotal2
-		} else {
-			_T7 = peakTotal2
-		}
-		peakTotal2 = _T7
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanValue1 = float64(periodTotal1 * invPeriod)
 		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 		tempReal = inReal[trailingIdx] - shift
@@ -683,9 +669,7 @@ func (c *Core) varOpenImpl(sp *VARStream, inReal []float64, startIdx, optInTimeP
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
 			}
 			peakTotal2 = periodTotal2
-			if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
-				variance = 0.0
-			}
+			variance = selF(variance < float64(1e-12*float64(periodTotal2*invPeriod)), 0.0, variance)
 			tempReal = inReal[windowStart] - shift
 			periodTotal1 -= tempReal
 			tempReal = float64(tempReal * tempReal)

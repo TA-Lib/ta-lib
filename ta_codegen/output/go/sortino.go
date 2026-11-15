@@ -161,20 +161,8 @@ func (c *Core) sortinoImpl(startIdx, endIdx int32, inReal []float64, optInTimePe
 		} else if dev > 0.0 {
 			nbAbove += 1
 		}
-		var _T0 float64
-		if downTotal > peakDown {
-			_T0 = downTotal
-		} else {
-			_T0 = peakDown
-		}
-		peakDown = _T0
-		var _T1 float64
-		if absTotal > peakAbs {
-			_T1 = absTotal
-		} else {
-			_T1 = peakAbs
-		}
-		peakAbs = _T1
+		peakDown = selF(downTotal > peakDown, downTotal, peakDown)
+		peakAbs = selF(absTotal > peakAbs, absTotal, peakAbs)
 		windowTotal = periodTotal
 		windowDown = downTotal
 		windowAbs = absTotal
@@ -834,20 +822,8 @@ func (c *Core) sortinoOpenImpl(sp *SORTINOStream, inReal []float64, startIdx, op
 		} else if dev > 0.0 {
 			nbAbove += 1
 		}
-		var _T9 float64
-		if downTotal > peakDown {
-			_T9 = downTotal
-		} else {
-			_T9 = peakDown
-		}
-		peakDown = _T9
-		var _T10 float64
-		if absTotal > peakAbs {
-			_T10 = absTotal
-		} else {
-			_T10 = peakAbs
-		}
-		peakAbs = _T10
+		peakDown = selF(downTotal > peakDown, downTotal, peakDown)
+		peakAbs = selF(absTotal > peakAbs, absTotal, peakAbs)
 		windowTotal = periodTotal
 		windowDown = downTotal
 		windowAbs = absTotal

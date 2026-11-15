@@ -147,13 +147,7 @@ func (c *Core) sharpeImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 		dev = ret - shift
 		periodTotal1 += dev
 		periodTotal2 += float64(dev * dev)
-		var _T0 float64
-		if periodTotal2 > peakTotal2 {
-			_T0 = periodTotal2
-		} else {
-			_T0 = peakTotal2
-		}
-		peakTotal2 = _T0
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanDev = float64(periodTotal1 * invPeriod)
 		moment2 = periodTotal2 - float64(meanDev*periodTotal1)
 		trailingPrevPrice = inReal[trailingIdx]
@@ -857,13 +851,7 @@ func (c *Core) sharpeOpenImpl(sp *SHARPEStream, inReal []float64, startIdx, optI
 		dev = ret - shift
 		periodTotal1 += dev
 		periodTotal2 += float64(dev * dev)
-		var _T13 float64
-		if periodTotal2 > peakTotal2 {
-			_T13 = periodTotal2
-		} else {
-			_T13 = peakTotal2
-		}
-		peakTotal2 = _T13
+		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 		meanDev = float64(periodTotal1 * invPeriod)
 		moment2 = periodTotal2 - float64(meanDev*periodTotal1)
 		trailingPrevPrice = inReal[trailingIdx]

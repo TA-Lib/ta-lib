@@ -231,9 +231,13 @@ func (sp *TRANGEStream) Update(inHigh, inLow, inClose float64) (float64, error) 
 	tempCY = sp.lag1_inClose
 	greatest = tempHT - tempLT
 	val2 = math.Abs(tempCY - tempHT)
-	greatest = selF(val2 > greatest, val2, greatest)
+	if val2 > greatest {
+		greatest = val2
+	}
 	val3 = math.Abs(tempCY - tempLT)
-	greatest = selF(val3 > greatest, val3, greatest)
+	if val3 > greatest {
+		greatest = val3
+	}
 	sp.cur_outReal = greatest
 	sp.lag1_inClose = inClose
 	return sp.cur_outReal, nil

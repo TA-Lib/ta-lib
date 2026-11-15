@@ -225,10 +225,8 @@ func (c *Core) kvoImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		dmToday = inHigh[today] - inLow[today]
 		if hlc > prevHlc {
 			trend = 1.0
-		} else if hlc < prevHlc {
-			trend = -1.0
 		} else {
-			trend = prevTrend
+			trend = selF(hlc < prevHlc, -1.0, prevTrend)
 		}
 		if trend != prevTrend {
 			cm = prevDm + dmToday
@@ -677,10 +675,8 @@ func (c *Core) kvoOpenImpl(sp *KVOStream, inHigh, inLow, inClose, inVolume []flo
 		dmToday = inHigh[today] - inLow[today]
 		if hlc > prevHlc {
 			trend = 1.0
-		} else if hlc < prevHlc {
-			trend = -1.0
 		} else {
-			trend = prevTrend
+			trend = selF(hlc < prevHlc, -1.0, prevTrend)
 		}
 		if trend != prevTrend {
 			cm = prevDm + dmToday

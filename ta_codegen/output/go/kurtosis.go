@@ -127,12 +127,8 @@ func (c *Core) kurtosisImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 		total2 += dev2
 		total3 += float64(dev2 * dev)
 		total4 += float64(dev2 * dev2)
-		if total2 > peak2 {
-			peak2 = total2
-		}
-		if total4 > peak4 {
-			peak4 = total4
-		}
+		peak2 = selF(total2 > peak2, total2, peak2)
+		peak4 = selF(total4 > peak4, total4, peak4)
 		residue = float64(total1 * invPeriod)
 		residueSq = float64(residue * residue)
 		moment2 = total2 - float64(dPeriod*residueSq)
@@ -744,12 +740,8 @@ func (c *Core) kurtosisOpenImpl(sp *KURTOSISStream, inReal []float64, startIdx, 
 		total2 += dev2
 		total3 += float64(dev2 * dev)
 		total4 += float64(dev2 * dev2)
-		if total2 > peak2 {
-			peak2 = total2
-		}
-		if total4 > peak4 {
-			peak4 = total4
-		}
+		peak2 = selF(total2 > peak2, total2, peak2)
+		peak4 = selF(total4 > peak4, total4, peak4)
 		residue = float64(total1 * invPeriod)
 		residueSq = float64(residue * residue)
 		moment2 = total2 - float64(dPeriod*residueSq)

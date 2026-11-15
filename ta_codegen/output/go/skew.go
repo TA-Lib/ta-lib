@@ -118,9 +118,7 @@ func (c *Core) skewImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		total1 += dev
 		total2 += dev2
 		total3 += float64(dev2 * dev)
-		if total2 > peak2 {
-			peak2 = total2
-		}
+		peak2 = selF(total2 > peak2, total2, peak2)
 		residue = float64(total1 * invPeriod)
 		residueSq = float64(residue * residue)
 		moment2 = total2 - float64(dPeriod*residueSq)
@@ -694,9 +692,7 @@ func (c *Core) skewOpenImpl(sp *SKEWStream, inReal []float64, startIdx, optInTim
 		total1 += dev
 		total2 += dev2
 		total3 += float64(dev2 * dev)
-		if total2 > peak2 {
-			peak2 = total2
-		}
+		peak2 = selF(total2 > peak2, total2, peak2)
 		residue = float64(total1 * invPeriod)
 		residueSq = float64(residue * residue)
 		moment2 = total2 - float64(dPeriod*residueSq)

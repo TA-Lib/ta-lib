@@ -124,20 +124,8 @@ func (c *Core) correlImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, op
 		sumXY += float64(x * y)
 		sumY += y
 		sumY2 += float64(y * y)
-		var _T0 float64
-		if sumX2 > peakX2 {
-			_T0 = sumX2
-		} else {
-			_T0 = peakX2
-		}
-		peakX2 = _T0
-		var _T1 float64
-		if sumY2 > peakY2 {
-			_T1 = sumY2
-		} else {
-			_T1 = peakY2
-		}
-		peakY2 = _T1
+		peakX2 = selF(sumX2 > peakX2, sumX2, peakX2)
+		peakY2 = selF(sumY2 > peakY2, sumY2, peakY2)
 		ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 		ssY = sumY2 - float64(float64(sumY*sumY)*invPeriod)
 		spXY = sumXY - float64(float64(sumX*sumY)*invPeriod)
@@ -861,20 +849,8 @@ func (c *Core) correlOpenImpl(sp *CORRELStream, inReal0, inReal1 []float64, star
 		sumXY += float64(x * y)
 		sumY += y
 		sumY2 += float64(y * y)
-		var _T10 float64
-		if sumX2 > peakX2 {
-			_T10 = sumX2
-		} else {
-			_T10 = peakX2
-		}
-		peakX2 = _T10
-		var _T11 float64
-		if sumY2 > peakY2 {
-			_T11 = sumY2
-		} else {
-			_T11 = peakY2
-		}
-		peakY2 = _T11
+		peakX2 = selF(sumX2 > peakX2, sumX2, peakX2)
+		peakY2 = selF(sumY2 > peakY2, sumY2, peakY2)
 		ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 		ssY = sumY2 - float64(float64(sumY*sumY)*invPeriod)
 		spXY = sumXY - float64(float64(sumX*sumY)*invPeriod)

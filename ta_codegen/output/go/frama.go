@@ -219,43 +219,23 @@ func (c *Core) framaImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInT
 			preHigh = tmpHigh
 			preLow = tmpLow
 		} else {
-			if tmpHigh > preHigh {
-				preHigh = tmpHigh
-			}
-			if tmpLow < preLow {
-				preLow = tmpLow
-			}
+			preHigh = selF(tmpHigh > preHigh, tmpHigh, preHigh)
+			preLow = selF(tmpLow < preLow, tmpLow, preLow)
 		}
 		if slot_Idx == lastSlot {
 			hi1 = preHigh
 			lo1 = preLow
 		} else {
 			hi1 = slot_sufHigh[slot_Idx+1]
-			if preHigh > hi1 {
-				hi1 = preHigh
-			}
+			hi1 = selF(preHigh > hi1, preHigh, hi1)
 			lo1 = slot_sufLow[slot_Idx+1]
-			if preLow < lo1 {
-				lo1 = preLow
-			}
+			lo1 = selF(preLow < lo1, preLow, lo1)
 		}
 		hi2 = slot_oldHigh[slot_Idx]
 		lo2 = slot_oldLow[slot_Idx]
 		r1 = hi1 - lo1
 		r2 = hi2 - lo2
-		var _T0 float64
-		if hi1 > hi2 {
-			_T0 = hi1
-		} else {
-			_T0 = hi2
-		}
-		var _T1 float64
-		if lo1 < lo2 {
-			_T1 = lo1
-		} else {
-			_T1 = lo2
-		}
-		r = _T0 - _T1
+		r = selF(hi1 > hi2, hi1, hi2) - selF(lo1 < lo2, lo1, lo2)
 		if r1 > 0.0 && r2 > 0.0 && r1+r2 > r {
 			alpha = math.Exp(float64(expScale * math.Log((r1+r2)/r)))
 			prevFRAMA = math.FMA(1.0-alpha, prevFRAMA, float64(alpha*price))
@@ -743,43 +723,23 @@ func (c *Core) framaOpenImpl(sp *FRAMAStream, inHigh, inLow []float64, startIdx,
 			preHigh = tmpHigh
 			preLow = tmpLow
 		} else {
-			if tmpHigh > preHigh {
-				preHigh = tmpHigh
-			}
-			if tmpLow < preLow {
-				preLow = tmpLow
-			}
+			preHigh = selF(tmpHigh > preHigh, tmpHigh, preHigh)
+			preLow = selF(tmpLow < preLow, tmpLow, preLow)
 		}
 		if slot_Idx == lastSlot {
 			hi1 = preHigh
 			lo1 = preLow
 		} else {
 			hi1 = slot_sufHigh[slot_Idx+1]
-			if preHigh > hi1 {
-				hi1 = preHigh
-			}
+			hi1 = selF(preHigh > hi1, preHigh, hi1)
 			lo1 = slot_sufLow[slot_Idx+1]
-			if preLow < lo1 {
-				lo1 = preLow
-			}
+			lo1 = selF(preLow < lo1, preLow, lo1)
 		}
 		hi2 = slot_oldHigh[slot_Idx]
 		lo2 = slot_oldLow[slot_Idx]
 		r1 = hi1 - lo1
 		r2 = hi2 - lo2
-		var _T0 float64
-		if hi1 > hi2 {
-			_T0 = hi1
-		} else {
-			_T0 = hi2
-		}
-		var _T1 float64
-		if lo1 < lo2 {
-			_T1 = lo1
-		} else {
-			_T1 = lo2
-		}
-		r = _T0 - _T1
+		r = selF(hi1 > hi2, hi1, hi2) - selF(lo1 < lo2, lo1, lo2)
 		if r1 > 0.0 && r2 > 0.0 && r1+r2 > r {
 			alpha = math.Exp(float64(expScale * math.Log((r1+r2)/r)))
 			prevFRAMA = math.FMA(1.0-alpha, prevFRAMA, float64(alpha*price))

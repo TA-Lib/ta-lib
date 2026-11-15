@@ -150,13 +150,7 @@ func (c *Core) rogerssatchellImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 		periodTotal += term
 		windowTotal = periodTotal
 		windowMagnitude = math.Abs(windowTotal)
-		var _T0 float64
-		if windowMagnitude > peakTotal {
-			_T0 = windowMagnitude
-		} else {
-			_T0 = peakTotal
-		}
-		peakTotal = _T0
+		peakTotal = selF(windowMagnitude > peakTotal, windowMagnitude, peakTotal)
 		termRing_Idx++
 		if termRing_Idx > maxIdx_termRing {
 			termRing_Idx = 0
@@ -632,13 +626,7 @@ func (c *Core) rogerssatchellOpenImpl(sp *ROGERSSATCHELLStream, inOpen, inHigh, 
 		periodTotal += term
 		windowTotal = periodTotal
 		windowMagnitude = math.Abs(windowTotal)
-		var _T4 float64
-		if windowMagnitude > peakTotal {
-			_T4 = windowMagnitude
-		} else {
-			_T4 = peakTotal
-		}
-		peakTotal = _T4
+		peakTotal = selF(windowMagnitude > peakTotal, windowMagnitude, peakTotal)
 		termRing_Idx++
 		if termRing_Idx > maxIdx_termRing {
 			termRing_Idx = 0
