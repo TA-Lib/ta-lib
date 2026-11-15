@@ -269,6 +269,10 @@ pub fn emit_rust_unpacking_from(
 /// `RangeType` enum there, so it is read via `.ordinal()` into the `int` local the
 /// candle ternaries compare against (`RealBody`=0, `HighLow`=1, `Shadows`=2). Shared
 /// with the JSON-RPC Java server, whose `Core` mirrors this array + `RangeType` model.
+///
+/// Java keeps the reads nothing uses: HotSpot C2 inlines a lookback either way,
+/// and without them it compiles the callers' bar loops differently, slower on
+/// several candlesticks.
 pub fn emit_java_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
     let pad = " ".repeat(indent);
     let mut out = String::new();
@@ -314,6 +318,50 @@ pub fn emit_csharp_unpacking(settings: &BTreeSet<String>, indent: usize) -> Stri
         out.push_str(&format!(
             "{pad}double {setting}_factor = this._candleSettings[(int)CandleSettingType.{setting}]._factor;\n"
         ));
+    }
+    out
+}
+
+/// `src` without the `<Setting>_<prop>` declarations nothing in their scope
+/// reads, for a backend that unpacks all three properties of each setting a
+/// body names. A declaration is one line typed `int` or `double`, and its
+/// scope ends where indentation drops below it.
+#[must_use]
+pub fn drop_unread_setting_locals(src: &str) -> String {
+    fn declared(l: &str) -> Option<&str> {
+        let t = l.trim_start();
+        let rest = ["int ", "double "].iter().find_map(|k| t.strip_prefix(k))?;
+        let name = rest.split([' ', ':', '=']).next()?;
+        (is_setting_property(name) && t.ends_with(';')).then_some(name)
+    }
+    let lines: Vec<&str> = src.lines().collect();
+    let indent = |l: &str| l.len() - l.trim_start().len();
+    let reads = |l: &str, name: &str| {
+        let code = l.find("//").map_or(l, |i| &l[..i]);
+        code.match_indices(name).any(|(at, _)| {
+            let before = code[..at].chars().next_back();
+            let after = code[at + name.len()..].chars().next();
+            !before.is_some_and(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+                && !after.is_some_and(|c| c.is_ascii_alphanumeric() || c == '_')
+        })
+    };
+    let mut keep = vec![true; lines.len()];
+    for (k, l) in lines.iter().enumerate() {
+        let Some(name) = declared(l) else { continue };
+        let depth = indent(l);
+        let read = lines[k + 1..]
+            .iter()
+            .take_while(|m| m.trim().is_empty() || indent(m) >= depth)
+            .any(|m| reads(m, name));
+        keep[k] = read;
+    }
+    let mut out = String::with_capacity(src.len());
+    for (l, _) in lines.iter().zip(&keep).filter(|(_, k)| **k) {
+        out.push_str(l);
+        out.push('\n');
+    }
+    if !src.ends_with('\n') {
+        out.pop();
     }
     out
 }
@@ -456,6 +504,15 @@ mod tests {
         assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();"));
         assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;"));
         assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;"));
+    }
+
+    #[test]
+    fn an_unread_setting_property_goes_and_a_read_one_stays() {
+        let src = "   int f()\n   {\n      int Near_avgPeriod = s.a;\n      double Near_factor = s.f;\n      if( x ) {\n         int Far_rangeType = s.r;\n      }\n      return Near_avgPeriod;\n   }\n";
+        assert_eq!(
+            drop_unread_setting_locals(src),
+            "   int f()\n   {\n      int Near_avgPeriod = s.a;\n      if( x ) {\n      }\n      return Near_avgPeriod;\n   }\n"
+        );
     }
 
     #[test]

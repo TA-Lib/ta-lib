@@ -367,3 +367,29 @@ fn rust_colour_macros_select_on_x86_64_only() {
         assert_eq!(src.matches(&format!("macro_rules! {name} ")).count(), 2, "{name}: one arm per cfg");
     }
 }
+
+/// Inlined into its batch or stream frame, a candlestick's lookback makes
+/// RyuJIT allocate that frame's registers differently, and the open runs slower
+/// with no instruction saved; nothing but timing would notice the attribute go.
+#[test]
+fn a_csharp_lookback_that_reads_candle_settings_stays_out_of_line() {
+    if common::sweep_filtered() {
+        return;
+    }
+    let attr = "   [MethodImpl(MethodImplOptions.NoInlining)]";
+    let registry = common::make_registry();
+    let mut pinned = 0usize;
+    for name in common::discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let s = backends::csharp::generate(&func, &enums, registry, common::make_helpers());
+        let lines: Vec<&str> = s.lines().collect();
+        let Some(at) = lines.iter().position(|l| l.starts_with("   public int ") && l.contains("Lookback(")) else {
+            continue;
+        };
+        let end = lines[at..].iter().position(|l| *l == "   }").map_or(lines.len(), |k| at + k);
+        let reads = lines[at..end].iter().any(|l| l.contains("_candleSettings["));
+        assert_eq!(lines[at - 1] == attr, reads, "{name}: NoInlining must sit on exactly the lookbacks that read candle settings");
+        pinned += usize::from(reads);
+    }
+    assert!(pinned >= 55, "expected the candlestick lookbacks, saw {pinned}");
+}

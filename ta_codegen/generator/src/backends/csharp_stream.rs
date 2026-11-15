@@ -464,6 +464,16 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    crate::candle_settings::drop_unread_setting_locals(&generate_unpruned(func, enums, registry, helpers))
+}
+
+#[allow(clippy::implicit_hasher)]
+fn generate_unpruned(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
     // Resolve `PRAGMA TA_ALT` here too: `generate` has direct callers. Nothing
     // below may read `func.body`.
     let resolved = func.resolved_for(crate::ir::Lang::CSharp);
