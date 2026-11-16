@@ -94,8 +94,18 @@ import "ta-lib.github.io/go/abstract"
 
 f, ok := abstract.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
 
+overlay := f.HasFlags(abstract.FuncOverlap)   // true: drawn over the price chart
+
+opt := f.OptInputs()[0]   // ParamName "optInTimePeriod"
+if d, isRange := opt.Domain.(abstract.IntegerRange); isRange {
+	fmt.Println(d.Min, d.Max, d.Default)   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
 for _, fi := range abstract.All() {
-	fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+	if fi.HasFlags(abstract.FuncUsesTranscendental) {
+		fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+	}
 }
 ```
 
