@@ -273,6 +273,8 @@ pub(super) struct Ctx<'a> {
     /// What each loop of a batch body leaves live, by its address. A loop
     /// missing from it keeps every last value.
     live_after: std::cell::RefCell<HashMap<usize, BTreeSet<String>>>,
+    /// The batch body's [`super::go_lockstep::branched_loops`].
+    branched: std::cell::RefCell<HashSet<usize>>,
 }
 
 /// A lockstep loop as it renders: the pass count, the counter, a name per
@@ -431,6 +433,7 @@ impl<'a> Ctx<'a> {
             end_fixed: Cell::new(false),
             lock: std::cell::RefCell::new(None),
             live_after: std::cell::RefCell::new(HashMap::new()),
+            branched: std::cell::RefCell::new(HashSet::new()),
         }
     }
 
@@ -477,6 +480,7 @@ impl<'a> Ctx<'a> {
             end_fixed: Cell::new(false),
             lock: std::cell::RefCell::new(None),
             live_after: std::cell::RefCell::new(HashMap::new()),
+            branched: std::cell::RefCell::new(HashSet::new()),
         }
     }
 
@@ -1399,17 +1403,24 @@ impl<'a> Ctx<'a> {
     /// count once as an `int`, one re-slice per lane, a fresh counter ranging
     /// over the first, and after it each index read later takes its last
     /// value. `false` renders the loop as written.
-    fn lockstep_loop(&self, s: &Statement, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, out: &mut Vec<String>) -> bool {
-        use super::go_lockstep::{plan, Env, Trip};
-        if !self.lockstep.get() || self.lock.borrow().is_some() {
-            return false;
-        }
+    /// What [`super::go_lockstep::plan`] needs to know of this body.
+    fn with_lockstep_env<R>(&self, branched: bool, f: impl FnOnce(&super::go_lockstep::Env) -> R) -> R {
         let int_local = |n: &str| self.env.lookup(n) == Some(CType::Int32) && retcode_name(n).is_none() && !self.arrays.contains(n);
         let contract = |n: &str| self.contract.borrow().get(n).copied();
         let fixed_end = |e: &Expr| self.end_fixed.get() && matches!(e, Expr::Var(n) if n == "endIdx");
         let reg = self.svc.registry;
         let cross_call = |n: &str| reg.contains(n) && MathFn::from_name(n).is_none();
-        let Ok(plan) = plan(condition, body, update, &Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call }) else {
+        let int_expr = |e: &Expr| self.env.type_of(e).numeric() == CType::Int32;
+        f(&super::go_lockstep::Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call, int_expr: &int_expr, branched })
+    }
+
+    fn lockstep_loop(&self, s: &Statement, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, out: &mut Vec<String>) -> bool {
+        use super::go_lockstep::{plan, Trip};
+        if !self.lockstep.get() || self.lock.borrow().is_some() {
+            return false;
+        }
+        let branched = self.branched.borrow().contains(&super::go_select::addr(s));
+        let Ok(plan) = self.with_lockstep_env(branched, |env| plan(condition, body, update, env)) else {
             return false;
         };
         let pure = |e: &Expr| {
@@ -1503,7 +1514,8 @@ impl<'a> Ctx<'a> {
     /// The loop by [`super::go_lockstep::capped`], in any tier: capped at
     /// `min(K, B)` passes, and the variable left at `K` where read later.
     fn capped_loop(&self, s: &Statement, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) -> bool {
-        let Some(c) = super::go_lockstep::capped(init, condition, update, body) else { return false };
+        let int_expr = |e: &Expr| self.env.type_of(e).numeric() == CType::Int32;
+        let Some(c) = super::go_lockstep::capped(init, condition, update, body, &int_expr) else { return false };
         let mut sc = Scope::default();
         let b = self.lower_as(c.bound, CType::Int32, &mut sc);
         if !sc.is_empty() {
@@ -2062,18 +2074,23 @@ impl Ctx<'_> {
         let copies = range_type_copies(body, func);
         if self.lockstep.get() {
             let mut map = self.live_after.borrow_mut();
+            let mut branched = HashSet::new();
             match &copies {
                 None => {
                     super::go_lockstep::live_after_loops(body, BTreeSet::new(), &mut map);
+                    self.with_lockstep_env(false, |env| super::go_lockstep::branched_loops(body, env, &mut branched));
                 }
                 Some(c) => {
                     let mut tail = BTreeSet::new();
                     for arm in &c.arms {
                         tail.extend(super::go_lockstep::live_after_loops(&arm.body, BTreeSet::new(), &mut map));
+                        self.with_lockstep_env(false, |env| super::go_lockstep::branched_loops(&arm.body, env, &mut branched));
                     }
                     super::go_lockstep::live_after_loops(&c.head, tail, &mut map);
+                    self.with_lockstep_env(false, |env| super::go_lockstep::branched_loops(&c.head, env, &mut branched));
                 }
             }
+            *self.branched.borrow_mut() = branched;
         }
         let Some(copies) = copies else { return top(body, out) };
         top(&copies.head, out);

@@ -131,13 +131,9 @@ func (c *Core) medianImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 				}
 			}
 			j = nbSorted
-			if _n0 := int(j) - int(lo); _n0 > 0 {
-				_r2 := sorted[j-int32(_n0):][:_n0]
-				_r3 := sorted[j+1-int32(_n0):][:_n0]
-				for _k1 := _n0 - 1; _k1 >= 0; _k1-- {
-					_r3[_k1] = _r2[_k1]
-				}
-				j -= int32(_n0)
+			for j > lo {
+				sorted[j] = sorted[j-1]
+				j -= 1
 			}
 		}
 		sorted[j] = newValue
@@ -216,20 +212,20 @@ func (c *Core) medianImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 			j = lo
 		}
 		if j < pos {
-			if _n4 := int(pos-1) - int(j); _n4 > 0 {
-				_r6 := sorted[j+1:][:_n4]
-				_r7 := sorted[j:][:_n4]
-				for _k5 := range _r6 {
-					_r7[_k5] = _r6[_k5]
+			if _n0 := int(pos-1) - int(j); _n0 > 0 {
+				_r2 := sorted[j+1:][:_n0]
+				_r3 := sorted[j:][:_n0]
+				for _k1 := range _r2 {
+					_r3[_k1] = _r2[_k1]
 				}
 			}
 			sorted[pos-1] = newValue
 		} else {
-			if _n8 := int(j) - int(pos); _n8 > 0 {
-				_r10 := sorted[j-int32(_n8):][:_n8]
-				_r11 := sorted[j+1-int32(_n8):][:_n8]
-				for _k9 := _n8 - 1; _k9 >= 0; _k9-- {
-					_r11[_k9] = _r10[_k9]
+			if _n4 := int(j) - int(pos); _n4 > 0 {
+				_r6 := sorted[j-int32(_n4):][:_n4]
+				_r7 := sorted[j+1-int32(_n4):][:_n4]
+				for _k5 := _n4 - 1; _k5 >= 0; _k5-- {
+					_r7[_k5] = _r6[_k5]
 				}
 			}
 			sorted[pos] = newValue

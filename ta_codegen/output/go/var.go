@@ -127,25 +127,17 @@ func (c *Core) varImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			barsSinceReseed = 32 * optInTimePeriod
 			windowStart = i - nbInitialElementNeeded
 			tempReal = 0.0
-			j = windowStart
-			if _n3 := int(i) - int(j) + 1; _n3 > 0 {
-				_r5 := inReal[j:][:_n3]
-				for _k4 := range _r5 {
-					tempReal += _r5[_k4]
-				}
+			for j = windowStart; j <= i; j += 1 {
+				tempReal += inReal[j]
 			}
 			shift = float64(tempReal * invPeriod)
 			periodTotal1 = 0.0
 			periodTotal2 = 0.0
-			j = windowStart
-			if _n6 := int(i) - int(j) + 1; _n6 > 0 {
-				_r8 := inReal[j:][:_n6]
-				for _k7 := range _r8 {
-					tempReal = _r8[_k7] - shift
-					periodTotal1 += tempReal
-					tempReal = float64(tempReal * tempReal)
-					periodTotal2 += tempReal
-				}
+			for j = windowStart; j <= i; j += 1 {
+				tempReal = inReal[j] - shift
+				periodTotal1 += tempReal
+				tempReal = float64(tempReal * tempReal)
+				periodTotal2 += tempReal
 			}
 			meanValue1 = float64(periodTotal1 * invPeriod)
 			variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
@@ -153,15 +145,11 @@ func (c *Core) varImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				shift = inReal[i]
 				periodTotal1 = 0.0
 				periodTotal2 = 0.0
-				j = windowStart
-				if _n9 := int(i) - int(j) + 1; _n9 > 0 {
-					_r11 := inReal[j:][:_n9]
-					for _k10 := range _r11 {
-						tempReal = _r11[_k10] - shift
-						periodTotal1 += tempReal
-						tempReal = float64(tempReal * tempReal)
-						periodTotal2 += tempReal
-					}
+				for j = windowStart; j <= i; j += 1 {
+					tempReal = inReal[j] - shift
+					periodTotal1 += tempReal
+					tempReal = float64(tempReal * tempReal)
+					periodTotal2 += tempReal
 				}
 				meanValue1 = float64(periodTotal1 * invPeriod)
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)

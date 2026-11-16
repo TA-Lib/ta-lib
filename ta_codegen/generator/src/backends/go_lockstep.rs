@@ -11,7 +11,7 @@
 //! B) S` runs `S` for `v` below `min(K, B)` and nothing else, so it stops
 //! there.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use super::lockstep::{as_step, each_access, eager_call, flatten, form, invariant, linear, shifted, step, substitute, Facts, Names, Reach};
 use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, Statement};
@@ -35,6 +35,11 @@ pub(super) struct Env<'a> {
     /// `endIdx` itself, never assigned in the body.
     pub fixed_end: &'a dyn Fn(&Expr) -> bool,
     pub cross_call: &'a dyn Fn(&str) -> bool,
+    /// An expression of C integer type: a real bound would run a different
+    /// number of passes once converted to the `int` count.
+    pub int_expr: &'a dyn Fn(&Expr) -> bool,
+    /// The loop is one [`branched_loops`] returns.
+    pub branched: bool,
 }
 
 /// One re-slice: `array[start:][:n]`, element `k` being what `array[inv + var
@@ -95,13 +100,17 @@ pub(super) enum Refusal {
     /// A `return`, or a `break` / `continue` of this loop.
     Exit,
     CrossCall,
-    /// The counter is not an index, or the bound moves.
+    /// The counter is not an index, or the bound moves or is not an integer.
     Counter,
     /// An index the loop keeps from one pass to the next, taken from a moving
     /// one: a scan that tracks where its extreme is.
     IndexTracking,
     /// Nothing to re-slice.
     NoLane,
+    /// Skipped by some pass of a loop over bars ([`branched_loops`]): it would
+    /// save its checks on some bars only, while what its re-slices hold stays live
+    /// across every bar and pushes that loop's own indices to the stack.
+    Branched,
 }
 
 /// `while( cond ) body`, or with `update` the rest of
@@ -144,7 +153,7 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
 
     let facts = Facts::of(&pass);
     let steps: BTreeMap<String, i64> = facts.induction().into_iter().filter(|(v, _)| (env.int_local)(v)).collect();
-    if steps.get(&f.counter) != Some(&f.step) || !invariant(&f.bound, &facts) {
+    if steps.get(&f.counter) != Some(&f.step) || !invariant(&f.bound, &facts) || !(env.int_expr)(&f.bound) {
         return Err(Refusal::Counter);
     }
     let int_assigned: BTreeSet<&String> = facts.other.iter().filter(|v| (env.int_local)(v) && !steps.contains_key(*v)).collect();
@@ -169,6 +178,9 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
     }
     if lanes.is_empty() {
         return Err(Refusal::NoLane);
+    }
+    if env.branched {
+        return Err(Refusal::Branched);
     }
     Ok(Plan { counter: f.counter, trip, steps, facts, lanes, down, pass, before })
 }
@@ -572,6 +584,61 @@ pub(super) fn scratch(body: &[Statement]) -> Vec<String> {
     out
 }
 
+/// The loops of `body` that some pass of an enclosing loop over bars skips,
+/// by address: an `if` or `switch` lies between them that is not one whose
+/// every arm, `else` or `default` included, runs outside any further branch
+/// a loop [`plan`] takes. A loop over bars moves some index by one on every pass; a block
+/// scan's pass loop, which moves its indices by a block, is none, so its arms
+/// keep their passes.
+pub(super) fn branched_loops(body: &[Statement], env: &Env, out: &mut HashSet<usize>) {
+    fn over_bars(s: &Statement, env: &Env) -> bool {
+        let (body, update) = match s {
+            Statement::For { .. } => return true,
+            Statement::While { body, .. } | Statement::DoWhile { body, .. } => (body, None),
+            Statement::ForC { body, update, .. } => (body, Some(update.as_ref())),
+            _ => return false,
+        };
+        let mut pass = Vec::new();
+        for x in body.iter().chain(update) {
+            inline(x, &mut pass);
+        }
+        Facts::of(&pass).induction().keys().any(|v| (env.int_local)(v))
+    }
+    fn plans(arm: &[Statement], env: &Env) -> bool {
+        arm.iter().any(|s| match s {
+            Statement::While { condition, body } => plan(condition, body, None, env).is_ok(),
+            Statement::ForC { condition, body, update, .. } => plan(condition, body, Some(update), env).is_ok(),
+            Statement::Block { body } => plans(body, env),
+            _ => false,
+        })
+    }
+    fn walk(list: &[Statement], in_bars: bool, branched: bool, env: &Env, out: &mut HashSet<usize>) {
+        for s in list {
+            let arms: Vec<&[Statement]> = match s {
+                Statement::If { then_body, else_body, .. } => vec![then_body, else_body],
+                Statement::Switch { cases, default, .. } => cases.iter().map(|(_, b)| b.as_slice()).chain([default.as_slice()]).collect(),
+                Statement::Block { body } => {
+                    walk(body, in_bars, branched, env, out);
+                    continue;
+                }
+                _ => {
+                    let Some(body) = super::go_select::loop_body(s) else { continue };
+                    if branched {
+                        out.insert(super::go_select::addr(s));
+                    }
+                    walk(body, in_bars || over_bars(s, env), branched, env, out);
+                    continue;
+                }
+            };
+            let every = arms.iter().all(|a| plans(a, env));
+            for a in arms {
+                walk(a, in_bars, branched || (in_bars && !every), env, out);
+            }
+        }
+    }
+    walk(body, false, false, env, out);
+}
+
 // ---------------------------------------------------------------------------
 // The padded constant-cap loop
 // ---------------------------------------------------------------------------
@@ -585,8 +652,8 @@ pub(super) struct Capped<'s> {
 
 /// `for( v = a; v < K; v++ ) { if( v < B ) S }`, `a <= K`, the `if` the whole
 /// body with no `else`, `S` writing neither `v` nor what `B` reads, and
-/// leaving the loop no other way than by its test.
-pub(super) fn capped<'s>(init: &Statement, cond: &Expr, update: &Statement, body: &'s [Statement]) -> Option<Capped<'s>> {
+/// leaving the loop no other way than by its test, and `B` an integer.
+pub(super) fn capped<'s>(init: &Statement, cond: &Expr, update: &Statement, body: &'s [Statement], int_expr: &dyn Fn(&Expr) -> bool) -> Option<Capped<'s>> {
     let Statement::Assign { target: Expr::Var(v), value: Expr::IntLiteral(first), compound: false } = init else { return None };
     let Expr::BinOp(lhs, BinOp::Less, limit) = cond else { return None };
     let (Expr::Var(tested), Expr::IntLiteral(cap)) = (lhs.as_ref(), limit.as_ref()) else { return None };
@@ -598,7 +665,7 @@ pub(super) fn capped<'s>(init: &Statement, cond: &Expr, update: &Statement, body
     let code: Vec<&Statement> = body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
     let [Statement::If { condition, then_body, else_body, .. }] = code.as_slice() else { return None };
     let Expr::BinOp(gl, BinOp::Less, bound) = condition else { return None };
-    if !matches!(gl.as_ref(), Expr::Var(n) if n == v) || !else_body.is_empty() || mentions(bound, v) {
+    if !matches!(gl.as_ref(), Expr::Var(n) if n == v) || !else_body.is_empty() || mentions(bound, v) || !int_expr(bound) {
         return None;
     }
     let facts = Facts::of(then_body);
@@ -772,10 +839,11 @@ impl Live<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::{capped, live_after_loops, plan, Contract, Env, Refusal};
+    use super::{branched_loops, capped, live_after_loops, plan, Contract, Env, Refusal};
+    use crate::backends::go_select::addr;
     use crate::backends::lockstep::{bin, int, step, var};
     use crate::ir::{BinOp, Expr, Statement};
-    use std::collections::{BTreeSet, HashMap};
+    use std::collections::{BTreeSet, HashMap, HashSet};
 
     fn at(a: &str, i: Expr) -> Expr {
         Expr::ArrayAccess(a.into(), Box::new(i))
@@ -784,6 +852,18 @@ mod tests {
         Statement::Assign { target: t, value: e, compound: false }
     }
     fn run(cond: &Expr, body: &[Statement], update: Option<&Statement>) -> Result<super::Plan, Refusal> {
+        run_in(cond, body, update, false)
+    }
+    fn run_in(cond: &Expr, body: &[Statement], update: Option<&Statement>, branched: bool) -> Result<super::Plan, Refusal> {
+        with_env(branched, |env| plan(cond, body, update, env))
+    }
+    /// `r` and every real literal are reals.
+    fn int_expr(e: &Expr) -> bool {
+        let mut real = false;
+        crate::streaming::walk_expr(e, &mut |x| real |= matches!(x, Expr::Literal(_)) || matches!(x, Expr::Var(n) if n == "r"));
+        !real
+    }
+    fn with_env<R>(branched: bool, f: impl FnOnce(&Env) -> R) -> R {
         let int_local = |n: &str| ["i", "o", "t", "n", "h", "j"].contains(&n);
         let contract = |n: &str| match n {
             "in" | "vol" => Some(Contract::Input),
@@ -793,7 +873,7 @@ mod tests {
         };
         let fixed_end = |e: &Expr| matches!(e, Expr::Var(n) if n == "endIdx");
         let cross = |n: &str| n == "TA_SMA";
-        plan(cond, body, update, &Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross })
+        f(&Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross, int_expr: &int_expr, branched })
     }
     fn lanes(p: &super::Plan) -> Vec<(String, String, i64)> {
         p.lanes.iter().map(|l| (l.array.clone(), l.var.clone(), l.elem)).collect()
@@ -888,6 +968,7 @@ mod tests {
         assert_eq!(run(&le_end(), &[set(var("x"), at("scratch", var("i"))), step("i", 1)], None).err(), Some(Refusal::NoLane));
         let moved = set(var("endIdx"), var("x"));
         assert_eq!(run(&le_end(), &[read.clone(), moved, step("i", 1)], None).err(), Some(Refusal::Counter));
+        assert_eq!(run(&bin(var("i"), BinOp::LessEq, var("r")), &[read.clone(), step("i", 1)], None).err(), Some(Refusal::Counter));
         // MAXINDEX: `h` keeps where the extreme was, read before it is written.
         let track = Statement::If {
             condition: bin(var("h"), BinOp::Less, var("t")),
@@ -904,7 +985,37 @@ mod tests {
             else_body: vec![],
             cond_comments: vec![],
         };
-        assert!(run(&le_end(), &[read, reseed, step("i", 1)], None).is_ok());
+        assert!(run(&le_end(), &[read.clone(), reseed, step("i", 1)], None).is_ok());
+        assert_eq!(run_in(&le_end(), &[read, step("i", 1)], None, true).err(), Some(Refusal::Branched));
+    }
+
+    /// Of a loop over bars, a loop on an arm is branched at any depth, unless
+    /// every arm of an `if` with an `else` runs a loop the plan takes; one run
+    /// on every pass is not; nor is a loop on an arm of a block scan's pass
+    /// loop, which moves its index by a block, or of no loop at all.
+    #[test]
+    fn a_loop_on_an_arm_of_a_loop_over_bars_is_branched() {
+        let inner = |v: &str| Statement::While { condition: bin(var(v), BinOp::Less, var("e")), body: vec![set(var("x"), at("in", var(v))), step(v, 1)] };
+        let arm = |then_body: Vec<Statement>, else_body: Vec<Statement>| Statement::If { condition: var("c"), then_body, else_body, cond_comments: vec![] };
+        let bars = Statement::DoWhile {
+            condition: le_end(),
+            body: vec![
+                inner("j"),
+                arm(vec![inner("j"), arm(vec![inner("h")], vec![])], vec![]),
+                arm(vec![inner("j")], vec![inner("h")]),
+                arm(vec![inner("j")], vec![set(var("x"), int(0))]),
+                step("i", 1),
+            ],
+        };
+        let block = Statement::While { condition: bin(var("t"), BinOp::LessEq, var("endIdx")), body: vec![inner("j"), step("t", 1), arm(vec![inner("j")], vec![inner("h"), set(var("t"), bin(var("t"), BinOp::Add, var("n")))])] };
+        let body = vec![arm(vec![inner("j")], vec![]), bars, block];
+        let mut got = HashSet::new();
+        with_env(false, |env| branched_loops(&body, env, &mut got));
+        let Statement::DoWhile { body: b, .. } = &body[1] else { unreachable!() };
+        let Statement::If { then_body: t, .. } = &b[1] else { unreachable!() };
+        let Statement::If { then_body: t2, .. } = &t[1] else { unreachable!() };
+        let Statement::If { then_body: half, .. } = &b[3] else { unreachable!() };
+        assert_eq!(got, HashSet::from([addr(&t[0]), addr(&t2[0]), addr(&half[0])]));
     }
 
     #[test]
@@ -914,20 +1025,21 @@ mod tests {
         let guarded = |b: Expr, s: Vec<Statement>| vec![Statement::If { condition: bin(var("i"), BinOp::Less, b), then_body: s, else_body: vec![], cond_comments: vec![] }];
         let sum = vec![Statement::Assign { target: var("s"), value: at("in", bin(var("t"), BinOp::Sub, var("i"))), compound: true }];
         let body = guarded(var("p"), sum.clone());
-        let c = capped(&init, &cond, &step("i", 1), &body).expect("capped");
+        let c = capped(&init, &cond, &step("i", 1), &body, &int_expr).expect("capped");
         assert_eq!((c.var.as_str(), c.cap), ("i", 50));
         let writes_bound = guarded(var("p"), vec![set(var("p"), int(3))]);
-        assert!(capped(&init, &cond, &step("i", 1), &writes_bound).is_none());
+        assert!(capped(&init, &cond, &step("i", 1), &writes_bound, &int_expr).is_none());
         let writes_var = guarded(var("p"), vec![set(var("i"), int(3))]);
-        assert!(capped(&init, &cond, &step("i", 1), &writes_var).is_none());
+        assert!(capped(&init, &cond, &step("i", 1), &writes_var, &int_expr).is_none());
         let mut with_else = guarded(var("p"), sum.clone());
         if let Statement::If { else_body, .. } = &mut with_else[0] {
             else_body.push(Statement::Break);
         }
-        assert!(capped(&init, &cond, &step("i", 1), &with_else).is_none());
+        assert!(capped(&init, &cond, &step("i", 1), &with_else, &int_expr).is_none());
         let mut two = guarded(var("p"), sum);
         two.push(set(var("x"), int(1)));
-        assert!(capped(&init, &cond, &step("i", 1), &two).is_none());
+        assert!(capped(&init, &cond, &step("i", 1), &two, &int_expr).is_none());
+        assert!(capped(&init, &cond, &step("i", 1), &guarded(var("r"), vec![set(var("x"), int(1))]), &int_expr).is_none(), "a real guard");
     }
 
     #[test]

@@ -185,20 +185,15 @@ func (c *Core) betaImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, optI
 			prev_y = trailing_last_price_y
 			tmp_real = 0.0
 			shift_y = 0.0
-			j = windowStart
-			if _n4 := int(i) - int(j); _n4 > 0 {
-				_r6 := inReal0[j:][:_n4]
-				_r7 := inReal1[j:][:_n4]
-				for _k5 := range _r6 {
-					if prev_x != 0.0 {
-						tmp_real += (_r6[_k5] - prev_x) / prev_x
-					}
-					prev_x = _r6[_k5]
-					if prev_y != 0.0 {
-						shift_y += (_r7[_k5] - prev_y) / prev_y
-					}
-					prev_y = _r7[_k5]
+			for j = windowStart; j < i; j += 1 {
+				if prev_x != 0.0 {
+					tmp_real += (inReal0[j] - prev_x) / prev_x
 				}
+				prev_x = inReal0[j]
+				if prev_y != 0.0 {
+					shift_y += (inReal1[j] - prev_y) / prev_y
+				}
+				prev_y = inReal1[j]
 			}
 			shift_x = tmp_real / n
 			shift_y = shift_y / n
@@ -209,29 +204,24 @@ func (c *Core) betaImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, optI
 			S_xy = 0.0
 			S_x = 0.0
 			S_y = 0.0
-			j = windowStart
-			if _n8 := int(i) - int(j); _n8 > 0 {
-				_r10 := inReal0[j:][:_n8]
-				_r11 := inReal1[j:][:_n8]
-				for _k9 := range _r10 {
-					if prev_x != 0.0 {
-						x = (_r10[_k9]-prev_x)/prev_x - shift_x
-					} else {
-						x = -shift_x
-					}
-					prev_x = _r10[_k9]
-					if prev_y != 0.0 {
-						y = (_r11[_k9]-prev_y)/prev_y - shift_y
-					} else {
-						y = -shift_y
-					}
-					prev_y = _r11[_k9]
-					S_xx += float64(x * x)
-					S_yy += float64(y * y)
-					S_xy += float64(x * y)
-					S_x += x
-					S_y += y
+			for j = windowStart; j < i; j += 1 {
+				if prev_x != 0.0 {
+					x = (inReal0[j]-prev_x)/prev_x - shift_x
+				} else {
+					x = -shift_x
 				}
+				prev_x = inReal0[j]
+				if prev_y != 0.0 {
+					y = (inReal1[j]-prev_y)/prev_y - shift_y
+				} else {
+					y = -shift_y
+				}
+				prev_y = inReal1[j]
+				S_xx += float64(x * x)
+				S_yy += float64(y * y)
+				S_xy += float64(x * y)
+				S_x += x
+				S_y += y
 			}
 			denom_scale = float64(n * S_xx)
 			denom = denom_scale - float64(S_x*S_x)

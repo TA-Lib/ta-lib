@@ -320,7 +320,73 @@ fn go_block_scans_range_over_re_slices() {
             down += usize::from(d);
         }
     }
-    assert!(common::sweep_filtered() || down >= 13, "only {down} loops count down over re-slices");
+    assert!(common::sweep_filtered() || down >= 12, "only {down} loops count down over re-slices");
+}
+
+/// The plain loops of `body` with an `if` or `else` arm between them and an
+/// enclosing loop, that index an array at their own variable.
+fn loops_on_an_arm(body: &str) -> usize {
+    let head = regex::Regex::new(r"^for (\w+) = [^;]+; [^;]+; \w+ [-+]= 1 \{$").unwrap();
+    let lines: Vec<&str> = body.lines().collect();
+    let (mut found, mut stack) = (0usize, Vec::new());
+    for (n, raw) in lines.iter().enumerate() {
+        let line = raw.trim();
+        if line.starts_with('}') {
+            stack.pop();
+        }
+        if !line.ends_with('{') {
+            continue;
+        }
+        if let Some(c) = head.captures(line) {
+            let armed = stack.iter().position(|k| *k == 'f').is_some_and(|f| stack[f..].contains(&'a'));
+            let indent = &raw[..raw.len() - raw.trim_start().len()];
+            let end = n + lines[n..].iter().position(|l| *l == format!("{indent}}}")).expect("the loop closes");
+            let at = regex::Regex::new(&format!(r"\w\[{}(\]| [-+] )", regex::escape(&c[1]))).unwrap();
+            found += usize::from(armed && lines[n + 1..end].iter().any(|l| at.is_match(l)));
+        }
+        let kind = match line {
+            l if l.starts_with("for ") => 'f',
+            l if (l.starts_with("if ") && !l.starts_with("if _n")) || l.starts_with("} else") => 'a',
+            _ => 'o',
+        };
+        stack.push(kind);
+    }
+    found
+}
+
+/// A loop on an arm of a loop over bars runs on some bars only, while what
+/// its re-slices hold would stay live across every bar: VAR's three reseed
+/// loops keep their checks and its prologue loop ranges over a re-slice.
+/// MEDIAN's two shifts sit on the two arms of one `if`/`else`, so one runs on
+/// every bar and both keep their re-slices; its warm-up shift, whose sibling
+/// arm's loop is not one the rule takes, does not. ALMA's window loop, run
+/// on every pass of its outer loop, keeps its re-slices, as the block scans'
+/// passes do (above).
+#[test]
+fn go_a_loop_on_an_arm_of_a_bar_loop_is_not_re_sliced() {
+    if !common::sweep_filtered() {
+        let var = batch_body("var");
+        let loops = re_sliced_loops(&var);
+        assert_eq!(loops.len(), 1, "VAR re-slices a loop besides its prologue:\n{var}");
+        assert!(loops[0].1.iter().any(|(_, a, _)| a == "inReal"), "VAR's prologue loop is not re-sliced:\n{var}");
+        assert_eq!(var.matches("for j = windowStart; j <= i; j += 1 {").count(), 3, "VAR's reseed loops:\n{var}");
+        assert_eq!(loops_on_an_arm(&var), 3, "VAR's reseed loops:\n{var}");
+
+        let median = batch_body("median");
+        let shifts = re_sliced_loops(&median);
+        assert!(shifts.len() == 2 && shifts.iter().all(|(_, cuts, _, _)| cuts.iter().all(|(_, a, _)| a == "sorted")), "MEDIAN's bar-loop shifts are not re-sliced:\n{median}");
+        let both = median.find("\n\t\tif j < pos {\n").expect("MEDIAN's shifts");
+        assert!(median[..both].contains("\n\t\t\tfor j > lo {\n"), "MEDIAN's warm-up shift is re-sliced:\n{median}");
+
+        let alma = batch_body("alma");
+        let window = re_sliced_loops(&alma).into_iter().find(|(_, cuts, _, _)| cuts.iter().any(|(_, a, _)| a == "weights") && cuts.iter().any(|(_, a, _)| a == "inReal"));
+        let (_, cuts, _, _) = window.unwrap_or_else(|| panic!("ALMA's window loop is not re-sliced:\n{alma}"));
+        let at = alma.find(&format!("{} := weights[", cuts.iter().find(|(_, a, _)| a == "weights").expect("weights").0)).expect("the cut");
+        let outer = alma.find("\n\tfor i+3 <= endIdx {\n").expect("ALMA's outer loop");
+        assert!(outer < at && !alma[outer..at].contains("\n\t}\n"), "ALMA's window loop is not nested in its outer loop:\n{alma}");
+    }
+    let sites: usize = common::discover_indicators().iter().map(|n| loops_on_an_arm(&batch_body(n))).sum();
+    assert!(common::sweep_filtered() || sites >= 55, "only {sites} loops on an arm of a loop keep their checks");
 }
 
 /// The factors of each `math.FMA(` call in `src`.
