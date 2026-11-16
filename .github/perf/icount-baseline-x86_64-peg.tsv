@@ -1,13 +1,13 @@
 # Instruction counts per C entry point, from scripts/bench_icount.py.
 # A count is comparable only against the same toolchain line.
-# policy=monotone: a passing run lowers a row it beat and holds every
+# policy=monotone: a run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/15.2.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	4f67b4c01c289486b8b8cf7abbb61a2bdd8bcd0d
-#generated	2026-11-13T12:45:19Z
+#commit	092ca5df7d7bfd6a5ae6801241b58b77e64b6b19
+#generated	2026-11-16T00:32:28Z
 AC	batch	0	647497
 AC	open	0	564093
 AC	openfill	0	604575
@@ -798,8 +798,8 @@ MCGD	open	0	340173
 MCGD	openfill	0	360160
 MCGD	peek	0	40976
 MCGD	update	0	51214
-MEDIAN	batch	0	4215607
-MEDIAN	open	0	4245522
+MEDIAN	batch	0	3765102
+MEDIAN	open	0	3810433
 MEDIAN	openfill	0	3831688
 MEDIAN	peek	0	165968
 MEDIAN	update	0	285133
@@ -885,7 +885,7 @@ PERCENTB	peek	0	150770
 PERCENTB	update	0	251345
 PERCENTILE	batch	0	3489117
 PERCENTILE	open	0	3531534
-PERCENTILE	openfill	0	3555270
+PERCENTILE	openfill	0	3555139
 PERCENTILE	peek	0	35856
 PERCENTILE	update	0	249265
 PERCENTRANK	batch	0	4341800
