@@ -219,8 +219,9 @@ func (c *Core) cdl3starsinsouthImpl(startIdx, endIdx int32, inOpen, inHigh, inLo
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
+			_e1 := math.Abs(inClose[i-2] - inOpen[i-2])
+			BodyLongPeriodTotal += _e1 - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
+			ShadowLongPeriodTotal += _e1 - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
 			ShadowVeryShortPeriodTotalRange0 = (inHigh[i] - inLow[i])
 			ShadowVeryShortPeriodTotalTrailRange0 = (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1)
@@ -1309,8 +1310,9 @@ func (c *Core) cdl3starsinsouthOpenImpl(sp *CDL3STARSINSOUTHStream, inOpen, inHi
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
+			_e2 := math.Abs(inClose[i-2] - inOpen[i-2])
+			BodyLongPeriodTotal += _e2 - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
+			ShadowLongPeriodTotal += _e2 - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
 			ShadowVeryShortPeriodTotalRange0 = (inHigh[i] - inLow[i])
 			ShadowVeryShortPeriodTotalTrailRange0 = (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1)
@@ -1681,8 +1683,9 @@ func (c *Core) cdl3starsinsouthOpenSinkFrame(sp *CDL3STARSINSOUTHStream, inOpen,
 		ShadowVeryShortPeriodTotalTrailRange1 = (inHigh[ShadowVeryShortTrailingIdx-1] - inLow[ShadowVeryShortTrailingIdx-1])
 		for i < endIdx {
 			outIdx += 1
-			BodyLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
+			_e3 := math.Abs(inClose[i-2] - inOpen[i-2])
+			BodyLongPeriodTotal += _e3 - (math.Abs(inClose[BodyLongTrailingIdx-2] - inOpen[BodyLongTrailingIdx-2]))
+			ShadowLongPeriodTotal += _e3 - (math.Abs(inClose[ShadowLongTrailingIdx-2] - inOpen[ShadowLongTrailingIdx-2]))
 			ShadowVeryShortPeriodTotalRange0 = (inHigh[i] - inLow[i])
 			ShadowVeryShortPeriodTotalTrailRange0 = (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1)

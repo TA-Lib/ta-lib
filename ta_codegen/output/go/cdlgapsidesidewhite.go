@@ -161,8 +161,9 @@ func (c *Core) cdlgapsidesidewhiteImpl(startIdx, endIdx int32, inOpen, inHigh, i
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
-			EqualPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
+			_e1 := inHigh[i-1] - inLow[i-1]
+			NearPeriodTotal += _e1 - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
+			EqualPeriodTotal += _e1 - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 			EqualTrailingIdx += 1
@@ -917,8 +918,9 @@ func (c *Core) cdlgapsidesidewhiteOpenImpl(sp *CDLGAPSIDESIDEWHITEStream, inOpen
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
-			EqualPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
+			_e2 := inHigh[i-1] - inLow[i-1]
+			NearPeriodTotal += _e2 - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
+			EqualPeriodTotal += _e2 - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 			EqualTrailingIdx += 1
@@ -1151,8 +1153,9 @@ func (c *Core) cdlgapsidesidewhiteOpenSinkFrame(sp *CDLGAPSIDESIDEWHITEStream, i
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
-			EqualPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
+			_e3 := inHigh[i-1] - inLow[i-1]
+			NearPeriodTotal += _e3 - (inHigh[NearTrailingIdx-1] - inLow[NearTrailingIdx-1])
+			EqualPeriodTotal += _e3 - (inHigh[EqualTrailingIdx-1] - inLow[EqualTrailingIdx-1])
 			i += 1
 			NearTrailingIdx += 1
 			EqualTrailingIdx += 1

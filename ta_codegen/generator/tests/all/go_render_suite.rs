@@ -825,3 +825,54 @@ fn go_an_update_scan_rendered_with_a_select_steps_in_its_loop() {
     let stepped = lines[open..end].iter().any(|l| matches!(l.trim(), "i++" | "i += 1"));
     assert!(stepped && !lines[open..end].iter().any(|l| l.contains("goto ")), "the scan's loop does not step:\n{body}");
 }
+
+fn kama_impl_with(edit: impl Fn(&str) -> String) -> String {
+    let source = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../input/kama/kama.c")).unwrap();
+    let patched = edit(&source);
+    assert_ne!(patched, source, "the edit does not apply");
+    let (func, enums) = common::load_indicator_with_source("kama", &patched);
+    let src = backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers());
+    go_body(&src, "func (c *Core) kamaImpl(").to_string()
+}
+
+/// A real expression two neighbouring statements compute is bound once, in
+/// every tier, unless a store between them could change it or the first one
+/// fuses its product into a sum.
+#[test]
+fn go_binds_an_expression_two_neighbouring_statements_compute() {
+    let (func, enums) = common::load_indicator("kama");
+    let src = backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers());
+    let bound = regex::Regex::new(r"(?m)^\t+(_e\d+) := math\.Abs\(tempReal - [^\n]+\)\n\t+(sp\.)?sumROC1 \+= (_e\d+)\n\t+live = b2i\(!\((_e\d+) <= 0\.0\)\)$").unwrap();
+    for decl in ["func (c *Core) kamaImpl(", "func (sp *KAMAStream) Update(", "func (sp *KAMAStream) Peek("] {
+        let body = go_body(&src, decl);
+        let caps: Vec<_> = bound.captures_iter(body).collect();
+        assert!(!caps.is_empty(), "{decl}: the difference is not bound once");
+        assert!(caps.iter().all(|c| c[1] == c[3] && c[1] == c[4]), "{decl}: the bound local is not the one both uses read");
+        assert_eq!(body.matches("math.Abs(tempReal-").count(), 0, "{decl}: the difference is still computed twice");
+    }
+
+    let unbound = regex::Regex::new(r"_e\d+ := math\.Abs\(tempReal - ").unwrap();
+    let site = "      live = fabs(tempReal - inReal[today-1]) <= 0.0 ? 0 : 1;";
+    for between in ["tempReal = inReal[today];", "outReal[0] = tempReal2;", "periodROC = tempReal2 + ta_true_range(tempReal, tempReal2, periodROC);"] {
+        let body = kama_impl_with(|s| s.replace(site, &format!("      {between}\n{site}")));
+        assert!(!unbound.is_match(&body) && body.contains("math.Abs(tempReal-"), "`{between}` between the uses must keep both computations:\n{body}");
+    }
+
+    let product = "      periodROC = tempReal-tempReal2;\n";
+    let with = |sum: &str| kama_impl_with(|s| s.replacen(product, &format!("{product}      periodROC = (tempReal*tempReal2){sum}periodROC;\n      sumROC1 += tempReal*tempReal2;\n"), 1));
+    let bound_product = regex::Regex::new(r"_e\d+ := float64\(tempReal \* tempReal2\)").unwrap();
+    assert!(bound_product.is_match(&with("-")), "a product two statements round is not bound");
+    let fused = with("+");
+    assert!(fused.contains("math.FMA(tempReal, tempReal2, periodROC)") && !bound_product.is_match(&fused), "a product one statement fuses is bound:\n{fused}");
+
+    let (registry, helpers) = (common::make_registry(), common::make_helpers());
+    let decl = regex::Regex::new(r"(?m)^\t+_e\d+ := ").unwrap();
+    let total: usize = common::discover_indicators()
+        .iter()
+        .map(|name| {
+            let (func, enums) = common::load_indicator(name);
+            decl.find_iter(&backends::go::generate(&func, &enums, registry, helpers)).count()
+        })
+        .sum();
+    assert!(common::sweep_filtered() || total >= 71, "the corpus binds {total} expressions");
+}

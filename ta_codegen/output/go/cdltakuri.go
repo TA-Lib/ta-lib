@@ -137,8 +137,9 @@ func (c *Core) cdltakuriImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inCl
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyDojiPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
-			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
+			_e1 := inHigh[i] - inLow[i]
+			BodyDojiPeriodTotal += _e1 - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
+			ShadowVeryShortPeriodTotal += _e1 - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx]))
 			i += 1
 			BodyDojiTrailingIdx += 1
@@ -787,8 +788,9 @@ func (c *Core) cdltakuriOpenImpl(sp *CDLTAKURIStream, inOpen, inHigh, inLow, inC
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyDojiPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
-			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
+			_e2 := inHigh[i] - inLow[i]
+			BodyDojiPeriodTotal += _e2 - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
+			ShadowVeryShortPeriodTotal += _e2 - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx]))
 			i += 1
 			BodyDojiTrailingIdx += 1
@@ -1005,8 +1007,9 @@ func (c *Core) cdltakuriOpenSinkFrame(sp *CDLTAKURIStream, inOpen, inHigh, inLow
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyDojiPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
-			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
+			_e3 := inHigh[i] - inLow[i]
+			BodyDojiPeriodTotal += _e3 - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx])
+			ShadowVeryShortPeriodTotal += _e3 - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			ShadowVeryLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx]))
 			i += 1
 			BodyDojiTrailingIdx += 1

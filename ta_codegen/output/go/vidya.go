@@ -165,10 +165,11 @@ func (c *Core) vidyaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 			tempReal = _r11[_k10]
 			diff = tempReal - prevValue
 			prevValue = tempReal
-			up = float64((diff + math.Abs(diff)) * 0.5)
+			_e1 := math.Abs(diff)
+			up = float64((diff + _e1) * 0.5)
 			upSum += up
 			downSum += up - diff
-			live = b2i(!(math.Abs(diff) <= 0.0))
+			live = b2i(!(_e1 <= 0.0))
 			nullRun = (nullRun + 1) & (live - 1)
 			sum = upSum + downSum
 			if sum > 0.0 {
@@ -195,10 +196,11 @@ func (c *Core) vidyaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 			tempReal = _r14[_k13]
 			diff = tempReal - prevValue
 			prevValue = tempReal
-			up = float64((diff + math.Abs(diff)) * 0.5)
+			_e2 := math.Abs(diff)
+			up = float64((diff + _e2) * 0.5)
 			upSum += up
 			downSum += up - diff
-			live = b2i(!(math.Abs(diff) <= 0.0))
+			live = b2i(!(_e2 <= 0.0))
 			nullRun = (nullRun + 1) & (live - 1)
 			if nullRun >= optInCMOPeriod {
 				nullRun = optInCMOPeriod
@@ -234,10 +236,11 @@ func (c *Core) vidyaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 			tempReal = _r18[_k17]
 			diff = tempReal - prevValue
 			prevValue = tempReal
-			up = float64((diff + math.Abs(diff)) * 0.5)
+			_e3 := math.Abs(diff)
+			up = float64((diff + _e3) * 0.5)
 			upSum += up
 			downSum += up - diff
-			live = b2i(!(math.Abs(diff) <= 0.0))
+			live = b2i(!(_e3 <= 0.0))
 			nullRun = (nullRun + 1) & (live - 1)
 			if nullRun >= optInCMOPeriod {
 				nullRun = optInCMOPeriod
@@ -449,10 +452,11 @@ func (sp *VIDYAStream) Update(inReal float64) (float64, error) {
 	tempReal = inReal
 	diff = tempReal - sp.prevValue
 	sp.prevValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
+	_e5 := math.Abs(diff)
+	up = float64((diff + _e5) * 0.5)
 	sp.upSum += up
 	sp.downSum += up - diff
-	live = b2i(!(math.Abs(diff) <= 0.0))
+	live = b2i(!(_e5 <= 0.0))
 	sp.nullRun = (sp.nullRun + 1) & (live - 1)
 	if sp.nullRun >= sp.optInCMOPeriod {
 		sp.nullRun = sp.optInCMOPeriod
@@ -511,10 +515,11 @@ func (sp *VIDYAStream) Peek(inReal float64) (float64, error) {
 	tempReal = inReal
 	diff = tempReal - prevValue
 	prevValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
+	_e4 := math.Abs(diff)
+	up = float64((diff + _e4) * 0.5)
 	upSum += up
 	downSum += up - diff
-	live = b2i(!(math.Abs(diff) <= 0.0))
+	live = b2i(!(_e4 <= 0.0))
 	nullRun = (nullRun + 1) & (live - 1)
 	if nullRun >= sp.optInCMOPeriod {
 		nullRun = sp.optInCMOPeriod
@@ -641,10 +646,11 @@ func (c *Core) vidyaOpenImpl(sp *VIDYAStream, inReal []float64, startIdx, optInT
 		tempReal = inReal[today]
 		diff = tempReal - prevValue
 		prevValue = tempReal
-		up = float64((diff + math.Abs(diff)) * 0.5)
+		_e6 := math.Abs(diff)
+		up = float64((diff + _e6) * 0.5)
 		upSum += up
 		downSum += up - diff
-		live = b2i(!(math.Abs(diff) <= 0.0))
+		live = b2i(!(_e6 <= 0.0))
 		nullRun = (nullRun + 1) & (live - 1)
 		sum = upSum + downSum
 		if sum > 0.0 {
@@ -666,10 +672,11 @@ func (c *Core) vidyaOpenImpl(sp *VIDYAStream, inReal []float64, startIdx, optInT
 		tempReal = inReal[today]
 		diff = tempReal - prevValue
 		prevValue = tempReal
-		up = float64((diff + math.Abs(diff)) * 0.5)
+		_e7 := math.Abs(diff)
+		up = float64((diff + _e7) * 0.5)
 		upSum += up
 		downSum += up - diff
-		live = b2i(!(math.Abs(diff) <= 0.0))
+		live = b2i(!(_e7 <= 0.0))
 		nullRun = (nullRun + 1) & (live - 1)
 		if nullRun >= optInCMOPeriod {
 			nullRun = optInCMOPeriod
@@ -700,10 +707,11 @@ func (c *Core) vidyaOpenImpl(sp *VIDYAStream, inReal []float64, startIdx, optInT
 		tempReal = inReal[today]
 		diff = tempReal - prevValue
 		prevValue = tempReal
-		up = float64((diff + math.Abs(diff)) * 0.5)
+		_e8 := math.Abs(diff)
+		up = float64((diff + _e8) * 0.5)
 		upSum += up
 		downSum += up - diff
-		live = b2i(!(math.Abs(diff) <= 0.0))
+		live = b2i(!(_e8 <= 0.0))
 		nullRun = (nullRun + 1) & (live - 1)
 		if nullRun >= optInCMOPeriod {
 			nullRun = optInCMOPeriod
@@ -851,10 +859,11 @@ func vidyaStepTape(sp *VIDYAStream, tape []float64, tapeBase, tapeMask int32, in
 	tempReal = inReal
 	diff = tempReal - sp.prevValue
 	sp.prevValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
+	_e9 := math.Abs(diff)
+	up = float64((diff + _e9) * 0.5)
 	sp.upSum += up
 	sp.downSum += up - diff
-	live = b2i(!(math.Abs(diff) <= 0.0))
+	live = b2i(!(_e9 <= 0.0))
 	sp.nullRun = (sp.nullRun + 1) & (live - 1)
 	if sp.nullRun >= sp.optInCMOPeriod {
 		sp.nullRun = sp.optInCMOPeriod
@@ -897,10 +906,11 @@ func vidyaPeekTape(sp *VIDYAStream, tape []float64, tapeBase, tapeMask int32, in
 	tempReal = inReal
 	diff = tempReal - prevValue
 	prevValue = tempReal
-	up = float64((diff + math.Abs(diff)) * 0.5)
+	_e10 := math.Abs(diff)
+	up = float64((diff + _e10) * 0.5)
 	upSum += up
 	downSum += up - diff
-	live = b2i(!(math.Abs(diff) <= 0.0))
+	live = b2i(!(_e10 <= 0.0))
 	nullRun = (nullRun + 1) & (live - 1)
 	if nullRun >= sp.optInCMOPeriod {
 		nullRun = sp.optInCMOPeriod

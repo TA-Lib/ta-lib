@@ -162,6 +162,7 @@ pub fn generate(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Reg
     let _ = file_stem(&func.name);
     let svc = Services { enums, registry, helpers };
 
+    BOUND_NAMES.with(|n| n.set(0));
     let mut body = String::new();
     body.push_str(&gen_lookback(func, &svc));
     if func.has_explicit_private {
@@ -285,6 +286,27 @@ pub(super) struct Ctx<'a> {
     /// The loop being rendered, by address, and the stores and `return` that
     /// follow it, when nothing else does.
     epilogue: std::cell::RefCell<Option<(usize, Vec<Statement>)>>,
+    /// The expressions bound to a local over the statements being rendered.
+    bound: std::cell::RefCell<Vec<Bound>>,
+    /// Rendering an expression as it reads unbound.
+    unbound: Cell<bool>,
+}
+
+thread_local! {
+    /// Numbers the bound locals apart from the other temps, unique in a file.
+    static BOUND_NAMES: Cell<usize> = const { Cell::new(0) };
+}
+
+/// A [`super::go_cse::Span`] as it renders: the local, the list by address,
+/// its rendering, and the uses taken so far and by the end of its first
+/// statement.
+struct Bound {
+    span: super::go_cse::Span,
+    name: String,
+    list: usize,
+    text: String,
+    uses: Cell<usize>,
+    first_uses: Cell<usize>,
 }
 
 /// A lockstep loop as it renders: the pass count, the counter, a name per
@@ -473,6 +495,8 @@ impl<'a> Ctx<'a> {
             live_after: std::cell::RefCell::new(HashMap::new()),
             branched: std::cell::RefCell::new(HashSet::new()),
             epilogue: std::cell::RefCell::new(None),
+            bound: std::cell::RefCell::new(Vec::new()),
+            unbound: Cell::new(false),
         }
     }
 
@@ -522,6 +546,8 @@ impl<'a> Ctx<'a> {
             live_after: std::cell::RefCell::new(HashMap::new()),
             branched: std::cell::RefCell::new(HashSet::new()),
             epilogue: std::cell::RefCell::new(None),
+            bound: std::cell::RefCell::new(Vec::new()),
+            unbound: Cell::new(false),
         }
     }
 
@@ -693,6 +719,9 @@ impl<'a> Ctx<'a> {
 
     #[allow(clippy::too_many_lines)]
     pub(super) fn lower(&self, e: &Expr, sc: &mut Scope) -> (GExpr, CType) {
+        if let Some(name) = self.bound_use(e) {
+            return (GExpr::name(name), CType::Real);
+        }
         match e {
             Expr::Literal(f) => (real_lit(*f), CType::Real),
             Expr::IntLiteral(i) => (int_lit(*i), CType::Int32),
@@ -1192,12 +1221,74 @@ impl<'a> Ctx<'a> {
         }
         self.stmt_depth.set(self.stmt_depth.get() + 1);
         for at in 0..body.len() {
+            self.bind(body, at, out);
             self.stmt_at(body, at, out);
+            self.unbind(body, at);
         }
         self.stmt_depth.set(self.stmt_depth.get() - 1);
         if self.float_selects.get() && self.stmt_depth.get() == 0 {
             self.scan.take();
         }
+    }
+
+    /// Binds what `list[at]` computes with a neighbour, by [`super::go_cse`]:
+    /// inside a loop or in a stream frame, never in setup code that runs once.
+    fn bind(&self, list: &[Statement], at: usize, out: &mut Vec<String>) {
+        if !(self.float_selects.get() || self.loop_depth.get() > 0) {
+            return;
+        }
+        let taken: Vec<Expr> = self.bound.borrow().iter().map(|b| b.span.expr.clone()).collect();
+        for span in super::go_cse::spans(list, at, &self.env, self.fma_sets(), &taken) {
+            let text = self.unbound_text(&span.expr);
+            let name = BOUND_NAMES.with(|n| {
+                n.set(n.get() + 1);
+                format!("_e{}", n.get())
+            });
+            out.push(format!("{name} := {text}"));
+            let list = list.as_ptr() as usize;
+            self.bound.borrow_mut().push(Bound { span, name, list, text, uses: Cell::new(0), first_uses: Cell::new(0) });
+        }
+    }
+
+    /// Closes the bindings `list[at]` ends, each read by both its statements.
+    fn unbind(&self, list: &[Statement], at: usize) {
+        let addr = list.as_ptr() as usize;
+        let mut bound = self.bound.borrow_mut();
+        for b in bound.iter().filter(|b| b.list == addr) {
+            if b.span.first == at {
+                b.first_uses.set(b.uses.get());
+            }
+            if b.span.last == at && (b.first_uses.get() == 0 || b.uses.get() == b.first_uses.get()) {
+                self.fail(&format!("`{}` is not read by both statements it was bound for", b.text));
+            }
+        }
+        bound.retain(|b| !(b.list == addr && b.span.last == at));
+    }
+
+    fn unbound_text(&self, e: &Expr) -> String {
+        let outer = self.unbound.replace(true);
+        let mut sc = Scope::default();
+        let (g, _) = self.lower(e, &mut sc);
+        self.unbound.set(outer);
+        if !sc.is_empty() {
+            self.fail(&format!("a bound expression needs statements: {e:?}"));
+        }
+        strip_paren(g).render()
+    }
+
+    /// The local bound to `e`, which must render as it does unbound.
+    fn bound_use(&self, e: &Expr) -> Option<String> {
+        if self.unbound.get() {
+            return None;
+        }
+        let (name, text) = self.bound.borrow().iter().find(|b| b.span.expr == *e).map(|b| {
+            b.uses.set(b.uses.get() + 1);
+            (b.name.clone(), b.text.clone())
+        })?;
+        if self.unbound_text(e) != text {
+            self.fail(&format!("`{text}` renders differently where it is read"));
+        }
+        Some(name)
     }
 
     /// Statement `at` of `list`, a loop knowing what follows it.
@@ -1729,7 +1820,9 @@ impl<'a> Ctx<'a> {
                     continue;
                 }
                 lock.at.set(at);
+                self.bind(&lock.plan.pass, at, &mut lines);
                 self.stmt(st, &mut lines);
+                self.unbind(&lock.plan.pass, at);
             }
             self.stmt_depth.set(self.stmt_depth.get() - 1);
             lines
@@ -1890,7 +1983,9 @@ impl<'a> Ctx<'a> {
                 }
                 continue;
             }
+            self.bind(&lock.plan.pass, at, &mut rendered);
             self.stmt(st, &mut rendered);
+            self.unbind(&lock.plan.pass, at);
         }
         self.stmt_depth.set(self.stmt_depth.get() - 1);
         *self.lock.borrow_mut() = None;
@@ -2530,7 +2625,9 @@ impl Ctx<'_> {
         let top = |stmts: &[Statement], out: &mut Vec<String>| {
             for (at, s) in stmts.iter().enumerate() {
                 if !matches!(s, Statement::VarDecl { .. }) {
+                    self.bind(stmts, at, out);
                     self.stmt_at(stmts, at, out);
+                    self.unbind(stmts, at);
                 }
             }
         };
@@ -2625,7 +2722,7 @@ fn math_name(mf: MathFn) -> &'static str {
 /// so the plain multiply-add returns the fused bits without `math.FMA`'s
 /// per-call CPU test at GOAMD64=v1. Not `2^-k`: that product rounds a
 /// subnormal.
-fn exact_factor(e: &Expr) -> bool {
+pub(super) fn exact_factor(e: &Expr) -> bool {
     match e {
         Expr::Literal(v) => v.is_finite() && v.abs() >= 2.0 && v.abs().to_bits() & ((1u64 << 52) - 1) == 0,
         Expr::Neg(x) => exact_factor(x),

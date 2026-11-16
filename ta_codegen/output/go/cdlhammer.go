@@ -161,8 +161,9 @@ func (c *Core) cdlhammerImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inCl
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
+			_e1 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e1 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowLongPeriodTotal += _e1 - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
 			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx] - inLow[NearTrailingIdx])
 			i += 1
@@ -958,8 +959,9 @@ func (c *Core) cdlhammerOpenImpl(sp *CDLHAMMERStream, inOpen, inHigh, inLow, inC
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
+			_e2 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e2 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowLongPeriodTotal += _e2 - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
 			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx] - inLow[NearTrailingIdx])
 			i += 1
@@ -1236,8 +1238,9 @@ func (c *Core) cdlhammerOpenSinkFrame(sp *CDLHAMMERStream, inOpen, inHigh, inLow
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowLongPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
+			_e3 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e3 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowLongPeriodTotal += _e3 - (math.Abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]))
 			ShadowVeryShortPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx])
 			NearPeriodTotal += (inHigh[i-1] - inLow[i-1]) - (inHigh[NearTrailingIdx] - inLow[NearTrailingIdx])
 			i += 1

@@ -130,8 +130,9 @@ func (c *Core) cdlhighwaveImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, in
 				outInteger[outIdx] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
+			_e1 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e1 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowPeriodTotal += _e1 - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			ShadowTrailingIdx += 1
@@ -734,8 +735,9 @@ func (c *Core) cdlhighwaveOpenImpl(sp *CDLHIGHWAVEStream, inOpen, inHigh, inLow,
 				outInteger[outIdx*outStride] = 0
 				outIdx++
 			}
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
+			_e2 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e2 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowPeriodTotal += _e2 - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			ShadowTrailingIdx += 1
@@ -920,8 +922,9 @@ func (c *Core) cdlhighwaveOpenSinkFrame(sp *CDLHIGHWAVEStream, inOpen, inHigh, i
 		outIdx = 0
 		for i < endIdx {
 			outIdx += 1
-			BodyPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
-			ShadowPeriodTotal += (math.Abs(inClose[i] - inOpen[i])) - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
+			_e3 := math.Abs(inClose[i] - inOpen[i])
+			BodyPeriodTotal += _e3 - (math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]))
+			ShadowPeriodTotal += _e3 - (math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx]))
 			i += 1
 			BodyTrailingIdx += 1
 			ShadowTrailingIdx += 1

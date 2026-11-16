@@ -34,6 +34,7 @@ pub mod func_api_xml;
 pub mod func_list;
 pub mod go;
 pub mod go_abstract;
+pub mod go_cse;
 pub mod go_doc;
 pub mod go_examples;
 pub mod go_enums;
