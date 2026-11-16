@@ -92,26 +92,21 @@ func (c *Core) swakGaussImpl(startIdx, endIdx int32, inReal []float64, optInTime
 	y1 = inReal[today]
 	y2 = y1
 	i = lookbackTotal
-	if _n0 := int(i); _n0 > 0 {
-		_r2 := inReal[today:][:_n0]
-		for _k1 := range _r2 {
-			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*_r2[_k1])))
-			y2 = y1
-			y1 = y
-		}
-		today += int32(_n0)
+	for i != 0 {
+		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*inReal[today])))
+		y2 = y1
+		y1 = y
+		today += 1
+		i -= 1
 	}
 	outIdx = 0
-	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
-		_r5 := inReal[today:][:_n3]
-		_r6 := outReal[outIdx:][:_n3]
-		for _k4 := range _r5 {
-			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*_r5[_k4])))
-			y2 = y1
-			y1 = y
-			_r6[_k4] = y
-		}
-		outIdx += int32(_n3)
+	for today <= endIdx {
+		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*inReal[today])))
+		y2 = y1
+		y1 = y
+		outReal[outIdx] = y
+		outIdx = outIdx + 1
+		today += 1
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

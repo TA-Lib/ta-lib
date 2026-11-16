@@ -39,6 +39,8 @@ pub(super) struct Env<'a> {
     /// An expression of C integer type: a real bound would run a different
     /// number of passes once converted to the `int` count.
     pub int_expr: &'a dyn Fn(&Expr) -> bool,
+    /// A sum Go renders as `math.FMA`.
+    pub fused: &'a dyn Fn(&Expr) -> bool,
     /// The loop is one [`branched_loops`] returns.
     pub branched: bool,
     /// The loop runs inside another, over a window or a block, where no
@@ -120,6 +122,17 @@ pub(super) enum Refusal {
     /// save its checks on some bars only, while what its re-slices hold stays live
     /// across every bar and pushes that loop's own indices to the stack.
     Branched,
+    /// A pass that calls out, carries a scalar to the next pass and indexes an
+    /// array no lane cuts: every call clobbers the registers, so the re-slices
+    /// are reloaded after each call beside the many values such a loop keeps,
+    /// costing more than the checks they remove from its long body.
+    CallsOverRing,
+    /// A pass that shifts a carried real through two variables, `y2 = y1; y1 =
+    /// y`, into a fused multiply-add: each fused site has a call path at the
+    /// default GOAMD64, so `y1` goes to the stack every pass and comes back as
+    /// `y2`. That round trip bounds the loop, and the re-sliced form lands the
+    /// reload worse.
+    FusedShift,
 }
 
 /// `while( cond ) body`, or with `update` the rest of
@@ -193,6 +206,12 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         return Err(Refusal::Branched);
     }
     plan.calls_out = calls_out(&plan.pass);
+    if plan.calls_out && carries(&plan) && unlaned(&plan.pass, env) {
+        return Err(Refusal::CallsOverRing);
+    }
+    if fused_shift(&plan, env) {
+        return Err(Refusal::FusedShift);
+    }
     if plan.scan.is_none() {
         plan.unroll = unroll(&plan, env);
     }
@@ -210,6 +229,54 @@ fn calls_out(pass: &[Statement]) -> bool {
                     hit |= MathFn::from_name(n).is_some_and(|m| !matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min));
                 }
             });
+        });
+    }
+    hit
+}
+
+/// Some scalar the pass reads holds the value the pass before left in it.
+fn carries(plan: &Plan) -> bool {
+    plan.facts.assigned.iter().any(|n| !plan.steps.contains_key(n) && !fresh(&plan.pass, n))
+}
+
+/// The pass, at any depth, indexes an array that is no contract: a ring, a
+/// local array, a scratch array used as a ring.
+fn unlaned(pass: &[Statement], env: &Env) -> bool {
+    let mut hit = false;
+    for s in pass {
+        crate::streaming::walk_stmt_exprs(s, &mut |top| {
+            crate::streaming::walk_expr(top, &mut |e| hit |= matches!(e, Expr::ArrayAccess(a, _) if (env.contract)(a).is_none()));
+        });
+    }
+    hit
+}
+
+/// `p = q` on every pass and `p` assigned nowhere else, both reals carried
+/// in, `q` assigned something other than `p` in the same pass, and a sum Go
+/// fuses reading `p`.
+fn fused_shift(plan: &Plan, env: &Env) -> bool {
+    let mut writes: Vec<(String, Expr)> = Vec::new();
+    for s in &plan.pass {
+        visit_assigns(s, &mut |t, v| {
+            if let Expr::Var(n) = t {
+                writes.push((n.clone(), v.clone()));
+            }
+        });
+    }
+    let carried = |n: &str| !(env.int_local)(n) && !fresh(&plan.pass, n);
+    let mut delayed = BTreeSet::new();
+    for s in &plan.pass {
+        let Statement::Assign { target: Expr::Var(p), value: Expr::Var(q), compound: false } = s else { continue };
+        let renewed = writes.iter().any(|(t, w)| t == q && !matches!(w, Expr::Var(n) if n == p));
+        let once = writes.iter().filter(|(t, _)| t == p).count() == 1;
+        if q != p && renewed && once && carried(p) && carried(q) {
+            delayed.insert(p.as_str());
+        }
+    }
+    let mut hit = false;
+    for s in &plan.pass {
+        crate::streaming::walk_stmt_exprs(s, &mut |top| {
+            crate::streaming::walk_expr(top, &mut |e| hit |= (env.fused)(e) && delayed.iter().any(|v| mentions(e, v)));
         });
     }
     hit
@@ -261,7 +328,7 @@ fn unroll(plan: &Plan, env: &Env) -> Option<usize> {
     for s in &plan.pass {
         crate::streaming::walk_stmt_exprs(s, &mut |top| crate::streaming::walk_expr(top, &mut |e| eager &= !matches!(e, Expr::FuncCall(n, _) if !eager_call(n))));
     }
-    if !eager || plan.facts.assigned.iter().any(|n| !plan.steps.contains_key(n) && !fresh(&plan.pass, n)) {
+    if !eager || carries(plan) {
         return None;
     }
     let mut code = Vec::new();
@@ -1103,7 +1170,9 @@ mod tests {
         };
         let fixed_end = |e: &Expr| matches!(e, Expr::Var(n) if n == "endIdx");
         let cross = |n: &str| n == "TA_SMA";
-        f(&Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross, int_expr: &int_expr, branched, nested: false })
+        let product = |e: &Expr| matches!(e, Expr::BinOp(_, BinOp::Mul, _));
+        let fused = |e: &Expr| matches!(e, Expr::BinOp(l, BinOp::Add, r) if product(l) || product(r));
+        f(&Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross, int_expr: &int_expr, fused: &fused, branched, nested: false })
     }
     fn lanes(p: &super::Plan) -> Vec<(String, String, i64)> {
         p.lanes.iter().map(|l| (l.array.clone(), l.var.clone(), l.elem)).collect()
@@ -1218,6 +1287,52 @@ mod tests {
         };
         assert!(run(&le_end(), &[read.clone(), reseed, step("i", 1)], None).is_ok());
         assert_eq!(run_in(&le_end(), &[read, step("i", 1)], None, true).err(), Some(Refusal::Branched));
+    }
+
+    /// A call, a carried scalar and a ring together are refused, a call in a
+    /// loop inside the pass included; any two of them are not.
+    #[test]
+    fn a_stateful_pass_that_calls_out_over_a_ring_is_refused() {
+        let call = |e: Expr| Expr::FuncCall("exp".into(), vec![e]);
+        let pass = |x: Expr, ring: bool| {
+            let mut v = vec![set(var("x"), x), set(at("out", var("o")), var("x"))];
+            if ring {
+                v.push(set(at("ring", var("h")), var("x")));
+            }
+            v.extend([step("o", 1), step("i", 1)]);
+            v
+        };
+        let carried = bin(var("x"), BinOp::Add, call(at("in", var("i"))));
+        assert_eq!(run(&le_end(), &pass(carried.clone(), true), None).err(), Some(Refusal::CallsOverRing));
+        assert!(run(&le_end(), &pass(carried, false), None).is_ok(), "no ring");
+        assert!(run(&le_end(), &pass(call(at("in", var("i"))), true), None).is_ok(), "nothing carried");
+        let sqrt = bin(var("x"), BinOp::Add, Expr::FuncCall("sqrt".into(), vec![at("in", var("i"))]));
+        assert!(run(&le_end(), &pass(sqrt, true), None).is_ok(), "no call gc keeps");
+        let inner = Statement::While { condition: bin(var("j"), BinOp::Less, var("e")), body: vec![set(var("y"), call(var("y"))), step("j", 1)] };
+        let mut nested = pass(bin(var("x"), BinOp::Add, at("in", var("i"))), true);
+        nested.insert(0, inner);
+        assert_eq!(run(&le_end(), &nested, None).err(), Some(Refusal::CallsOverRing));
+    }
+
+    /// `y = a1*y1 + (a2*y2 + c0*in[i]); y2 = y1; y1 = y` is refused; a
+    /// delayed copy no fused sum reads, one assigned on a branch too, and a
+    /// one-tap recurrence are not.
+    #[test]
+    fn a_two_variable_shift_into_a_fused_sum_is_refused() {
+        let prod = |a: &str, b: Expr| bin(var(a), BinOp::Mul, b);
+        let filter = |older: Expr| bin(prod("a1", var("y1")), BinOp::Add, bin(prod("a2", older), BinOp::Add, prod("c0", at("in", var("i")))));
+        let pass = |y: Expr, extra: Vec<Statement>| {
+            let mut v = vec![set(var("y"), y), set(var("y2"), var("y1")), set(var("y1"), var("y"))];
+            v.extend(extra);
+            v.extend([set(at("out", var("o")), bin(var("y"), BinOp::Sub, var("y2"))), step("o", 1), step("i", 1)]);
+            v
+        };
+        assert_eq!(run(&le_end(), &pass(filter(var("y2")), vec![]), None).err(), Some(Refusal::FusedShift));
+        assert!(run(&le_end(), &pass(filter(var("z")), vec![]), None).is_ok(), "the delayed copy feeds no fused sum");
+        let reset = Statement::If { condition: var("c"), then_body: vec![set(var("y2"), Expr::Literal(0.0))], else_body: vec![], cond_comments: vec![] };
+        assert!(run(&le_end(), &pass(filter(var("y2")), vec![reset]), None).is_ok(), "the delayed copy is assigned twice");
+        let one_tap = [set(var("y"), bin(prod("a1", var("y")), BinOp::Add, prod("c0", at("in", var("i"))))), set(at("out", var("o")), var("y")), step("o", 1), step("i", 1)];
+        assert!(run(&le_end(), &one_tap, None).is_ok(), "a one-tap recurrence");
     }
 
     /// MAXINDEX's pass: `x = in[i]`; when `h` leaves the window, `h = t`,

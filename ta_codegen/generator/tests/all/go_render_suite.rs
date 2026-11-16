@@ -328,7 +328,7 @@ fn go_lockstep_loops_range_over_re_slices() {
         }
         functions += usize::from(!loops.is_empty());
     }
-    assert!(common::sweep_filtered() || functions >= 160, "only {functions} batch bodies re-slice a loop");
+    assert!(common::sweep_filtered() || functions >= 158, "only {functions} batch bodies re-slice a loop");
 }
 
 /// `for( i = 0; i < 50; i++ ) if( i < DCPeriodInt ) S` runs `min(50,
@@ -633,4 +633,76 @@ fn go_out_parameters_are_stored_before_a_loop_that_calls_out() {
     }
     let sites = common::discover_indicators().iter().filter(|n| early(&batch_body(n))).count();
     assert!(common::sweep_filtered() || sites >= 17, "only {sites} loops store the out-parameters first");
+}
+
+/// A call gc keeps a call: a `math.` function but those Go compiles to an
+/// instruction or always inlines.
+fn calls_out(line: &str) -> bool {
+    let inline = ["Sqrt", "Abs", "Max", "Min", "FMA", "Float64frombits", "Float64bits", "IsNaN", "IsInf", "Inf", "NaN"];
+    regex::Regex::new(r"math\.(\w+)\(").unwrap().captures_iter(line).any(|c| c.get(1).is_some_and(|m| !inline.contains(&m.as_str())))
+}
+
+/// HT_PHASOR's bar loop calls `math.Atan`, carries its filters and indexes
+/// their rings: it keeps its checks. LINEARREG_ANGLE's and CHOP's carry sums
+/// and call out but index no ring, and EXP's carries nothing: each ranges
+/// over re-slices. Over the corpus no re-sliced loop that calls out indexes
+/// an array but a re-slice, an input or an output.
+#[test]
+fn go_a_stateful_loop_calling_out_over_a_ring_is_not_re_sliced() {
+    let indexed = regex::Regex::new(r"(^|[^\w.])([A-Za-z_]\w*)\[").unwrap();
+    let contract = regex::Regex::new(r"^(_|in[A-Z0-9]|out[A-Z0-9])").unwrap();
+    if !common::sweep_filtered() {
+        let phasor = batch_body("ht_phasor");
+        assert!(!re_sliced_loops(&phasor).iter().any(|(pass, ..)| pass.iter().any(|l| calls_out(l))), "ht_phasor: its bar loop is re-sliced:\n{phasor}");
+        assert!(phasor.contains("\t\ttodayValue = inReal[today]\n"), "ht_phasor: its bar loop does not read the input at the bar:\n{phasor}");
+        for (name, call) in [("linearreg_angle", "math.Atan("), ("chop", "math.Log10("), ("exp", "math.Exp(")] {
+            let body = batch_body(name);
+            assert!(re_sliced_loops(&body).iter().any(|(pass, ..)| pass.iter().any(|l| l.contains(call))), "{name}: its loop calling `{call}` is not re-sliced:\n{body}");
+        }
+    }
+    let mut loops = 0usize;
+    for name in common::discover_indicators() {
+        let body = batch_body(&name);
+        for (pass, ..) in re_sliced_loops(&body).iter().filter(|(pass, ..)| pass.iter().any(|l| calls_out(l))) {
+            for c in pass.iter().flat_map(|l| indexed.captures_iter(l)) {
+                assert!(contract.is_match(&c[2]), "{name}: a re-sliced loop that calls out indexes `{}`:\n{}", &c[2], pass.join("\n"));
+            }
+            loops += 1;
+        }
+    }
+    assert!(common::sweep_filtered() || loops >= 20, "only {loops} re-sliced loops call out");
+}
+
+/// SWAK_GAUSS shifts its output through `y2 = y1; y1 = y` into nested fused
+/// sums: both its loops keep their checks. WAVETREND's `prevEsa = esa` feeds
+/// no fused sum, and T3's chain copies no carried value: both range over
+/// re-slices. Over the corpus no re-sliced loop holds such a shift.
+#[test]
+fn go_a_two_variable_shift_into_a_fused_sum_is_not_re_sliced() {
+    let copy = regex::Regex::new(r"^\s*(\w+) = (\w+)$").unwrap();
+    let written = |pass: &[String], v: &str| pass.iter().filter(|l| l.trim_start().starts_with(&format!("{v} = "))).count();
+    if !common::sweep_filtered() {
+        let gauss = batch_body("swak_gauss");
+        assert!(re_sliced_loops(&gauss).is_empty(), "swak_gauss: a loop is re-sliced:\n{gauss}");
+        assert_eq!(gauss.matches("\t\ty2 = y1\n").count(), 2, "swak_gauss: its two loops:\n{gauss}");
+        for (name, line) in [("wavetrend", "prevEsa = esa"), ("t3", "math.FMA(")] {
+            let body = batch_body(name);
+            assert!(re_sliced_loops(&body).iter().any(|(pass, ..)| pass.iter().any(|l| l.contains(line))), "{name}: its recurrence is not re-sliced:\n{body}");
+        }
+    }
+    let mut loops = 0usize;
+    for name in common::discover_indicators() {
+        let body = batch_body(&name);
+        for (pass, ..) in re_sliced_loops(&body).iter().filter(|(pass, ..)| pass.iter().any(|l| l.contains("math.FMA("))) {
+            for c in pass.iter().filter_map(|l| copy.captures(l)) {
+                let (p, q) = (&c[1], &c[2]);
+                let named = |v: &str| regex::Regex::new(&format!(r"\b{v}\b")).unwrap();
+                let fused = pass.iter().any(|l| l.contains("math.FMA(") && named(p).is_match(l));
+                let carried = pass.iter().find(|l| named(q).is_match(l)).is_some_and(|l| !l.trim_start().starts_with(&format!("{q} = ")));
+                assert!(!(fused && carried && written(pass, p) == 1 && written(pass, q) >= 1), "{name}: a re-sliced loop shifts `{q}` into `{p}`, read by a fused sum:\n{}", pass.join("\n"));
+            }
+            loops += 1;
+        }
+    }
+    assert!(common::sweep_filtered() || loops >= 99, "only {loops} re-sliced loops fuse");
 }

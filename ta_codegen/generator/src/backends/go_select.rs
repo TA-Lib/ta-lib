@@ -32,7 +32,8 @@
 //! quiet value's bits as they were, but quiets a signaling NaN. Two arms
 //! must never both be true. The addend is computed on every bar: it may not
 //! call, except for an intrinsic Go inlines, nor read an array but an input
-//! at an index the bar already read, and a condition keeping its divisor or
+//! at an index the bar already read, nor hold a product among its terms
+//! (the accumulation may fuse it), and a condition keeping its divisor or
 //! root in domain is a guard. An accumulator its own statement list also
 //! assigns holds this bar's value, not a sum carried in, and keeps its branch.
 
@@ -276,7 +277,7 @@ pub(super) fn accrual<'s>(cond: &'s Expr, then_body: &'s [Statement], else_body:
     let code = |body: &'s [Statement]| -> Vec<&'s Statement> { body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect() };
     let one = |body: &'s [Statement]| -> Option<(&'s str, BinOp, &'s Expr)> {
         match code(body).as_slice() {
-            [Statement::Assign { target: Expr::Var(v), value: Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub), r), compound: true }] if matches!(l.as_ref(), Expr::Var(n) if n == v) => {
+            [Statement::Assign { target: Expr::Var(v), value: Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub), r), compound: true }] if matches!(l.as_ref(), Expr::Var(n) if n == v) && !product_term(r) => {
                 Some((v, op.clone(), r))
             }
             _ => None,
@@ -293,6 +294,16 @@ pub(super) fn accrual<'s>(cond: &'s Expr, then_body: &'s [Statement], else_body:
         _ => return None,
     }
     Some((acc, arms))
+}
+
+/// A product, or a sum with one among its terms.
+fn product_term(e: &Expr) -> bool {
+    match e {
+        Expr::BinOp(_, BinOp::Mul, _) => true,
+        Expr::BinOp(l, BinOp::Add | BinOp::Sub, r) => product_term(l) || product_term(r),
+        Expr::Cast(_, x) | Expr::Neg(x) => product_term(x),
+        _ => false,
+    }
 }
 
 /// Two comparisons of the same operands in opposite directions, at most one
@@ -586,4 +597,29 @@ pub(super) fn stores_output(body: &[Statement]) -> bool {
         matches!(st, Statement::Assign { target: Expr::ArrayAccess(n, _), .. } if n.starts_with("out"))
             || nested(st).into_iter().chain(loop_body(st)).any(stores_output)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::accrual;
+    use crate::backends::lockstep::{bin, var};
+    use crate::ir::{BinOp, Expr, Statement};
+
+    /// `if a > b { acc += e }`.
+    fn arm(e: Expr) -> (Expr, Vec<Statement>) {
+        let add = Statement::Assign { target: var("acc"), value: bin(var("acc"), BinOp::Add, e), compound: true };
+        (bin(var("a"), BinOp::Greater, var("b")), vec![add])
+    }
+
+    #[test]
+    fn an_addend_with_a_product_on_top_keeps_its_branch() {
+        let (c, then_body) = arm(var("x"));
+        assert!(accrual(&c, &then_body, &[]).is_some());
+        let (c, then_body) = arm(bin(var("x"), BinOp::Div, var("y")));
+        assert!(accrual(&c, &then_body, &[]).is_some(), "a quotient does not fuse");
+        let (c, then_body) = arm(bin(var("x"), BinOp::Mul, var("y")));
+        assert!(accrual(&c, &then_body, &[]).is_none(), "acc += x*y");
+        let (c, then_body) = arm(bin(var("z"), BinOp::Sub, bin(var("x"), BinOp::Mul, var("y"))));
+        assert!(accrual(&c, &then_body, &[]).is_none(), "acc += z - x*y");
+    }
 }

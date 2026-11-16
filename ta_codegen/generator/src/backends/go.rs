@@ -1545,7 +1545,20 @@ impl<'a> Ctx<'a> {
         let reg = self.svc.registry;
         let cross_call = |n: &str| reg.contains(n) && MathFn::from_name(n).is_none();
         let int_expr = |e: &Expr| self.env.type_of(e).numeric() == CType::Int32;
-        f(&super::go_lockstep::Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call, int_expr: &int_expr, branched, nested: self.loop_depth.get() > 1 })
+        let fused = |e: &Expr| {
+            let Expr::BinOp(l, op, r) = e else { return false };
+            fma::EMIT_FMA && self.fma_sets().is_some_and(|fs| fma::fuse_operands(l, op, r, &fs.view()).is_some_and(|(a, b, _)| !exact_factor(a) && !exact_factor(b)))
+        };
+        f(&super::go_lockstep::Env {
+            int_local: &int_local,
+            contract: &contract,
+            fixed_end: &fixed_end,
+            cross_call: &cross_call,
+            int_expr: &int_expr,
+            fused: &fused,
+            branched,
+            nested: self.loop_depth.get() > 1,
+        })
     }
 
     /// The stores and `return` that follow loop `s` when, with each index at
