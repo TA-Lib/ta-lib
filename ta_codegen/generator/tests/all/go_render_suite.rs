@@ -176,22 +176,73 @@ fn go_candle_bodies_fold_the_range_type_and_take_no_colour_branch() {
 }
 
 /// A re-sliced loop: its lines, the re-slices cut for it (name, array,
-/// start), the pass counter, and whether it counts down.
+/// start), the pass counter, and whether it counts down. Of an unrolled loop,
+/// the scalar tail's lines and counter.
 type ReSliced = (Vec<String>, Vec<(String, String, String)>, String, bool);
 
 /// Each re-sliced loop of a batch body.
 fn re_sliced_loops(body: &str) -> Vec<ReSliced> {
     let head = regex::Regex::new(r"^(\s*)for (_k\d+) := (range _r\d+|_n\d+ - 1; _k\d+ >= 0; _k\d+--) \{$").unwrap();
-    let cut = regex::Regex::new(r"^\s*(_r\d+) := (\w+)\[(.+):\]\[:_n\d+\]$").unwrap();
+    let cut = regex::Regex::new(r"^\s*(_r\d+) := (\w+)\[(.+):\]\[:_n\d+(:_n\d+)?\]$").unwrap();
     let lines: Vec<&str> = body.lines().collect();
     let mut out = Vec::new();
+    let cuts_before = |h: usize| lines[..h].iter().rev().map_while(|l| cut.captures(l)).map(|r| (r[1].to_string(), r[2].to_string(), r[3].to_string())).collect();
     for (h, line) in lines.iter().enumerate() {
-        let Some(c) = head.captures(line) else { continue };
-        let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
-        let cuts = lines[..h].iter().rev().map_while(|l| cut.captures(l)).map(|r| (r[1].to_string(), r[2].to_string(), r[3].to_string())).collect();
-        out.push((lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), cuts, c[2].to_string(), !c[3].starts_with("range")));
+        if let Some(c) = head.captures(line) {
+            let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
+            out.push((lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), cuts_before(h), c[2].to_string(), !c[3].starts_with("range")));
+        } else if let Some(u) = unrolled(&lines, h) {
+            out.push((u.tail, cuts_before(h - 1), u.tail_counter, false));
+        }
     }
     out
+}
+
+/// An unrolled loop: its width, each pass of a group, the scalar tail, and
+/// each tail cut with the group cut of the same re-slice.
+struct Unrolled {
+    width: usize,
+    passes: Vec<Vec<String>>,
+    tail: Vec<String>,
+    tail_counter: String,
+    cuts: Vec<(String, String)>,
+}
+
+/// The unrolled loop whose group loop opens at line `h`: `_k := 0`, `for ;
+/// _k+K <= _n; _k += K {`, a group cut per re-slice, K passes, then a tail cut
+/// per re-slice and `for _j := range _t {`.
+fn unrolled(lines: &[&str], h: usize) -> Option<Unrolled> {
+    let head = regex::Regex::new(r"^(\s*)for ; (_k\d+)\+(\d+) <= _n\d+; _k\d+ \+= \d+ \{$").unwrap();
+    let group = regex::Regex::new(r"^\s*(_g\d+) := (_r\d+)\[_k\d+ : _k\d+\+\d+ : _k\d+\+\d+\]$").unwrap();
+    let tail_cut = regex::Regex::new(r"^\s*(_t\d+) := (_r\d+)\[_k\d+:\]").unwrap();
+    let tail_head = regex::Regex::new(r"^\s*for (_j\d+) := range _t\d+ \{$").unwrap();
+    let c = head.captures(lines[h])?;
+    let indent = &c[1];
+    assert_eq!(lines[h - 1].trim(), format!("{} := 0", &c[2]), "an unrolled loop starts its counter at 0");
+    let width: usize = c[3].parse().expect("a width");
+    let end = h + lines[h..].iter().position(|l| *l == format!("{indent}}}")).expect("the group loop closes");
+    let body: Vec<String> = lines[h + 1..end].iter().skip_while(|l| group.is_match(l)).map(|l| (*l).to_string()).collect();
+    assert_eq!(body.len() % width, 0, "{width} passes of equal length:\n{}", body.join("\n"));
+    let passes = body.chunks(body.len() / width).map(<[String]>::to_vec).collect();
+    let t = end + 1 + lines[end + 1..].iter().position(|l| tail_head.is_match(l)).expect("a scalar tail");
+    let tail_end = t + lines[t..].iter().position(|l| *l == format!("{indent}}}")).expect("the tail closes");
+    let tail_counter = tail_head.captures(lines[t]).expect("the tail head")[1].to_string();
+    let groups: Vec<(String, String)> = lines[h + 1..end].iter().map_while(|l| group.captures(l)).map(|g| (g[2].to_string(), g[1].to_string())).collect();
+    let cuts = lines[end + 1..t]
+        .iter()
+        .map(|l| {
+            let c = tail_cut.captures(l).unwrap_or_else(|| panic!("a tail cut: {l}"));
+            let g = groups.iter().find(|(r, _)| *r == c[2]).unwrap_or_else(|| panic!("no group cut of {}", &c[2]));
+            (c[1].to_string(), g.1.clone())
+        })
+        .collect();
+    Some(Unrolled { width, passes, tail: lines[t + 1..tail_end].iter().map(|l| (*l).to_string()).collect(), tail_counter, cuts })
+}
+
+/// Each unrolled loop of a batch body.
+fn unrolled_loops(body: &str) -> Vec<Unrolled> {
+    let lines: Vec<&str> = body.lines().collect();
+    (1..lines.len()).filter_map(|h| unrolled(&lines, h)).collect()
 }
 
 fn batch_body(name: &str) -> String {
@@ -445,4 +496,101 @@ fn go_renders_an_exact_product_unfused() {
     let (func, enums) = common::load_indicator("wclprice");
     assert!(backends::c::generate(&func, &enums, registry, helpers).contains("fma(inClose[i], 2.0,"), "C stops fusing WCLPRICE");
     assert!(backends::rust_lang::generate(&func, &enums, registry, helpers).contains("fmadd!(inClose, 2.0,"), "Rust stops fusing WCLPRICE");
+}
+
+/// A loop whose passes depend on no other runs a group of passes over cuts
+/// proved once per group, then a scalar tail: eight for ADD's one store, four
+/// for TRANGE's branches, every pass of a group being the tail's pass on its
+/// own element. SMA and SUM carry a sum, EXP calls out, and MAX's merge runs
+/// inside its block loop: none is unrolled.
+#[test]
+fn go_independent_passes_are_unrolled() {
+    if !common::sweep_filtered() {
+        for (name, width) in [("add", 8), ("trange", 4)] {
+            let body = batch_body(name);
+            let loops = unrolled_loops(&body);
+            let [u] = loops.as_slice() else { panic!("{name}: not one unrolled loop:\n{body}") };
+            assert_eq!(u.width, width, "{name}:\n{body}");
+            for (e, pass) in u.passes.iter().enumerate() {
+                let expected: Vec<String> = u
+                    .tail
+                    .iter()
+                    .map(|l| u.cuts.iter().fold(l.clone(), |l, (t, g)| l.replace(&format!("{t}[{}]", u.tail_counter), &format!("{g}[{e}]"))))
+                    .collect();
+                assert_eq!(pass, &expected, "{name}: pass {e} of a group is not the tail's pass on its element:\n{body}");
+            }
+        }
+        for name in ["sma", "sum", "exp", "max"] {
+            assert!(unrolled_loops(&batch_body(name)).is_empty(), "{name}: unrolled:\n{}", batch_body(name));
+        }
+    }
+    let loops: usize = common::discover_indicators().iter().map(|n| unrolled_loops(&batch_body(n)).len()).sum();
+    assert!(common::sweep_filtered() || loops >= 28, "only {loops} unrolled loops");
+}
+
+/// An index-tracking scan cuts each input once to `endIdx + 1`, runs an
+/// `int` bar cursor to that length and each rescan on a fresh `int` counter
+/// over the cut itself, never a cut of its window, and writes its output
+/// through a cut at the bars since entry: MAXINDEX and AROONOSC, each rescan
+/// keeping its tie rule.
+#[test]
+fn go_index_tracking_scans_use_native_cursors() {
+    let bar = regex::Regex::new(r"^(\s*)for (_t\d+) := (_s\d+); _t\d+ < len\(_x\d+\); _t\d+\+\+ \{$").unwrap();
+    let rescan = regex::Regex::new(r"^\s*for _j\d+ := _i\d+ \+ 1; _j\d+ <= (_t\d+); _j\d+\+\+ \{$").unwrap();
+    if !common::sweep_filtered() {
+        let cases: [(&str, &[&str], &[&str]); 2] = [("maxindex", &["inReal"], &["if tmp >= highest {"]), ("aroonosc", &["inHigh", "inLow"], &["if tmp <= lowest {", "if tmp >= highest {"])];
+        for (name, inputs, ties) in cases {
+            let body = batch_body(name);
+            let lines: Vec<&str> = body.lines().collect();
+            let h = lines.iter().position(|l| bar.is_match(l)).unwrap_or_else(|| panic!("{name}: no bar cursor:\n{body}"));
+            let c = bar.captures(lines[h]).expect("the bar loop");
+            let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the bar loop closes");
+            let pass = &lines[h + 1..end];
+            for a in inputs {
+                assert!(body.contains(&format!(" := {a}[:int(endIdx)+1]")) || body.contains(&format!(" := {a}[:len(_x")), "{name}: `{a}` is not cut to endIdx+1:\n{body}");
+                assert!(!pass.iter().any(|l| l.contains(&format!("{a}["))), "{name}: `{a}` is indexed in the loop:\n{body}");
+            }
+            let rescans: Vec<_> = pass.iter().filter_map(|l| rescan.captures(l)).collect();
+            assert!(rescans.len() == inputs.len() && rescans.iter().all(|r| r[1] == c[2]), "{name}: not one rescan per input to the bar cursor:\n{body}");
+            assert!(!pass.iter().any(|l| l.contains("[:") || l.contains(":]")), "{name}: a window is cut in the loop:\n{body}");
+            assert!(pass.iter().any(|l| l.contains(&format!("[{}-{}] = ", &c[2], &c[3]))), "{name}: the output is not written at the bars since entry:\n{body}");
+            for t in ties {
+                assert!(pass.iter().any(|l| l.trim() == *t), "{name}: `{t}` is lost:\n{body}");
+            }
+        }
+    }
+    let scans = common::discover_indicators().iter().filter(|n| batch_body(n).lines().any(|l| bar.is_match(l))).count();
+    assert!(common::sweep_filtered() || scans >= 9, "only {scans} index-tracking scans");
+}
+
+/// A loop that calls a math function gc keeps a call stores the
+/// out-parameters first, at their values after it, and returns right after
+/// it, the stores after its block staying for an empty range: EXP and SINH,
+/// neither unrolled. SQRT's square root is an instruction: its stores stay
+/// after its loop, which is unrolled.
+#[test]
+fn go_out_parameters_are_stored_before_a_loop_that_calls_out() {
+    let guard = regex::Regex::new(r"^\tif (_n\d+) := .+; _n\d+ > 0 \{$").unwrap();
+    let early = |body: &str| body.contains("\t\t*outNBElement = outIdx + int32(_n");
+    if !common::sweep_filtered() {
+        for name in ["exp", "sinh"] {
+            let body = batch_body(name);
+            let lines: Vec<&str> = body.lines().collect();
+            let g = lines.iter().position(|l| guard.is_match(l)).unwrap_or_else(|| panic!("{name}: no guarded loop:\n{body}"));
+            let n = guard.captures(lines[g]).expect("the guard")[1].to_string();
+            let end = g + lines[g..].iter().position(|l| *l == "\t}").expect("the guard closes");
+            let after: Vec<&str> = lines[end + 1..].iter().map(|l| l.trim()).collect();
+            assert_eq!(after.last(), Some(&"return Success"), "{name}:\n{body}");
+            let stores = &after[..after.len() - 1];
+            let ahead: Vec<String> = stores.iter().map(|l| l.replace(" = outIdx", &format!(" = outIdx + int32({n})"))).collect();
+            let first: Vec<String> = lines[g + 1..=g + stores.len()].iter().map(|l| l.trim().to_string()).collect();
+            assert_eq!(first, ahead, "{name}: the stores do not open the block:\n{body}");
+            assert_eq!(lines[end - 1].trim(), "return Success", "{name}: no return after the loop:\n{body}");
+            assert!(unrolled_loops(&body).is_empty(), "{name}: unrolled:\n{body}");
+        }
+        let sqrt = batch_body("sqrt");
+        assert!(!early(&sqrt) && unrolled_loops(&sqrt).len() == 1, "sqrt:\n{sqrt}");
+    }
+    let sites = common::discover_indicators().iter().filter(|n| early(&batch_body(n))).count();
+    assert!(common::sweep_filtered() || sites >= 17, "only {sites} loops store the out-parameters first");
 }

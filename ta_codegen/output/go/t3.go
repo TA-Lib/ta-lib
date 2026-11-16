@@ -111,10 +111,25 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 		outIdx = 0
 		today = startIdx
 		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
-			_r2 := inReal[today:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[today:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 			outIdx += int32(_n0)
 		}
@@ -128,90 +143,90 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 	tempReal = inReal[today]
 	today++
 	i = optInTimePeriod - 1
-	if _n4 := int(i); _n4 > 0 {
-		_r6 := inReal[today:][:_n4]
-		for _k5 := range _r6 {
-			tempReal += _r6[_k5]
+	if _n9 := int(i); _n9 > 0 {
+		_r11 := inReal[today:][:_n9]
+		for _k10 := range _r11 {
+			tempReal += _r11[_k10]
 		}
-		today += int32(_n4)
+		today += int32(_n9)
 	}
 	e1 = tempReal / float64(optInTimePeriod)
 	tempReal = e1
 	i = optInTimePeriod - 1
-	if _n7 := int(i); _n7 > 0 {
-		_r9 := inReal[today:][:_n7]
-		for _k8 := range _r9 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r9[_k8]))
+	if _n12 := int(i); _n12 > 0 {
+		_r14 := inReal[today:][:_n12]
+		for _k13 := range _r14 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r14[_k13]))
 			tempReal += e1
 		}
-		today += int32(_n7)
+		today += int32(_n12)
 	}
 	e2 = tempReal / float64(optInTimePeriod)
 	tempReal = e2
 	i = optInTimePeriod - 1
-	if _n10 := int(i); _n10 > 0 {
-		_r12 := inReal[today:][:_n10]
-		for _k11 := range _r12 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r12[_k11]))
+	if _n15 := int(i); _n15 > 0 {
+		_r17 := inReal[today:][:_n15]
+		for _k16 := range _r17 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r17[_k16]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			tempReal += e2
 		}
-		today += int32(_n10)
+		today += int32(_n15)
 	}
 	e3 = tempReal / float64(optInTimePeriod)
 	tempReal = e3
 	i = optInTimePeriod - 1
-	if _n13 := int(i); _n13 > 0 {
-		_r15 := inReal[today:][:_n13]
-		for _k14 := range _r15 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r15[_k14]))
+	if _n18 := int(i); _n18 > 0 {
+		_r20 := inReal[today:][:_n18]
+		for _k19 := range _r20 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r20[_k19]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
 			tempReal += e3
 		}
-		today += int32(_n13)
+		today += int32(_n18)
 	}
 	e4 = tempReal / float64(optInTimePeriod)
 	tempReal = e4
 	i = optInTimePeriod - 1
-	if _n16 := int(i); _n16 > 0 {
-		_r18 := inReal[today:][:_n16]
-		for _k17 := range _r18 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r18[_k17]))
+	if _n21 := int(i); _n21 > 0 {
+		_r23 := inReal[today:][:_n21]
+		for _k22 := range _r23 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r23[_k22]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
 			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
 			tempReal += e4
 		}
-		today += int32(_n16)
+		today += int32(_n21)
 	}
 	e5 = tempReal / float64(optInTimePeriod)
 	tempReal = e5
 	i = optInTimePeriod - 1
-	if _n19 := int(i); _n19 > 0 {
-		_r21 := inReal[today:][:_n19]
-		for _k20 := range _r21 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r21[_k20]))
+	if _n24 := int(i); _n24 > 0 {
+		_r26 := inReal[today:][:_n24]
+		for _k25 := range _r26 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r26[_k25]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
 			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
 			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
 			tempReal += e5
 		}
-		today += int32(_n19)
+		today += int32(_n24)
 	}
 	e6 = tempReal / float64(optInTimePeriod)
-	if _n22 := int(startIdx) - int(today) + 1; _n22 > 0 {
-		_r24 := inReal[today:][:_n22]
-		for _k23 := range _r24 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r24[_k23]))
+	if _n27 := int(startIdx) - int(today) + 1; _n27 > 0 {
+		_r29 := inReal[today:][:_n27]
+		for _k28 := range _r29 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r29[_k28]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
 			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
 			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
 			e6 = math.FMA(one_minus_k, e6, float64(k*e5))
 		}
-		today += int32(_n22)
+		today += int32(_n27)
 	}
 	tempReal = float64(optInVFactor * optInVFactor)
 	c1 = -float64(tempReal * optInVFactor)
@@ -221,19 +236,19 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 	outIdx = 0
 	outReal[outIdx] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
 	outIdx++
-	if _n25 := int(endIdx) - int(today) + 1; _n25 > 0 {
-		_r27 := inReal[today:][:_n25]
-		_r28 := outReal[outIdx:][:_n25]
-		for _k26 := range _r27 {
-			e1 = math.FMA(one_minus_k, e1, float64(k*_r27[_k26]))
+	if _n30 := int(endIdx) - int(today) + 1; _n30 > 0 {
+		_r32 := inReal[today:][:_n30]
+		_r33 := outReal[outIdx:][:_n30]
+		for _k31 := range _r32 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r32[_k31]))
 			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
 			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
 			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
 			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
 			e6 = math.FMA(one_minus_k, e6, float64(k*e5))
-			_r28[_k26] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
+			_r33[_k31] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
 		}
-		outIdx += int32(_n25)
+		outIdx += int32(_n30)
 	}
 	*outNBElement = outIdx
 	return Success

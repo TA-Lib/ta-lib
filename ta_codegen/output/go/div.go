@@ -51,11 +51,28 @@ func (c *Core) divImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, outBe
 	i = startIdx
 	outIdx = 0
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inReal0[i:][:_n0]
-		_r3 := inReal1[i:][:_n0]
-		_r4 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			_r4[_k1] = _r2[_k1] / _r3[_k1]
+		_r2 := inReal0[i:][:_n0:_n0]
+		_r3 := inReal1[i:][:_n0:_n0]
+		_r4 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+8 <= _n0; _k1 += 8 {
+			_g5 := _r2[_k1 : _k1+8 : _k1+8]
+			_g6 := _r3[_k1 : _k1+8 : _k1+8]
+			_g7 := _r4[_k1 : _k1+8 : _k1+8]
+			_g7[0] = _g5[0] / _g6[0]
+			_g7[1] = _g5[1] / _g6[1]
+			_g7[2] = _g5[2] / _g6[2]
+			_g7[3] = _g5[3] / _g6[3]
+			_g7[4] = _g5[4] / _g6[4]
+			_g7[5] = _g5[5] / _g6[5]
+			_g7[6] = _g5[6] / _g6[6]
+			_g7[7] = _g5[7] / _g6[7]
+		}
+		_t8 := _r2[_k1:]
+		_t9 := _r3[_k1:][:len(_t8)]
+		_t10 := _r4[_k1:][:len(_t8)]
+		for _j11 := range _t8 {
+			_t10[_j11] = _t8[_j11] / _t9[_j11]
 		}
 		outIdx += int32(_n0)
 	}

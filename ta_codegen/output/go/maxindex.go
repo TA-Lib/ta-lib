@@ -51,7 +51,6 @@ func (c *Core) maxindexImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	var nbInitialElementNeeded int32
 	var trailingIdx int32
 	var today int32
-	var i int32
 	var highestIdx int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
@@ -78,31 +77,32 @@ func (c *Core) maxindexImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	trailingIdx = startIdx - nbInitialElementNeeded
 	highestIdx = -1
 	highest = 0.0
-	for today <= endIdx {
-		tmp = inReal[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inReal[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inReal[:int(endIdx)+1]
+		_s1 := int(today)
+		_r3 := outInteger[outIdx:][:len(_x0)-_s1]
+		_i4 := int(highestIdx)
+		_i5 := int(trailingIdx)
+		for _t2 := _s1; _t2 < len(_x0); _t2++ {
+			tmp = _x0[_t2]
+			if _i4 < _i5 {
+				_i4 = _i5
+				highest = _x0[_i4]
+				for _j6 := _i4 + 1; _j6 <= _t2; _j6++ {
+					tmp = _x0[_j6]
+					if tmp >= highest {
+						_i4 = _j6
+						highest = tmp
+					}
 				}
-				tmp = inReal[i]
-				if tmp >= highest {
-					highestIdx = i
-					highest = tmp
-				}
+			} else if tmp >= highest {
+				_i4 = _t2
+				highest = tmp
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
+			_r3[_t2-_s1] = int32(_i4)
+			_i5++
 		}
-		outInteger[outIdx] = highestIdx
-		outIdx++
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

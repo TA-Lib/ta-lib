@@ -114,10 +114,25 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		i = startIdx
 		outIdx = 0
 		if _n0 := int(*outNBElement) - int(outIdx); _n0 > 0 {
-			_r2 := inReal[i:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[i:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 		}
 		return Success
@@ -135,19 +150,32 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	twoSSq = float64(float64(2.0*s) * s)
 	norm = 0.0
 	j = 0
-	if _n4 := int(optInTimePeriod) - int(j); _n4 > 0 {
-		_r6 := weights[j:][:_n4]
-		for _k5 := range _r6 {
-			d = float64(j + int32(_k5) - m)
-			_r6[_k5] = math.Exp(-float64(d*d) / twoSSq)
-			norm += _r6[_k5]
+	if _n9 := int(optInTimePeriod) - int(j); _n9 > 0 {
+		_r11 := weights[j:][:_n9]
+		for _k10 := range _r11 {
+			d = float64(j + int32(_k10) - m)
+			_r11[_k10] = math.Exp(-float64(d*d) / twoSSq)
+			norm += _r11[_k10]
 		}
 	}
 	j = 0
-	if _n7 := int(optInTimePeriod) - int(j); _n7 > 0 {
-		_r9 := weights[j:][:_n7]
-		for _k8 := range _r9 {
-			_r9[_k8] = _r9[_k8] / norm
+	if _n12 := int(optInTimePeriod) - int(j); _n12 > 0 {
+		_r14 := weights[j:][:_n12:_n12]
+		_k13 := 0
+		for ; _k13+8 <= _n12; _k13 += 8 {
+			_g15 := _r14[_k13 : _k13+8 : _k13+8]
+			_g15[0] = _g15[0] / norm
+			_g15[1] = _g15[1] / norm
+			_g15[2] = _g15[2] / norm
+			_g15[3] = _g15[3] / norm
+			_g15[4] = _g15[4] / norm
+			_g15[5] = _g15[5] / norm
+			_g15[6] = _g15[6] / norm
+			_g15[7] = _g15[7] / norm
+		}
+		_t16 := _r14[_k13:]
+		for _j17 := range _t16 {
+			_t16[_j17] = _t16[_j17] / norm
 		}
 	}
 	outIdx = 0
@@ -159,18 +187,18 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		s3 = 0.0
 		b = i - lookbackTotal
 		j = 0
-		if _n10 := int(optInTimePeriod) - int(j); _n10 > 0 {
-			_r12 := weights[j:][:_n10]
-			_r13 := inReal[b:][:_n10]
-			_r14 := inReal[b+1:][:_n10]
-			_r15 := inReal[b+2:][:_n10]
-			_r16 := inReal[b+3:][:_n10]
-			for _k11 := range _r12 {
-				wj = _r12[_k11]
-				s0 += float64(wj * _r13[_k11])
-				s1 += float64(wj * _r14[_k11])
-				s2 += float64(wj * _r15[_k11])
-				s3 += float64(wj * _r16[_k11])
+		if _n18 := int(optInTimePeriod) - int(j); _n18 > 0 {
+			_r20 := weights[j:][:_n18]
+			_r21 := inReal[b:][:_n18]
+			_r22 := inReal[b+1:][:_n18]
+			_r23 := inReal[b+2:][:_n18]
+			_r24 := inReal[b+3:][:_n18]
+			for _k19 := range _r20 {
+				wj = _r20[_k19]
+				s0 += float64(wj * _r21[_k19])
+				s1 += float64(wj * _r22[_k19])
+				s2 += float64(wj * _r23[_k19])
+				s3 += float64(wj * _r24[_k19])
 			}
 		}
 		outReal[outIdx] = s0
@@ -180,18 +208,18 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		outIdx += 4
 		i += 4
 	}
-	if _n17 := int(endIdx) - int(i) + 1; _n17 > 0 {
-		_r19 := outReal[outIdx:][:_n17]
-		for _k18 := range _r19 {
+	if _n25 := int(endIdx) - int(i) + 1; _n25 > 0 {
+		_r27 := outReal[outIdx:][:_n25]
+		for _k26 := range _r27 {
 			sum = 0.0
 			w = 0
-			for j = i + int32(_k18) - lookbackTotal; j <= i+int32(_k18); j += 1 {
+			for j = i + int32(_k26) - lookbackTotal; j <= i+int32(_k26); j += 1 {
 				sum += float64(weights[w] * inReal[j])
 				w += 1
 			}
-			_r19[_k18] = sum
+			_r27[_k26] = sum
 		}
-		outIdx += int32(_n17)
+		outIdx += int32(_n25)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

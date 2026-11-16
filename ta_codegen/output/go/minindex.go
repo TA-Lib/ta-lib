@@ -52,7 +52,6 @@ func (c *Core) minindexImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	var trailingIdx int32
 	var lowestIdx int32
 	var today int32
-	var i int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -78,31 +77,32 @@ func (c *Core) minindexImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	trailingIdx = startIdx - nbInitialElementNeeded
 	lowestIdx = -1
 	lowest = 0.0
-	for today <= endIdx {
-		tmp = inReal[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inReal[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inReal[:int(endIdx)+1]
+		_s1 := int(today)
+		_r3 := outInteger[outIdx:][:len(_x0)-_s1]
+		_i4 := int(lowestIdx)
+		_i5 := int(trailingIdx)
+		for _t2 := _s1; _t2 < len(_x0); _t2++ {
+			tmp = _x0[_t2]
+			if _i4 < _i5 {
+				_i4 = _i5
+				lowest = _x0[_i4]
+				for _j6 := _i4 + 1; _j6 <= _t2; _j6++ {
+					tmp = _x0[_j6]
+					if tmp <= lowest {
+						_i4 = _j6
+						lowest = tmp
+					}
 				}
-				tmp = inReal[i]
-				if tmp <= lowest {
-					lowestIdx = i
-					lowest = tmp
-				}
+			} else if tmp <= lowest {
+				_i4 = _t2
+				lowest = tmp
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
+			_r3[_t2-_s1] = int32(_i4)
+			_i5++
 		}
-		outInteger[outIdx] = lowestIdx
-		outIdx++
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

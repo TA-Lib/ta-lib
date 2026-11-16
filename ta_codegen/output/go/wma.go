@@ -85,10 +85,25 @@ func (c *Core) wmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		inIdx = startIdx
 		i = 0
 		if _n0 := int(*outNBElement) - int(i); _n0 > 0 {
-			_r2 := inReal[inIdx:][:_n0]
-			_r3 := outReal[i:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[inIdx:][:_n0:_n0]
+			_r3 := outReal[i:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 		}
 		return Success
@@ -101,23 +116,23 @@ func (c *Core) wmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	periodSum = periodSub
 	inIdx = trailingIdx
 	i = 1
-	if _n4 := int(startIdx) - int(inIdx); _n4 > 0 {
-		_r6 := inReal[inIdx:][:_n4]
-		for _k5 := range _r6 {
-			tempReal = _r6[_k5]
+	if _n9 := int(startIdx) - int(inIdx); _n9 > 0 {
+		_r11 := inReal[inIdx:][:_n9]
+		for _k10 := range _r11 {
+			tempReal = _r11[_k10]
 			periodSub += tempReal
-			periodSum += float64(tempReal * float64(i+int32(_k5)))
+			periodSum += float64(tempReal * float64(i+int32(_k10)))
 		}
-		inIdx += int32(_n4)
+		inIdx += int32(_n9)
 	}
 	barsSinceReseed = 8 * optInTimePeriod
 	trailingValue = 0.0
-	if _n7 := int(endIdx) - int(inIdx) + 1; _n7 > 0 {
-		_r9 := inReal[inIdx:][:_n7]
-		_r10 := inReal[trailingIdx:][:_n7]
-		_r11 := outReal[outIdx:][:_n7]
-		for _k8 := range _r9 {
-			tempReal = _r9[_k8]
+	if _n12 := int(endIdx) - int(inIdx) + 1; _n12 > 0 {
+		_r14 := inReal[inIdx:][:_n12]
+		_r15 := inReal[trailingIdx:][:_n12]
+		_r16 := outReal[outIdx:][:_n12]
+		for _k13 := range _r14 {
+			tempReal = _r14[_k13]
 			periodSub += tempReal
 			periodSub -= trailingValue
 			periodSum += float64(tempReal * float64(optInTimePeriod))
@@ -127,18 +142,18 @@ func (c *Core) wmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				periodSub = 0.0
 				periodSum = 0.0
 				rw = 1
-				for j = inIdx + int32(_k8) - lookbackWin; j <= inIdx+int32(_k8); j += 1 {
+				for j = inIdx + int32(_k13) - lookbackWin; j <= inIdx+int32(_k13); j += 1 {
 					tempReal = inReal[j]
 					periodSub += tempReal
 					periodSum += float64(tempReal * float64(rw))
 					rw += 1
 				}
 			}
-			trailingValue = _r10[_k8]
-			_r11[_k8] = periodSum / divider
+			trailingValue = _r15[_k13]
+			_r16[_k13] = periodSum / divider
 			periodSum -= periodSub
 		}
-		outIdx += int32(_n7)
+		outIdx += int32(_n12)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

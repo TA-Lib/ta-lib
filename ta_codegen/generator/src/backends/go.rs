@@ -275,6 +275,9 @@ pub(super) struct Ctx<'a> {
     live_after: std::cell::RefCell<HashMap<usize, BTreeSet<String>>>,
     /// The batch body's [`super::go_lockstep::branched_loops`].
     branched: std::cell::RefCell<HashSet<usize>>,
+    /// The loop being rendered, by address, and the stores and `return` that
+    /// follow it, when nothing else does.
+    epilogue: std::cell::RefCell<Option<(usize, Vec<Statement>)>>,
 }
 
 /// A lockstep loop as it renders: the pass count, the counter, a name per
@@ -282,9 +285,28 @@ pub(super) struct Ctx<'a> {
 struct Lock {
     plan: super::go_lockstep::Plan,
     count: String,
-    pass: String,
-    lanes: Vec<String>,
+    pass: std::cell::RefCell<String>,
+    lanes: std::cell::RefCell<Vec<String>>,
     at: Cell<usize>,
+    /// Rendering the stores ahead of the loop.
+    exit: Cell<bool>,
+    scan: Option<ScanNames>,
+}
+
+/// A [`super::go_lockstep::Scan`] as it renders.
+struct ScanNames {
+    /// Each index's `int`: the bar cursor for the counter, and a rescan's
+    /// fresh counter while its loop renders.
+    ints: std::cell::RefCell<HashMap<String, String>>,
+    /// Each input's cut.
+    inputs: HashMap<String, String>,
+    cursor: String,
+    /// The cursor on entry.
+    entry: String,
+    /// The start the rescan about to render was given.
+    start: std::cell::RefCell<Option<Expr>>,
+    /// Rescan counters read after the loop.
+    keep: BTreeSet<String>,
 }
 
 const RETCODE_NAMES: &[(&str, &str)] = &[
@@ -297,6 +319,15 @@ const RETCODE_NAMES: &[(&str, &str)] = &[
     ("OutOfRangeEndIndex", "OutOfRangeEndIndex"),
     ("OutOfRangeStartIndex", "OutOfRangeStartIndex"),
 ];
+
+/// The stores to the out-parameters and the `return` that make up `tail`.
+fn epilogue(tail: &[Statement]) -> Option<Vec<Statement>> {
+    let code: Vec<&Statement> = tail.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+    let (ret, stores) = code.split_last()?;
+    let out = |t: &Expr| matches!(t, Expr::Var(n) | Expr::PointerDeref(n) if n == "outBegIdx" || n == "outNBElement");
+    let ok = matches!(ret, Statement::Return { .. }) && stores.iter().all(|s| matches!(s, Statement::Assign { target, compound: false, .. } if out(target)));
+    ok.then(|| code.into_iter().cloned().collect())
+}
 
 fn retcode_name(name: &str) -> Option<&'static str> {
     RETCODE_NAMES.iter().find(|(c, _)| *c == name).map(|(_, g)| *g)
@@ -434,6 +465,7 @@ impl<'a> Ctx<'a> {
             lock: std::cell::RefCell::new(None),
             live_after: std::cell::RefCell::new(HashMap::new()),
             branched: std::cell::RefCell::new(HashSet::new()),
+            epilogue: std::cell::RefCell::new(None),
         }
     }
 
@@ -481,6 +513,7 @@ impl<'a> Ctx<'a> {
             lock: std::cell::RefCell::new(None),
             live_after: std::cell::RefCell::new(HashMap::new()),
             branched: std::cell::RefCell::new(HashSet::new()),
+            epilogue: std::cell::RefCell::new(None),
         }
     }
 
@@ -758,6 +791,9 @@ impl<'a> Ctx<'a> {
         }
         if matches!(op, BinOp::And | BinOp::Or) {
             return (self.logical(l, op, r, sc), CType::Bool);
+        }
+        if let Some(g) = self.scan_compare(l, op, r) {
+            return (g, CType::Bool);
         }
         let (lg, lt) = self.lower(l, sc);
         let (rg, rt) = self.lower(r, sc);
@@ -1147,13 +1183,23 @@ impl<'a> Ctx<'a> {
             *self.scan.borrow_mut() = super::go_select::scan(body);
         }
         self.stmt_depth.set(self.stmt_depth.get() + 1);
-        for s in body {
-            self.stmt(s, out);
+        for at in 0..body.len() {
+            self.stmt_at(body, at, out);
         }
         self.stmt_depth.set(self.stmt_depth.get() - 1);
         if self.float_selects.get() && self.stmt_depth.get() == 0 {
             self.scan.take();
         }
+    }
+
+    /// Statement `at` of `list`, a loop knowing what follows it.
+    fn stmt_at(&self, list: &[Statement], at: usize, out: &mut Vec<String>) {
+        let s = &list[at];
+        if matches!(s, Statement::While { .. } | Statement::ForC { .. }) {
+            *self.epilogue.borrow_mut() = epilogue(&list[at + 1..]).map(|t| (super::go_select::addr(s), t));
+        }
+        self.stmt(s, out);
+        *self.epilogue.borrow_mut() = None;
     }
 
     pub(super) fn block(&self, body: &[Statement]) -> Vec<String> {
@@ -1239,7 +1285,7 @@ impl<'a> Ctx<'a> {
             }
             Statement::Assign { target, value, compound } => self.assign(target, value, *compound, out),
             Statement::Expr(e) => self.expr_stmt(e, out),
-            Statement::While { condition, body } if self.lockstep_loop(s, None, condition, body, None, out) => {}
+            Statement::While { condition, body } if self.lockstep_loop(s, None, condition, body, None, out) || self.scan_rescan(condition, body, out) => {}
             Statement::While { condition, body } => {
                 self.check_steps(&[condition]);
                 let mut sc = Scope::default();
@@ -1373,36 +1419,124 @@ impl<'a> Ctx<'a> {
     }
 
     /// An index of the re-sliced loop being rendered, read in its pass:
-    /// `v + int32(k)`, plus the steps the pass took before the read.
+    /// `v + int32(k)`, plus the steps the pass took before the read; in a
+    /// [`super::go_lockstep::Scan`], its `int`; in a store ahead of the loop,
+    /// its value after it.
     fn lock_var(&self, name: &str) -> Option<(GExpr, CType)> {
         let lock = self.lock.borrow();
         let lock = lock.as_ref()?;
+        if let Some(sc) = &lock.scan {
+            let n = sc.ints.borrow().get(name).cloned()?;
+            return Some((GExpr::call("int32", vec![GExpr::name(n)]), CType::Int32));
+        }
         let d = *lock.plan.steps.get(name)?;
+        let sign = if d > 0 { GOp::Add } else { GOp::Sub };
+        if lock.exit.get() {
+            return Some((GExpr::bin(GExpr::name(go_ident(name)), sign, GExpr::call("int32", vec![GExpr::name(lock.count.clone())])), CType::Int32));
+        }
         let taken = lock.plan.before[lock.at.get()].get(name).copied().unwrap_or(0);
-        let mut k = GExpr::name(lock.pass.clone());
+        let mut k = GExpr::name(lock.pass.borrow().clone());
         if lock.plan.down {
             k = GExpr::bin(GExpr::bin(GExpr::name(lock.count.clone()), GOp::Sub, GExpr::name("1")), GOp::Sub, k);
         }
         let k = GExpr::call("int32", vec![k]);
-        let mut g = GExpr::bin(GExpr::name(go_ident(name)), if d > 0 { GOp::Add } else { GOp::Sub }, k);
+        let mut g = GExpr::bin(GExpr::name(go_ident(name)), sign, k);
         if taken != 0 {
             g = GExpr::bin(g, if taken > 0 { GOp::Add } else { GOp::Sub }, GExpr::name(taken.unsigned_abs().to_string()));
         }
         Some((g, CType::Int32))
     }
 
-    /// `array[idx]` as its lane's element at the pass counter.
+    /// `array[idx]` as its lane's element at the pass counter; in a scan, an
+    /// input's cut or any array at an index expression, in `int`s.
     fn lock_lane(&self, array: &str, idx: &Expr) -> Option<GExpr> {
-        let lock = self.lock.borrow();
-        let lock = lock.as_ref()?;
-        let j = lock.plan.lane_of(lock.at.get(), array, idx)?;
-        Some(GExpr::index(GExpr::name(lock.lanes[j].clone()), GExpr::name(lock.pass.clone())))
+        let lock = self.lock.borrow().clone()?;
+        let j = lock.plan.lane_of(lock.at.get(), array, idx);
+        let Some(sc) = &lock.scan else {
+            return Some(GExpr::index(GExpr::name(lock.lanes.borrow()[j?].clone()), GExpr::name(lock.pass.borrow().clone())));
+        };
+        if let Some(x) = sc.inputs.get(array) {
+            return Some(GExpr::index(GExpr::name(x.clone()), self.scan_int(idx)?));
+        }
+        if let Some(lane) = j.map(|j| lock.lanes.borrow()[j].clone()).filter(|l| !l.is_empty()) {
+            return Some(GExpr::index(GExpr::name(lane), GExpr::bin(GExpr::name(sc.cursor.clone()), GOp::Sub, GExpr::name(sc.entry.clone()))));
+        }
+        Some(GExpr::index(GExpr::name(go_ident(array)), self.scan_int(idx)?))
     }
 
-    /// The loop by [`super::go_lockstep::plan`] in a batch body: the pass
-    /// count once as an `int`, one re-slice per lane, a fresh counter ranging
-    /// over the first, and after it each index read later takes its last
-    /// value. `false` renders the loop as written.
+    /// An index expression of a scan in its `int`s.
+    fn scan_int(&self, e: &Expr) -> Option<GExpr> {
+        fn go(e: &Expr, ints: &HashMap<String, String>) -> Option<GExpr> {
+            match e {
+                Expr::IntLiteral(n) => Some(int_lit(*n)),
+                Expr::Var(n) => ints.get(n).map(|g| GExpr::name(g.clone())),
+                Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub), r) => Some(GExpr::bin(go(l, ints)?, if *op == BinOp::Add { GOp::Add } else { GOp::Sub }, go(r, ints)?)),
+                _ => None,
+            }
+        }
+        let lock = self.lock.borrow().clone()?;
+        let sc = lock.scan.as_ref()?;
+        let ints = sc.ints.borrow();
+        go(e, &ints)
+    }
+
+    /// A comparison of two index expressions of a scan, in its `int`s.
+    fn scan_compare(&self, l: &Expr, op: &BinOp, r: &Expr) -> Option<GExpr> {
+        let gop = match op {
+            BinOp::Less => GOp::Lt,
+            BinOp::LessEq => GOp::Le,
+            BinOp::Greater => GOp::Gt,
+            BinOp::GreaterEq => GOp::Ge,
+            BinOp::Eq => GOp::Eq,
+            BinOp::NotEq => GOp::Ne,
+            _ => return None,
+        };
+        Some(GExpr::bin(self.scan_int(l)?, gop, self.scan_int(r)?))
+    }
+
+    /// A store to an index of a scan: to its `int`, or for a rescan counter,
+    /// the rescan's start, which its loop renders.
+    fn scan_assign(&self, target: &Expr, value: &Expr) -> Option<Vec<String>> {
+        let lock = self.lock.borrow().clone()?;
+        let sc = lock.scan.as_ref()?;
+        let Expr::Var(t) = target else { return None };
+        if lock.plan.scan.as_ref().is_some_and(|p| p.rescans.contains(t)) {
+            *sc.start.borrow_mut() = Some(value.clone());
+            return Some(Vec::new());
+        }
+        let n = sc.ints.borrow().get(t).cloned()?;
+        let v = self.scan_int(value).unwrap_or_else(|| GExpr::call("int", vec![strip_paren(self.pure(value, Some(CType::Int32)))]));
+        Some(vec![format!("{n} = {}", strip_paren(v).render())])
+    }
+
+    /// A scan's rescan `while( ++c <= b )` after `c = a`: a fresh counter
+    /// from `a + 1` through `b`, and `c` its last value where read later.
+    fn scan_rescan(&self, condition: &Expr, body: &[Statement], out: &mut Vec<String>) -> bool {
+        let Some(lock) = self.lock.borrow().clone() else { return false };
+        let Some(sc) = &lock.scan else { return false };
+        let Some((c, bound)) = super::go_lockstep::rescan_of(condition) else { return false };
+        let Some(start) = sc.start.take() else { self.fail("a rescan without its start") };
+        let (Some(a), Some(b)) = (self.scan_int(&start), self.scan_int(bound)) else { self.fail("a rescan bound outside the scan's indices") };
+        let j = self.temp("j");
+        let first = GExpr::bin(a, GOp::Add, GExpr::name("1"));
+        sc.ints.borrow_mut().insert(c.to_string(), j.clone());
+        let lines = self.block(body);
+        sc.ints.borrow_mut().remove(c);
+        let keep = sc.keep.contains(c);
+        if keep {
+            out.push(format!("{j} := {}", first.render()));
+            out.push(format!("for ; {j} <= {}; {j}++ {{", b.render()));
+        } else {
+            out.push(format!("for {j} := {}; {j} <= {}; {j}++ {{", first.render(), b.render()));
+        }
+        out.extend(indented(&lines));
+        out.push("}".to_string());
+        if keep {
+            out.push(format!("{} = int32({j})", go_ident(c)));
+        }
+        true
+    }
+
     /// What [`super::go_lockstep::plan`] needs to know of this body.
     fn with_lockstep_env<R>(&self, branched: bool, f: impl FnOnce(&super::go_lockstep::Env) -> R) -> R {
         let int_local = |n: &str| self.env.lookup(n) == Some(CType::Int32) && retcode_name(n).is_none() && !self.arrays.contains(n);
@@ -1411,9 +1545,48 @@ impl<'a> Ctx<'a> {
         let reg = self.svc.registry;
         let cross_call = |n: &str| reg.contains(n) && MathFn::from_name(n).is_none();
         let int_expr = |e: &Expr| self.env.type_of(e).numeric() == CType::Int32;
-        f(&super::go_lockstep::Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call, int_expr: &int_expr, branched })
+        f(&super::go_lockstep::Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call, int_expr: &int_expr, branched, nested: self.loop_depth.get() > 1 })
     }
 
+    /// The stores and `return` that follow loop `s` when, with each index at
+    /// its value after the loop, they read nothing the loop writes: rendered
+    /// ahead of a loop that calls out, so no value they read stays live
+    /// across its calls.
+    fn early_epilogue(&self, s: &Statement, plan: &super::go_lockstep::Plan) -> Option<Vec<Statement>> {
+        let tail = self.epilogue.borrow().as_ref().filter(|(at, _)| *at == super::go_select::addr(s)).map(|(_, t)| t.clone())?;
+        if !plan.calls_out || plan.scan.is_some() {
+            return None;
+        }
+        let fixed = |e: &Expr| {
+            let mut ok = true;
+            crate::streaming::walk_expr(e, &mut |x| match x {
+                Expr::Var(n) | Expr::PointerDeref(n) => ok &= plan.steps.contains_key(n) || !plan.facts.assigned.contains(n),
+                Expr::IntLiteral(_) | Expr::BinOp(..) | Expr::Cast(..) => {}
+                _ => ok = false,
+            });
+            ok
+        };
+        let mut read = BTreeSet::new();
+        for st in &plan.pass {
+            crate::streaming::walk_stmt_exprs(st, &mut |e| crate::streaming::walk_expr(e, &mut |x| {
+                if let Expr::Var(n) | Expr::PointerDeref(n) = x {
+                    read.insert(n.clone());
+                }
+            }));
+        }
+        let ok = tail.iter().all(|st| match st {
+            Statement::Assign { target: Expr::Var(t) | Expr::PointerDeref(t), value, compound: false } => !read.contains(t) && !plan.facts.assigned.contains(t) && fixed(value),
+            Statement::Return { value } => value.as_ref().is_none_or(fixed),
+            _ => false,
+        });
+        ok.then_some(tail)
+    }
+
+    /// The loop by [`super::go_lockstep::plan`] in a batch body: the pass
+    /// count once as an `int`, one re-slice per lane, a fresh counter ranging
+    /// over the first, and after it each index read later takes its last
+    /// value. `false` renders the loop as written.
+    #[allow(clippy::too_many_lines)]
     fn lockstep_loop(&self, s: &Statement, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, out: &mut Vec<String>) -> bool {
         use super::go_lockstep::{plan, Trip};
         if !self.lockstep.get() || self.lock.borrow().is_some() {
@@ -1423,6 +1596,9 @@ impl<'a> Ctx<'a> {
         let Ok(plan) = self.with_lockstep_env(branched, |env| plan(condition, body, update, env)) else {
             return false;
         };
+        if plan.scan.is_some() {
+            return self.scan_loop(s, init, condition, plan, out);
+        }
         let pure = |e: &Expr| {
             let mut sc = Scope::default();
             let g = self.lower_as(e, CType::Int32, &mut sc);
@@ -1451,24 +1627,31 @@ impl<'a> Ctx<'a> {
             let Some(g) = pure(&lane.start) else { return false };
             starts.push(g);
         }
+        let epilogue = self.early_epilogue(s, &plan);
         if let Some(init) = init {
             out.extend(self.block(std::slice::from_ref(init)));
         }
         let n = self.temp("n");
         let k = self.temp("k");
         let lane_names: Vec<String> = plan.lanes.iter().map(|_| self.temp("r")).collect();
-        out.push(format!("if {n} := {}; {n} > 0 {{", count.render()));
+        let unroll = plan.unroll;
+        // An unrolled group's cut is proved against the capacity, so the cap
+        // is the count too.
+        let to = if unroll.is_some() { format!("[:{n}:{n}]") } else { format!("[:{n}]") };
+        let mut cuts = Vec::new();
         for ((lane, name), start) in plan.lanes.iter().zip(&lane_names).zip(starts) {
             let lo = if plan.down { GExpr::bin(start, GOp::Sub, GExpr::call("int32", vec![GExpr::name(n.clone())])) } else { strip_paren(start) };
-            let cut = GExpr::slice(GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(lo), None), None, Some(GExpr::name(n.clone())));
-            out.push(format!("\t{name} := {}", cut.render()));
+            cuts.push(format!("\t{name} := {}{to}", GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(lo), None).render()));
         }
-        if plan.down {
-            out.push(format!("\tfor {k} := {n} - 1; {k} >= 0; {k}-- {{"));
-        } else {
-            out.push(format!("\tfor {k} := range {} {{", lane_names[0]));
-        }
-        let lock = std::rc::Rc::new(Lock { plan, count: n.clone(), pass: k, lanes: lane_names, at: Cell::new(0) });
+        let lock = std::rc::Rc::new(Lock {
+            plan,
+            count: n.clone(),
+            pass: std::cell::RefCell::new(k.clone()),
+            lanes: std::cell::RefCell::new(lane_names.clone()),
+            at: Cell::new(0),
+            exit: Cell::new(false),
+            scan: None,
+        });
         let outermost = self.loop_selects.get() && self.loop_depth.get() == 1;
         let outer_scan = outermost.then(|| {
             self.loop_out.set(super::go_select::stores_output(&lock.plan.pass));
@@ -1483,16 +1666,62 @@ impl<'a> Ctx<'a> {
         let inner_keys: Vec<usize> = inner.keys().copied().collect();
         self.live_after.borrow_mut().extend(inner);
         *self.lock.borrow_mut() = Some(lock.clone());
-        let mut lines = Vec::new();
-        self.stmt_depth.set(self.stmt_depth.get() + 1);
-        for (at, st) in lock.plan.pass.iter().enumerate() {
-            if lock.plan.is_step(st) {
-                continue;
-            }
-            lock.at.set(at);
-            self.stmt(st, &mut lines);
+        out.push(format!("if {n} := {}; {n} > 0 {{", count.render()));
+        let (stores, ret) = match &epilogue {
+            Some(tail) => (&tail[..tail.len() - 1], tail.last()),
+            None => (&[][..], None),
+        };
+        lock.exit.set(true);
+        let mut early = Vec::new();
+        for st in stores {
+            self.stmt(st, &mut early);
         }
-        self.stmt_depth.set(self.stmt_depth.get() - 1);
+        lock.exit.set(false);
+        out.extend(indented(&early));
+        out.extend(cuts);
+        let pass_lines = |pass: String, lanes: Vec<String>| {
+            *lock.pass.borrow_mut() = pass;
+            *lock.lanes.borrow_mut() = lanes;
+            let mut lines = Vec::new();
+            self.stmt_depth.set(self.stmt_depth.get() + 1);
+            for (at, st) in lock.plan.pass.iter().enumerate() {
+                if lock.plan.is_step(st) {
+                    continue;
+                }
+                lock.at.set(at);
+                self.stmt(st, &mut lines);
+            }
+            self.stmt_depth.set(self.stmt_depth.get() - 1);
+            lines
+        };
+        if let Some(width) = unroll {
+            let groups: Vec<String> = lane_names.iter().map(|_| self.temp("g")).collect();
+            out.push(format!("\t{k} := 0"));
+            out.push(format!("\tfor ; {k}+{width} <= {n}; {k} += {width} {{"));
+            for (g, r) in groups.iter().zip(&lane_names) {
+                out.push(format!("\t\t{g} := {r}[{k} : {k}+{width} : {k}+{width}]"));
+            }
+            for e in 0..width {
+                out.extend(pass_lines(e.to_string(), groups.clone()).into_iter().map(|l| format!("\t\t{l}")));
+            }
+            out.push("\t}".to_string());
+            let tails: Vec<String> = lane_names.iter().map(|_| self.temp("t")).collect();
+            for (i, (t, r)) in tails.iter().zip(&lane_names).enumerate() {
+                out.push(if i == 0 { format!("\t{t} := {r}[{k}:]") } else { format!("\t{t} := {r}[{k}:][:len({})]", tails[0]) });
+            }
+            let j = self.temp("j");
+            out.push(format!("\tfor {j} := range {} {{", tails[0]));
+            out.extend(pass_lines(j, tails).into_iter().map(|l| format!("\t\t{l}")));
+            out.push("\t}".to_string());
+        } else {
+            if lock.plan.down {
+                out.push(format!("\tfor {k} := {n} - 1; {k} >= 0; {k}-- {{"));
+            } else {
+                out.push(format!("\tfor {k} := range {} {{", lane_names[0]));
+            }
+            out.extend(pass_lines(k.clone(), lane_names.clone()).into_iter().map(|l| format!("\t\t{l}")));
+            out.push("\t}".to_string());
+        }
         *self.lock.borrow_mut() = None;
         for key in inner_keys {
             self.live_after.borrow_mut().remove(&key);
@@ -1500,11 +1729,135 @@ impl<'a> Ctx<'a> {
         if let Some(sc) = outer_scan {
             *self.scan.borrow_mut() = sc;
         }
-        out.extend(lines.into_iter().map(|l| format!("\t\t{l}")));
+        if let Some(ret) = ret {
+            out.extend(indented(&self.block(std::slice::from_ref(ret))));
+        } else {
+            for (v, d) in &lock.plan.steps {
+                if live.as_ref().is_none_or(|l| l.contains(v)) {
+                    out.push(format!("\t{} {}= int32({n})", go_ident(v), if *d > 0 { "+" } else { "-" }));
+                }
+            }
+        }
+        out.push("}".to_string());
+        true
+    }
+
+    /// The loop by [`super::go_lockstep::plan`] with a
+    /// [`super::go_lockstep::Scan`]: each input cut once to `endIdx + 1`,
+    /// the bar cursor an `int` bounded by that length, each index an `int`, a
+    /// lane of an output indexed by the bars since entry, and after it each
+    /// index read later takes its last value.
+    #[allow(clippy::too_many_lines)]
+    fn scan_loop(&self, s: &Statement, init: Option<&Statement>, condition: &Expr, plan: super::go_lockstep::Plan, out: &mut Vec<String>) -> bool {
+        use super::go_lockstep::Trip;
+        let pure = |e: &Expr| {
+            let mut sc = Scope::default();
+            let g = self.lower_as(e, CType::Int32, &mut sc);
+            sc.is_empty().then_some(g)
+        };
+        let Trip::Up { bound, .. } = &plan.trip else { return false };
+        let Some(end) = pure(bound).map(|b| GExpr::call("int", vec![strip_paren(b)])) else { return false };
+        let mut sc = Scope::default();
+        let guard = self.cond(condition, &mut sc);
+        if !sc.is_empty() {
+            return false;
+        }
+        let Some(scan) = plan.scan.as_ref() else { return false };
+        let mut starts = Vec::new();
+        for lane in &plan.lanes {
+            let laned = (self.contract.borrow().get(&lane.array) != Some(&super::go_lockstep::Contract::Input)) && !scan.ints.contains(&lane.var);
+            match laned.then(|| pure(&lane.start)) {
+                Some(None) => return false,
+                other => starts.push(other.flatten()),
+            }
+        }
+        if let Some(init) = init {
+            out.extend(self.block(std::slice::from_ref(init)));
+        }
+        let live = self.live_after.borrow().get(&super::go_select::addr(s)).cloned();
+        let read_later = |v: &str| live.as_ref().is_none_or(|l| l.contains(v));
+        let counter = go_ident(&plan.counter);
+        out.push(format!("if {} {{", strip_paren(guard).render()));
+        let mut inputs = HashMap::new();
+        let mut first = None::<String>;
+        for a in &scan.inputs {
+            let x = self.temp("x");
+            match &first {
+                None => out.push(format!("\t{x} := {}", GExpr::slice(GExpr::name(go_ident(a)), None, Some(GExpr::bin(end.clone(), GOp::Add, GExpr::name("1")))).render())),
+                Some(f) => out.push(format!("\t{x} := {}[:len({f})]", go_ident(a))),
+            }
+            first.get_or_insert(x.clone());
+            inputs.insert(a.clone(), x);
+        }
+        let Some(len) = first.map(|f| format!("len({f})")) else { self.fail("a scan that reads no input") };
+        let entry = self.temp("s");
+        let cursor = self.temp("t");
+        out.push(format!("\t{entry} := int({counter})"));
+        let mut lanes = Vec::new();
+        for (lane, start) in plan.lanes.iter().zip(starts) {
+            let Some(start) = start else {
+                lanes.push(String::new());
+                continue;
+            };
+            let o = self.temp("r");
+            let cut = GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(strip_paren(start)), None).render();
+            out.push(format!("\t{o} := {cut}[:{len}-{entry}]"));
+            lanes.push(o);
+        }
+        let mut ints = HashMap::new();
+        ints.insert(plan.counter.clone(), cursor.clone());
+        for v in scan.ints.iter().filter(|v| **v != plan.counter) {
+            let i = self.temp("i");
+            out.push(format!("\t{i} := int({})", go_ident(v)));
+            ints.insert(v.clone(), i);
+        }
+        let keep: BTreeSet<String> = scan.rescans.iter().filter(|c| read_later(c)).cloned().collect();
+        let shadows: Vec<(String, String)> = scan.ints.iter().filter(|v| **v != plan.counter).map(|v| (v.clone(), ints[v].clone())).collect();
+        let lock = std::rc::Rc::new(Lock {
+            plan,
+            count: String::new(),
+            pass: std::cell::RefCell::new(String::new()),
+            lanes: std::cell::RefCell::new(lanes),
+            at: Cell::new(0),
+            exit: Cell::new(false),
+            scan: Some(ScanNames { ints: std::cell::RefCell::new(ints), inputs, cursor: cursor.clone(), entry: entry.clone(), start: std::cell::RefCell::new(None), keep }),
+        });
+        let mut inner = HashMap::new();
+        if let Some(after) = &live {
+            super::go_lockstep::live_after_pass_loops(condition, &lock.plan.pass, after, &mut inner);
+        }
+        let inner_keys: Vec<usize> = inner.keys().copied().collect();
+        self.live_after.borrow_mut().extend(inner);
+        *self.lock.borrow_mut() = Some(lock.clone());
+        out.push(format!("\tfor {cursor} := {entry}; {cursor} < {len}; {cursor}++ {{"));
+        let mut rendered = Vec::new();
+        self.stmt_depth.set(self.stmt_depth.get() + 1);
+        for (at, st) in lock.plan.pass.iter().enumerate() {
+            lock.at.set(at);
+            if lock.plan.is_step(st) {
+                let Some((v, d)) = super::lockstep::as_step(st) else { continue };
+                if let Some(i) = shadows.iter().find(|(name, _)| name == v).map(|(_, i)| i) {
+                    rendered.push(format!("{i}{}", if d > 0 { "++" } else { "--" }));
+                }
+                continue;
+            }
+            self.stmt(st, &mut rendered);
+        }
+        self.stmt_depth.set(self.stmt_depth.get() - 1);
+        *self.lock.borrow_mut() = None;
+        for key in inner_keys {
+            self.live_after.borrow_mut().remove(&key);
+        }
+        out.extend(rendered.into_iter().map(|l| format!("\t\t{l}")));
         out.push("\t}".to_string());
         for (v, d) in &lock.plan.steps {
-            if live.as_ref().is_none_or(|l| l.contains(v)) {
-                out.push(format!("\t{} {}= int32({n})", go_ident(v), if *d > 0 { "+" } else { "-" }));
+            if read_later(v) && !shadows.iter().any(|(name, _)| name == v) {
+                out.push(format!("\t{} {}= int32({len} - {entry})", go_ident(v), if *d > 0 { "+" } else { "-" }));
+            }
+        }
+        for (v, i) in &shadows {
+            if read_later(v) {
+                out.push(format!("\t{} = int32({i})", go_ident(v)));
             }
         }
         out.push("}".to_string());
@@ -1804,6 +2157,10 @@ impl<'a> Ctx<'a> {
     }
 
     fn assign(&self, target: &Expr, value: &Expr, compound: bool, out: &mut Vec<String>) {
+        if let Some(lines) = self.scan_assign(target, value) {
+            out.extend(lines);
+            return;
+        }
         if let Expr::FuncCall(fname, args) = value {
             if self.svc.registry.contains(fname) && self.cross_call(fname, args, out) {
                 let mut sc = Scope::default();
@@ -2067,8 +2424,10 @@ impl Ctx<'_> {
     /// range-type copies.
     pub(super) fn body_stmts(&self, body: &[Statement], func: &FuncDef, out: &mut Vec<String>) {
         let top = |stmts: &[Statement], out: &mut Vec<String>| {
-            for s in stmts.iter().filter(|s| !matches!(s, Statement::VarDecl { .. })) {
-                self.stmt(s, out);
+            for (at, s) in stmts.iter().enumerate() {
+                if !matches!(s, Statement::VarDecl { .. }) {
+                    self.stmt_at(stmts, at, out);
+                }
             }
         };
         let copies = range_type_copies(body, func);

@@ -52,15 +52,46 @@ func (c *Core) ibsImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	outIdx = 0
 	i = startIdx
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inHigh[i:][:_n0]
-		_r3 := inLow[i:][:_n0]
-		_r4 := inClose[i:][:_n0]
-		_r5 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			range_ = _r2[_k1] - _r3[_k1]
-			_r5[_k1] = (_r4[_k1] - _r3[_k1]) / range_
+		_r2 := inHigh[i:][:_n0:_n0]
+		_r3 := inLow[i:][:_n0:_n0]
+		_r4 := inClose[i:][:_n0:_n0]
+		_r5 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+4 <= _n0; _k1 += 4 {
+			_g6 := _r2[_k1 : _k1+4 : _k1+4]
+			_g7 := _r3[_k1 : _k1+4 : _k1+4]
+			_g8 := _r4[_k1 : _k1+4 : _k1+4]
+			_g9 := _r5[_k1 : _k1+4 : _k1+4]
+			range_ = _g6[0] - _g7[0]
+			_g9[0] = (_g8[0] - _g7[0]) / range_
 			if range_ <= 0.0 {
-				_r5[_k1] = 0.5
+				_g9[0] = 0.5
+			}
+			range_ = _g6[1] - _g7[1]
+			_g9[1] = (_g8[1] - _g7[1]) / range_
+			if range_ <= 0.0 {
+				_g9[1] = 0.5
+			}
+			range_ = _g6[2] - _g7[2]
+			_g9[2] = (_g8[2] - _g7[2]) / range_
+			if range_ <= 0.0 {
+				_g9[2] = 0.5
+			}
+			range_ = _g6[3] - _g7[3]
+			_g9[3] = (_g8[3] - _g7[3]) / range_
+			if range_ <= 0.0 {
+				_g9[3] = 0.5
+			}
+		}
+		_t10 := _r2[_k1:]
+		_t11 := _r3[_k1:][:len(_t10)]
+		_t12 := _r4[_k1:][:len(_t10)]
+		_t13 := _r5[_k1:][:len(_t10)]
+		for _j14 := range _t10 {
+			range_ = _t10[_j14] - _t11[_j14]
+			_t13[_j14] = (_t12[_j14] - _t11[_j14]) / range_
+			if range_ <= 0.0 {
+				_t13[_j14] = 0.5
 			}
 		}
 		outIdx += int32(_n0)

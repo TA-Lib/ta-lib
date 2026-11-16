@@ -51,15 +51,46 @@ func (c *Core) marketfiImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []fl
 	outIdx = 0
 	i = startIdx
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inVolume[i:][:_n0]
-		_r3 := inHigh[i:][:_n0]
-		_r4 := inLow[i:][:_n0]
-		_r5 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			if _r2[_k1] != 0.0 {
-				_r5[_k1] = (_r3[_k1] - _r4[_k1]) / _r2[_k1]
+		_r2 := inVolume[i:][:_n0:_n0]
+		_r3 := inHigh[i:][:_n0:_n0]
+		_r4 := inLow[i:][:_n0:_n0]
+		_r5 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+4 <= _n0; _k1 += 4 {
+			_g6 := _r2[_k1 : _k1+4 : _k1+4]
+			_g7 := _r3[_k1 : _k1+4 : _k1+4]
+			_g8 := _r4[_k1 : _k1+4 : _k1+4]
+			_g9 := _r5[_k1 : _k1+4 : _k1+4]
+			if _g6[0] != 0.0 {
+				_g9[0] = (_g7[0] - _g8[0]) / _g6[0]
 			} else {
-				_r5[_k1] = 0.0
+				_g9[0] = 0.0
+			}
+			if _g6[1] != 0.0 {
+				_g9[1] = (_g7[1] - _g8[1]) / _g6[1]
+			} else {
+				_g9[1] = 0.0
+			}
+			if _g6[2] != 0.0 {
+				_g9[2] = (_g7[2] - _g8[2]) / _g6[2]
+			} else {
+				_g9[2] = 0.0
+			}
+			if _g6[3] != 0.0 {
+				_g9[3] = (_g7[3] - _g8[3]) / _g6[3]
+			} else {
+				_g9[3] = 0.0
+			}
+		}
+		_t10 := _r2[_k1:]
+		_t11 := _r3[_k1:][:len(_t10)]
+		_t12 := _r4[_k1:][:len(_t10)]
+		_t13 := _r5[_k1:][:len(_t10)]
+		for _j14 := range _t10 {
+			if _t10[_j14] != 0.0 {
+				_t13[_j14] = (_t11[_j14] - _t12[_j14]) / _t10[_j14]
+			} else {
+				_t13[_j14] = 0.0
 			}
 		}
 		outIdx += int32(_n0)

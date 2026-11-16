@@ -53,12 +53,14 @@ func (c *Core) tanhImpl(startIdx, endIdx int32, inReal []float64, outBegIdx, out
 	i = startIdx
 	outIdx = 0
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		*outNBElement = outIdx + int32(_n0)
+		*outBegIdx = startIdx
 		_r2 := inReal[i:][:_n0]
 		_r3 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			_r3[_k1] = math.Tanh(_r2[_k1])
 		}
-		outIdx += int32(_n0)
+		return Success
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

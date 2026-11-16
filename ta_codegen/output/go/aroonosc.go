@@ -55,7 +55,6 @@ func (c *Core) aroonoscImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 	var lowestIdx int32
 	var highestIdx int32
 	var today int32
-	var i int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -83,52 +82,50 @@ func (c *Core) aroonoscImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 	lowest = 0.0
 	highest = 0.0
 	factor = 100.0 / float64(optInTimePeriod)
-	for today <= endIdx {
-		tmp = inLow[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inHigh[:int(endIdx)+1]
+		_x1 := inLow[:len(_x0)]
+		_s2 := int(today)
+		_r4 := outReal[outIdx:][:len(_x0)-_s2]
+		_i5 := int(highestIdx)
+		_i6 := int(lowestIdx)
+		_i7 := int(trailingIdx)
+		for _t3 := _s2; _t3 < len(_x0); _t3++ {
+			tmp = _x1[_t3]
+			if _i6 < _i7 {
+				_i6 = _i7
+				lowest = _x1[_i6]
+				for _j8 := _i6 + 1; _j8 <= _t3; _j8++ {
+					tmp = _x1[_j8]
+					if tmp <= lowest {
+						_i6 = _j8
+						lowest = tmp
+					}
 				}
-				tmp = inLow[i]
-				if tmp <= lowest {
-					lowestIdx = i
-					lowest = tmp
-				}
+			} else if tmp <= lowest {
+				_i6 = _t3
+				lowest = tmp
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
-		}
-		tmp = inHigh[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			tmp = _x0[_t3]
+			if _i5 < _i7 {
+				_i5 = _i7
+				highest = _x0[_i5]
+				for _j9 := _i5 + 1; _j9 <= _t3; _j9++ {
+					tmp = _x0[_j9]
+					if tmp >= highest {
+						_i5 = _j9
+						highest = tmp
+					}
 				}
-				tmp = inHigh[i]
-				if tmp >= highest {
-					highestIdx = i
-					highest = tmp
-				}
+			} else if tmp >= highest {
+				_i5 = _t3
+				highest = tmp
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
+			aroon = float64(factor * float64(int32(_i5)-int32(_i6)))
+			_r4[_t3-_s2] = aroon
+			_i7++
 		}
-		aroon = float64(factor * float64(highestIdx-lowestIdx))
-		outReal[outIdx] = aroon
-		outIdx += 1
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s2)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

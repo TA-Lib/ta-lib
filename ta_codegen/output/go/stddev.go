@@ -83,17 +83,43 @@ func (c *Core) stddevImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	if optInNbDev != 1.0 {
 		i = 0
 		if _n1 := int(*outNBElement) - int(i); _n1 > 0 {
-			_r3 := outReal[i:][:_n1]
-			for _k2 := range _r3 {
-				_r3[_k2] = float64(math.Sqrt(_r3[_k2]) * optInNbDev)
+			_r3 := outReal[i:][:_n1:_n1]
+			_k2 := 0
+			for ; _k2+8 <= _n1; _k2 += 8 {
+				_g4 := _r3[_k2 : _k2+8 : _k2+8]
+				_g4[0] = float64(math.Sqrt(_g4[0]) * optInNbDev)
+				_g4[1] = float64(math.Sqrt(_g4[1]) * optInNbDev)
+				_g4[2] = float64(math.Sqrt(_g4[2]) * optInNbDev)
+				_g4[3] = float64(math.Sqrt(_g4[3]) * optInNbDev)
+				_g4[4] = float64(math.Sqrt(_g4[4]) * optInNbDev)
+				_g4[5] = float64(math.Sqrt(_g4[5]) * optInNbDev)
+				_g4[6] = float64(math.Sqrt(_g4[6]) * optInNbDev)
+				_g4[7] = float64(math.Sqrt(_g4[7]) * optInNbDev)
+			}
+			_t5 := _r3[_k2:]
+			for _j6 := range _t5 {
+				_t5[_j6] = float64(math.Sqrt(_t5[_j6]) * optInNbDev)
 			}
 		}
 	} else {
 		i = 0
-		if _n4 := int(*outNBElement) - int(i); _n4 > 0 {
-			_r6 := outReal[i:][:_n4]
-			for _k5 := range _r6 {
-				_r6[_k5] = math.Sqrt(_r6[_k5])
+		if _n7 := int(*outNBElement) - int(i); _n7 > 0 {
+			_r9 := outReal[i:][:_n7:_n7]
+			_k8 := 0
+			for ; _k8+8 <= _n7; _k8 += 8 {
+				_g10 := _r9[_k8 : _k8+8 : _k8+8]
+				_g10[0] = math.Sqrt(_g10[0])
+				_g10[1] = math.Sqrt(_g10[1])
+				_g10[2] = math.Sqrt(_g10[2])
+				_g10[3] = math.Sqrt(_g10[3])
+				_g10[4] = math.Sqrt(_g10[4])
+				_g10[5] = math.Sqrt(_g10[5])
+				_g10[6] = math.Sqrt(_g10[6])
+				_g10[7] = math.Sqrt(_g10[7])
+			}
+			_t11 := _r9[_k8:]
+			for _j12 := range _t11 {
+				_t11[_j12] = math.Sqrt(_t11[_j12])
 			}
 		}
 	}

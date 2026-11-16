@@ -109,10 +109,25 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		outIdx = 0
 		today = startIdx
 		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
-			_r2 := inReal[today:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[today:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 			outIdx += int32(_n0)
 		}
@@ -139,10 +154,10 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	trailingIdxFull = wmaStartIdx - lookbackFull
 	i = trailingIdxFull
 	w = 1.0
-	if _n4 := int(wmaStartIdx) - int(i); _n4 > 0 {
-		_r6 := inReal[i:][:_n4]
-		for _k5 := range _r6 {
-			tempReal = _r6[_k5]
+	if _n9 := int(wmaStartIdx) - int(i); _n9 > 0 {
+		_r11 := inReal[i:][:_n9]
+		for _k10 := range _r11 {
+			tempReal = _r11[_k10]
 			periodSubFull += tempReal
 			periodSumFull += float64(tempReal * w)
 			w += 1.0
@@ -153,12 +168,12 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	outIdx = 0
 	if optInTimePeriod == 2 || optInTimePeriod == 3 {
 		today = startIdx
-		if _n7 := int(endIdx) - int(today) + 1; _n7 > 0 {
-			_r9 := inReal[today:][:_n7]
-			_r10 := inReal[trailingIdxFull:][:_n7]
-			_r11 := outReal[outIdx:][:_n7]
-			for _k8 := range _r9 {
-				tempReal = _r9[_k8]
+		if _n12 := int(endIdx) - int(today) + 1; _n12 > 0 {
+			_r14 := inReal[today:][:_n12]
+			_r15 := inReal[trailingIdxFull:][:_n12]
+			_r16 := outReal[outIdx:][:_n12]
+			for _k13 := range _r14 {
+				tempReal = _r14[_k13]
 				periodSubFull += tempReal
 				periodSubFull -= trailingFull
 				periodSumFull += float64(tempReal * float64(optInTimePeriod))
@@ -168,19 +183,19 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 					periodSubFull = 0.0
 					periodSumFull = 0.0
 					rw = 1.0
-					for jFull = today + int32(_k8) - lookbackFull; jFull <= today+int32(_k8); jFull += 1 {
+					for jFull = today + int32(_k13) - lookbackFull; jFull <= today+int32(_k13); jFull += 1 {
 						tempReal2 = inReal[jFull]
 						periodSubFull += tempReal2
 						periodSumFull += float64(tempReal2 * rw)
 						rw += 1.0
 					}
 				}
-				trailingFull = _r10[_k8]
+				trailingFull = _r15[_k13]
 				fullOut = periodSumFull / dividerFull
 				periodSumFull -= periodSubFull
-				_r11[_k8] = float64(2.0*tempReal) - fullOut
+				_r16[_k13] = float64(2.0*tempReal) - fullOut
 			}
-			outIdx += int32(_n7)
+			outIdx += int32(_n12)
 		}
 	} else {
 		dividerHalf = float64(float64(halfPeriod)*float64(halfPeriod+1)) / 2.0
@@ -191,10 +206,10 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		trailingIdxHalf = wmaStartIdx - lookbackHalf
 		i = trailingIdxHalf
 		w = 1.0
-		if _n12 := int(wmaStartIdx) - int(i); _n12 > 0 {
-			_r14 := inReal[i:][:_n12]
-			for _k13 := range _r14 {
-				tempReal = _r14[_k13]
+		if _n17 := int(wmaStartIdx) - int(i); _n17 > 0 {
+			_r19 := inReal[i:][:_n17]
+			for _k18 := range _r19 {
+				tempReal = _r19[_k18]
 				periodSubHalf += tempReal
 				periodSumHalf += float64(tempReal * w)
 				w += 1.0
@@ -218,78 +233,14 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		periodSumSqrt = 0.0
 		w = 1.0
 		today = wmaStartIdx
-		if _n15 := int(startIdx) - int(today); _n15 > 0 {
-			_r17 := inReal[today:][:_n15]
-			_r18 := inReal[trailingIdxFull:][:_n15]
-			_r19 := inReal[trailingIdxHalf:][:_n15]
-			for _k16 := range _r17 {
-				tempReal = _r17[_k16]
-				periodSubFull += tempReal
-				periodSubFull -= trailingFull
-				periodSumFull += float64(tempReal * float64(optInTimePeriod))
-				barsSinceReseedFull -= 1
-				if barsSinceReseedFull <= 0 {
-					barsSinceReseedFull = 8 * optInTimePeriod
-					periodSubFull = 0.0
-					periodSumFull = 0.0
-					rw = 1.0
-					for jFull = today + int32(_k16) - lookbackFull; jFull <= today+int32(_k16); jFull += 1 {
-						tempReal2 = inReal[jFull]
-						periodSubFull += tempReal2
-						periodSumFull += float64(tempReal2 * rw)
-						rw += 1.0
-					}
-				}
-				trailingFull = _r18[_k16]
-				fullOut = periodSumFull / dividerFull
-				periodSumFull -= periodSubFull
-				periodSubHalf += tempReal
-				periodSubHalf -= trailingHalf
-				periodSumHalf += float64(tempReal * float64(halfPeriod))
-				barsSinceReseedHalf -= 1
-				if barsSinceReseedHalf <= 0 {
-					barsSinceReseedHalf = 8 * halfPeriod
-					periodSubHalf = 0.0
-					periodSumHalf = 0.0
-					rw = 1.0
-					for jHalf = today + int32(_k16) - lookbackHalf; jHalf <= today+int32(_k16); jHalf += 1 {
-						tempReal2 = inReal[jHalf]
-						periodSubHalf += tempReal2
-						periodSumHalf += float64(tempReal2 * rw)
-						rw += 1.0
-					}
-				}
-				trailingHalf = _r19[_k16]
-				halfOut = periodSumHalf / dividerHalf
-				periodSumHalf -= periodSubHalf
-				diffReal = float64(2.0*halfOut) - fullOut
-				periodSubSqrt += diffReal
-				periodSumSqrt += float64(diffReal * w)
-				w += 1.0
-				dRing[dRing_Idx] = diffReal
-				dRing_Idx++
-				if dRing_Idx > maxIdx_dRing {
-					dRing_Idx = 0
-				}
-			}
-			trailingIdxFull += int32(_n15)
-			trailingIdxHalf += int32(_n15)
-		}
-		barsSinceReseedSqrt = 8 * sqrtPeriod
-		trailingIdxFull -= 1
-		trailingIdxHalf -= 1
-		subHalf = periodSubHalf
-		today = startIdx
-		if _n20 := int(endIdx) - int(today) + 1; _n20 > 0 {
+		if _n20 := int(startIdx) - int(today); _n20 > 0 {
 			_r22 := inReal[today:][:_n20]
 			_r23 := inReal[trailingIdxFull:][:_n20]
 			_r24 := inReal[trailingIdxHalf:][:_n20]
-			_r25 := outReal[outIdx:][:_n20]
 			for _k21 := range _r22 {
 				tempReal = _r22[_k21]
-				tempReal2 = _r23[_k21]
 				periodSubFull += tempReal
-				periodSubFull -= tempReal2
+				periodSubFull -= trailingFull
 				periodSumFull += float64(tempReal * float64(optInTimePeriod))
 				barsSinceReseedFull -= 1
 				if barsSinceReseedFull <= 0 {
@@ -304,9 +255,73 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 						rw += 1.0
 					}
 				}
+				trailingFull = _r23[_k21]
 				fullOut = periodSumFull / dividerFull
 				periodSumFull -= periodSubFull
-				tempReal2 = _r24[_k21]
+				periodSubHalf += tempReal
+				periodSubHalf -= trailingHalf
+				periodSumHalf += float64(tempReal * float64(halfPeriod))
+				barsSinceReseedHalf -= 1
+				if barsSinceReseedHalf <= 0 {
+					barsSinceReseedHalf = 8 * halfPeriod
+					periodSubHalf = 0.0
+					periodSumHalf = 0.0
+					rw = 1.0
+					for jHalf = today + int32(_k21) - lookbackHalf; jHalf <= today+int32(_k21); jHalf += 1 {
+						tempReal2 = inReal[jHalf]
+						periodSubHalf += tempReal2
+						periodSumHalf += float64(tempReal2 * rw)
+						rw += 1.0
+					}
+				}
+				trailingHalf = _r24[_k21]
+				halfOut = periodSumHalf / dividerHalf
+				periodSumHalf -= periodSubHalf
+				diffReal = float64(2.0*halfOut) - fullOut
+				periodSubSqrt += diffReal
+				periodSumSqrt += float64(diffReal * w)
+				w += 1.0
+				dRing[dRing_Idx] = diffReal
+				dRing_Idx++
+				if dRing_Idx > maxIdx_dRing {
+					dRing_Idx = 0
+				}
+			}
+			trailingIdxFull += int32(_n20)
+			trailingIdxHalf += int32(_n20)
+		}
+		barsSinceReseedSqrt = 8 * sqrtPeriod
+		trailingIdxFull -= 1
+		trailingIdxHalf -= 1
+		subHalf = periodSubHalf
+		today = startIdx
+		if _n25 := int(endIdx) - int(today) + 1; _n25 > 0 {
+			_r27 := inReal[today:][:_n25]
+			_r28 := inReal[trailingIdxFull:][:_n25]
+			_r29 := inReal[trailingIdxHalf:][:_n25]
+			_r30 := outReal[outIdx:][:_n25]
+			for _k26 := range _r27 {
+				tempReal = _r27[_k26]
+				tempReal2 = _r28[_k26]
+				periodSubFull += tempReal
+				periodSubFull -= tempReal2
+				periodSumFull += float64(tempReal * float64(optInTimePeriod))
+				barsSinceReseedFull -= 1
+				if barsSinceReseedFull <= 0 {
+					barsSinceReseedFull = 8 * optInTimePeriod
+					periodSubFull = 0.0
+					periodSumFull = 0.0
+					rw = 1.0
+					for jFull = today + int32(_k26) - lookbackFull; jFull <= today+int32(_k26); jFull += 1 {
+						tempReal2 = inReal[jFull]
+						periodSubFull += tempReal2
+						periodSumFull += float64(tempReal2 * rw)
+						rw += 1.0
+					}
+				}
+				fullOut = periodSumFull / dividerFull
+				periodSumFull -= periodSubFull
+				tempReal2 = _r29[_k26]
 				subHalf += tempReal
 				subHalf -= tempReal2
 				periodSumHalf += float64(tempReal * float64(halfPeriod))
@@ -316,7 +331,7 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 					subHalf = 0.0
 					periodSumHalf = 0.0
 					rw = 1.0
-					for jHalf = today + int32(_k21) - lookbackHalf; jHalf <= today+int32(_k21); jHalf += 1 {
+					for jHalf = today + int32(_k26) - lookbackHalf; jHalf <= today+int32(_k26); jHalf += 1 {
 						tempReal2 = inReal[jHalf]
 						subHalf += tempReal2
 						periodSumHalf += float64(tempReal2 * rw)
@@ -354,10 +369,10 @@ func (c *Core) hmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				if dRing_Idx > maxIdx_dRing {
 					dRing_Idx = 0
 				}
-				_r25[_k21] = periodSumSqrt / dividerSqrt
+				_r30[_k26] = periodSumSqrt / dividerSqrt
 				periodSumSqrt -= periodSubSqrt
 			}
-			outIdx += int32(_n20)
+			outIdx += int32(_n25)
 		}
 	}
 	*outBegIdx = startIdx

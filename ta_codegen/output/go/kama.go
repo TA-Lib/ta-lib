@@ -94,10 +94,25 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		outIdx = 0
 		today = startIdx
 		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
-			_r2 := inReal[today:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[today:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 			outIdx += int32(_n0)
 		}
@@ -119,9 +134,9 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	trailingIdx = today
 	i = optInTimePeriod
 	for {
-		_C4 := i > 0
+		_C9 := i > 0
 		i--
-		if !_C4 {
+		if !_C9 {
 			break
 		}
 		tempReal = inReal[today]
@@ -149,46 +164,10 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	tempReal = float64(tempReal * tempReal)
 	prevKAMA = math.FMA(inReal[today]-prevKAMA, tempReal, prevKAMA)
 	today++
-	if _n5 := int(startIdx) - int(today) + 1; _n5 > 0 {
-		_r7 := inReal[today:][:_n5]
-		_r8 := inReal[trailingIdx:][:_n5]
-		_r9 := inReal[today-1:][:_n5]
-		for _k6 := range _r7 {
-			tempReal = _r7[_k6]
-			tempReal2 = _r8[_k6]
-			periodROC = tempReal - tempReal2
-			sumROC1 -= math.Abs(trailingValue - tempReal2)
-			sumROC1 += math.Abs(tempReal - _r9[_k6])
-			live = b2i(!(math.Abs(tempReal-_r9[_k6]) <= 0.0))
-			nullRun = (nullRun + 1) & (live - 1)
-			if nullRun >= optInTimePeriod {
-				nullRun = optInTimePeriod
-				sumROC1 = 0.0
-				tempReal = 1.0
-			} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-				tempReal = 1.0
-			} else {
-				tempReal = math.Abs(periodROC / sumROC1)
-				if tempReal > 1.0 {
-					tempReal = 1.0
-				}
-			}
-			trailingValue = tempReal2
-			tempReal = math.FMA(tempReal, constDiff, constMax)
-			tempReal = float64(tempReal * tempReal)
-			prevKAMA = math.FMA(_r7[_k6]-prevKAMA, tempReal, prevKAMA)
-		}
-		today += int32(_n5)
-		trailingIdx += int32(_n5)
-	}
-	outReal[0] = prevKAMA
-	outIdx = 1
-	*outBegIdx = today - 1
-	if _n10 := int(endIdx) - int(today) + 1; _n10 > 0 {
+	if _n10 := int(startIdx) - int(today) + 1; _n10 > 0 {
 		_r12 := inReal[today:][:_n10]
 		_r13 := inReal[trailingIdx:][:_n10]
 		_r14 := inReal[today-1:][:_n10]
-		_r15 := outReal[outIdx:][:_n10]
 		for _k11 := range _r12 {
 			tempReal = _r12[_k11]
 			tempReal2 = _r13[_k11]
@@ -213,9 +192,45 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 			tempReal = math.FMA(tempReal, constDiff, constMax)
 			tempReal = float64(tempReal * tempReal)
 			prevKAMA = math.FMA(_r12[_k11]-prevKAMA, tempReal, prevKAMA)
-			_r15[_k11] = prevKAMA
 		}
-		outIdx += int32(_n10)
+		today += int32(_n10)
+		trailingIdx += int32(_n10)
+	}
+	outReal[0] = prevKAMA
+	outIdx = 1
+	*outBegIdx = today - 1
+	if _n15 := int(endIdx) - int(today) + 1; _n15 > 0 {
+		_r17 := inReal[today:][:_n15]
+		_r18 := inReal[trailingIdx:][:_n15]
+		_r19 := inReal[today-1:][:_n15]
+		_r20 := outReal[outIdx:][:_n15]
+		for _k16 := range _r17 {
+			tempReal = _r17[_k16]
+			tempReal2 = _r18[_k16]
+			periodROC = tempReal - tempReal2
+			sumROC1 -= math.Abs(trailingValue - tempReal2)
+			sumROC1 += math.Abs(tempReal - _r19[_k16])
+			live = b2i(!(math.Abs(tempReal-_r19[_k16]) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				sumROC1 = 0.0
+				tempReal = 1.0
+			} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+				tempReal = 1.0
+			} else {
+				tempReal = math.Abs(periodROC / sumROC1)
+				if tempReal > 1.0 {
+					tempReal = 1.0
+				}
+			}
+			trailingValue = tempReal2
+			tempReal = math.FMA(tempReal, constDiff, constMax)
+			tempReal = float64(tempReal * tempReal)
+			prevKAMA = math.FMA(_r17[_k16]-prevKAMA, tempReal, prevKAMA)
+			_r20[_k16] = prevKAMA
+		}
+		outIdx += int32(_n15)
 	}
 	*outNBElement = outIdx
 	return Success

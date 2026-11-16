@@ -83,10 +83,25 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 		outIdx = 0
 		i = startIdx
 		if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-			_r2 := inReal[i:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[i:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 			outIdx += int32(_n0)
 		}
@@ -99,48 +114,48 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 	zeroCount = 0
 	i = trailingIdx
 	if optInTimePeriod > 1 {
-		if _n4 := int(startIdx) - int(i); _n4 > 0 {
-			_r6 := inReal[i:][:_n4]
-			_r7 := inVolume[i:][:_n4]
-			for _k5 := range _r6 {
-				tempReal = float64(_r6[_k5] * _r7[_k5])
+		if _n9 := int(startIdx) - int(i); _n9 > 0 {
+			_r11 := inReal[i:][:_n9]
+			_r12 := inVolume[i:][:_n9]
+			for _k10 := range _r11 {
+				tempReal = float64(_r11[_k10] * _r12[_k10])
 				sumPV += tempReal
-				sumV += _r7[_k5]
-				zeroCount += b2i(math.Abs(_r7[_k5]) <= 0.0)
+				sumV += _r12[_k10]
+				zeroCount += b2i(math.Abs(_r12[_k10]) <= 0.0)
 			}
-			i += int32(_n4)
+			i += int32(_n9)
 		}
 	}
 	outIdx = 0
-	if _n8 := int(endIdx) - int(i) + 1; _n8 > 0 {
-		_r10 := inReal[i:][:_n8]
-		_r11 := inVolume[i:][:_n8]
-		_r12 := inVolume[trailingIdx:][:_n8]
-		_r13 := inReal[trailingIdx:][:_n8]
-		_r14 := outReal[outIdx:][:_n8]
-		for _k9 := range _r10 {
-			tempReal = float64(_r10[_k9] * _r11[_k9])
+	if _n13 := int(endIdx) - int(i) + 1; _n13 > 0 {
+		_r15 := inReal[i:][:_n13]
+		_r16 := inVolume[i:][:_n13]
+		_r17 := inVolume[trailingIdx:][:_n13]
+		_r18 := inReal[trailingIdx:][:_n13]
+		_r19 := outReal[outIdx:][:_n13]
+		for _k14 := range _r15 {
+			tempReal = float64(_r15[_k14] * _r16[_k14])
 			sumPV += tempReal
-			sumV += _r11[_k9]
-			zeroCount += b2i(math.Abs(_r11[_k9]) <= 0.0)
-			trailingVolume = _r12[_k9]
-			tempReal = float64(_r13[_k9] * trailingVolume)
+			sumV += _r16[_k14]
+			zeroCount += b2i(math.Abs(_r16[_k14]) <= 0.0)
+			trailingVolume = _r17[_k14]
+			tempReal = float64(_r18[_k14] * trailingVolume)
 			if zeroCount >= optInTimePeriod {
 				tempPV = 0.0
 				tempV = 0.0
 				sumPV = 0.0 - tempReal
 				sumV = 0.0 - trailingVolume
-				_r14[_k9] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+				_r19[_k14] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
 			} else {
 				tempPV = sumPV
 				tempV = sumV
 				sumPV -= tempReal
 				sumV -= trailingVolume
-				_r14[_k9] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+				_r19[_k14] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
 			}
 			zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
 		}
-		outIdx += int32(_n8)
+		outIdx += int32(_n13)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

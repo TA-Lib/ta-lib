@@ -263,65 +263,65 @@ func (c *Core) smiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	outSMI[0] = smiValue
 	outSMISignal[0] = prevSignal
 	outIdx = 1
-	for today <= endIdx {
-		tmp = inLow[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inClose[:int(endIdx)+1]
+		_x1 := inHigh[:len(_x0)]
+		_x2 := inLow[:len(_x0)]
+		_s3 := int(today)
+		_r5 := outSMI[outIdx:][:len(_x0)-_s3]
+		_r6 := outSMISignal[outIdx:][:len(_x0)-_s3]
+		_i7 := int(highestIdx)
+		_i8 := int(lowestIdx)
+		_i9 := int(trailingIdx)
+		for _t4 := _s3; _t4 < len(_x0); _t4++ {
+			tmp = _x2[_t4]
+			if _i8 < _i9 {
+				_i8 = _i9
+				lowest = _x2[_i8]
+				for _j10 := _i8 + 1; _j10 <= _t4; _j10++ {
+					tmp = _x2[_j10]
+					if tmp < lowest {
+						_i8 = _j10
+						lowest = tmp
+					}
 				}
-				tmp = inLow[i]
-				if tmp < lowest {
-					lowestIdx = i
-					lowest = tmp
-				}
+			} else if tmp <= lowest {
+				_i8 = _t4
+				lowest = tmp
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
-		}
-		tmp = inHigh[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			tmp = _x1[_t4]
+			if _i7 < _i9 {
+				_i7 = _i9
+				highest = _x1[_i7]
+				for _j11 := _i7 + 1; _j11 <= _t4; _j11++ {
+					tmp = _x1[_j11]
+					if tmp > highest {
+						_i7 = _j11
+						highest = tmp
+					}
 				}
-				tmp = inHigh[i]
-				if tmp > highest {
-					highestIdx = i
-					highest = tmp
-				}
+			} else if tmp >= highest {
+				_i7 = _t4
+				highest = tmp
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
+			den = highest - lowest
+			num = _x0[_t4] - float64((highest+lowest)*0.5)
+			emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
+			emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
+			emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
+			emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
+			halfDen = float64(0.5 * emaFastDen)
+			if halfDen > 0.0 {
+				smiValue = float64(100.0*emaFastNum) / halfDen
+			} else {
+				smiValue = 0.0
+			}
+			prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
+			_r5[_t4-_s3] = smiValue
+			_r6[_t4-_s3] = prevSignal
+			_i9++
 		}
-		den = highest - lowest
-		num = inClose[today] - float64((highest+lowest)*0.5)
-		emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
-		emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
-		emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
-		emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
-		halfDen = float64(0.5 * emaFastDen)
-		if halfDen > 0.0 {
-			smiValue = float64(100.0*emaFastNum) / halfDen
-		} else {
-			smiValue = 0.0
-		}
-		prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
-		outSMI[outIdx] = smiValue
-		outSMISignal[outIdx] = prevSignal
-		outIdx = outIdx + 1
-		trailingIdx = trailingIdx + 1
-		today = today + 1
+		outIdx += int32(len(_x0) - _s3)
 	}
 	*outNBElement = outIdx
 	return Success

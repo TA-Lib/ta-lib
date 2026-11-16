@@ -55,7 +55,6 @@ func (c *Core) donchianImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 	var lowestIdx int32
 	var highestIdx int32
 	var today int32
-	var i int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -86,53 +85,53 @@ func (c *Core) donchianImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 	highest = 0.0
 	lowestIdx = -1
 	lowest = 0.0
-	for today <= endIdx {
-		tmpHigh = inHigh[today]
-		tmpLow = inLow[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inHigh[:int(endIdx)+1]
+		_x1 := inLow[:len(_x0)]
+		_s2 := int(today)
+		_r4 := outRealUpperBand[outIdx:][:len(_x0)-_s2]
+		_r5 := outRealLowerBand[outIdx:][:len(_x0)-_s2]
+		_r6 := outRealMiddleBand[outIdx:][:len(_x0)-_s2]
+		_i7 := int(highestIdx)
+		_i8 := int(lowestIdx)
+		_i9 := int(trailingIdx)
+		for _t3 := _s2; _t3 < len(_x0); _t3++ {
+			tmpHigh = _x0[_t3]
+			tmpLow = _x1[_t3]
+			if _i7 < _i9 {
+				_i7 = _i9
+				highest = _x0[_i7]
+				for _j10 := _i7 + 1; _j10 <= _t3; _j10++ {
+					tmpHigh = _x0[_j10]
+					if tmpHigh > highest {
+						_i7 = _j10
+						highest = tmpHigh
+					}
 				}
-				tmpHigh = inHigh[i]
-				if tmpHigh > highest {
-					highestIdx = i
-					highest = tmpHigh
-				}
+			} else if tmpHigh >= highest {
+				_i7 = _t3
+				highest = tmpHigh
 			}
-		} else if tmpHigh >= highest {
-			highestIdx = today
-			highest = tmpHigh
-		}
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			if _i8 < _i9 {
+				_i8 = _i9
+				lowest = _x1[_i8]
+				for _j11 := _i8 + 1; _j11 <= _t3; _j11++ {
+					tmpLow = _x1[_j11]
+					if tmpLow < lowest {
+						_i8 = _j11
+						lowest = tmpLow
+					}
 				}
-				tmpLow = inLow[i]
-				if tmpLow < lowest {
-					lowestIdx = i
-					lowest = tmpLow
-				}
+			} else if tmpLow <= lowest {
+				_i8 = _t3
+				lowest = tmpLow
 			}
-		} else if tmpLow <= lowest {
-			lowestIdx = today
-			lowest = tmpLow
+			_r4[_t3-_s2] = highest
+			_r5[_t3-_s2] = lowest
+			_r6[_t3-_s2] = (highest + lowest) / 2.0
+			_i9++
 		}
-		outRealUpperBand[outIdx] = highest
-		outRealLowerBand[outIdx] = lowest
-		outRealMiddleBand[outIdx] = (highest + lowest) / 2.0
-		outIdx += 1
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s2)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

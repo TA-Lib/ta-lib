@@ -122,11 +122,28 @@ func (c *Core) kdjImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	}
 	i = 0
 	if _n1 := int(*outNBElement) - int(i); _n1 > 0 {
-		_r3 := outK[i:][:_n1]
-		_r4 := outD[i:][:_n1]
-		_r5 := outJ[i:][:_n1]
-		for _k2 := range _r3 {
-			_r5[_k2] = float64(3.0*_r3[_k2]) - float64(2.0*_r4[_k2])
+		_r3 := outK[i:][:_n1:_n1]
+		_r4 := outD[i:][:_n1:_n1]
+		_r5 := outJ[i:][:_n1:_n1]
+		_k2 := 0
+		for ; _k2+8 <= _n1; _k2 += 8 {
+			_g6 := _r3[_k2 : _k2+8 : _k2+8]
+			_g7 := _r4[_k2 : _k2+8 : _k2+8]
+			_g8 := _r5[_k2 : _k2+8 : _k2+8]
+			_g8[0] = float64(3.0*_g6[0]) - float64(2.0*_g7[0])
+			_g8[1] = float64(3.0*_g6[1]) - float64(2.0*_g7[1])
+			_g8[2] = float64(3.0*_g6[2]) - float64(2.0*_g7[2])
+			_g8[3] = float64(3.0*_g6[3]) - float64(2.0*_g7[3])
+			_g8[4] = float64(3.0*_g6[4]) - float64(2.0*_g7[4])
+			_g8[5] = float64(3.0*_g6[5]) - float64(2.0*_g7[5])
+			_g8[6] = float64(3.0*_g6[6]) - float64(2.0*_g7[6])
+			_g8[7] = float64(3.0*_g6[7]) - float64(2.0*_g7[7])
+		}
+		_t9 := _r3[_k2:]
+		_t10 := _r4[_k2:][:len(_t9)]
+		_t11 := _r5[_k2:][:len(_t9)]
+		for _j12 := range _t9 {
+			_t11[_j12] = float64(3.0*_t9[_j12]) - float64(2.0*_t10[_j12])
 		}
 	}
 	return Success

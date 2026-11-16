@@ -53,7 +53,6 @@ func (c *Core) minmaxindexImpl(startIdx, endIdx int32, inReal []float64, optInTi
 	var nbInitialElementNeeded int32
 	var trailingIdx int32
 	var today int32
-	var i int32
 	var highestIdx int32
 	var lowestIdx int32
 	if startIdx < 0 || startIdx > IndexMax {
@@ -86,52 +85,50 @@ func (c *Core) minmaxindexImpl(startIdx, endIdx int32, inReal []float64, optInTi
 	highest = 0.0
 	lowestIdx = -1
 	lowest = 0.0
-	for today <= endIdx {
-		tmpHigh = inReal[today]
-		tmpLow = tmpHigh
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inReal[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inReal[:int(endIdx)+1]
+		_s1 := int(today)
+		_r3 := outMaxIdx[outIdx:][:len(_x0)-_s1]
+		_r4 := outMinIdx[outIdx:][:len(_x0)-_s1]
+		_i5 := int(highestIdx)
+		_i6 := int(lowestIdx)
+		_i7 := int(trailingIdx)
+		for _t2 := _s1; _t2 < len(_x0); _t2++ {
+			tmpHigh = _x0[_t2]
+			tmpLow = tmpHigh
+			if _i5 < _i7 {
+				_i5 = _i7
+				highest = _x0[_i5]
+				for _j8 := _i5 + 1; _j8 <= _t2; _j8++ {
+					tmpHigh = _x0[_j8]
+					if tmpHigh >= highest {
+						_i5 = _j8
+						highest = tmpHigh
+					}
 				}
-				tmpHigh = inReal[i]
-				if tmpHigh >= highest {
-					highestIdx = i
-					highest = tmpHigh
-				}
+			} else if tmpHigh >= highest {
+				_i5 = _t2
+				highest = tmpHigh
 			}
-		} else if tmpHigh >= highest {
-			highestIdx = today
-			highest = tmpHigh
-		}
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inReal[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			if _i6 < _i7 {
+				_i6 = _i7
+				lowest = _x0[_i6]
+				for _j9 := _i6 + 1; _j9 <= _t2; _j9++ {
+					tmpLow = _x0[_j9]
+					if tmpLow <= lowest {
+						_i6 = _j9
+						lowest = tmpLow
+					}
 				}
-				tmpLow = inReal[i]
-				if tmpLow <= lowest {
-					lowestIdx = i
-					lowest = tmpLow
-				}
+			} else if tmpLow <= lowest {
+				_i6 = _t2
+				lowest = tmpLow
 			}
-		} else if tmpLow <= lowest {
-			lowestIdx = today
-			lowest = tmpLow
+			_r3[_t2-_s1] = int32(_i5)
+			_r4[_t2-_s1] = int32(_i6)
+			_i7++
 		}
-		outMaxIdx[outIdx] = highestIdx
-		outMinIdx[outIdx] = lowestIdx
-		outIdx += 1
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

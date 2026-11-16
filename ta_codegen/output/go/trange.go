@@ -67,14 +67,19 @@ func (c *Core) trangeImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	outIdx = 0
 	today = startIdx
 	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
-		_r2 := inLow[today:][:_n0]
-		_r3 := inHigh[today:][:_n0]
-		_r4 := inClose[today-1:][:_n0]
-		_r5 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			tempLT = _r2[_k1]
-			tempHT = _r3[_k1]
-			tempCY = _r4[_k1]
+		_r2 := inLow[today:][:_n0:_n0]
+		_r3 := inHigh[today:][:_n0:_n0]
+		_r4 := inClose[today-1:][:_n0:_n0]
+		_r5 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+4 <= _n0; _k1 += 4 {
+			_g6 := _r2[_k1 : _k1+4 : _k1+4]
+			_g7 := _r3[_k1 : _k1+4 : _k1+4]
+			_g8 := _r4[_k1 : _k1+4 : _k1+4]
+			_g9 := _r5[_k1 : _k1+4 : _k1+4]
+			tempLT = _g6[0]
+			tempHT = _g7[0]
+			tempCY = _g8[0]
 			greatest = tempHT - tempLT
 			val2 = math.Abs(tempCY - tempHT)
 			if val2 > greatest {
@@ -84,7 +89,65 @@ func (c *Core) trangeImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 			if val3 > greatest {
 				greatest = val3
 			}
-			_r5[_k1] = greatest
+			_g9[0] = greatest
+			tempLT = _g6[1]
+			tempHT = _g7[1]
+			tempCY = _g8[1]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			_g9[1] = greatest
+			tempLT = _g6[2]
+			tempHT = _g7[2]
+			tempCY = _g8[2]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			_g9[2] = greatest
+			tempLT = _g6[3]
+			tempHT = _g7[3]
+			tempCY = _g8[3]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			_g9[3] = greatest
+		}
+		_t10 := _r2[_k1:]
+		_t11 := _r3[_k1:][:len(_t10)]
+		_t12 := _r4[_k1:][:len(_t10)]
+		_t13 := _r5[_k1:][:len(_t10)]
+		for _j14 := range _t10 {
+			tempLT = _t10[_j14]
+			tempHT = _t11[_j14]
+			tempCY = _t12[_j14]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			_t13[_j14] = greatest
 		}
 		outIdx += int32(_n0)
 	}

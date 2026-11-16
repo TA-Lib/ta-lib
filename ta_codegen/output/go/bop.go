@@ -52,17 +52,54 @@ func (c *Core) bopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inClose []
 	outIdx = 0
 	i = startIdx
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inHigh[i:][:_n0]
-		_r3 := inLow[i:][:_n0]
-		_r4 := outReal[outIdx:][:_n0]
-		_r5 := inClose[i:][:_n0]
-		_r6 := inOpen[i:][:_n0]
-		for _k1 := range _r2 {
-			tempReal = _r2[_k1] - _r3[_k1]
+		_r2 := inHigh[i:][:_n0:_n0]
+		_r3 := inLow[i:][:_n0:_n0]
+		_r4 := outReal[outIdx:][:_n0:_n0]
+		_r5 := inClose[i:][:_n0:_n0]
+		_r6 := inOpen[i:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+4 <= _n0; _k1 += 4 {
+			_g7 := _r2[_k1 : _k1+4 : _k1+4]
+			_g8 := _r3[_k1 : _k1+4 : _k1+4]
+			_g9 := _r4[_k1 : _k1+4 : _k1+4]
+			_g10 := _r5[_k1 : _k1+4 : _k1+4]
+			_g11 := _r6[_k1 : _k1+4 : _k1+4]
+			tempReal = _g7[0] - _g8[0]
 			if tempReal <= 0.0 {
-				_r4[_k1] = 0.0
+				_g9[0] = 0.0
 			} else {
-				_r4[_k1] = (_r5[_k1] - _r6[_k1]) / tempReal
+				_g9[0] = (_g10[0] - _g11[0]) / tempReal
+			}
+			tempReal = _g7[1] - _g8[1]
+			if tempReal <= 0.0 {
+				_g9[1] = 0.0
+			} else {
+				_g9[1] = (_g10[1] - _g11[1]) / tempReal
+			}
+			tempReal = _g7[2] - _g8[2]
+			if tempReal <= 0.0 {
+				_g9[2] = 0.0
+			} else {
+				_g9[2] = (_g10[2] - _g11[2]) / tempReal
+			}
+			tempReal = _g7[3] - _g8[3]
+			if tempReal <= 0.0 {
+				_g9[3] = 0.0
+			} else {
+				_g9[3] = (_g10[3] - _g11[3]) / tempReal
+			}
+		}
+		_t12 := _r2[_k1:]
+		_t13 := _r3[_k1:][:len(_t12)]
+		_t14 := _r4[_k1:][:len(_t12)]
+		_t15 := _r5[_k1:][:len(_t12)]
+		_t16 := _r6[_k1:][:len(_t12)]
+		for _j17 := range _t12 {
+			tempReal = _t12[_j17] - _t13[_j17]
+			if tempReal <= 0.0 {
+				_t14[_j17] = 0.0
+			} else {
+				_t14[_j17] = (_t15[_j17] - _t16[_j17]) / tempReal
 			}
 		}
 		outIdx += int32(_n0)

@@ -13,6 +13,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
+use super::builtins::MathFn;
 use super::lockstep::{as_step, each_access, eager_call, flatten, form, invariant, linear, shifted, step, substitute, Facts, Names, Reach};
 use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, Statement};
 
@@ -40,6 +41,9 @@ pub(super) struct Env<'a> {
     pub int_expr: &'a dyn Fn(&Expr) -> bool,
     /// The loop is one [`branched_loops`] returns.
     pub branched: bool,
+    /// The loop runs inside another, over a window or a block, where no
+    /// unrolled loop was measured: [`unroll`] leaves it alone.
+    pub nested: bool,
 }
 
 /// One re-slice: `array[start:][:n]`, element `k` being what `array[inv + var
@@ -75,6 +79,11 @@ pub(super) struct Plan {
     pub pass: Vec<Statement>,
     /// Per statement of `pass`, each index's steps taken before it.
     pub before: Vec<BTreeMap<String, i64>>,
+    /// Passes per trip, by [`unroll`].
+    pub unroll: Option<usize>,
+    /// The pass makes a call [`calls_out`] names.
+    pub calls_out: bool,
+    pub scan: Option<Scan>,
 }
 
 impl Plan {
@@ -157,9 +166,7 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         return Err(Refusal::Counter);
     }
     let int_assigned: BTreeSet<&String> = facts.other.iter().filter(|v| (env.int_local)(v) && !steps.contains_key(*v)).collect();
-    if int_assigned.iter().any(|t| taken_from_index(&pass, t, &steps) && !fresh(&pass, t)) {
-        return Err(Refusal::IndexTracking);
-    }
+    let tracking = int_assigned.iter().any(|t| taken_from_index(&pass, t, &steps) && !fresh(&pass, t));
 
     let mut before = Vec::with_capacity(pass.len());
     let mut taken: BTreeMap<String, i64> = BTreeMap::new();
@@ -172,17 +179,237 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
 
     let mut down = false;
     let mut lanes = choose_lanes(&pass, &before, &steps, &facts, env, &f.counter, &trip, 1);
-    if lanes.is_empty() {
+    if lanes.is_empty() && !tracking {
         down = true;
         lanes = choose_lanes(&pass, &before, &steps, &facts, env, &f.counter, &trip, -1);
     }
-    if lanes.is_empty() {
+    let mut plan = Plan { counter: f.counter, trip, steps, facts, lanes, down, pass, before, unroll: None, calls_out: false, scan: None };
+    if tracking {
+        plan.scan = Some(scan_shape(&plan, env).ok_or(Refusal::IndexTracking)?);
+    } else if plan.lanes.is_empty() {
         return Err(Refusal::NoLane);
     }
     if env.branched {
         return Err(Refusal::Branched);
     }
-    Ok(Plan { counter: f.counter, trip, steps, facts, lanes, down, pass, before })
+    plan.calls_out = calls_out(&plan.pass);
+    if plan.scan.is_none() {
+        plan.unroll = unroll(&plan, env);
+    }
+    Ok(plan)
+}
+
+/// A call gc keeps a call at the default GOAMD64: every value live across the
+/// loop is reloaded after it on each pass.
+fn calls_out(pass: &[Statement]) -> bool {
+    let mut hit = false;
+    for s in pass {
+        crate::streaming::walk_stmt_exprs(s, &mut |top| {
+            crate::streaming::walk_expr(top, &mut |e| {
+                if let Expr::FuncCall(n, _) = e {
+                    hit |= MathFn::from_name(n).is_some_and(|m| !matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min));
+                }
+            });
+        });
+    }
+    hit
+}
+
+/// How many times each step variable is named in `s`, and how many of those
+/// sit in the index of an access [`Plan::lane_of`] resolves; `arrays` keeps
+/// the lanes of the arrays it accepts.
+fn step_mentions(plan: &Plan, at: usize, s: &Statement, arrays: &dyn Fn(&str) -> bool) -> (BTreeMap<String, usize>, BTreeMap<String, usize>) {
+    let (mut all, mut laned) = (BTreeMap::new(), BTreeMap::new());
+    let count = |e: &Expr, into: &mut BTreeMap<String, usize>| {
+        crate::streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(n) = x {
+                if plan.steps.contains_key(n) {
+                    *into.entry(n.clone()).or_default() += 1;
+                }
+            }
+        });
+    };
+    crate::streaming::walk_stmt_exprs(s, &mut |e| count(e, &mut all));
+    each_access(s, &mut |array, idx, _| {
+        if arrays(array) && plan.lane_of(at, array, idx).is_some() {
+            count(idx, &mut laned);
+        }
+    });
+    (all, laned)
+}
+
+/// Passes per trip, when no pass depends on another: every scalar the pass
+/// reads it either never writes or writes first on every path, every element
+/// it touches is a lane at its own position, an index is read through a lane
+/// only, and nothing is called that gc keeps a call. Eight when the pass is
+/// one store of an expression to an element, four otherwise. The unrolled
+/// passes run in their original order over the same memory, so an output
+/// that is its input stays exact.
+fn unroll(plan: &Plan, env: &Env) -> Option<usize> {
+    fn plain(list: &[Statement]) -> bool {
+        list.iter().all(|s| match s {
+            Statement::Assign { target, .. } => !matches!(target, Expr::PointerDeref(_)),
+            Statement::If { then_body, else_body, .. } => plain(then_body) && plain(else_body),
+            Statement::Comment(_) | Statement::UnrollHint { .. } => true,
+            _ => false,
+        })
+    }
+    if env.nested || plan.down || plan.calls_out || !plain(&plan.pass) {
+        return None;
+    }
+    let mut eager = true;
+    for s in &plan.pass {
+        crate::streaming::walk_stmt_exprs(s, &mut |top| crate::streaming::walk_expr(top, &mut |e| eager &= !matches!(e, Expr::FuncCall(n, _) if !eager_call(n))));
+    }
+    if !eager || plan.facts.assigned.iter().any(|n| !plan.steps.contains_key(n) && !fresh(&plan.pass, n)) {
+        return None;
+    }
+    let mut code = Vec::new();
+    for (at, s) in plan.pass.iter().enumerate() {
+        if plan.is_step(s) || matches!(s, Statement::Comment(_) | Statement::UnrollHint { .. }) {
+            continue;
+        }
+        code.push(s);
+        let mut every = true;
+        each_access(s, &mut |array, idx, _| every &= plan.lane_of(at, array, idx).is_some());
+        let (all, laned) = step_mentions(plan, at, s, &|_| true);
+        if !every || all != laned {
+            return None;
+        }
+    }
+    let single = matches!(code.as_slice(), [Statement::Assign { target: Expr::ArrayAccess(..), compound: false, .. }]);
+    Some(if single { 8 } else { 4 })
+}
+
+/// An index-tracking scan as [`scan_shape`] proves it.
+pub(super) struct Scan {
+    /// Indices held in an `int` across the loop: the counter, the steps read
+    /// other than as a lane, and the indices the pass assigns.
+    pub ints: BTreeSet<String>,
+    /// Counters of the rescans `c = e; while( ++c <= t ) ...`.
+    pub rescans: BTreeSet<String>,
+    /// The inputs the pass reads, each cut once to `endIdx + 1`.
+    pub inputs: Vec<String>,
+}
+
+/// A loop over bars to `endIdx` inclusive whose integer locals are indices:
+/// each one assigned is assigned an index expression (indices and literals
+/// added or subtracted), every input is read at one, and a rescan counter is
+/// named only in its own rescan, which follows its start and writes neither
+/// it, nor the bound, nor a step. The counter is not read after its step.
+fn scan_shape(plan: &Plan, env: &Env) -> Option<Scan> {
+    struct Ck<'a> {
+        ints: &'a BTreeSet<String>,
+        rescans: &'a BTreeSet<String>,
+        steps: &'a BTreeMap<String, i64>,
+        env: &'a Env<'a>,
+        inputs: BTreeSet<String>,
+    }
+    impl Ck<'_> {
+        fn index(&self, e: &Expr, inner: Option<&str>) -> bool {
+            match e {
+                Expr::IntLiteral(_) => true,
+                Expr::Var(n) => self.ints.contains(n) || inner == Some(n.as_str()),
+                Expr::BinOp(l, BinOp::Add | BinOp::Sub, r) => self.index(l, inner) && self.index(r, inner),
+                _ => false,
+            }
+        }
+        fn reads(&mut self, e: &Expr, inner: Option<&str>) -> bool {
+            let mut ok = true;
+            crate::streaming::walk_expr(e, &mut |x| match x {
+                Expr::ArrayAccess(a, i) if (self.env.contract)(a) == Some(Contract::Input) => {
+                    ok &= self.index(i, inner);
+                    self.inputs.insert(a.clone());
+                }
+                Expr::Var(n) if self.rescans.contains(n) => ok &= inner == Some(n.as_str()),
+                Expr::PostIncrement(_) | Expr::PreIncrement(_) | Expr::PostDecrement(_) | Expr::PreDecrement(_) | Expr::AddressOf(_) => ok = false,
+                _ => {}
+            });
+            ok
+        }
+        fn list(&mut self, list: &[Statement], inner: Option<&str>, top: bool) -> bool {
+            let code: Vec<&Statement> = list.iter().filter(|s| !matches!(s, Statement::Comment(_) | Statement::UnrollHint { .. })).collect();
+            for (n, s) in code.iter().enumerate() {
+                let ok = match s {
+                    Statement::Assign { .. } if top && as_step(s).is_some_and(|(v, _)| self.steps.contains_key(v)) => true,
+                    Statement::Assign { target: Expr::Var(t), value, compound } if self.rescans.contains(t) => {
+                        let follows = matches!(code.get(n + 1), Some(Statement::While { condition, .. }) if rescan_of(condition).is_some_and(|(c, _)| c == t.as_str()));
+                        inner.is_none() && !compound && follows && self.index(value, None)
+                    }
+                    Statement::Assign { target: Expr::Var(t), value, compound } if (self.env.int_local)(t) => {
+                        self.ints.contains(t) && !self.steps.contains_key(t) && !compound && self.index(value, inner) && self.reads(value, inner)
+                    }
+                    Statement::Assign { target: Expr::Var(_), value, .. } => self.reads(value, inner),
+                    Statement::Assign { target: Expr::ArrayAccess(a, i), value, .. } => {
+                        (self.env.contract)(a) != Some(Contract::Input) && self.reads(i, inner) && self.reads(value, inner)
+                    }
+                    Statement::If { condition, then_body, else_body, .. } => {
+                        self.reads(condition, inner) && self.list(then_body, inner, false) && self.list(else_body, inner, false)
+                    }
+                    Statement::While { condition, body } if inner.is_none() => match rescan_of(condition) {
+                        Some((c, bound)) if self.rescans.contains(c) && self.index(bound, None) => {
+                            let written = stored(body);
+                            !written.contains(c) && !written.iter().any(|w| self.steps.contains_key(w)) && self.list(body, Some(c), false)
+                        }
+                        _ => false,
+                    },
+                    _ => false,
+                };
+                if !ok {
+                    return false;
+                }
+            }
+            true
+        }
+    }
+    let Trip::Up { bound, inclusive: true } = &plan.trip else { return None };
+    if !(env.fixed_end)(bound) {
+        return None;
+    }
+    let mut rescans = BTreeSet::new();
+    rescan_counters(&plan.pass, &mut rescans);
+    let output = |a: &str| matches!((env.contract)(a), Some(Contract::Output | Contract::Scratch));
+    let mut laned: BTreeSet<String> = plan.steps.keys().filter(|v| **v != plan.counter).cloned().collect();
+    for (at, s) in plan.pass.iter().enumerate() {
+        if plan.is_step(s) {
+            continue;
+        }
+        let (all, through) = step_mentions(plan, at, s, &output);
+        laned.retain(|v| all.get(v) == through.get(v));
+    }
+    let mut ints: BTreeSet<String> = plan.steps.keys().filter(|v| !laned.contains(*v)).cloned().collect();
+    ints.extend(plan.facts.assigned.iter().filter(|v| (env.int_local)(v) && !plan.steps.contains_key(*v) && !rescans.contains(*v)).cloned());
+    let mut ck = Ck { ints: &ints, rescans: &rescans, steps: &plan.steps, env, inputs: BTreeSet::new() };
+    if !ck.list(&plan.pass, None, true) {
+        return None;
+    }
+    let stepped = plan.pass.iter().position(|s| as_step(s).is_some_and(|(v, _)| v == plan.counter))?;
+    if plan.pass[stepped + 1..].iter().any(|s| stmt_mentions(s, &plan.counter)) {
+        return None;
+    }
+    let inputs = ck.inputs.into_iter().collect();
+    Some(Scan { ints, rescans, inputs })
+}
+
+fn rescan_counters(list: &[Statement], out: &mut BTreeSet<String>) {
+    for s in list {
+        match s {
+            Statement::While { condition, .. } => out.extend(rescan_of(condition).map(|(c, _)| c.to_string())),
+            Statement::If { then_body, else_body, .. } => {
+                rescan_counters(then_body, out);
+                rescan_counters(else_body, out);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// `++c <= bound`: the counter and the bound.
+pub(super) fn rescan_of(cond: &Expr) -> Option<(&str, &Expr)> {
+    let Expr::BinOp(l, BinOp::LessEq, bound) = cond else { return None };
+    let Expr::PreIncrement(c) = l.as_ref() else { return None };
+    let Expr::Var(c) = c.as_ref() else { return None };
+    Some((c, bound))
 }
 
 /// One access of a contract array at an index plus constants.
@@ -857,6 +1084,9 @@ mod tests {
     fn run_in(cond: &Expr, body: &[Statement], update: Option<&Statement>, branched: bool) -> Result<super::Plan, Refusal> {
         with_env(branched, |env| plan(cond, body, update, env))
     }
+    fn run_nested(cond: &Expr, body: &[Statement]) -> Result<super::Plan, Refusal> {
+        with_env(false, |env| plan(cond, body, None, &Env { nested: true, ..*env }))
+    }
     /// `r` and every real literal are reals.
     fn int_expr(e: &Expr) -> bool {
         let mut real = false;
@@ -873,7 +1103,7 @@ mod tests {
         };
         let fixed_end = |e: &Expr| matches!(e, Expr::Var(n) if n == "endIdx");
         let cross = |n: &str| n == "TA_SMA";
-        f(&Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross, int_expr: &int_expr, branched })
+        f(&Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross, int_expr: &int_expr, branched, nested: false })
     }
     fn lanes(p: &super::Plan) -> Vec<(String, String, i64)> {
         p.lanes.iter().map(|l| (l.array.clone(), l.var.clone(), l.elem)).collect()
@@ -969,10 +1199,11 @@ mod tests {
         let moved = set(var("endIdx"), var("x"));
         assert_eq!(run(&le_end(), &[read.clone(), moved, step("i", 1)], None).err(), Some(Refusal::Counter));
         assert_eq!(run(&bin(var("i"), BinOp::LessEq, var("r")), &[read.clone(), step("i", 1)], None).err(), Some(Refusal::Counter));
-        // MAXINDEX: `h` keeps where the extreme was, read before it is written.
+        // `h` keeps where the extreme was, read before it is written, and
+        // takes a value no index expression gives.
         let track = Statement::If {
             condition: bin(var("h"), BinOp::Less, var("t")),
-            then_body: vec![set(var("h"), var("i"))],
+            then_body: vec![set(var("h"), bin(var("i"), BinOp::Mul, int(2)))],
             else_body: vec![],
             cond_comments: vec![],
         };
@@ -987,6 +1218,77 @@ mod tests {
         };
         assert!(run(&le_end(), &[read.clone(), reseed, step("i", 1)], None).is_ok());
         assert_eq!(run_in(&le_end(), &[read, step("i", 1)], None, true).err(), Some(Refusal::Branched));
+    }
+
+    /// MAXINDEX's pass: `x = in[i]`; when `h` leaves the window, `h = t`,
+    /// `m = in[h]`, `j = h`, `while( ++j <= i )` keeping the best index;
+    /// else a new extreme at `i`; `out[o] = h`.
+    fn tracking_pass(rescan_tail: Vec<Statement>, after: Vec<Statement>) -> Vec<Statement> {
+        let better = |v: &str| Statement::If { condition: bin(var("x"), BinOp::GreaterEq, var("m")), then_body: vec![set(var("h"), var(v)), set(var("m"), var("x"))], else_body: vec![], cond_comments: vec![] };
+        let mut rescan = vec![set(var("x"), at("in", var("j"))), better("j")];
+        rescan.extend(rescan_tail);
+        let cond = bin(Expr::PreIncrement(Box::new(var("j"))), BinOp::LessEq, var("i"));
+        let mut then_body = vec![set(var("h"), var("t")), set(var("m"), at("in", var("h"))), set(var("j"), var("h")), Statement::While { condition: cond, body: rescan }];
+        then_body.extend(after);
+        let track = Statement::If { condition: bin(var("h"), BinOp::Less, var("t")), then_body, else_body: vec![better("i")], cond_comments: vec![] };
+        vec![set(var("x"), at("in", var("i"))), track, set(at("out", var("o")), var("h")), step("o", 1), step("t", 1), step("i", 1)]
+    }
+
+    /// An index-tracking scan to `endIdx` holds its counter, the window's
+    /// trailing index and the tracked index in `int`s, reads the output only
+    /// through its lane, and keeps the rescan counter to its rescan.
+    #[test]
+    fn an_index_tracking_scan_holds_its_indices_in_ints() {
+        let p = run(&le_end(), &tracking_pass(vec![], vec![]), None).expect("planned");
+        let scan = p.scan.as_ref().expect("a scan");
+        assert_eq!(scan.ints, BTreeSet::from(["h".to_string(), "i".into(), "t".into()]));
+        assert_eq!(scan.rescans, BTreeSet::from(["j".to_string()]));
+        assert_eq!(scan.inputs, vec!["in".to_string()]);
+        assert!(p.unroll.is_none());
+        assert!(lanes(&p).contains(&("out".into(), "o".into(), 0)));
+
+        let lt = bin(var("i"), BinOp::Less, var("endIdx"));
+        assert_eq!(run(&lt, &tracking_pass(vec![], vec![]), None).err(), Some(Refusal::IndexTracking), "a bound short of endIdx");
+        let read_after = vec![set(var("y"), var("j"))];
+        assert_eq!(run(&le_end(), &tracking_pass(vec![], read_after), None).err(), Some(Refusal::IndexTracking), "the rescan counter read after its rescan");
+        let moves_bound = vec![step("i", 1)];
+        assert_eq!(run(&le_end(), &tracking_pass(moves_bound, vec![]), None).err(), Some(Refusal::Counter), "the rescan moves the counter");
+        let mut scaled = tracking_pass(vec![], vec![]);
+        scaled[0] = set(var("x"), at("in", bin(var("i"), BinOp::Mul, int(2))));
+        assert_eq!(run(&le_end(), &scaled, None).err(), Some(Refusal::IndexTracking), "an input read at no index expression");
+    }
+
+    /// A pass that depends on no other is unrolled: eight per group for one
+    /// store to an element, four for more or a branch; a carried scalar, an
+    /// index read other than as a lane, a call gc keeps, counting down or a
+    /// loop inside another are not.
+    #[test]
+    fn independent_passes_are_unrolled() {
+        let post = |v: &str| Box::new(Expr::PostIncrement(Box::new(var(v))));
+        let elem = |a: &str, v: &str| Expr::ArrayAccess(a.into(), post(v));
+        let map = |e: Expr| set(Expr::ArrayAccess("out".into(), post("o")), e);
+        let add = map(bin(at("in", var("i")), BinOp::Add, at("vol", var("i"))));
+        let p = run(&le_end(), &[add.clone(), step("i", 1)], None).expect("planned");
+        assert_eq!((p.unroll, p.calls_out), (Some(8), false));
+
+        let fresh = [set(var("x"), at("in", var("i"))), set(var("y"), bin(var("x"), BinOp::Sub, at("vol", var("i")))), set(at("out", var("o")), var("y")), step("o", 1), step("i", 1)];
+        assert_eq!(run(&le_end(), &fresh, None).expect("planned").unroll, Some(4));
+        let guarded = Statement::If { condition: bin(var("x"), BinOp::Greater, Expr::Literal(0.0)), then_body: vec![set(var("x"), Expr::Literal(0.0))], else_body: vec![], cond_comments: vec![] };
+        let branch = [set(var("x"), at("in", var("i"))), guarded, map(var("x")), step("i", 1)];
+        assert_eq!(run(&le_end(), &branch, None).expect("planned").unroll, Some(4));
+
+        let carried = [Statement::Assign { target: var("x"), value: bin(var("x"), BinOp::Add, elem("in", "i")), compound: true }, map(var("x"))];
+        assert_eq!(run(&le_end(), &carried, None).expect("planned").unroll, None, "a carried sum");
+        let index = [map(Expr::Cast(crate::ir::VarType::Real, Box::new(var("i")))), step("i", 1)];
+        assert_eq!(run(&le_end(), &index, None).expect("planned").unroll, None, "an index read as a value");
+        let exp = run(&le_end(), &[map(Expr::FuncCall("exp".into(), vec![at("in", var("i"))])), step("i", 1)], None).expect("planned");
+        assert_eq!((exp.unroll, exp.calls_out), (None, true));
+        let sqrt = run(&le_end(), &[map(Expr::FuncCall("sqrt".into(), vec![at("in", var("i"))])), step("i", 1)], None).expect("planned");
+        assert_eq!((sqrt.unroll, sqrt.calls_out), (Some(8), false));
+        assert_eq!(run_nested(&le_end(), &[add, step("i", 1)]).expect("planned").unroll, None, "inside another loop");
+        let down = [step("i", -1), set(at("s", bin(var("i"), BinOp::Sub, var("b"))), at("in", var("i")))];
+        let p = run(&bin(var("i"), BinOp::Greater, var("b")), &down, None).expect("planned");
+        assert!(p.down && p.unroll.is_none(), "counting down");
     }
 
     /// Of a loop over bars, a loop on an arm is branched at any depth, unless

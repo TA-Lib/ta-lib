@@ -118,10 +118,25 @@ func (c *Core) maImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod,
 		todayIdx = startIdx
 		outIdx = 0
 		if _n0 := int(nbElement) - int(outIdx); _n0 > 0 {
-			_r2 := inReal[todayIdx:][:_n0]
-			_r3 := outReal[outIdx:][:_n0]
-			for _k1 := range _r2 {
-				_r3[_k1] = _r2[_k1]
+			_r2 := inReal[todayIdx:][:_n0:_n0]
+			_r3 := outReal[outIdx:][:_n0:_n0]
+			_k1 := 0
+			for ; _k1+8 <= _n0; _k1 += 8 {
+				_g4 := _r2[_k1 : _k1+8 : _k1+8]
+				_g5 := _r3[_k1 : _k1+8 : _k1+8]
+				_g5[0] = _g4[0]
+				_g5[1] = _g4[1]
+				_g5[2] = _g4[2]
+				_g5[3] = _g4[3]
+				_g5[4] = _g4[4]
+				_g5[5] = _g4[5]
+				_g5[6] = _g4[6]
+				_g5[7] = _g4[7]
+			}
+			_t6 := _r2[_k1:]
+			_t7 := _r3[_k1:][:len(_t6)]
+			for _j8 := range _t6 {
+				_t7[_j8] = _t6[_j8]
 			}
 		}
 		*outBegIdx = startIdx
@@ -129,117 +144,117 @@ func (c *Core) maImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod,
 	}
 	switch optInMAType {
 	case int32(MATypeSMA):
-		_X4, _E4 := c.SMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
-		if _E4 != nil {
-			return _E4.(RetCode)
-		}
-		*outBegIdx = int32(_X4.BegIdx)
-		*outNBElement = int32(_X4.NBElement)
-		retCode = Success
-	case int32(MATypeEMA):
-		_X5, _E5 := c.EMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
-		if _E5 != nil {
-			return _E5.(RetCode)
-		}
-		*outBegIdx = int32(_X5.BegIdx)
-		*outNBElement = int32(_X5.NBElement)
-		retCode = Success
-	case int32(MATypeWMA):
-		_X6, _E6 := c.WMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
-		if _E6 != nil {
-			return _E6.(RetCode)
-		}
-		*outBegIdx = int32(_X6.BegIdx)
-		*outNBElement = int32(_X6.NBElement)
-		retCode = Success
-	case int32(MATypeDEMA):
-		_X7, _E7 := c.DEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
-		if _E7 != nil {
-			return _E7.(RetCode)
-		}
-		*outBegIdx = int32(_X7.BegIdx)
-		*outNBElement = int32(_X7.NBElement)
-		retCode = Success
-	case int32(MATypeTEMA):
-		_X8, _E8 := c.TEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
-		if _E8 != nil {
-			return _E8.(RetCode)
-		}
-		*outBegIdx = int32(_X8.BegIdx)
-		*outNBElement = int32(_X8.NBElement)
-		retCode = Success
-	case int32(MATypeTRIMA):
-		_X9, _E9 := c.TRIMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+		_X9, _E9 := c.SMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E9 != nil {
 			return _E9.(RetCode)
 		}
 		*outBegIdx = int32(_X9.BegIdx)
 		*outNBElement = int32(_X9.NBElement)
 		retCode = Success
-	case int32(MATypeKAMA):
-		_X10, _E10 := c.KAMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+	case int32(MATypeEMA):
+		_X10, _E10 := c.EMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E10 != nil {
 			return _E10.(RetCode)
 		}
 		*outBegIdx = int32(_X10.BegIdx)
 		*outNBElement = int32(_X10.NBElement)
 		retCode = Success
-	case int32(MATypeMAMA):
-		famaScratch = make([]float64, endIdx-startIdx+1)
-		_X11, _E11 := c.MAMA(int(startIdx), int(endIdx), inReal, 0.5, 0.05, outReal, famaScratch)
+	case int32(MATypeWMA):
+		_X11, _E11 := c.WMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E11 != nil {
 			return _E11.(RetCode)
 		}
 		*outBegIdx = int32(_X11.BegIdx)
 		*outNBElement = int32(_X11.NBElement)
 		retCode = Success
-	case int32(MATypeT3):
-		_X12, _E12 := c.T3(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), 0.7, outReal)
+	case int32(MATypeDEMA):
+		_X12, _E12 := c.DEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E12 != nil {
 			return _E12.(RetCode)
 		}
 		*outBegIdx = int32(_X12.BegIdx)
 		*outNBElement = int32(_X12.NBElement)
 		retCode = Success
-	case int32(MATypeHMA):
-		_X13, _E13 := c.HMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+	case int32(MATypeTEMA):
+		_X13, _E13 := c.TEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E13 != nil {
 			return _E13.(RetCode)
 		}
 		*outBegIdx = int32(_X13.BegIdx)
 		*outNBElement = int32(_X13.NBElement)
 		retCode = Success
-	case int32(MATypeZLEMA):
-		_X14, _E14 := c.ZLEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+	case int32(MATypeTRIMA):
+		_X14, _E14 := c.TRIMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E14 != nil {
 			return _E14.(RetCode)
 		}
 		*outBegIdx = int32(_X14.BegIdx)
 		*outNBElement = int32(_X14.NBElement)
 		retCode = Success
-	case int32(MATypeRMA):
-		_X15, _E15 := c.RMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+	case int32(MATypeKAMA):
+		_X15, _E15 := c.KAMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
 		if _E15 != nil {
 			return _E15.(RetCode)
 		}
 		*outBegIdx = int32(_X15.BegIdx)
 		*outNBElement = int32(_X15.NBElement)
 		retCode = Success
-	case int32(MATypeVIDYA):
-		_X16, _E16 := c.VIDYA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), int((3*optInTimePeriod+2)/4), outReal)
+	case int32(MATypeMAMA):
+		famaScratch = make([]float64, endIdx-startIdx+1)
+		_X16, _E16 := c.MAMA(int(startIdx), int(endIdx), inReal, 0.5, 0.05, outReal, famaScratch)
 		if _E16 != nil {
 			return _E16.(RetCode)
 		}
 		*outBegIdx = int32(_X16.BegIdx)
 		*outNBElement = int32(_X16.NBElement)
 		retCode = Success
-	case int32(MATypeALMA):
-		_X17, _E17 := c.ALMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), 6.0, 0.85, outReal)
+	case int32(MATypeT3):
+		_X17, _E17 := c.T3(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), 0.7, outReal)
 		if _E17 != nil {
 			return _E17.(RetCode)
 		}
 		*outBegIdx = int32(_X17.BegIdx)
 		*outNBElement = int32(_X17.NBElement)
+		retCode = Success
+	case int32(MATypeHMA):
+		_X18, _E18 := c.HMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+		if _E18 != nil {
+			return _E18.(RetCode)
+		}
+		*outBegIdx = int32(_X18.BegIdx)
+		*outNBElement = int32(_X18.NBElement)
+		retCode = Success
+	case int32(MATypeZLEMA):
+		_X19, _E19 := c.ZLEMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+		if _E19 != nil {
+			return _E19.(RetCode)
+		}
+		*outBegIdx = int32(_X19.BegIdx)
+		*outNBElement = int32(_X19.NBElement)
+		retCode = Success
+	case int32(MATypeRMA):
+		_X20, _E20 := c.RMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+		if _E20 != nil {
+			return _E20.(RetCode)
+		}
+		*outBegIdx = int32(_X20.BegIdx)
+		*outNBElement = int32(_X20.NBElement)
+		retCode = Success
+	case int32(MATypeVIDYA):
+		_X21, _E21 := c.VIDYA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), int((3*optInTimePeriod+2)/4), outReal)
+		if _E21 != nil {
+			return _E21.(RetCode)
+		}
+		*outBegIdx = int32(_X21.BegIdx)
+		*outNBElement = int32(_X21.NBElement)
+		retCode = Success
+	case int32(MATypeALMA):
+		_X22, _E22 := c.ALMA(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), 6.0, 0.85, outReal)
+		if _E22 != nil {
+			return _E22.(RetCode)
+		}
+		*outBegIdx = int32(_X22.BegIdx)
+		*outNBElement = int32(_X22.NBElement)
 		retCode = Success
 	default:
 		retCode = BadParam

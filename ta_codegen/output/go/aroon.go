@@ -54,7 +54,6 @@ func (c *Core) aroonImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInT
 	var lowestIdx int32
 	var highestIdx int32
 	var today int32
-	var i int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -85,52 +84,51 @@ func (c *Core) aroonImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInT
 	lowest = 0.0
 	highest = 0.0
 	factor = 100.0 / float64(optInTimePeriod)
-	for today <= endIdx {
-		tmp = inLow[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if today <= endIdx {
+		_x0 := inHigh[:int(endIdx)+1]
+		_x1 := inLow[:len(_x0)]
+		_s2 := int(today)
+		_r4 := outAroonUp[outIdx:][:len(_x0)-_s2]
+		_r5 := outAroonDown[outIdx:][:len(_x0)-_s2]
+		_i6 := int(highestIdx)
+		_i7 := int(lowestIdx)
+		_i8 := int(trailingIdx)
+		for _t3 := _s2; _t3 < len(_x0); _t3++ {
+			tmp = _x1[_t3]
+			if _i7 < _i8 {
+				_i7 = _i8
+				lowest = _x1[_i7]
+				for _j9 := _i7 + 1; _j9 <= _t3; _j9++ {
+					tmp = _x1[_j9]
+					if tmp <= lowest {
+						_i7 = _j9
+						lowest = tmp
+					}
 				}
-				tmp = inLow[i]
-				if tmp <= lowest {
-					lowestIdx = i
-					lowest = tmp
-				}
+			} else if tmp <= lowest {
+				_i7 = _t3
+				lowest = tmp
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
-		}
-		tmp = inHigh[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			tmp = _x0[_t3]
+			if _i6 < _i8 {
+				_i6 = _i8
+				highest = _x0[_i6]
+				for _j10 := _i6 + 1; _j10 <= _t3; _j10++ {
+					tmp = _x0[_j10]
+					if tmp >= highest {
+						_i6 = _j10
+						highest = tmp
+					}
 				}
-				tmp = inHigh[i]
-				if tmp >= highest {
-					highestIdx = i
-					highest = tmp
-				}
+			} else if tmp >= highest {
+				_i6 = _t3
+				highest = tmp
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
+			_r4[_t3-_s2] = float64(factor * float64(optInTimePeriod-(int32(_t3)-int32(_i6))))
+			_r5[_t3-_s2] = float64(factor * float64(optInTimePeriod-(int32(_t3)-int32(_i7))))
+			_i8++
 		}
-		outAroonUp[outIdx] = float64(factor * float64(optInTimePeriod-(today-highestIdx)))
-		outAroonDown[outIdx] = float64(factor * float64(optInTimePeriod-(today-lowestIdx)))
-		outIdx += 1
-		trailingIdx += 1
-		today += 1
+		outIdx += int32(len(_x0) - _s2)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

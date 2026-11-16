@@ -53,10 +53,25 @@ func (c *Core) sqrtImpl(startIdx, endIdx int32, inReal []float64, outBegIdx, out
 	i = startIdx
 	outIdx = 0
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inReal[i:][:_n0]
-		_r3 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			_r3[_k1] = math.Sqrt(_r2[_k1])
+		_r2 := inReal[i:][:_n0:_n0]
+		_r3 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+8 <= _n0; _k1 += 8 {
+			_g4 := _r2[_k1 : _k1+8 : _k1+8]
+			_g5 := _r3[_k1 : _k1+8 : _k1+8]
+			_g5[0] = math.Sqrt(_g4[0])
+			_g5[1] = math.Sqrt(_g4[1])
+			_g5[2] = math.Sqrt(_g4[2])
+			_g5[3] = math.Sqrt(_g4[3])
+			_g5[4] = math.Sqrt(_g4[4])
+			_g5[5] = math.Sqrt(_g4[5])
+			_g5[6] = math.Sqrt(_g4[6])
+			_g5[7] = math.Sqrt(_g4[7])
+		}
+		_t6 := _r2[_k1:]
+		_t7 := _r3[_k1:][:len(_t6)]
+		for _j8 := range _t6 {
+			_t7[_j8] = math.Sqrt(_t6[_j8])
 		}
 		outIdx += int32(_n0)
 	}

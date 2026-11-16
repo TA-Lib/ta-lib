@@ -84,6 +84,8 @@ func (c *Core) choptrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	outIdx = 0
 	today = startIdx
 	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		*outBegIdx = startIdx
+		*outNBElement = outIdx + int32(_n0)
 		_r2 := inHigh[today:][:_n0]
 		_r3 := inLow[today:][:_n0]
 		_r4 := outReal[outIdx:][:_n0]
@@ -120,7 +122,7 @@ func (c *Core) choptrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 				_r4[_k1] = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / logPeriod))
 			}
 		}
-		outIdx += int32(_n0)
+		return Success
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

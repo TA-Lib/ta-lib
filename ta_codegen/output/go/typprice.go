@@ -51,12 +51,31 @@ func (c *Core) typpriceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []flo
 	outIdx = 0
 	i = startIdx
 	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
-		_r2 := inHigh[i:][:_n0]
-		_r3 := inLow[i:][:_n0]
-		_r4 := inClose[i:][:_n0]
-		_r5 := outReal[outIdx:][:_n0]
-		for _k1 := range _r2 {
-			_r5[_k1] = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
+		_r2 := inHigh[i:][:_n0:_n0]
+		_r3 := inLow[i:][:_n0:_n0]
+		_r4 := inClose[i:][:_n0:_n0]
+		_r5 := outReal[outIdx:][:_n0:_n0]
+		_k1 := 0
+		for ; _k1+8 <= _n0; _k1 += 8 {
+			_g6 := _r2[_k1 : _k1+8 : _k1+8]
+			_g7 := _r3[_k1 : _k1+8 : _k1+8]
+			_g8 := _r4[_k1 : _k1+8 : _k1+8]
+			_g9 := _r5[_k1 : _k1+8 : _k1+8]
+			_g9[0] = (_g6[0] + _g7[0] + _g8[0]) / 3.0
+			_g9[1] = (_g6[1] + _g7[1] + _g8[1]) / 3.0
+			_g9[2] = (_g6[2] + _g7[2] + _g8[2]) / 3.0
+			_g9[3] = (_g6[3] + _g7[3] + _g8[3]) / 3.0
+			_g9[4] = (_g6[4] + _g7[4] + _g8[4]) / 3.0
+			_g9[5] = (_g6[5] + _g7[5] + _g8[5]) / 3.0
+			_g9[6] = (_g6[6] + _g7[6] + _g8[6]) / 3.0
+			_g9[7] = (_g6[7] + _g7[7] + _g8[7]) / 3.0
+		}
+		_t10 := _r2[_k1:]
+		_t11 := _r3[_k1:][:len(_t10)]
+		_t12 := _r4[_k1:][:len(_t10)]
+		_t13 := _r5[_k1:][:len(_t10)]
+		for _j14 := range _t10 {
+			_t13[_j14] = (_t10[_j14] + _t11[_j14] + _t12[_j14]) / 3.0
 		}
 		outIdx += int32(_n0)
 	}

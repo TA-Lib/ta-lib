@@ -114,6 +114,8 @@ func (c *Core) linearregAngleImpl(startIdx, endIdx int32, inReal []float64, optI
 	outIdx++
 	today += 1
 	if _n1 := int(endIdx) - int(today) + 1; _n1 > 0 {
+		*outBegIdx = startIdx
+		*outNBElement = outIdx + int32(_n1)
 		_r3 := inReal[today:][:_n1]
 		_r4 := inReal[trailingIdx:][:_n1]
 		_r5 := outReal[outIdx:][:_n1]
@@ -142,7 +144,7 @@ func (c *Core) linearregAngleImpl(startIdx, endIdx int32, inReal []float64, optI
 			trailingValue = _r4[_k2]
 			_r5[_k2] = float64(math.Atan(m) * float64(float64(180.0)/float64(3.141592653589793)))
 		}
-		outIdx += int32(_n1)
+		return Success
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx
