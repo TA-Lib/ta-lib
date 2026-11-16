@@ -50,8 +50,14 @@ func (c *Core) divImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, outBe
 	}
 	i = startIdx
 	outIdx = 0
-	for ; i <= endIdx; i, outIdx = i+1, outIdx+1 {
-		outReal[outIdx] = inReal0[i] / inReal1[i]
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inReal0[i:][:_n0]
+		_r3 := inReal1[i:][:_n0]
+		_r4 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			_r4[_k1] = _r2[_k1] / _r3[_k1]
+		}
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

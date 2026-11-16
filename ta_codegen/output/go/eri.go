@@ -83,14 +83,20 @@ func (c *Core) eriImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	if optInTimePeriod == 1 {
 		outIdx = 0
 		today = startIdx
-		for today <= endIdx {
-			tempHT = inHigh[today]
-			tempLT = inLow[today]
-			tempReal = inClose[today]
-			outBullPower[outIdx] = tempHT - tempReal
-			outBearPower[outIdx] = tempLT - tempReal
-			outIdx += 1
-			today += 1
+		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inHigh[today:][:_n0]
+			_r3 := inLow[today:][:_n0]
+			_r4 := inClose[today:][:_n0]
+			_r5 := outBullPower[outIdx:][:_n0]
+			_r6 := outBearPower[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				tempHT = _r2[_k1]
+				tempLT = _r3[_k1]
+				tempReal = _r4[_k1]
+				_r5[_k1] = tempHT - tempReal
+				_r6[_k1] = tempLT - tempReal
+			}
+			outIdx += int32(_n0)
 		}
 		*outBegIdx = startIdx
 		*outNBElement = outIdx
@@ -105,32 +111,41 @@ func (c *Core) eriImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	i = optInTimePeriod
 	tempReal = 0.0
 	for {
-		_C0 := i > 0
+		_C7 := i > 0
 		i--
-		if !_C0 {
+		if !_C7 {
 			break
 		}
 		tempReal += inClose[today]
 		today++
 	}
 	prevMA = tempReal / float64(optInTimePeriod)
-	for today <= startIdx {
-		prevMA = math.FMA(beta, prevMA, float64(k*inClose[today]))
-		today++
+	if _n8 := int(startIdx) - int(today) + 1; _n8 > 0 {
+		_r10 := inClose[today:][:_n8]
+		for _k9 := range _r10 {
+			prevMA = math.FMA(beta, prevMA, float64(k*_r10[_k9]))
+		}
+		today += int32(_n8)
 	}
 	tempHT = inHigh[startIdx]
 	tempLT = inLow[startIdx]
 	outBullPower[0] = tempHT - prevMA
 	outBearPower[0] = tempLT - prevMA
 	outIdx = 1
-	for today <= endIdx {
-		prevMA = math.FMA(beta, prevMA, float64(k*inClose[today]))
-		tempHT = inHigh[today]
-		tempLT = inLow[today]
-		outBullPower[outIdx] = tempHT - prevMA
-		outBearPower[outIdx] = tempLT - prevMA
-		outIdx += 1
-		today += 1
+	if _n11 := int(endIdx) - int(today) + 1; _n11 > 0 {
+		_r13 := inClose[today:][:_n11]
+		_r14 := inHigh[today:][:_n11]
+		_r15 := inLow[today:][:_n11]
+		_r16 := outBullPower[outIdx:][:_n11]
+		_r17 := outBearPower[outIdx:][:_n11]
+		for _k12 := range _r13 {
+			prevMA = math.FMA(beta, prevMA, float64(k*_r13[_k12]))
+			tempHT = _r14[_k12]
+			tempLT = _r15[_k12]
+			_r16[_k12] = tempHT - prevMA
+			_r17[_k12] = tempLT - prevMA
+		}
+		outIdx += int32(_n11)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

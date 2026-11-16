@@ -89,29 +89,39 @@ func (c *Core) aoImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInFast
 	trailingFastIdx = startIdx - (optInFastPeriod - 1)
 	trailingSlowIdx = startIdx - (optInSlowPeriod - 1)
 	i = startIdx - lookbackTotal
-	for i < startIdx {
-		medianPrice = (inHigh[i] + inLow[i]) / 2.0
-		if i >= trailingFastIdx {
-			sumFast += medianPrice
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		for _k1 := range _r2 {
+			medianPrice = (_r2[_k1] + _r3[_k1]) / 2.0
+			if i+int32(_k1) >= trailingFastIdx {
+				sumFast += medianPrice
+			}
+			if i+int32(_k1) >= trailingSlowIdx {
+				sumSlow += medianPrice
+			}
 		}
-		if i >= trailingSlowIdx {
-			sumSlow += medianPrice
-		}
-		i = i + 1
+		i += int32(_n0)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		medianPrice = (inHigh[i] + inLow[i]) / 2.0
-		sumFast += medianPrice
-		sumSlow += medianPrice
-		i = i + 1
-		tempReal = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
-		sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0
-		sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0
-		trailingFastIdx = trailingFastIdx + 1
-		trailingSlowIdx = trailingSlowIdx + 1
-		outReal[outIdx] = tempReal
-		outIdx = outIdx + 1
+	if _n4 := int(endIdx) - int(i) + 1; _n4 > 0 {
+		_r6 := inHigh[i:][:_n4]
+		_r7 := inLow[i:][:_n4]
+		_r8 := inHigh[trailingFastIdx:][:_n4]
+		_r9 := inLow[trailingFastIdx:][:_n4]
+		_r10 := inHigh[trailingSlowIdx:][:_n4]
+		_r11 := inLow[trailingSlowIdx:][:_n4]
+		_r12 := outReal[outIdx:][:_n4]
+		for _k5 := range _r6 {
+			medianPrice = (_r6[_k5] + _r7[_k5]) / 2.0
+			sumFast += medianPrice
+			sumSlow += medianPrice
+			tempReal = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
+			sumFast -= (_r8[_k5] + _r9[_k5]) / 2.0
+			sumSlow -= (_r10[_k5] + _r11[_k5]) / 2.0
+			_r12[_k5] = tempReal
+		}
+		outIdx += int32(_n4)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

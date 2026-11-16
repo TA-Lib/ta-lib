@@ -137,95 +137,99 @@ func (c *Core) coppockImpl(startIdx, endIdx int32, inReal []float64, optInWMAPer
 	periodSub = 0.0
 	periodSum = periodSub
 	i = 1
-	for inIdx < startIdx {
-		base1 = inReal[roc1Idx]
-		roc1Idx += 1
-		base2 = inReal[roc2Idx]
-		roc2Idx += 1
-		var _T0 float64
-		if base1 != 0.0 {
-			_T0 = float64((inReal[inIdx]/base1 - 1.0) * 100.0)
-		} else {
-			_T0 = 0.0
+	if _n0 := int(startIdx) - int(inIdx); _n0 > 0 {
+		_r2 := inReal[roc1Idx:][:_n0]
+		_r3 := inReal[roc2Idx:][:_n0]
+		for _k1 := range _r2 {
+			base1 = _r2[_k1]
+			base2 = _r3[_k1]
+			var _T4 float64
+			if base1 != 0.0 {
+				_T4 = float64((inReal[inIdx+int32(_k1)]/base1 - 1.0) * 100.0)
+			} else {
+				_T4 = 0.0
+			}
+			roc1 = _T4
+			var _T5 float64
+			if base2 != 0.0 {
+				_T5 = float64((inReal[inIdx+int32(_k1)]/base2 - 1.0) * 100.0)
+			} else {
+				_T5 = 0.0
+			}
+			roc2 = _T5
+			tempReal = roc1 + roc2
+			periodSub += tempReal
+			periodSum += float64(tempReal * float64(i+int32(_k1)))
+			sRing[sRing_Idx] = tempReal
+			sRing_Idx++
+			if sRing_Idx > maxIdx_sRing {
+				sRing_Idx = 0
+			}
 		}
-		roc1 = _T0
-		var _T1 float64
-		if base2 != 0.0 {
-			_T1 = float64((inReal[inIdx]/base2 - 1.0) * 100.0)
-		} else {
-			_T1 = 0.0
-		}
-		roc2 = _T1
-		tempReal = roc1 + roc2
-		periodSub += tempReal
-		periodSum += float64(tempReal * float64(i))
-		i += 1
-		sRing[sRing_Idx] = tempReal
-		sRing_Idx++
-		if sRing_Idx > maxIdx_sRing {
-			sRing_Idx = 0
-		}
-		inIdx += 1
+		inIdx += int32(_n0)
+		roc1Idx += int32(_n0)
+		roc2Idx += int32(_n0)
 	}
 	barsSinceReseed = 8 * optInWMAPeriod
 	trailingValue = 0.0
-	for inIdx <= endIdx {
-		base1 = inReal[roc1Idx]
-		roc1Idx += 1
-		base2 = inReal[roc2Idx]
-		roc2Idx += 1
-		var _T2 float64
-		if base1 != 0.0 {
-			_T2 = float64((inReal[inIdx]/base1 - 1.0) * 100.0)
-		} else {
-			_T2 = 0.0
-		}
-		roc1 = _T2
-		var _T3 float64
-		if base2 != 0.0 {
-			_T3 = float64((inReal[inIdx]/base2 - 1.0) * 100.0)
-		} else {
-			_T3 = 0.0
-		}
-		roc2 = _T3
-		tempReal = roc1 + roc2
-		periodSub += tempReal
-		periodSub -= trailingValue
-		periodSum += float64(tempReal * float64(optInWMAPeriod))
-		barsSinceReseed -= 1
-		if barsSinceReseed <= 0 {
-			barsSinceReseed = 8 * optInWMAPeriod
-			periodSub = 0.0
-			periodSum = 0.0
-			rw = 1
-			ringWalk = sRing_Idx
-			for q = 0; q < ringSize; q += 1 {
-				tempReal2 = sRing[ringWalk]
-				periodSub += tempReal2
-				periodSum += float64(tempReal2 * float64(rw))
-				rw += 1
-				ringWalk += 1
-				if ringWalk >= ringSize {
-					ringWalk = 0
-				}
+	if _n6 := int(endIdx) - int(inIdx) + 1; _n6 > 0 {
+		_r8 := inReal[roc1Idx:][:_n6]
+		_r9 := inReal[roc2Idx:][:_n6]
+		for _k7 := range _r8 {
+			base1 = _r8[_k7]
+			base2 = _r9[_k7]
+			var _T10 float64
+			if base1 != 0.0 {
+				_T10 = float64((inReal[inIdx+int32(_k7)]/base1 - 1.0) * 100.0)
+			} else {
+				_T10 = 0.0
 			}
+			roc1 = _T10
+			var _T11 float64
+			if base2 != 0.0 {
+				_T11 = float64((inReal[inIdx+int32(_k7)]/base2 - 1.0) * 100.0)
+			} else {
+				_T11 = 0.0
+			}
+			roc2 = _T11
+			tempReal = roc1 + roc2
 			periodSub += tempReal
+			periodSub -= trailingValue
 			periodSum += float64(tempReal * float64(optInWMAPeriod))
+			barsSinceReseed -= 1
+			if barsSinceReseed <= 0 {
+				barsSinceReseed = 8 * optInWMAPeriod
+				periodSub = 0.0
+				periodSum = 0.0
+				rw = 1
+				ringWalk = sRing_Idx
+				for q = 0; q < ringSize; q += 1 {
+					tempReal2 = sRing[ringWalk]
+					periodSub += tempReal2
+					periodSum += float64(tempReal2 * float64(rw))
+					rw += 1
+					ringWalk += 1
+					if ringWalk >= ringSize {
+						ringWalk = 0
+					}
+				}
+				periodSub += tempReal
+				periodSum += float64(tempReal * float64(optInWMAPeriod))
+			}
+			trailingValue = sRing[sRing_Idx]
+			sRing[sRing_Idx] = tempReal
+			sRing_Idx++
+			if sRing_Idx > maxIdx_sRing {
+				sRing_Idx = 0
+			}
+			if optInWMAPeriod == 1 {
+				outReal[outIdx+int32(_k7)] = tempReal
+			} else {
+				outReal[outIdx+int32(_k7)] = periodSum / divider
+			}
+			periodSum -= periodSub
 		}
-		trailingValue = sRing[sRing_Idx]
-		sRing[sRing_Idx] = tempReal
-		sRing_Idx++
-		if sRing_Idx > maxIdx_sRing {
-			sRing_Idx = 0
-		}
-		if optInWMAPeriod == 1 {
-			outReal[outIdx] = tempReal
-		} else {
-			outReal[outIdx] = periodSum / divider
-		}
-		outIdx += 1
-		periodSum -= periodSub
-		inIdx += 1
+		outIdx += int32(_n6)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

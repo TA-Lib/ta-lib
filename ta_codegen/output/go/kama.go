@@ -93,10 +93,13 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		*outBegIdx = startIdx
 		outIdx = 0
 		today = startIdx
-		for today <= endIdx {
-			outReal[outIdx] = inReal[today]
-			outIdx++
-			today++
+		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inReal[today:][:_n0]
+			_r3 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				_r3[_k1] = _r2[_k1]
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -116,9 +119,9 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	trailingIdx = today
 	i = optInTimePeriod
 	for {
-		_C0 := i > 0
+		_C4 := i > 0
 		i--
-		if !_C0 {
+		if !_C4 {
 			break
 		}
 		tempReal = inReal[today]
@@ -146,64 +149,73 @@ func (c *Core) kamaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	tempReal = float64(tempReal * tempReal)
 	prevKAMA = math.FMA(inReal[today]-prevKAMA, tempReal, prevKAMA)
 	today++
-	for today <= startIdx {
-		tempReal = inReal[today]
-		tempReal2 = inReal[trailingIdx]
-		trailingIdx++
-		periodROC = tempReal - tempReal2
-		sumROC1 -= math.Abs(trailingValue - tempReal2)
-		sumROC1 += math.Abs(tempReal - inReal[today-1])
-		live = b2i(!(math.Abs(tempReal-inReal[today-1]) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			sumROC1 = 0.0
-			tempReal = 1.0
-		} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-			tempReal = 1.0
-		} else {
-			tempReal = math.Abs(periodROC / sumROC1)
-			if tempReal > 1.0 {
+	if _n5 := int(startIdx) - int(today) + 1; _n5 > 0 {
+		_r7 := inReal[today:][:_n5]
+		_r8 := inReal[trailingIdx:][:_n5]
+		_r9 := inReal[today-1:][:_n5]
+		for _k6 := range _r7 {
+			tempReal = _r7[_k6]
+			tempReal2 = _r8[_k6]
+			periodROC = tempReal - tempReal2
+			sumROC1 -= math.Abs(trailingValue - tempReal2)
+			sumROC1 += math.Abs(tempReal - _r9[_k6])
+			live = b2i(!(math.Abs(tempReal-_r9[_k6]) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				sumROC1 = 0.0
 				tempReal = 1.0
+			} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+				tempReal = 1.0
+			} else {
+				tempReal = math.Abs(periodROC / sumROC1)
+				if tempReal > 1.0 {
+					tempReal = 1.0
+				}
 			}
+			trailingValue = tempReal2
+			tempReal = math.FMA(tempReal, constDiff, constMax)
+			tempReal = float64(tempReal * tempReal)
+			prevKAMA = math.FMA(_r7[_k6]-prevKAMA, tempReal, prevKAMA)
 		}
-		trailingValue = tempReal2
-		tempReal = math.FMA(tempReal, constDiff, constMax)
-		tempReal = float64(tempReal * tempReal)
-		prevKAMA = math.FMA(inReal[today]-prevKAMA, tempReal, prevKAMA)
-		today++
+		today += int32(_n5)
+		trailingIdx += int32(_n5)
 	}
 	outReal[0] = prevKAMA
 	outIdx = 1
 	*outBegIdx = today - 1
-	for today <= endIdx {
-		tempReal = inReal[today]
-		tempReal2 = inReal[trailingIdx]
-		trailingIdx++
-		periodROC = tempReal - tempReal2
-		sumROC1 -= math.Abs(trailingValue - tempReal2)
-		sumROC1 += math.Abs(tempReal - inReal[today-1])
-		live = b2i(!(math.Abs(tempReal-inReal[today-1]) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			sumROC1 = 0.0
-			tempReal = 1.0
-		} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-			tempReal = 1.0
-		} else {
-			tempReal = math.Abs(periodROC / sumROC1)
-			if tempReal > 1.0 {
+	if _n10 := int(endIdx) - int(today) + 1; _n10 > 0 {
+		_r12 := inReal[today:][:_n10]
+		_r13 := inReal[trailingIdx:][:_n10]
+		_r14 := inReal[today-1:][:_n10]
+		_r15 := outReal[outIdx:][:_n10]
+		for _k11 := range _r12 {
+			tempReal = _r12[_k11]
+			tempReal2 = _r13[_k11]
+			periodROC = tempReal - tempReal2
+			sumROC1 -= math.Abs(trailingValue - tempReal2)
+			sumROC1 += math.Abs(tempReal - _r14[_k11])
+			live = b2i(!(math.Abs(tempReal-_r14[_k11]) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				sumROC1 = 0.0
 				tempReal = 1.0
+			} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+				tempReal = 1.0
+			} else {
+				tempReal = math.Abs(periodROC / sumROC1)
+				if tempReal > 1.0 {
+					tempReal = 1.0
+				}
 			}
+			trailingValue = tempReal2
+			tempReal = math.FMA(tempReal, constDiff, constMax)
+			tempReal = float64(tempReal * tempReal)
+			prevKAMA = math.FMA(_r12[_k11]-prevKAMA, tempReal, prevKAMA)
+			_r15[_k11] = prevKAMA
 		}
-		trailingValue = tempReal2
-		tempReal = math.FMA(tempReal, constDiff, constMax)
-		tempReal = float64(tempReal * tempReal)
-		prevKAMA = math.FMA(inReal[today]-prevKAMA, tempReal, prevKAMA)
-		today++
-		outReal[outIdx] = prevKAMA
-		outIdx++
+		outIdx += int32(_n10)
 	}
 	*outNBElement = outIdx
 	return Success

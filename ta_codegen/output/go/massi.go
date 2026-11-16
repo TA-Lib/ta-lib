@@ -125,28 +125,60 @@ func (c *Core) massiImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInF
 	tempReal = 0.0
 	today = startIdx - lookbackTotal
 	nBar = 0
-	for today <= startIdx {
-		hl = inHigh[today] - inLow[today]
-		if nBar < optInFastPeriod {
-			sum1 = sum1 + hl
-			if nBar == optInFastPeriod-1 {
-				ema1 = sum1 / float64(optInFastPeriod)
-			}
-		} else {
-			ema1 = math.FMA(emaBeta, ema1, float64(optInK_1*hl))
-		}
-		if nBar >= lookbackEma {
-			n2 = nBar - lookbackEma
-			if n2 < optInFastPeriod {
-				sum2 = sum2 + ema1
-				if n2 == optInFastPeriod-1 {
-					ema2 = sum2 / float64(optInFastPeriod)
+	if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		for _k1 := range _r2 {
+			hl = _r2[_k1] - _r3[_k1]
+			if nBar+int32(_k1) < optInFastPeriod {
+				sum1 = sum1 + hl
+				if nBar+int32(_k1) == optInFastPeriod-1 {
+					ema1 = sum1 / float64(optInFastPeriod)
 				}
 			} else {
-				ema2 = math.FMA(emaBeta, ema2, float64(optInK_1*ema1))
+				ema1 = math.FMA(emaBeta, ema1, float64(optInK_1*hl))
+			}
+			if nBar+int32(_k1) >= lookbackEma {
+				n2 = nBar + int32(_k1) - lookbackEma
+				if n2 < optInFastPeriod {
+					sum2 = sum2 + ema1
+					if n2 == optInFastPeriod-1 {
+						ema2 = sum2 / float64(optInFastPeriod)
+					}
+				} else {
+					ema2 = math.FMA(emaBeta, ema2, float64(optInK_1*ema1))
+				}
+			}
+			if nBar+int32(_k1) >= lookbackEma2 {
+				if ema2 == 0.0 {
+					ratio = 1.0
+				} else {
+					ratio = ema1 / ema2
+				}
+				ratioRing[ratioRing_Idx] = ratio
+				total = total + ratio
+				ratioRing_Idx++
+				if ratioRing_Idx > maxIdx_ratioRing {
+					ratioRing_Idx = 0
+				}
+				if nBar+int32(_k1) == lookbackTotal {
+					tempReal = total
+					total = total - ratioRing[ratioRing_Idx]
+				}
 			}
 		}
-		if nBar >= lookbackEma2 {
+		today += int32(_n0)
+	}
+	outReal[0] = tempReal
+	outIdx = 1
+	if _n4 := int(endIdx) - int(today) + 1; _n4 > 0 {
+		_r6 := inHigh[today:][:_n4]
+		_r7 := inLow[today:][:_n4]
+		_r8 := outReal[outIdx:][:_n4]
+		for _k5 := range _r6 {
+			hl = _r6[_k5] - _r7[_k5]
+			ema1 = math.FMA(emaBeta, ema1, float64(optInK_1*hl))
+			ema2 = math.FMA(emaBeta, ema2, float64(optInK_1*ema1))
 			if ema2 == 0.0 {
 				ratio = 1.0
 			} else {
@@ -158,36 +190,11 @@ func (c *Core) massiImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInF
 			if ratioRing_Idx > maxIdx_ratioRing {
 				ratioRing_Idx = 0
 			}
-			if nBar == lookbackTotal {
-				tempReal = total
-				total = total - ratioRing[ratioRing_Idx]
-			}
+			tempReal = total
+			total = total - ratioRing[ratioRing_Idx]
+			_r8[_k5] = tempReal
 		}
-		nBar = nBar + 1
-		today = today + 1
-	}
-	outReal[0] = tempReal
-	outIdx = 1
-	for today <= endIdx {
-		hl = inHigh[today] - inLow[today]
-		ema1 = math.FMA(emaBeta, ema1, float64(optInK_1*hl))
-		ema2 = math.FMA(emaBeta, ema2, float64(optInK_1*ema1))
-		if ema2 == 0.0 {
-			ratio = 1.0
-		} else {
-			ratio = ema1 / ema2
-		}
-		ratioRing[ratioRing_Idx] = ratio
-		total = total + ratio
-		ratioRing_Idx++
-		if ratioRing_Idx > maxIdx_ratioRing {
-			ratioRing_Idx = 0
-		}
-		tempReal = total
-		total = total - ratioRing[ratioRing_Idx]
-		outReal[outIdx] = tempReal
-		outIdx = outIdx + 1
-		today = today + 1
+		outIdx += int32(_n4)
 	}
 	*outNBElement = outIdx
 	return Success

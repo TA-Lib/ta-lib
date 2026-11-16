@@ -81,8 +81,12 @@ func (c *Core) adxrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	*outBegIdx = int32(_X0.BegIdx)
 	*outNBElement = int32(_X0.NBElement)
 	nbElement = *outNBElement - (optInTimePeriod - 1)
-	for outIdx = 0; outIdx < nbElement; outIdx += 1 {
-		outReal[outIdx] = (adx[outIdx+(optInTimePeriod-1)] + adx[outIdx]) / 2.0
+	outIdx = 0
+	if _n1 := int(nbElement) - int(outIdx); _n1 > 0 {
+		_r3 := outReal[outIdx:][:_n1]
+		for _k2 := range _r3 {
+			_r3[_k2] = (adx[outIdx+int32(_k2)+(optInTimePeriod-1)] + adx[outIdx+int32(_k2)]) / 2.0
+		}
 	}
 	*outBegIdx = startIdx
 	*outNBElement = nbElement

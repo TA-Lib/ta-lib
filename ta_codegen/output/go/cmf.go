@@ -107,27 +107,34 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	sumMFV = 0.0
 	sumVol = 0.0
 	nullRun = 0
-	for i = optInTimePeriod; i > 0; i -= 1 {
-		high = inHigh[today]
-		low = inLow[today]
-		close_ = inClose[today]
-		tmp = high - low
-		if tmp > 0.0 {
-			mfv = float64((close_ - low - (high - close_)) / tmp * inVolume[today])
-		} else {
-			mfv = 0.0
+	i = optInTimePeriod
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		_r4 := inClose[today:][:_n0]
+		_r5 := inVolume[today:][:_n0]
+		for _k1 := range _r2 {
+			high = _r2[_k1]
+			low = _r3[_k1]
+			close_ = _r4[_k1]
+			tmp = high - low
+			if tmp > 0.0 {
+				mfv = float64((close_ - low - (high - close_)) / tmp * _r5[_k1])
+			} else {
+				mfv = 0.0
+			}
+			mfv_flow[mfv_Idx] = mfv
+			mfv_volume[mfv_Idx] = _r5[_k1]
+			sumMFV += mfv
+			sumVol += _r5[_k1]
+			liveVol = b2i(!(math.Abs(_r5[_k1]) <= 0.0))
+			nullRun = (nullRun + 1) & (liveVol - 1)
+			mfv_Idx++
+			if mfv_Idx > maxIdx_mfv {
+				mfv_Idx = 0
+			}
 		}
-		mfv_flow[mfv_Idx] = mfv
-		mfv_volume[mfv_Idx] = inVolume[today]
-		sumMFV += mfv
-		sumVol += inVolume[today]
-		liveVol = b2i(!(math.Abs(inVolume[today]) <= 0.0))
-		nullRun = (nullRun + 1) & (liveVol - 1)
-		today += 1
-		mfv_Idx++
-		if mfv_Idx > maxIdx_mfv {
-			mfv_Idx = 0
-		}
+		today += int32(_n0)
 	}
 	if sumVol > 0.0 {
 		outReal[outIdx] = sumMFV / sumVol
@@ -136,41 +143,46 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		outReal[outIdx] = 0.0
 		outIdx++
 	}
-	for today <= endIdx {
-		sumMFV -= mfv_flow[mfv_Idx]
-		sumVol -= mfv_volume[mfv_Idx]
-		high = inHigh[today]
-		low = inLow[today]
-		close_ = inClose[today]
-		tmp = high - low
-		if tmp > 0.0 {
-			mfv = float64((close_ - low - (high - close_)) / tmp * inVolume[today])
-		} else {
-			mfv = 0.0
-		}
-		mfv_flow[mfv_Idx] = mfv
-		mfv_volume[mfv_Idx] = inVolume[today]
-		sumMFV += mfv
-		sumVol += inVolume[today]
-		liveVol = b2i(!(math.Abs(inVolume[today]) <= 0.0))
-		nullRun = (nullRun + 1) & (liveVol - 1)
-		today += 1
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			sumMFV = 0.0
-			sumVol = 0.0
-			outReal[outIdx] = 0.0
-			outIdx++
-		} else if sumVol > 0.0 {
-			outReal[outIdx] = sumMFV / sumVol
-			outIdx++
-		} else {
-			outReal[outIdx] = 0.0
-			outIdx++
-		}
-		mfv_Idx++
-		if mfv_Idx > maxIdx_mfv {
-			mfv_Idx = 0
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inHigh[today:][:_n6]
+		_r9 := inLow[today:][:_n6]
+		_r10 := inClose[today:][:_n6]
+		_r11 := inVolume[today:][:_n6]
+		for _k7 := range _r8 {
+			sumMFV -= mfv_flow[mfv_Idx]
+			sumVol -= mfv_volume[mfv_Idx]
+			high = _r8[_k7]
+			low = _r9[_k7]
+			close_ = _r10[_k7]
+			tmp = high - low
+			if tmp > 0.0 {
+				mfv = float64((close_ - low - (high - close_)) / tmp * _r11[_k7])
+			} else {
+				mfv = 0.0
+			}
+			mfv_flow[mfv_Idx] = mfv
+			mfv_volume[mfv_Idx] = _r11[_k7]
+			sumMFV += mfv
+			sumVol += _r11[_k7]
+			liveVol = b2i(!(math.Abs(_r11[_k7]) <= 0.0))
+			nullRun = (nullRun + 1) & (liveVol - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				sumMFV = 0.0
+				sumVol = 0.0
+				outReal[outIdx] = 0.0
+				outIdx++
+			} else if sumVol > 0.0 {
+				outReal[outIdx] = sumMFV / sumVol
+				outIdx++
+			} else {
+				outReal[outIdx] = 0.0
+				outIdx++
+			}
+			mfv_Idx++
+			if mfv_Idx > maxIdx_mfv {
+				mfv_Idx = 0
+			}
 		}
 	}
 	*outBegIdx = startIdx

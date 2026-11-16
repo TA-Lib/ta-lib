@@ -75,20 +75,29 @@ func (c *Core) qstickImpl(startIdx, endIdx int32, inOpen, inClose []float64, opt
 	trailingIdx = startIdx - lookbackTotal
 	i = trailingIdx
 	if optInTimePeriod > 1 {
-		for i < startIdx {
-			periodTotal += inClose[i] - inOpen[i]
-			i = i + 1
+		if _n0 := int(startIdx) - int(i); _n0 > 0 {
+			_r2 := inClose[i:][:_n0]
+			_r3 := inOpen[i:][:_n0]
+			for _k1 := range _r2 {
+				periodTotal += _r2[_k1] - _r3[_k1]
+			}
+			i += int32(_n0)
 		}
 	}
 	outIdx = 0
-	for i <= endIdx {
-		periodTotal += inClose[i] - inOpen[i]
-		i = i + 1
-		tempReal = periodTotal
-		periodTotal -= inClose[trailingIdx] - inOpen[trailingIdx]
-		trailingIdx = trailingIdx + 1
-		outReal[outIdx] = tempReal / float64(optInTimePeriod)
-		outIdx = outIdx + 1
+	if _n4 := int(endIdx) - int(i) + 1; _n4 > 0 {
+		_r6 := inClose[i:][:_n4]
+		_r7 := inOpen[i:][:_n4]
+		_r8 := inClose[trailingIdx:][:_n4]
+		_r9 := inOpen[trailingIdx:][:_n4]
+		_r10 := outReal[outIdx:][:_n4]
+		for _k5 := range _r6 {
+			periodTotal += _r6[_k5] - _r7[_k5]
+			tempReal = periodTotal
+			periodTotal -= _r8[_k5] - _r9[_k5]
+			_r10[_k5] = tempReal / float64(optInTimePeriod)
+		}
+		outIdx += int32(_n4)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

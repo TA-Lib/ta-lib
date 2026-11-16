@@ -159,26 +159,242 @@ func (c *Core) cgImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 	outIdx = 0
 	today = startIdx
 	trailingIdx = startIdx - lookbackTotal
-	for today <= endIdx {
-		fits = 0
-		x = inReal[today]
-		y = float64(x * scale)
-		if limbs == 2 {
-			if math.Abs(y) < ylim && (y != 0.0 || x == 0.0) {
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		_r3 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			fits = 0
+			x = _r2[_k1]
+			y = float64(x * scale)
+			if limbs == 2 {
+				if math.Abs(y) < ylim && (y != 0.0 || x == 0.0) {
+					t = float64(y * invWidth)
+					a = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(a * width)
+					c_ = y - t
+					if c_+6755399441055744.0-6755399441055744.0 == c_ {
+						denA += a
+						denC += c_
+						numA += denA
+						numC += denC
+						fits = 1
+					}
+				}
+			} else if limbs == 3 {
+				if math.Abs(y) < ylim && (y != 0.0 || x == 0.0) {
+					t = float64(y * invWidthSq)
+					a = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(a * widthSq)
+					q = y - t
+					t = float64(q * invWidth)
+					b = t + 6755399441055744.0 - 6755399441055744.0
+					t = float64(b * width)
+					c_ = q - t
+					if c_+6755399441055744.0-6755399441055744.0 == c_ {
+						denA += a
+						denB += b
+						denC += c_
+						numA += denA
+						numB += denB
+						numC += denC
+						fits = 1
+					}
+				}
+			}
+			if fits == 0 && limbs == 0 && stickyBars > 0 {
+				stickyBars -= 1
+				num = 0.0
+				den = 0.0
+				for j = today + int32(_k1) - lookbackTotal; j <= today+int32(_k1); j += 1 {
+					den += inReal[j]
+					num += den
+				}
+			} else if fits == 0 {
+				maxAbs = 0.0
+				maxAt = 0
+				k = 0
+				for j = today + int32(_k1) - lookbackTotal; j <= today+int32(_k1); j += 1 {
+					x = math.Abs(inReal[j])
+					if x >= maxAbs {
+						maxAbs = x
+						maxAt = k
+					}
+					k += 1
+				}
+				if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
+					for float64(half*65536.0) <= maxAbs {
+						half = float64(half * 65536.0)
+					}
+					for float64(half*2.0) <= maxAbs {
+						half = float64(half * 2.0)
+					}
+					for half > float64(maxAbs*65536.0) {
+						half = float64(half * 1.52587890625e-5)
+					}
+					for half > maxAbs {
+						half = float64(half * 0.5)
+					}
+				}
+				scale2Lo = float64(ylim2*0.5) / half
+				if scale2Lo > 4.49423283715579e307 {
+					scale2Lo = 4.49423283715579e307
+				}
+				scale2Mid = scale2Lo / head2
+				scale3Lo = float64(ylim3*0.5) / half
+				if scale3Lo > 4.49423283715579e307 {
+					scale3Lo = 4.49423283715579e307
+				}
+				scale3Mid = scale3Lo / head3
+				fit2Mid = 1
+				fit2Lo = 1
+				fit3Mid = 1
+				failAt = -1
+				num = 0.0
+				den = 0.0
+				k = 0
+				for j = today + int32(_k1) - lookbackTotal; j <= today+int32(_k1); j += 1 {
+					x = inReal[j]
+					den += x
+					num += den
+					y = math.Abs(float64(x * scale2Mid))
+					if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+						fit2Mid = 0
+					}
+					y = math.Abs(float64(x * scale2Lo))
+					if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+						fit2Lo = 0
+					}
+					y = math.Abs(float64(x * scale3Mid))
+					if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+						fit3Mid = 0
+					}
+					y = math.Abs(float64(x * scale3Lo))
+					if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
+						failAt = k
+					}
+					k += 1
+				}
+				limbs = 0
+				if failAt >= 0 {
+					if failAt < maxAt {
+						stickyBars = failAt
+					} else {
+						stickyBars = maxAt
+					}
+				} else {
+					if fit2Mid == 1 || fit2Lo == 1 {
+						limbs = 2
+						width = width2
+						ylim = ylim2
+						if fit2Mid == 1 {
+							scale = scale2Mid
+						} else {
+							scale = scale2Lo
+						}
+					} else {
+						limbs = 3
+						width = width3
+						ylim = ylim3
+						if fit3Mid == 1 {
+							scale = scale3Mid
+						} else {
+							scale = scale3Lo
+						}
+					}
+					invWidth = 1.0 / width
+					widthSq = float64(width * width)
+					invWidthSq = float64(invWidth * invWidth)
+					denA = 0.0
+					denB = 0.0
+					denC = 0.0
+					numA = 0.0
+					numB = 0.0
+					numC = 0.0
+					if limbs == 2 {
+						for j = today + int32(_k1) - lookbackTotal; j <= today+int32(_k1); j += 1 {
+							y = float64(inReal[j] * scale)
+							t = float64(y * invWidth)
+							a = t + 6755399441055744.0 - 6755399441055744.0
+							t = float64(a * width)
+							c_ = y - t
+							denA += a
+							denC += c_
+							numA += denA
+							numC += denC
+						}
+					} else {
+						for j = today + int32(_k1) - lookbackTotal; j <= today+int32(_k1); j += 1 {
+							y = float64(inReal[j] * scale)
+							t = float64(y * invWidthSq)
+							a = t + 6755399441055744.0 - 6755399441055744.0
+							t = float64(a * widthSq)
+							q = y - t
+							t = float64(q * invWidth)
+							b = t + 6755399441055744.0 - 6755399441055744.0
+							t = float64(b * width)
+							c_ = q - t
+							denA += a
+							denB += b
+							denC += c_
+							numA += denA
+							numB += denB
+							numC += denC
+						}
+					}
+				}
+			}
+			if limbs == 2 {
+				t = float64(denA * width)
+				den = t + denC
+				t = float64(numA * width)
+				num = t + numC
+			} else if limbs == 3 {
+				t = float64(denC * invWidth)
+				q = t + 6755399441055744.0 - 6755399441055744.0
+				b = denB + q
+				t = float64(q * width)
+				c_ = denC - t
+				t = float64(b * invWidth)
+				q = t + 6755399441055744.0 - 6755399441055744.0
+				t = float64(q * width)
+				b = b - t
+				t = float64(b * width)
+				c_ = t + c_
+				t = denA + q
+				t = float64(t * widthSq)
+				den = t + c_
+				t = float64(numC * invWidth)
+				q = t + 6755399441055744.0 - 6755399441055744.0
+				b = numB + q
+				t = float64(q * width)
+				c_ = numC - t
+				t = float64(b * invWidth)
+				q = t + 6755399441055744.0 - 6755399441055744.0
+				t = float64(q * width)
+				b = b - t
+				t = float64(b * width)
+				c_ = t + c_
+				t = numA + q
+				t = float64(t * widthSq)
+				num = t + c_
+			}
+			if den != 0.0 {
+				value = -num / den
+			} else {
+				value = flatValue
+			}
+			if limbs == 2 {
+				y = float64(inReal[trailingIdx+int32(_k1)] * scale)
 				t = float64(y * invWidth)
 				a = t + 6755399441055744.0 - 6755399441055744.0
 				t = float64(a * width)
 				c_ = y - t
-				if c_+6755399441055744.0-6755399441055744.0 == c_ {
-					denA += a
-					denC += c_
-					numA += denA
-					numC += denC
-					fits = 1
-				}
-			}
-		} else if limbs == 3 {
-			if math.Abs(y) < ylim && (y != 0.0 || x == 0.0) {
+				denA -= a
+				denC -= c_
+				numA -= float64(periodDouble * a)
+				numC -= float64(periodDouble * c_)
+			} else if limbs == 3 {
+				y = float64(inReal[trailingIdx+int32(_k1)] * scale)
 				t = float64(y * invWidthSq)
 				a = t + 6755399441055744.0 - 6755399441055744.0
 				t = float64(a * widthSq)
@@ -187,230 +403,16 @@ func (c *Core) cgImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 				b = t + 6755399441055744.0 - 6755399441055744.0
 				t = float64(b * width)
 				c_ = q - t
-				if c_+6755399441055744.0-6755399441055744.0 == c_ {
-					denA += a
-					denB += b
-					denC += c_
-					numA += denA
-					numB += denB
-					numC += denC
-					fits = 1
-				}
+				denA -= a
+				denB -= b
+				denC -= c_
+				numA -= float64(periodDouble * a)
+				numB -= float64(periodDouble * b)
+				numC -= float64(periodDouble * c_)
 			}
+			_r3[_k1] = value
 		}
-		if fits == 0 && limbs == 0 && stickyBars > 0 {
-			stickyBars -= 1
-			num = 0.0
-			den = 0.0
-			for j = today - lookbackTotal; j <= today; j += 1 {
-				den += inReal[j]
-				num += den
-			}
-		} else if fits == 0 {
-			maxAbs = 0.0
-			maxAt = 0
-			k = 0
-			for j = today - lookbackTotal; j <= today; j += 1 {
-				x = math.Abs(inReal[j])
-				if x >= maxAbs {
-					maxAbs = x
-					maxAt = k
-				}
-				k += 1
-			}
-			if maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 {
-				for float64(half*65536.0) <= maxAbs {
-					half = float64(half * 65536.0)
-				}
-				for float64(half*2.0) <= maxAbs {
-					half = float64(half * 2.0)
-				}
-				for half > float64(maxAbs*65536.0) {
-					half = float64(half * 1.52587890625e-5)
-				}
-				for half > maxAbs {
-					half = float64(half * 0.5)
-				}
-			}
-			scale2Lo = float64(ylim2*0.5) / half
-			if scale2Lo > 4.49423283715579e307 {
-				scale2Lo = 4.49423283715579e307
-			}
-			scale2Mid = scale2Lo / head2
-			scale3Lo = float64(ylim3*0.5) / half
-			if scale3Lo > 4.49423283715579e307 {
-				scale3Lo = 4.49423283715579e307
-			}
-			scale3Mid = scale3Lo / head3
-			fit2Mid = 1
-			fit2Lo = 1
-			fit3Mid = 1
-			failAt = -1
-			num = 0.0
-			den = 0.0
-			k = 0
-			for j = today - lookbackTotal; j <= today; j += 1 {
-				x = inReal[j]
-				den += x
-				num += den
-				y = math.Abs(float64(x * scale2Mid))
-				if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-					fit2Mid = 0
-				}
-				y = math.Abs(float64(x * scale2Lo))
-				if !(y < ylim2) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-					fit2Lo = 0
-				}
-				y = math.Abs(float64(x * scale3Mid))
-				if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-					fit3Mid = 0
-				}
-				y = math.Abs(float64(x * scale3Lo))
-				if !(y < ylim3) || y < 4503599627370496.0 && y+4503599627370496.0-4503599627370496.0 != y || y == 0.0 && x != 0.0 {
-					failAt = k
-				}
-				k += 1
-			}
-			limbs = 0
-			if failAt >= 0 {
-				if failAt < maxAt {
-					stickyBars = failAt
-				} else {
-					stickyBars = maxAt
-				}
-			} else {
-				if fit2Mid == 1 || fit2Lo == 1 {
-					limbs = 2
-					width = width2
-					ylim = ylim2
-					if fit2Mid == 1 {
-						scale = scale2Mid
-					} else {
-						scale = scale2Lo
-					}
-				} else {
-					limbs = 3
-					width = width3
-					ylim = ylim3
-					if fit3Mid == 1 {
-						scale = scale3Mid
-					} else {
-						scale = scale3Lo
-					}
-				}
-				invWidth = 1.0 / width
-				widthSq = float64(width * width)
-				invWidthSq = float64(invWidth * invWidth)
-				denA = 0.0
-				denB = 0.0
-				denC = 0.0
-				numA = 0.0
-				numB = 0.0
-				numC = 0.0
-				if limbs == 2 {
-					for j = today - lookbackTotal; j <= today; j += 1 {
-						y = float64(inReal[j] * scale)
-						t = float64(y * invWidth)
-						a = t + 6755399441055744.0 - 6755399441055744.0
-						t = float64(a * width)
-						c_ = y - t
-						denA += a
-						denC += c_
-						numA += denA
-						numC += denC
-					}
-				} else {
-					for j = today - lookbackTotal; j <= today; j += 1 {
-						y = float64(inReal[j] * scale)
-						t = float64(y * invWidthSq)
-						a = t + 6755399441055744.0 - 6755399441055744.0
-						t = float64(a * widthSq)
-						q = y - t
-						t = float64(q * invWidth)
-						b = t + 6755399441055744.0 - 6755399441055744.0
-						t = float64(b * width)
-						c_ = q - t
-						denA += a
-						denB += b
-						denC += c_
-						numA += denA
-						numB += denB
-						numC += denC
-					}
-				}
-			}
-		}
-		if limbs == 2 {
-			t = float64(denA * width)
-			den = t + denC
-			t = float64(numA * width)
-			num = t + numC
-		} else if limbs == 3 {
-			t = float64(denC * invWidth)
-			q = t + 6755399441055744.0 - 6755399441055744.0
-			b = denB + q
-			t = float64(q * width)
-			c_ = denC - t
-			t = float64(b * invWidth)
-			q = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(q * width)
-			b = b - t
-			t = float64(b * width)
-			c_ = t + c_
-			t = denA + q
-			t = float64(t * widthSq)
-			den = t + c_
-			t = float64(numC * invWidth)
-			q = t + 6755399441055744.0 - 6755399441055744.0
-			b = numB + q
-			t = float64(q * width)
-			c_ = numC - t
-			t = float64(b * invWidth)
-			q = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(q * width)
-			b = b - t
-			t = float64(b * width)
-			c_ = t + c_
-			t = numA + q
-			t = float64(t * widthSq)
-			num = t + c_
-		}
-		if den != 0.0 {
-			value = -num / den
-		} else {
-			value = flatValue
-		}
-		if limbs == 2 {
-			y = float64(inReal[trailingIdx] * scale)
-			t = float64(y * invWidth)
-			a = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(a * width)
-			c_ = y - t
-			denA -= a
-			denC -= c_
-			numA -= float64(periodDouble * a)
-			numC -= float64(periodDouble * c_)
-		} else if limbs == 3 {
-			y = float64(inReal[trailingIdx] * scale)
-			t = float64(y * invWidthSq)
-			a = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(a * widthSq)
-			q = y - t
-			t = float64(q * invWidth)
-			b = t + 6755399441055744.0 - 6755399441055744.0
-			t = float64(b * width)
-			c_ = q - t
-			denA -= a
-			denB -= b
-			denC -= c_
-			numA -= float64(periodDouble * a)
-			numB -= float64(periodDouble * b)
-			numC -= float64(periodDouble * c_)
-		}
-		outReal[outIdx] = value
-		trailingIdx += 1
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

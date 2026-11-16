@@ -104,10 +104,12 @@ func (c *Core) rmaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	}
 	prevRMA = periodTotal / float64(optInTimePeriod)
 	i = lookbackTotal - (optInTimePeriod - 1)
-	for i != 0 {
-		prevRMA = math.FMA(wBeta, prevRMA, float64(wAlpha*inReal[today]))
-		today += 1
-		i -= 1
+	if _n1 := int(i); _n1 > 0 {
+		_r3 := inReal[today:][:_n1]
+		for _k2 := range _r3 {
+			prevRMA = math.FMA(wBeta, prevRMA, float64(wAlpha*_r3[_k2]))
+		}
+		today += int32(_n1)
 	}
 	outIdx = 1
 	outReal[0] = prevRMA

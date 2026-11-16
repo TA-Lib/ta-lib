@@ -87,10 +87,13 @@ func (c *Core) zlemaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		*outBegIdx = startIdx
 		outIdx = 0
 		today = startIdx
-		for today <= endIdx {
-			outReal[outIdx] = inReal[today]
-			outIdx++
-			today++
+		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inReal[today:][:_n0]
+			_r3 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				_r3[_k1] = _r2[_k1]
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -101,9 +104,9 @@ func (c *Core) zlemaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 	i = optInTimePeriod
 	tempReal = 0.0
 	for {
-		_C0 := i > 0
+		_C4 := i > 0
 		i--
-		if !_C0 {
+		if !_C4 {
 			break
 		}
 		tempReal += float64(2.0*inReal[today]) - inReal[trailingIdx]
@@ -111,19 +114,26 @@ func (c *Core) zlemaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		trailingIdx += 1
 	}
 	prevMA = tempReal / float64(optInTimePeriod)
-	for today <= startIdx {
-		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*(float64(2.0*inReal[today])-inReal[trailingIdx])))
-		today += 1
-		trailingIdx += 1
+	if _n5 := int(startIdx) - int(today) + 1; _n5 > 0 {
+		_r7 := inReal[today:][:_n5]
+		_r8 := inReal[trailingIdx:][:_n5]
+		for _k6 := range _r7 {
+			prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*(float64(2.0*_r7[_k6])-_r8[_k6])))
+		}
+		today += int32(_n5)
+		trailingIdx += int32(_n5)
 	}
 	outReal[0] = prevMA
 	outIdx = 1
-	for today <= endIdx {
-		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*(float64(2.0*inReal[today])-inReal[trailingIdx])))
-		today += 1
-		trailingIdx += 1
-		outReal[outIdx] = prevMA
-		outIdx++
+	if _n9 := int(endIdx) - int(today) + 1; _n9 > 0 {
+		_r11 := inReal[today:][:_n9]
+		_r12 := inReal[trailingIdx:][:_n9]
+		_r13 := outReal[outIdx:][:_n9]
+		for _k10 := range _r11 {
+			prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*(float64(2.0*_r11[_k10])-_r12[_k10])))
+			_r13[_k10] = prevMA
+		}
+		outIdx += int32(_n9)
 	}
 	*outNBElement = outIdx
 	return Success

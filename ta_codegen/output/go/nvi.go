@@ -58,20 +58,26 @@ func (c *Core) nviImpl(startIdx, endIdx int32, inClose, inVolume []float64, outB
 	prevClose = inClose[startIdx]
 	prevVolume = inVolume[startIdx]
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		tempClose = inClose[i]
-		tempVolume = inVolume[i]
-		if tempVolume < prevVolume && prevClose != 0.0 {
-			tempNVI = prevNVI
-			tempNVI += float64((tempClose - prevClose) / prevClose * tempNVI)
-			if isFinite(tempNVI) {
-				prevNVI = tempNVI
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inClose[i:][:_n0]
+		_r3 := inVolume[i:][:_n0]
+		_r4 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			tempClose = _r2[_k1]
+			tempVolume = _r3[_k1]
+			if tempVolume < prevVolume && prevClose != 0.0 {
+				tempNVI = prevNVI
+				tempNVI += float64((tempClose - prevClose) / prevClose * tempNVI)
+				if isFinite(tempNVI) {
+					prevNVI = tempNVI
+				}
 			}
+			_r4[_k1] = prevNVI
+			prevClose = tempClose
+			prevVolume = tempVolume
 		}
-		outReal[outIdx] = prevNVI
-		outIdx++
-		prevClose = tempClose
-		prevVolume = tempVolume
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

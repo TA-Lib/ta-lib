@@ -102,14 +102,19 @@ func (c *Core) correlImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, op
 	sumY = sumX2
 	sumX = sumY
 	sumXY = sumX
-	for j = trailingIdx; j < startIdx; j += 1 {
-		x = inReal0[j] - shiftX
-		sumX += x
-		sumX2 += float64(x * x)
-		y = inReal1[j] - shiftY
-		sumXY += float64(x * y)
-		sumY += y
-		sumY2 += float64(y * y)
+	j = trailingIdx
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inReal0[j:][:_n0]
+		_r3 := inReal1[j:][:_n0]
+		for _k1 := range _r2 {
+			x = _r2[_k1] - shiftX
+			sumX += x
+			sumX2 += float64(x * x)
+			y = _r3[_k1] - shiftY
+			sumXY += float64(x * y)
+			sumY += y
+			sumY2 += float64(y * y)
+		}
 	}
 	today = startIdx
 	outIdx = 0
@@ -135,9 +140,14 @@ func (c *Core) correlImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, op
 			windowStart = today - lookbackTotal
 			tempReal = 0.0
 			shiftY = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal += inReal0[j]
-				shiftY += inReal1[j]
+			j = windowStart
+			if _n4 := int(today) - int(j) + 1; _n4 > 0 {
+				_r6 := inReal0[j:][:_n4]
+				_r7 := inReal1[j:][:_n4]
+				for _k5 := range _r6 {
+					tempReal += _r6[_k5]
+					shiftY += _r7[_k5]
+				}
 			}
 			shiftX = float64(tempReal * invPeriod)
 			shiftY = float64(shiftY * invPeriod)
@@ -146,14 +156,19 @@ func (c *Core) correlImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, op
 			sumY = sumX2
 			sumX = sumY
 			sumXY = sumX
-			for j = windowStart; j <= today; j += 1 {
-				x = inReal0[j] - shiftX
-				sumX += x
-				sumX2 += float64(x * x)
-				y = inReal1[j] - shiftY
-				sumXY += float64(x * y)
-				sumY += y
-				sumY2 += float64(y * y)
+			j = windowStart
+			if _n8 := int(today) - int(j) + 1; _n8 > 0 {
+				_r10 := inReal0[j:][:_n8]
+				_r11 := inReal1[j:][:_n8]
+				for _k9 := range _r10 {
+					x = _r10[_k9] - shiftX
+					sumX += x
+					sumX2 += float64(x * x)
+					y = _r11[_k9] - shiftY
+					sumXY += float64(x * y)
+					sumY += y
+					sumY2 += float64(y * y)
+				}
 			}
 			ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 			ssY = sumY2 - float64(float64(sumY*sumY)*invPeriod)
@@ -170,14 +185,19 @@ func (c *Core) correlImpl(startIdx, endIdx int32, inReal0, inReal1 []float64, op
 				sumY = sumX2
 				sumX = sumY
 				sumXY = sumX
-				for j = windowStart; j <= today; j += 1 {
-					x = inReal0[j] - shiftX
-					sumX += x
-					sumX2 += float64(x * x)
-					y = inReal1[j] - shiftY
-					sumXY += float64(x * y)
-					sumY += y
-					sumY2 += float64(y * y)
+				j = windowStart
+				if _n12 := int(today) - int(j) + 1; _n12 > 0 {
+					_r14 := inReal0[j:][:_n12]
+					_r15 := inReal1[j:][:_n12]
+					for _k13 := range _r14 {
+						x = _r14[_k13] - shiftX
+						sumX += x
+						sumX2 += float64(x * x)
+						y = _r15[_k13] - shiftY
+						sumXY += float64(x * y)
+						sumY += y
+						sumY2 += float64(y * y)
+					}
 				}
 				ssX = sumX2 - float64(float64(sumX*sumX)*invPeriod)
 				ssY = sumY2 - float64(float64(sumY*sumY)*invPeriod)

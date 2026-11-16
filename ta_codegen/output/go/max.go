@@ -126,23 +126,27 @@ func (c *Core) maxImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			highest = inReal[blockStart+optInTimePeriod]
 			preHighest[0] = highest
 			i = 1
-			for i < nAvail {
-				tmp = inReal[blockStart+optInTimePeriod+i]
-				if tmp > highest {
-					highest = tmp
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inReal[blockStart+optInTimePeriod+i:][:_n0]
+				for _k1 := range _r2 {
+					tmp = _r2[_k1]
+					if tmp > highest {
+						highest = tmp
+					}
+					preHighest[i+int32(_k1)] = highest
 				}
-				preHighest[i] = highest
-				i += 1
 			}
 			m = 1
-			for m <= nAvail {
-				highest = sufHighest[m]
-				if preHighest[m-1] > highest {
-					highest = preHighest[m-1]
+			if _n3 := int(nAvail) - int(m) + 1; _n3 > 0 {
+				_r5 := outReal[outIdx:][:_n3]
+				for _k4 := range _r5 {
+					highest = sufHighest[m+int32(_k4)]
+					if preHighest[m+int32(_k4)-1] > highest {
+						highest = preHighest[m+int32(_k4)-1]
+					}
+					_r5[_k4] = highest
 				}
-				outReal[outIdx] = highest
-				outIdx++
-				m += 1
+				outIdx += int32(_n3)
 			}
 			trailingIdx = trailingIdx + nAvail
 			today = today + nAvail

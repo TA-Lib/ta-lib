@@ -49,9 +49,17 @@ func (c *Core) avgpriceImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inClo
 		return OutOfRangeEndIndex
 	}
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		outReal[outIdx] = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4.0
-		outIdx++
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inClose[i:][:_n0]
+		_r5 := inOpen[i:][:_n0]
+		_r6 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			_r6[_k1] = (_r2[_k1] + _r3[_k1] + _r4[_k1] + _r5[_k1]) / 4.0
+		}
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

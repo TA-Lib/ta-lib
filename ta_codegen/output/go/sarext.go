@@ -201,46 +201,72 @@ func (c *Core) sarextImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 	}
 	newLow = inLow[todayIdx]
 	newHigh = inHigh[todayIdx]
-	for todayIdx <= endIdx {
-		prevLow = newLow
-		prevHigh = newHigh
-		newLow = inLow[todayIdx]
-		newHigh = inHigh[todayIdx]
-		todayIdx += 1
-		if isLong == 1 {
-			if newLow <= sar {
-				isLong = 0
-				sar = ep
-				if sar < prevHigh {
-					sar = prevHigh
-				}
-				if sar < newHigh {
-					sar = newHigh
-				}
-				if optInOffsetOnReverse != 0.0 {
-					sar += float64(sar * optInOffsetOnReverse)
-				}
-				outReal[outIdx] = -sar
-				outIdx++
-				afShort = optInAccelerationInitShort
-				ep = newLow
-				sar = math.FMA(afShort, ep-sar, sar)
-				if sar < prevHigh {
-					sar = prevHigh
-				}
-				if sar < newHigh {
-					sar = newHigh
-				}
-			} else {
-				outReal[outIdx] = sar
-				outIdx++
-				if newHigh > ep {
-					ep = newHigh
-					afLong += optInAccelerationLong
-					if afLong > optInAccelerationMaxLong {
-						afLong = optInAccelerationMaxLong
+	if _n1 := int(endIdx) - int(todayIdx) + 1; _n1 > 0 {
+		_r3 := inLow[todayIdx:][:_n1]
+		_r4 := inHigh[todayIdx:][:_n1]
+		for _k2 := range _r3 {
+			prevLow = newLow
+			prevHigh = newHigh
+			newLow = _r3[_k2]
+			newHigh = _r4[_k2]
+			if isLong == 1 {
+				if newLow <= sar {
+					isLong = 0
+					sar = ep
+					if sar < prevHigh {
+						sar = prevHigh
+					}
+					if sar < newHigh {
+						sar = newHigh
+					}
+					if optInOffsetOnReverse != 0.0 {
+						sar += float64(sar * optInOffsetOnReverse)
+					}
+					outReal[outIdx] = -sar
+					outIdx++
+					afShort = optInAccelerationInitShort
+					ep = newLow
+					sar = math.FMA(afShort, ep-sar, sar)
+					if sar < prevHigh {
+						sar = prevHigh
+					}
+					if sar < newHigh {
+						sar = newHigh
+					}
+				} else {
+					outReal[outIdx] = sar
+					outIdx++
+					if newHigh > ep {
+						ep = newHigh
+						afLong += optInAccelerationLong
+						if afLong > optInAccelerationMaxLong {
+							afLong = optInAccelerationMaxLong
+						}
+					}
+					sar = math.FMA(afLong, ep-sar, sar)
+					if sar > prevLow {
+						sar = prevLow
+					}
+					if sar > newLow {
+						sar = newLow
 					}
 				}
+			} else if newHigh >= sar {
+				isLong = 1
+				sar = ep
+				if sar > prevLow {
+					sar = prevLow
+				}
+				if sar > newLow {
+					sar = newLow
+				}
+				if optInOffsetOnReverse != 0.0 {
+					sar -= float64(sar * optInOffsetOnReverse)
+				}
+				outReal[outIdx] = sar
+				outIdx++
+				afLong = optInAccelerationInitLong
+				ep = newHigh
 				sar = math.FMA(afLong, ep-sar, sar)
 				if sar > prevLow {
 					sar = prevLow
@@ -248,46 +274,23 @@ func (c *Core) sarextImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 				if sar > newLow {
 					sar = newLow
 				}
-			}
-		} else if newHigh >= sar {
-			isLong = 1
-			sar = ep
-			if sar > prevLow {
-				sar = prevLow
-			}
-			if sar > newLow {
-				sar = newLow
-			}
-			if optInOffsetOnReverse != 0.0 {
-				sar -= float64(sar * optInOffsetOnReverse)
-			}
-			outReal[outIdx] = sar
-			outIdx++
-			afLong = optInAccelerationInitLong
-			ep = newHigh
-			sar = math.FMA(afLong, ep-sar, sar)
-			if sar > prevLow {
-				sar = prevLow
-			}
-			if sar > newLow {
-				sar = newLow
-			}
-		} else {
-			outReal[outIdx] = -sar
-			outIdx++
-			if newLow < ep {
-				ep = newLow
-				afShort += optInAccelerationShort
-				if afShort > optInAccelerationMaxShort {
-					afShort = optInAccelerationMaxShort
+			} else {
+				outReal[outIdx] = -sar
+				outIdx++
+				if newLow < ep {
+					ep = newLow
+					afShort += optInAccelerationShort
+					if afShort > optInAccelerationMaxShort {
+						afShort = optInAccelerationMaxShort
+					}
 				}
-			}
-			sar = math.FMA(afShort, ep-sar, sar)
-			if sar < prevHigh {
-				sar = prevHigh
-			}
-			if sar < newHigh {
-				sar = newHigh
+				sar = math.FMA(afShort, ep-sar, sar)
+				if sar < prevHigh {
+					sar = prevHigh
+				}
+				if sar < newHigh {
+					sar = newHigh
+				}
 			}
 		}
 	}

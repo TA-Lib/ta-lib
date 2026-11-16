@@ -93,10 +93,14 @@ func (c *Core) trimaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		}
 		numeratorAdd = 0.0
 		middleIdx += 1
-		for i = middleIdx; i <= todayIdx; i += 1 {
-			tempReal = inReal[i]
-			numeratorAdd += tempReal
-			numerator += numeratorAdd
+		i = middleIdx
+		if _n0 := int(todayIdx) - int(i) + 1; _n0 > 0 {
+			_r2 := inReal[i:][:_n0]
+			for _k1 := range _r2 {
+				tempReal = _r2[_k1]
+				numeratorAdd += tempReal
+				numerator += numeratorAdd
+			}
 		}
 		outIdx = 0
 		tempReal = inReal[trailingIdx]
@@ -104,22 +108,25 @@ func (c *Core) trimaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		outReal[outIdx] = float64(numerator * factor)
 		outIdx++
 		todayIdx += 1
-		for todayIdx <= endIdx {
-			numerator -= numeratorSub
-			numeratorSub -= tempReal
-			tempReal = inReal[middleIdx]
-			middleIdx++
-			numeratorSub += tempReal
-			numerator += numeratorAdd
-			numeratorAdd -= tempReal
-			tempReal = inReal[todayIdx]
-			todayIdx++
-			numeratorAdd += tempReal
-			numerator += tempReal
-			tempReal = inReal[trailingIdx]
-			trailingIdx++
-			outReal[outIdx] = float64(numerator * factor)
-			outIdx++
+		if _n3 := int(endIdx) - int(todayIdx) + 1; _n3 > 0 {
+			_r5 := inReal[middleIdx:][:_n3]
+			_r6 := inReal[todayIdx:][:_n3]
+			_r7 := inReal[trailingIdx:][:_n3]
+			_r8 := outReal[outIdx:][:_n3]
+			for _k4 := range _r5 {
+				numerator -= numeratorSub
+				numeratorSub -= tempReal
+				tempReal = _r5[_k4]
+				numeratorSub += tempReal
+				numerator += numeratorAdd
+				numeratorAdd -= tempReal
+				tempReal = _r6[_k4]
+				numeratorAdd += tempReal
+				numerator += tempReal
+				tempReal = _r7[_k4]
+				_r8[_k4] = float64(numerator * factor)
+			}
+			outIdx += int32(_n3)
 		}
 	} else {
 		i = optInTimePeriod >> 1
@@ -137,10 +144,14 @@ func (c *Core) trimaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		}
 		numeratorAdd = 0.0
 		middleIdx += 1
-		for i = middleIdx; i <= todayIdx; i += 1 {
-			tempReal = inReal[i]
-			numeratorAdd += tempReal
-			numerator += numeratorAdd
+		i = middleIdx
+		if _n9 := int(todayIdx) - int(i) + 1; _n9 > 0 {
+			_r11 := inReal[i:][:_n9]
+			for _k10 := range _r11 {
+				tempReal = _r11[_k10]
+				numeratorAdd += tempReal
+				numerator += numeratorAdd
+			}
 		}
 		outIdx = 0
 		tempReal = inReal[trailingIdx]
@@ -148,22 +159,25 @@ func (c *Core) trimaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		outReal[outIdx] = float64(numerator * factor)
 		outIdx++
 		todayIdx += 1
-		for todayIdx <= endIdx {
-			numerator -= numeratorSub
-			numeratorSub -= tempReal
-			tempReal = inReal[middleIdx]
-			middleIdx++
-			numeratorSub += tempReal
-			numeratorAdd -= tempReal
-			numerator += numeratorAdd
-			tempReal = inReal[todayIdx]
-			todayIdx++
-			numeratorAdd += tempReal
-			numerator += tempReal
-			tempReal = inReal[trailingIdx]
-			trailingIdx++
-			outReal[outIdx] = float64(numerator * factor)
-			outIdx++
+		if _n12 := int(endIdx) - int(todayIdx) + 1; _n12 > 0 {
+			_r14 := inReal[middleIdx:][:_n12]
+			_r15 := inReal[todayIdx:][:_n12]
+			_r16 := inReal[trailingIdx:][:_n12]
+			_r17 := outReal[outIdx:][:_n12]
+			for _k13 := range _r14 {
+				numerator -= numeratorSub
+				numeratorSub -= tempReal
+				tempReal = _r14[_k13]
+				numeratorSub += tempReal
+				numeratorAdd -= tempReal
+				numerator += numeratorAdd
+				tempReal = _r15[_k13]
+				numeratorAdd += tempReal
+				numerator += tempReal
+				tempReal = _r16[_k13]
+				_r17[_k13] = float64(numerator * factor)
+			}
+			outIdx += int32(_n12)
 		}
 	}
 	*outNBElement = outIdx

@@ -84,10 +84,13 @@ func (c *Core) temaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	if optInTimePeriod == 1 {
 		*outBegIdx = startIdx
 		outIdx = 0
-		for startIdx <= endIdx {
-			outReal[outIdx] = inReal[startIdx]
-			outIdx++
-			startIdx++
+		if _n0 := int(endIdx) - int(startIdx) + 1; _n0 > 0 {
+			_r2 := inReal[startIdx:][:_n0]
+			_r3 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				_r3[_k1] = _r2[_k1]
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -101,26 +104,29 @@ func (c *Core) temaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	i = optInTimePeriod
 	tempReal = 0.0
 	for {
-		_C0 := i > 0
+		_C4 := i > 0
 		i--
-		if !_C0 {
+		if !_C4 {
 			break
 		}
 		tempReal += inReal[today]
 		today++
 	}
 	prevEMA1 = tempReal / float64(optInTimePeriod)
-	for today <= startIdx-lookbackEMA*2 {
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
+	if _n5 := int(startIdx-lookbackEMA*2) - int(today) + 1; _n5 > 0 {
+		_r7 := inReal[today:][:_n5]
+		for _k6 := range _r7 {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r7[_k6]))
+		}
+		today += int32(_n5)
 	}
 	tempReal = 0.0
 	tempReal += prevEMA1
 	i = optInTimePeriod - 1
 	for {
-		_C1 := i > 0
+		_C8 := i > 0
 		i--
-		if !_C1 {
+		if !_C8 {
 			break
 		}
 		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
@@ -128,18 +134,21 @@ func (c *Core) temaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		tempReal += prevEMA1
 	}
 	prevEMA2 = tempReal / float64(optInTimePeriod)
-	for today <= startIdx-lookbackEMA {
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
-		prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+	if _n9 := int(startIdx-lookbackEMA) - int(today) + 1; _n9 > 0 {
+		_r11 := inReal[today:][:_n9]
+		for _k10 := range _r11 {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r11[_k10]))
+			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+		}
+		today += int32(_n9)
 	}
 	tempReal = 0.0
 	tempReal += prevEMA2
 	i = optInTimePeriod - 1
 	for {
-		_C2 := i > 0
+		_C12 := i > 0
 		i--
-		if !_C2 {
+		if !_C12 {
 			break
 		}
 		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
@@ -148,21 +157,27 @@ func (c *Core) temaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		tempReal += prevEMA2
 	}
 	prevEMA3 = tempReal / float64(optInTimePeriod)
-	for today <= startIdx {
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
-		prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
-		prevEMA3 = math.FMA(emaBeta, prevEMA3, float64(optInK_1*prevEMA2))
+	if _n13 := int(startIdx) - int(today) + 1; _n13 > 0 {
+		_r15 := inReal[today:][:_n13]
+		for _k14 := range _r15 {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r15[_k14]))
+			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+			prevEMA3 = math.FMA(emaBeta, prevEMA3, float64(optInK_1*prevEMA2))
+		}
+		today += int32(_n13)
 	}
 	outReal[0] = prevEMA3 + (float64(3.0*prevEMA1) - float64(3.0*prevEMA2))
 	outIdx = 1
-	for today <= endIdx {
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
-		prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
-		prevEMA3 = math.FMA(emaBeta, prevEMA3, float64(optInK_1*prevEMA2))
-		outReal[outIdx] = prevEMA3 + (float64(3.0*prevEMA1) - float64(3.0*prevEMA2))
-		outIdx++
+	if _n16 := int(endIdx) - int(today) + 1; _n16 > 0 {
+		_r18 := inReal[today:][:_n16]
+		_r19 := outReal[outIdx:][:_n16]
+		for _k17 := range _r18 {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r18[_k17]))
+			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+			prevEMA3 = math.FMA(emaBeta, prevEMA3, float64(optInK_1*prevEMA2))
+			_r19[_k17] = prevEMA3 + (float64(3.0*prevEMA1) - float64(3.0*prevEMA2))
+		}
+		outIdx += int32(_n16)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

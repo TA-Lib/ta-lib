@@ -124,33 +124,40 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 	if emaRing_Idx > maxIdx_emaRing {
 		emaRing_Idx = 0
 	}
-	for today < startIdx {
-		tempReal = inHigh[today] - inLow[today]
-		prevEMA = math.FMA(emaBeta, prevEMA, float64(optInK_1*tempReal))
-		today += 1
-		emaRing[emaRing_Idx] = prevEMA
-		emaRing_Idx++
-		if emaRing_Idx > maxIdx_emaRing {
-			emaRing_Idx = 0
+	if _n1 := int(startIdx) - int(today); _n1 > 0 {
+		_r3 := inHigh[today:][:_n1]
+		_r4 := inLow[today:][:_n1]
+		for _k2 := range _r3 {
+			tempReal = _r3[_k2] - _r4[_k2]
+			prevEMA = math.FMA(emaBeta, prevEMA, float64(optInK_1*tempReal))
+			emaRing[emaRing_Idx] = prevEMA
+			emaRing_Idx++
+			if emaRing_Idx > maxIdx_emaRing {
+				emaRing_Idx = 0
+			}
 		}
+		today += int32(_n1)
 	}
 	outIdx = 0
-	for today <= endIdx {
-		tempReal = inHigh[today] - inLow[today]
-		prevEMA = math.FMA(emaBeta, prevEMA, float64(optInK_1*tempReal))
-		today += 1
-		laggedEMA = emaRing[emaRing_Idx]
-		emaRing[emaRing_Idx] = prevEMA
-		emaRing_Idx++
-		if emaRing_Idx > maxIdx_emaRing {
-			emaRing_Idx = 0
-		}
-		if laggedEMA != 0.0 {
-			outReal[outIdx] = float64(100.0 * ((prevEMA - laggedEMA) / laggedEMA))
-			outIdx++
-		} else {
-			outReal[outIdx] = 0.0
-			outIdx++
+	if _n5 := int(endIdx) - int(today) + 1; _n5 > 0 {
+		_r7 := inHigh[today:][:_n5]
+		_r8 := inLow[today:][:_n5]
+		for _k6 := range _r7 {
+			tempReal = _r7[_k6] - _r8[_k6]
+			prevEMA = math.FMA(emaBeta, prevEMA, float64(optInK_1*tempReal))
+			laggedEMA = emaRing[emaRing_Idx]
+			emaRing[emaRing_Idx] = prevEMA
+			emaRing_Idx++
+			if emaRing_Idx > maxIdx_emaRing {
+				emaRing_Idx = 0
+			}
+			if laggedEMA != 0.0 {
+				outReal[outIdx] = float64(100.0 * ((prevEMA - laggedEMA) / laggedEMA))
+				outIdx++
+			} else {
+				outReal[outIdx] = 0.0
+				outIdx++
+			}
 		}
 	}
 	*outBegIdx = startIdx

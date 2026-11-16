@@ -50,14 +50,21 @@ func (c *Core) bopImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inClose []
 		return OutOfRangeEndIndex
 	}
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		tempReal = inHigh[i] - inLow[i]
-		if tempReal <= 0.0 {
-			outReal[outIdx] = 0.0
-			outIdx++
-		} else {
-			outReal[outIdx] = (inClose[i] - inOpen[i]) / tempReal
-			outIdx++
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inClose[i:][:_n0]
+		_r5 := inOpen[i:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1] - _r3[_k1]
+			if tempReal <= 0.0 {
+				outReal[outIdx] = 0.0
+				outIdx++
+			} else {
+				outReal[outIdx] = (_r4[_k1] - _r5[_k1]) / tempReal
+				outIdx++
+			}
 		}
 	}
 	*outNBElement = outIdx

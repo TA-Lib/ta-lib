@@ -263,6 +263,25 @@ pub(super) struct Ctx<'a> {
     /// Batch circular buffers kept in a stack array up to their static size,
     /// as C keeps them: the id and that size.
     pub(super) stack_circ: std::cell::RefCell<HashMap<String, i64>>,
+    /// A batch body: its lockstep counted loops render over re-slices of its
+    /// contract arrays, by [`super::go_lockstep::plan`].
+    lockstep: Cell<bool>,
+    contract: std::cell::RefCell<HashMap<String, super::go_lockstep::Contract>>,
+    end_fixed: Cell<bool>,
+    /// The re-sliced loop being rendered.
+    lock: std::cell::RefCell<Option<std::rc::Rc<Lock>>>,
+    /// What each loop of a batch body leaves live, by its address. A loop
+    /// missing from it keeps every last value.
+    live_after: std::cell::RefCell<HashMap<usize, BTreeSet<String>>>,
+}
+
+/// A lockstep loop as it renders: the pass counter, a name per lane, and the
+/// statement of the pass being rendered.
+struct Lock {
+    plan: super::go_lockstep::Plan,
+    pass: String,
+    lanes: Vec<String>,
+    at: Cell<usize>,
 }
 
 const RETCODE_NAMES: &[(&str, &str)] = &[
@@ -406,6 +425,11 @@ impl<'a> Ctx<'a> {
             stmt_depth: Cell::new(0),
             cur_stmt: Cell::new(0),
             stack_circ: std::cell::RefCell::new(HashMap::new()),
+            lockstep: Cell::new(false),
+            contract: std::cell::RefCell::new(HashMap::new()),
+            end_fixed: Cell::new(false),
+            lock: std::cell::RefCell::new(None),
+            live_after: std::cell::RefCell::new(HashMap::new()),
         }
     }
 
@@ -447,6 +471,11 @@ impl<'a> Ctx<'a> {
             stmt_depth: Cell::new(0),
             cur_stmt: Cell::new(0),
             stack_circ: std::cell::RefCell::new(HashMap::new()),
+            lockstep: Cell::new(false),
+            contract: std::cell::RefCell::new(HashMap::new()),
+            end_fixed: Cell::new(false),
+            lock: std::cell::RefCell::new(None),
+            live_after: std::cell::RefCell::new(HashMap::new()),
         }
     }
 
@@ -621,14 +650,17 @@ impl<'a> Ctx<'a> {
         match e {
             Expr::Literal(f) => (real_lit(*f), CType::Real),
             Expr::IntLiteral(i) => (int_lit(*i), CType::Int32),
-            Expr::Var(name) => self.var(name),
+            Expr::Var(name) => self.lock_var(name).unwrap_or_else(|| self.var(name)),
             Expr::ArrayAccess(name, idx) => {
-                let i = self.lower_as(idx, CType::Int32, sc);
                 let t = match self.env.lookup(name) {
                     Some(CType::RealPtr) => CType::Real,
                     Some(CType::IntPtr) => CType::Int32,
                     other => self.fail(&format!("`{name}` is indexed but is {other:?}")),
                 };
+                if let Some(g) = self.lock_lane(name, idx) {
+                    return (g, t);
+                }
+                let i = self.lower_as(idx, CType::Int32, sc);
                 (GExpr::index(GExpr::name(go_ident(name)), i), t)
             }
             Expr::PointerDeref(name) => {
@@ -1199,6 +1231,7 @@ impl<'a> Ctx<'a> {
             }
             Statement::Assign { target, value, compound } => self.assign(target, value, *compound, out),
             Statement::Expr(e) => self.expr_stmt(e, out),
+            Statement::While { condition, body } if self.lockstep_loop(s, None, condition, body, None, out) => {}
             Statement::While { condition, body } => {
                 self.check_steps(&[condition]);
                 let mut sc = Scope::default();
@@ -1246,7 +1279,7 @@ impl<'a> Ctx<'a> {
                 out.extend(indented(&self.block(body)));
                 out.push("}".to_string());
             }
-            Statement::ForC { init, condition, update, body } => self.for_c(init, condition, update, body, out),
+            Statement::ForC { init, condition, update, body } => self.for_c(s, init, condition, update, body, out),
             Statement::If { condition, then_body, else_body, .. } => self.if_stmt(condition, then_body, else_body, out),
             Statement::Return { value } => self.return_stmt(value.as_ref(), out),
             Statement::Break => out.push("break".to_string()),
@@ -1299,8 +1332,11 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) {
-        if self.shift_copy(init, condition, update, body, out) {
+    fn for_c(&self, s: &Statement, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) {
+        if self.shift_copy(init, condition, update, body, out)
+            || self.capped_loop(s, init, condition, update, body, out)
+            || self.lockstep_loop(s, Some(init), condition, body, Some(update), out)
+        {
             return;
         }
         let init_lines = self.block(std::slice::from_ref(init));
@@ -1326,6 +1362,155 @@ impl<'a> Ctx<'a> {
             out.extend(indented(&b));
         }
         out.push("}".to_string());
+    }
+
+    /// An index of the re-sliced loop being rendered, read in its pass:
+    /// `v + int32(k)`, plus the steps the pass took before the read.
+    fn lock_var(&self, name: &str) -> Option<(GExpr, CType)> {
+        let lock = self.lock.borrow();
+        let lock = lock.as_ref()?;
+        let d = *lock.plan.steps.get(name)?;
+        let taken = lock.plan.before[lock.at.get()].get(name).copied().unwrap_or(0);
+        let k = GExpr::call("int32", vec![GExpr::name(lock.pass.clone())]);
+        let mut g = GExpr::bin(GExpr::name(go_ident(name)), if d > 0 { GOp::Add } else { GOp::Sub }, k);
+        if taken != 0 {
+            g = GExpr::bin(g, if taken > 0 { GOp::Add } else { GOp::Sub }, GExpr::name(taken.unsigned_abs().to_string()));
+        }
+        Some((g, CType::Int32))
+    }
+
+    /// `array[idx]` as its lane's element at the pass counter.
+    fn lock_lane(&self, array: &str, idx: &Expr) -> Option<GExpr> {
+        let lock = self.lock.borrow();
+        let lock = lock.as_ref()?;
+        let j = lock.plan.lane_of(lock.at.get(), array, idx)?;
+        Some(GExpr::index(GExpr::name(lock.lanes[j].clone()), GExpr::name(lock.pass.clone())))
+    }
+
+    /// The loop by [`super::go_lockstep::plan`] in a batch body: the pass
+    /// count once as an `int`, one re-slice per lane, a fresh counter ranging
+    /// over the first, and after it each index read later takes its last
+    /// value. `false` renders the loop as written.
+    fn lockstep_loop(&self, s: &Statement, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, out: &mut Vec<String>) -> bool {
+        use super::go_lockstep::{plan, Env, Trip};
+        if !self.lockstep.get() || self.lock.borrow().is_some() {
+            return false;
+        }
+        let int_local = |n: &str| self.env.lookup(n) == Some(CType::Int32) && retcode_name(n).is_none() && !self.arrays.contains(n);
+        let contract = |n: &str| self.contract.borrow().get(n).copied();
+        let fixed_end = |e: &Expr| self.end_fixed.get() && matches!(e, Expr::Var(n) if n == "endIdx");
+        let reg = self.svc.registry;
+        let cross_call = |n: &str| reg.contains(n) && MathFn::from_name(n).is_none();
+        let Ok(plan) = plan(condition, body, update, &Env { int_local: &int_local, contract: &contract, fixed_end: &fixed_end, cross_call: &cross_call }) else {
+            return false;
+        };
+        let pure = |e: &Expr| {
+            let mut sc = Scope::default();
+            let g = self.lower_as(e, CType::Int32, &mut sc);
+            sc.is_empty().then_some(g)
+        };
+        let as_int = |g: GExpr| GExpr::call("int", vec![strip_paren(g)]);
+        let counter = GExpr::call("int", vec![GExpr::name(go_ident(&plan.counter))]);
+        let count = match &plan.trip {
+            Trip::Up { bound, inclusive } => {
+                let Some(b) = pure(bound) else { return false };
+                let span = GExpr::bin(as_int(b), GOp::Sub, counter);
+                if *inclusive {
+                    GExpr::bin(span, GOp::Add, GExpr::name("1"))
+                } else {
+                    span
+                }
+            }
+            Trip::Down { bound: None } => counter,
+            Trip::Down { bound: Some(bound) } => {
+                let Some(b) = pure(bound) else { return false };
+                GExpr::bin(counter, GOp::Sub, as_int(b))
+            }
+        };
+        let mut starts = Vec::new();
+        for lane in &plan.lanes {
+            let Some(g) = pure(&lane.start) else { return false };
+            starts.push(g);
+        }
+        if let Some(init) = init {
+            out.extend(self.block(std::slice::from_ref(init)));
+        }
+        let n = self.temp("n");
+        let k = self.temp("k");
+        let lane_names: Vec<String> = plan.lanes.iter().map(|_| self.temp("r")).collect();
+        out.push(format!("if {n} := {}; {n} > 0 {{", count.render()));
+        for ((lane, name), start) in plan.lanes.iter().zip(&lane_names).zip(starts) {
+            let cut = GExpr::slice(GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(strip_paren(start)), None), None, Some(GExpr::name(n.clone())));
+            out.push(format!("\t{name} := {}", cut.render()));
+        }
+        out.push(format!("\tfor {k} := range {} {{", lane_names[0]));
+        let lock = std::rc::Rc::new(Lock { plan, pass: k, lanes: lane_names, at: Cell::new(0) });
+        let outermost = self.loop_selects.get() && self.loop_depth.get() == 1;
+        let outer_scan = outermost.then(|| {
+            self.loop_out.set(super::go_select::stores_output(&lock.plan.pass));
+            self.scan.replace(super::go_select::scan_loop(&lock.plan.pass))
+        });
+        let live = self.live_after.borrow().get(&super::go_select::addr(s)).cloned();
+        // Keyed by the addresses of the pass's own statements, so they go with it.
+        let mut inner = HashMap::new();
+        if let Some(after) = &live {
+            super::go_lockstep::live_after_pass_loops(condition, &lock.plan.pass, after, &mut inner);
+        }
+        let inner_keys: Vec<usize> = inner.keys().copied().collect();
+        self.live_after.borrow_mut().extend(inner);
+        *self.lock.borrow_mut() = Some(lock.clone());
+        let mut lines = Vec::new();
+        self.stmt_depth.set(self.stmt_depth.get() + 1);
+        for (at, st) in lock.plan.pass.iter().enumerate() {
+            if lock.plan.is_step(st) {
+                continue;
+            }
+            lock.at.set(at);
+            self.stmt(st, &mut lines);
+        }
+        self.stmt_depth.set(self.stmt_depth.get() - 1);
+        *self.lock.borrow_mut() = None;
+        for key in inner_keys {
+            self.live_after.borrow_mut().remove(&key);
+        }
+        if let Some(sc) = outer_scan {
+            *self.scan.borrow_mut() = sc;
+        }
+        out.extend(lines.into_iter().map(|l| format!("\t\t{l}")));
+        out.push("\t}".to_string());
+        for (v, d) in &lock.plan.steps {
+            if live.as_ref().is_none_or(|l| l.contains(v)) {
+                out.push(format!("\t{} {}= int32({n})", go_ident(v), if *d > 0 { "+" } else { "-" }));
+            }
+        }
+        out.push("}".to_string());
+        true
+    }
+
+    /// The loop by [`super::go_lockstep::capped`], in any tier: capped at
+    /// `min(K, B)` passes, and the variable left at `K` where read later.
+    fn capped_loop(&self, s: &Statement, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], out: &mut Vec<String>) -> bool {
+        let Some(c) = super::go_lockstep::capped(init, condition, update, body) else { return false };
+        let mut sc = Scope::default();
+        let b = self.lower_as(c.bound, CType::Int32, &mut sc);
+        if !sc.is_empty() {
+            return false;
+        }
+        let header_init = match self.block(std::slice::from_ref(init)).as_slice() {
+            [one] if is_simple_stmt(one) => one.clone(),
+            _ => return false,
+        };
+        let post = self.for_post(update);
+        let v = GExpr::name(go_ident(&c.var));
+        let test = GExpr::bin(v.clone(), GOp::Lt, GExpr::call("min", vec![int_lit(c.cap), strip_paren(b)]));
+        out.push(format!("for {header_init}; {}; {post} {{", test.render()));
+        out.extend(indented(&self.block(c.body)));
+        out.push("}".to_string());
+        let live = self.live_after.borrow().get(&super::go_select::addr(s)).is_none_or(|l| l.contains(&c.var));
+        if live {
+            out.push(format!("{} = {}", v.render(), c.cap));
+        }
+        true
     }
 
     /// A loop that only moves a run of one array by one slot, toward the end
@@ -1861,7 +2046,23 @@ impl Ctx<'_> {
                 self.stmt(s, out);
             }
         };
-        let Some(copies) = range_type_copies(body, func) else { return top(body, out) };
+        let copies = range_type_copies(body, func);
+        if self.lockstep.get() {
+            let mut map = self.live_after.borrow_mut();
+            match &copies {
+                None => {
+                    super::go_lockstep::live_after_loops(body, BTreeSet::new(), &mut map);
+                }
+                Some(c) => {
+                    let mut tail = BTreeSet::new();
+                    for arm in &c.arms {
+                        tail.extend(super::go_lockstep::live_after_loops(&arm.body, BTreeSet::new(), &mut map));
+                    }
+                    super::go_lockstep::live_after_loops(&c.head, tail, &mut map);
+                }
+            }
+        }
+        let Some(copies) = copies else { return top(body, out) };
         top(&copies.head, out);
         for (k, arm) in copies.arms.iter().enumerate() {
             let guard = arm.guard.as_ref().map(|g| {
@@ -2293,6 +2494,18 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
     ctx.env.seed_signature(func);
     ctx.colour_selects.set(true);
     ctx.loop_selects.set(true);
+    if !private {
+        let stored = super::go_lockstep::stored(body);
+        let mut contract = ctx.contract.borrow_mut();
+        for i in func.inputs.iter().filter(|i| !stored.contains(&i.name)) {
+            contract.insert(i.name.clone(), super::go_lockstep::Contract::Input);
+        }
+        for o in func.outputs.iter().filter(|o| !stored.contains(&o.name)) {
+            contract.insert(o.name.clone(), super::go_lockstep::Contract::Output);
+        }
+        ctx.end_fixed.set(!stored.contains("endIdx"));
+        ctx.lockstep.set(true);
+    }
 
     let mut params = vec![("startIdx".to_string(), "int32".to_string()), ("endIdx".to_string(), "int32".to_string())];
     for i in &func.inputs {

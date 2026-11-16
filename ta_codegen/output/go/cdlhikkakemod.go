@@ -85,108 +85,115 @@ func (c *Core) cdlhikkakemodImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, 
 		patternHigh = 0.0
 		patternLow = 0.0
 		i = startIdx - 3
-		for i < startIdx {
-			_B5 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B5 {
-				_B1 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B1 {
-					var _T0 float64
-					if Near_avgPeriod != 0 {
-						_T0 = NearPeriodTotal / float64(Near_avgPeriod)
-					} else {
-						_T0 = (math.Abs(inClose[i-2] - inOpen[i-2]))
-					}
-					_B1 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T0)
-				}
-				_B4 := _B1
-				if !_B4 {
-					_B3 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B3 {
-						var _T2 float64
+		if _n0 := int(startIdx) - int(i); _n0 > 0 {
+			_r2 := inHigh[i-2:][:_n0]
+			_r3 := inHigh[i-3:][:_n0]
+			_r4 := inLow[i-2:][:_n0]
+			_r5 := inLow[i-3:][:_n0]
+			_r6 := inClose[i-2:][:_n0]
+			_r7 := inOpen[i-2:][:_n0]
+			for _k1 := range _r2 {
+				_B13 := _r2[_k1] < _r3[_k1] && _r4[_k1] > _r5[_k1] && inHigh[i+int32(_k1)-1] < _r2[_k1] && inLow[i+int32(_k1)-1] > _r4[_k1]
+				if _B13 {
+					_B9 := inHigh[i+int32(_k1)] < inHigh[i+int32(_k1)-1] && inLow[i+int32(_k1)] < inLow[i+int32(_k1)-1]
+					if _B9 {
+						var _T8 float64
 						if Near_avgPeriod != 0 {
-							_T2 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T8 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T2 = (math.Abs(inClose[i-2] - inOpen[i-2]))
+							_T8 = (math.Abs(_r6[_k1] - _r7[_k1]))
 						}
-						_B3 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T2)
+						_B9 = _r6[_k1] <= _r4[_k1]+float64(Near_factor*_T8)
 					}
-					_B4 = _B3
+					_B12 := _B9
+					if !_B12 {
+						_B11 := inHigh[i+int32(_k1)] > inHigh[i+int32(_k1)-1] && inLow[i+int32(_k1)] > inLow[i+int32(_k1)-1]
+						if _B11 {
+							var _T10 float64
+							if Near_avgPeriod != 0 {
+								_T10 = NearPeriodTotal / float64(Near_avgPeriod)
+							} else {
+								_T10 = (math.Abs(_r6[_k1] - _r7[_k1]))
+							}
+							_B11 = _r6[_k1] >= _r2[_k1]-float64(Near_factor*_T10)
+						}
+						_B12 = _B11
+					}
+					_B13 = _B12
 				}
-				_B5 = _B4
-			}
-			if _B5 {
-				var _T6 int32
-				if inHigh[i] < inHigh[i-1] {
-					_T6 = 1
-				} else {
-					_T6 = -1
+				if _B13 {
+					var _T14 int32
+					if inHigh[i+int32(_k1)] < inHigh[i+int32(_k1)-1] {
+						_T14 = 1
+					} else {
+						_T14 = -1
+					}
+					patternResult = 100 * _T14
+					patternHigh = inHigh[i+int32(_k1)-1]
+					patternLow = inLow[i+int32(_k1)-1]
+					patternCount = 4
+				} else if patternCount > 0 && (patternResult > 0 && inClose[i+int32(_k1)] > patternHigh || patternResult < 0 && inClose[i+int32(_k1)] < patternLow) {
+					patternCount = 0
 				}
-				patternResult = 100 * _T6
-				patternHigh = inHigh[i-1]
-				patternLow = inLow[i-1]
-				patternCount = 4
-			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				patternCount = 0
+				NearPeriodTotal += (math.Abs(_r6[_k1] - _r7[_k1])) - (math.Abs(inClose[NearTrailingIdx+int32(_k1)-2] - inOpen[NearTrailingIdx+int32(_k1)-2]))
+				if patternCount > 0 {
+					patternCount -= 1
+				}
 			}
-			NearPeriodTotal += (math.Abs(inClose[i-2] - inOpen[i-2])) - (math.Abs(inClose[NearTrailingIdx-2] - inOpen[NearTrailingIdx-2]))
-			NearTrailingIdx += 1
-			if patternCount > 0 {
-				patternCount -= 1
-			}
-			i += 1
+			NearTrailingIdx += int32(_n0)
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B12 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B12 {
-				_B8 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B8 {
-					var _T7 float64
+			_B20 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
+			if _B20 {
+				_B16 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
+				if _B16 {
+					var _T15 float64
 					if Near_avgPeriod != 0 {
-						_T7 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T15 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T7 = (math.Abs(inClose[i-2] - inOpen[i-2]))
+						_T15 = (math.Abs(inClose[i-2] - inOpen[i-2]))
 					}
-					_B8 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T7)
+					_B16 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T15)
 				}
-				_B11 := _B8
-				if !_B11 {
-					_B10 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B10 {
-						var _T9 float64
+				_B19 := _B16
+				if !_B19 {
+					_B18 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
+					if _B18 {
+						var _T17 float64
 						if Near_avgPeriod != 0 {
-							_T9 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T17 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T9 = (math.Abs(inClose[i-2] - inOpen[i-2]))
+							_T17 = (math.Abs(inClose[i-2] - inOpen[i-2]))
 						}
-						_B10 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T9)
+						_B18 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T17)
 					}
-					_B11 = _B10
+					_B19 = _B18
 				}
-				_B12 = _B11
+				_B20 = _B19
 			}
-			if _B12 {
-				var _T13 int32
+			if _B20 {
+				var _T21 int32
 				if inHigh[i] < inHigh[i-1] {
-					_T13 = 1
+					_T21 = 1
 				} else {
-					_T13 = -1
+					_T21 = -1
 				}
-				patternResult = 100 * _T13
+				patternResult = 100 * _T21
 				patternHigh = inHigh[i-1]
 				patternLow = inLow[i-1]
 				patternCount = 4
 				outInteger[outIdx] = patternResult
 				outIdx++
 			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				var _T14 int32
+				var _T22 int32
 				if patternResult > 0 {
-					_T14 = 1
+					_T22 = 1
 				} else {
-					_T14 = -1
+					_T22 = -1
 				}
-				outInteger[outIdx] = patternResult + 100*_T14
+				outInteger[outIdx] = patternResult + 100*_T22
 				outIdx++
 				patternCount = 0
 			} else {
@@ -219,108 +226,114 @@ func (c *Core) cdlhikkakemodImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, 
 		patternHigh = 0.0
 		patternLow = 0.0
 		i = startIdx - 3
-		for i < startIdx {
-			_B20 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B20 {
-				_B16 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B16 {
-					var _T15 float64
-					if Near_avgPeriod != 0 {
-						_T15 = NearPeriodTotal / float64(Near_avgPeriod)
-					} else {
-						_T15 = (inHigh[i-2] - inLow[i-2])
-					}
-					_B16 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T15)
-				}
-				_B19 := _B16
-				if !_B19 {
-					_B18 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B18 {
-						var _T17 float64
+		if _n23 := int(startIdx) - int(i); _n23 > 0 {
+			_r25 := inHigh[i-2:][:_n23]
+			_r26 := inHigh[i-3:][:_n23]
+			_r27 := inLow[i-2:][:_n23]
+			_r28 := inLow[i-3:][:_n23]
+			_r29 := inClose[i-2:][:_n23]
+			for _k24 := range _r25 {
+				_B36 := _r25[_k24] < _r26[_k24] && _r27[_k24] > _r28[_k24] && inHigh[i+int32(_k24)-1] < _r25[_k24] && inLow[i+int32(_k24)-1] > _r27[_k24]
+				if _B36 {
+					_B32 := inHigh[i+int32(_k24)] < inHigh[i+int32(_k24)-1] && inLow[i+int32(_k24)] < inLow[i+int32(_k24)-1]
+					if _B32 {
+						var _T31 float64
 						if Near_avgPeriod != 0 {
-							_T17 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T31 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T17 = (inHigh[i-2] - inLow[i-2])
+							_T31 = (_r25[_k24] - _r27[_k24])
 						}
-						_B18 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T17)
+						_B32 = _r29[_k24] <= _r27[_k24]+float64(Near_factor*_T31)
 					}
-					_B19 = _B18
+					_B35 := _B32
+					if !_B35 {
+						_B34 := inHigh[i+int32(_k24)] > inHigh[i+int32(_k24)-1] && inLow[i+int32(_k24)] > inLow[i+int32(_k24)-1]
+						if _B34 {
+							var _T33 float64
+							if Near_avgPeriod != 0 {
+								_T33 = NearPeriodTotal / float64(Near_avgPeriod)
+							} else {
+								_T33 = (_r25[_k24] - _r27[_k24])
+							}
+							_B34 = _r29[_k24] >= _r25[_k24]-float64(Near_factor*_T33)
+						}
+						_B35 = _B34
+					}
+					_B36 = _B35
 				}
-				_B20 = _B19
-			}
-			if _B20 {
-				var _T21 int32
-				if inHigh[i] < inHigh[i-1] {
-					_T21 = 1
-				} else {
-					_T21 = -1
+				if _B36 {
+					var _T37 int32
+					if inHigh[i+int32(_k24)] < inHigh[i+int32(_k24)-1] {
+						_T37 = 1
+					} else {
+						_T37 = -1
+					}
+					patternResult = 100 * _T37
+					patternHigh = inHigh[i+int32(_k24)-1]
+					patternLow = inLow[i+int32(_k24)-1]
+					patternCount = 4
+				} else if patternCount > 0 && (patternResult > 0 && inClose[i+int32(_k24)] > patternHigh || patternResult < 0 && inClose[i+int32(_k24)] < patternLow) {
+					patternCount = 0
 				}
-				patternResult = 100 * _T21
-				patternHigh = inHigh[i-1]
-				patternLow = inLow[i-1]
-				patternCount = 4
-			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				patternCount = 0
+				NearPeriodTotal += (_r25[_k24] - _r27[_k24]) - (inHigh[NearTrailingIdx+int32(_k24)-2] - inLow[NearTrailingIdx+int32(_k24)-2])
+				if patternCount > 0 {
+					patternCount -= 1
+				}
 			}
-			NearPeriodTotal += (inHigh[i-2] - inLow[i-2]) - (inHigh[NearTrailingIdx-2] - inLow[NearTrailingIdx-2])
-			NearTrailingIdx += 1
-			if patternCount > 0 {
-				patternCount -= 1
-			}
-			i += 1
+			NearTrailingIdx += int32(_n23)
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B27 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B27 {
-				_B23 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B23 {
-					var _T22 float64
+			_B43 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
+			if _B43 {
+				_B39 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
+				if _B39 {
+					var _T38 float64
 					if Near_avgPeriod != 0 {
-						_T22 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T38 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T22 = (inHigh[i-2] - inLow[i-2])
+						_T38 = (inHigh[i-2] - inLow[i-2])
 					}
-					_B23 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T22)
+					_B39 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T38)
 				}
-				_B26 := _B23
-				if !_B26 {
-					_B25 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B25 {
-						var _T24 float64
+				_B42 := _B39
+				if !_B42 {
+					_B41 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
+					if _B41 {
+						var _T40 float64
 						if Near_avgPeriod != 0 {
-							_T24 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T40 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T24 = (inHigh[i-2] - inLow[i-2])
+							_T40 = (inHigh[i-2] - inLow[i-2])
 						}
-						_B25 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T24)
+						_B41 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T40)
 					}
-					_B26 = _B25
+					_B42 = _B41
 				}
-				_B27 = _B26
+				_B43 = _B42
 			}
-			if _B27 {
-				var _T28 int32
+			if _B43 {
+				var _T44 int32
 				if inHigh[i] < inHigh[i-1] {
-					_T28 = 1
+					_T44 = 1
 				} else {
-					_T28 = -1
+					_T44 = -1
 				}
-				patternResult = 100 * _T28
+				patternResult = 100 * _T44
 				patternHigh = inHigh[i-1]
 				patternLow = inLow[i-1]
 				patternCount = 4
 				outInteger[outIdx] = patternResult
 				outIdx++
 			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				var _T29 int32
+				var _T45 int32
 				if patternResult > 0 {
-					_T29 = 1
+					_T45 = 1
 				} else {
-					_T29 = -1
+					_T45 = -1
 				}
-				outInteger[outIdx] = patternResult + 100*_T29
+				outInteger[outIdx] = patternResult + 100*_T45
 				outIdx++
 				patternCount = 0
 			} else {
@@ -353,108 +366,115 @@ func (c *Core) cdlhikkakemodImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, 
 		patternHigh = 0.0
 		patternLow = 0.0
 		i = startIdx - 3
-		for i < startIdx {
-			_B35 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B35 {
-				_B31 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B31 {
-					var _T30 float64
-					if Near_avgPeriod != 0 {
-						_T30 = NearPeriodTotal / float64(Near_avgPeriod)
-					} else {
-						_T30 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
-					}
-					_B31 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T30)/2.0
-				}
-				_B34 := _B31
-				if !_B34 {
-					_B33 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B33 {
-						var _T32 float64
+		if _n46 := int(startIdx) - int(i); _n46 > 0 {
+			_r48 := inHigh[i-2:][:_n46]
+			_r49 := inHigh[i-3:][:_n46]
+			_r50 := inLow[i-2:][:_n46]
+			_r51 := inLow[i-3:][:_n46]
+			_r52 := inClose[i-2:][:_n46]
+			_r53 := inOpen[i-2:][:_n46]
+			for _k47 := range _r48 {
+				_B59 := _r48[_k47] < _r49[_k47] && _r50[_k47] > _r51[_k47] && inHigh[i+int32(_k47)-1] < _r48[_k47] && inLow[i+int32(_k47)-1] > _r50[_k47]
+				if _B59 {
+					_B55 := inHigh[i+int32(_k47)] < inHigh[i+int32(_k47)-1] && inLow[i+int32(_k47)] < inLow[i+int32(_k47)-1]
+					if _B55 {
+						var _T54 float64
 						if Near_avgPeriod != 0 {
-							_T32 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T54 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T32 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
+							_T54 = ((_r48[_k47] - selF(_r52[_k47] >= _r53[_k47], _r52[_k47], _r53[_k47])) + (selF(_r52[_k47] >= _r53[_k47], _r53[_k47], _r52[_k47]) - _r50[_k47]))
 						}
-						_B33 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T32)/2.0
+						_B55 = _r52[_k47] <= _r50[_k47]+float64(Near_factor*_T54)/2.0
 					}
-					_B34 = _B33
+					_B58 := _B55
+					if !_B58 {
+						_B57 := inHigh[i+int32(_k47)] > inHigh[i+int32(_k47)-1] && inLow[i+int32(_k47)] > inLow[i+int32(_k47)-1]
+						if _B57 {
+							var _T56 float64
+							if Near_avgPeriod != 0 {
+								_T56 = NearPeriodTotal / float64(Near_avgPeriod)
+							} else {
+								_T56 = ((_r48[_k47] - selF(_r52[_k47] >= _r53[_k47], _r52[_k47], _r53[_k47])) + (selF(_r52[_k47] >= _r53[_k47], _r53[_k47], _r52[_k47]) - _r50[_k47]))
+							}
+							_B57 = _r52[_k47] >= _r48[_k47]-float64(Near_factor*_T56)/2.0
+						}
+						_B58 = _B57
+					}
+					_B59 = _B58
 				}
-				_B35 = _B34
-			}
-			if _B35 {
-				var _T36 int32
-				if inHigh[i] < inHigh[i-1] {
-					_T36 = 1
-				} else {
-					_T36 = -1
+				if _B59 {
+					var _T60 int32
+					if inHigh[i+int32(_k47)] < inHigh[i+int32(_k47)-1] {
+						_T60 = 1
+					} else {
+						_T60 = -1
+					}
+					patternResult = 100 * _T60
+					patternHigh = inHigh[i+int32(_k47)-1]
+					patternLow = inLow[i+int32(_k47)-1]
+					patternCount = 4
+				} else if patternCount > 0 && (patternResult > 0 && inClose[i+int32(_k47)] > patternHigh || patternResult < 0 && inClose[i+int32(_k47)] < patternLow) {
+					patternCount = 0
 				}
-				patternResult = 100 * _T36
-				patternHigh = inHigh[i-1]
-				patternLow = inLow[i-1]
-				patternCount = 4
-			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				patternCount = 0
+				NearPeriodTotal += ((_r48[_k47] - selF(_r52[_k47] >= _r53[_k47], _r52[_k47], _r53[_k47])) + (selF(_r52[_k47] >= _r53[_k47], _r53[_k47], _r52[_k47]) - _r50[_k47])) - ((inHigh[NearTrailingIdx+int32(_k47)-2] - selF(inClose[NearTrailingIdx+int32(_k47)-2] >= inOpen[NearTrailingIdx+int32(_k47)-2], inClose[NearTrailingIdx+int32(_k47)-2], inOpen[NearTrailingIdx+int32(_k47)-2])) + (selF(inClose[NearTrailingIdx+int32(_k47)-2] >= inOpen[NearTrailingIdx+int32(_k47)-2], inOpen[NearTrailingIdx+int32(_k47)-2], inClose[NearTrailingIdx+int32(_k47)-2]) - inLow[NearTrailingIdx+int32(_k47)-2]))
+				if patternCount > 0 {
+					patternCount -= 1
+				}
 			}
-			NearPeriodTotal += ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2])) - ((inHigh[NearTrailingIdx-2] - selF(inClose[NearTrailingIdx-2] >= inOpen[NearTrailingIdx-2], inClose[NearTrailingIdx-2], inOpen[NearTrailingIdx-2])) + (selF(inClose[NearTrailingIdx-2] >= inOpen[NearTrailingIdx-2], inOpen[NearTrailingIdx-2], inClose[NearTrailingIdx-2]) - inLow[NearTrailingIdx-2]))
-			NearTrailingIdx += 1
-			if patternCount > 0 {
-				patternCount -= 1
-			}
-			i += 1
+			NearTrailingIdx += int32(_n46)
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B42 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B42 {
-				_B38 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B38 {
-					var _T37 float64
+			_B66 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
+			if _B66 {
+				_B62 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
+				if _B62 {
+					var _T61 float64
 					if Near_avgPeriod != 0 {
-						_T37 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T61 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T37 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
+						_T61 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
 					}
-					_B38 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T37)/2.0
+					_B62 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T61)/2.0
 				}
-				_B41 := _B38
-				if !_B41 {
-					_B40 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B40 {
-						var _T39 float64
+				_B65 := _B62
+				if !_B65 {
+					_B64 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
+					if _B64 {
+						var _T63 float64
 						if Near_avgPeriod != 0 {
-							_T39 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T63 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T39 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
+							_T63 = ((inHigh[i-2] - selF(inClose[i-2] >= inOpen[i-2], inClose[i-2], inOpen[i-2])) + (selF(inClose[i-2] >= inOpen[i-2], inOpen[i-2], inClose[i-2]) - inLow[i-2]))
 						}
-						_B40 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T39)/2.0
+						_B64 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T63)/2.0
 					}
-					_B41 = _B40
+					_B65 = _B64
 				}
-				_B42 = _B41
+				_B66 = _B65
 			}
-			if _B42 {
-				var _T43 int32
+			if _B66 {
+				var _T67 int32
 				if inHigh[i] < inHigh[i-1] {
-					_T43 = 1
+					_T67 = 1
 				} else {
-					_T43 = -1
+					_T67 = -1
 				}
-				patternResult = 100 * _T43
+				patternResult = 100 * _T67
 				patternHigh = inHigh[i-1]
 				patternLow = inLow[i-1]
 				patternCount = 4
 				outInteger[outIdx] = patternResult
 				outIdx++
 			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				var _T44 int32
+				var _T68 int32
 				if patternResult > 0 {
-					_T44 = 1
+					_T68 = 1
 				} else {
-					_T44 = -1
+					_T68 = -1
 				}
-				outInteger[outIdx] = patternResult + 100*_T44
+				outInteger[outIdx] = patternResult + 100*_T68
 				outIdx++
 				patternCount = 0
 			} else {
@@ -487,132 +507,139 @@ func (c *Core) cdlhikkakemodImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, 
 		patternHigh = 0.0
 		patternLow = 0.0
 		i = startIdx - 3
-		for i < startIdx {
-			_B52 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B52 {
-				_B47 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B47 {
-					var _T45 float64
-					if Near_avgPeriod != 0 {
-						_T45 = NearPeriodTotal / float64(Near_avgPeriod)
-					} else {
-						_T45 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
-					}
-					var _T46 float64
-					if Near_rangeType == 2 {
-						_T46 = 2.0
-					} else {
-						_T46 = 1.0
-					}
-					_B47 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T45)/_T46
-				}
-				_B51 := _B47
-				if !_B51 {
-					_B50 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B50 {
-						var _T48 float64
+		if _n69 := int(startIdx) - int(i); _n69 > 0 {
+			_r71 := inHigh[i-2:][:_n69]
+			_r72 := inHigh[i-3:][:_n69]
+			_r73 := inLow[i-2:][:_n69]
+			_r74 := inLow[i-3:][:_n69]
+			_r75 := inClose[i-2:][:_n69]
+			_r76 := inOpen[i-2:][:_n69]
+			for _k70 := range _r71 {
+				_B84 := _r71[_k70] < _r72[_k70] && _r73[_k70] > _r74[_k70] && inHigh[i+int32(_k70)-1] < _r71[_k70] && inLow[i+int32(_k70)-1] > _r73[_k70]
+				if _B84 {
+					_B79 := inHigh[i+int32(_k70)] < inHigh[i+int32(_k70)-1] && inLow[i+int32(_k70)] < inLow[i+int32(_k70)-1]
+					if _B79 {
+						var _T77 float64
 						if Near_avgPeriod != 0 {
-							_T48 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T77 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T48 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+							_T77 = candleRange(Near_rangeType, _r76[_k70], _r71[_k70], _r73[_k70], _r75[_k70])
 						}
-						var _T49 float64
+						var _T78 float64
 						if Near_rangeType == 2 {
-							_T49 = 2.0
+							_T78 = 2.0
 						} else {
-							_T49 = 1.0
+							_T78 = 1.0
 						}
-						_B50 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T48)/_T49
+						_B79 = _r75[_k70] <= _r73[_k70]+float64(Near_factor*_T77)/_T78
 					}
-					_B51 = _B50
+					_B83 := _B79
+					if !_B83 {
+						_B82 := inHigh[i+int32(_k70)] > inHigh[i+int32(_k70)-1] && inLow[i+int32(_k70)] > inLow[i+int32(_k70)-1]
+						if _B82 {
+							var _T80 float64
+							if Near_avgPeriod != 0 {
+								_T80 = NearPeriodTotal / float64(Near_avgPeriod)
+							} else {
+								_T80 = candleRange(Near_rangeType, _r76[_k70], _r71[_k70], _r73[_k70], _r75[_k70])
+							}
+							var _T81 float64
+							if Near_rangeType == 2 {
+								_T81 = 2.0
+							} else {
+								_T81 = 1.0
+							}
+							_B82 = _r75[_k70] >= _r71[_k70]-float64(Near_factor*_T80)/_T81
+						}
+						_B83 = _B82
+					}
+					_B84 = _B83
 				}
-				_B52 = _B51
-			}
-			if _B52 {
-				var _T53 int32
-				if inHigh[i] < inHigh[i-1] {
-					_T53 = 1
-				} else {
-					_T53 = -1
+				if _B84 {
+					var _T85 int32
+					if inHigh[i+int32(_k70)] < inHigh[i+int32(_k70)-1] {
+						_T85 = 1
+					} else {
+						_T85 = -1
+					}
+					patternResult = 100 * _T85
+					patternHigh = inHigh[i+int32(_k70)-1]
+					patternLow = inLow[i+int32(_k70)-1]
+					patternCount = 4
+				} else if patternCount > 0 && (patternResult > 0 && inClose[i+int32(_k70)] > patternHigh || patternResult < 0 && inClose[i+int32(_k70)] < patternLow) {
+					patternCount = 0
 				}
-				patternResult = 100 * _T53
-				patternHigh = inHigh[i-1]
-				patternLow = inLow[i-1]
-				patternCount = 4
-			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				patternCount = 0
+				NearPeriodTotal += candleRange(Near_rangeType, _r76[_k70], _r71[_k70], _r73[_k70], _r75[_k70]) - candleRange(Near_rangeType, inOpen[NearTrailingIdx+int32(_k70)-2], inHigh[NearTrailingIdx+int32(_k70)-2], inLow[NearTrailingIdx+int32(_k70)-2], inClose[NearTrailingIdx+int32(_k70)-2])
+				if patternCount > 0 {
+					patternCount -= 1
+				}
 			}
-			NearPeriodTotal += candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) - candleRange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2])
-			NearTrailingIdx += 1
-			if patternCount > 0 {
-				patternCount -= 1
-			}
-			i += 1
+			NearTrailingIdx += int32(_n69)
 		}
 		i = startIdx
 		outIdx = 0
 		for {
-			_B61 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
-			if _B61 {
-				_B56 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
-				if _B56 {
-					var _T54 float64
+			_B93 := inHigh[i-2] < inHigh[i-3] && inLow[i-2] > inLow[i-3] && inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2]
+			if _B93 {
+				_B88 := inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1]
+				if _B88 {
+					var _T86 float64
 					if Near_avgPeriod != 0 {
-						_T54 = NearPeriodTotal / float64(Near_avgPeriod)
+						_T86 = NearPeriodTotal / float64(Near_avgPeriod)
 					} else {
-						_T54 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+						_T86 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
 					}
-					var _T55 float64
+					var _T87 float64
 					if Near_rangeType == 2 {
-						_T55 = 2.0
+						_T87 = 2.0
 					} else {
-						_T55 = 1.0
+						_T87 = 1.0
 					}
-					_B56 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T54)/_T55
+					_B88 = inClose[i-2] <= inLow[i-2]+float64(Near_factor*_T86)/_T87
 				}
-				_B60 := _B56
-				if !_B60 {
-					_B59 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
-					if _B59 {
-						var _T57 float64
+				_B92 := _B88
+				if !_B92 {
+					_B91 := inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]
+					if _B91 {
+						var _T89 float64
 						if Near_avgPeriod != 0 {
-							_T57 = NearPeriodTotal / float64(Near_avgPeriod)
+							_T89 = NearPeriodTotal / float64(Near_avgPeriod)
 						} else {
-							_T57 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+							_T89 = candleRange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
 						}
-						var _T58 float64
+						var _T90 float64
 						if Near_rangeType == 2 {
-							_T58 = 2.0
+							_T90 = 2.0
 						} else {
-							_T58 = 1.0
+							_T90 = 1.0
 						}
-						_B59 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T57)/_T58
+						_B91 = inClose[i-2] >= inHigh[i-2]-float64(Near_factor*_T89)/_T90
 					}
-					_B60 = _B59
+					_B92 = _B91
 				}
-				_B61 = _B60
+				_B93 = _B92
 			}
-			if _B61 {
-				var _T62 int32
+			if _B93 {
+				var _T94 int32
 				if inHigh[i] < inHigh[i-1] {
-					_T62 = 1
+					_T94 = 1
 				} else {
-					_T62 = -1
+					_T94 = -1
 				}
-				patternResult = 100 * _T62
+				patternResult = 100 * _T94
 				patternHigh = inHigh[i-1]
 				patternLow = inLow[i-1]
 				patternCount = 4
 				outInteger[outIdx] = patternResult
 				outIdx++
 			} else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-				var _T63 int32
+				var _T95 int32
 				if patternResult > 0 {
-					_T63 = 1
+					_T95 = 1
 				} else {
-					_T63 = -1
+					_T95 = -1
 				}
-				outInteger[outIdx] = patternResult + 100*_T63
+				outInteger[outIdx] = patternResult + 100*_T95
 				outIdx++
 				patternCount = 0
 			} else {

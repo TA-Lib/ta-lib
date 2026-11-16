@@ -83,40 +83,43 @@ func (c *Core) choptrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	logPeriod = math.Log10(float64(optInTimePeriod))
 	outIdx = 0
 	today = startIdx
-	for today <= endIdx {
-		highest = inHigh[today]
-		lowest = inLow[today]
-		sumTR = 0.0
-		prevClose = 0.0
-		for i = optInTimePeriod; i >= 0; i -= 1 {
-			if i < optInTimePeriod {
-				tempHT = inHigh[today-i]
-				tempLT = inLow[today-i]
-				trueHigh = tempHT
-				if prevClose > trueHigh {
-					trueHigh = prevClose
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		for _k1 := range _r2 {
+			highest = _r2[_k1]
+			lowest = _r3[_k1]
+			sumTR = 0.0
+			prevClose = 0.0
+			for i = optInTimePeriod; i >= 0; i -= 1 {
+				if i < optInTimePeriod {
+					tempHT = inHigh[today+int32(_k1)-i]
+					tempLT = inLow[today+int32(_k1)-i]
+					trueHigh = tempHT
+					if prevClose > trueHigh {
+						trueHigh = prevClose
+					}
+					trueLow = tempLT
+					if prevClose < trueLow {
+						trueLow = prevClose
+					}
+					sumTR += trueHigh - trueLow
+					if trueHigh > highest {
+						highest = trueHigh
+					}
+					if trueLow < lowest {
+						lowest = trueLow
+					}
 				}
-				trueLow = tempLT
-				if prevClose < trueLow {
-					trueLow = prevClose
-				}
-				sumTR += trueHigh - trueLow
-				if trueHigh > highest {
-					highest = trueHigh
-				}
-				if trueLow < lowest {
-					lowest = trueLow
-				}
+				prevClose = inClose[today+int32(_k1)-i]
 			}
-			prevClose = inClose[today-i]
+			if sumTR <= 0.0 {
+				outReal[outIdx+int32(_k1)] = 100.0
+			} else {
+				outReal[outIdx+int32(_k1)] = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / logPeriod))
+			}
 		}
-		if sumTR <= 0.0 {
-			outReal[outIdx] = 100.0
-		} else {
-			outReal[outIdx] = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / logPeriod))
-		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

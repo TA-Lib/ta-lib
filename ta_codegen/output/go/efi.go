@@ -87,12 +87,16 @@ func (c *Core) efiImpl(startIdx, endIdx int32, inClose, inVolume []float64, optI
 		outIdx = 0
 		today = startIdx
 		prevClose = inClose[today-1]
-		for today <= endIdx {
-			force = float64((inClose[today] - prevClose) * inVolume[today])
-			prevClose = inClose[today]
-			outReal[outIdx] = force
-			outIdx = outIdx + 1
-			today = today + 1
+		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inClose[today:][:_n0]
+			_r3 := inVolume[today:][:_n0]
+			_r4 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				force = float64((_r2[_k1] - prevClose) * _r3[_k1])
+				prevClose = _r2[_k1]
+				_r4[_k1] = force
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -103,9 +107,9 @@ func (c *Core) efiImpl(startIdx, endIdx int32, inClose, inVolume []float64, optI
 	i = optInTimePeriod
 	tempReal = 0.0
 	for {
-		_C0 := i > 0
+		_C5 := i > 0
 		i--
-		if !_C0 {
+		if !_C5 {
 			break
 		}
 		force = float64((inClose[today] - prevClose) * inVolume[today])
@@ -114,21 +118,29 @@ func (c *Core) efiImpl(startIdx, endIdx int32, inClose, inVolume []float64, optI
 		today = today + 1
 	}
 	prevMA = tempReal / float64(optInTimePeriod)
-	for today <= startIdx {
-		force = float64((inClose[today] - prevClose) * inVolume[today])
-		prevClose = inClose[today]
-		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*force))
-		today = today + 1
+	if _n6 := int(startIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inClose[today:][:_n6]
+		_r9 := inVolume[today:][:_n6]
+		for _k7 := range _r8 {
+			force = float64((_r8[_k7] - prevClose) * _r9[_k7])
+			prevClose = _r8[_k7]
+			prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*force))
+		}
+		today += int32(_n6)
 	}
 	outReal[0] = prevMA
 	outIdx = 1
-	for today <= endIdx {
-		force = float64((inClose[today] - prevClose) * inVolume[today])
-		prevClose = inClose[today]
-		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*force))
-		outReal[outIdx] = prevMA
-		outIdx = outIdx + 1
-		today = today + 1
+	if _n10 := int(endIdx) - int(today) + 1; _n10 > 0 {
+		_r12 := inClose[today:][:_n10]
+		_r13 := inVolume[today:][:_n10]
+		_r14 := outReal[outIdx:][:_n10]
+		for _k11 := range _r12 {
+			force = float64((_r12[_k11] - prevClose) * _r13[_k11])
+			prevClose = _r12[_k11]
+			prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*force))
+			_r14[_k11] = prevMA
+		}
+		outIdx += int32(_n10)
 	}
 	*outNBElement = outIdx
 	return Success

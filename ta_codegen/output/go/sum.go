@@ -75,9 +75,12 @@ func (c *Core) sumImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	trailingIdx = startIdx - lookbackTotal
 	i = trailingIdx
 	if optInTimePeriod > 1 {
-		for i < startIdx {
-			periodTotal += inReal[i]
-			i++
+		if _n0 := int(startIdx) - int(i); _n0 > 0 {
+			_r2 := inReal[i:][:_n0]
+			for _k1 := range _r2 {
+				periodTotal += _r2[_k1]
+			}
+			i += int32(_n0)
 		}
 	}
 	outIdx = 0

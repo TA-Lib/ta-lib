@@ -98,11 +98,15 @@ func (c *Core) ctiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	sumXY = 0.0
 	sumX2 = sumXY
 	sumX = sumX2
-	for j = trailingIdx; j < startIdx; j += 1 {
-		x = inReal[j] - shift
-		sumX += x
-		sumX2 += float64(x * x)
-		sumXY += float64(x * float64(startIdx-j))
+	j = trailingIdx
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inReal[j:][:_n0]
+		for _k1 := range _r2 {
+			x = _r2[_k1] - shift
+			sumX += x
+			sumX2 += float64(x * x)
+			sumXY += float64(x * float64(startIdx-(j+int32(_k1))))
+		}
 	}
 	today = startIdx
 	outIdx = 0
@@ -120,29 +124,41 @@ func (c *Core) ctiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			barsSinceReseed = 32 * optInTimePeriod
 			windowStart = today - lookbackTotal
 			tempReal = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal += inReal[j]
+			j = windowStart
+			if _n3 := int(today) - int(j) + 1; _n3 > 0 {
+				_r5 := inReal[j:][:_n3]
+				for _k4 := range _r5 {
+					tempReal += _r5[_k4]
+				}
 			}
 			shift = float64(tempReal * invPeriod)
 			sumXY = 0.0
 			sumX2 = sumXY
 			sumX = sumX2
-			for j = windowStart; j <= today; j += 1 {
-				x = inReal[j] - shift
-				sumX += x
-				sumX2 += float64(x * x)
-				sumXY += float64(x * float64(today-j))
+			j = windowStart
+			if _n6 := int(today) - int(j) + 1; _n6 > 0 {
+				_r8 := inReal[j:][:_n6]
+				for _k7 := range _r8 {
+					x = _r8[_k7] - shift
+					sumX += x
+					sumX2 += float64(x * x)
+					sumXY += float64(x * float64(today-(j+int32(_k7))))
+				}
 			}
 			if sumX2-float64(float64(sumX*sumX)*invPeriod) < float64(1e-6*sumX2) {
 				shift = inReal[today]
 				sumXY = 0.0
 				sumX2 = sumXY
 				sumX = sumX2
-				for j = windowStart; j <= today; j += 1 {
-					x = inReal[j] - shift
-					sumX += x
-					sumX2 += float64(x * x)
-					sumXY += float64(x * float64(today-j))
+				j = windowStart
+				if _n9 := int(today) - int(j) + 1; _n9 > 0 {
+					_r11 := inReal[j:][:_n9]
+					for _k10 := range _r11 {
+						x = _r11[_k10] - shift
+						sumX += x
+						sumX2 += float64(x * x)
+						sumXY += float64(x * float64(today-(j+int32(_k10))))
+					}
 				}
 			}
 			peakX2 = sumX2

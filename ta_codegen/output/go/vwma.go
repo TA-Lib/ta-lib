@@ -82,10 +82,13 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 		*outBegIdx = startIdx
 		outIdx = 0
 		i = startIdx
-		for i <= endIdx {
-			outReal[outIdx] = inReal[i]
-			outIdx++
-			i++
+		if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+			_r2 := inReal[i:][:_n0]
+			_r3 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				_r3[_k1] = _r2[_k1]
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -96,39 +99,47 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 	zeroCount = 0
 	i = trailingIdx
 	if optInTimePeriod > 1 {
-		for i < startIdx {
-			tempReal = float64(inReal[i] * inVolume[i])
-			sumPV += tempReal
-			sumV += inVolume[i]
-			zeroCount += b2i(math.Abs(inVolume[i]) <= 0.0)
-			i = i + 1
+		if _n4 := int(startIdx) - int(i); _n4 > 0 {
+			_r6 := inReal[i:][:_n4]
+			_r7 := inVolume[i:][:_n4]
+			for _k5 := range _r6 {
+				tempReal = float64(_r6[_k5] * _r7[_k5])
+				sumPV += tempReal
+				sumV += _r7[_k5]
+				zeroCount += b2i(math.Abs(_r7[_k5]) <= 0.0)
+			}
+			i += int32(_n4)
 		}
 	}
 	outIdx = 0
-	for i <= endIdx {
-		tempReal = float64(inReal[i] * inVolume[i])
-		sumPV += tempReal
-		sumV += inVolume[i]
-		zeroCount += b2i(math.Abs(inVolume[i]) <= 0.0)
-		i = i + 1
-		trailingVolume = inVolume[trailingIdx]
-		tempReal = float64(inReal[trailingIdx] * trailingVolume)
-		if zeroCount >= optInTimePeriod {
-			tempPV = 0.0
-			tempV = 0.0
-			sumPV = 0.0 - tempReal
-			sumV = 0.0 - trailingVolume
-			outReal[outIdx] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
-		} else {
-			tempPV = sumPV
-			tempV = sumV
-			sumPV -= tempReal
-			sumV -= trailingVolume
-			outReal[outIdx] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+	if _n8 := int(endIdx) - int(i) + 1; _n8 > 0 {
+		_r10 := inReal[i:][:_n8]
+		_r11 := inVolume[i:][:_n8]
+		_r12 := inVolume[trailingIdx:][:_n8]
+		_r13 := inReal[trailingIdx:][:_n8]
+		for _k9 := range _r10 {
+			tempReal = float64(_r10[_k9] * _r11[_k9])
+			sumPV += tempReal
+			sumV += _r11[_k9]
+			zeroCount += b2i(math.Abs(_r11[_k9]) <= 0.0)
+			trailingVolume = _r12[_k9]
+			tempReal = float64(_r13[_k9] * trailingVolume)
+			if zeroCount >= optInTimePeriod {
+				tempPV = 0.0
+				tempV = 0.0
+				sumPV = 0.0 - tempReal
+				sumV = 0.0 - trailingVolume
+				outReal[outIdx+int32(_k9)] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+			} else {
+				tempPV = sumPV
+				tempV = sumV
+				sumPV -= tempReal
+				sumV -= trailingVolume
+				outReal[outIdx+int32(_k9)] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+			}
+			zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
 		}
-		zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
-		trailingIdx = trailingIdx + 1
-		outIdx = outIdx + 1
+		outIdx += int32(_n8)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

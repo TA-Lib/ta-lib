@@ -173,18 +173,21 @@ func (c *Core) willrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 			preHighest[0] = highest
 			preLowest[0] = lowest
 			i = 1
-			for i < nAvail {
-				tmp = inHigh[blockNext+i]
-				if tmp > highest {
-					highest = tmp
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inHigh[blockNext+i:][:_n0]
+				_r3 := inLow[blockNext+i:][:_n0]
+				for _k1 := range _r2 {
+					tmp = _r2[_k1]
+					if tmp > highest {
+						highest = tmp
+					}
+					tmp = _r3[_k1]
+					if tmp < lowest {
+						lowest = tmp
+					}
+					preHighest[i+int32(_k1)] = highest
+					preLowest[i+int32(_k1)] = lowest
 				}
-				tmp = inLow[blockNext+i]
-				if tmp < lowest {
-					lowest = tmp
-				}
-				preHighest[i] = highest
-				preLowest[i] = lowest
-				i += 1
 			}
 			m = 1
 			for m <= nAvail {

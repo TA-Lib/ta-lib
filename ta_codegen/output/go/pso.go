@@ -189,18 +189,21 @@ func (c *Core) psoImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 			lowest = inLow[blockNext]
 			preHighest[1] = highest
 			preLowest[1] = lowest
-			for i < nAvail {
-				tmp = inHigh[blockNext+i]
-				if tmp > highest {
-					highest = tmp
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inHigh[blockNext+i:][:_n0]
+				_r3 := inLow[blockNext+i:][:_n0]
+				for _k1 := range _r2 {
+					tmp = _r2[_k1]
+					if tmp > highest {
+						highest = tmp
+					}
+					tmp = _r3[_k1]
+					if tmp < lowest {
+						lowest = tmp
+					}
+					preHighest[i+int32(_k1)+1] = highest
+					preLowest[i+int32(_k1)+1] = lowest
 				}
-				tmp = inLow[blockNext+i]
-				if tmp < lowest {
-					lowest = tmp
-				}
-				preHighest[i+1] = highest
-				preLowest[i+1] = lowest
-				i += 1
 			}
 		}
 		nOut = 0
@@ -255,10 +258,12 @@ func (c *Core) psoImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 			m += 1
 		}
 		i = 0
-		for i < nOut {
-			outReal[outIdx] = math.Tanh(outReal[outIdx])
-			outIdx = outIdx + 1
-			i += 1
+		if _n4 := int(nOut) - int(i); _n4 > 0 {
+			_r6 := outReal[outIdx:][:_n4]
+			for _k5 := range _r6 {
+				_r6[_k5] = math.Tanh(_r6[_k5])
+			}
+			outIdx += int32(_n4)
 		}
 		today = today + nAvail + 1
 		blockStart = blockNext

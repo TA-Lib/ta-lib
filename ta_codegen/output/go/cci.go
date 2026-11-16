@@ -94,13 +94,18 @@ func (c *Core) cciImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	circBuffer_Idx = 0
 	i = startIdx - lookbackTotal
 	if optInTimePeriod > 1 {
-		for i < startIdx {
-			circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0
-			i += 1
-			circBuffer_Idx++
-			if circBuffer_Idx > maxIdx_circBuffer {
-				circBuffer_Idx = 0
+		if _n0 := int(startIdx) - int(i); _n0 > 0 {
+			_r2 := inHigh[i:][:_n0]
+			_r3 := inLow[i:][:_n0]
+			_r4 := inClose[i:][:_n0]
+			for _k1 := range _r2 {
+				circBuffer[circBuffer_Idx] = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
+				circBuffer_Idx++
+				if circBuffer_Idx > maxIdx_circBuffer {
+					circBuffer_Idx = 0
+				}
 			}
+			i += int32(_n0)
 		}
 	}
 	prevValue = (inHigh[startIdx-1] + inLow[startIdx-1] + inClose[startIdx-1]) / 3.0

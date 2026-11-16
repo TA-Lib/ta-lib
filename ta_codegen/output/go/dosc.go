@@ -168,14 +168,18 @@ func (c *Core) doscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	prevGain = 0.0
 	prevLoss = 0.0
 	today = today + 1
-	for i = optInTimePeriod; i > 0; i -= 1 {
-		tempValue1 = inReal[today]
-		today = today + 1
-		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
-		prevGain += gainDelta
-		prevLoss += gainDelta - tempValue2
+	i = optInTimePeriod
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			tempValue1 = _r2[_k1]
+			tempValue2 = tempValue1 - prevValue
+			prevValue = tempValue1
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+			prevGain += gainDelta
+			prevLoss += gainDelta - tempValue2
+		}
+		today += int32(_n0)
 	}
 	prevLoss = float64(prevLoss * invPeriod)
 	prevGain = float64(prevGain * invPeriod)
@@ -185,56 +189,57 @@ func (c *Core) doscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	} else {
 		rsiValue = 50.0
 	}
-	for rsiBar < startIdx {
-		if nRsi >= skipRSI {
-			n1 = nRsi - skipRSI
-			if n1 < optInFirstPeriod {
-				sum1 = sum1 + rsiValue
-				if n1 == optInFirstPeriod-1 {
-					ema1 = sum1 / float64(optInFirstPeriod)
-				}
-			} else {
-				ema1 = math.FMA(beta1, ema1, float64(k1*rsiValue))
-			}
-			if n1 >= lookbackEMA1 {
-				n2 = n1 - lookbackEMA1
-				if n2 < optInSecondPeriod {
-					sum2 = sum2 + ema1
-					if n2 == optInSecondPeriod-1 {
-						ema2 = sum2 / float64(optInSecondPeriod)
+	if _n3 := int(startIdx) - int(rsiBar); _n3 > 0 {
+		_r5 := inReal[today:][:_n3]
+		for _k4 := range _r5 {
+			if nRsi+int32(_k4) >= skipRSI {
+				n1 = nRsi + int32(_k4) - skipRSI
+				if n1 < optInFirstPeriod {
+					sum1 = sum1 + rsiValue
+					if n1 == optInFirstPeriod-1 {
+						ema1 = sum1 / float64(optInFirstPeriod)
 					}
 				} else {
-					ema2 = math.FMA(beta2, ema2, float64(k2*ema1))
+					ema1 = math.FMA(beta1, ema1, float64(k1*rsiValue))
 				}
-				if n2 >= lookbackEMA2 {
-					dsBuffer[dsBuffer_Idx] = ema2
-					sumSignal = sumSignal + ema2
-					dsBuffer_Idx++
-					if dsBuffer_Idx > maxIdx_dsBuffer {
-						dsBuffer_Idx = 0
+				if n1 >= lookbackEMA1 {
+					n2 = n1 - lookbackEMA1
+					if n2 < optInSecondPeriod {
+						sum2 = sum2 + ema1
+						if n2 == optInSecondPeriod-1 {
+							ema2 = sum2 / float64(optInSecondPeriod)
+						}
+					} else {
+						ema2 = math.FMA(beta2, ema2, float64(k2*ema1))
+					}
+					if n2 >= lookbackEMA2 {
+						dsBuffer[dsBuffer_Idx] = ema2
+						sumSignal = sumSignal + ema2
+						dsBuffer_Idx++
+						if dsBuffer_Idx > maxIdx_dsBuffer {
+							dsBuffer_Idx = 0
+						}
 					}
 				}
 			}
+			tempValue1 = _r5[_k4]
+			tempValue2 = tempValue1 - prevValue
+			prevValue = tempValue1
+			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
+			prevGain = float64(prevGain * float64(optInTimePeriod-1))
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+			prevGain += gainDelta
+			prevLoss += gainDelta - tempValue2
+			prevLoss = float64(prevLoss * invPeriod)
+			prevGain = float64(prevGain * invPeriod)
+			tempValue1 = prevGain + prevLoss
+			if tempValue1 > 0.0 {
+				rsiValue = float64(100.0 * (prevGain / tempValue1))
+			} else {
+				rsiValue = 50.0
+			}
 		}
-		nRsi = nRsi + 1
-		tempValue1 = inReal[today]
-		today = today + 1
-		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
-		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
-		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
-		prevGain += gainDelta
-		prevLoss += gainDelta - tempValue2
-		prevLoss = float64(prevLoss * invPeriod)
-		prevGain = float64(prevGain * invPeriod)
-		tempValue1 = prevGain + prevLoss
-		if tempValue1 > 0.0 {
-			rsiValue = float64(100.0 * (prevGain / tempValue1))
-		} else {
-			rsiValue = 50.0
-		}
-		rsiBar = rsiBar + 1
+		today += int32(_n3)
 	}
 	ema1 = math.FMA(beta1, ema1, float64(k1*rsiValue))
 	ema2 = math.FMA(beta2, ema2, float64(k2*ema1))
@@ -247,35 +252,38 @@ func (c *Core) doscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		dsBuffer_Idx = 0
 	}
 	sumSignal = sumSignal - dsBuffer[dsBuffer_Idx]
-	for today <= endIdx {
-		tempValue1 = inReal[today]
-		today = today + 1
-		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
-		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
-		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
-		prevGain += gainDelta
-		prevLoss += gainDelta - tempValue2
-		prevLoss = float64(prevLoss * invPeriod)
-		prevGain = float64(prevGain * invPeriod)
-		tempValue1 = prevGain + prevLoss
-		if tempValue1 > 0.0 {
-			rsiValue = float64(100.0 * (prevGain / tempValue1))
-		} else {
-			rsiValue = 50.0
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inReal[today:][:_n6]
+		_r9 := outReal[outIdx:][:_n6]
+		for _k7 := range _r8 {
+			tempValue1 = _r8[_k7]
+			tempValue2 = tempValue1 - prevValue
+			prevValue = tempValue1
+			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
+			prevGain = float64(prevGain * float64(optInTimePeriod-1))
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+			prevGain += gainDelta
+			prevLoss += gainDelta - tempValue2
+			prevLoss = float64(prevLoss * invPeriod)
+			prevGain = float64(prevGain * invPeriod)
+			tempValue1 = prevGain + prevLoss
+			if tempValue1 > 0.0 {
+				rsiValue = float64(100.0 * (prevGain / tempValue1))
+			} else {
+				rsiValue = 50.0
+			}
+			ema1 = math.FMA(beta1, ema1, float64(k1*rsiValue))
+			ema2 = math.FMA(beta2, ema2, float64(k2*ema1))
+			dsBuffer[dsBuffer_Idx] = ema2
+			sumSignal = sumSignal + ema2
+			_r9[_k7] = ema2 - sumSignal/float64(optInSignalPeriod)
+			dsBuffer_Idx++
+			if dsBuffer_Idx > maxIdx_dsBuffer {
+				dsBuffer_Idx = 0
+			}
+			sumSignal = sumSignal - dsBuffer[dsBuffer_Idx]
 		}
-		ema1 = math.FMA(beta1, ema1, float64(k1*rsiValue))
-		ema2 = math.FMA(beta2, ema2, float64(k2*ema1))
-		dsBuffer[dsBuffer_Idx] = ema2
-		sumSignal = sumSignal + ema2
-		outReal[outIdx] = ema2 - sumSignal/float64(optInSignalPeriod)
-		outIdx = outIdx + 1
-		dsBuffer_Idx++
-		if dsBuffer_Idx > maxIdx_dsBuffer {
-			dsBuffer_Idx = 0
-		}
-		sumSignal = sumSignal - dsBuffer[dsBuffer_Idx]
+		outIdx += int32(_n6)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

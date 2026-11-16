@@ -115,31 +115,49 @@ func (c *Core) apoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		}
 		_fastTrailing = _fastStart - (optInFastPeriod - 1)
 		_fastTotal = 0.0
-		for _j = _fastTrailing; _j < _fastStart; _j += 1 {
-			_fastTotal += inReal[_j]
+		_j = _fastTrailing
+		if _n0 := int(_fastStart) - int(_j); _n0 > 0 {
+			_r2 := inReal[_j:][:_n0]
+			for _k1 := range _r2 {
+				_fastTotal += _r2[_k1]
+			}
 		}
 		_slowTrailing = _slowStart - (optInSlowPeriod - 1)
 		_slowTotal = 0.0
-		for _j = _slowTrailing; _j < _slowStart; _j += 1 {
-			_slowTotal += inReal[_j]
+		_j = _slowTrailing
+		if _n3 := int(_slowStart) - int(_j); _n3 > 0 {
+			_r5 := inReal[_j:][:_n3]
+			for _k4 := range _r5 {
+				_slowTotal += _r5[_k4]
+			}
 		}
-		for _i = _fastStart; _i < _slowStart; _i += 1 {
-			_fastTotal += inReal[_i]
-			_fastTotal -= inReal[_fastTrailing]
-			_fastTrailing += 1
+		_i = _fastStart
+		if _n6 := int(_slowStart) - int(_i); _n6 > 0 {
+			_r8 := inReal[_i:][:_n6]
+			_r9 := inReal[_fastTrailing:][:_n6]
+			for _k7 := range _r8 {
+				_fastTotal += _r8[_k7]
+				_fastTotal -= _r9[_k7]
+			}
+			_fastTrailing += int32(_n6)
 		}
 		_outIdx = 0
-		for _i = _slowStart; _i <= endIdx; _i += 1 {
-			_fastTotal += inReal[_i]
-			_fastValue = _fastTotal
-			_fastTotal -= inReal[_fastTrailing]
-			_fastTrailing += 1
-			_slowTotal += inReal[_i]
-			_slowValue = _slowTotal
-			_slowTotal -= inReal[_slowTrailing]
-			_slowTrailing += 1
-			outReal[_outIdx] = _fastValue/float64(optInFastPeriod) - _slowValue/float64(optInSlowPeriod)
-			_outIdx += 1
+		_i = _slowStart
+		if _n10 := int(endIdx) - int(_i) + 1; _n10 > 0 {
+			_r12 := inReal[_i:][:_n10]
+			_r13 := inReal[_fastTrailing:][:_n10]
+			_r14 := inReal[_slowTrailing:][:_n10]
+			_r15 := outReal[_outIdx:][:_n10]
+			for _k11 := range _r12 {
+				_fastTotal += _r12[_k11]
+				_fastValue = _fastTotal
+				_fastTotal -= _r13[_k11]
+				_slowTotal += _r12[_k11]
+				_slowValue = _slowTotal
+				_slowTotal -= _r14[_k11]
+				_r15[_k11] = _fastValue/float64(optInFastPeriod) - _slowValue/float64(optInSlowPeriod)
+			}
+			_outIdx += int32(_n10)
 		}
 		*outBegIdx = _slowStart
 		*outNBElement = _outIdx
@@ -185,36 +203,51 @@ func (c *Core) apoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		}
 		_eSlowToday = _eSlowStart - c.emaLookback(optInSlowPeriod)
 		_eFast = 0.0
-		for _eN = 0; _eN < optInFastPeriod; _eN += 1 {
-			_eFast += inReal[_eFastToday]
-			_eFastToday++
+		_eN = 0
+		if _n16 := int(optInFastPeriod) - int(_eN); _n16 > 0 {
+			_r18 := inReal[_eFastToday:][:_n16]
+			for _k17 := range _r18 {
+				_eFast += _r18[_k17]
+			}
+			_eFastToday += int32(_n16)
 		}
 		_eFast = _eFast / float64(optInFastPeriod)
-		for _eFastToday <= _eSlowStart {
-			_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*inReal[_eFastToday]))
-			_eFastToday++
+		if _n19 := int(_eSlowStart) - int(_eFastToday) + 1; _n19 > 0 {
+			_r21 := inReal[_eFastToday:][:_n19]
+			for _k20 := range _r21 {
+				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r21[_k20]))
+			}
 		}
 		_eSlow = 0.0
-		for _eN = 0; _eN < optInSlowPeriod; _eN += 1 {
-			_eSlow += inReal[_eSlowToday]
-			_eSlowToday++
+		_eN = 0
+		if _n22 := int(optInSlowPeriod) - int(_eN); _n22 > 0 {
+			_r24 := inReal[_eSlowToday:][:_n22]
+			for _k23 := range _r24 {
+				_eSlow += _r24[_k23]
+			}
+			_eSlowToday += int32(_n22)
 		}
 		_eSlow = _eSlow / float64(optInSlowPeriod)
-		for _eSlowToday <= _eSlowStart {
-			_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*inReal[_eSlowToday]))
-			_eSlowToday++
+		if _n25 := int(_eSlowStart) - int(_eSlowToday) + 1; _n25 > 0 {
+			_r27 := inReal[_eSlowToday:][:_n25]
+			for _k26 := range _r27 {
+				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r27[_k26]))
+			}
 		}
 		_eOutIdx = 0
 		outReal[_eOutIdx] = _eFast - _eSlow
 		_eOutIdx += 1
 		_eToday = _eSlowStart + 1
-		for _eToday <= endIdx {
-			_eX = inReal[_eToday]
-			_eToday++
-			_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
-			_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
-			outReal[_eOutIdx] = _eFast - _eSlow
-			_eOutIdx += 1
+		if _n28 := int(endIdx) - int(_eToday) + 1; _n28 > 0 {
+			_r30 := inReal[_eToday:][:_n28]
+			_r31 := outReal[_eOutIdx:][:_n28]
+			for _k29 := range _r30 {
+				_eX = _r30[_k29]
+				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
+				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
+				_r31[_k29] = _eFast - _eSlow
+			}
+			_eOutIdx += int32(_n28)
 		}
 		*outBegIdx = _eSlowStart
 		*outNBElement = _eOutIdx
@@ -226,20 +259,24 @@ func (c *Core) apoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		optInSlowPeriod = optInFastPeriod
 		optInFastPeriod = tempInteger
 	}
-	_X0, _E0 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
-	if _E0 != nil {
-		return _E0.(RetCode)
+	_X32, _E32 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
+	if _E32 != nil {
+		return _E32.(RetCode)
 	}
-	fastNb = int32(_X0.NBElement)
-	_X1, _E1 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
-	if _E1 != nil {
-		return _E1.(RetCode)
+	fastNb = int32(_X32.NBElement)
+	_X33, _E33 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
+	if _E33 != nil {
+		return _E33.(RetCode)
 	}
-	*outBegIdx = int32(_X1.BegIdx)
-	*outNBElement = int32(_X1.NBElement)
+	*outBegIdx = int32(_X33.BegIdx)
+	*outNBElement = int32(_X33.NBElement)
 	offset = fastNb - *outNBElement
-	for i = 0; i < *outNBElement; i += 1 {
-		outReal[i] = tempBuffer[i+offset] - outReal[i]
+	i = 0
+	if _n34 := int(*outNBElement) - int(i); _n34 > 0 {
+		_r36 := outReal[i:][:_n34]
+		for _k35 := range _r36 {
+			_r36[_k35] = tempBuffer[i+int32(_k35)+offset] - _r36[_k35]
+		}
 	}
 	return Success
 }

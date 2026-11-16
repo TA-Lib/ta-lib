@@ -170,39 +170,46 @@ func (c *Core) ultoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	a3Total = 0.0
 	b3Total = 0.0
 	nullRun = 0
-	for i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 {
-		tempLT = inLow[i]
-		tempHT = inHigh[i]
-		tempCY = inClose[i-1]
-		trueLow = minF(tempLT, tempCY)
-		closeMinusTrueLow = inClose[i] - trueLow
-		trueRange = tempHT - tempLT
-		tempDouble = math.Abs(tempCY - tempHT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
+	i = startIdx - optInTimePeriod3 + 1
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inLow[i:][:_n0]
+		_r3 := inHigh[i:][:_n0]
+		_r4 := inClose[i-1:][:_n0]
+		_r5 := inClose[i:][:_n0]
+		for _k1 := range _r2 {
+			tempLT = _r2[_k1]
+			tempHT = _r3[_k1]
+			tempCY = _r4[_k1]
+			trueLow = minF(tempLT, tempCY)
+			closeMinusTrueLow = _r5[_k1] - trueLow
+			trueRange = tempHT - tempLT
+			tempDouble = math.Abs(tempCY - tempHT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			tempDouble = math.Abs(tempCY - tempLT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow
+			term_trueRange[term_Idx] = trueRange
+			term_Idx++
+			if term_Idx > maxIdx_term {
+				term_Idx = 0
+			}
+			live = b2i(!(trueRange+math.Abs(closeMinusTrueLow) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if i+int32(_k1) >= startIdx-optInTimePeriod1+1 {
+				a1Total += closeMinusTrueLow
+				b1Total += trueRange
+			}
+			if i+int32(_k1) >= startIdx-optInTimePeriod2+1 {
+				a2Total += closeMinusTrueLow
+				b2Total += trueRange
+			}
+			a3Total += closeMinusTrueLow
+			b3Total += trueRange
 		}
-		tempDouble = math.Abs(tempCY - tempLT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow
-		term_trueRange[term_Idx] = trueRange
-		term_Idx++
-		if term_Idx > maxIdx_term {
-			term_Idx = 0
-		}
-		live = b2i(!(trueRange+math.Abs(closeMinusTrueLow) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if i >= startIdx-optInTimePeriod1+1 {
-			a1Total += closeMinusTrueLow
-			b1Total += trueRange
-		}
-		if i >= startIdx-optInTimePeriod2+1 {
-			a2Total += closeMinusTrueLow
-			b2Total += trueRange
-		}
-		a3Total += closeMinusTrueLow
-		b3Total += trueRange
 	}
 	today = startIdx
 	outIdx = 0
@@ -219,111 +226,117 @@ func (c *Core) ultoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		trailingPos3 = 0
 	}
 	negSlot = 0
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		trueLow = minF(tempLT, tempCY)
-		closeMinusTrueLow = inClose[today] - trueLow
-		trueRange = tempHT - tempLT
-		tempDouble = math.Abs(tempCY - tempHT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		tempDouble = math.Abs(tempCY - tempLT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow
-		term_trueRange[term_Idx] = trueRange
-		live = b2i(!(trueRange+math.Abs(closeMinusTrueLow) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if nullRun >= optInTimePeriod3 {
-			nullRun = optInTimePeriod3
-			a1Total = 0.0
-			b1Total = 0.0
-			a2Total = 0.0
-			b2Total = 0.0
-			a3Total = 0.0
-			b3Total = 0.0
-			output = 0.0
-		} else {
-			a1Total += closeMinusTrueLow
-			a2Total += closeMinusTrueLow
-			a3Total += closeMinusTrueLow
-			b1Total += trueRange
-			b2Total += trueRange
-			b3Total += trueRange
-			if nullRun >= optInTimePeriod1 {
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inLow[today:][:_n6]
+		_r9 := inHigh[today:][:_n6]
+		_r10 := inClose[today-1:][:_n6]
+		_r11 := inClose[today:][:_n6]
+		_r12 := outReal[outIdx:][:_n6]
+		for _k7 := range _r8 {
+			tempLT = _r8[_k7]
+			tempHT = _r9[_k7]
+			tempCY = _r10[_k7]
+			trueLow = minF(tempLT, tempCY)
+			closeMinusTrueLow = _r11[_k7] - trueLow
+			trueRange = tempHT - tempLT
+			tempDouble = math.Abs(tempCY - tempHT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			tempDouble = math.Abs(tempCY - tempLT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow
+			term_trueRange[term_Idx] = trueRange
+			live = b2i(!(trueRange+math.Abs(closeMinusTrueLow) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod3 {
+				nullRun = optInTimePeriod3
 				a1Total = 0.0
 				b1Total = 0.0
-				if nullRun >= optInTimePeriod2 {
-					a2Total = 0.0
-					b2Total = 0.0
+				a2Total = 0.0
+				b2Total = 0.0
+				a3Total = 0.0
+				b3Total = 0.0
+				output = 0.0
+			} else {
+				a1Total += closeMinusTrueLow
+				a2Total += closeMinusTrueLow
+				a3Total += closeMinusTrueLow
+				b1Total += trueRange
+				b2Total += trueRange
+				b3Total += trueRange
+				if nullRun >= optInTimePeriod1 {
+					a1Total = 0.0
+					b1Total = 0.0
+					if nullRun >= optInTimePeriod2 {
+						a2Total = 0.0
+						b2Total = 0.0
+					}
+				}
+				output = 0.0
+				if b1Total > 0.0 {
+					output += float64(4.0 * (a1Total / b1Total))
+				}
+				if b2Total > 0.0 {
+					output += float64(2.0 * (a2Total / b2Total))
+				}
+				if b3Total > 0.0 {
+					output += a3Total / b3Total
+				}
+				a1Total -= term_closeMinusTrueLow[trailingPos1]
+				b1Total -= term_trueRange[trailingPos1]
+				a2Total -= term_closeMinusTrueLow[trailingPos2]
+				b2Total -= term_trueRange[trailingPos2]
+				a3Total -= term_closeMinusTrueLow[trailingPos3]
+				b3Total -= term_trueRange[trailingPos3]
+			}
+			trailingPos1 += 1
+			if trailingPos1 >= optInTimePeriod3 {
+				trailingPos1 = 0
+			}
+			trailingPos2 += 1
+			if trailingPos2 >= optInTimePeriod3 {
+				trailingPos2 = 0
+			}
+			term_Idx = trailingPos3
+			trailingPos3 += 1
+			if trailingPos3 >= optInTimePeriod3 {
+				trailingPos3 = 0
+			}
+			_r12[_k7] = float64(100.0 * (output / 7.0))
+			lowest = selF(a1Total < a2Total, a1Total, a2Total)
+			lowest = selF(a3Total < lowest, a3Total, lowest)
+			if lowest < 0.0 && (negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0) {
+				a1Total = 0.0
+				b1Total = 0.0
+				a2Total = 0.0
+				b2Total = 0.0
+				a3Total = 0.0
+				b3Total = 0.0
+				for i = 1; i < optInTimePeriod3; i += 1 {
+					j = term_Idx + i
+					if j >= optInTimePeriod3 {
+						j -= optInTimePeriod3
+					}
+					if i > optInTimePeriod3-optInTimePeriod1 {
+						a1Total += term_closeMinusTrueLow[j]
+						b1Total += term_trueRange[j]
+					}
+					if i > optInTimePeriod3-optInTimePeriod2 {
+						a2Total += term_closeMinusTrueLow[j]
+						b2Total += term_trueRange[j]
+					}
+					a3Total += term_closeMinusTrueLow[j]
+					b3Total += term_trueRange[j]
+					if term_closeMinusTrueLow[j] < 0.0 {
+						negSlot = j
+					}
 				}
 			}
-			output = 0.0
-			if b1Total > 0.0 {
-				output += float64(4.0 * (a1Total / b1Total))
-			}
-			if b2Total > 0.0 {
-				output += float64(2.0 * (a2Total / b2Total))
-			}
-			if b3Total > 0.0 {
-				output += a3Total / b3Total
-			}
-			a1Total -= term_closeMinusTrueLow[trailingPos1]
-			b1Total -= term_trueRange[trailingPos1]
-			a2Total -= term_closeMinusTrueLow[trailingPos2]
-			b2Total -= term_trueRange[trailingPos2]
-			a3Total -= term_closeMinusTrueLow[trailingPos3]
-			b3Total -= term_trueRange[trailingPos3]
 		}
-		trailingPos1 += 1
-		if trailingPos1 >= optInTimePeriod3 {
-			trailingPos1 = 0
-		}
-		trailingPos2 += 1
-		if trailingPos2 >= optInTimePeriod3 {
-			trailingPos2 = 0
-		}
-		term_Idx = trailingPos3
-		trailingPos3 += 1
-		if trailingPos3 >= optInTimePeriod3 {
-			trailingPos3 = 0
-		}
-		outReal[outIdx] = float64(100.0 * (output / 7.0))
-		lowest = selF(a1Total < a2Total, a1Total, a2Total)
-		lowest = selF(a3Total < lowest, a3Total, lowest)
-		if lowest < 0.0 && (negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0) {
-			a1Total = 0.0
-			b1Total = 0.0
-			a2Total = 0.0
-			b2Total = 0.0
-			a3Total = 0.0
-			b3Total = 0.0
-			for i = 1; i < optInTimePeriod3; i += 1 {
-				j = term_Idx + i
-				if j >= optInTimePeriod3 {
-					j -= optInTimePeriod3
-				}
-				if i > optInTimePeriod3-optInTimePeriod1 {
-					a1Total += term_closeMinusTrueLow[j]
-					b1Total += term_trueRange[j]
-				}
-				if i > optInTimePeriod3-optInTimePeriod2 {
-					a2Total += term_closeMinusTrueLow[j]
-					b2Total += term_trueRange[j]
-				}
-				a3Total += term_closeMinusTrueLow[j]
-				b3Total += term_trueRange[j]
-				if term_closeMinusTrueLow[j] < 0.0 {
-					negSlot = j
-				}
-			}
-		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n6)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

@@ -119,54 +119,72 @@ func (c *Core) acImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInFast
 	trailingFastIdx = oscStartIdx - (optInFastPeriod - 1)
 	trailingSlowIdx = oscStartIdx - (optInSlowPeriod - 1)
 	i = startIdx - lookbackTotal
-	for i < oscStartIdx {
-		medianPrice = (inHigh[i] + inLow[i]) / 2.0
-		if i >= trailingFastIdx {
-			sumFast += medianPrice
+	if _n0 := int(oscStartIdx) - int(i); _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		for _k1 := range _r2 {
+			medianPrice = (_r2[_k1] + _r3[_k1]) / 2.0
+			if i+int32(_k1) >= trailingFastIdx {
+				sumFast += medianPrice
+			}
+			if i+int32(_k1) >= trailingSlowIdx {
+				sumSlow += medianPrice
+			}
 		}
-		if i >= trailingSlowIdx {
-			sumSlow += medianPrice
-		}
-		i = i + 1
+		i += int32(_n0)
 	}
-	for i < startIdx {
-		medianPrice = (inHigh[i] + inLow[i]) / 2.0
-		sumFast += medianPrice
-		sumSlow += medianPrice
-		osc = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
-		sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0
-		sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0
-		trailingFastIdx = trailingFastIdx + 1
-		trailingSlowIdx = trailingSlowIdx + 1
-		i = i + 1
-		oscBuffer[oscBuffer_Idx] = osc
-		sumSignal += osc
-		oscBuffer_Idx++
-		if oscBuffer_Idx > maxIdx_oscBuffer {
-			oscBuffer_Idx = 0
+	if _n4 := int(startIdx) - int(i); _n4 > 0 {
+		_r6 := inHigh[i:][:_n4]
+		_r7 := inLow[i:][:_n4]
+		_r8 := inHigh[trailingFastIdx:][:_n4]
+		_r9 := inLow[trailingFastIdx:][:_n4]
+		_r10 := inHigh[trailingSlowIdx:][:_n4]
+		_r11 := inLow[trailingSlowIdx:][:_n4]
+		for _k5 := range _r6 {
+			medianPrice = (_r6[_k5] + _r7[_k5]) / 2.0
+			sumFast += medianPrice
+			sumSlow += medianPrice
+			osc = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
+			sumFast -= (_r8[_k5] + _r9[_k5]) / 2.0
+			sumSlow -= (_r10[_k5] + _r11[_k5]) / 2.0
+			oscBuffer[oscBuffer_Idx] = osc
+			sumSignal += osc
+			oscBuffer_Idx++
+			if oscBuffer_Idx > maxIdx_oscBuffer {
+				oscBuffer_Idx = 0
+			}
 		}
+		i += int32(_n4)
+		trailingFastIdx += int32(_n4)
+		trailingSlowIdx += int32(_n4)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		medianPrice = (inHigh[i] + inLow[i]) / 2.0
-		sumFast += medianPrice
-		sumSlow += medianPrice
-		osc = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
-		sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0
-		sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0
-		trailingFastIdx = trailingFastIdx + 1
-		trailingSlowIdx = trailingSlowIdx + 1
-		i = i + 1
-		oscBuffer[oscBuffer_Idx] = osc
-		sumSignal += osc
-		tempReal = osc - sumSignal/float64(optInSignalPeriod)
-		oscBuffer_Idx++
-		if oscBuffer_Idx > maxIdx_oscBuffer {
-			oscBuffer_Idx = 0
+	if _n12 := int(endIdx) - int(i) + 1; _n12 > 0 {
+		_r14 := inHigh[i:][:_n12]
+		_r15 := inLow[i:][:_n12]
+		_r16 := inHigh[trailingFastIdx:][:_n12]
+		_r17 := inLow[trailingFastIdx:][:_n12]
+		_r18 := inHigh[trailingSlowIdx:][:_n12]
+		_r19 := inLow[trailingSlowIdx:][:_n12]
+		_r20 := outReal[outIdx:][:_n12]
+		for _k13 := range _r14 {
+			medianPrice = (_r14[_k13] + _r15[_k13]) / 2.0
+			sumFast += medianPrice
+			sumSlow += medianPrice
+			osc = sumFast/float64(optInFastPeriod) - sumSlow/float64(optInSlowPeriod)
+			sumFast -= (_r16[_k13] + _r17[_k13]) / 2.0
+			sumSlow -= (_r18[_k13] + _r19[_k13]) / 2.0
+			oscBuffer[oscBuffer_Idx] = osc
+			sumSignal += osc
+			tempReal = osc - sumSignal/float64(optInSignalPeriod)
+			oscBuffer_Idx++
+			if oscBuffer_Idx > maxIdx_oscBuffer {
+				oscBuffer_Idx = 0
+			}
+			sumSignal -= oscBuffer[oscBuffer_Idx]
+			_r20[_k13] = tempReal
 		}
-		sumSignal -= oscBuffer[oscBuffer_Idx]
-		outReal[outIdx] = tempReal
-		outIdx = outIdx + 1
+		outIdx += int32(_n12)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

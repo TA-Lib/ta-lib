@@ -70,11 +70,14 @@ func (c *Core) momImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	outIdx = 0
 	inIdx = startIdx
 	trailingIdx = startIdx - optInTimePeriod
-	for inIdx <= endIdx {
-		outReal[outIdx] = inReal[inIdx] - inReal[trailingIdx]
-		outIdx++
-		inIdx++
-		trailingIdx++
+	if _n0 := int(endIdx) - int(inIdx) + 1; _n0 > 0 {
+		_r2 := inReal[inIdx:][:_n0]
+		_r3 := inReal[trailingIdx:][:_n0]
+		_r4 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			_r4[_k1] = _r2[_k1] - _r3[_k1]
+		}
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

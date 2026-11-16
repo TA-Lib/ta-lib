@@ -92,8 +92,12 @@ func (c *Core) rvirImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTi
 	}
 	*outBegIdx = int32(_X1.BegIdx)
 	*outNBElement = int32(_X1.NBElement)
-	for i = 0; i < *outNBElement; i += 1 {
-		outReal[i] = float64(0.5 * (tempHigh[i] + outReal[i]))
+	i = 0
+	if _n2 := int(*outNBElement) - int(i); _n2 > 0 {
+		_r4 := outReal[i:][:_n2]
+		for _k3 := range _r4 {
+			_r4[_k3] = float64(0.5 * (tempHigh[i+int32(_k3)] + _r4[_k3]))
+		}
 	}
 	return Success
 }

@@ -189,8 +189,13 @@ func (c *Core) macdextImpl(startIdx, endIdx int32, inReal []float64, optInFastPe
 	}
 	outBegIdx2 = int32(_X3.BegIdx)
 	outNbElement2 = int32(_X3.NBElement)
-	for i = 0; i < outNbElement2; i += 1 {
-		outMACDHist[i] = outMACD[i] - outMACDSignal[i]
+	i = 0
+	if _n4 := int(outNbElement2) - int(i); _n4 > 0 {
+		_r6 := outMACDSignal[i:][:_n4]
+		_r7 := outMACDHist[i:][:_n4]
+		for _k5 := range _r6 {
+			_r7[_k5] = outMACD[i+int32(_k5)] - _r6[_k5]
+		}
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outNbElement2

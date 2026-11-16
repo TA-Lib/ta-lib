@@ -81,28 +81,34 @@ func (c *Core) rvolImpl(startIdx, endIdx int32, inVolume []float64, optInTimePer
 	trailingIdx = startIdx - lookbackTotal
 	nullRun = 0
 	i = trailingIdx
-	for i < startIdx {
-		periodTotal += inVolume[i]
-		liveIn = b2i(!(math.Abs(inVolume[i]) <= 0.0))
-		nullRun = (nullRun + 1) & (liveIn - 1)
-		i = i + 1
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inVolume[i:][:_n0]
+		for _k1 := range _r2 {
+			periodTotal += _r2[_k1]
+			liveIn = b2i(!(math.Abs(_r2[_k1]) <= 0.0))
+			nullRun = (nullRun + 1) & (liveIn - 1)
+		}
+		i += int32(_n0)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		baseline = periodTotal / float64(optInTimePeriod)
-		trailingVolume = inVolume[trailingIdx]
-		trailingIdx = trailingIdx + 1
-		todayVolume = inVolume[i]
-		i = i + 1
-		outReal[outIdx] = todayVolume / baseline
-		outIdx = outIdx + 1
-		periodTotal -= trailingVolume
-		periodTotal += todayVolume
-		liveIn = b2i(!(math.Abs(todayVolume) <= 0.0))
-		nullRun = (nullRun + 1) & (liveIn - 1)
-		if nullRun >= optInTimePeriod {
-			periodTotal = 0.0
+	if _n3 := int(endIdx) - int(i) + 1; _n3 > 0 {
+		_r5 := inVolume[trailingIdx:][:_n3]
+		_r6 := inVolume[i:][:_n3]
+		_r7 := outReal[outIdx:][:_n3]
+		for _k4 := range _r5 {
+			baseline = periodTotal / float64(optInTimePeriod)
+			trailingVolume = _r5[_k4]
+			todayVolume = _r6[_k4]
+			_r7[_k4] = todayVolume / baseline
+			periodTotal -= trailingVolume
+			periodTotal += todayVolume
+			liveIn = b2i(!(math.Abs(todayVolume) <= 0.0))
+			nullRun = (nullRun + 1) & (liveIn - 1)
+			if nullRun >= optInTimePeriod {
+				periodTotal = 0.0
+			}
 		}
+		outIdx += int32(_n3)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

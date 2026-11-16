@@ -96,106 +96,124 @@ func (c *Core) vortexImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	sVMP = 0.0
 	sVMM = 0.0
 	nullRun = 0
-	for i = startIdx - optInTimePeriod + 1; i < startIdx; i += 1 {
-		tempLT = inLow[i]
-		tempHT = inHigh[i]
-		tempCY = inClose[i-1]
-		trueRange = tempHT - tempLT
-		tempDouble = math.Abs(tempCY - tempHT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
+	i = startIdx - optInTimePeriod + 1
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inLow[i:][:_n0]
+		_r3 := inHigh[i:][:_n0]
+		_r4 := inClose[i-1:][:_n0]
+		_r5 := inLow[i-1:][:_n0]
+		_r6 := inHigh[i-1:][:_n0]
+		for _k1 := range _r2 {
+			tempLT = _r2[_k1]
+			tempHT = _r3[_k1]
+			tempCY = _r4[_k1]
+			trueRange = tempHT - tempLT
+			tempDouble = math.Abs(tempCY - tempHT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			tempDouble = math.Abs(tempCY - tempLT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			sTR += trueRange
+			sVMP += math.Abs(_r3[_k1] - _r5[_k1])
+			sVMM += math.Abs(_r2[_k1] - _r6[_k1])
+			live = b2i(!(trueRange <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
 		}
-		tempDouble = math.Abs(tempCY - tempLT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		sTR += trueRange
-		sVMP += math.Abs(inHigh[i] - inLow[i-1])
-		sVMM += math.Abs(inLow[i] - inHigh[i-1])
-		live = b2i(!(trueRange <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
 	}
 	outIdx = 0
 	today = startIdx
 	trailingIdx = startIdx - optInTimePeriod + 1
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		trueRange = tempHT - tempLT
-		tempDouble = math.Abs(tempCY - tempHT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		tempDouble = math.Abs(tempCY - tempLT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		sTR += trueRange
-		sVMP += math.Abs(inHigh[today] - inLow[today-1])
-		sVMM += math.Abs(inLow[today] - inHigh[today-1])
-		live = b2i(!(trueRange <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			sTR = 0.0
-		}
-		curTR = sTR
-		curVMP = sVMP
-		curVMM = sVMM
-		tempLT = inLow[trailingIdx]
-		tempHT = inHigh[trailingIdx]
-		tempCY = inClose[trailingIdx-1]
-		trueRange = tempHT - tempLT
-		tempDouble = math.Abs(tempCY - tempHT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		tempDouble = math.Abs(tempCY - tempLT)
-		if tempDouble > trueRange {
-			trueRange = tempDouble
-		}
-		sTR -= trueRange
-		sVMP -= math.Abs(inHigh[trailingIdx] - inLow[trailingIdx-1])
-		sVMM -= math.Abs(inLow[trailingIdx] - inHigh[trailingIdx-1])
-		trailingIdx += 1
-		if curTR > 0.0 {
-			outPlusVI[outIdx] = curVMP / curTR
-			outMinusVI[outIdx] = curVMM / curTR
-		} else {
-			outPlusVI[outIdx] = 0.0
-			outMinusVI[outIdx] = 0.0
-		}
-		if sVMP < 0.0 || sVMM < 0.0 {
-			sTR = 0.0
-			sVMP = 0.0
-			sVMM = 0.0
-			seeded = 0
-			for i = today - optInTimePeriod; i <= today; i += 1 {
-				if seeded > 1 {
-					tempLT = inLow[i]
-					tempHT = inHigh[i]
-					trueRange = tempHT - tempLT
-					tempDouble = math.Abs(prevClose - tempHT)
-					if tempDouble > trueRange {
-						trueRange = tempDouble
+	if _n7 := int(endIdx) - int(today) + 1; _n7 > 0 {
+		_r9 := inLow[today:][:_n7]
+		_r10 := inHigh[today:][:_n7]
+		_r11 := inClose[today-1:][:_n7]
+		_r12 := inLow[today-1:][:_n7]
+		_r13 := inHigh[today-1:][:_n7]
+		_r14 := inLow[trailingIdx:][:_n7]
+		_r15 := inHigh[trailingIdx:][:_n7]
+		_r16 := inClose[trailingIdx-1:][:_n7]
+		_r17 := inLow[trailingIdx-1:][:_n7]
+		_r18 := inHigh[trailingIdx-1:][:_n7]
+		for _k8 := range _r9 {
+			tempLT = _r9[_k8]
+			tempHT = _r10[_k8]
+			tempCY = _r11[_k8]
+			trueRange = tempHT - tempLT
+			tempDouble = math.Abs(tempCY - tempHT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			tempDouble = math.Abs(tempCY - tempLT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			sTR += trueRange
+			sVMP += math.Abs(_r10[_k8] - _r12[_k8])
+			sVMM += math.Abs(_r9[_k8] - _r13[_k8])
+			live = b2i(!(trueRange <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				sTR = 0.0
+			}
+			curTR = sTR
+			curVMP = sVMP
+			curVMM = sVMM
+			tempLT = _r14[_k8]
+			tempHT = _r15[_k8]
+			tempCY = _r16[_k8]
+			trueRange = tempHT - tempLT
+			tempDouble = math.Abs(tempCY - tempHT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			tempDouble = math.Abs(tempCY - tempLT)
+			if tempDouble > trueRange {
+				trueRange = tempDouble
+			}
+			sTR -= trueRange
+			sVMP -= math.Abs(_r15[_k8] - _r17[_k8])
+			sVMM -= math.Abs(_r14[_k8] - _r18[_k8])
+			if curTR > 0.0 {
+				outPlusVI[outIdx+int32(_k8)] = curVMP / curTR
+				outMinusVI[outIdx+int32(_k8)] = curVMM / curTR
+			} else {
+				outPlusVI[outIdx+int32(_k8)] = 0.0
+				outMinusVI[outIdx+int32(_k8)] = 0.0
+			}
+			if sVMP < 0.0 || sVMM < 0.0 {
+				sTR = 0.0
+				sVMP = 0.0
+				sVMM = 0.0
+				seeded = 0
+				for i = today + int32(_k8) - optInTimePeriod; i <= today+int32(_k8); i += 1 {
+					if seeded > 1 {
+						tempLT = inLow[i]
+						tempHT = inHigh[i]
+						trueRange = tempHT - tempLT
+						tempDouble = math.Abs(prevClose - tempHT)
+						if tempDouble > trueRange {
+							trueRange = tempDouble
+						}
+						tempDouble = math.Abs(prevClose - tempLT)
+						if tempDouble > trueRange {
+							trueRange = tempDouble
+						}
+						sTR += trueRange
+						sVMP += math.Abs(tempHT - prevLow)
+						sVMM += math.Abs(tempLT - prevHigh)
 					}
-					tempDouble = math.Abs(prevClose - tempLT)
-					if tempDouble > trueRange {
-						trueRange = tempDouble
-					}
-					sTR += trueRange
-					sVMP += math.Abs(tempHT - prevLow)
-					sVMM += math.Abs(tempLT - prevHigh)
+					prevHigh = inHigh[i]
+					prevLow = inLow[i]
+					prevClose = inClose[i]
+					seeded += 1
 				}
-				prevHigh = inHigh[i]
-				prevLow = inLow[i]
-				prevClose = inClose[i]
-				seeded += 1
 			}
 		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n7)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

@@ -104,41 +104,45 @@ func (c *Core) plusDiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		prevHigh = inHigh[today]
 		prevLow = inLow[today]
 		prevClose = inClose[today]
-		for today < endIdx {
-			today += 1
-			tempReal = inHigh[today]
-			diffP = tempReal - prevHigh
-			prevHigh = tempReal
-			tempReal = inLow[today]
-			diffM = prevLow - tempReal
-			prevLow = tempReal
-			if diffP > 0.0 && diffP > diffM {
-				var _true_range_0 float64
-				var range_0 float64
-				range_0 = prevHigh - prevLow
-				var tmp_0 float64
-				tmp_0 = math.Abs(prevHigh - prevClose)
-				if tmp_0 > range_0 {
-					range_0 = tmp_0
-				}
-				tmp_0 = math.Abs(prevLow - prevClose)
-				if tmp_0 > range_0 {
-					range_0 = tmp_0
-				}
-				_true_range_0 = range_0
-				tempReal = _true_range_0
-				if tempReal <= 0.0 {
+		if _n0 := int(endIdx) - int(today); _n0 > 0 {
+			_r2 := inHigh[today+1:][:_n0]
+			_r3 := inLow[today+1:][:_n0]
+			_r4 := inClose[today+1:][:_n0]
+			for _k1 := range _r2 {
+				tempReal = _r2[_k1]
+				diffP = tempReal - prevHigh
+				prevHigh = tempReal
+				tempReal = _r3[_k1]
+				diffM = prevLow - tempReal
+				prevLow = tempReal
+				if diffP > 0.0 && diffP > diffM {
+					var _true_range_5 float64
+					var range_5 float64
+					range_5 = prevHigh - prevLow
+					var tmp_5 float64
+					tmp_5 = math.Abs(prevHigh - prevClose)
+					if tmp_5 > range_5 {
+						range_5 = tmp_5
+					}
+					tmp_5 = math.Abs(prevLow - prevClose)
+					if tmp_5 > range_5 {
+						range_5 = tmp_5
+					}
+					_true_range_5 = range_5
+					tempReal = _true_range_5
+					if tempReal <= 0.0 {
+						outReal[outIdx] = 0.0
+						outIdx++
+					} else {
+						outReal[outIdx] = diffP / tempReal
+						outIdx++
+					}
+				} else {
 					outReal[outIdx] = 0.0
 					outIdx++
-				} else {
-					outReal[outIdx] = diffP / tempReal
-					outIdx++
 				}
-			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				prevClose = _r4[_k1]
 			}
-			prevClose = inClose[today]
 		}
 		*outNBElement = outIdx
 		return Success
@@ -154,9 +158,9 @@ func (c *Core) plusDiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	prevClose = inClose[today]
 	i = optInTimePeriod - 1
 	for {
-		_C3 := i > 0
+		_C8 := i > 0
 		i--
-		if !_C3 {
+		if !_C8 {
 			break
 		}
 		today += 1
@@ -169,91 +173,13 @@ func (c *Core) plusDiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		tempReal = diffP - diffM
 		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
 		tempReal = prevPlusDM + plusDM1
-		var _T1 float64
+		var _T6 float64
 		if prevPlusDM > tempReal {
-			_T1 = prevPlusDM
+			_T6 = prevPlusDM
 		} else {
-			_T1 = tempReal
+			_T6 = tempReal
 		}
-		prevPlusDM = _T1
-		var _true_range_2 float64
-		var range_2 float64
-		range_2 = prevHigh - prevLow
-		var tmp_2 float64
-		tmp_2 = math.Abs(prevHigh - prevClose)
-		if tmp_2 > range_2 {
-			range_2 = tmp_2
-		}
-		tmp_2 = math.Abs(prevLow - prevClose)
-		if tmp_2 > range_2 {
-			range_2 = tmp_2
-		}
-		_true_range_2 = range_2
-		tempReal = _true_range_2
-		prevTR += tempReal
-		prevClose = inClose[today]
-	}
-	i = lookbackTotal - (optInTimePeriod - 1)
-	for {
-		_C6 := i != 0
-		i--
-		if !_C6 {
-			break
-		}
-		today += 1
-		tempReal = inHigh[today]
-		diffP = tempReal - prevHigh
-		prevHigh = tempReal
-		tempReal = inLow[today]
-		diffM = prevLow - tempReal
-		prevLow = tempReal
-		tempReal = diffP - diffM
-		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
-		tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
-		prevPlusDM = tempReal + plusDM1
-		var _T4 float64
-		if tempReal > prevPlusDM {
-			_T4 = tempReal
-		} else {
-			_T4 = prevPlusDM
-		}
-		prevPlusDM = _T4
-		var _true_range_5 float64
-		var range_5 float64
-		range_5 = prevHigh - prevLow
-		var tmp_5 float64
-		tmp_5 = math.Abs(prevHigh - prevClose)
-		if tmp_5 > range_5 {
-			range_5 = tmp_5
-		}
-		tmp_5 = math.Abs(prevLow - prevClose)
-		if tmp_5 > range_5 {
-			range_5 = tmp_5
-		}
-		_true_range_5 = range_5
-		tempReal = _true_range_5
-		prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
-		prevClose = inClose[today]
-	}
-	if prevTR > 0.0 {
-		outReal[0] = float64(100.0 * (prevPlusDM / prevTR))
-	} else {
-		outReal[0] = 0.0
-	}
-	outIdx = 1
-	for today < endIdx {
-		today += 1
-		tempReal = inHigh[today]
-		diffP = tempReal - prevHigh
-		prevHigh = tempReal
-		tempReal = inLow[today]
-		diffM = prevLow - tempReal
-		prevLow = tempReal
-		tempReal = diffP - diffM
-		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
-		tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
-		prevPlusDM = tempReal + plusDM1
-		prevPlusDM = selF(tempReal > prevPlusDM, tempReal, prevPlusDM)
+		prevPlusDM = _T6
 		var _true_range_7 float64
 		var range_7 float64
 		range_7 = prevHigh - prevLow
@@ -268,14 +194,96 @@ func (c *Core) plusDiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		}
 		_true_range_7 = range_7
 		tempReal = _true_range_7
+		prevTR += tempReal
+		prevClose = inClose[today]
+	}
+	i = lookbackTotal - (optInTimePeriod - 1)
+	for {
+		_C11 := i != 0
+		i--
+		if !_C11 {
+			break
+		}
+		today += 1
+		tempReal = inHigh[today]
+		diffP = tempReal - prevHigh
+		prevHigh = tempReal
+		tempReal = inLow[today]
+		diffM = prevLow - tempReal
+		prevLow = tempReal
+		tempReal = diffP - diffM
+		plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
+		tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
+		prevPlusDM = tempReal + plusDM1
+		var _T9 float64
+		if tempReal > prevPlusDM {
+			_T9 = tempReal
+		} else {
+			_T9 = prevPlusDM
+		}
+		prevPlusDM = _T9
+		var _true_range_10 float64
+		var range_10 float64
+		range_10 = prevHigh - prevLow
+		var tmp_10 float64
+		tmp_10 = math.Abs(prevHigh - prevClose)
+		if tmp_10 > range_10 {
+			range_10 = tmp_10
+		}
+		tmp_10 = math.Abs(prevLow - prevClose)
+		if tmp_10 > range_10 {
+			range_10 = tmp_10
+		}
+		_true_range_10 = range_10
+		tempReal = _true_range_10
 		prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
 		prevClose = inClose[today]
-		if prevTR > 0.0 {
-			outReal[outIdx] = float64(100.0 * (prevPlusDM / prevTR))
-			outIdx++
-		} else {
-			outReal[outIdx] = 0.0
-			outIdx++
+	}
+	if prevTR > 0.0 {
+		outReal[0] = float64(100.0 * (prevPlusDM / prevTR))
+	} else {
+		outReal[0] = 0.0
+	}
+	outIdx = 1
+	if _n12 := int(endIdx) - int(today); _n12 > 0 {
+		_r14 := inHigh[today+1:][:_n12]
+		_r15 := inLow[today+1:][:_n12]
+		_r16 := inClose[today+1:][:_n12]
+		for _k13 := range _r14 {
+			tempReal = _r14[_k13]
+			diffP = tempReal - prevHigh
+			prevHigh = tempReal
+			tempReal = _r15[_k13]
+			diffM = prevLow - tempReal
+			prevLow = tempReal
+			tempReal = diffP - diffM
+			plusDM1 = selF(tempReal > 0.0, diffP, 0.0)
+			tempReal = prevPlusDM - float64(prevPlusDM*invPeriod)
+			prevPlusDM = tempReal + plusDM1
+			prevPlusDM = selF(tempReal > prevPlusDM, tempReal, prevPlusDM)
+			var _true_range_17 float64
+			var range_17 float64
+			range_17 = prevHigh - prevLow
+			var tmp_17 float64
+			tmp_17 = math.Abs(prevHigh - prevClose)
+			if tmp_17 > range_17 {
+				range_17 = tmp_17
+			}
+			tmp_17 = math.Abs(prevLow - prevClose)
+			if tmp_17 > range_17 {
+				range_17 = tmp_17
+			}
+			_true_range_17 = range_17
+			tempReal = _true_range_17
+			prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
+			prevClose = _r16[_k13]
+			if prevTR > 0.0 {
+				outReal[outIdx] = float64(100.0 * (prevPlusDM / prevTR))
+				outIdx++
+			} else {
+				outReal[outIdx] = 0.0
+				outIdx++
+			}
 		}
 	}
 	*outNBElement = outIdx

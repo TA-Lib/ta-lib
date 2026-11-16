@@ -133,11 +133,17 @@ func (c *Core) kcImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 		return retCode
 	}
 	*outBegIdx = startIdx
-	for i = 0; i < *outNBElement; i += 1 {
-		middle = outRealMiddleBand[i]
-		tempReal = float64(tempATR[i] * optInNbDev)
-		outRealUpperBand[i] = middle + tempReal
-		outRealLowerBand[i] = middle - tempReal
+	i = 0
+	if _n3 := int(*outNBElement) - int(i); _n3 > 0 {
+		_r5 := outRealMiddleBand[i:][:_n3]
+		_r6 := outRealUpperBand[i:][:_n3]
+		_r7 := outRealLowerBand[i:][:_n3]
+		for _k4 := range _r5 {
+			middle = _r5[_k4]
+			tempReal = float64(tempATR[i+int32(_k4)] * optInNbDev)
+			_r6[_k4] = middle + tempReal
+			_r7[_k4] = middle - tempReal
+		}
 	}
 	return Success
 }

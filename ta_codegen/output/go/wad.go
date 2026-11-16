@@ -55,24 +55,31 @@ func (c *Core) wadImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	sum = 0.0
 	outIdx = 0
 	prevClose = inClose[startIdx]
-	for i = startIdx; i <= endIdx; i += 1 {
-		close_ = inClose[i]
-		if close_ > prevClose {
-			trueExtreme = inLow[i]
-			if prevClose < trueExtreme {
-				trueExtreme = prevClose
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inClose[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inHigh[i:][:_n0]
+		_r5 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			close_ = _r2[_k1]
+			if close_ > prevClose {
+				trueExtreme = _r3[_k1]
+				if prevClose < trueExtreme {
+					trueExtreme = prevClose
+				}
+				sum += close_ - trueExtreme
+			} else if close_ < prevClose {
+				trueExtreme = _r4[_k1]
+				if prevClose > trueExtreme {
+					trueExtreme = prevClose
+				}
+				sum += close_ - trueExtreme
 			}
-			sum += close_ - trueExtreme
-		} else if close_ < prevClose {
-			trueExtreme = inHigh[i]
-			if prevClose > trueExtreme {
-				trueExtreme = prevClose
-			}
-			sum += close_ - trueExtreme
+			_r5[_k1] = sum
+			prevClose = close_
 		}
-		outReal[outIdx] = sum
-		outIdx = outIdx + 1
-		prevClose = close_
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

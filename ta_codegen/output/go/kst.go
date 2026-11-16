@@ -269,246 +269,263 @@ func (c *Core) kstImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period
 	total1 = total2
 	inIdx = sigStart - (optInSMA1Period - 1)
 	den1 = inIdx - optInROC1Period
-	for inIdx < sigStart {
-		prior = inReal[den1]
-		den1 += 1
-		var _T0 float64
-		if prior != 0.0 {
-			_T0 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T0 = 0.0
+	if _n0 := int(sigStart) - int(inIdx); _n0 > 0 {
+		_r2 := inReal[den1:][:_n0]
+		for _k1 := range _r2 {
+			prior = _r2[_k1]
+			var _T3 float64
+			if prior != 0.0 {
+				_T3 = float64((inReal[inIdx+int32(_k1)]/prior - 1.0) * 100.0)
+			} else {
+				_T3 = 0.0
+			}
+			roc = _T3
+			total1 += roc
+			ring1[ring1_Idx] = roc
+			ring1_Idx++
+			if ring1_Idx > maxIdx_ring1 {
+				ring1_Idx = 0
+			}
 		}
-		roc = _T0
-		total1 += roc
-		ring1[ring1_Idx] = roc
-		ring1_Idx++
-		if ring1_Idx > maxIdx_ring1 {
-			ring1_Idx = 0
-		}
-		inIdx += 1
+		den1 += int32(_n0)
 	}
 	inIdx = sigStart - (optInSMA2Period - 1)
 	den2 = inIdx - optInROC2Period
-	for inIdx < sigStart {
-		prior = inReal[den2]
-		den2 += 1
-		var _T1 float64
-		if prior != 0.0 {
-			_T1 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T1 = 0.0
+	if _n4 := int(sigStart) - int(inIdx); _n4 > 0 {
+		_r6 := inReal[den2:][:_n4]
+		for _k5 := range _r6 {
+			prior = _r6[_k5]
+			var _T7 float64
+			if prior != 0.0 {
+				_T7 = float64((inReal[inIdx+int32(_k5)]/prior - 1.0) * 100.0)
+			} else {
+				_T7 = 0.0
+			}
+			roc = _T7
+			total2 += roc
+			ring2[ring2_Idx] = roc
+			ring2_Idx++
+			if ring2_Idx > maxIdx_ring2 {
+				ring2_Idx = 0
+			}
 		}
-		roc = _T1
-		total2 += roc
-		ring2[ring2_Idx] = roc
-		ring2_Idx++
-		if ring2_Idx > maxIdx_ring2 {
-			ring2_Idx = 0
-		}
-		inIdx += 1
+		den2 += int32(_n4)
 	}
 	inIdx = sigStart - (optInSMA3Period - 1)
 	den3 = inIdx - optInROC3Period
-	for inIdx < sigStart {
-		prior = inReal[den3]
-		den3 += 1
-		var _T2 float64
-		if prior != 0.0 {
-			_T2 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T2 = 0.0
+	if _n8 := int(sigStart) - int(inIdx); _n8 > 0 {
+		_r10 := inReal[den3:][:_n8]
+		for _k9 := range _r10 {
+			prior = _r10[_k9]
+			var _T11 float64
+			if prior != 0.0 {
+				_T11 = float64((inReal[inIdx+int32(_k9)]/prior - 1.0) * 100.0)
+			} else {
+				_T11 = 0.0
+			}
+			roc = _T11
+			total3 += roc
+			ring3[ring3_Idx] = roc
+			ring3_Idx++
+			if ring3_Idx > maxIdx_ring3 {
+				ring3_Idx = 0
+			}
 		}
-		roc = _T2
-		total3 += roc
-		ring3[ring3_Idx] = roc
-		ring3_Idx++
-		if ring3_Idx > maxIdx_ring3 {
-			ring3_Idx = 0
-		}
-		inIdx += 1
+		den3 += int32(_n8)
 	}
 	inIdx = sigStart - (optInSMA4Period - 1)
 	den4 = inIdx - optInROC4Period
-	for inIdx < sigStart {
-		prior = inReal[den4]
-		den4 += 1
-		var _T3 float64
-		if prior != 0.0 {
-			_T3 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T3 = 0.0
+	if _n12 := int(sigStart) - int(inIdx); _n12 > 0 {
+		_r14 := inReal[den4:][:_n12]
+		for _k13 := range _r14 {
+			prior = _r14[_k13]
+			var _T15 float64
+			if prior != 0.0 {
+				_T15 = float64((inReal[inIdx+int32(_k13)]/prior - 1.0) * 100.0)
+			} else {
+				_T15 = 0.0
+			}
+			roc = _T15
+			total4 += roc
+			ring4[ring4_Idx] = roc
+			ring4_Idx++
+			if ring4_Idx > maxIdx_ring4 {
+				ring4_Idx = 0
+			}
 		}
-		roc = _T3
-		total4 += roc
-		ring4[ring4_Idx] = roc
-		ring4_Idx++
-		if ring4_Idx > maxIdx_ring4 {
-			ring4_Idx = 0
-		}
-		inIdx += 1
+		den4 += int32(_n12)
 	}
 	inIdx = sigStart
-	for inIdx < startIdx {
-		prior = inReal[den1]
-		den1 += 1
-		var _T4 float64
-		if prior != 0.0 {
-			_T4 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T4 = 0.0
+	if _n16 := int(startIdx) - int(inIdx); _n16 > 0 {
+		_r18 := inReal[den1:][:_n16]
+		_r19 := inReal[den2:][:_n16]
+		_r20 := inReal[den3:][:_n16]
+		_r21 := inReal[den4:][:_n16]
+		for _k17 := range _r18 {
+			prior = _r18[_k17]
+			var _T22 float64
+			if prior != 0.0 {
+				_T22 = float64((inReal[inIdx+int32(_k17)]/prior - 1.0) * 100.0)
+			} else {
+				_T22 = 0.0
+			}
+			roc = _T22
+			total1 += roc
+			rcma1 = total1 / float64(optInSMA1Period)
+			ring1[ring1_Idx] = roc
+			ring1_Idx++
+			if ring1_Idx > maxIdx_ring1 {
+				ring1_Idx = 0
+			}
+			total1 -= ring1[ring1_Idx]
+			prior = _r19[_k17]
+			var _T23 float64
+			if prior != 0.0 {
+				_T23 = float64((inReal[inIdx+int32(_k17)]/prior - 1.0) * 100.0)
+			} else {
+				_T23 = 0.0
+			}
+			roc = _T23
+			total2 += roc
+			rcma2 = total2 / float64(optInSMA2Period)
+			ring2[ring2_Idx] = roc
+			ring2_Idx++
+			if ring2_Idx > maxIdx_ring2 {
+				ring2_Idx = 0
+			}
+			total2 -= ring2[ring2_Idx]
+			prior = _r20[_k17]
+			var _T24 float64
+			if prior != 0.0 {
+				_T24 = float64((inReal[inIdx+int32(_k17)]/prior - 1.0) * 100.0)
+			} else {
+				_T24 = 0.0
+			}
+			roc = _T24
+			total3 += roc
+			rcma3 = total3 / float64(optInSMA3Period)
+			ring3[ring3_Idx] = roc
+			ring3_Idx++
+			if ring3_Idx > maxIdx_ring3 {
+				ring3_Idx = 0
+			}
+			total3 -= ring3[ring3_Idx]
+			prior = _r21[_k17]
+			var _T25 float64
+			if prior != 0.0 {
+				_T25 = float64((inReal[inIdx+int32(_k17)]/prior - 1.0) * 100.0)
+			} else {
+				_T25 = 0.0
+			}
+			roc = _T25
+			total4 += roc
+			rcma4 = total4 / float64(optInSMA4Period)
+			ring4[ring4_Idx] = roc
+			ring4_Idx++
+			if ring4_Idx > maxIdx_ring4 {
+				ring4_Idx = 0
+			}
+			total4 -= ring4[ring4_Idx]
+			kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+			sigTotal += kst
+			sigRing[sigRing_Idx] = kst
+			sigRing_Idx++
+			if sigRing_Idx > maxIdx_sigRing {
+				sigRing_Idx = 0
+			}
 		}
-		roc = _T4
-		total1 += roc
-		rcma1 = total1 / float64(optInSMA1Period)
-		ring1[ring1_Idx] = roc
-		ring1_Idx++
-		if ring1_Idx > maxIdx_ring1 {
-			ring1_Idx = 0
-		}
-		total1 -= ring1[ring1_Idx]
-		prior = inReal[den2]
-		den2 += 1
-		var _T5 float64
-		if prior != 0.0 {
-			_T5 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T5 = 0.0
-		}
-		roc = _T5
-		total2 += roc
-		rcma2 = total2 / float64(optInSMA2Period)
-		ring2[ring2_Idx] = roc
-		ring2_Idx++
-		if ring2_Idx > maxIdx_ring2 {
-			ring2_Idx = 0
-		}
-		total2 -= ring2[ring2_Idx]
-		prior = inReal[den3]
-		den3 += 1
-		var _T6 float64
-		if prior != 0.0 {
-			_T6 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T6 = 0.0
-		}
-		roc = _T6
-		total3 += roc
-		rcma3 = total3 / float64(optInSMA3Period)
-		ring3[ring3_Idx] = roc
-		ring3_Idx++
-		if ring3_Idx > maxIdx_ring3 {
-			ring3_Idx = 0
-		}
-		total3 -= ring3[ring3_Idx]
-		prior = inReal[den4]
-		den4 += 1
-		var _T7 float64
-		if prior != 0.0 {
-			_T7 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T7 = 0.0
-		}
-		roc = _T7
-		total4 += roc
-		rcma4 = total4 / float64(optInSMA4Period)
-		ring4[ring4_Idx] = roc
-		ring4_Idx++
-		if ring4_Idx > maxIdx_ring4 {
-			ring4_Idx = 0
-		}
-		total4 -= ring4[ring4_Idx]
-		kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
-		sigTotal += kst
-		sigRing[sigRing_Idx] = kst
-		sigRing_Idx++
-		if sigRing_Idx > maxIdx_sigRing {
-			sigRing_Idx = 0
-		}
-		inIdx += 1
+		den1 += int32(_n16)
+		den2 += int32(_n16)
+		den3 += int32(_n16)
+		den4 += int32(_n16)
+		inIdx += int32(_n16)
 	}
 	outIdx = 0
-	for inIdx <= endIdx {
-		prior = inReal[den1]
-		den1 += 1
-		var _T8 float64
-		if prior != 0.0 {
-			_T8 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T8 = 0.0
+	if _n26 := int(endIdx) - int(inIdx) + 1; _n26 > 0 {
+		_r28 := inReal[den1:][:_n26]
+		_r29 := inReal[den2:][:_n26]
+		_r30 := inReal[den3:][:_n26]
+		_r31 := inReal[den4:][:_n26]
+		_r32 := outKST[outIdx:][:_n26]
+		_r33 := outKSTSignal[outIdx:][:_n26]
+		for _k27 := range _r28 {
+			prior = _r28[_k27]
+			var _T34 float64
+			if prior != 0.0 {
+				_T34 = float64((inReal[inIdx+int32(_k27)]/prior - 1.0) * 100.0)
+			} else {
+				_T34 = 0.0
+			}
+			roc = _T34
+			total1 += roc
+			rcma1 = total1 / float64(optInSMA1Period)
+			ring1[ring1_Idx] = roc
+			ring1_Idx++
+			if ring1_Idx > maxIdx_ring1 {
+				ring1_Idx = 0
+			}
+			total1 -= ring1[ring1_Idx]
+			prior = _r29[_k27]
+			var _T35 float64
+			if prior != 0.0 {
+				_T35 = float64((inReal[inIdx+int32(_k27)]/prior - 1.0) * 100.0)
+			} else {
+				_T35 = 0.0
+			}
+			roc = _T35
+			total2 += roc
+			rcma2 = total2 / float64(optInSMA2Period)
+			ring2[ring2_Idx] = roc
+			ring2_Idx++
+			if ring2_Idx > maxIdx_ring2 {
+				ring2_Idx = 0
+			}
+			total2 -= ring2[ring2_Idx]
+			prior = _r30[_k27]
+			var _T36 float64
+			if prior != 0.0 {
+				_T36 = float64((inReal[inIdx+int32(_k27)]/prior - 1.0) * 100.0)
+			} else {
+				_T36 = 0.0
+			}
+			roc = _T36
+			total3 += roc
+			rcma3 = total3 / float64(optInSMA3Period)
+			ring3[ring3_Idx] = roc
+			ring3_Idx++
+			if ring3_Idx > maxIdx_ring3 {
+				ring3_Idx = 0
+			}
+			total3 -= ring3[ring3_Idx]
+			prior = _r31[_k27]
+			var _T37 float64
+			if prior != 0.0 {
+				_T37 = float64((inReal[inIdx+int32(_k27)]/prior - 1.0) * 100.0)
+			} else {
+				_T37 = 0.0
+			}
+			roc = _T37
+			total4 += roc
+			rcma4 = total4 / float64(optInSMA4Period)
+			ring4[ring4_Idx] = roc
+			ring4_Idx++
+			if ring4_Idx > maxIdx_ring4 {
+				ring4_Idx = 0
+			}
+			total4 -= ring4[ring4_Idx]
+			kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+			sigTotal += kst
+			sig = sigTotal / float64(optInSignalPeriod)
+			sigRing[sigRing_Idx] = kst
+			sigRing_Idx++
+			if sigRing_Idx > maxIdx_sigRing {
+				sigRing_Idx = 0
+			}
+			sigTotal -= sigRing[sigRing_Idx]
+			_r32[_k27] = kst
+			_r33[_k27] = sig
 		}
-		roc = _T8
-		total1 += roc
-		rcma1 = total1 / float64(optInSMA1Period)
-		ring1[ring1_Idx] = roc
-		ring1_Idx++
-		if ring1_Idx > maxIdx_ring1 {
-			ring1_Idx = 0
-		}
-		total1 -= ring1[ring1_Idx]
-		prior = inReal[den2]
-		den2 += 1
-		var _T9 float64
-		if prior != 0.0 {
-			_T9 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T9 = 0.0
-		}
-		roc = _T9
-		total2 += roc
-		rcma2 = total2 / float64(optInSMA2Period)
-		ring2[ring2_Idx] = roc
-		ring2_Idx++
-		if ring2_Idx > maxIdx_ring2 {
-			ring2_Idx = 0
-		}
-		total2 -= ring2[ring2_Idx]
-		prior = inReal[den3]
-		den3 += 1
-		var _T10 float64
-		if prior != 0.0 {
-			_T10 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T10 = 0.0
-		}
-		roc = _T10
-		total3 += roc
-		rcma3 = total3 / float64(optInSMA3Period)
-		ring3[ring3_Idx] = roc
-		ring3_Idx++
-		if ring3_Idx > maxIdx_ring3 {
-			ring3_Idx = 0
-		}
-		total3 -= ring3[ring3_Idx]
-		prior = inReal[den4]
-		den4 += 1
-		var _T11 float64
-		if prior != 0.0 {
-			_T11 = float64((inReal[inIdx]/prior - 1.0) * 100.0)
-		} else {
-			_T11 = 0.0
-		}
-		roc = _T11
-		total4 += roc
-		rcma4 = total4 / float64(optInSMA4Period)
-		ring4[ring4_Idx] = roc
-		ring4_Idx++
-		if ring4_Idx > maxIdx_ring4 {
-			ring4_Idx = 0
-		}
-		total4 -= ring4[ring4_Idx]
-		kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
-		sigTotal += kst
-		sig = sigTotal / float64(optInSignalPeriod)
-		sigRing[sigRing_Idx] = kst
-		sigRing_Idx++
-		if sigRing_Idx > maxIdx_sigRing {
-			sigRing_Idx = 0
-		}
-		sigTotal -= sigRing[sigRing_Idx]
-		outKST[outIdx] = kst
-		outKSTSignal[outIdx] = sig
-		outIdx += 1
-		inIdx += 1
+		outIdx += int32(_n26)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

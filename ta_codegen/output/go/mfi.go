@@ -111,57 +111,64 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	negSumMF = 0.0
 	nullRun = 0
 	today += 1
-	for i = optInTimePeriod; i > 0; i -= 1 {
-		tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0
-		tempValue2 = tempValue1 - prevValue
-		tempValue3 = math.Abs(tempValue1) + math.Abs(prevValue)
-		prevValue = tempValue1
-		tempValue1 = float64(tempValue1 * inVolume[today])
-		today++
-		var _T0 float64
-		if isZeroScaled(tempValue2, tempValue3) {
-			_T0 = 0.0
-		} else {
-			_T0 = tempValue1
+	i = optInTimePeriod
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		_r4 := inClose[today:][:_n0]
+		_r5 := inVolume[today:][:_n0]
+		for _k1 := range _r2 {
+			tempValue1 = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
+			tempValue2 = tempValue1 - prevValue
+			tempValue3 = math.Abs(tempValue1) + math.Abs(prevValue)
+			prevValue = tempValue1
+			tempValue1 = float64(tempValue1 * _r5[_k1])
+			var _T6 float64
+			if isZeroScaled(tempValue2, tempValue3) {
+				_T6 = 0.0
+			} else {
+				_T6 = tempValue1
+			}
+			moneyFlow = _T6
+			posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+			negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
+			mflow_positive[mflow_Idx] = posFlow
+			mflow_negative[mflow_Idx] = negFlow
+			posSumMF += posFlow
+			negSumMF += negFlow
+			var _T7 int32
+			if moneyFlow == 0.0 {
+				_T7 = nullRun + 1
+			} else {
+				_T7 = 0
+			}
+			nullRun = _T7
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				posSumMF = 0.0
+				negSumMF = 0.0
+			}
+			mflow_Idx++
+			if mflow_Idx > maxIdx_mflow {
+				mflow_Idx = 0
+			}
 		}
-		moneyFlow = _T0
-		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
-		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
-		mflow_positive[mflow_Idx] = posFlow
-		mflow_negative[mflow_Idx] = negFlow
-		posSumMF += posFlow
-		negSumMF += negFlow
-		var _T1 int32
-		if moneyFlow == 0.0 {
-			_T1 = nullRun + 1
-		} else {
-			_T1 = 0
-		}
-		nullRun = _T1
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			posSumMF = 0.0
-			negSumMF = 0.0
-		}
-		mflow_Idx++
-		if mflow_Idx > maxIdx_mflow {
-			mflow_Idx = 0
-		}
+		today += int32(_n0)
 	}
 	tempValue1 = posSumMF + negSumMF
-	var _T3 float64
+	var _T9 float64
 	if posSumMF < 0.0 {
-		_T3 = 0.0
+		_T9 = 0.0
 	} else {
-		var _T2 float64
+		var _T8 float64
 		if posSumMF > tempValue1 {
-			_T2 = tempValue1
+			_T8 = tempValue1
 		} else {
-			_T2 = posSumMF
+			_T8 = posSumMF
 		}
-		_T3 = _T2
+		_T9 = _T8
 	}
-	posClamped = _T3
+	posClamped = _T9
 	if tempValue1 <= 0.0 {
 		outReal[outIdx] = 0.0
 		outIdx++
@@ -169,58 +176,63 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		outReal[outIdx] = float64(100.0 * (posClamped / tempValue1))
 		outIdx++
 	}
-	for today <= endIdx {
-		posSumMF -= mflow_positive[mflow_Idx]
-		negSumMF -= mflow_negative[mflow_Idx]
-		tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0
-		tempValue2 = tempValue1 - prevValue
-		tempValue3 = math.Abs(tempValue1) + math.Abs(prevValue)
-		prevValue = tempValue1
-		tempValue1 = float64(tempValue1 * inVolume[today])
-		today++
-		var _T4 float64
-		if isZeroScaled(tempValue2, tempValue3) {
-			_T4 = 0.0
-		} else {
-			_T4 = tempValue1
-		}
-		moneyFlow = _T4
-		posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
-		negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
-		mflow_positive[mflow_Idx] = posFlow
-		mflow_negative[mflow_Idx] = negFlow
-		posSumMF += posFlow
-		negSumMF += negFlow
-		var _T5 int32
-		if moneyFlow == 0.0 {
-			_T5 = nullRun + 1
-		} else {
-			_T5 = 0
-		}
-		nullRun = _T5
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			posSumMF = 0.0
-			negSumMF = 0.0
-		}
-		tempValue1 = posSumMF + negSumMF
-		var _T6 float64
-		if posSumMF < 0.0 {
-			_T6 = 0.0
-		} else {
-			_T6 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
-		}
-		posClamped = _T6
-		if tempValue1 <= 0.0 {
-			outReal[outIdx] = 0.0
-			outIdx++
-		} else {
-			outReal[outIdx] = float64(100.0 * (posClamped / tempValue1))
-			outIdx++
-		}
-		mflow_Idx++
-		if mflow_Idx > maxIdx_mflow {
-			mflow_Idx = 0
+	if _n10 := int(endIdx) - int(today) + 1; _n10 > 0 {
+		_r12 := inHigh[today:][:_n10]
+		_r13 := inLow[today:][:_n10]
+		_r14 := inClose[today:][:_n10]
+		_r15 := inVolume[today:][:_n10]
+		for _k11 := range _r12 {
+			posSumMF -= mflow_positive[mflow_Idx]
+			negSumMF -= mflow_negative[mflow_Idx]
+			tempValue1 = (_r12[_k11] + _r13[_k11] + _r14[_k11]) / 3.0
+			tempValue2 = tempValue1 - prevValue
+			tempValue3 = math.Abs(tempValue1) + math.Abs(prevValue)
+			prevValue = tempValue1
+			tempValue1 = float64(tempValue1 * _r15[_k11])
+			var _T16 float64
+			if isZeroScaled(tempValue2, tempValue3) {
+				_T16 = 0.0
+			} else {
+				_T16 = tempValue1
+			}
+			moneyFlow = _T16
+			posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
+			negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
+			mflow_positive[mflow_Idx] = posFlow
+			mflow_negative[mflow_Idx] = negFlow
+			posSumMF += posFlow
+			negSumMF += negFlow
+			var _T17 int32
+			if moneyFlow == 0.0 {
+				_T17 = nullRun + 1
+			} else {
+				_T17 = 0
+			}
+			nullRun = _T17
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				posSumMF = 0.0
+				negSumMF = 0.0
+			}
+			tempValue1 = posSumMF + negSumMF
+			var _T18 float64
+			if posSumMF < 0.0 {
+				_T18 = 0.0
+			} else {
+				_T18 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
+			}
+			posClamped = _T18
+			if tempValue1 <= 0.0 {
+				outReal[outIdx] = 0.0
+				outIdx++
+			} else {
+				outReal[outIdx] = float64(100.0 * (posClamped / tempValue1))
+				outIdx++
+			}
+			mflow_Idx++
+			if mflow_Idx > maxIdx_mflow {
+				mflow_Idx = 0
+			}
 		}
 	}
 	*outBegIdx = startIdx

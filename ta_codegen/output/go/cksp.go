@@ -204,22 +204,26 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	}
 	prevATR = periodTotal / float64(optInTimePeriod)
 	i = lookbackTotal - lastQ - optInTimePeriod
-	for i != 0 {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n1 := int(i); _n1 > 0 {
+		_r3 := inLow[today:][:_n1]
+		_r4 := inHigh[today:][:_n1]
+		_r5 := inClose[today-1:][:_n1]
+		for _k2 := range _r3 {
+			tempLT = _r3[_k2]
+			tempHT = _r4[_k2]
+			tempCY = _r5[_k2]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		today += 1
-		i -= 1
+		today += int32(_n1)
 	}
 	highest = inHigh[today-1]
 	lowest = inLow[today-1]
@@ -252,76 +256,81 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	if hsBuf_Idx > maxIdx_hsBuf {
 		hsBuf_Idx = 0
 	}
-	for today <= startIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
-		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		highest = hhPre
-		lowest = llPre
-		highest = selF(tempHT > highest, tempHT, highest)
-		lowest = selF(tempLT < lowest, tempLT, lowest)
-		if hhBuf_Idx == 0 {
-			highest = tempHT
-			lowest = tempLT
-		}
-		hhPre = highest
-		llPre = lowest
-		if hhBuf_Idx < lastP {
-			tempReal = hhBuf[hhBuf_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = llBuf[hhBuf_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		hhBuf[hhBuf_Idx] = tempHT
-		llBuf[hhBuf_Idx] = tempLT
-		hhBuf_Idx++
-		if hhBuf_Idx > maxIdx_hhBuf {
-			hhBuf_Idx = 0
-		}
-		if hhBuf_Idx == 0 {
-			sufHi = hhBuf[lastP]
-			sufLo = llBuf[lastP]
-			ip = lastP
-			for ip > 1 {
-				ip -= 1
-				tempReal = hhBuf[ip]
-				if tempReal > sufHi {
-					sufHi = tempReal
+	if _n6 := int(startIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inLow[today:][:_n6]
+		_r9 := inHigh[today:][:_n6]
+		_r10 := inClose[today-1:][:_n6]
+		for _k7 := range _r8 {
+			tempLT = _r8[_k7]
+			tempHT = _r9[_k7]
+			tempCY = _r10[_k7]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
+			highest = hhPre
+			lowest = llPre
+			highest = selF(tempHT > highest, tempHT, highest)
+			lowest = selF(tempLT < lowest, tempLT, lowest)
+			if hhBuf_Idx == 0 {
+				highest = tempHT
+				lowest = tempLT
+			}
+			hhPre = highest
+			llPre = lowest
+			if hhBuf_Idx < lastP {
+				tempReal = hhBuf[hhBuf_Idx+1]
+				highest = selF(tempReal > highest, tempReal, highest)
+				tempReal = llBuf[hhBuf_Idx+1]
+				lowest = selF(tempReal < lowest, tempReal, lowest)
+			}
+			hhBuf[hhBuf_Idx] = tempHT
+			llBuf[hhBuf_Idx] = tempLT
+			hhBuf_Idx++
+			if hhBuf_Idx > maxIdx_hhBuf {
+				hhBuf_Idx = 0
+			}
+			if hhBuf_Idx == 0 {
+				sufHi = hhBuf[lastP]
+				sufLo = llBuf[lastP]
+				ip = lastP
+				for ip > 1 {
+					ip -= 1
+					tempReal = hhBuf[ip]
+					if tempReal > sufHi {
+						sufHi = tempReal
+					}
+					hhBuf[ip] = sufHi
+					tempReal = llBuf[ip]
+					if tempReal < sufLo {
+						sufLo = tempReal
+					}
+					llBuf[ip] = sufLo
 				}
-				hhBuf[ip] = sufHi
-				tempReal = llBuf[ip]
-				if tempReal < sufLo {
-					sufLo = tempReal
-				}
-				llBuf[ip] = sufLo
+			}
+			band = float64(optInMultiplier * prevATR)
+			highStop = highest - band
+			lowStop = lowest + band
+			if highStop > hsPre {
+				hsPre = highStop
+			}
+			if lowStop < lsPre {
+				lsPre = lowStop
+			}
+			hsBuf[hsBuf_Idx] = highStop
+			lsBuf[hsBuf_Idx] = lowStop
+			hsBuf_Idx++
+			if hsBuf_Idx > maxIdx_hsBuf {
+				hsBuf_Idx = 0
 			}
 		}
-		band = float64(optInMultiplier * prevATR)
-		highStop = highest - band
-		lowStop = lowest + band
-		if highStop > hsPre {
-			hsPre = highStop
-		}
-		if lowStop < lsPre {
-			lsPre = lowStop
-		}
-		hsBuf[hsBuf_Idx] = highStop
-		lsBuf[hsBuf_Idx] = lowStop
-		hsBuf_Idx++
-		if hsBuf_Idx > maxIdx_hsBuf {
-			hsBuf_Idx = 0
-		}
-		today += 1
+		today += int32(_n6)
 	}
 	sufHi = hsBuf[lastQ]
 	sufLo = lsBuf[lastQ]
@@ -342,107 +351,113 @@ func (c *Core) ckspImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	outHighStop[0] = hsPre
 	outLowStop[0] = lsPre
 	outIdx = 1
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
-		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		highest = hhPre
-		lowest = llPre
-		highest = selF(tempHT > highest, tempHT, highest)
-		lowest = selF(tempLT < lowest, tempLT, lowest)
-		if hhBuf_Idx == 0 {
-			highest = tempHT
-			lowest = tempLT
-		}
-		hhPre = highest
-		llPre = lowest
-		if hhBuf_Idx < lastP {
-			tempReal = hhBuf[hhBuf_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = llBuf[hhBuf_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		hhBuf[hhBuf_Idx] = tempHT
-		llBuf[hhBuf_Idx] = tempLT
-		hhBuf_Idx++
-		if hhBuf_Idx > maxIdx_hhBuf {
-			hhBuf_Idx = 0
-		}
-		band = float64(optInMultiplier * prevATR)
-		highStop = highest - band
-		lowStop = lowest + band
-		highest = hsPre
-		lowest = lsPre
-		highest = selF(highStop > highest, highStop, highest)
-		lowest = selF(lowStop < lowest, lowStop, lowest)
-		if hsBuf_Idx == 0 {
-			highest = highStop
-			lowest = lowStop
-		}
-		hsPre = highest
-		lsPre = lowest
-		if hsBuf_Idx < lastQ {
-			tempReal = hsBuf[hsBuf_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = lsBuf[hsBuf_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		hsBuf[hsBuf_Idx] = highStop
-		lsBuf[hsBuf_Idx] = lowStop
-		hsBuf_Idx++
-		if hsBuf_Idx > maxIdx_hsBuf {
-			hsBuf_Idx = 0
-		}
-		outHighStop[outIdx] = highest
-		outLowStop[outIdx] = lowest
-		if hhBuf_Idx == 0 {
-			sufHi = hhBuf[lastP]
-			sufLo = llBuf[lastP]
-			ip = lastP
-			for ip > 1 {
-				ip -= 1
-				tempReal = hhBuf[ip]
-				if tempReal > sufHi {
-					sufHi = tempReal
+	if _n11 := int(endIdx) - int(today) + 1; _n11 > 0 {
+		_r13 := inLow[today:][:_n11]
+		_r14 := inHigh[today:][:_n11]
+		_r15 := inClose[today-1:][:_n11]
+		_r16 := outHighStop[outIdx:][:_n11]
+		_r17 := outLowStop[outIdx:][:_n11]
+		for _k12 := range _r13 {
+			tempLT = _r13[_k12]
+			tempHT = _r14[_k12]
+			tempCY = _r15[_k12]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
+			highest = hhPre
+			lowest = llPre
+			highest = selF(tempHT > highest, tempHT, highest)
+			lowest = selF(tempLT < lowest, tempLT, lowest)
+			if hhBuf_Idx == 0 {
+				highest = tempHT
+				lowest = tempLT
+			}
+			hhPre = highest
+			llPre = lowest
+			if hhBuf_Idx < lastP {
+				tempReal = hhBuf[hhBuf_Idx+1]
+				highest = selF(tempReal > highest, tempReal, highest)
+				tempReal = llBuf[hhBuf_Idx+1]
+				lowest = selF(tempReal < lowest, tempReal, lowest)
+			}
+			hhBuf[hhBuf_Idx] = tempHT
+			llBuf[hhBuf_Idx] = tempLT
+			hhBuf_Idx++
+			if hhBuf_Idx > maxIdx_hhBuf {
+				hhBuf_Idx = 0
+			}
+			band = float64(optInMultiplier * prevATR)
+			highStop = highest - band
+			lowStop = lowest + band
+			highest = hsPre
+			lowest = lsPre
+			highest = selF(highStop > highest, highStop, highest)
+			lowest = selF(lowStop < lowest, lowStop, lowest)
+			if hsBuf_Idx == 0 {
+				highest = highStop
+				lowest = lowStop
+			}
+			hsPre = highest
+			lsPre = lowest
+			if hsBuf_Idx < lastQ {
+				tempReal = hsBuf[hsBuf_Idx+1]
+				highest = selF(tempReal > highest, tempReal, highest)
+				tempReal = lsBuf[hsBuf_Idx+1]
+				lowest = selF(tempReal < lowest, tempReal, lowest)
+			}
+			hsBuf[hsBuf_Idx] = highStop
+			lsBuf[hsBuf_Idx] = lowStop
+			hsBuf_Idx++
+			if hsBuf_Idx > maxIdx_hsBuf {
+				hsBuf_Idx = 0
+			}
+			_r16[_k12] = highest
+			_r17[_k12] = lowest
+			if hhBuf_Idx == 0 {
+				sufHi = hhBuf[lastP]
+				sufLo = llBuf[lastP]
+				ip = lastP
+				for ip > 1 {
+					ip -= 1
+					tempReal = hhBuf[ip]
+					if tempReal > sufHi {
+						sufHi = tempReal
+					}
+					hhBuf[ip] = sufHi
+					tempReal = llBuf[ip]
+					if tempReal < sufLo {
+						sufLo = tempReal
+					}
+					llBuf[ip] = sufLo
 				}
-				hhBuf[ip] = sufHi
-				tempReal = llBuf[ip]
-				if tempReal < sufLo {
-					sufLo = tempReal
+			}
+			if hsBuf_Idx == 0 {
+				sufHi = hsBuf[lastQ]
+				sufLo = lsBuf[lastQ]
+				iq = lastQ
+				for iq > 1 {
+					iq -= 1
+					tempReal = hsBuf[iq]
+					if tempReal > sufHi {
+						sufHi = tempReal
+					}
+					hsBuf[iq] = sufHi
+					tempReal = lsBuf[iq]
+					if tempReal < sufLo {
+						sufLo = tempReal
+					}
+					lsBuf[iq] = sufLo
 				}
-				llBuf[ip] = sufLo
 			}
 		}
-		if hsBuf_Idx == 0 {
-			sufHi = hsBuf[lastQ]
-			sufLo = lsBuf[lastQ]
-			iq = lastQ
-			for iq > 1 {
-				iq -= 1
-				tempReal = hsBuf[iq]
-				if tempReal > sufHi {
-					sufHi = tempReal
-				}
-				hsBuf[iq] = sufHi
-				tempReal = lsBuf[iq]
-				if tempReal < sufLo {
-					sufLo = tempReal
-				}
-				lsBuf[iq] = sufLo
-			}
-		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n11)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

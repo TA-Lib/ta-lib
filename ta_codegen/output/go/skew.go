@@ -101,12 +101,16 @@ func (c *Core) skewImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	total1 = 0.0
 	total2 = 0.0
 	total3 = 0.0
-	for j = trailingIdx; j < startIdx; j += 1 {
-		dev = inReal[j] - shift
-		dev2 = float64(dev * dev)
-		total1 += dev
-		total2 += dev2
-		total3 += float64(dev2 * dev)
+	j = trailingIdx
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inReal[j:][:_n0]
+		for _k1 := range _r2 {
+			dev = _r2[_k1] - shift
+			dev2 = float64(dev * dev)
+			total1 += dev
+			total2 += dev2
+			total3 += float64(dev2 * dev)
+		}
 	}
 	i = startIdx
 	outIdx = 0
@@ -128,19 +132,27 @@ func (c *Core) skewImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 			barsSinceReseed = reseedPeriod
 			windowStart = i - nbInitialElementNeeded
 			tempReal = 0.0
-			for j = windowStart; j <= i; j += 1 {
-				tempReal += inReal[j]
+			j = windowStart
+			if _n3 := int(i) - int(j) + 1; _n3 > 0 {
+				_r5 := inReal[j:][:_n3]
+				for _k4 := range _r5 {
+					tempReal += _r5[_k4]
+				}
 			}
 			shift = float64(tempReal * invPeriod)
 			total1 = 0.0
 			total2 = 0.0
 			total3 = 0.0
-			for j = windowStart; j <= i; j += 1 {
-				dev = inReal[j] - shift
-				dev2 = float64(dev * dev)
-				total1 += dev
-				total2 += dev2
-				total3 += float64(dev2 * dev)
+			j = windowStart
+			if _n6 := int(i) - int(j) + 1; _n6 > 0 {
+				_r8 := inReal[j:][:_n6]
+				for _k7 := range _r8 {
+					dev = _r8[_k7] - shift
+					dev2 = float64(dev * dev)
+					total1 += dev
+					total2 += dev2
+					total3 += float64(dev2 * dev)
+				}
 			}
 			residue = float64(total1 * invPeriod)
 			residueSq = float64(residue * residue)
@@ -151,12 +163,16 @@ func (c *Core) skewImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 				total1 = 0.0
 				total2 = 0.0
 				total3 = 0.0
-				for j = windowStart; j <= i; j += 1 {
-					dev = inReal[j] - shift
-					dev2 = float64(dev * dev)
-					total1 += dev
-					total2 += dev2
-					total3 += float64(dev2 * dev)
+				j = windowStart
+				if _n9 := int(i) - int(j) + 1; _n9 > 0 {
+					_r11 := inReal[j:][:_n9]
+					for _k10 := range _r11 {
+						dev = _r11[_k10] - shift
+						dev2 = float64(dev * dev)
+						total1 += dev
+						total2 += dev2
+						total3 += float64(dev2 * dev)
+					}
 				}
 				residue = float64(total1 * invPeriod)
 				residueSq = float64(residue * residue)

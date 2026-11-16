@@ -122,16 +122,20 @@ func (c *Core) sharpeImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	shift = ret
 	periodTotal1 = 0.0
 	periodTotal2 = 0.0
-	for j = trailingIdx + 1; j < startIdx; j += 1 {
-		price = inReal[j]
-		ret = 0.0
-		if prevPrice != 0.0 {
-			ret = (price - prevPrice) / prevPrice
+	j = trailingIdx + 1
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inReal[j:][:_n0]
+		for _k1 := range _r2 {
+			price = _r2[_k1]
+			ret = 0.0
+			if prevPrice != 0.0 {
+				ret = (price - prevPrice) / prevPrice
+			}
+			prevPrice = price
+			dev = ret - shift
+			periodTotal1 += dev
+			periodTotal2 += float64(dev * dev)
 		}
-		prevPrice = price
-		dev = ret - shift
-		periodTotal1 += dev
-		periodTotal2 += float64(dev * dev)
 	}
 	i = startIdx
 	outIdx = 0
@@ -166,39 +170,28 @@ func (c *Core) sharpeImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 			windowStart = i - optInTimePeriod + 1
 			windowPrevPrice = inReal[windowStart-1]
 			dev = 0.0
-			for j = windowStart; j <= i; j += 1 {
-				price = inReal[j]
-				ret = 0.0
-				if windowPrevPrice != 0.0 {
-					ret = (price - windowPrevPrice) / windowPrevPrice
+			j = windowStart
+			if _n3 := int(i) - int(j) + 1; _n3 > 0 {
+				_r5 := inReal[j:][:_n3]
+				for _k4 := range _r5 {
+					price = _r5[_k4]
+					ret = 0.0
+					if windowPrevPrice != 0.0 {
+						ret = (price - windowPrevPrice) / windowPrevPrice
+					}
+					windowPrevPrice = price
+					dev += ret
 				}
-				windowPrevPrice = price
-				dev += ret
 			}
 			shift = float64(dev * invPeriod)
 			windowPrevPrice = inReal[windowStart-1]
 			periodTotal1 = 0.0
 			periodTotal2 = 0.0
-			for j = windowStart; j <= i; j += 1 {
-				price = inReal[j]
-				ret = 0.0
-				if windowPrevPrice != 0.0 {
-					ret = (price - windowPrevPrice) / windowPrevPrice
-				}
-				windowPrevPrice = price
-				dev = ret - shift
-				periodTotal1 += dev
-				periodTotal2 += float64(dev * dev)
-			}
-			meanDev = float64(periodTotal1 * invPeriod)
-			moment2 = periodTotal2 - float64(meanDev*periodTotal1)
-			if moment2 < float64(1e-6*periodTotal2) {
-				shift = ret
-				windowPrevPrice = inReal[windowStart-1]
-				periodTotal1 = 0.0
-				periodTotal2 = 0.0
-				for j = windowStart; j <= i; j += 1 {
-					price = inReal[j]
+			j = windowStart
+			if _n6 := int(i) - int(j) + 1; _n6 > 0 {
+				_r8 := inReal[j:][:_n6]
+				for _k7 := range _r8 {
+					price = _r8[_k7]
 					ret = 0.0
 					if windowPrevPrice != 0.0 {
 						ret = (price - windowPrevPrice) / windowPrevPrice
@@ -207,6 +200,29 @@ func (c *Core) sharpeImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 					dev = ret - shift
 					periodTotal1 += dev
 					periodTotal2 += float64(dev * dev)
+				}
+			}
+			meanDev = float64(periodTotal1 * invPeriod)
+			moment2 = periodTotal2 - float64(meanDev*periodTotal1)
+			if moment2 < float64(1e-6*periodTotal2) {
+				shift = ret
+				windowPrevPrice = inReal[windowStart-1]
+				periodTotal1 = 0.0
+				periodTotal2 = 0.0
+				j = windowStart
+				if _n9 := int(i) - int(j) + 1; _n9 > 0 {
+					_r11 := inReal[j:][:_n9]
+					for _k10 := range _r11 {
+						price = _r11[_k10]
+						ret = 0.0
+						if windowPrevPrice != 0.0 {
+							ret = (price - windowPrevPrice) / windowPrevPrice
+						}
+						windowPrevPrice = price
+						dev = ret - shift
+						periodTotal1 += dev
+						periodTotal2 += float64(dev * dev)
+					}
 				}
 				meanDev = float64(periodTotal1 * invPeriod)
 				moment2 = periodTotal2 - float64(meanDev*periodTotal1)

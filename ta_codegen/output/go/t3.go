@@ -110,10 +110,13 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 		*outBegIdx = startIdx
 		outIdx = 0
 		today = startIdx
-		for today <= endIdx {
-			outReal[outIdx] = inReal[today]
-			outIdx++
-			today++
+		if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inReal[today:][:_n0]
+			_r3 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				_r3[_k1] = _r2[_k1]
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -124,64 +127,91 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 	one_minus_k = 1.0 - k
 	tempReal = inReal[today]
 	today++
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		tempReal += inReal[today]
-		today++
+	i = optInTimePeriod - 1
+	if _n4 := int(i); _n4 > 0 {
+		_r6 := inReal[today:][:_n4]
+		for _k5 := range _r6 {
+			tempReal += _r6[_k5]
+		}
+		today += int32(_n4)
 	}
 	e1 = tempReal / float64(optInTimePeriod)
 	tempReal = e1
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		tempReal += e1
+	i = optInTimePeriod - 1
+	if _n7 := int(i); _n7 > 0 {
+		_r9 := inReal[today:][:_n7]
+		for _k8 := range _r9 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r9[_k8]))
+			tempReal += e1
+		}
+		today += int32(_n7)
 	}
 	e2 = tempReal / float64(optInTimePeriod)
 	tempReal = e2
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		tempReal += e2
+	i = optInTimePeriod - 1
+	if _n10 := int(i); _n10 > 0 {
+		_r12 := inReal[today:][:_n10]
+		for _k11 := range _r12 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r12[_k11]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			tempReal += e2
+		}
+		today += int32(_n10)
 	}
 	e3 = tempReal / float64(optInTimePeriod)
 	tempReal = e3
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		e3 = math.FMA(one_minus_k, e3, float64(k*e2))
-		tempReal += e3
+	i = optInTimePeriod - 1
+	if _n13 := int(i); _n13 > 0 {
+		_r15 := inReal[today:][:_n13]
+		for _k14 := range _r15 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r15[_k14]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
+			tempReal += e3
+		}
+		today += int32(_n13)
 	}
 	e4 = tempReal / float64(optInTimePeriod)
 	tempReal = e4
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		e3 = math.FMA(one_minus_k, e3, float64(k*e2))
-		e4 = math.FMA(one_minus_k, e4, float64(k*e3))
-		tempReal += e4
+	i = optInTimePeriod - 1
+	if _n16 := int(i); _n16 > 0 {
+		_r18 := inReal[today:][:_n16]
+		for _k17 := range _r18 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r18[_k17]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
+			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
+			tempReal += e4
+		}
+		today += int32(_n16)
 	}
 	e5 = tempReal / float64(optInTimePeriod)
 	tempReal = e5
-	for i = optInTimePeriod - 1; i > 0; i -= 1 {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		e3 = math.FMA(one_minus_k, e3, float64(k*e2))
-		e4 = math.FMA(one_minus_k, e4, float64(k*e3))
-		e5 = math.FMA(one_minus_k, e5, float64(k*e4))
-		tempReal += e5
+	i = optInTimePeriod - 1
+	if _n19 := int(i); _n19 > 0 {
+		_r21 := inReal[today:][:_n19]
+		for _k20 := range _r21 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r21[_k20]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
+			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
+			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
+			tempReal += e5
+		}
+		today += int32(_n19)
 	}
 	e6 = tempReal / float64(optInTimePeriod)
-	for today <= startIdx {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		e3 = math.FMA(one_minus_k, e3, float64(k*e2))
-		e4 = math.FMA(one_minus_k, e4, float64(k*e3))
-		e5 = math.FMA(one_minus_k, e5, float64(k*e4))
-		e6 = math.FMA(one_minus_k, e6, float64(k*e5))
+	if _n22 := int(startIdx) - int(today) + 1; _n22 > 0 {
+		_r24 := inReal[today:][:_n22]
+		for _k23 := range _r24 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r24[_k23]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
+			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
+			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
+			e6 = math.FMA(one_minus_k, e6, float64(k*e5))
+		}
+		today += int32(_n22)
 	}
 	tempReal = float64(optInVFactor * optInVFactor)
 	c1 = -float64(tempReal * optInVFactor)
@@ -191,16 +221,19 @@ func (c *Core) t3Impl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 	outIdx = 0
 	outReal[outIdx] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
 	outIdx++
-	for today <= endIdx {
-		e1 = math.FMA(one_minus_k, e1, float64(k*inReal[today]))
-		today++
-		e2 = math.FMA(one_minus_k, e2, float64(k*e1))
-		e3 = math.FMA(one_minus_k, e3, float64(k*e2))
-		e4 = math.FMA(one_minus_k, e4, float64(k*e3))
-		e5 = math.FMA(one_minus_k, e5, float64(k*e4))
-		e6 = math.FMA(one_minus_k, e6, float64(k*e5))
-		outReal[outIdx] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
-		outIdx++
+	if _n25 := int(endIdx) - int(today) + 1; _n25 > 0 {
+		_r27 := inReal[today:][:_n25]
+		_r28 := outReal[outIdx:][:_n25]
+		for _k26 := range _r27 {
+			e1 = math.FMA(one_minus_k, e1, float64(k*_r27[_k26]))
+			e2 = math.FMA(one_minus_k, e2, float64(k*e1))
+			e3 = math.FMA(one_minus_k, e3, float64(k*e2))
+			e4 = math.FMA(one_minus_k, e4, float64(k*e3))
+			e5 = math.FMA(one_minus_k, e5, float64(k*e4))
+			e6 = math.FMA(one_minus_k, e6, float64(k*e5))
+			_r28[_k26] = math.FMA(c4, e3, math.FMA(c3, e4, math.FMA(c1, e6, float64(c2*e5))))
+		}
+		outIdx += int32(_n25)
 	}
 	*outNBElement = outIdx
 	return Success

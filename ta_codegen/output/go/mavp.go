@@ -138,24 +138,28 @@ func (c *Core) mavpImpl(startIdx, endIdx int32, inReal, inPeriods []float64, opt
 	if optInMinPeriod == optInMaxPeriod {
 		maxUsed = minUsed
 	} else {
-		for i = 0; i < outputSize; i += 1 {
-			tempPeriod = inPeriods[startIdx+i]
-			if !(tempPeriod >= minPeriodReal) {
-				tempInt = optInMinPeriod
-			} else if tempPeriod > maxPeriodReal {
-				tempInt = optInMaxPeriod
-			} else {
-				tempInt = f2i(tempPeriod)
-			}
-			if tempInt < 1 {
-				tempInt = 1
-			}
-			localPeriodArray[i] = tempInt
-			if tempInt < minUsed {
-				minUsed = tempInt
-			}
-			if tempInt > maxUsed {
-				maxUsed = tempInt
+		i = 0
+		if _n0 := int(outputSize) - int(i); _n0 > 0 {
+			_r2 := inPeriods[startIdx+i:][:_n0]
+			for _k1 := range _r2 {
+				tempPeriod = _r2[_k1]
+				if !(tempPeriod >= minPeriodReal) {
+					tempInt = optInMinPeriod
+				} else if tempPeriod > maxPeriodReal {
+					tempInt = optInMaxPeriod
+				} else {
+					tempInt = f2i(tempPeriod)
+				}
+				if tempInt < 1 {
+					tempInt = 1
+				}
+				localPeriodArray[i+int32(_k1)] = tempInt
+				if tempInt < minUsed {
+					minUsed = tempInt
+				}
+				if tempInt > maxUsed {
+					maxUsed = tempInt
+				}
 			}
 		}
 	}
@@ -163,9 +167,9 @@ func (c *Core) mavpImpl(startIdx, endIdx int32, inReal, inPeriods []float64, opt
 		return BadParam
 	}
 	if minUsed == maxUsed {
-		_, _E0 := c.MA(int(startIdx), int(endIdx), inReal, int(minUsed), MAType(optInMAType), localFinalArray)
-		if _E0 != nil {
-			return _E0.(RetCode)
+		_, _E3 := c.MA(int(startIdx), int(endIdx), inReal, int(minUsed), MAType(optInMAType), localFinalArray)
+		if _E3 != nil {
+			return _E3.(RetCode)
 		}
 	} else {
 		localOutputArray = make([]float64, outputSize)
@@ -192,9 +196,9 @@ func (c *Core) mavpImpl(startIdx, endIdx int32, inReal, inPeriods []float64, opt
 			if bucketEnd > bucketStart {
 				firstOccurrence = sortedIdx[bucketStart]
 				lastOccurrence = sortedIdx[bucketEnd-1]
-				_, _E1 := c.MA(int(startIdx), int(startIdx+lastOccurrence), inReal, int(curPeriod), MAType(optInMAType), localOutputArray)
-				if _E1 != nil {
-					return _E1.(RetCode)
+				_, _E4 := c.MA(int(startIdx), int(startIdx+lastOccurrence), inReal, int(curPeriod), MAType(optInMAType), localOutputArray)
+				if _E4 != nil {
+					return _E4.(RetCode)
 				}
 				if lastOccurrence-firstOccurrence == bucketEnd-1-bucketStart {
 					copy(localFinalArray[firstOccurrence:], localOutputArray[firstOccurrence:firstOccurrence+(bucketEnd-bucketStart)])

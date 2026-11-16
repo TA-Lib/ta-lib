@@ -120,9 +120,14 @@ func (c *Core) ichimokuImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 	if _E3 != nil {
 		return _E3.(RetCode)
 	}
-	for i = 0; i < n; i += 1 {
-		outTenkanSen[i] = tempT[i]
-		outKijunSen[i] = tempK[i]
+	i = 0
+	if _n4 := int(n) - int(i); _n4 > 0 {
+		_r6 := outTenkanSen[i:][:_n4]
+		_r7 := outKijunSen[i:][:_n4]
+		for _k5 := range _r6 {
+			_r6[_k5] = tempT[i+int32(_k5)]
+			_r7[_k5] = tempK[i+int32(_k5)]
+		}
 	}
 	*outBegIdx = startIdx
 	*outNBElement = n

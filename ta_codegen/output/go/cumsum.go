@@ -52,9 +52,14 @@ func (c *Core) cumsumImpl(startIdx, endIdx int32, inReal []float64, outBegIdx, o
 	total = 0.0
 	i = startIdx
 	outIdx = 0
-	for ; i <= endIdx; i, outIdx = i+1, outIdx+1 {
-		total += inReal[i]
-		outReal[outIdx] = total
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inReal[i:][:_n0]
+		_r3 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			total += _r2[_k1]
+			_r3[_k1] = total
+		}
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

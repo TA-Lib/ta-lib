@@ -104,48 +104,58 @@ func (c *Core) emvImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []float64
 	prevMid = (inHigh[i] + inLow[i]) / 2.0
 	i = i + 1
 	periodTotal = 0.0
-	for i < startIdx {
-		mid = (inHigh[i] + inLow[i]) / 2.0
-		range_ = inHigh[i] - inLow[i]
-		raw = 0.0
-		if range_ != 0.0 {
-			boxRatio = inVolume[i] / optInVolumeDivisor / range_
-			if boxRatio != 0.0 {
-				raw = (mid - prevMid) / boxRatio
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inVolume[i:][:_n0]
+		for _k1 := range _r2 {
+			mid = (_r2[_k1] + _r3[_k1]) / 2.0
+			range_ = _r2[_k1] - _r3[_k1]
+			raw = 0.0
+			if range_ != 0.0 {
+				boxRatio = _r4[_k1] / optInVolumeDivisor / range_
+				if boxRatio != 0.0 {
+					raw = (mid - prevMid) / boxRatio
+				}
+			}
+			prevMid = mid
+			rawBuffer[rawBuffer_Idx] = raw
+			periodTotal += raw
+			rawBuffer_Idx++
+			if rawBuffer_Idx > maxIdx_rawBuffer {
+				rawBuffer_Idx = 0
 			}
 		}
-		prevMid = mid
-		i = i + 1
-		rawBuffer[rawBuffer_Idx] = raw
-		periodTotal += raw
-		rawBuffer_Idx++
-		if rawBuffer_Idx > maxIdx_rawBuffer {
-			rawBuffer_Idx = 0
-		}
+		i += int32(_n0)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		mid = (inHigh[i] + inLow[i]) / 2.0
-		range_ = inHigh[i] - inLow[i]
-		raw = 0.0
-		if range_ != 0.0 {
-			boxRatio = inVolume[i] / optInVolumeDivisor / range_
-			if boxRatio != 0.0 {
-				raw = (mid - prevMid) / boxRatio
+	if _n5 := int(endIdx) - int(i) + 1; _n5 > 0 {
+		_r7 := inHigh[i:][:_n5]
+		_r8 := inLow[i:][:_n5]
+		_r9 := inVolume[i:][:_n5]
+		_r10 := outReal[outIdx:][:_n5]
+		for _k6 := range _r7 {
+			mid = (_r7[_k6] + _r8[_k6]) / 2.0
+			range_ = _r7[_k6] - _r8[_k6]
+			raw = 0.0
+			if range_ != 0.0 {
+				boxRatio = _r9[_k6] / optInVolumeDivisor / range_
+				if boxRatio != 0.0 {
+					raw = (mid - prevMid) / boxRatio
+				}
 			}
+			prevMid = mid
+			rawBuffer[rawBuffer_Idx] = raw
+			periodTotal += raw
+			tempReal = periodTotal
+			rawBuffer_Idx++
+			if rawBuffer_Idx > maxIdx_rawBuffer {
+				rawBuffer_Idx = 0
+			}
+			periodTotal -= rawBuffer[rawBuffer_Idx]
+			_r10[_k6] = tempReal / float64(optInTimePeriod)
 		}
-		prevMid = mid
-		i = i + 1
-		rawBuffer[rawBuffer_Idx] = raw
-		periodTotal += raw
-		tempReal = periodTotal
-		rawBuffer_Idx++
-		if rawBuffer_Idx > maxIdx_rawBuffer {
-			rawBuffer_Idx = 0
-		}
-		periodTotal -= rawBuffer[rawBuffer_Idx]
-		outReal[outIdx] = tempReal / float64(optInTimePeriod)
-		outIdx = outIdx + 1
+		outIdx += int32(_n5)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

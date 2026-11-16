@@ -80,15 +80,17 @@ func (c *Core) mcgdImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	prevMD = inReal[today]
 	today += 1
 	i = lookbackTotal
-	for i != 0 {
-		tempReal = inReal[today]
-		ratio = tempReal / prevMD
-		tempMD = prevMD + (tempReal-prevMD)/float64(period*float64(float64(ratio*ratio)*float64(ratio*ratio)))
-		if isFinite(tempMD) {
-			prevMD = tempMD
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1]
+			ratio = tempReal / prevMD
+			tempMD = prevMD + (tempReal-prevMD)/float64(period*float64(float64(ratio*ratio)*float64(ratio*ratio)))
+			if isFinite(tempMD) {
+				prevMD = tempMD
+			}
 		}
-		today += 1
-		i -= 1
+		today += int32(_n0)
 	}
 	outIdx = 1
 	outReal[0] = prevMD

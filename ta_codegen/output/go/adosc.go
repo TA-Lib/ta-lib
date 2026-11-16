@@ -124,32 +124,44 @@ func (c *Core) adoscImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolum
 	today += 1
 	fastEMA = ad
 	slowEMA = ad
-	for today < startIdx {
-		high = inHigh[today]
-		low = inLow[today]
-		tmp = high - low
-		close_ = inClose[today]
-		if tmp > 0.0 {
-			ad += float64((close_ - low - (high - close_)) / tmp * inVolume[today])
+	if _n0 := int(startIdx) - int(today); _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		_r4 := inClose[today:][:_n0]
+		_r5 := inVolume[today:][:_n0]
+		for _k1 := range _r2 {
+			high = _r2[_k1]
+			low = _r3[_k1]
+			tmp = high - low
+			close_ = _r4[_k1]
+			if tmp > 0.0 {
+				ad += float64((close_ - low - (high - close_)) / tmp * _r5[_k1])
+			}
+			fastEMA = math.FMA(one_minus_fastk, fastEMA, float64(fastk*ad))
+			slowEMA = math.FMA(one_minus_slowk, slowEMA, float64(slowk*ad))
 		}
-		today += 1
-		fastEMA = math.FMA(one_minus_fastk, fastEMA, float64(fastk*ad))
-		slowEMA = math.FMA(one_minus_slowk, slowEMA, float64(slowk*ad))
+		today += int32(_n0)
 	}
 	outIdx = 0
-	for today <= endIdx {
-		high = inHigh[today]
-		low = inLow[today]
-		tmp = high - low
-		close_ = inClose[today]
-		if tmp > 0.0 {
-			ad += float64((close_ - low - (high - close_)) / tmp * inVolume[today])
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inHigh[today:][:_n6]
+		_r9 := inLow[today:][:_n6]
+		_r10 := inClose[today:][:_n6]
+		_r11 := inVolume[today:][:_n6]
+		_r12 := outReal[outIdx:][:_n6]
+		for _k7 := range _r8 {
+			high = _r8[_k7]
+			low = _r9[_k7]
+			tmp = high - low
+			close_ = _r10[_k7]
+			if tmp > 0.0 {
+				ad += float64((close_ - low - (high - close_)) / tmp * _r11[_k7])
+			}
+			fastEMA = math.FMA(one_minus_fastk, fastEMA, float64(fastk*ad))
+			slowEMA = math.FMA(one_minus_slowk, slowEMA, float64(slowk*ad))
+			_r12[_k7] = fastEMA - slowEMA
 		}
-		today += 1
-		fastEMA = math.FMA(one_minus_fastk, fastEMA, float64(fastk*ad))
-		slowEMA = math.FMA(one_minus_slowk, slowEMA, float64(slowk*ad))
-		outReal[outIdx] = fastEMA - slowEMA
-		outIdx++
+		outIdx += int32(_n6)
 	}
 	*outNBElement = outIdx
 	return Success

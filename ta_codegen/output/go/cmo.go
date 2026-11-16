@@ -95,14 +95,18 @@ func (c *Core) cmoImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	prevGain = 0.0
 	prevLoss = 0.0
 	today += 1
-	for i = optInTimePeriod; i > 0; i -= 1 {
-		tempValue1 = inReal[today]
-		today++
-		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
-		prevGain += gainDelta
-		prevLoss += gainDelta - tempValue2
+	i = optInTimePeriod
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			tempValue1 = _r2[_k1]
+			tempValue2 = tempValue1 - prevValue
+			prevValue = tempValue1
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+			prevGain += gainDelta
+			prevLoss += gainDelta - tempValue2
+		}
+		today += int32(_n0)
 	}
 	prevLoss /= float64(optInTimePeriod)
 	prevGain /= float64(optInTimePeriod)
@@ -116,31 +120,36 @@ func (c *Core) cmoImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			outIdx++
 		}
 	} else {
-		for today < startIdx {
-			tempValue1 = inReal[today]
+		if _n3 := int(startIdx) - int(today); _n3 > 0 {
+			_r5 := inReal[today:][:_n3]
+			for _k4 := range _r5 {
+				tempValue1 = _r5[_k4]
+				tempValue2 = tempValue1 - prevValue
+				prevValue = tempValue1
+				gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+				prevGain += float64(gainDelta*invPeriod) - float64(prevGain*invPeriod)
+				prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
+			}
+			today += int32(_n3)
+		}
+	}
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inReal[today:][:_n6]
+		for _k7 := range _r8 {
+			tempValue1 = _r8[_k7]
 			tempValue2 = tempValue1 - prevValue
 			prevValue = tempValue1
 			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevGain += float64(gainDelta*invPeriod) - float64(prevGain*invPeriod)
 			prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
-			today += 1
-		}
-	}
-	for today <= endIdx {
-		tempValue1 = inReal[today]
-		today++
-		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
-		prevGain += float64(gainDelta*invPeriod) - float64(prevGain*invPeriod)
-		prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
-		tempValue1 = prevGain + prevLoss
-		if tempValue1 > 0.0 {
-			outReal[outIdx] = float64(100.0 * ((prevGain - prevLoss) / tempValue1))
-			outIdx++
-		} else {
-			outReal[outIdx] = 0.0
-			outIdx++
+			tempValue1 = prevGain + prevLoss
+			if tempValue1 > 0.0 {
+				outReal[outIdx] = float64(100.0 * ((prevGain - prevLoss) / tempValue1))
+				outIdx++
+			} else {
+				outReal[outIdx] = 0.0
+				outIdx++
+			}
 		}
 	}
 	*outBegIdx = startIdx

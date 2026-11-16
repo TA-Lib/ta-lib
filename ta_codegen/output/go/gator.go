@@ -204,25 +204,33 @@ func (c *Core) gatorImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInJ
 	if _E2 != nil {
 		return _E2.(RetCode)
 	}
-	for i = 0; i < nbElement; i += 1 {
-		outUpper[i] = math.Abs(tempA[i] - tempB[i])
-	}
-	_, _E3 := c.RMA(int(localStart-backTeethLower), int(localEnd), tempMP, int(optInTeethPeriod), tempA)
-	if _E3 != nil {
-		return _E3.(RetCode)
-	}
-	_, _E4 := c.RMA(int(localStart-backLips), int(localEnd), tempMP, int(optInLipsPeriod), tempB)
-	if _E4 != nil {
-		return _E4.(RetCode)
-	}
-	for i = 0; i < nbElement; i += 1 {
-		var _T5 float64
-		if tempA[i] < tempB[i] {
-			_T5 = tempA[i] - tempB[i]
-		} else {
-			_T5 = tempB[i] - tempA[i]
+	i = 0
+	if _n3 := int(nbElement) - int(i); _n3 > 0 {
+		_r5 := outUpper[i:][:_n3]
+		for _k4 := range _r5 {
+			_r5[_k4] = math.Abs(tempA[i+int32(_k4)] - tempB[i+int32(_k4)])
 		}
-		outLower[i] = _T5
+	}
+	_, _E6 := c.RMA(int(localStart-backTeethLower), int(localEnd), tempMP, int(optInTeethPeriod), tempA)
+	if _E6 != nil {
+		return _E6.(RetCode)
+	}
+	_, _E7 := c.RMA(int(localStart-backLips), int(localEnd), tempMP, int(optInLipsPeriod), tempB)
+	if _E7 != nil {
+		return _E7.(RetCode)
+	}
+	i = 0
+	if _n8 := int(nbElement) - int(i); _n8 > 0 {
+		_r10 := outLower[i:][:_n8]
+		for _k9 := range _r10 {
+			var _T11 float64
+			if tempA[i+int32(_k9)] < tempB[i+int32(_k9)] {
+				_T11 = tempA[i+int32(_k9)] - tempB[i+int32(_k9)]
+			} else {
+				_T11 = tempB[i+int32(_k9)] - tempA[i+int32(_k9)]
+			}
+			_r10[_k9] = _T11
+		}
 	}
 	*outBegIdx = startIdx
 	*outNBElement = nbElement

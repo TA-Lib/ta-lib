@@ -113,57 +113,63 @@ func (c *Core) crsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	prevClose = inReal[anchorIdx]
 	outIdx = 0
 	today = anchorIdx + 1
-	for today <= endIdx {
-		close_ = inReal[today]
-		if close_ > prevClose {
-			var _T0 float64
-			if streak > 0.0 {
-				_T0 = streak + 1.0
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			close_ = _r2[_k1]
+			if close_ > prevClose {
+				var _T3 float64
+				if streak > 0.0 {
+					_T3 = streak + 1.0
+				} else {
+					_T3 = 1.0
+				}
+				streak = _T3
+			} else if close_ < prevClose {
+				var _T4 float64
+				if streak < 0.0 {
+					_T4 = streak - 1.0
+				} else {
+					_T4 = -1.0
+				}
+				streak = _T4
 			} else {
-				_T0 = 1.0
+				streak = 0.0
 			}
-			streak = _T0
-		} else if close_ < prevClose {
-			var _T1 float64
-			if streak < 0.0 {
-				_T1 = streak - 1.0
-			} else {
-				_T1 = -1.0
-			}
-			streak = _T1
-		} else {
-			streak = 0.0
+			tempStreak[outIdx+int32(_k1)] = streak
+			prevClose = close_
 		}
-		tempStreak[outIdx] = streak
-		outIdx++
-		prevClose = close_
-		today += 1
+		outIdx += int32(_n0)
 	}
-	_X2, _E2 := c.RSI(0, int(outIdx-1), tempStreak, int(optInStreakPeriod), tempStreakRSI)
-	if _E2 != nil {
-		return _E2.(RetCode)
-	}
-	streakNb = int32(_X2.NBElement)
-	_X3, _E3 := c.RSI(int(anchorIdx+c.rsiLookback(optInTimePeriod)), int(endIdx), inReal, int(optInTimePeriod), tempRSI)
-	if _E3 != nil {
-		return _E3.(RetCode)
-	}
-	rsiNb = int32(_X3.NBElement)
-	_X4, _E4 := c.ROCP(int(startIdx-optInRankPeriod), int(endIdx), inReal, 1, tempStreak)
-	if _E4 != nil {
-		return _E4.(RetCode)
-	}
-	rocNb = int32(_X4.NBElement)
-	_X5, _E5 := c.PERCENTRANK(0, int(rocNb-1), tempStreak, int(optInRankPeriod), outReal)
+	_X5, _E5 := c.RSI(0, int(outIdx-1), tempStreak, int(optInStreakPeriod), tempStreakRSI)
 	if _E5 != nil {
 		return _E5.(RetCode)
 	}
-	*outBegIdx = int32(_X5.BegIdx)
-	*outNBElement = int32(_X5.NBElement)
+	streakNb = int32(_X5.NBElement)
+	_X6, _E6 := c.RSI(int(anchorIdx+c.rsiLookback(optInTimePeriod)), int(endIdx), inReal, int(optInTimePeriod), tempRSI)
+	if _E6 != nil {
+		return _E6.(RetCode)
+	}
+	rsiNb = int32(_X6.NBElement)
+	_X7, _E7 := c.ROCP(int(startIdx-optInRankPeriod), int(endIdx), inReal, 1, tempStreak)
+	if _E7 != nil {
+		return _E7.(RetCode)
+	}
+	rocNb = int32(_X7.NBElement)
+	_X8, _E8 := c.PERCENTRANK(0, int(rocNb-1), tempStreak, int(optInRankPeriod), outReal)
+	if _E8 != nil {
+		return _E8.(RetCode)
+	}
+	*outBegIdx = int32(_X8.BegIdx)
+	*outNBElement = int32(_X8.NBElement)
 	offsetRSI = rsiNb - *outNBElement
 	offsetStreak = streakNb - *outNBElement
-	for i = 0; i < *outNBElement; i += 1 {
-		outReal[i] = (tempRSI[i+offsetRSI] + tempStreakRSI[i+offsetStreak] + outReal[i]) / 3.0
+	i = 0
+	if _n9 := int(*outNBElement) - int(i); _n9 > 0 {
+		_r11 := outReal[i:][:_n9]
+		for _k10 := range _r11 {
+			_r11[_k10] = (tempRSI[i+int32(_k10)+offsetRSI] + tempStreakRSI[i+int32(_k10)+offsetStreak] + _r11[_k10]) / 3.0
+		}
 	}
 	*outBegIdx = startIdx
 	return Success

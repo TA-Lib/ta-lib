@@ -240,16 +240,22 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		fastToday++
 	}
 	prevFast = prevFast / float64(optInFastPeriod)
-	for today < fastToday {
-		tempReal = inReal[today]
-		today++
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+	if _n2 := int(fastToday) - int(today); _n2 > 0 {
+		_r4 := inReal[today:][:_n2]
+		for _k3 := range _r4 {
+			tempReal = _r4[_k3]
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		}
+		today += int32(_n2)
 	}
-	for today <= lineStart {
-		tempReal = inReal[today]
-		today++
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+	if _n5 := int(lineStart) - int(today) + 1; _n5 > 0 {
+		_r7 := inReal[today:][:_n5]
+		for _k6 := range _r7 {
+			tempReal = _r7[_k6]
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		}
+		today += int32(_n5)
 	}
 	frac1 = 0.0
 	frac2 = 0.0
@@ -267,81 +273,190 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 	lineHi = lineValue
 	lineLo = lineValue
 	nLine = 1
-	for today <= startIdx {
-		tempReal = inReal[today]
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-		lineValue = prevFast - prevSlow
-		nLine = nLine + 1
-		lineRing[lineRing_Idx] = lineValue
-		if lineRing_Idx == 0 {
-			lineHi = lineValue
-			lineLo = lineValue
-		} else {
-			if lineValue > lineHi {
+	if _n8 := int(startIdx) - int(today) + 1; _n8 > 0 {
+		_r10 := inReal[today:][:_n8]
+		for _k9 := range _r10 {
+			tempReal = _r10[_k9]
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			lineValue = prevFast - prevSlow
+			lineRing[lineRing_Idx] = lineValue
+			if lineRing_Idx == 0 {
 				lineHi = lineValue
-			}
-			if lineValue < lineLo {
 				lineLo = lineValue
+			} else {
+				if lineValue > lineHi {
+					lineHi = lineValue
+				}
+				if lineValue < lineLo {
+					lineLo = lineValue
+				}
+			}
+			highest = lineHi
+			lowest = lineLo
+			if nLine+int32(_k9)+1 >= optInCyclePeriod && lineRing_Idx < lastIdx {
+				tempReal = lineSufHi[lineRing_Idx+1]
+				highest = selF(tempReal > highest, tempReal, highest)
+				tempReal = lineSufLo[lineRing_Idx+1]
+				lowest = selF(tempReal < lowest, tempReal, lowest)
+			}
+			lineRing_Idx++
+			if lineRing_Idx > maxIdx_lineRing {
+				lineRing_Idx = 0
+			}
+			if lineRing_Idx == 0 {
+				sufHi = lineRing[lastIdx]
+				sufLo = sufHi
+				lineSufHi[lastIdx] = sufHi
+				lineSufLo[lastIdx] = sufLo
+				i = lastIdx
+				for i > 0 {
+					i -= 1
+					tempReal = lineRing[i]
+					if tempReal > sufHi {
+						sufHi = tempReal
+					}
+					if tempReal < sufLo {
+						sufLo = tempReal
+					}
+					lineSufHi[i] = sufHi
+					lineSufLo[i] = sufLo
+				}
+			}
+			if nLine+int32(_k9)+1 >= optInCyclePeriod {
+				range_ = highest - lowest
+				if range_ > 0.0 {
+					frac1 = float64((lineValue - lowest) / range_ * 100.0)
+				}
+				if nPF == 0 {
+					pf = frac1
+				} else {
+					pf = math.FMA(0.5, frac1-pf, pf)
+				}
+				nPF = nPF + 1
+				pfRing[pfRing_Idx] = pf
+				if pfRing_Idx == 0 {
+					pfHi = pf
+					pfLo = pf
+				} else {
+					if pf > pfHi {
+						pfHi = pf
+					}
+					if pf < pfLo {
+						pfLo = pf
+					}
+				}
+				highest = pfHi
+				lowest = pfLo
+				if nPF >= optInCyclePeriod && pfRing_Idx < lastIdx {
+					tempReal = pfSufHi[pfRing_Idx+1]
+					highest = selF(tempReal > highest, tempReal, highest)
+					tempReal = pfSufLo[pfRing_Idx+1]
+					lowest = selF(tempReal < lowest, tempReal, lowest)
+				}
+				pfRing_Idx++
+				if pfRing_Idx > maxIdx_pfRing {
+					pfRing_Idx = 0
+				}
+				if pfRing_Idx == 0 {
+					sufHi = pfRing[lastIdx]
+					sufLo = sufHi
+					pfSufHi[lastIdx] = sufHi
+					pfSufLo[lastIdx] = sufLo
+					i = lastIdx
+					for i > 0 {
+						i -= 1
+						tempReal = pfRing[i]
+						if tempReal > sufHi {
+							sufHi = tempReal
+						}
+						if tempReal < sufLo {
+							sufLo = tempReal
+						}
+						pfSufHi[i] = sufHi
+						pfSufLo[i] = sufLo
+					}
+				}
+				if nPF >= optInCyclePeriod {
+					range_ = highest - lowest
+					if range_ > 0.0 {
+						frac2 = float64((pf - lowest) / range_ * 100.0)
+					}
+					if nPF == optInCyclePeriod {
+						pff = frac2
+					} else {
+						pff = math.FMA(0.5, frac2-pff, pff)
+					}
+				}
 			}
 		}
-		highest = lineHi
-		lowest = lineLo
-		if nLine >= optInCyclePeriod && lineRing_Idx < lastIdx {
-			tempReal = lineSufHi[lineRing_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = lineSufLo[lineRing_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		lineRing_Idx++
-		if lineRing_Idx > maxIdx_lineRing {
-			lineRing_Idx = 0
-		}
-		if lineRing_Idx == 0 {
-			sufHi = lineRing[lastIdx]
-			sufLo = sufHi
-			lineSufHi[lastIdx] = sufHi
-			lineSufLo[lastIdx] = sufLo
-			i = lastIdx
-			for i > 0 {
-				i -= 1
-				tempReal = lineRing[i]
-				if tempReal > sufHi {
-					sufHi = tempReal
-				}
-				if tempReal < sufLo {
-					sufLo = tempReal
-				}
-				lineSufHi[i] = sufHi
-				lineSufLo[i] = sufLo
+		today += int32(_n8)
+	}
+	outReal[0] = pff
+	outIdx = 1
+	if _n11 := int(endIdx) - int(today) + 1; _n11 > 0 {
+		_r13 := inReal[today:][:_n11]
+		_r14 := outReal[outIdx:][:_n11]
+		for _k12 := range _r13 {
+			tempReal = _r13[_k12]
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			lineValue = prevFast - prevSlow
+			lineRing[lineRing_Idx] = lineValue
+			if lineRing_Idx == 0 {
+				lineHi = lineValue
+				lineLo = lineValue
+			} else {
+				lineHi = selF(lineValue > lineHi, lineValue, lineHi)
+				lineLo = selF(lineValue < lineLo, lineValue, lineLo)
 			}
-		}
-		if nLine >= optInCyclePeriod {
+			highest = lineHi
+			lowest = lineLo
+			if lineRing_Idx < lastIdx {
+				tempReal = lineSufHi[lineRing_Idx+1]
+				highest = selF(tempReal > highest, tempReal, highest)
+				tempReal = lineSufLo[lineRing_Idx+1]
+				lowest = selF(tempReal < lowest, tempReal, lowest)
+			}
+			lineRing_Idx++
+			if lineRing_Idx > maxIdx_lineRing {
+				lineRing_Idx = 0
+			}
+			if lineRing_Idx == 0 {
+				sufHi = lineRing[lastIdx]
+				sufLo = sufHi
+				lineSufHi[lastIdx] = sufHi
+				lineSufLo[lastIdx] = sufLo
+				i = lastIdx
+				for i > 0 {
+					i -= 1
+					tempReal = lineRing[i]
+					if tempReal > sufHi {
+						sufHi = tempReal
+					}
+					if tempReal < sufLo {
+						sufLo = tempReal
+					}
+					lineSufHi[i] = sufHi
+					lineSufLo[i] = sufLo
+				}
+			}
 			range_ = highest - lowest
 			if range_ > 0.0 {
 				frac1 = float64((lineValue - lowest) / range_ * 100.0)
 			}
-			if nPF == 0 {
-				pf = frac1
-			} else {
-				pf = math.FMA(0.5, frac1-pf, pf)
-			}
-			nPF = nPF + 1
+			pf = math.FMA(0.5, frac1-pf, pf)
 			pfRing[pfRing_Idx] = pf
 			if pfRing_Idx == 0 {
 				pfHi = pf
 				pfLo = pf
 			} else {
-				if pf > pfHi {
-					pfHi = pf
-				}
-				if pf < pfLo {
-					pfLo = pf
-				}
+				pfHi = selF(pf > pfHi, pf, pfHi)
+				pfLo = selF(pf < pfLo, pf, pfLo)
 			}
 			highest = pfHi
 			lowest = pfLo
-			if nPF >= optInCyclePeriod && pfRing_Idx < lastIdx {
+			if pfRing_Idx < lastIdx {
 				tempReal = pfSufHi[pfRing_Idx+1]
 				highest = selF(tempReal > highest, tempReal, highest)
 				tempReal = pfSufLo[pfRing_Idx+1]
@@ -370,118 +485,14 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 					pfSufLo[i] = sufLo
 				}
 			}
-			if nPF >= optInCyclePeriod {
-				range_ = highest - lowest
-				if range_ > 0.0 {
-					frac2 = float64((pf - lowest) / range_ * 100.0)
-				}
-				if nPF == optInCyclePeriod {
-					pff = frac2
-				} else {
-					pff = math.FMA(0.5, frac2-pff, pff)
-				}
+			range_ = highest - lowest
+			if range_ > 0.0 {
+				frac2 = float64((pf - lowest) / range_ * 100.0)
 			}
+			pff = math.FMA(0.5, frac2-pff, pff)
+			_r14[_k12] = pff
 		}
-		today = today + 1
-	}
-	outReal[0] = pff
-	outIdx = 1
-	for today <= endIdx {
-		tempReal = inReal[today]
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-		lineValue = prevFast - prevSlow
-		lineRing[lineRing_Idx] = lineValue
-		if lineRing_Idx == 0 {
-			lineHi = lineValue
-			lineLo = lineValue
-		} else {
-			lineHi = selF(lineValue > lineHi, lineValue, lineHi)
-			lineLo = selF(lineValue < lineLo, lineValue, lineLo)
-		}
-		highest = lineHi
-		lowest = lineLo
-		if lineRing_Idx < lastIdx {
-			tempReal = lineSufHi[lineRing_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = lineSufLo[lineRing_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		lineRing_Idx++
-		if lineRing_Idx > maxIdx_lineRing {
-			lineRing_Idx = 0
-		}
-		if lineRing_Idx == 0 {
-			sufHi = lineRing[lastIdx]
-			sufLo = sufHi
-			lineSufHi[lastIdx] = sufHi
-			lineSufLo[lastIdx] = sufLo
-			i = lastIdx
-			for i > 0 {
-				i -= 1
-				tempReal = lineRing[i]
-				if tempReal > sufHi {
-					sufHi = tempReal
-				}
-				if tempReal < sufLo {
-					sufLo = tempReal
-				}
-				lineSufHi[i] = sufHi
-				lineSufLo[i] = sufLo
-			}
-		}
-		range_ = highest - lowest
-		if range_ > 0.0 {
-			frac1 = float64((lineValue - lowest) / range_ * 100.0)
-		}
-		pf = math.FMA(0.5, frac1-pf, pf)
-		pfRing[pfRing_Idx] = pf
-		if pfRing_Idx == 0 {
-			pfHi = pf
-			pfLo = pf
-		} else {
-			pfHi = selF(pf > pfHi, pf, pfHi)
-			pfLo = selF(pf < pfLo, pf, pfLo)
-		}
-		highest = pfHi
-		lowest = pfLo
-		if pfRing_Idx < lastIdx {
-			tempReal = pfSufHi[pfRing_Idx+1]
-			highest = selF(tempReal > highest, tempReal, highest)
-			tempReal = pfSufLo[pfRing_Idx+1]
-			lowest = selF(tempReal < lowest, tempReal, lowest)
-		}
-		pfRing_Idx++
-		if pfRing_Idx > maxIdx_pfRing {
-			pfRing_Idx = 0
-		}
-		if pfRing_Idx == 0 {
-			sufHi = pfRing[lastIdx]
-			sufLo = sufHi
-			pfSufHi[lastIdx] = sufHi
-			pfSufLo[lastIdx] = sufLo
-			i = lastIdx
-			for i > 0 {
-				i -= 1
-				tempReal = pfRing[i]
-				if tempReal > sufHi {
-					sufHi = tempReal
-				}
-				if tempReal < sufLo {
-					sufLo = tempReal
-				}
-				pfSufHi[i] = sufHi
-				pfSufLo[i] = sufLo
-			}
-		}
-		range_ = highest - lowest
-		if range_ > 0.0 {
-			frac2 = float64((pf - lowest) / range_ * 100.0)
-		}
-		pff = math.FMA(0.5, frac2-pff, pff)
-		outReal[outIdx] = pff
-		outIdx++
-		today = today + 1
+		outIdx += int32(_n11)
 	}
 	*outNBElement = outIdx
 	return Success

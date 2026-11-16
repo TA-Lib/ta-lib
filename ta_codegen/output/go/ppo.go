@@ -122,55 +122,72 @@ func (c *Core) ppoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		}
 		_fastTrailing = _fastStart - (optInFastPeriod - 1)
 		_fastTotal = 0.0
-		for _j = _fastTrailing; _j < _fastStart; _j += 1 {
-			_fastTotal += inReal[_j]
+		_j = _fastTrailing
+		if _n0 := int(_fastStart) - int(_j); _n0 > 0 {
+			_r2 := inReal[_j:][:_n0]
+			for _k1 := range _r2 {
+				_fastTotal += _r2[_k1]
+			}
 		}
 		_slowLookback = optInSlowPeriod - 1
 		_zeroRun = 0
 		_slowTrailing = _slowStart - _slowLookback
 		_slowTotal = 0.0
-		for _j = _slowTrailing; _j < _slowStart; _j += 1 {
-			_slowTotal += inReal[_j]
-			var _T0 int32
-			if math.Abs(inReal[_j]) <= 0.0 {
-				_T0 = _zeroRun + 1
-			} else {
-				_T0 = 0
+		_j = _slowTrailing
+		if _n3 := int(_slowStart) - int(_j); _n3 > 0 {
+			_r5 := inReal[_j:][:_n3]
+			for _k4 := range _r5 {
+				_slowTotal += _r5[_k4]
+				var _T6 int32
+				if math.Abs(_r5[_k4]) <= 0.0 {
+					_T6 = _zeroRun + 1
+				} else {
+					_T6 = 0
+				}
+				_zeroRun = _T6
 			}
-			_zeroRun = _T0
 		}
-		for _i = _fastStart; _i < _slowStart; _i += 1 {
-			_fastTotal += inReal[_i]
-			_fastTotal -= inReal[_fastTrailing]
-			_fastTrailing += 1
+		_i = _fastStart
+		if _n7 := int(_slowStart) - int(_i); _n7 > 0 {
+			_r9 := inReal[_i:][:_n7]
+			_r10 := inReal[_fastTrailing:][:_n7]
+			for _k8 := range _r9 {
+				_fastTotal += _r9[_k8]
+				_fastTotal -= _r10[_k8]
+			}
+			_fastTrailing += int32(_n7)
 		}
 		_outIdx = 0
-		for _i = _slowStart; _i <= endIdx; _i += 1 {
-			var _T1 int32
-			if math.Abs(inReal[_i]) <= 0.0 {
-				_T1 = _zeroRun + 1
-			} else {
-				_T1 = 0
+		_i = _slowStart
+		if _n11 := int(endIdx) - int(_i) + 1; _n11 > 0 {
+			_r13 := inReal[_i:][:_n11]
+			_r14 := inReal[_fastTrailing:][:_n11]
+			_r15 := inReal[_slowTrailing:][:_n11]
+			for _k12 := range _r13 {
+				var _T16 int32
+				if math.Abs(_r13[_k12]) <= 0.0 {
+					_T16 = _zeroRun + 1
+				} else {
+					_T16 = 0
+				}
+				_zeroRun = _T16
+				_fastTotal += _r13[_k12]
+				_fastValue = _fastTotal
+				_fastTotal -= _r14[_k12]
+				_slowTotal += _r13[_k12]
+				_slowValue = _slowTotal
+				_slowTotal -= _r15[_k12]
+				_slowMA = _slowValue / float64(optInSlowPeriod)
+				if _zeroRun > _slowLookback {
+					_zeroRun = _slowLookback
+					outReal[_outIdx+int32(_k12)] = 0.0
+				} else if !isZero(_slowMA) {
+					outReal[_outIdx+int32(_k12)] = float64((_fastValue/float64(optInFastPeriod) - _slowMA) / _slowMA * 100.0)
+				} else {
+					outReal[_outIdx+int32(_k12)] = 0.0
+				}
 			}
-			_zeroRun = _T1
-			_fastTotal += inReal[_i]
-			_fastValue = _fastTotal
-			_fastTotal -= inReal[_fastTrailing]
-			_fastTrailing += 1
-			_slowTotal += inReal[_i]
-			_slowValue = _slowTotal
-			_slowTotal -= inReal[_slowTrailing]
-			_slowTrailing += 1
-			_slowMA = _slowValue / float64(optInSlowPeriod)
-			if _zeroRun > _slowLookback {
-				_zeroRun = _slowLookback
-				outReal[_outIdx] = 0.0
-			} else if !isZero(_slowMA) {
-				outReal[_outIdx] = float64((_fastValue/float64(optInFastPeriod) - _slowMA) / _slowMA * 100.0)
-			} else {
-				outReal[_outIdx] = 0.0
-			}
-			_outIdx += 1
+			_outIdx += int32(_n11)
 		}
 		*outBegIdx = _slowStart
 		*outNBElement = _outIdx
@@ -216,24 +233,36 @@ func (c *Core) ppoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		}
 		_eSlowToday = _eSlowStart - c.emaLookback(optInSlowPeriod)
 		_eFast = 0.0
-		for _eN = 0; _eN < optInFastPeriod; _eN += 1 {
-			_eFast += inReal[_eFastToday]
-			_eFastToday++
+		_eN = 0
+		if _n17 := int(optInFastPeriod) - int(_eN); _n17 > 0 {
+			_r19 := inReal[_eFastToday:][:_n17]
+			for _k18 := range _r19 {
+				_eFast += _r19[_k18]
+			}
+			_eFastToday += int32(_n17)
 		}
 		_eFast = _eFast / float64(optInFastPeriod)
-		for _eFastToday <= _eSlowStart {
-			_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*inReal[_eFastToday]))
-			_eFastToday++
+		if _n20 := int(_eSlowStart) - int(_eFastToday) + 1; _n20 > 0 {
+			_r22 := inReal[_eFastToday:][:_n20]
+			for _k21 := range _r22 {
+				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r22[_k21]))
+			}
 		}
 		_eSlow = 0.0
-		for _eN = 0; _eN < optInSlowPeriod; _eN += 1 {
-			_eSlow += inReal[_eSlowToday]
-			_eSlowToday++
+		_eN = 0
+		if _n23 := int(optInSlowPeriod) - int(_eN); _n23 > 0 {
+			_r25 := inReal[_eSlowToday:][:_n23]
+			for _k24 := range _r25 {
+				_eSlow += _r25[_k24]
+			}
+			_eSlowToday += int32(_n23)
 		}
 		_eSlow = _eSlow / float64(optInSlowPeriod)
-		for _eSlowToday <= _eSlowStart {
-			_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*inReal[_eSlowToday]))
-			_eSlowToday++
+		if _n26 := int(_eSlowStart) - int(_eSlowToday) + 1; _n26 > 0 {
+			_r28 := inReal[_eSlowToday:][:_n26]
+			for _k27 := range _r28 {
+				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r28[_k27]))
+			}
 		}
 		_eOutIdx = 0
 		if !isZero(_eSlow) {
@@ -243,17 +272,19 @@ func (c *Core) ppoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		}
 		_eOutIdx += 1
 		_eToday = _eSlowStart + 1
-		for _eToday <= endIdx {
-			_eX = inReal[_eToday]
-			_eToday++
-			_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
-			_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
-			if !isZero(_eSlow) {
-				outReal[_eOutIdx] = float64((_eFast - _eSlow) / _eSlow * 100.0)
-			} else {
-				outReal[_eOutIdx] = 0.0
+		if _n29 := int(endIdx) - int(_eToday) + 1; _n29 > 0 {
+			_r31 := inReal[_eToday:][:_n29]
+			for _k30 := range _r31 {
+				_eX = _r31[_k30]
+				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
+				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
+				if !isZero(_eSlow) {
+					outReal[_eOutIdx+int32(_k30)] = float64((_eFast - _eSlow) / _eSlow * 100.0)
+				} else {
+					outReal[_eOutIdx+int32(_k30)] = 0.0
+				}
 			}
-			_eOutIdx += 1
+			_eOutIdx += int32(_n29)
 		}
 		*outBegIdx = _eSlowStart
 		*outNBElement = _eOutIdx
@@ -265,56 +296,69 @@ func (c *Core) ppoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		optInSlowPeriod = optInFastPeriod
 		optInFastPeriod = tempInteger
 	}
-	_X2, _E2 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
-	if _E2 != nil {
-		return _E2.(RetCode)
+	_X32, _E32 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
+	if _E32 != nil {
+		return _E32.(RetCode)
 	}
-	fastNb = int32(_X2.NBElement)
-	_X3, _E3 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
-	if _E3 != nil {
-		return _E3.(RetCode)
+	fastNb = int32(_X32.NBElement)
+	_X33, _E33 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
+	if _E33 != nil {
+		return _E33.(RetCode)
 	}
-	*outBegIdx = int32(_X3.BegIdx)
-	*outNBElement = int32(_X3.NBElement)
+	*outBegIdx = int32(_X33.BegIdx)
+	*outNBElement = int32(_X33.NBElement)
 	offset = fastNb - *outNBElement
 	slowLookback = c.maLookback(optInSlowPeriod, optInMAType)
 	windowed = b2i(optInMAType == int32(MATypeSMA) || optInMAType == int32(MATypeWMA) || optInMAType == int32(MATypeTRIMA) || optInMAType == int32(MATypeHMA))
 	zeroRun = 0
-	for i = *outBegIdx - slowLookback; i < *outBegIdx; i += 1 {
-		var _T4 int32
-		if math.Abs(inReal[i]) <= 0.0 {
-			_T4 = zeroRun + 1
-		} else {
-			_T4 = 0
+	i = *outBegIdx - slowLookback
+	if _n34 := int(*outBegIdx) - int(i); _n34 > 0 {
+		_r36 := inReal[i:][:_n34]
+		for _k35 := range _r36 {
+			var _T37 int32
+			if math.Abs(_r36[_k35]) <= 0.0 {
+				_T37 = zeroRun + 1
+			} else {
+				_T37 = 0
+			}
+			zeroRun = _T37
 		}
-		zeroRun = _T4
 	}
 	if windowed != 0 {
-		for i = 0; i < *outNBElement; i += 1 {
-			var _T5 int32
-			if math.Abs(inReal[*outBegIdx+i]) <= 0.0 {
-				_T5 = zeroRun + 1
-			} else {
-				_T5 = 0
-			}
-			zeroRun = _T5
-			tempReal = outReal[i]
-			if zeroRun > slowLookback {
-				zeroRun = slowLookback
-				outReal[i] = 0.0
-			} else if !isZero(tempReal) {
-				outReal[i] = float64((tempBuffer[i+offset] - tempReal) / tempReal * 100.0)
-			} else {
-				outReal[i] = 0.0
+		i = 0
+		if _n38 := int(*outNBElement) - int(i); _n38 > 0 {
+			_r40 := inReal[*outBegIdx+i:][:_n38]
+			_r41 := outReal[i:][:_n38]
+			for _k39 := range _r40 {
+				var _T42 int32
+				if math.Abs(_r40[_k39]) <= 0.0 {
+					_T42 = zeroRun + 1
+				} else {
+					_T42 = 0
+				}
+				zeroRun = _T42
+				tempReal = _r41[_k39]
+				if zeroRun > slowLookback {
+					zeroRun = slowLookback
+					_r41[_k39] = 0.0
+				} else if !isZero(tempReal) {
+					_r41[_k39] = float64((tempBuffer[i+int32(_k39)+offset] - tempReal) / tempReal * 100.0)
+				} else {
+					_r41[_k39] = 0.0
+				}
 			}
 		}
 	} else {
-		for i = 0; i < *outNBElement; i += 1 {
-			tempReal = outReal[i]
-			if !isZero(tempReal) {
-				outReal[i] = float64((tempBuffer[i+offset] - tempReal) / tempReal * 100.0)
-			} else {
-				outReal[i] = 0.0
+		i = 0
+		if _n43 := int(*outNBElement) - int(i); _n43 > 0 {
+			_r45 := outReal[i:][:_n43]
+			for _k44 := range _r45 {
+				tempReal = _r45[_k44]
+				if !isZero(tempReal) {
+					_r45[_k44] = float64((tempBuffer[i+int32(_k44)+offset] - tempReal) / tempReal * 100.0)
+				} else {
+					_r45[_k44] = 0.0
+				}
 			}
 		}
 	}

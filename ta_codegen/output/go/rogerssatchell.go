@@ -111,23 +111,30 @@ func (c *Core) rogerssatchellImpl(startIdx, endIdx int32, inOpen, inHigh, inLow,
 	termRing_Idx = 0
 	sqrtA = math.Sqrt(optInAnnualization)
 	periodTotal = 0.0
-	for j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 {
-		o = inOpen[j]
-		h = inHigh[j]
-		l = inLow[j]
-		c_ = inClose[j]
-		if o > 0.0 && h > 0.0 && l > 0.0 && c_ > 0.0 {
-			p1 = float64(math.Log(h/c_) * math.Log(h/o))
-			p2 = float64(math.Log(l/c_) * math.Log(l/o))
-			term = p1 + p2
-		} else {
-			term = 0.0
-		}
-		termRing[termRing_Idx] = term
-		periodTotal += term
-		termRing_Idx++
-		if termRing_Idx > maxIdx_termRing {
-			termRing_Idx = 0
+	j = startIdx - nbInitialElementNeeded
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inOpen[j:][:_n0]
+		_r3 := inHigh[j:][:_n0]
+		_r4 := inLow[j:][:_n0]
+		_r5 := inClose[j:][:_n0]
+		for _k1 := range _r2 {
+			o = _r2[_k1]
+			h = _r3[_k1]
+			l = _r4[_k1]
+			c_ = _r5[_k1]
+			if o > 0.0 && h > 0.0 && l > 0.0 && c_ > 0.0 {
+				p1 = float64(math.Log(h/c_) * math.Log(h/o))
+				p2 = float64(math.Log(l/c_) * math.Log(l/o))
+				term = p1 + p2
+			} else {
+				term = 0.0
+			}
+			termRing[termRing_Idx] = term
+			periodTotal += term
+			termRing_Idx++
+			if termRing_Idx > maxIdx_termRing {
+				termRing_Idx = 0
+			}
 		}
 	}
 	i = startIdx

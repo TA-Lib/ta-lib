@@ -99,18 +99,22 @@ func (c *Core) minusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optI
 		today = startIdx - 1
 		prevHigh = inHigh[today]
 		prevLow = inLow[today]
-		for today < endIdx {
-			today += 1
-			tempReal = inHigh[today]
-			diffP = tempReal - prevHigh
-			prevHigh = tempReal
-			tempReal = inLow[today]
-			diffM = prevLow - tempReal
-			prevLow = tempReal
-			minusDM1 = selF(diffM > 0.0, diffM, 0.0)
-			minusDM1 = selF(diffP < diffM, minusDM1, 0.0)
-			outReal[outIdx] = minusDM1
-			outIdx++
+		if _n0 := int(endIdx) - int(today); _n0 > 0 {
+			_r2 := inHigh[today+1:][:_n0]
+			_r3 := inLow[today+1:][:_n0]
+			_r4 := outReal[outIdx:][:_n0]
+			for _k1 := range _r2 {
+				tempReal = _r2[_k1]
+				diffP = tempReal - prevHigh
+				prevHigh = tempReal
+				tempReal = _r3[_k1]
+				diffM = prevLow - tempReal
+				prevLow = tempReal
+				minusDM1 = selF(diffM > 0.0, diffM, 0.0)
+				minusDM1 = selF(diffP < diffM, minusDM1, 0.0)
+				_r4[_k1] = minusDM1
+			}
+			outIdx += int32(_n0)
 		}
 		*outNBElement = outIdx
 		return Success
@@ -123,9 +127,9 @@ func (c *Core) minusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optI
 	prevLow = inLow[today]
 	i = optInTimePeriod - 1
 	for {
-		_C1 := i > 0
+		_C6 := i > 0
 		i--
-		if !_C1 {
+		if !_C6 {
 			break
 		}
 		today += 1
@@ -138,19 +142,19 @@ func (c *Core) minusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optI
 		tempReal = diffM - diffP
 		minusDM1 = selF(tempReal > 0.0, diffM, 0.0)
 		tempReal = prevMinusDM + minusDM1
-		var _T0 float64
+		var _T5 float64
 		if prevMinusDM > tempReal {
-			_T0 = prevMinusDM
+			_T5 = prevMinusDM
 		} else {
-			_T0 = tempReal
+			_T5 = tempReal
 		}
-		prevMinusDM = _T0
+		prevMinusDM = _T5
 	}
 	i = lookbackTotal - (optInTimePeriod - 1)
 	for {
-		_C3 := i != 0
+		_C8 := i != 0
 		i--
-		if !_C3 {
+		if !_C8 {
 			break
 		}
 		today += 1
@@ -164,31 +168,35 @@ func (c *Core) minusDmImpl(startIdx, endIdx int32, inHigh, inLow []float64, optI
 		minusDM1 = selF(tempReal > 0.0, diffM, 0.0)
 		tempReal = prevMinusDM - float64(prevMinusDM*invPeriod)
 		prevMinusDM = tempReal + minusDM1
-		var _T2 float64
+		var _T7 float64
 		if tempReal > prevMinusDM {
-			_T2 = tempReal
+			_T7 = tempReal
 		} else {
-			_T2 = prevMinusDM
+			_T7 = prevMinusDM
 		}
-		prevMinusDM = _T2
+		prevMinusDM = _T7
 	}
 	outReal[0] = prevMinusDM
 	outIdx = 1
-	for today < endIdx {
-		today += 1
-		tempReal = inHigh[today]
-		diffP = tempReal - prevHigh
-		prevHigh = tempReal
-		tempReal = inLow[today]
-		diffM = prevLow - tempReal
-		prevLow = tempReal
-		tempReal = diffM - diffP
-		minusDM1 = selF(tempReal > 0.0, diffM, 0.0)
-		tempReal = prevMinusDM - float64(prevMinusDM*invPeriod)
-		prevMinusDM = tempReal + minusDM1
-		prevMinusDM = selF(tempReal > prevMinusDM, tempReal, prevMinusDM)
-		outReal[outIdx] = prevMinusDM
-		outIdx++
+	if _n9 := int(endIdx) - int(today); _n9 > 0 {
+		_r11 := inHigh[today+1:][:_n9]
+		_r12 := inLow[today+1:][:_n9]
+		_r13 := outReal[outIdx:][:_n9]
+		for _k10 := range _r11 {
+			tempReal = _r11[_k10]
+			diffP = tempReal - prevHigh
+			prevHigh = tempReal
+			tempReal = _r12[_k10]
+			diffM = prevLow - tempReal
+			prevLow = tempReal
+			tempReal = diffM - diffP
+			minusDM1 = selF(tempReal > 0.0, diffM, 0.0)
+			tempReal = prevMinusDM - float64(prevMinusDM*invPeriod)
+			prevMinusDM = tempReal + minusDM1
+			prevMinusDM = selF(tempReal > prevMinusDM, tempReal, prevMinusDM)
+			_r13[_k10] = prevMinusDM
+		}
+		outIdx += int32(_n9)
 	}
 	*outNBElement = outIdx
 	return Success

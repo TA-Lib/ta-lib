@@ -178,36 +178,40 @@ func (c *Core) macdvImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		today++
 	}
 	prevSlow = tempReal / float64(optInSlowPeriod)
-	for today <= lineIdx {
-		tempReal = inClose[today]
-		today++
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+	if _n1 := int(lineIdx) - int(today) + 1; _n1 > 0 {
+		_r3 := inClose[today:][:_n1]
+		for _k2 := range _r3 {
+			tempReal = _r3[_k2]
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		}
 	}
 	today = lineIdx - lookbackFast
 	tempReal = 0.0
 	i = optInFastPeriod
 	for {
-		_C1 := i > 0
+		_C4 := i > 0
 		i--
-		if !_C1 {
+		if !_C4 {
 			break
 		}
 		tempReal += inClose[today]
 		today++
 	}
 	prevFast = tempReal / float64(optInFastPeriod)
-	for today <= lineIdx {
-		tempReal = inClose[today]
-		today++
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+	if _n5 := int(lineIdx) - int(today) + 1; _n5 > 0 {
+		_r7 := inClose[today:][:_n5]
+		for _k6 := range _r7 {
+			tempReal = _r7[_k6]
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+		}
 	}
 	today = lineIdx - lookbackATR + 1
 	periodTotal = 0.0
 	i = optInSlowPeriod
 	for {
-		_C2 := i > 0
+		_C8 := i > 0
 		i--
-		if !_C2 {
+		if !_C8 {
 			break
 		}
 		tempLT = inLow[today]
@@ -226,21 +230,26 @@ func (c *Core) macdvImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		today += 1
 	}
 	prevATR = periodTotal / float64(optInSlowPeriod)
-	for today <= lineIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n9 := int(lineIdx) - int(today) + 1; _n9 > 0 {
+		_r11 := inLow[today:][:_n9]
+		_r12 := inHigh[today:][:_n9]
+		_r13 := inClose[today-1:][:_n9]
+		for _k10 := range _r11 {
+			tempLT = _r11[_k10]
+			tempHT = _r12[_k10]
+			tempCY = _r13[_k10]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		today += 1
+		today += int32(_n9)
 	}
 	spread = prevFast - prevSlow
 	bandScale = math.Abs(prevFast)
@@ -256,9 +265,9 @@ func (c *Core) macdvImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 	prevSignal += lineValue
 	i = optInSignalPeriod - 1
 	for {
-		_C3 := i > 0
+		_C14 := i > 0
 		i--
-		if !_C3 {
+		if !_C14 {
 			break
 		}
 		tempLT = inLow[today]
@@ -291,81 +300,95 @@ func (c *Core) macdvImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		today += 1
 	}
 	prevSignal = prevSignal / float64(optInSignalPeriod)
-	for today <= startIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		tempReal = inClose[today]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n15 := int(startIdx) - int(today) + 1; _n15 > 0 {
+		_r17 := inLow[today:][:_n15]
+		_r18 := inHigh[today:][:_n15]
+		_r19 := inClose[today-1:][:_n15]
+		_r20 := inClose[today:][:_n15]
+		for _k16 := range _r17 {
+			tempLT = _r17[_k16]
+			tempHT = _r18[_k16]
+			tempCY = _r19[_k16]
+			tempReal = _r20[_k16]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			spread = prevFast - prevSlow
+			bandScale = math.Abs(prevFast)
+			if math.Abs(prevSlow) > bandScale {
+				bandScale = math.Abs(prevSlow)
+			}
+			bandScale = float64(bandScale * periodScale)
+			lineValue = 0.0
+			if !isZeroScaled(spread, bandScale) && !isZeroScaled(prevATR, bandScale) && prevATR >= 2.2250738585072014e-308 {
+				lineValue = float64(spread / prevATR * 100.0)
+			}
+			if optInSignalPeriod == 1 {
+				prevSignal = lineValue
+			} else {
+				prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*lineValue))
+			}
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-		spread = prevFast - prevSlow
-		bandScale = math.Abs(prevFast)
-		if math.Abs(prevSlow) > bandScale {
-			bandScale = math.Abs(prevSlow)
-		}
-		bandScale = float64(bandScale * periodScale)
-		lineValue = 0.0
-		if !isZeroScaled(spread, bandScale) && !isZeroScaled(prevATR, bandScale) && prevATR >= 2.2250738585072014e-308 {
-			lineValue = float64(spread / prevATR * 100.0)
-		}
-		if optInSignalPeriod == 1 {
-			prevSignal = lineValue
-		} else {
-			prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*lineValue))
-		}
-		today += 1
+		today += int32(_n15)
 	}
 	outMACDV[0] = lineValue
 	outMACDVSignal[0] = prevSignal
 	outMACDVHist[0] = lineValue - prevSignal
 	outIdx = 1
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		tempReal = inClose[today]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n21 := int(endIdx) - int(today) + 1; _n21 > 0 {
+		_r23 := inLow[today:][:_n21]
+		_r24 := inHigh[today:][:_n21]
+		_r25 := inClose[today-1:][:_n21]
+		_r26 := inClose[today:][:_n21]
+		_r27 := outMACDV[outIdx:][:_n21]
+		_r28 := outMACDVSignal[outIdx:][:_n21]
+		_r29 := outMACDVHist[outIdx:][:_n21]
+		for _k22 := range _r23 {
+			tempLT = _r23[_k22]
+			tempHT = _r24[_k22]
+			tempCY = _r25[_k22]
+			tempReal = _r26[_k22]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			spread = prevFast - prevSlow
+			bandScale = math.Abs(prevFast)
+			if math.Abs(prevSlow) > bandScale {
+				bandScale = math.Abs(prevSlow)
+			}
+			bandScale = float64(bandScale * periodScale)
+			lineValue = 0.0
+			if !isZeroScaled(spread, bandScale) && !isZeroScaled(prevATR, bandScale) && prevATR >= 2.2250738585072014e-308 {
+				lineValue = float64(spread / prevATR * 100.0)
+			}
+			if optInSignalPeriod == 1 {
+				prevSignal = lineValue
+			} else {
+				prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*lineValue))
+			}
+			_r27[_k22] = lineValue
+			_r28[_k22] = prevSignal
+			_r29[_k22] = lineValue - prevSignal
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-		spread = prevFast - prevSlow
-		bandScale = math.Abs(prevFast)
-		if math.Abs(prevSlow) > bandScale {
-			bandScale = math.Abs(prevSlow)
-		}
-		bandScale = float64(bandScale * periodScale)
-		lineValue = 0.0
-		if !isZeroScaled(spread, bandScale) && !isZeroScaled(prevATR, bandScale) && prevATR >= 2.2250738585072014e-308 {
-			lineValue = float64(spread / prevATR * 100.0)
-		}
-		if optInSignalPeriod == 1 {
-			prevSignal = lineValue
-		} else {
-			prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*lineValue))
-		}
-		outMACDV[outIdx] = lineValue
-		outMACDVSignal[outIdx] = prevSignal
-		outMACDVHist[outIdx] = lineValue - prevSignal
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n21)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

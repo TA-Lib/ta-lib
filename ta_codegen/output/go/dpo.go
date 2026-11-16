@@ -77,21 +77,27 @@ func (c *Core) dpoImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	trailingIdx = startIdx - (optInTimePeriod - 1)
 	dispIdx = startIdx - (optInTimePeriod/2 + 1)
 	i = trailingIdx
-	for i < startIdx {
-		periodTotal += inReal[i]
-		i = i + 1
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inReal[i:][:_n0]
+		for _k1 := range _r2 {
+			periodTotal += _r2[_k1]
+		}
+		i += int32(_n0)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		periodTotal += inReal[i]
-		i = i + 1
-		tempReal = periodTotal
-		periodTotal -= inReal[trailingIdx]
-		trailingIdx = trailingIdx + 1
-		dispVal = inReal[dispIdx]
-		dispIdx = dispIdx + 1
-		outReal[outIdx] = dispVal - tempReal/float64(optInTimePeriod)
-		outIdx = outIdx + 1
+	if _n3 := int(endIdx) - int(i) + 1; _n3 > 0 {
+		_r5 := inReal[i:][:_n3]
+		_r6 := inReal[trailingIdx:][:_n3]
+		_r7 := inReal[dispIdx:][:_n3]
+		_r8 := outReal[outIdx:][:_n3]
+		for _k4 := range _r5 {
+			periodTotal += _r5[_k4]
+			tempReal = periodTotal
+			periodTotal -= _r6[_k4]
+			dispVal = _r7[_k4]
+			_r8[_k4] = dispVal - tempReal/float64(optInTimePeriod)
+		}
+		outIdx += int32(_n3)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

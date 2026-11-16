@@ -190,65 +190,78 @@ func (c *Core) kvoImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 	prevDm = dmToday
 	prevTrend = trend
 	today = today + 1
-	for today < startIdx {
-		hlc = inHigh[today] + inLow[today] + inClose[today]
-		dmToday = inHigh[today] - inLow[today]
-		if hlc > prevHlc {
-			trend = 1.0
-		} else if hlc < prevHlc {
-			trend = -1.0
-		} else {
-			trend = prevTrend
+	if _n0 := int(startIdx) - int(today); _n0 > 0 {
+		_r2 := inHigh[today:][:_n0]
+		_r3 := inLow[today:][:_n0]
+		_r4 := inClose[today:][:_n0]
+		_r5 := inVolume[today:][:_n0]
+		for _k1 := range _r2 {
+			hlc = _r2[_k1] + _r3[_k1] + _r4[_k1]
+			dmToday = _r2[_k1] - _r3[_k1]
+			if hlc > prevHlc {
+				trend = 1.0
+			} else if hlc < prevHlc {
+				trend = -1.0
+			} else {
+				trend = prevTrend
+			}
+			if trend != prevTrend {
+				cm = prevDm + dmToday
+			} else {
+				cm = cm + dmToday
+			}
+			if cm == 0.0 {
+				vf = 0.0
+			} else {
+				vf = float64(float64(float64(_r5[_k1]*math.Abs(float64(2.0*(dmToday/cm))-1.0))*100.0) * trend)
+			}
+			emaFast = math.FMA(betaFast, emaFast, float64(kFast*vf))
+			emaSlow = math.FMA(betaSlow, emaSlow, float64(kSlow*vf))
+			kvoValue = emaFast - emaSlow
+			signalValue = math.FMA(betaSignal, signalValue, float64(kSignal*kvoValue))
+			prevHlc = hlc
+			prevDm = dmToday
+			prevTrend = trend
 		}
-		if trend != prevTrend {
-			cm = prevDm + dmToday
-		} else {
-			cm = cm + dmToday
-		}
-		if cm == 0.0 {
-			vf = 0.0
-		} else {
-			vf = float64(float64(float64(inVolume[today]*math.Abs(float64(2.0*(dmToday/cm))-1.0))*100.0) * trend)
-		}
-		emaFast = math.FMA(betaFast, emaFast, float64(kFast*vf))
-		emaSlow = math.FMA(betaSlow, emaSlow, float64(kSlow*vf))
-		kvoValue = emaFast - emaSlow
-		signalValue = math.FMA(betaSignal, signalValue, float64(kSignal*kvoValue))
-		prevHlc = hlc
-		prevDm = dmToday
-		prevTrend = trend
-		today = today + 1
+		today += int32(_n0)
 	}
 	outIdx = 0
-	for today <= endIdx {
-		hlc = inHigh[today] + inLow[today] + inClose[today]
-		dmToday = inHigh[today] - inLow[today]
-		if hlc > prevHlc {
-			trend = 1.0
-		} else {
-			trend = selF(hlc < prevHlc, -1.0, prevTrend)
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inHigh[today:][:_n6]
+		_r9 := inLow[today:][:_n6]
+		_r10 := inClose[today:][:_n6]
+		_r11 := inVolume[today:][:_n6]
+		_r12 := outKVO[outIdx:][:_n6]
+		_r13 := outKVOSignal[outIdx:][:_n6]
+		for _k7 := range _r8 {
+			hlc = _r8[_k7] + _r9[_k7] + _r10[_k7]
+			dmToday = _r8[_k7] - _r9[_k7]
+			if hlc > prevHlc {
+				trend = 1.0
+			} else {
+				trend = selF(hlc < prevHlc, -1.0, prevTrend)
+			}
+			if trend != prevTrend {
+				cm = prevDm + dmToday
+			} else {
+				cm = cm + dmToday
+			}
+			if cm == 0.0 {
+				vf = 0.0
+			} else {
+				vf = float64(float64(float64(_r11[_k7]*math.Abs(float64(2.0*(dmToday/cm))-1.0))*100.0) * trend)
+			}
+			emaFast = math.FMA(betaFast, emaFast, float64(kFast*vf))
+			emaSlow = math.FMA(betaSlow, emaSlow, float64(kSlow*vf))
+			kvoValue = emaFast - emaSlow
+			signalValue = math.FMA(betaSignal, signalValue, float64(kSignal*kvoValue))
+			_r12[_k7] = kvoValue
+			_r13[_k7] = signalValue
+			prevHlc = hlc
+			prevDm = dmToday
+			prevTrend = trend
 		}
-		if trend != prevTrend {
-			cm = prevDm + dmToday
-		} else {
-			cm = cm + dmToday
-		}
-		if cm == 0.0 {
-			vf = 0.0
-		} else {
-			vf = float64(float64(float64(inVolume[today]*math.Abs(float64(2.0*(dmToday/cm))-1.0))*100.0) * trend)
-		}
-		emaFast = math.FMA(betaFast, emaFast, float64(kFast*vf))
-		emaSlow = math.FMA(betaSlow, emaSlow, float64(kSlow*vf))
-		kvoValue = emaFast - emaSlow
-		signalValue = math.FMA(betaSignal, signalValue, float64(kSignal*kvoValue))
-		outKVO[outIdx] = kvoValue
-		outKVOSignal[outIdx] = signalValue
-		outIdx = outIdx + 1
-		prevHlc = hlc
-		prevDm = dmToday
-		prevTrend = trend
-		today = today + 1
+		outIdx += int32(_n6)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

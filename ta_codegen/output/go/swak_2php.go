@@ -97,27 +97,32 @@ func (c *Core) swak2phpImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	y1 = 0.0
 	y2 = 0.0
 	i = lookbackTotal
-	for i != 0 {
-		x0 = inReal[today]
-		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0-float64(2.0*x1)+x2))))
-		x2 = x1
-		x1 = x0
-		y2 = y1
-		y1 = y
-		today += 1
-		i -= 1
+	if _n0 := int(i); _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			x0 = _r2[_k1]
+			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0-float64(2.0*x1)+x2))))
+			x2 = x1
+			x1 = x0
+			y2 = y1
+			y1 = y
+		}
+		today += int32(_n0)
 	}
 	outIdx = 0
-	for today <= endIdx {
-		x0 = inReal[today]
-		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0-float64(2.0*x1)+x2))))
-		x2 = x1
-		x1 = x0
-		y2 = y1
-		y1 = y
-		outReal[outIdx] = y
-		outIdx = outIdx + 1
-		today += 1
+	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
+		_r5 := inReal[today:][:_n3]
+		_r6 := outReal[outIdx:][:_n3]
+		for _k4 := range _r5 {
+			x0 = _r5[_k4]
+			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0-float64(2.0*x1)+x2))))
+			x2 = x1
+			x1 = x0
+			y2 = y1
+			y1 = y
+			_r6[_k4] = y
+		}
+		outIdx += int32(_n3)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

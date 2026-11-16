@@ -87,31 +87,39 @@ func (c *Core) siImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inClose []f
 	prevClose = inClose[startIdx-1]
 	prevBody = prevClose - inOpen[startIdx-1]
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		tempOpen = inOpen[i]
-		tempHigh = inHigh[i]
-		tempLow = inLow[i]
-		tempClose = inClose[i]
-		body = tempClose - tempOpen
-		n = tempClose - prevClose
-		n += float64(0.5 * body)
-		n += float64(0.25 * prevBody)
-		up = math.Abs(tempHigh - prevClose)
-		dn = math.Abs(tempLow - prevClose)
-		rg = math.Abs(tempHigh - tempLow)
-		k = maxF(up, dn)
-		r = maxF(up-float64(0.5*dn), dn-float64(0.5*up))
-		r = maxF(r, rg)
-		r += float64(0.25 * math.Abs(prevBody))
-		if r == 0.0 {
-			swing = 0.0
-		} else {
-			swing = float64(float64(50.0*(n/r)) * (k / optInLimitMove))
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inOpen[i:][:_n0]
+		_r3 := inHigh[i:][:_n0]
+		_r4 := inLow[i:][:_n0]
+		_r5 := inClose[i:][:_n0]
+		_r6 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			tempOpen = _r2[_k1]
+			tempHigh = _r3[_k1]
+			tempLow = _r4[_k1]
+			tempClose = _r5[_k1]
+			body = tempClose - tempOpen
+			n = tempClose - prevClose
+			n += float64(0.5 * body)
+			n += float64(0.25 * prevBody)
+			up = math.Abs(tempHigh - prevClose)
+			dn = math.Abs(tempLow - prevClose)
+			rg = math.Abs(tempHigh - tempLow)
+			k = maxF(up, dn)
+			r = maxF(up-float64(0.5*dn), dn-float64(0.5*up))
+			r = maxF(r, rg)
+			r += float64(0.25 * math.Abs(prevBody))
+			if r == 0.0 {
+				swing = 0.0
+			} else {
+				swing = float64(float64(50.0*(n/r)) * (k / optInLimitMove))
+			}
+			_r6[_k1] = swing
+			prevClose = tempClose
+			prevBody = body
 		}
-		outReal[outIdx] = swing
-		outIdx += 1
-		prevClose = tempClose
-		prevBody = body
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

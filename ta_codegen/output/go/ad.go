@@ -60,18 +60,22 @@ func (c *Core) adImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume [
 	currentBar = startIdx
 	outIdx = 0
 	ad = 0.0
-	for nbBar != 0 {
-		high = inHigh[currentBar]
-		low = inLow[currentBar]
-		tmp = high - low
-		close_ = inClose[currentBar]
-		if tmp > 0.0 {
-			ad += float64((close_ - low - (high - close_)) / tmp * inVolume[currentBar])
+	if _n0 := int(nbBar); _n0 > 0 {
+		_r2 := inHigh[currentBar:][:_n0]
+		_r3 := inLow[currentBar:][:_n0]
+		_r4 := inClose[currentBar:][:_n0]
+		_r5 := inVolume[currentBar:][:_n0]
+		_r6 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			high = _r2[_k1]
+			low = _r3[_k1]
+			tmp = high - low
+			close_ = _r4[_k1]
+			if tmp > 0.0 {
+				ad += float64((close_ - low - (high - close_)) / tmp * _r5[_k1])
+			}
+			_r6[_k1] = ad
 		}
-		outReal[outIdx] = ad
-		outIdx++
-		currentBar += 1
-		nbBar -= 1
 	}
 	return Success
 }

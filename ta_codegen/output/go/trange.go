@@ -66,22 +66,27 @@ func (c *Core) trangeImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	}
 	outIdx = 0
 	today = startIdx
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inLow[today:][:_n0]
+		_r3 := inHigh[today:][:_n0]
+		_r4 := inClose[today-1:][:_n0]
+		_r5 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			tempLT = _r2[_k1]
+			tempHT = _r3[_k1]
+			tempCY = _r4[_k1]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			_r5[_k1] = greatest
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		outReal[outIdx] = greatest
-		outIdx++
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

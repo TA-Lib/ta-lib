@@ -128,22 +128,25 @@ func (c *Core) supertrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []f
 	}
 	prevATR = periodTotal / float64(optInTimePeriod)
 	i = lookbackTotal - optInTimePeriod
-	for i != 0 {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
+	if _n1 := int(i); _n1 > 0 {
+		_r3 := inLow[today:][:_n1]
+		_r4 := inHigh[today:][:_n1]
+		_r5 := inClose[today-1:][:_n1]
+		for _k2 := range _r3 {
+			tempLT = _r3[_k2]
+			tempHT = _r4[_k2]
+			tempCY = _r5[_k2]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
+			}
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
 		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		today += 1
-		i -= 1
 	}
 	medianPrice = (inHigh[startIdx] + inLow[startIdx]) / 2.0
 	band = float64(optInMultiplier * prevATR)
@@ -155,48 +158,53 @@ func (c *Core) supertrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []f
 	outTrend[0] = 1
 	outIdx = 1
 	today = startIdx + 1
-	for today <= endIdx {
-		tempLT = inLow[today]
-		tempHT = inHigh[today]
-		tempCY = inClose[today-1]
-		greatest = tempHT - tempLT
-		val2 = math.Abs(tempCY - tempHT)
-		if val2 > greatest {
-			greatest = val2
-		}
-		val3 = math.Abs(tempCY - tempLT)
-		if val3 > greatest {
-			greatest = val3
-		}
-		prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
-		medianPrice = (tempHT + tempLT) / 2.0
-		band = float64(optInMultiplier * prevATR)
-		basicUpper = medianPrice + band
-		basicLower = medianPrice - band
-		if basicUpper < finalUpper || prevClose > finalUpper {
-			finalUpper = basicUpper
-		}
-		if basicLower > finalLower || prevClose < finalLower {
-			finalLower = basicLower
-		}
-		closeToday = inClose[today]
-		if isUptrend != 0 {
-			if closeToday < finalLower {
-				isUptrend = 0
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inLow[today:][:_n6]
+		_r9 := inHigh[today:][:_n6]
+		_r10 := inClose[today-1:][:_n6]
+		_r11 := inClose[today:][:_n6]
+		for _k7 := range _r8 {
+			tempLT = _r8[_k7]
+			tempHT = _r9[_k7]
+			tempCY = _r10[_k7]
+			greatest = tempHT - tempLT
+			val2 = math.Abs(tempCY - tempHT)
+			if val2 > greatest {
+				greatest = val2
 			}
-		} else if closeToday > finalUpper {
-			isUptrend = 1
+			val3 = math.Abs(tempCY - tempLT)
+			if val3 > greatest {
+				greatest = val3
+			}
+			prevATR = math.FMA(wBeta, prevATR, float64(wAlpha*greatest))
+			medianPrice = (tempHT + tempLT) / 2.0
+			band = float64(optInMultiplier * prevATR)
+			basicUpper = medianPrice + band
+			basicLower = medianPrice - band
+			if basicUpper < finalUpper || prevClose > finalUpper {
+				finalUpper = basicUpper
+			}
+			if basicLower > finalLower || prevClose < finalLower {
+				finalLower = basicLower
+			}
+			closeToday = _r11[_k7]
+			if isUptrend != 0 {
+				if closeToday < finalLower {
+					isUptrend = 0
+				}
+			} else if closeToday > finalUpper {
+				isUptrend = 1
+			}
+			if isUptrend != 0 {
+				outSupertrend[outIdx+int32(_k7)] = finalLower
+				outTrend[outIdx+int32(_k7)] = 1
+			} else {
+				outSupertrend[outIdx+int32(_k7)] = finalUpper
+				outTrend[outIdx+int32(_k7)] = -1
+			}
+			prevClose = closeToday
 		}
-		if isUptrend != 0 {
-			outSupertrend[outIdx] = finalLower
-			outTrend[outIdx] = 1
-		} else {
-			outSupertrend[outIdx] = finalUpper
-			outTrend[outIdx] = -1
-		}
-		prevClose = closeToday
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n6)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

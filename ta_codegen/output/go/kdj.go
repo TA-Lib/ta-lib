@@ -120,8 +120,14 @@ func (c *Core) kdjImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 		*outNBElement = 0
 		return retCode
 	}
-	for i = 0; i < *outNBElement; i += 1 {
-		outJ[i] = float64(3.0*outK[i]) - float64(2.0*outD[i])
+	i = 0
+	if _n1 := int(*outNBElement) - int(i); _n1 > 0 {
+		_r3 := outK[i:][:_n1]
+		_r4 := outD[i:][:_n1]
+		_r5 := outJ[i:][:_n1]
+		for _k2 := range _r3 {
+			_r5[_k2] = float64(3.0*_r3[_k2]) - float64(2.0*_r4[_k2])
+		}
 	}
 	return Success
 }

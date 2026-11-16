@@ -49,13 +49,19 @@ func (c *Core) marketfiImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []fl
 		return OutOfRangeEndIndex
 	}
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		if inVolume[i] != 0.0 {
-			outReal[outIdx] = (inHigh[i] - inLow[i]) / inVolume[i]
-			outIdx++
-		} else {
-			outReal[outIdx] = 0.0
-			outIdx++
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inVolume[i:][:_n0]
+		_r3 := inHigh[i:][:_n0]
+		_r4 := inLow[i:][:_n0]
+		for _k1 := range _r2 {
+			if _r2[_k1] != 0.0 {
+				outReal[outIdx] = (_r3[_k1] - _r4[_k1]) / _r2[_k1]
+				outIdx++
+			} else {
+				outReal[outIdx] = 0.0
+				outIdx++
+			}
 		}
 	}
 	*outBegIdx = startIdx

@@ -174,55 +174,61 @@ func (c *Core) fisherImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 			preHighest[1] = highest
 			preLowest[1] = lowest
 			i = 1
-			for i < nAvail {
-				tempHigh = inHigh[blockNext+i]
-				tempLow = inLow[blockNext+i]
-				tempReal = (tempHigh + tempLow) / 2.0
-				if tempReal > highest {
-					highest = tempReal
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inHigh[blockNext+i:][:_n0]
+				_r3 := inLow[blockNext+i:][:_n0]
+				for _k1 := range _r2 {
+					tempHigh = _r2[_k1]
+					tempLow = _r3[_k1]
+					tempReal = (tempHigh + tempLow) / 2.0
+					if tempReal > highest {
+						highest = tempReal
+					}
+					if tempReal < lowest {
+						lowest = tempReal
+					}
+					preHighest[i+int32(_k1)+1] = highest
+					preLowest[i+int32(_k1)+1] = lowest
 				}
-				if tempReal < lowest {
-					lowest = tempReal
-				}
-				preHighest[i+1] = highest
-				preLowest[i+1] = lowest
-				i += 1
 			}
 		}
 		m = 0
-		for m <= nAvail {
-			highest = sufHighest[m]
-			if preHighest[m] > highest {
-				highest = preHighest[m]
+		if _n4 := int(nAvail) - int(m) + 1; _n4 > 0 {
+			_r6 := inHigh[today+m:][:_n4]
+			_r7 := inLow[today+m:][:_n4]
+			for _k5 := range _r6 {
+				highest = sufHighest[m+int32(_k5)]
+				if preHighest[m+int32(_k5)] > highest {
+					highest = preHighest[m+int32(_k5)]
+				}
+				lowest = sufLowest[m+int32(_k5)]
+				if preLowest[m+int32(_k5)] < lowest {
+					lowest = preLowest[m+int32(_k5)]
+				}
+				tempHigh = _r6[_k5]
+				tempLow = _r7[_k5]
+				price = (tempHigh + tempLow) / 2.0
+				tempReal = highest - lowest
+				if !isZeroScaled(tempReal, math.Abs(highest)+math.Abs(lowest)) {
+					ratio = (price - lowest) / tempReal
+				} else {
+					ratio = 0.5
+				}
+				smoothed = math.FMA(0.67, smoothed, float64(float64(float64(0.33)*float64(2.0))*(ratio-0.5)))
+				if smoothed > 0.99 {
+					smoothed = 0.999
+				}
+				if smoothed < -0.99 {
+					smoothed = -0.999
+				}
+				fish = math.FMA(0.5, math.Log((1.0+smoothed)/(1.0-smoothed)), float64(0.5*prevFish))
+				if today+(m+int32(_k5)) >= startIdx {
+					outFisher[outIdx] = fish
+					outTrigger[outIdx] = prevFish
+					outIdx = outIdx + 1
+				}
+				prevFish = fish
 			}
-			lowest = sufLowest[m]
-			if preLowest[m] < lowest {
-				lowest = preLowest[m]
-			}
-			tempHigh = inHigh[today+m]
-			tempLow = inLow[today+m]
-			price = (tempHigh + tempLow) / 2.0
-			tempReal = highest - lowest
-			if !isZeroScaled(tempReal, math.Abs(highest)+math.Abs(lowest)) {
-				ratio = (price - lowest) / tempReal
-			} else {
-				ratio = 0.5
-			}
-			smoothed = math.FMA(0.67, smoothed, float64(float64(float64(0.33)*float64(2.0))*(ratio-0.5)))
-			if smoothed > 0.99 {
-				smoothed = 0.999
-			}
-			if smoothed < -0.99 {
-				smoothed = -0.999
-			}
-			fish = math.FMA(0.5, math.Log((1.0+smoothed)/(1.0-smoothed)), float64(0.5*prevFish))
-			if today+m >= startIdx {
-				outFisher[outIdx] = fish
-				outTrigger[outIdx] = prevFish
-				outIdx = outIdx + 1
-			}
-			prevFish = fish
-			m += 1
 		}
 		today = today + nAvail + 1
 		blockStart = blockNext

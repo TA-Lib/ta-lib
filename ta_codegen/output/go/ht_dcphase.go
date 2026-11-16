@@ -225,174 +225,176 @@ func (c *Core) htDcphaseImpl(startIdx, endIdx int32, inReal []float64, outBegIdx
 		smoothPrice[i] = 0.0
 	}
 	DCPhase = 0.0
-	for today <= endIdx {
-		adjustedPrevPeriod = math.FMA(0.075, period, 0.54)
-		todayValue = inReal[today]
-		periodWMASub += todayValue
-		periodWMASub -= trailingWMAValue
-		periodWMASum += float64(todayValue * 4.0)
-		trailingWMAValue = inReal[trailingWMAIdx]
-		trailingWMAIdx++
-		smoothedValue = float64(periodWMASum * 0.1)
-		periodWMASum -= periodWMASub
-		smoothPrice[smoothPrice_Idx] = smoothedValue
-		if today%2 == 0 {
-			hilbertTempReal = float64(a * smoothedValue)
-			detrender = -detrender_Even[hilbertIdx]
-			detrender_Even[hilbertIdx] = hilbertTempReal
-			detrender += hilbertTempReal
-			detrender -= prev_detrender_Even
-			prev_detrender_Even = float64(b * prev_detrender_input_Even)
-			detrender += prev_detrender_Even
-			prev_detrender_input_Even = smoothedValue
-			detrender = float64(detrender * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * detrender)
-			Q1 = -Q1_Even[hilbertIdx]
-			Q1_Even[hilbertIdx] = hilbertTempReal
-			Q1 += hilbertTempReal
-			Q1 -= prev_Q1_Even
-			prev_Q1_Even = float64(b * prev_Q1_input_Even)
-			Q1 += prev_Q1_Even
-			prev_Q1_input_Even = detrender
-			Q1 = float64(Q1 * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * I1ForEvenPrev3)
-			jI = -jI_Even[hilbertIdx]
-			jI_Even[hilbertIdx] = hilbertTempReal
-			jI += hilbertTempReal
-			jI -= prev_jI_Even
-			prev_jI_Even = float64(b * prev_jI_input_Even)
-			jI += prev_jI_Even
-			prev_jI_input_Even = I1ForEvenPrev3
-			jI = float64(jI * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * Q1)
-			jQ = -jQ_Even[hilbertIdx]
-			jQ_Even[hilbertIdx] = hilbertTempReal
-			jQ += hilbertTempReal
-			jQ -= prev_jQ_Even
-			prev_jQ_Even = float64(b * prev_jQ_input_Even)
-			jQ += prev_jQ_Even
-			prev_jQ_input_Even = Q1
-			jQ = float64(jQ * adjustedPrevPeriod)
-			hilbertIdx++
-			if hilbertIdx == 3 {
-				hilbertIdx = 0
-			}
-			Q2 = math.FMA(0.2, Q1+jI, float64(0.8*prevQ2))
-			I2 = math.FMA(0.2, I1ForEvenPrev3-jQ, float64(0.8*prevI2))
-			I1ForOddPrev3 = I1ForOddPrev2
-			I1ForOddPrev2 = detrender
-		} else {
-			hilbertTempReal = float64(a * smoothedValue)
-			detrender = -detrender_Odd[hilbertIdx]
-			detrender_Odd[hilbertIdx] = hilbertTempReal
-			detrender += hilbertTempReal
-			detrender -= prev_detrender_Odd
-			prev_detrender_Odd = float64(b * prev_detrender_input_Odd)
-			detrender += prev_detrender_Odd
-			prev_detrender_input_Odd = smoothedValue
-			detrender = float64(detrender * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * detrender)
-			Q1 = -Q1_Odd[hilbertIdx]
-			Q1_Odd[hilbertIdx] = hilbertTempReal
-			Q1 += hilbertTempReal
-			Q1 -= prev_Q1_Odd
-			prev_Q1_Odd = float64(b * prev_Q1_input_Odd)
-			Q1 += prev_Q1_Odd
-			prev_Q1_input_Odd = detrender
-			Q1 = float64(Q1 * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * I1ForOddPrev3)
-			jI = -jI_Odd[hilbertIdx]
-			jI_Odd[hilbertIdx] = hilbertTempReal
-			jI += hilbertTempReal
-			jI -= prev_jI_Odd
-			prev_jI_Odd = float64(b * prev_jI_input_Odd)
-			jI += prev_jI_Odd
-			prev_jI_input_Odd = I1ForOddPrev3
-			jI = float64(jI * adjustedPrevPeriod)
-			hilbertTempReal = float64(a * Q1)
-			jQ = -jQ_Odd[hilbertIdx]
-			jQ_Odd[hilbertIdx] = hilbertTempReal
-			jQ += hilbertTempReal
-			jQ -= prev_jQ_Odd
-			prev_jQ_Odd = float64(b * prev_jQ_input_Odd)
-			jQ += prev_jQ_Odd
-			prev_jQ_input_Odd = Q1
-			jQ = float64(jQ * adjustedPrevPeriod)
-			Q2 = math.FMA(0.2, Q1+jI, float64(0.8*prevQ2))
-			I2 = math.FMA(0.2, I1ForOddPrev3-jQ, float64(0.8*prevI2))
-			I1ForEvenPrev3 = I1ForEvenPrev2
-			I1ForEvenPrev2 = detrender
-		}
-		Re = math.FMA(0.8, Re, float64(0.2*math.FMA(I2, prevI2, float64(Q2*prevQ2))))
-		Im = math.FMA(0.8, Im, float64(0.2*(float64(I2*prevQ2)-float64(Q2*prevI2))))
-		prevQ2 = Q2
-		prevI2 = I2
-		tempReal = period
-		if Im != 0.0 && Re != 0.0 {
-			period = 360.0 / float64(math.Atan(Im/Re)*rad2Deg)
-		}
-		tempReal2 = float64(1.5 * tempReal)
-		if period > tempReal2 {
-			period = tempReal2
-		}
-		tempReal2 = float64(0.67 * tempReal)
-		if period < tempReal2 {
-			period = tempReal2
-		}
-		if period < 6.0 {
-			period = 6.0
-		} else if period > 50.0 {
-			period = 50.0
-		}
-		period = math.FMA(0.2, period, float64(0.8*tempReal))
-		smoothPeriod = math.FMA(0.67, smoothPeriod, float64(0.33*period))
-		DCPeriod = smoothPeriod + 0.5
-		if DCPeriod >= 0.0 {
-			DCPeriodInt = f2i(DCPeriod)
-		} else {
-			DCPeriodInt = 0
-		}
-		realPart = 0.0
-		imagPart = 0.0
-		idx = smoothPrice_Idx
-		for i = 0; i < DCPeriodInt; i += 1 {
-			tempReal = float64(float64(i)*constDeg2RadBy360) / float64(DCPeriodInt)
-			tempReal2 = smoothPrice[idx]
-			realPart += float64(math.Sin(tempReal) * tempReal2)
-			imagPart += float64(math.Cos(tempReal) * tempReal2)
-			if idx == 0 {
-				idx = 50 - 1
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		_r3 := inReal[trailingWMAIdx:][:_n0]
+		for _k1 := range _r2 {
+			adjustedPrevPeriod = math.FMA(0.075, period, 0.54)
+			todayValue = _r2[_k1]
+			periodWMASub += todayValue
+			periodWMASub -= trailingWMAValue
+			periodWMASum += float64(todayValue * 4.0)
+			trailingWMAValue = _r3[_k1]
+			smoothedValue = float64(periodWMASum * 0.1)
+			periodWMASum -= periodWMASub
+			smoothPrice[smoothPrice_Idx] = smoothedValue
+			if (today+int32(_k1))%2 == 0 {
+				hilbertTempReal = float64(a * smoothedValue)
+				detrender = -detrender_Even[hilbertIdx]
+				detrender_Even[hilbertIdx] = hilbertTempReal
+				detrender += hilbertTempReal
+				detrender -= prev_detrender_Even
+				prev_detrender_Even = float64(b * prev_detrender_input_Even)
+				detrender += prev_detrender_Even
+				prev_detrender_input_Even = smoothedValue
+				detrender = float64(detrender * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * detrender)
+				Q1 = -Q1_Even[hilbertIdx]
+				Q1_Even[hilbertIdx] = hilbertTempReal
+				Q1 += hilbertTempReal
+				Q1 -= prev_Q1_Even
+				prev_Q1_Even = float64(b * prev_Q1_input_Even)
+				Q1 += prev_Q1_Even
+				prev_Q1_input_Even = detrender
+				Q1 = float64(Q1 * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * I1ForEvenPrev3)
+				jI = -jI_Even[hilbertIdx]
+				jI_Even[hilbertIdx] = hilbertTempReal
+				jI += hilbertTempReal
+				jI -= prev_jI_Even
+				prev_jI_Even = float64(b * prev_jI_input_Even)
+				jI += prev_jI_Even
+				prev_jI_input_Even = I1ForEvenPrev3
+				jI = float64(jI * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * Q1)
+				jQ = -jQ_Even[hilbertIdx]
+				jQ_Even[hilbertIdx] = hilbertTempReal
+				jQ += hilbertTempReal
+				jQ -= prev_jQ_Even
+				prev_jQ_Even = float64(b * prev_jQ_input_Even)
+				jQ += prev_jQ_Even
+				prev_jQ_input_Even = Q1
+				jQ = float64(jQ * adjustedPrevPeriod)
+				hilbertIdx++
+				if hilbertIdx == 3 {
+					hilbertIdx = 0
+				}
+				Q2 = math.FMA(0.2, Q1+jI, float64(0.8*prevQ2))
+				I2 = math.FMA(0.2, I1ForEvenPrev3-jQ, float64(0.8*prevI2))
+				I1ForOddPrev3 = I1ForOddPrev2
+				I1ForOddPrev2 = detrender
 			} else {
-				idx -= 1
+				hilbertTempReal = float64(a * smoothedValue)
+				detrender = -detrender_Odd[hilbertIdx]
+				detrender_Odd[hilbertIdx] = hilbertTempReal
+				detrender += hilbertTempReal
+				detrender -= prev_detrender_Odd
+				prev_detrender_Odd = float64(b * prev_detrender_input_Odd)
+				detrender += prev_detrender_Odd
+				prev_detrender_input_Odd = smoothedValue
+				detrender = float64(detrender * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * detrender)
+				Q1 = -Q1_Odd[hilbertIdx]
+				Q1_Odd[hilbertIdx] = hilbertTempReal
+				Q1 += hilbertTempReal
+				Q1 -= prev_Q1_Odd
+				prev_Q1_Odd = float64(b * prev_Q1_input_Odd)
+				Q1 += prev_Q1_Odd
+				prev_Q1_input_Odd = detrender
+				Q1 = float64(Q1 * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * I1ForOddPrev3)
+				jI = -jI_Odd[hilbertIdx]
+				jI_Odd[hilbertIdx] = hilbertTempReal
+				jI += hilbertTempReal
+				jI -= prev_jI_Odd
+				prev_jI_Odd = float64(b * prev_jI_input_Odd)
+				jI += prev_jI_Odd
+				prev_jI_input_Odd = I1ForOddPrev3
+				jI = float64(jI * adjustedPrevPeriod)
+				hilbertTempReal = float64(a * Q1)
+				jQ = -jQ_Odd[hilbertIdx]
+				jQ_Odd[hilbertIdx] = hilbertTempReal
+				jQ += hilbertTempReal
+				jQ -= prev_jQ_Odd
+				prev_jQ_Odd = float64(b * prev_jQ_input_Odd)
+				jQ += prev_jQ_Odd
+				prev_jQ_input_Odd = Q1
+				jQ = float64(jQ * adjustedPrevPeriod)
+				Q2 = math.FMA(0.2, Q1+jI, float64(0.8*prevQ2))
+				I2 = math.FMA(0.2, I1ForOddPrev3-jQ, float64(0.8*prevI2))
+				I1ForEvenPrev3 = I1ForEvenPrev2
+				I1ForEvenPrev2 = detrender
+			}
+			Re = math.FMA(0.8, Re, float64(0.2*math.FMA(I2, prevI2, float64(Q2*prevQ2))))
+			Im = math.FMA(0.8, Im, float64(0.2*(float64(I2*prevQ2)-float64(Q2*prevI2))))
+			prevQ2 = Q2
+			prevI2 = I2
+			tempReal = period
+			if Im != 0.0 && Re != 0.0 {
+				period = 360.0 / float64(math.Atan(Im/Re)*rad2Deg)
+			}
+			tempReal2 = float64(1.5 * tempReal)
+			if period > tempReal2 {
+				period = tempReal2
+			}
+			tempReal2 = float64(0.67 * tempReal)
+			if period < tempReal2 {
+				period = tempReal2
+			}
+			if period < 6.0 {
+				period = 6.0
+			} else if period > 50.0 {
+				period = 50.0
+			}
+			period = math.FMA(0.2, period, float64(0.8*tempReal))
+			smoothPeriod = math.FMA(0.67, smoothPeriod, float64(0.33*period))
+			DCPeriod = smoothPeriod + 0.5
+			if DCPeriod >= 0.0 {
+				DCPeriodInt = f2i(DCPeriod)
+			} else {
+				DCPeriodInt = 0
+			}
+			realPart = 0.0
+			imagPart = 0.0
+			idx = smoothPrice_Idx
+			for i = 0; i < DCPeriodInt; i += 1 {
+				tempReal = float64(float64(i)*constDeg2RadBy360) / float64(DCPeriodInt)
+				tempReal2 = smoothPrice[idx]
+				realPart += float64(math.Sin(tempReal) * tempReal2)
+				imagPart += float64(math.Cos(tempReal) * tempReal2)
+				if idx == 0 {
+					idx = 50 - 1
+				} else {
+					idx -= 1
+				}
+			}
+			tempReal = math.Abs(imagPart)
+			if tempReal > 0.0 {
+				DCPhase = float64(math.Atan(realPart/imagPart) * rad2Deg)
+			} else if tempReal <= 0.01 {
+				if realPart < 0.0 {
+					DCPhase -= 90.0
+				} else if realPart > 0.0 {
+					DCPhase += 90.0
+				}
+			}
+			DCPhase += 90.0
+			DCPhase += 360.0 / smoothPeriod
+			if imagPart < 0.0 {
+				DCPhase += 180.0
+			}
+			if DCPhase > 315.0 {
+				DCPhase -= 360.0
+			}
+			if today+int32(_k1) >= startIdx {
+				outReal[outIdx] = DCPhase
+				outIdx++
+			}
+			smoothPrice_Idx++
+			if smoothPrice_Idx > maxIdx_smoothPrice {
+				smoothPrice_Idx = 0
 			}
 		}
-		tempReal = math.Abs(imagPart)
-		if tempReal > 0.0 {
-			DCPhase = float64(math.Atan(realPart/imagPart) * rad2Deg)
-		} else if tempReal <= 0.01 {
-			if realPart < 0.0 {
-				DCPhase -= 90.0
-			} else if realPart > 0.0 {
-				DCPhase += 90.0
-			}
-		}
-		DCPhase += 90.0
-		DCPhase += 360.0 / smoothPeriod
-		if imagPart < 0.0 {
-			DCPhase += 180.0
-		}
-		if DCPhase > 315.0 {
-			DCPhase -= 360.0
-		}
-		if today >= startIdx {
-			outReal[outIdx] = DCPhase
-			outIdx++
-		}
-		smoothPrice_Idx++
-		if smoothPrice_Idx > maxIdx_smoothPrice {
-			smoothPrice_Idx = 0
-		}
-		today += 1
 	}
 	*outNBElement = outIdx
 	return Success

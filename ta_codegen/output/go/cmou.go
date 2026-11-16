@@ -89,16 +89,20 @@ func (c *Core) cmouImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	upSum = 0.0
 	downSum = 0.0
 	nullRun = 0
-	for i = 0; i < optInTimePeriod; i += 1 {
-		today += 1
-		tempReal = inReal[today]
-		diff = tempReal - prevValue
-		prevValue = tempReal
-		up = float64((diff + math.Abs(diff)) * 0.5)
-		upSum += up
-		downSum += up - diff
-		live = b2i(!(math.Abs(diff) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
+	i = 0
+	if _n0 := int(optInTimePeriod) - int(i); _n0 > 0 {
+		_r2 := inReal[today+1:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1]
+			diff = tempReal - prevValue
+			prevValue = tempReal
+			up = float64((diff + math.Abs(diff)) * 0.5)
+			upSum += up
+			downSum += up - diff
+			live = b2i(!(math.Abs(diff) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+		}
+		today += int32(_n0)
 	}
 	outIdx = 0
 	sum = upSum + downSum
@@ -117,39 +121,41 @@ func (c *Core) cmouImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	upSum -= up
 	downSum -= up - diff
 	today += 1
-	for today <= endIdx {
-		tempReal = inReal[today]
-		diff = tempReal - prevValue
-		prevValue = tempReal
-		up = float64((diff + math.Abs(diff)) * 0.5)
-		upSum += up
-		downSum += up - diff
-		live = b2i(!(math.Abs(diff) <= 0.0))
-		nullRun = (nullRun + 1) & (live - 1)
-		if nullRun >= optInTimePeriod {
-			nullRun = optInTimePeriod
-			upSum = 0.0
-			downSum = 0.0
-			outReal[outIdx] = 0.0
-			outIdx++
-		} else {
-			sum = upSum + downSum
-			if sum > 0.0 {
-				outReal[outIdx] = float64(100.0*(upSum-downSum)) / sum
-				outIdx++
-			} else {
+	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
+		_r5 := inReal[today:][:_n3]
+		_r6 := inReal[trailingIdx:][:_n3]
+		for _k4 := range _r5 {
+			tempReal = _r5[_k4]
+			diff = tempReal - prevValue
+			prevValue = tempReal
+			up = float64((diff + math.Abs(diff)) * 0.5)
+			upSum += up
+			downSum += up - diff
+			live = b2i(!(math.Abs(diff) <= 0.0))
+			nullRun = (nullRun + 1) & (live - 1)
+			if nullRun >= optInTimePeriod {
+				nullRun = optInTimePeriod
+				upSum = 0.0
+				downSum = 0.0
 				outReal[outIdx] = 0.0
 				outIdx++
+			} else {
+				sum = upSum + downSum
+				if sum > 0.0 {
+					outReal[outIdx] = float64(100.0*(upSum-downSum)) / sum
+					outIdx++
+				} else {
+					outReal[outIdx] = 0.0
+					outIdx++
+				}
 			}
+			tempReal = _r6[_k4]
+			diff = tempReal - trailingValue
+			trailingValue = tempReal
+			up = float64((diff + math.Abs(diff)) * 0.5)
+			upSum -= up
+			downSum -= up - diff
 		}
-		tempReal = inReal[trailingIdx]
-		diff = tempReal - trailingValue
-		trailingValue = tempReal
-		trailingIdx += 1
-		up = float64((diff + math.Abs(diff)) * 0.5)
-		upSum -= up
-		downSum -= up - diff
-		today += 1
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

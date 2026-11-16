@@ -67,50 +67,55 @@ func (c *Core) cdlhikkakeImpl(startIdx, endIdx int32, inOpen, inHigh, inLow, inC
 	cd = 0
 	patternResult = 0
 	i = startIdx - 3
-	for i < startIdx {
-		if inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] && (inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] || inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]) {
-			var _T0 int32
-			if inHigh[i] < inHigh[i-1] {
-				_T0 = 1
-			} else {
-				_T0 = -1
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inHigh[i-1:][:_n0]
+		_r3 := inHigh[i-2:][:_n0]
+		_r4 := inLow[i-1:][:_n0]
+		_r5 := inLow[i-2:][:_n0]
+		for _k1 := range _r2 {
+			if _r2[_k1] < _r3[_k1] && _r4[_k1] > _r5[_k1] && (inHigh[i+int32(_k1)] < _r2[_k1] && inLow[i+int32(_k1)] < _r4[_k1] || inHigh[i+int32(_k1)] > _r2[_k1] && inLow[i+int32(_k1)] > _r4[_k1]) {
+				var _T6 int32
+				if inHigh[i+int32(_k1)] < _r2[_k1] {
+					_T6 = 1
+				} else {
+					_T6 = -1
+				}
+				patternResult = 100 * _T6
+				savedHigh = _r2[_k1]
+				savedLow = _r4[_k1]
+				cd = 4
+			} else if cd > 0 && (patternResult > 0 && inClose[i+int32(_k1)] > savedHigh || patternResult < 0 && inClose[i+int32(_k1)] < savedLow) {
+				cd = 0
 			}
-			patternResult = 100 * _T0
-			savedHigh = inHigh[i-1]
-			savedLow = inLow[i-1]
-			cd = 4
-		} else if cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) {
-			cd = 0
+			if cd > 0 {
+				cd -= 1
+			}
 		}
-		if cd > 0 {
-			cd -= 1
-		}
-		i += 1
 	}
 	i = startIdx
 	outIdx = 0
 	for {
 		if inHigh[i-1] < inHigh[i-2] && inLow[i-1] > inLow[i-2] && (inHigh[i] < inHigh[i-1] && inLow[i] < inLow[i-1] || inHigh[i] > inHigh[i-1] && inLow[i] > inLow[i-1]) {
-			var _T1 int32
+			var _T7 int32
 			if inHigh[i] < inHigh[i-1] {
-				_T1 = 1
+				_T7 = 1
 			} else {
-				_T1 = -1
+				_T7 = -1
 			}
-			patternResult = 100 * _T1
+			patternResult = 100 * _T7
 			savedHigh = inHigh[i-1]
 			savedLow = inLow[i-1]
 			cd = 4
 			outInteger[outIdx] = patternResult
 			outIdx++
 		} else if cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) {
-			var _T2 int32
+			var _T8 int32
 			if patternResult > 0 {
-				_T2 = 1
+				_T8 = 1
 			} else {
-				_T2 = -1
+				_T8 = -1
 			}
-			outInteger[outIdx] = patternResult + 100*_T2
+			outInteger[outIdx] = patternResult + 100*_T8
 			outIdx++
 			cd = 0
 		} else {

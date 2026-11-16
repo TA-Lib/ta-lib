@@ -123,21 +123,25 @@ func (c *Core) sortinoImpl(startIdx, endIdx int32, inReal []float64, optInTimePe
 	absTotal = 0.0
 	nbBelow = 0
 	nbAbove = 0
-	for j = trailingIdx + 1; j < startIdx; j += 1 {
-		price = inReal[j]
-		ret = 0.0
-		if prevPrice != 0.0 {
-			ret = (price - prevPrice) / prevPrice
-		}
-		prevPrice = price
-		periodTotal += ret
-		absTotal += math.Abs(ret)
-		dev = ret - optInMAR
-		if dev < 0.0 {
-			downTotal += float64(dev * dev)
-			nbBelow += 1
-		} else if dev > 0.0 {
-			nbAbove += 1
+	j = trailingIdx + 1
+	if _n0 := int(startIdx) - int(j); _n0 > 0 {
+		_r2 := inReal[j:][:_n0]
+		for _k1 := range _r2 {
+			price = _r2[_k1]
+			ret = 0.0
+			if prevPrice != 0.0 {
+				ret = (price - prevPrice) / prevPrice
+			}
+			prevPrice = price
+			periodTotal += ret
+			absTotal += math.Abs(ret)
+			dev = ret - optInMAR
+			if dev < 0.0 {
+				downTotal += float64(dev * dev)
+				nbBelow += 1
+			} else if dev > 0.0 {
+				nbAbove += 1
+			}
 		}
 	}
 	i = startIdx
@@ -192,18 +196,22 @@ func (c *Core) sortinoImpl(startIdx, endIdx int32, inReal []float64, optInTimePe
 			windowTotal = 0.0
 			windowDown = 0.0
 			windowAbs = 0.0
-			for j = windowStart; j <= i; j += 1 {
-				price = inReal[j]
-				ret = 0.0
-				if windowPrevPrice != 0.0 {
-					ret = (price - windowPrevPrice) / windowPrevPrice
-				}
-				windowPrevPrice = price
-				windowTotal += ret
-				windowAbs += math.Abs(ret)
-				dev = ret - optInMAR
-				if dev < 0.0 {
-					windowDown += float64(dev * dev)
+			j = windowStart
+			if _n3 := int(i) - int(j) + 1; _n3 > 0 {
+				_r5 := inReal[j:][:_n3]
+				for _k4 := range _r5 {
+					price = _r5[_k4]
+					ret = 0.0
+					if windowPrevPrice != 0.0 {
+						ret = (price - windowPrevPrice) / windowPrevPrice
+					}
+					windowPrevPrice = price
+					windowTotal += ret
+					windowAbs += math.Abs(ret)
+					dev = ret - optInMAR
+					if dev < 0.0 {
+						windowDown += float64(dev * dev)
+					}
 				}
 			}
 			peakDown = windowDown

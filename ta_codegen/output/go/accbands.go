@@ -86,50 +86,64 @@ func (c *Core) accbandsImpl(startIdx, endIdx int32, inHigh, inLow, inClose []flo
 	periodTotalLower = 0.0
 	trailingIdx = startIdx - lookbackTotal
 	i = trailingIdx
-	for i < startIdx {
-		tempReal = inHigh[i] + inLow[i]
-		if !isZeroScaled(tempReal, math.Abs(inHigh[i])+math.Abs(inLow[i])) {
-			tempReal = float64(4.0*(inHigh[i]-inLow[i])) / tempReal
-			periodTotalUpper += float64(inHigh[i] * (1.0 + tempReal))
-			periodTotalLower += float64(inLow[i] * (1.0 - tempReal))
-		} else {
-			periodTotalUpper += inHigh[i]
-			periodTotalLower += inLow[i]
+	if _n0 := int(startIdx) - int(i); _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inClose[i:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1] + _r3[_k1]
+			if !isZeroScaled(tempReal, math.Abs(_r2[_k1])+math.Abs(_r3[_k1])) {
+				tempReal = float64(4.0*(_r2[_k1]-_r3[_k1])) / tempReal
+				periodTotalUpper += float64(_r2[_k1] * (1.0 + tempReal))
+				periodTotalLower += float64(_r3[_k1] * (1.0 - tempReal))
+			} else {
+				periodTotalUpper += _r2[_k1]
+				periodTotalLower += _r3[_k1]
+			}
+			periodTotalMiddle += _r4[_k1]
 		}
-		periodTotalMiddle += inClose[i]
-		i = i + 1
+		i += int32(_n0)
 	}
 	outIdx = 0
-	for i <= endIdx {
-		tempReal = inHigh[i] + inLow[i]
-		if !isZeroScaled(tempReal, math.Abs(inHigh[i])+math.Abs(inLow[i])) {
-			tempReal = float64(4.0*(inHigh[i]-inLow[i])) / tempReal
-			periodTotalUpper += float64(inHigh[i] * (1.0 + tempReal))
-			periodTotalLower += float64(inLow[i] * (1.0 - tempReal))
-		} else {
-			periodTotalUpper += inHigh[i]
-			periodTotalLower += inLow[i]
+	if _n5 := int(endIdx) - int(i) + 1; _n5 > 0 {
+		_r7 := inHigh[i:][:_n5]
+		_r8 := inLow[i:][:_n5]
+		_r9 := inClose[i:][:_n5]
+		_r10 := inHigh[trailingIdx:][:_n5]
+		_r11 := inLow[trailingIdx:][:_n5]
+		_r12 := inClose[trailingIdx:][:_n5]
+		_r13 := outRealUpperBand[outIdx:][:_n5]
+		_r14 := outRealMiddleBand[outIdx:][:_n5]
+		_r15 := outRealLowerBand[outIdx:][:_n5]
+		for _k6 := range _r7 {
+			tempReal = _r7[_k6] + _r8[_k6]
+			if !isZeroScaled(tempReal, math.Abs(_r7[_k6])+math.Abs(_r8[_k6])) {
+				tempReal = float64(4.0*(_r7[_k6]-_r8[_k6])) / tempReal
+				periodTotalUpper += float64(_r7[_k6] * (1.0 + tempReal))
+				periodTotalLower += float64(_r8[_k6] * (1.0 - tempReal))
+			} else {
+				periodTotalUpper += _r7[_k6]
+				periodTotalLower += _r8[_k6]
+			}
+			periodTotalMiddle += _r9[_k6]
+			tempUpper = periodTotalUpper
+			tempMiddle = periodTotalMiddle
+			tempLower = periodTotalLower
+			tempReal = _r10[_k6] + _r11[_k6]
+			if !isZeroScaled(tempReal, math.Abs(_r10[_k6])+math.Abs(_r11[_k6])) {
+				tempReal = float64(4.0*(_r10[_k6]-_r11[_k6])) / tempReal
+				periodTotalUpper -= float64(_r10[_k6] * (1.0 + tempReal))
+				periodTotalLower -= float64(_r11[_k6] * (1.0 - tempReal))
+			} else {
+				periodTotalUpper -= _r10[_k6]
+				periodTotalLower -= _r11[_k6]
+			}
+			periodTotalMiddle -= _r12[_k6]
+			_r13[_k6] = tempUpper / float64(optInTimePeriod)
+			_r14[_k6] = tempMiddle / float64(optInTimePeriod)
+			_r15[_k6] = tempLower / float64(optInTimePeriod)
 		}
-		periodTotalMiddle += inClose[i]
-		i = i + 1
-		tempUpper = periodTotalUpper
-		tempMiddle = periodTotalMiddle
-		tempLower = periodTotalLower
-		tempReal = inHigh[trailingIdx] + inLow[trailingIdx]
-		if !isZeroScaled(tempReal, math.Abs(inHigh[trailingIdx])+math.Abs(inLow[trailingIdx])) {
-			tempReal = float64(4.0*(inHigh[trailingIdx]-inLow[trailingIdx])) / tempReal
-			periodTotalUpper -= float64(inHigh[trailingIdx] * (1.0 + tempReal))
-			periodTotalLower -= float64(inLow[trailingIdx] * (1.0 - tempReal))
-		} else {
-			periodTotalUpper -= inHigh[trailingIdx]
-			periodTotalLower -= inLow[trailingIdx]
-		}
-		periodTotalMiddle -= inClose[trailingIdx]
-		trailingIdx = trailingIdx + 1
-		outRealUpperBand[outIdx] = tempUpper / float64(optInTimePeriod)
-		outRealMiddleBand[outIdx] = tempMiddle / float64(optInTimePeriod)
-		outRealLowerBand[outIdx] = tempLower / float64(optInTimePeriod)
-		outIdx = outIdx + 1
+		outIdx += int32(_n5)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

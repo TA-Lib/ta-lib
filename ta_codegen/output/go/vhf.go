@@ -78,31 +78,33 @@ func (c *Core) vhfImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	}
 	outIdx = 0
 	today = startIdx
-	for today <= endIdx {
-		highest = inReal[today]
-		lowest = highest
-		prev = highest
-		sumChange = 0.0
-		for i = optInTimePeriod; i >= 0; i -= 1 {
-			tempReal = inReal[today-i]
-			if i < optInTimePeriod {
-				sumChange += math.Abs(tempReal - prev)
-				if tempReal > highest {
-					highest = tempReal
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			highest = _r2[_k1]
+			lowest = highest
+			prev = highest
+			sumChange = 0.0
+			for i = optInTimePeriod; i >= 0; i -= 1 {
+				tempReal = inReal[today+int32(_k1)-i]
+				if i < optInTimePeriod {
+					sumChange += math.Abs(tempReal - prev)
+					if tempReal > highest {
+						highest = tempReal
+					}
+					if tempReal < lowest {
+						lowest = tempReal
+					}
 				}
-				if tempReal < lowest {
-					lowest = tempReal
-				}
+				prev = tempReal
 			}
-			prev = tempReal
+			if sumChange > 0.0 {
+				outReal[outIdx+int32(_k1)] = (highest - lowest) / sumChange
+			} else {
+				outReal[outIdx+int32(_k1)] = 0.0
+			}
 		}
-		if sumChange > 0.0 {
-			outReal[outIdx] = (highest - lowest) / sumChange
-		} else {
-			outReal[outIdx] = 0.0
-		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

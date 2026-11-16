@@ -115,34 +115,37 @@ func (c *Core) tsfImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	outReal[outIdx] = math.FMA(m, float64(optInTimePeriod), b)
 	outIdx++
 	today += 1
-	for today <= endIdx {
-		weightedTrailing = float64(float64(optInTimePeriod) * trailingValue)
-		SumXY = SumXY + SumY - weightedTrailing
-		SumY = SumY - trailingValue + inReal[today]
-		sumAbs = sumAbs - math.Abs(trailingValue) + math.Abs(inReal[today])
-		barsSinceReseed -= 1
-		if barsSinceReseed <= 0 || math.Abs(weightedTrailing) > float64(100.0*sumAbs) {
-			barsSinceReseed = 32 * optInTimePeriod
-			windowStart = today - lookbackTotal
-			SumY = 0.0
-			SumXY = 0.0
-			sumAbs = 0.0
-			tempValue2 = float64(lookbackTotal)
-			for j = windowStart; j <= today; j += 1 {
-				tempValue1 = inReal[j]
-				SumY += tempValue1
-				SumXY += float64(tempValue2 * tempValue1)
-				sumAbs += math.Abs(tempValue1)
-				tempValue2 -= 1.0
+	if _n1 := int(endIdx) - int(today) + 1; _n1 > 0 {
+		_r3 := inReal[today:][:_n1]
+		_r4 := inReal[trailingIdx:][:_n1]
+		_r5 := outReal[outIdx:][:_n1]
+		for _k2 := range _r3 {
+			weightedTrailing = float64(float64(optInTimePeriod) * trailingValue)
+			SumXY = SumXY + SumY - weightedTrailing
+			SumY = SumY - trailingValue + _r3[_k2]
+			sumAbs = sumAbs - math.Abs(trailingValue) + math.Abs(_r3[_k2])
+			barsSinceReseed -= 1
+			if barsSinceReseed <= 0 || math.Abs(weightedTrailing) > float64(100.0*sumAbs) {
+				barsSinceReseed = 32 * optInTimePeriod
+				windowStart = today + int32(_k2) - lookbackTotal
+				SumY = 0.0
+				SumXY = 0.0
+				sumAbs = 0.0
+				tempValue2 = float64(lookbackTotal)
+				for j = windowStart; j <= today+int32(_k2); j += 1 {
+					tempValue1 = inReal[j]
+					SumY += tempValue1
+					SumXY += float64(tempValue2 * tempValue1)
+					sumAbs += math.Abs(tempValue1)
+					tempValue2 -= 1.0
+				}
 			}
+			m = (float64(float64(optInTimePeriod)*SumXY) - float64(SumX*SumY)) / Divisor
+			b = (SumY - float64(m*SumX)) / float64(optInTimePeriod)
+			trailingValue = _r4[_k2]
+			_r5[_k2] = math.FMA(m, float64(optInTimePeriod), b)
 		}
-		m = (float64(float64(optInTimePeriod)*SumXY) - float64(SumX*SumY)) / Divisor
-		b = (SumY - float64(m*SumX)) / float64(optInTimePeriod)
-		trailingValue = inReal[trailingIdx]
-		trailingIdx += 1
-		outReal[outIdx] = math.FMA(m, float64(optInTimePeriod), b)
-		outIdx++
-		today += 1
+		outIdx += int32(_n1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

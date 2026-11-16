@@ -54,16 +54,22 @@ func (c *Core) obvImpl(startIdx, endIdx int32, inReal, inVolume []float64, outBe
 	prevOBV = inVolume[startIdx]
 	prevReal = inReal[startIdx]
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		tempReal = inReal[i]
-		if tempReal > prevReal {
-			prevOBV += inVolume[i]
-		} else if tempReal < prevReal {
-			prevOBV -= inVolume[i]
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inReal[i:][:_n0]
+		_r3 := inVolume[i:][:_n0]
+		_r4 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1]
+			if tempReal > prevReal {
+				prevOBV += _r3[_k1]
+			} else if tempReal < prevReal {
+				prevOBV -= _r3[_k1]
+			}
+			_r4[_k1] = prevOBV
+			prevReal = tempReal
 		}
-		outReal[outIdx] = prevOBV
-		outIdx++
-		prevReal = tempReal
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

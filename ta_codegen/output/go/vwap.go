@@ -58,19 +58,27 @@ func (c *Core) vwapImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume
 	sumV = 0.0
 	vwap = 0.0
 	outIdx = 0
-	for i = startIdx; i <= endIdx; i += 1 {
-		typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0
-		volume = inVolume[i]
-		tempReal = float64(typPrice * volume)
-		if isFinite(typPrice) && isFinite(volume) {
-			sumPV += tempReal
-			sumV += volume
+	i = startIdx
+	if _n0 := int(endIdx) - int(i) + 1; _n0 > 0 {
+		_r2 := inHigh[i:][:_n0]
+		_r3 := inLow[i:][:_n0]
+		_r4 := inClose[i:][:_n0]
+		_r5 := inVolume[i:][:_n0]
+		_r6 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			typPrice = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
+			volume = _r5[_k1]
+			tempReal = float64(typPrice * volume)
+			if isFinite(typPrice) && isFinite(volume) {
+				sumPV += tempReal
+				sumV += volume
+			}
+			if sumV > 0.0 {
+				vwap = sumPV / sumV
+			}
+			_r6[_k1] = vwap
 		}
-		if sumV > 0.0 {
-			vwap = sumPV / sumV
-		}
-		outReal[outIdx] = vwap
-		outIdx++
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

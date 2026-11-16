@@ -122,37 +122,39 @@ func (c *Core) tsiImpl(startIdx, endIdx int32, inReal []float64, optInFirstPerio
 	today = startIdx - lookbackTotal + 1
 	prevClose = inReal[today-1]
 	nBar = 0
-	for today <= startIdx {
-		mom = inReal[today] - prevClose
-		prevClose = inReal[today]
-		absMom = math.Abs(mom)
-		if nBar < optInFirstPeriod {
-			sumFirstNum = sumFirstNum + mom
-			sumFirstDen = sumFirstDen + absMom
-			if nBar == optInFirstPeriod-1 {
-				emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
-				emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
-			}
-		} else {
-			emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
-			emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
-		}
-		if nBar >= lookbackFirst {
-			nSecond = nBar - lookbackFirst
-			if nSecond < optInSecondPeriod {
-				sumSecondNum = sumSecondNum + emaFirstNum
-				sumSecondDen = sumSecondDen + emaFirstDen
-				if nSecond == optInSecondPeriod-1 {
-					emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
-					emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+	if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		for _k1 := range _r2 {
+			mom = _r2[_k1] - prevClose
+			prevClose = _r2[_k1]
+			absMom = math.Abs(mom)
+			if nBar+int32(_k1) < optInFirstPeriod {
+				sumFirstNum = sumFirstNum + mom
+				sumFirstDen = sumFirstDen + absMom
+				if nBar+int32(_k1) == optInFirstPeriod-1 {
+					emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
+					emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
 				}
 			} else {
-				emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
-				emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+				emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+				emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
+			}
+			if nBar+int32(_k1) >= lookbackFirst {
+				nSecond = nBar + int32(_k1) - lookbackFirst
+				if nSecond < optInSecondPeriod {
+					sumSecondNum = sumSecondNum + emaFirstNum
+					sumSecondDen = sumSecondDen + emaFirstDen
+					if nSecond == optInSecondPeriod-1 {
+						emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
+						emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+					}
+				} else {
+					emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+					emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+				}
 			}
 		}
-		nBar = nBar + 1
-		today = today + 1
+		today += int32(_n0)
 	}
 	if emaSecondDen > 0.0 {
 		tsiValue = float64(100.0*emaSecondNum) / emaSecondDen
@@ -161,22 +163,25 @@ func (c *Core) tsiImpl(startIdx, endIdx int32, inReal []float64, optInFirstPerio
 	}
 	outReal[0] = tsiValue
 	outIdx = 1
-	for today <= endIdx {
-		mom = inReal[today] - prevClose
-		prevClose = inReal[today]
-		absMom = math.Abs(mom)
-		emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
-		emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
-		emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
-		emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
-		if emaSecondDen > 0.0 {
-			tsiValue = float64(100.0*emaSecondNum) / emaSecondDen
-		} else {
-			tsiValue = 0.0
+	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
+		_r5 := inReal[today:][:_n3]
+		_r6 := outReal[outIdx:][:_n3]
+		for _k4 := range _r5 {
+			mom = _r5[_k4] - prevClose
+			prevClose = _r5[_k4]
+			absMom = math.Abs(mom)
+			emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+			emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
+			emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+			emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+			if emaSecondDen > 0.0 {
+				tsiValue = float64(100.0*emaSecondNum) / emaSecondDen
+			} else {
+				tsiValue = 0.0
+			}
+			_r6[_k4] = tsiValue
 		}
-		outReal[outIdx] = tsiValue
-		outIdx = outIdx + 1
-		today = today + 1
+		outIdx += int32(_n3)
 	}
 	*outNBElement = outIdx
 	return Success

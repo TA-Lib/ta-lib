@@ -73,17 +73,20 @@ func (c *Core) percentrankImpl(startIdx, endIdx int32, inReal []float64, optInTi
 	}
 	outIdx = 0
 	today = startIdx
-	for today <= endIdx {
-		current = inReal[today]
-		count = 0
-		for i = optInTimePeriod; i >= 1; i -= 1 {
-			if inReal[today-i] < current {
-				count += 1
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := inReal[today:][:_n0]
+		_r3 := outReal[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			current = _r2[_k1]
+			count = 0
+			for i = optInTimePeriod; i >= 1; i -= 1 {
+				if inReal[today+int32(_k1)-i] < current {
+					count += 1
+				}
 			}
+			_r3[_k1] = float64(float64(count) / float64(optInTimePeriod) * 100.0)
 		}
-		outReal[outIdx] = float64(float64(count) / float64(optInTimePeriod) * 100.0)
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

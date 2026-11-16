@@ -128,59 +128,55 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	periodTotal1 = 0.0
 	periodTotal2 = 0.0
 	today = anchorIdx + nbInitialElementNeeded
-	for j = anchorIdx; j < today; j += 1 {
-		tempReal = inReal[j] - shift
-		periodTotal1 += tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 += tempReal
+	j = anchorIdx
+	if _n0 := int(today) - int(j); _n0 > 0 {
+		_r2 := inReal[j:][:_n0]
+		for _k1 := range _r2 {
+			tempReal = _r2[_k1] - shift
+			periodTotal1 += tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 += tempReal
+		}
 	}
 	barsSinceReseed = 32 * optInStdDevPeriod
 	peakTotal2 = periodTotal2
 	upTotal = 0.0
 	dnTotal = 0.0
-	for i = optInTimePeriod; i > 0; i -= 1 {
-		tempReal = inReal[today] - shift
-		periodTotal1 += tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 += tempReal
-		var _T0 float64
-		if periodTotal2 > peakTotal2 {
-			_T0 = periodTotal2
-		} else {
-			_T0 = peakTotal2
-		}
-		peakTotal2 = _T0
-		meanValue1 = float64(periodTotal1 * invPeriod)
-		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-		tempReal = inReal[trailingIdx] - shift
-		periodTotal1 -= tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 -= tempReal
-		trailingIdx += 1
-		barsSinceReseed -= 1
-		if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
-			barsSinceReseed = 32 * optInStdDevPeriod
-			windowStart = today - nbInitialElementNeeded
-			tempReal = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal += inReal[j]
+	i = optInTimePeriod
+	if _n3 := int(i); _n3 > 0 {
+		_r5 := inReal[today:][:_n3]
+		_r6 := inReal[trailingIdx:][:_n3]
+		_r7 := inReal[today-1:][:_n3]
+		for _k4 := range _r5 {
+			tempReal = _r5[_k4] - shift
+			periodTotal1 += tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 += tempReal
+			var _T8 float64
+			if periodTotal2 > peakTotal2 {
+				_T8 = periodTotal2
+			} else {
+				_T8 = peakTotal2
 			}
-			shift = float64(tempReal * invPeriod)
-			periodTotal1 = 0.0
-			periodTotal2 = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal = inReal[j] - shift
-				periodTotal1 += tempReal
-				tempReal = float64(tempReal * tempReal)
-				periodTotal2 += tempReal
-			}
+			peakTotal2 = _T8
 			meanValue1 = float64(periodTotal1 * invPeriod)
 			variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-			if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
-				shift = inReal[today]
+			tempReal = _r6[_k4] - shift
+			periodTotal1 -= tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 -= tempReal
+			barsSinceReseed -= 1
+			if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
+				barsSinceReseed = 32 * optInStdDevPeriod
+				windowStart = today + int32(_k4) - nbInitialElementNeeded
+				tempReal = 0.0
+				for j = windowStart; j <= today+int32(_k4); j += 1 {
+					tempReal += inReal[j]
+				}
+				shift = float64(tempReal * invPeriod)
 				periodTotal1 = 0.0
 				periodTotal2 = 0.0
-				for j = windowStart; j <= today; j += 1 {
+				for j = windowStart; j <= today+int32(_k4); j += 1 {
 					tempReal = inReal[j] - shift
 					periodTotal1 += tempReal
 					tempReal = float64(tempReal * tempReal)
@@ -188,71 +184,76 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				}
 				meanValue1 = float64(periodTotal1 * invPeriod)
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
+					shift = _r5[_k4]
+					periodTotal1 = 0.0
+					periodTotal2 = 0.0
+					for j = windowStart; j <= today+int32(_k4); j += 1 {
+						tempReal = inReal[j] - shift
+						periodTotal1 += tempReal
+						tempReal = float64(tempReal * tempReal)
+						periodTotal2 += tempReal
+					}
+					meanValue1 = float64(periodTotal1 * invPeriod)
+					variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				}
+				peakTotal2 = periodTotal2
+				if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
+					variance = 0.0
+				}
+				tempReal = inReal[windowStart] - shift
+				periodTotal1 -= tempReal
+				tempReal = float64(tempReal * tempReal)
+				periodTotal2 -= tempReal
 			}
-			peakTotal2 = periodTotal2
-			if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
-				variance = 0.0
+			sigma = math.Sqrt(variance)
+			delta = _r5[_k4] - _r7[_k4]
+			if delta > 0.0 {
+				upTotal += sigma
+			} else if delta < 0.0 {
+				dnTotal += sigma
 			}
-			tempReal = inReal[windowStart] - shift
-			periodTotal1 -= tempReal
-			tempReal = float64(tempReal * tempReal)
-			periodTotal2 -= tempReal
 		}
-		sigma = math.Sqrt(variance)
-		delta = inReal[today] - inReal[today-1]
-		if delta > 0.0 {
-			upTotal += sigma
-		} else if delta < 0.0 {
-			dnTotal += sigma
-		}
-		today += 1
+		today += int32(_n3)
+		trailingIdx += int32(_n3)
 	}
 	prevUp = upTotal / float64(optInTimePeriod)
 	prevDn = dnTotal / float64(optInTimePeriod)
 	i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1))
-	for i != 0 {
-		tempReal = inReal[today] - shift
-		periodTotal1 += tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 += tempReal
-		var _T1 float64
-		if periodTotal2 > peakTotal2 {
-			_T1 = periodTotal2
-		} else {
-			_T1 = peakTotal2
-		}
-		peakTotal2 = _T1
-		meanValue1 = float64(periodTotal1 * invPeriod)
-		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-		tempReal = inReal[trailingIdx] - shift
-		periodTotal1 -= tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 -= tempReal
-		trailingIdx += 1
-		barsSinceReseed -= 1
-		if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
-			barsSinceReseed = 32 * optInStdDevPeriod
-			windowStart = today - nbInitialElementNeeded
-			tempReal = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal += inReal[j]
+	if _n9 := int(i); _n9 > 0 {
+		_r11 := inReal[today:][:_n9]
+		_r12 := inReal[trailingIdx:][:_n9]
+		_r13 := inReal[today-1:][:_n9]
+		for _k10 := range _r11 {
+			tempReal = _r11[_k10] - shift
+			periodTotal1 += tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 += tempReal
+			var _T14 float64
+			if periodTotal2 > peakTotal2 {
+				_T14 = periodTotal2
+			} else {
+				_T14 = peakTotal2
 			}
-			shift = float64(tempReal * invPeriod)
-			periodTotal1 = 0.0
-			periodTotal2 = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal = inReal[j] - shift
-				periodTotal1 += tempReal
-				tempReal = float64(tempReal * tempReal)
-				periodTotal2 += tempReal
-			}
+			peakTotal2 = _T14
 			meanValue1 = float64(periodTotal1 * invPeriod)
 			variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-			if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
-				shift = inReal[today]
+			tempReal = _r12[_k10] - shift
+			periodTotal1 -= tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 -= tempReal
+			barsSinceReseed -= 1
+			if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
+				barsSinceReseed = 32 * optInStdDevPeriod
+				windowStart = today + int32(_k10) - nbInitialElementNeeded
+				tempReal = 0.0
+				for j = windowStart; j <= today+int32(_k10); j += 1 {
+					tempReal += inReal[j]
+				}
+				shift = float64(tempReal * invPeriod)
 				periodTotal1 = 0.0
 				periodTotal2 = 0.0
-				for j = windowStart; j <= today; j += 1 {
+				for j = windowStart; j <= today+int32(_k10); j += 1 {
 					tempReal = inReal[j] - shift
 					periodTotal1 += tempReal
 					tempReal = float64(tempReal * tempReal)
@@ -260,76 +261,81 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				}
 				meanValue1 = float64(periodTotal1 * invPeriod)
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
+					shift = _r11[_k10]
+					periodTotal1 = 0.0
+					periodTotal2 = 0.0
+					for j = windowStart; j <= today+int32(_k10); j += 1 {
+						tempReal = inReal[j] - shift
+						periodTotal1 += tempReal
+						tempReal = float64(tempReal * tempReal)
+						periodTotal2 += tempReal
+					}
+					meanValue1 = float64(periodTotal1 * invPeriod)
+					variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				}
+				peakTotal2 = periodTotal2
+				if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
+					variance = 0.0
+				}
+				tempReal = inReal[windowStart] - shift
+				periodTotal1 -= tempReal
+				tempReal = float64(tempReal * tempReal)
+				periodTotal2 -= tempReal
 			}
-			peakTotal2 = periodTotal2
-			if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
-				variance = 0.0
+			sigma = math.Sqrt(variance)
+			delta = _r11[_k10] - _r13[_k10]
+			upValue = 0.0
+			dnValue = 0.0
+			if delta > 0.0 {
+				upValue = sigma
+			} else if delta < 0.0 {
+				dnValue = sigma
 			}
-			tempReal = inReal[windowStart] - shift
-			periodTotal1 -= tempReal
-			tempReal = float64(tempReal * tempReal)
-			periodTotal2 -= tempReal
+			prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
+			prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
 		}
-		sigma = math.Sqrt(variance)
-		delta = inReal[today] - inReal[today-1]
-		upValue = 0.0
-		dnValue = 0.0
-		if delta > 0.0 {
-			upValue = sigma
-		} else if delta < 0.0 {
-			dnValue = sigma
-		}
-		prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
-		prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
-		today += 1
-		i -= 1
+		today += int32(_n9)
+		trailingIdx += int32(_n9)
 	}
 	total = prevUp + prevDn
-	var _T2 float64
+	var _T15 float64
 	if total == 0.0 {
-		_T2 = 50.0
+		_T15 = 50.0
 	} else {
-		_T2 = float64(100.0 * (prevUp / total))
+		_T15 = float64(100.0 * (prevUp / total))
 	}
-	outReal[0] = _T2
+	outReal[0] = _T15
 	outIdx = 1
-	for today <= endIdx {
-		tempReal = inReal[today] - shift
-		periodTotal1 += tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 += tempReal
-		peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
-		meanValue1 = float64(periodTotal1 * invPeriod)
-		variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-		tempReal = inReal[trailingIdx] - shift
-		periodTotal1 -= tempReal
-		tempReal = float64(tempReal * tempReal)
-		periodTotal2 -= tempReal
-		trailingIdx += 1
-		barsSinceReseed -= 1
-		if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
-			barsSinceReseed = 32 * optInStdDevPeriod
-			windowStart = today - nbInitialElementNeeded
-			tempReal = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal += inReal[j]
-			}
-			shift = float64(tempReal * invPeriod)
-			periodTotal1 = 0.0
-			periodTotal2 = 0.0
-			for j = windowStart; j <= today; j += 1 {
-				tempReal = inReal[j] - shift
-				periodTotal1 += tempReal
-				tempReal = float64(tempReal * tempReal)
-				periodTotal2 += tempReal
-			}
+	if _n16 := int(endIdx) - int(today) + 1; _n16 > 0 {
+		_r18 := inReal[today:][:_n16]
+		_r19 := inReal[trailingIdx:][:_n16]
+		_r20 := inReal[today-1:][:_n16]
+		_r21 := outReal[outIdx:][:_n16]
+		for _k17 := range _r18 {
+			tempReal = _r18[_k17] - shift
+			periodTotal1 += tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 += tempReal
+			peakTotal2 = selF(periodTotal2 > peakTotal2, periodTotal2, peakTotal2)
 			meanValue1 = float64(periodTotal1 * invPeriod)
 			variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
-			if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
-				shift = inReal[today]
+			tempReal = _r19[_k17] - shift
+			periodTotal1 -= tempReal
+			tempReal = float64(tempReal * tempReal)
+			periodTotal2 -= tempReal
+			barsSinceReseed -= 1
+			if variance < float64(1e-6*float64(peakTotal2*invPeriod)) || barsSinceReseed <= 0 {
+				barsSinceReseed = 32 * optInStdDevPeriod
+				windowStart = today + int32(_k17) - nbInitialElementNeeded
+				tempReal = 0.0
+				for j = windowStart; j <= today+int32(_k17); j += 1 {
+					tempReal += inReal[j]
+				}
+				shift = float64(tempReal * invPeriod)
 				periodTotal1 = 0.0
 				periodTotal2 = 0.0
-				for j = windowStart; j <= today; j += 1 {
+				for j = windowStart; j <= today+int32(_k17); j += 1 {
 					tempReal = inReal[j] - shift
 					periodTotal1 += tempReal
 					tempReal = float64(tempReal * tempReal)
@@ -337,37 +343,49 @@ func (c *Core) rviImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				}
 				meanValue1 = float64(periodTotal1 * invPeriod)
 				variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				if variance < float64(1e-6*float64(periodTotal2*invPeriod)) {
+					shift = _r18[_k17]
+					periodTotal1 = 0.0
+					periodTotal2 = 0.0
+					for j = windowStart; j <= today+int32(_k17); j += 1 {
+						tempReal = inReal[j] - shift
+						periodTotal1 += tempReal
+						tempReal = float64(tempReal * tempReal)
+						periodTotal2 += tempReal
+					}
+					meanValue1 = float64(periodTotal1 * invPeriod)
+					variance = float64(periodTotal2*invPeriod) - float64(meanValue1*meanValue1)
+				}
+				peakTotal2 = periodTotal2
+				if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
+					variance = 0.0
+				}
+				tempReal = inReal[windowStart] - shift
+				periodTotal1 -= tempReal
+				tempReal = float64(tempReal * tempReal)
+				periodTotal2 -= tempReal
 			}
-			peakTotal2 = periodTotal2
-			if variance < float64(1e-12*float64(periodTotal2*invPeriod)) {
-				variance = 0.0
+			sigma = math.Sqrt(variance)
+			delta = _r18[_k17] - _r20[_k17]
+			upValue = 0.0
+			dnValue = 0.0
+			if delta > 0.0 {
+				upValue = sigma
+			} else if delta < 0.0 {
+				dnValue = sigma
 			}
-			tempReal = inReal[windowStart] - shift
-			periodTotal1 -= tempReal
-			tempReal = float64(tempReal * tempReal)
-			periodTotal2 -= tempReal
+			prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
+			prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
+			total = prevUp + prevDn
+			var _T22 float64
+			if total == 0.0 {
+				_T22 = 50.0
+			} else {
+				_T22 = float64(100.0 * (prevUp / total))
+			}
+			_r21[_k17] = _T22
 		}
-		sigma = math.Sqrt(variance)
-		delta = inReal[today] - inReal[today-1]
-		upValue = 0.0
-		dnValue = 0.0
-		if delta > 0.0 {
-			upValue = sigma
-		} else if delta < 0.0 {
-			dnValue = sigma
-		}
-		prevUp = math.FMA(wBeta, prevUp, float64(wAlpha*upValue))
-		prevDn = math.FMA(wBeta, prevDn, float64(wAlpha*dnValue))
-		total = prevUp + prevDn
-		var _T3 float64
-		if total == 0.0 {
-			_T3 = 50.0
-		} else {
-			_T3 = float64(100.0 * (prevUp / total))
-		}
-		outReal[outIdx] = _T3
-		outIdx++
-		today += 1
+		outIdx += int32(_n16)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

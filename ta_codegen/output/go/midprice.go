@@ -158,32 +158,37 @@ func (c *Core) midpriceImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 			preHighest[0] = highest
 			preLowest[0] = lowest
 			i = 1
-			for i < nAvail {
-				tmpHigh = inHigh[blockNext+i]
-				if tmpHigh > highest {
-					highest = tmpHigh
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inHigh[blockNext+i:][:_n0]
+				_r3 := inLow[blockNext+i:][:_n0]
+				for _k1 := range _r2 {
+					tmpHigh = _r2[_k1]
+					if tmpHigh > highest {
+						highest = tmpHigh
+					}
+					tmpLow = _r3[_k1]
+					if tmpLow < lowest {
+						lowest = tmpLow
+					}
+					preHighest[i+int32(_k1)] = highest
+					preLowest[i+int32(_k1)] = lowest
 				}
-				tmpLow = inLow[blockNext+i]
-				if tmpLow < lowest {
-					lowest = tmpLow
-				}
-				preHighest[i] = highest
-				preLowest[i] = lowest
-				i += 1
 			}
 			m = 1
-			for m <= nAvail {
-				highest = sufHighest[m]
-				if preHighest[m-1] > highest {
-					highest = preHighest[m-1]
+			if _n4 := int(nAvail) - int(m) + 1; _n4 > 0 {
+				_r6 := outReal[outIdx:][:_n4]
+				for _k5 := range _r6 {
+					highest = sufHighest[m+int32(_k5)]
+					if preHighest[m+int32(_k5)-1] > highest {
+						highest = preHighest[m+int32(_k5)-1]
+					}
+					lowest = sufLowest[m+int32(_k5)]
+					if preLowest[m+int32(_k5)-1] < lowest {
+						lowest = preLowest[m+int32(_k5)-1]
+					}
+					_r6[_k5] = (highest + lowest) / 2.0
 				}
-				lowest = sufLowest[m]
-				if preLowest[m-1] < lowest {
-					lowest = preLowest[m-1]
-				}
-				outReal[outIdx] = (highest + lowest) / 2.0
-				outIdx++
-				m += 1
+				outIdx += int32(_n4)
 			}
 			trailingIdx = trailingIdx + nAvail
 			today = today + nAvail

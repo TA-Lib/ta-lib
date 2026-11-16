@@ -156,31 +156,35 @@ func (c *Core) midpointImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 			preHighest[0] = highest
 			preLowest[0] = lowest
 			i = 1
-			for i < nAvail {
-				tmpHigh = inReal[blockNext+i]
-				if tmpHigh > highest {
-					highest = tmpHigh
+			if _n0 := int(nAvail) - int(i); _n0 > 0 {
+				_r2 := inReal[blockNext+i:][:_n0]
+				for _k1 := range _r2 {
+					tmpHigh = _r2[_k1]
+					if tmpHigh > highest {
+						highest = tmpHigh
+					}
+					if tmpHigh < lowest {
+						lowest = tmpHigh
+					}
+					preHighest[i+int32(_k1)] = highest
+					preLowest[i+int32(_k1)] = lowest
 				}
-				if tmpHigh < lowest {
-					lowest = tmpHigh
-				}
-				preHighest[i] = highest
-				preLowest[i] = lowest
-				i += 1
 			}
 			m = 1
-			for m <= nAvail {
-				highest = sufHighest[m]
-				if preHighest[m-1] > highest {
-					highest = preHighest[m-1]
+			if _n3 := int(nAvail) - int(m) + 1; _n3 > 0 {
+				_r5 := outReal[outIdx:][:_n3]
+				for _k4 := range _r5 {
+					highest = sufHighest[m+int32(_k4)]
+					if preHighest[m+int32(_k4)-1] > highest {
+						highest = preHighest[m+int32(_k4)-1]
+					}
+					lowest = sufLowest[m+int32(_k4)]
+					if preLowest[m+int32(_k4)-1] < lowest {
+						lowest = preLowest[m+int32(_k4)-1]
+					}
+					_r5[_k4] = (highest + lowest) / 2.0
 				}
-				lowest = sufLowest[m]
-				if preLowest[m-1] < lowest {
-					lowest = preLowest[m-1]
-				}
-				outReal[outIdx] = (highest + lowest) / 2.0
-				outIdx++
-				m += 1
+				outIdx += int32(_n3)
 			}
 			trailingIdx = trailingIdx + nAvail
 			today = today + nAvail

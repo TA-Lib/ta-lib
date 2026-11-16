@@ -81,12 +81,20 @@ func (c *Core) stddevImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	*outBegIdx = int32(_X0.BegIdx)
 	*outNBElement = int32(_X0.NBElement)
 	if optInNbDev != 1.0 {
-		for i = 0; i < *outNBElement; i += 1 {
-			outReal[i] = float64(math.Sqrt(outReal[i]) * optInNbDev)
+		i = 0
+		if _n1 := int(*outNBElement) - int(i); _n1 > 0 {
+			_r3 := outReal[i:][:_n1]
+			for _k2 := range _r3 {
+				_r3[_k2] = float64(math.Sqrt(_r3[_k2]) * optInNbDev)
+			}
 		}
 	} else {
-		for i = 0; i < *outNBElement; i += 1 {
-			outReal[i] = math.Sqrt(outReal[i])
+		i = 0
+		if _n4 := int(*outNBElement) - int(i); _n4 > 0 {
+			_r6 := outReal[i:][:_n4]
+			for _k5 := range _r6 {
+				_r6[_k5] = math.Sqrt(_r6[_k5])
+			}
 		}
 	}
 	return Success
