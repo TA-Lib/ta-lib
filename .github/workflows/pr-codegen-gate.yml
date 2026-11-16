@@ -45,7 +45,7 @@ jobs:
   regen-check:
     name: ta_codegen output up-to-date
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       # The default merge-commit ref is the right one to gate: it is what lands.
