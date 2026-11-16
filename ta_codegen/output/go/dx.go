@@ -206,6 +206,7 @@ func (c *Core) dxImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 		_r10 := inHigh[today+1:][:_n8]
 		_r11 := inLow[today+1:][:_n8]
 		_r12 := inClose[today+1:][:_n8]
+		_r13 := outReal[outIdx:][:_n8]
 		for _k9 := range _r10 {
 			tempReal = _r10[_k9]
 			diffP = tempReal - prevHigh
@@ -221,20 +222,20 @@ func (c *Core) dxImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 			plusDM1 = selF(diffP > 0.0, plusSel, 0.0)
 			prevMinusDM += minusDM1
 			prevPlusDM += plusDM1
-			var _true_range_13 float64
-			var range_13 float64
-			range_13 = prevHigh - prevLow
-			var tmp_13 float64
-			tmp_13 = math.Abs(prevHigh - prevClose)
-			if tmp_13 > range_13 {
-				range_13 = tmp_13
+			var _true_range_14 float64
+			var range_14 float64
+			range_14 = prevHigh - prevLow
+			var tmp_14 float64
+			tmp_14 = math.Abs(prevHigh - prevClose)
+			if tmp_14 > range_14 {
+				range_14 = tmp_14
 			}
-			tmp_13 = math.Abs(prevLow - prevClose)
-			if tmp_13 > range_13 {
-				range_13 = tmp_13
+			tmp_14 = math.Abs(prevLow - prevClose)
+			if tmp_14 > range_14 {
+				range_14 = tmp_14
 			}
-			_true_range_13 = range_13
-			tempReal = _true_range_13
+			_true_range_14 = range_14
+			tempReal = _true_range_14
 			prevTR = prevTR - float64(prevTR*invPeriod) + tempReal
 			prevClose = _r12[_k9]
 			if prevTR > 0.0 {
@@ -242,12 +243,12 @@ func (c *Core) dxImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 				plusDI = float64(100.0 * (prevPlusDM / prevTR))
 				tempReal = minusDI + plusDI
 				if !isZero(tempReal) {
-					outReal[outIdx+int32(_k9)] = float64(100.0 * (math.Abs(minusDI-plusDI) / tempReal))
+					_r13[_k9] = float64(100.0 * (math.Abs(minusDI-plusDI) / tempReal))
 				} else {
-					outReal[outIdx+int32(_k9)] = outReal[outIdx+int32(_k9)-1]
+					_r13[_k9] = outReal[outIdx+int32(_k9)-1]
 				}
 			} else {
-				outReal[outIdx+int32(_k9)] = outReal[outIdx+int32(_k9)-1]
+				_r13[_k9] = outReal[outIdx+int32(_k9)-1]
 			}
 		}
 		outIdx += int32(_n8)

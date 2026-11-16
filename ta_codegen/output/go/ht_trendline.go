@@ -350,7 +350,7 @@ func (c *Core) htTrendlineImpl(startIdx, endIdx int32, inReal []float64, outBegI
 			if DCPeriodInt > 0 {
 				tempReal = tempReal / float64(DCPeriodInt)
 			}
-			tempReal2 = (math.FMA(2.0, iTrend2, math.FMA(4.0, tempReal, float64(3.0*iTrend1))) + iTrend3) / 10.0
+			tempReal2 = (float64(4.0*tempReal) + float64(3.0*iTrend1) + float64(2.0*iTrend2) + iTrend3) / 10.0
 			iTrend3 = iTrend2
 			iTrend2 = iTrend1
 			iTrend1 = tempReal
@@ -707,7 +707,7 @@ func (sp *HT_TRENDLINEStream) Update(inReal float64) (float64, error) {
 	if DCPeriodInt > 0 {
 		tempReal = tempReal / float64(DCPeriodInt)
 	}
-	tempReal2 = (math.FMA(2.0, sp.iTrend2, math.FMA(4.0, tempReal, float64(3.0*sp.iTrend1))) + sp.iTrend3) / 10.0
+	tempReal2 = (float64(4.0*tempReal) + float64(3.0*sp.iTrend1) + float64(2.0*sp.iTrend2) + sp.iTrend3) / 10.0
 	sp.iTrend3 = sp.iTrend2
 	sp.iTrend2 = sp.iTrend1
 	sp.iTrend1 = tempReal
@@ -935,7 +935,7 @@ func (sp *HT_TRENDLINEStream) Peek(inReal float64) (float64, error) {
 	if DCPeriodInt > 0 {
 		tempReal = tempReal / float64(DCPeriodInt)
 	}
-	tempReal2 = (math.FMA(2.0, iTrend2, math.FMA(4.0, tempReal, float64(3.0*iTrend1))) + iTrend3) / 10.0
+	tempReal2 = (float64(4.0*tempReal) + float64(3.0*iTrend1) + float64(2.0*iTrend2) + iTrend3) / 10.0
 	iTrend3 = iTrend2
 	iTrend2 = iTrend1
 	iTrend1 = tempReal
@@ -1269,7 +1269,7 @@ func (c *Core) htTrendlineOpenImpl(sp *HT_TRENDLINEStream, inReal []float64, sta
 		if DCPeriodInt > 0 {
 			tempReal = tempReal / float64(DCPeriodInt)
 		}
-		tempReal2 = (math.FMA(2.0, iTrend2, math.FMA(4.0, tempReal, float64(3.0*iTrend1))) + iTrend3) / 10.0
+		tempReal2 = (float64(4.0*tempReal) + float64(3.0*iTrend1) + float64(2.0*iTrend2) + iTrend3) / 10.0
 		iTrend3 = iTrend2
 		iTrend2 = iTrend1
 		iTrend1 = tempReal

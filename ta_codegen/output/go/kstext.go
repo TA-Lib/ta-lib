@@ -252,7 +252,7 @@ func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Per
 		return _E3.(RetCode)
 	}
 	for i = 0; i < kstNb; i += 1 {
-		kstBuffer[i] = math.FMA(2.0, tempBuffer[i], kstBuffer[i])
+		kstBuffer[i] = kstBuffer[i] + float64(2.0*tempBuffer[i])
 	}
 	_X4, _E4 := c.ROC(int(sigStart-lookbackMA3), int(endIdx), inReal, int(optInROC3Period), tempBuffer)
 	if _E4 != nil {
@@ -276,7 +276,7 @@ func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Per
 		return _E7.(RetCode)
 	}
 	for i = 0; i < kstNb; i += 1 {
-		kstBuffer[i] = math.FMA(4.0, tempBuffer[i], kstBuffer[i])
+		kstBuffer[i] = kstBuffer[i] + float64(4.0*tempBuffer[i])
 	}
 	copy(outKST, kstBuffer[lookbackSignal:lookbackSignal+(endIdx-startIdx+1)])
 	_X8, _E8 := c.MA(0, int(kstNb-1), kstBuffer, int(optInSignalPeriod), MAType(optInSignalMAType), outKSTSignal)
@@ -542,7 +542,7 @@ func (sp *KSTEXTStream) Update(inReal float64) (float64, float64, error) {
 	if subErr != nil {
 		return 0, 0, subErr
 	}
-	cur_kstBuffer = math.FMA(2.0, cur_tempBuffer, cur_kstBuffer)
+	cur_kstBuffer = cur_kstBuffer + float64(2.0*cur_tempBuffer)
 	cur_tempBuffer, subErr = sp.sub4.Update(inReal)
 	if subErr != nil {
 		return 0, 0, subErr
@@ -560,7 +560,7 @@ func (sp *KSTEXTStream) Update(inReal float64) (float64, float64, error) {
 	if subErr != nil {
 		return 0, 0, subErr
 	}
-	cur_kstBuffer = math.FMA(4.0, cur_tempBuffer, cur_kstBuffer)
+	cur_kstBuffer = cur_kstBuffer + float64(4.0*cur_tempBuffer)
 	cur_outKSTSignal, subErr = sp.sub8.Update(cur_kstBuffer)
 	if subErr != nil {
 		return 0, 0, subErr
@@ -598,7 +598,7 @@ func (sp *KSTEXTStream) Peek(inReal float64) (float64, float64, error) {
 	if subErr != nil {
 		return 0, 0, subErr
 	}
-	cur_kstBuffer = math.FMA(2.0, cur_tempBuffer, cur_kstBuffer)
+	cur_kstBuffer = cur_kstBuffer + float64(2.0*cur_tempBuffer)
 	cur_tempBuffer, subErr = sp.sub4.Peek(inReal)
 	if subErr != nil {
 		return 0, 0, subErr
@@ -616,7 +616,7 @@ func (sp *KSTEXTStream) Peek(inReal float64) (float64, float64, error) {
 	if subErr != nil {
 		return 0, 0, subErr
 	}
-	cur_kstBuffer = math.FMA(4.0, cur_tempBuffer, cur_kstBuffer)
+	cur_kstBuffer = cur_kstBuffer + float64(4.0*cur_tempBuffer)
 	cur_outKSTSignal, subErr = sp.sub8.Peek(cur_kstBuffer)
 	if subErr != nil {
 		return 0, 0, subErr
@@ -827,7 +827,7 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 		return InternalError
 	}
 	for i = 0; i < kstNb; i += 1 {
-		kstBuffer[i] = math.FMA(2.0, tempBuffer[i], kstBuffer[i])
+		kstBuffer[i] = kstBuffer[i] + float64(2.0*tempBuffer[i])
 	}
 	sub4, _E4 := c.rocOpenAndFillInternal(inReal, sigStart-lookbackMA3, optInROC3Period, &tempBegIdx, &rocNb, tempBuffer)
 	if _E4 != nil {
@@ -876,7 +876,7 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 		return InternalError
 	}
 	for i = 0; i < kstNb; i += 1 {
-		kstBuffer[i] = math.FMA(4.0, tempBuffer[i], kstBuffer[i])
+		kstBuffer[i] = kstBuffer[i] + float64(4.0*tempBuffer[i])
 	}
 	lagNb4 = endIdx - startIdx + 1
 	if endIdx-startIdx < 0 {

@@ -130,18 +130,23 @@ func (c *Core) willrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		lowest = inLow[i]
 		sufHighest[optInTimePeriod-1] = highest
 		sufLowest[optInTimePeriod-1] = lowest
-		for i > blockStart {
-			i -= 1
-			tmp = inHigh[i]
-			if tmp > highest {
-				highest = tmp
+		if _n0 := int(i) - int(blockStart); _n0 > 0 {
+			_r2 := inHigh[i-int32(_n0):][:_n0]
+			_r3 := inLow[i-int32(_n0):][:_n0]
+			_r4 := sufHighest[i-blockStart-int32(_n0):][:_n0]
+			_r5 := sufLowest[i-blockStart-int32(_n0):][:_n0]
+			for _k1 := _n0 - 1; _k1 >= 0; _k1-- {
+				tmp = _r2[_k1]
+				if tmp > highest {
+					highest = tmp
+				}
+				tmp = _r3[_k1]
+				if tmp < lowest {
+					lowest = tmp
+				}
+				_r4[_k1] = highest
+				_r5[_k1] = lowest
 			}
-			tmp = inLow[i]
-			if tmp < lowest {
-				lowest = tmp
-			}
-			sufHighest[i-blockStart] = highest
-			sufLowest[i-blockStart] = lowest
 		}
 		highest = sufHighest[0]
 		lowest = sufLowest[0]
@@ -173,46 +178,53 @@ func (c *Core) willrImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 			preHighest[0] = highest
 			preLowest[0] = lowest
 			i = 1
-			if _n0 := int(nAvail) - int(i); _n0 > 0 {
-				_r2 := inHigh[blockNext+i:][:_n0]
-				_r3 := inLow[blockNext+i:][:_n0]
-				for _k1 := range _r2 {
-					tmp = _r2[_k1]
+			if _n6 := int(nAvail) - int(i); _n6 > 0 {
+				_r8 := inHigh[blockNext+i:][:_n6]
+				_r9 := inLow[blockNext+i:][:_n6]
+				_r10 := preHighest[i:][:_n6]
+				_r11 := preLowest[i:][:_n6]
+				for _k7 := range _r8 {
+					tmp = _r8[_k7]
 					if tmp > highest {
 						highest = tmp
 					}
-					tmp = _r3[_k1]
+					tmp = _r9[_k7]
 					if tmp < lowest {
 						lowest = tmp
 					}
-					preHighest[i+int32(_k1)] = highest
-					preLowest[i+int32(_k1)] = lowest
+					_r10[_k7] = highest
+					_r11[_k7] = lowest
 				}
 			}
 			m = 1
-			for m <= nAvail {
-				highest = sufHighest[m]
-				if preHighest[m-1] > highest {
-					highest = preHighest[m-1]
-				}
-				lowest = sufLowest[m]
-				if preLowest[m-1] < lowest {
-					lowest = preLowest[m-1]
-				}
-				if !isZeroScaled(highest-lowest, math.Abs(highest)+math.Abs(lowest)) {
-					tempReal = float64((highest - inClose[today+m-1]) / (highest - lowest) * -100.0)
-					if tempReal > 0.0 {
-						tempReal = 0.0
-					} else if tempReal < -100.0 {
-						tempReal = -100.0
+			if _n12 := int(nAvail) - int(m) + 1; _n12 > 0 {
+				_r14 := sufHighest[m:][:_n12]
+				_r15 := preHighest[m-1:][:_n12]
+				_r16 := sufLowest[m:][:_n12]
+				_r17 := preLowest[m-1:][:_n12]
+				_r18 := outReal[outIdx:][:_n12]
+				for _k13 := range _r14 {
+					highest = _r14[_k13]
+					if _r15[_k13] > highest {
+						highest = _r15[_k13]
 					}
-					outReal[outIdx] = tempReal
-					outIdx++
-				} else {
-					outReal[outIdx] = 0.0
-					outIdx++
+					lowest = _r16[_k13]
+					if _r17[_k13] < lowest {
+						lowest = _r17[_k13]
+					}
+					if !isZeroScaled(highest-lowest, math.Abs(highest)+math.Abs(lowest)) {
+						tempReal = float64((highest - inClose[today+(m+int32(_k13))-1]) / (highest - lowest) * -100.0)
+						if tempReal > 0.0 {
+							tempReal = 0.0
+						} else if tempReal < -100.0 {
+							tempReal = -100.0
+						}
+						_r18[_k13] = tempReal
+					} else {
+						_r18[_k13] = 0.0
+					}
 				}
-				m += 1
+				outIdx += int32(_n12)
 			}
 			trailingIdx = trailingIdx + nAvail
 			today = today + nAvail

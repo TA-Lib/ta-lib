@@ -275,10 +275,11 @@ pub(super) struct Ctx<'a> {
     live_after: std::cell::RefCell<HashMap<usize, BTreeSet<String>>>,
 }
 
-/// A lockstep loop as it renders: the pass counter, a name per lane, and the
-/// statement of the pass being rendered.
+/// A lockstep loop as it renders: the pass count, the counter, a name per
+/// lane, and the statement of the pass being rendered.
 struct Lock {
     plan: super::go_lockstep::Plan,
+    count: String,
     pass: String,
     lanes: Vec<String>,
     at: Cell<usize>,
@@ -742,7 +743,10 @@ impl<'a> Ctx<'a> {
     fn binop(&self, l: &Expr, op: &BinOp, r: &Expr, sc: &mut Scope) -> (GExpr, CType) {
         if fma::EMIT_FMA {
             if let Some(fs) = self.fma_sets() {
-                if let Some(operands) = fma::fuse_operands(l, op, r, &fs.view()) {
+                // Decline the site and nothing else: re-asking the predicate
+                // without the exact product fuses the other product of
+                // `a*b + c*d`, where C's does not.
+                if let Some(operands) = fma::fuse_operands(l, op, r, &fs.view()).filter(|(a, b, _)| !exact_factor(a) && !exact_factor(b)) {
                     let args = [operands.0, operands.1, operands.2].iter().map(|x| self.lower_as(x, CType::Real, sc)).collect();
                     return (GExpr::call("math.FMA", args), CType::Real);
                 }
@@ -1371,7 +1375,11 @@ impl<'a> Ctx<'a> {
         let lock = lock.as_ref()?;
         let d = *lock.plan.steps.get(name)?;
         let taken = lock.plan.before[lock.at.get()].get(name).copied().unwrap_or(0);
-        let k = GExpr::call("int32", vec![GExpr::name(lock.pass.clone())]);
+        let mut k = GExpr::name(lock.pass.clone());
+        if lock.plan.down {
+            k = GExpr::bin(GExpr::bin(GExpr::name(lock.count.clone()), GOp::Sub, GExpr::name("1")), GOp::Sub, k);
+        }
+        let k = GExpr::call("int32", vec![k]);
         let mut g = GExpr::bin(GExpr::name(go_ident(name)), if d > 0 { GOp::Add } else { GOp::Sub }, k);
         if taken != 0 {
             g = GExpr::bin(g, if taken > 0 { GOp::Add } else { GOp::Sub }, GExpr::name(taken.unsigned_abs().to_string()));
@@ -1440,11 +1448,16 @@ impl<'a> Ctx<'a> {
         let lane_names: Vec<String> = plan.lanes.iter().map(|_| self.temp("r")).collect();
         out.push(format!("if {n} := {}; {n} > 0 {{", count.render()));
         for ((lane, name), start) in plan.lanes.iter().zip(&lane_names).zip(starts) {
-            let cut = GExpr::slice(GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(strip_paren(start)), None), None, Some(GExpr::name(n.clone())));
+            let lo = if plan.down { GExpr::bin(start, GOp::Sub, GExpr::call("int32", vec![GExpr::name(n.clone())])) } else { strip_paren(start) };
+            let cut = GExpr::slice(GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(lo), None), None, Some(GExpr::name(n.clone())));
             out.push(format!("\t{name} := {}", cut.render()));
         }
-        out.push(format!("\tfor {k} := range {} {{", lane_names[0]));
-        let lock = std::rc::Rc::new(Lock { plan, pass: k, lanes: lane_names, at: Cell::new(0) });
+        if plan.down {
+            out.push(format!("\tfor {k} := {n} - 1; {k} >= 0; {k}-- {{"));
+        } else {
+            out.push(format!("\tfor {k} := range {} {{", lane_names[0]));
+        }
+        let lock = std::rc::Rc::new(Lock { plan, count: n.clone(), pass: k, lanes: lane_names, at: Cell::new(0) });
         let outermost = self.loop_selects.get() && self.loop_depth.get() == 1;
         let outer_scan = outermost.then(|| {
             self.loop_out.set(super::go_select::stores_output(&lock.plan.pass));
@@ -2128,6 +2141,18 @@ fn math_name(mf: MathFn) -> &'static str {
     }
 }
 
+/// A literal `±2^k`, `k >= 1`: its product rounds nothing short of overflow,
+/// so the plain multiply-add returns the fused bits without `math.FMA`'s
+/// per-call CPU test at GOAMD64=v1. Not `2^-k`: that product rounds a
+/// subnormal.
+fn exact_factor(e: &Expr) -> bool {
+    match e {
+        Expr::Literal(v) => v.is_finite() && v.abs() >= 2.0 && v.abs().to_bits() & ((1u64 << 52) - 1) == 0,
+        Expr::Neg(x) => exact_factor(x),
+        _ => false,
+    }
+}
+
 pub(super) fn copy_call(d: GExpr, doff: GExpr, s: GExpr, soff: GExpr, n: GExpr) -> GExpr {
     let dst = if doff.is_name("0") { d } else { GExpr::slice(d, Some(doff), None) };
     let hi = if soff.is_name("0") { n } else { GExpr::bin(soff.clone(), GOp::Add, n) };
@@ -2502,6 +2527,9 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
         }
         for o in func.outputs.iter().filter(|o| !stored.contains(&o.name)) {
             contract.insert(o.name.clone(), super::go_lockstep::Contract::Output);
+        }
+        for a in super::go_lockstep::scratch(body).into_iter().filter(|a| !stored.contains(a)) {
+            contract.insert(a, super::go_lockstep::Contract::Scratch);
         }
         ctx.end_fixed.set(!stored.contains("endIdx"));
         ctx.lockstep.set(true);

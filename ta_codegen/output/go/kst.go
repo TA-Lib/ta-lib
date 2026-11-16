@@ -426,7 +426,7 @@ func (c *Core) kstImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period
 				ring4_Idx = 0
 			}
 			total4 -= ring4[ring4_Idx]
-			kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+			kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 			sigTotal += kst
 			sigRing[sigRing_Idx] = kst
 			sigRing_Idx++
@@ -513,7 +513,7 @@ func (c *Core) kstImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period
 				ring4_Idx = 0
 			}
 			total4 -= ring4[ring4_Idx]
-			kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+			kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 			sigTotal += kst
 			sig = sigTotal / float64(optInSignalPeriod)
 			sigRing[sigRing_Idx] = kst
@@ -872,7 +872,7 @@ func (sp *KSTStream) Update(inReal float64) (float64, float64, error) {
 		sp.ring4_Idx = 0
 	}
 	sp.total4 -= sp.cb_ring4[sp.ring4_Idx]
-	kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+	kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 	sp.sigTotal += kst
 	sig = sp.sigTotal / float64(sp.optInSignalPeriod)
 	sp.cb_sigRing[sp.sigRing_Idx] = kst
@@ -1090,7 +1090,7 @@ func (sp *KSTStream) Peek(inReal float64) (float64, float64, error) {
 		_T11 = pkVal7
 	}
 	total4 -= _T11
-	kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+	kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 	sigTotal += kst
 	sig = sigTotal / float64(sp.optInSignalPeriod)
 	pkSlot8 = sigRing_Idx
@@ -1425,7 +1425,7 @@ func (c *Core) kstOpenImpl(sp *KSTStream, inReal []float64, startIdx, optInROC1P
 			ring4_Idx = 0
 		}
 		total4 -= ring4[ring4_Idx]
-		kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+		kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 		sigTotal += kst
 		sigRing[sigRing_Idx] = kst
 		sigRing_Idx++
@@ -1504,7 +1504,7 @@ func (c *Core) kstOpenImpl(sp *KSTStream, inReal []float64, startIdx, optInROC1P
 			ring4_Idx = 0
 		}
 		total4 -= ring4[ring4_Idx]
-		kst = math.FMA(4.0, rcma4, math.FMA(3.0, rcma3, math.FMA(2.0, rcma2, rcma1)))
+		kst = math.FMA(3.0, rcma3, rcma1+float64(2.0*rcma2)) + float64(4.0*rcma4)
 		sigTotal += kst
 		sig = sigTotal / float64(optInSignalPeriod)
 		sigRing[sigRing_Idx] = kst

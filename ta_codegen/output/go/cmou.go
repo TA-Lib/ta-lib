@@ -123,7 +123,8 @@ func (c *Core) cmouImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	today += 1
 	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
 		_r5 := inReal[today:][:_n3]
-		_r6 := inReal[trailingIdx:][:_n3]
+		_r6 := outReal[outIdx:][:_n3]
+		_r7 := inReal[trailingIdx:][:_n3]
 		for _k4 := range _r5 {
 			tempReal = _r5[_k4]
 			diff = tempReal - prevValue
@@ -137,25 +138,23 @@ func (c *Core) cmouImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 				nullRun = optInTimePeriod
 				upSum = 0.0
 				downSum = 0.0
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r6[_k4] = 0.0
 			} else {
 				sum = upSum + downSum
 				if sum > 0.0 {
-					outReal[outIdx] = float64(100.0*(upSum-downSum)) / sum
-					outIdx++
+					_r6[_k4] = float64(100.0*(upSum-downSum)) / sum
 				} else {
-					outReal[outIdx] = 0.0
-					outIdx++
+					_r6[_k4] = 0.0
 				}
 			}
-			tempReal = _r6[_k4]
+			tempReal = _r7[_k4]
 			diff = tempReal - trailingValue
 			trailingValue = tempReal
 			up = float64((diff + math.Abs(diff)) * 0.5)
 			upSum -= up
 			downSum -= up - diff
 		}
+		outIdx += int32(_n3)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

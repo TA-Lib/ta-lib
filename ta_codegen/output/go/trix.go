@@ -155,19 +155,19 @@ func (c *Core) trixImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	outIdx = 0
 	if _n12 := int(endIdx) - int(today) + 1; _n12 > 0 {
 		_r14 := inReal[today:][:_n12]
+		_r15 := outReal[outIdx:][:_n12]
 		for _k13 := range _r14 {
 			tempReal = prevEMA3
 			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r14[_k13]))
 			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
 			prevEMA3 = math.FMA(emaBeta, prevEMA3, float64(optInK_1*prevEMA2))
 			if tempReal != 0.0 {
-				outReal[outIdx] = float64((prevEMA3/tempReal - 1.0) * 100.0)
-				outIdx++
+				_r15[_k13] = float64((prevEMA3/tempReal - 1.0) * 100.0)
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r15[_k13] = 0.0
 			}
 		}
+		outIdx += int32(_n12)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

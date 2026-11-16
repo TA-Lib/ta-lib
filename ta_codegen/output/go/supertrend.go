@@ -163,6 +163,8 @@ func (c *Core) supertrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []f
 		_r9 := inHigh[today:][:_n6]
 		_r10 := inClose[today-1:][:_n6]
 		_r11 := inClose[today:][:_n6]
+		_r12 := outSupertrend[outIdx:][:_n6]
+		_r13 := outTrend[outIdx:][:_n6]
 		for _k7 := range _r8 {
 			tempLT = _r8[_k7]
 			tempHT = _r9[_k7]
@@ -196,11 +198,11 @@ func (c *Core) supertrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []f
 				isUptrend = 1
 			}
 			if isUptrend != 0 {
-				outSupertrend[outIdx+int32(_k7)] = finalLower
-				outTrend[outIdx+int32(_k7)] = 1
+				_r12[_k7] = finalLower
+				_r13[_k7] = 1
 			} else {
-				outSupertrend[outIdx+int32(_k7)] = finalUpper
-				outTrend[outIdx+int32(_k7)] = -1
+				_r12[_k7] = finalUpper
+				_r13[_k7] = -1
 			}
 			prevClose = closeToday
 		}

@@ -181,6 +181,7 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		_r13 := inLow[today:][:_n10]
 		_r14 := inClose[today:][:_n10]
 		_r15 := inVolume[today:][:_n10]
+		_r16 := outReal[outIdx:][:_n10]
 		for _k11 := range _r12 {
 			posSumMF -= mflow_positive[mflow_Idx]
 			negSumMF -= mflow_negative[mflow_Idx]
@@ -189,51 +190,50 @@ func (c *Core) mfiImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 			tempValue3 = math.Abs(tempValue1) + math.Abs(prevValue)
 			prevValue = tempValue1
 			tempValue1 = float64(tempValue1 * _r15[_k11])
-			var _T16 float64
+			var _T17 float64
 			if isZeroScaled(tempValue2, tempValue3) {
-				_T16 = 0.0
+				_T17 = 0.0
 			} else {
-				_T16 = tempValue1
+				_T17 = tempValue1
 			}
-			moneyFlow = _T16
+			moneyFlow = _T17
 			posFlow = selF(tempValue2 < 0.0, 0.0, moneyFlow)
 			negFlow = selF(tempValue2 < 0.0, moneyFlow, 0.0)
 			mflow_positive[mflow_Idx] = posFlow
 			mflow_negative[mflow_Idx] = negFlow
 			posSumMF += posFlow
 			negSumMF += negFlow
-			var _T17 int32
+			var _T18 int32
 			if moneyFlow == 0.0 {
-				_T17 = nullRun + 1
+				_T18 = nullRun + 1
 			} else {
-				_T17 = 0
+				_T18 = 0
 			}
-			nullRun = _T17
+			nullRun = _T18
 			if nullRun >= optInTimePeriod {
 				nullRun = optInTimePeriod
 				posSumMF = 0.0
 				negSumMF = 0.0
 			}
 			tempValue1 = posSumMF + negSumMF
-			var _T18 float64
+			var _T19 float64
 			if posSumMF < 0.0 {
-				_T18 = 0.0
+				_T19 = 0.0
 			} else {
-				_T18 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
+				_T19 = selF(posSumMF > tempValue1, tempValue1, posSumMF)
 			}
-			posClamped = _T18
+			posClamped = _T19
 			if tempValue1 <= 0.0 {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r16[_k11] = 0.0
 			} else {
-				outReal[outIdx] = float64(100.0 * (posClamped / tempValue1))
-				outIdx++
+				_r16[_k11] = float64(100.0 * (posClamped / tempValue1))
 			}
 			mflow_Idx++
 			if mflow_Idx > maxIdx_mflow {
 				mflow_Idx = 0
 			}
 		}
+		outIdx += int32(_n10)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

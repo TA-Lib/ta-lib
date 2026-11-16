@@ -90,41 +90,44 @@ func (c *Core) fractalImpl(startIdx, endIdx int32, inHigh, inLow []float64, optI
 	}
 	outIdx = 0
 	today = startIdx
-	for today <= endIdx {
-		pivotHigh = 0.0
-		pivotLow = 0.0
-		otherHigh = 0.0
-		otherLow = 0.0
-		for i = optInLeftBars + optInRightBars; i >= 0; i -= 1 {
-			tempHigh = inHigh[today-i]
-			tempLow = inLow[today-i]
-			if i == optInRightBars {
-				pivotHigh = tempHigh
-				pivotLow = tempLow
-			} else if i == optInLeftBars+optInRightBars {
-				otherHigh = tempHigh
-				otherLow = tempLow
-			} else {
-				if tempHigh > otherHigh {
+	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
+		_r2 := outSwingHigh[outIdx:][:_n0]
+		_r3 := outSwingLow[outIdx:][:_n0]
+		for _k1 := range _r2 {
+			pivotHigh = 0.0
+			pivotLow = 0.0
+			otherHigh = 0.0
+			otherLow = 0.0
+			for i = optInLeftBars + optInRightBars; i >= 0; i -= 1 {
+				tempHigh = inHigh[today+int32(_k1)-i]
+				tempLow = inLow[today+int32(_k1)-i]
+				if i == optInRightBars {
+					pivotHigh = tempHigh
+					pivotLow = tempLow
+				} else if i == optInLeftBars+optInRightBars {
 					otherHigh = tempHigh
-				}
-				if tempLow < otherLow {
 					otherLow = tempLow
+				} else {
+					if tempHigh > otherHigh {
+						otherHigh = tempHigh
+					}
+					if tempLow < otherLow {
+						otherLow = tempLow
+					}
 				}
 			}
+			if pivotHigh > otherHigh {
+				_r2[_k1] = 100
+			} else {
+				_r2[_k1] = 0
+			}
+			if pivotLow < otherLow {
+				_r3[_k1] = 100
+			} else {
+				_r3[_k1] = 0
+			}
 		}
-		if pivotHigh > otherHigh {
-			outSwingHigh[outIdx] = 100
-		} else {
-			outSwingHigh[outIdx] = 0
-		}
-		if pivotLow < otherLow {
-			outSwingLow[outIdx] = 100
-		} else {
-			outSwingLow[outIdx] = 0
-		}
-		outIdx += 1
-		today += 1
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

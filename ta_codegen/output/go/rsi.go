@@ -139,6 +139,7 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	}
 	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
 		_r8 := inReal[today:][:_n6]
+		_r9 := outReal[outIdx:][:_n6]
 		for _k7 := range _r8 {
 			tempValue1 = _r8[_k7]
 			tempValue2 = tempValue1 - prevValue
@@ -152,13 +153,12 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			prevGain = float64(prevGain * invPeriod)
 			tempValue1 = prevGain + prevLoss
 			if tempValue1 > 0.0 {
-				outReal[outIdx] = float64(100.0 * (prevGain / tempValue1))
-				outIdx = outIdx + 1
+				_r9[_k7] = float64(100.0 * (prevGain / tempValue1))
 			} else {
-				outReal[outIdx] = 50.0
-				outIdx = outIdx + 1
+				_r9[_k7] = 50.0
 			}
 		}
+		outIdx += int32(_n6)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

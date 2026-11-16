@@ -209,22 +209,26 @@ func (c *Core) sqzmomImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	if _E9 != nil {
 		return _E9.(RetCode)
 	}
-	for i = 0; i < n; i += 1 {
-		dev = float64(tempSD[i] * optInNbDev)
-		up = tempMid[i] + dev
-		lo = tempMid[i] - dev
-		centre = tempKCM[i+kcmShift]
-		band = tempWork[i]
-		if lo > centre-float64(optInFactorNarrow*band) && up < centre+float64(optInFactorNarrow*band) {
-			outSqueeze[i] = 3
-		} else if lo > centre-float64(optInFactorNormal*band) && up < centre+float64(optInFactorNormal*band) {
-			outSqueeze[i] = 2
-		} else if lo > centre-float64(optInFactorWide*band) && up < centre+float64(optInFactorWide*band) {
-			outSqueeze[i] = 1
-		} else if lo < centre-float64(optInFactorWide*band) && up > centre+float64(optInFactorWide*band) {
-			outSqueeze[i] = -1
-		} else {
-			outSqueeze[i] = 0
+	i = 0
+	if _n10 := int(n) - int(i); _n10 > 0 {
+		_r12 := outSqueeze[i:][:_n10]
+		for _k11 := range _r12 {
+			dev = float64(tempSD[i+int32(_k11)] * optInNbDev)
+			up = tempMid[i+int32(_k11)] + dev
+			lo = tempMid[i+int32(_k11)] - dev
+			centre = tempKCM[i+int32(_k11)+kcmShift]
+			band = tempWork[i+int32(_k11)]
+			if lo > centre-float64(optInFactorNarrow*band) && up < centre+float64(optInFactorNarrow*band) {
+				_r12[_k11] = 3
+			} else if lo > centre-float64(optInFactorNormal*band) && up < centre+float64(optInFactorNormal*band) {
+				_r12[_k11] = 2
+			} else if lo > centre-float64(optInFactorWide*band) && up < centre+float64(optInFactorWide*band) {
+				_r12[_k11] = 1
+			} else if lo < centre-float64(optInFactorWide*band) && up > centre+float64(optInFactorWide*band) {
+				_r12[_k11] = -1
+			} else {
+				_r12[_k11] = 0
+			}
 		}
 	}
 	*outBegIdx = startIdx

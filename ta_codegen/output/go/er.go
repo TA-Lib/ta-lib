@@ -117,6 +117,7 @@ func (c *Core) erImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 		_r3 := inReal[today:][:_n1]
 		_r4 := inReal[trailingIdx:][:_n1]
 		_r5 := inReal[today-1:][:_n1]
+		_r6 := outReal[outIdx:][:_n1]
 		for _k2 := range _r3 {
 			tempReal = _r3[_k2]
 			tempReal2 = _r4[_k2]
@@ -128,21 +129,19 @@ func (c *Core) erImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod 
 			if nullRun >= optInTimePeriod {
 				nullRun = optInTimePeriod
 				sumROC1 = 0.0
-				outReal[outIdx] = 1.0
-				outIdx++
+				_r6[_k2] = 1.0
 			} else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
-				outReal[outIdx] = 1.0
-				outIdx++
+				_r6[_k2] = 1.0
 			} else {
 				tempReal = math.Abs(periodROC / sumROC1)
 				if tempReal > 1.0 {
 					tempReal = 1.0
 				}
-				outReal[outIdx] = tempReal
-				outIdx++
+				_r6[_k2] = tempReal
 			}
 			trailingValue = tempReal2
 		}
+		outIdx += int32(_n1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

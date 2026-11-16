@@ -117,6 +117,7 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 		_r11 := inVolume[i:][:_n8]
 		_r12 := inVolume[trailingIdx:][:_n8]
 		_r13 := inReal[trailingIdx:][:_n8]
+		_r14 := outReal[outIdx:][:_n8]
 		for _k9 := range _r10 {
 			tempReal = float64(_r10[_k9] * _r11[_k9])
 			sumPV += tempReal
@@ -129,13 +130,13 @@ func (c *Core) vwmaImpl(startIdx, endIdx int32, inReal, inVolume []float64, optI
 				tempV = 0.0
 				sumPV = 0.0 - tempReal
 				sumV = 0.0 - trailingVolume
-				outReal[outIdx+int32(_k9)] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+				_r14[_k9] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
 			} else {
 				tempPV = sumPV
 				tempV = sumV
 				sumPV -= tempReal
 				sumV -= trailingVolume
-				outReal[outIdx+int32(_k9)] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
+				_r14[_k9] = tempPV / float64(optInTimePeriod) / (tempV / float64(optInTimePeriod))
 			}
 			zeroCount -= b2i(math.Abs(trailingVolume) <= 0.0)
 		}

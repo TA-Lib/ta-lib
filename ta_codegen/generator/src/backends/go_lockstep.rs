@@ -1,9 +1,9 @@
 //! Two loop shapes Go lowers differently from the C it transcribes.
 //!
-//! The lockstep counted loop ([`plan`]): each contract array the loop reads or
-//! writes at `v + c`, `v` an index that moves up by one on every pass, is
-//! re-sliced once to what the loop touches and indexed by one fresh `int`
-//! counter, which is what lets gc's prove drop the bounds checks. The index
+//! The lockstep counted loop ([`plan`]): each contract or scratch array the
+//! loop reads or writes at `v + c`, `v` an index that moves by one on every
+//! pass, is re-sliced once to what the loop touches and indexed by one fresh
+//! `int` counter, which is what lets gc's prove drop the bounds checks. The index
 //! steps leave the loop: inside it a read of `v` is `v + int32(k)`, and after
 //! it `v` takes its last value only where something reads it.
 //!
@@ -13,20 +13,24 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use super::lockstep::{as_step, each_access, eager_call, form, invariant, linear, shifted, step, substitute, Facts, Names, Reach};
-use crate::ir::{BinOp, CircBuf, Expr, Statement};
+use super::lockstep::{as_step, each_access, eager_call, flatten, form, invariant, linear, shifted, step, substitute, Facts, Names, Reach};
+use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, Statement};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) enum Contract {
     Input,
     Output,
+    /// Allocated by the body itself and never used as a ring: cut only through
+    /// an element some access reaches on every pass.
+    Scratch,
 }
 
 /// What the Go renderer knows that the IR does not say.
 pub(super) struct Env<'a> {
     pub int_local: &'a dyn Fn(&str) -> bool,
-    /// An input or output of the batch tier, never reassigned in the body:
-    /// the public tier checked its length against the index range.
+    /// An input or output of the batch tier, never reassigned in the body
+    /// (the public tier checked its length against the index range), or a
+    /// [`scratch`] array.
     pub contract: &'a dyn Fn(&str) -> Option<Contract>,
     /// `endIdx` itself, never assigned in the body.
     pub fixed_end: &'a dyn Fn(&Expr) -> bool,
@@ -34,7 +38,9 @@ pub(super) struct Env<'a> {
 }
 
 /// One re-slice: `array[start:][:n]`, element `k` being what `array[inv + var
-/// + elem]` reaches on pass `k`, `var` at its value on loop entry.
+/// + elem]` reaches on pass `k`, `var` at its value on loop entry. In a
+/// [`Plan::down`] loop it is `array[start-n:][:n]` and pass `k` reaches
+/// element `n-1-k`.
 pub(super) struct Lane {
     pub array: String,
     pub var: String,
@@ -57,6 +63,8 @@ pub(super) struct Plan {
     pub steps: BTreeMap<String, i64>,
     pub facts: Facts,
     pub lanes: Vec<Lane>,
+    /// The lanes' indices move down, so the counter runs from `n-1` to 0.
+    pub down: bool,
     /// The body, then the `for` update, blocks inlined and every step a
     /// statement of its own.
     pub pass: Vec<Statement>,
@@ -153,11 +161,16 @@ pub(super) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         }
     }
 
-    let lanes = choose_lanes(&pass, &before, &steps, &facts, env, &f.counter, &trip);
+    let mut down = false;
+    let mut lanes = choose_lanes(&pass, &before, &steps, &facts, env, &f.counter, &trip, 1);
+    if lanes.is_empty() {
+        down = true;
+        lanes = choose_lanes(&pass, &before, &steps, &facts, env, &f.counter, &trip, -1);
+    }
     if lanes.is_empty() {
         return Err(Refusal::NoLane);
     }
-    Ok(Plan { counter: f.counter, trip, steps, facts, lanes, pass, before })
+    Ok(Plan { counter: f.counter, trip, steps, facts, lanes, down, pass, before })
 }
 
 /// One access of a contract array at an index plus constants.
@@ -172,6 +185,8 @@ struct Occ {
     c: i64,
 }
 
+/// The lanes of the indices that move by `dir`.
+#[allow(clippy::too_many_arguments)]
 fn choose_lanes(
     pass: &[Statement],
     before: &[BTreeMap<String, i64>],
@@ -180,19 +195,22 @@ fn choose_lanes(
     env: &Env,
     counter: &str,
     trip: &Trip,
+    dir: i64,
 ) -> Vec<Lane> {
     let mut occs = Vec::new();
     for (at, s) in pass.iter().enumerate() {
+        let both = every_path(s);
         each_access(s, &mut |array, idx, reach| {
             if (env.contract)(array).is_none() || facts.assigned.contains(array) || facts.bare.contains(array) {
                 return;
             }
             let Some((var, inv, c)) = linear(idx, steps, facts) else { return };
-            if steps[&var] != 1 {
+            if steps[&var] != dir {
                 return;
             }
             let elem = c + before[at].get(&var).copied().unwrap_or(0);
-            occs.push(Occ { array: array.to_string(), var, inv, elem, every: reach == Reach::Every, index: idx.clone(), c });
+            let every = reach == Reach::Every || both.contains(&(array.to_string(), format!("{idx:?}")));
+            occs.push(Occ { array: array.to_string(), var, inv, elem, every, index: idx.clone(), c });
         });
     }
     // An element some access reaches on every pass bounds the lane through it
@@ -226,19 +244,85 @@ fn choose_lanes(
             && o.elem <= 0
             && floor.is_some_and(|lo| lo <= o.elem);
         if (held || ended) && !lanes.iter().any(|l| l.array == o.array && l.var == o.var && l.inv == o.inv && l.elem == o.elem) {
-            let start = substitute(&o.index, &o.var, &shifted(&o.var, o.elem - o.c));
+            let top = i64::from(dir < 0);
+            let start = folded(substitute(&o.index, &o.var, &shifted(&o.var, o.elem - o.c + top)));
             lanes.push(Lane { array: o.array.clone(), var: o.var.clone(), inv: o.inv.clone(), elem: o.elem, start });
         }
     }
     lanes
 }
 
+/// `e` with its integer literals summed into one trailing term, when it has
+/// more than one.
+fn folded(e: Expr) -> Expr {
+    let mut terms = Vec::new();
+    flatten(&e, true, &mut terms);
+    let mut c = 0;
+    let mut rest = Vec::new();
+    for (t, plus) in &terms {
+        match t {
+            Expr::IntLiteral(n) => c += if *plus { *n } else { -*n },
+            other => rest.push((*other, *plus)),
+        }
+    }
+    if terms.len() - rest.len() < 2 || rest.is_empty() {
+        return e;
+    }
+    let mut acc = if rest[0].1 { rest[0].0.clone() } else { Expr::Neg(Box::new(rest[0].0.clone())) };
+    for (t, plus) in &rest[1..] {
+        acc = Expr::BinOp(Box::new(acc), if *plus { BinOp::Add } else { BinOp::Sub }, Box::new((*t).clone()));
+    }
+    match c {
+        0 => acc,
+        c if c > 0 => Expr::BinOp(Box::new(acc), BinOp::Add, Box::new(Expr::IntLiteral(c))),
+        c => Expr::BinOp(Box::new(acc), BinOp::Sub, Box::new(Expr::IntLiteral(-c))),
+    }
+}
+
+/// The elements every path through `s` accesses, as (array, index `Debug`
+/// text): an index means one element in both arms because no index of the
+/// loop steps in an arm.
+fn every_path(s: &Statement) -> BTreeSet<(String, String)> {
+    let mut out = BTreeSet::new();
+    each_access(s, &mut |a, i, r| {
+        if r == Reach::Every {
+            out.insert((a.to_string(), format!("{i:?}")));
+        }
+    });
+    if let Statement::If { then_body, else_body, .. } = s {
+        let arm = |b: &[Statement]| b.iter().flat_map(every_path).collect::<BTreeSet<_>>();
+        out.extend(arm(then_body).intersection(&arm(else_body)).cloned());
+    }
+    out
+}
+
 /// `s` with blocks inlined and each step it takes at a place every
 /// evaluation reaches moved into a statement of its own: a pre-step before
 /// it, a post-step after. Exact when the statement names the variable nowhere
-/// else, which is also what the renderer requires of a step.
+/// else, which is also what the renderer requires of a step. A step both arms
+/// of an `if` take last moves after it.
 fn inline(s: &Statement, out: &mut Vec<Statement>) {
     match s {
+        Statement::If { condition, then_body, else_body, cond_comments } if !else_body.is_empty() => {
+            let flat = |b: &[Statement]| {
+                let mut v = Vec::new();
+                for x in b {
+                    inline(x, &mut v);
+                }
+                v
+            };
+            let last = |v: &[Statement]| v.iter().rposition(|x| !matches!(x, Statement::Comment(_))).filter(|&at| as_step(&v[at]).is_some());
+            let (mut then2, mut else2) = (flat(then_body), flat(else_body));
+            match (last(&then2), last(&else2)) {
+                (Some(a), Some(b)) if as_step(&then2[a]) == as_step(&else2[b]) => {
+                    let moved = then2.remove(a);
+                    else2.remove(b);
+                    out.push(Statement::If { condition: condition.clone(), then_body: then2, else_body: else2, cond_comments: cond_comments.clone() });
+                    out.push(moved);
+                }
+                _ => out.push(s.clone()),
+            }
+        }
         Statement::Block { body } => {
             for x in body {
                 inline(x, out);
@@ -429,6 +513,63 @@ fn fresh(list: &[Statement], t: &str) -> bool {
 /// Every name `body` stores to other than as an element, at any depth.
 pub(super) fn stored(body: &[Statement]) -> BTreeSet<String> {
     Facts::of(body).assigned
+}
+
+/// The arrays of each circular buffer `body` sizes once with `CIRCBUF_INIT`,
+/// outside any loop, and never uses as a ring: no `CIRCBUF_NEXT`, and its
+/// index never named.
+pub(super) fn scratch(body: &[Statement]) -> Vec<String> {
+    #[derive(Default)]
+    struct Seen {
+        inits: HashMap<String, (usize, bool, Option<CircBufLayout>)>,
+        rings: BTreeSet<String>,
+        named: BTreeSet<String>,
+    }
+    fn walk(list: &[Statement], in_loop: bool, seen: &mut Seen) {
+        for s in list {
+            match s {
+                Statement::CircBuf(CircBuf::Init { id, layout, .. }) => {
+                    let e = seen.inits.entry(id.clone()).or_default();
+                    e.0 += 1;
+                    e.1 |= in_loop;
+                    e.2 = Some(layout.clone());
+                }
+                Statement::CircBuf(CircBuf::Next { id } | CircBuf::InitLocalOnly { id, .. }) => {
+                    seen.rings.insert(id.clone());
+                }
+                _ => {}
+            }
+            crate::streaming::walk_stmt_exprs(s, &mut |e| {
+                crate::streaming::walk_expr(e, &mut |x| {
+                    if let Expr::Var(n) = x {
+                        seen.named.insert(n.clone());
+                    }
+                });
+            });
+            let (nested, looped): (Vec<&[Statement]>, bool) = match s {
+                Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } => (vec![body], true),
+                Statement::ForC { init, update, body, .. } => (vec![std::slice::from_ref(init), std::slice::from_ref(update), body], true),
+                Statement::Block { body } => (vec![body], false),
+                Statement::If { then_body, else_body, .. } => (vec![then_body, else_body], false),
+                Statement::Switch { cases, default, .. } => (cases.iter().map(|(_, b)| b.as_slice()).chain([default.as_slice()]).collect(), false),
+                _ => (Vec::new(), false),
+            };
+            for b in nested {
+                walk(b, in_loop || looped, seen);
+            }
+        }
+    }
+    let mut seen = Seen::default();
+    walk(body, false, &mut seen);
+    let mut out = Vec::new();
+    for (id, (count, in_loop, layout)) in &seen.inits {
+        let Some(layout) = layout else { continue };
+        if *count == 1 && !in_loop && !seen.rings.contains(id) && !seen.named.contains(&format!("{id}_Idx")) {
+            out.extend(super::java::circbuf_arrays(id, layout).into_iter().map(|(a, _)| a));
+        }
+    }
+    out.sort();
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -647,6 +788,7 @@ mod tests {
         let contract = |n: &str| match n {
             "in" | "vol" => Some(Contract::Input),
             "out" => Some(Contract::Output),
+            "s" => Some(Contract::Scratch),
             _ => None,
         };
         let fixed_end = |e: &Expr| matches!(e, Expr::Var(n) if n == "endIdx");
@@ -708,6 +850,29 @@ mod tests {
         assert_eq!(lanes(&run(&le_end(), &ahead, None).expect("planned")), vec![("in".into(), "i".into(), 0)]);
         let written = [set(var("x"), at("in", var("i"))), branch(vec![set(at("out", var("i")), var("x"))]), step("i", 1)];
         assert_eq!(lanes(&run(&le_end(), &written, None).expect("planned")), vec![("in".into(), "i".into(), 0)]);
+    }
+
+    /// `while( i > b ) { i--; s[i-b] = in[i]; }` counts down over an input and
+    /// a scratch array, each cut from one past the top element.
+    #[test]
+    fn a_count_down_index_cuts_its_lanes_from_the_top() {
+        let body = [step("i", -1), set(at("s", bin(var("i"), BinOp::Sub, var("b"))), at("in", var("i")))];
+        let p = run(&bin(var("i"), BinOp::Greater, var("b")), &body, None).expect("planned");
+        assert!(p.down);
+        assert_eq!(lanes(&p), vec![("in".into(), "i".into(), -1), ("s".into(), "i".into(), -1)]);
+        assert_eq!(format!("{:?}", p.lanes[0].start), format!("{:?}", var("i")));
+    }
+
+    /// A step both arms take last is a step of the pass, and an element both
+    /// arms write is one every pass reaches; written on one arm, neither.
+    #[test]
+    fn a_step_both_arms_take_last_moves_after_the_branch() {
+        let arm = |v: Expr| vec![set(Expr::ArrayAccess("out".into(), Box::new(Expr::PostIncrement(Box::new(var("o"))))), v)];
+        let branch = |else_body| Statement::If { condition: var("c"), then_body: arm(at("in", var("i"))), else_body, cond_comments: vec![] };
+        let p = run(&le_end(), &[branch(arm(Expr::Literal(0.0))), step("i", 1)], None).expect("planned");
+        assert_eq!(p.steps.get("o"), Some(&1));
+        assert!(lanes(&p).contains(&("out".into(), "o".into(), 0)));
+        assert_eq!(run(&le_end(), &[branch(vec![set(var("x"), int(0))]), step("i", 1)], None).err(), Some(Refusal::NoLane));
     }
 
     /// The refusals, one per class.

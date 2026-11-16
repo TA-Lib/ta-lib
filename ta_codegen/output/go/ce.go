@@ -184,18 +184,22 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 	hhBuf[lastP] = highest
 	llBuf[lastP] = lowest
 	ip = lastP
-	for ip > 0 {
-		ip -= 1
-		tempHT = inHigh[today-1-lastP+ip]
-		tempLT = inLow[today-1-lastP+ip]
-		if tempHT > highest {
-			highest = tempHT
+	if _n6 := int(ip); _n6 > 0 {
+		_r8 := inHigh[today-1-lastP+ip-int32(_n6):][:_n6]
+		_r9 := inLow[today-1-lastP+ip-int32(_n6):][:_n6]
+		_r10 := llBuf[ip-int32(_n6):][:_n6]
+		for _k7 := _n6 - 1; _k7 >= 0; _k7-- {
+			tempHT = _r8[_k7]
+			tempLT = _r9[_k7]
+			if tempHT > highest {
+				highest = tempHT
+			}
+			if tempLT < lowest {
+				lowest = tempLT
+			}
+			hhBuf[ip-int32(_n6-1-_k7)-1] = highest
+			_r10[_k7] = lowest
 		}
-		if tempLT < lowest {
-			lowest = tempLT
-		}
-		hhBuf[ip] = highest
-		llBuf[ip] = lowest
 	}
 	hhPre = highest
 	llPre = lowest
@@ -203,16 +207,16 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 	outRealLong[0] = highest - band
 	outRealShort[0] = lowest + band
 	outIdx = 1
-	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
-		_r8 := inLow[today:][:_n6]
-		_r9 := inHigh[today:][:_n6]
-		_r10 := inClose[today-1:][:_n6]
-		_r11 := outRealLong[outIdx:][:_n6]
-		_r12 := outRealShort[outIdx:][:_n6]
-		for _k7 := range _r8 {
-			tempLT = _r8[_k7]
-			tempHT = _r9[_k7]
-			tempCY = _r10[_k7]
+	if _n11 := int(endIdx) - int(today) + 1; _n11 > 0 {
+		_r13 := inLow[today:][:_n11]
+		_r14 := inHigh[today:][:_n11]
+		_r15 := inClose[today-1:][:_n11]
+		_r16 := outRealLong[outIdx:][:_n11]
+		_r17 := outRealShort[outIdx:][:_n11]
+		for _k12 := range _r13 {
+			tempLT = _r13[_k12]
+			tempHT = _r14[_k12]
+			tempCY = _r15[_k12]
 			greatest = tempHT - tempLT
 			val2 = math.Abs(tempCY - tempHT)
 			if val2 > greatest {
@@ -246,8 +250,8 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 				hhBuf_Idx = 0
 			}
 			band = float64(optInMultiplier * prevATR)
-			_r11[_k7] = highest - band
-			_r12[_k7] = lowest + band
+			_r16[_k12] = highest - band
+			_r17[_k12] = lowest + band
 			if hhBuf_Idx == 0 {
 				sufHi = hhBuf[lastP]
 				sufLo = llBuf[lastP]
@@ -267,7 +271,7 @@ func (c *Core) ceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 				}
 			}
 		}
-		outIdx += int32(_n6)
+		outIdx += int32(_n11)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

@@ -126,6 +126,7 @@ func (c *Core) foscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		_r3 := inReal[today-1:][:_n1]
 		_r4 := inReal[trailingIdx:][:_n1]
 		_r5 := inReal[today:][:_n1]
+		_r6 := outReal[outIdx:][:_n1]
 		for _k2 := range _r3 {
 			weightedTrailing = float64(float64(optInTimePeriod) * trailingValue)
 			SumXY = SumXY + SumY - weightedTrailing
@@ -152,13 +153,12 @@ func (c *Core) foscImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 			trailingValue = _r4[_k2]
 			closeValue = _r5[_k2]
 			if closeValue != 0.0 {
-				outReal[outIdx] = float64(100.0*(closeValue-math.FMA(m, float64(optInTimePeriod), b))) / closeValue
-				outIdx++
+				_r6[_k2] = float64(100.0*(closeValue-math.FMA(m, float64(optInTimePeriod), b))) / closeValue
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r6[_k2] = 0.0
 			}
 		}
+		outIdx += int32(_n1)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

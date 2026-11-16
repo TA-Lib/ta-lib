@@ -137,6 +137,8 @@ func (c *Core) vortexImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		_r16 := inClose[trailingIdx-1:][:_n7]
 		_r17 := inLow[trailingIdx-1:][:_n7]
 		_r18 := inHigh[trailingIdx-1:][:_n7]
+		_r19 := outPlusVI[outIdx:][:_n7]
+		_r20 := outMinusVI[outIdx:][:_n7]
 		for _k8 := range _r9 {
 			tempLT = _r9[_k8]
 			tempHT = _r10[_k8]
@@ -178,11 +180,11 @@ func (c *Core) vortexImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 			sVMP -= math.Abs(_r15[_k8] - _r17[_k8])
 			sVMM -= math.Abs(_r14[_k8] - _r18[_k8])
 			if curTR > 0.0 {
-				outPlusVI[outIdx+int32(_k8)] = curVMP / curTR
-				outMinusVI[outIdx+int32(_k8)] = curVMM / curTR
+				_r19[_k8] = curVMP / curTR
+				_r20[_k8] = curVMM / curTR
 			} else {
-				outPlusVI[outIdx+int32(_k8)] = 0.0
-				outMinusVI[outIdx+int32(_k8)] = 0.0
+				_r19[_k8] = 0.0
+				_r20[_k8] = 0.0
 			}
 			if sVMP < 0.0 || sVMM < 0.0 {
 				sTR = 0.0

@@ -86,6 +86,7 @@ func (c *Core) chopImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
 		_r2 := inHigh[today:][:_n0]
 		_r3 := inLow[today:][:_n0]
+		_r4 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			highest = _r2[_k1]
 			lowest = _r3[_k1]
@@ -114,9 +115,9 @@ func (c *Core) chopImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64
 				prevClose = inClose[today+int32(_k1)-i]
 			}
 			if highest-lowest <= 0.0 || sumTR <= 0.0 {
-				outReal[outIdx+int32(_k1)] = 100.0
+				_r4[_k1] = 100.0
 			} else {
-				outReal[outIdx+int32(_k1)] = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / logPeriod))
+				_r4[_k1] = float64(100.0 * (math.Log10(sumTR/(highest-lowest)) / logPeriod))
 			}
 		}
 		outIdx += int32(_n0)

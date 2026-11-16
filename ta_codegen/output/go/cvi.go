@@ -142,6 +142,7 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 	if _n5 := int(endIdx) - int(today) + 1; _n5 > 0 {
 		_r7 := inHigh[today:][:_n5]
 		_r8 := inLow[today:][:_n5]
+		_r9 := outReal[outIdx:][:_n5]
 		for _k6 := range _r7 {
 			tempReal = _r7[_k6] - _r8[_k6]
 			prevEMA = math.FMA(emaBeta, prevEMA, float64(optInK_1*tempReal))
@@ -152,13 +153,12 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 				emaRing_Idx = 0
 			}
 			if laggedEMA != 0.0 {
-				outReal[outIdx] = float64(100.0 * ((prevEMA - laggedEMA) / laggedEMA))
-				outIdx++
+				_r9[_k6] = float64(100.0 * ((prevEMA - laggedEMA) / laggedEMA))
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r9[_k6] = 0.0
 			}
 		}
+		outIdx += int32(_n5)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

@@ -176,12 +176,12 @@ fn go_candle_bodies_fold_the_range_type_and_take_no_colour_branch() {
 }
 
 /// A re-sliced loop: its lines, the re-slices cut for it (name, array,
-/// start), and the pass counter.
-type ReSliced = (Vec<String>, Vec<(String, String, String)>, String);
+/// start), the pass counter, and whether it counts down.
+type ReSliced = (Vec<String>, Vec<(String, String, String)>, String, bool);
 
 /// Each re-sliced loop of a batch body.
 fn re_sliced_loops(body: &str) -> Vec<ReSliced> {
-    let head = regex::Regex::new(r"^(\s*)for (_k\d+) := range _r\d+ \{$").unwrap();
+    let head = regex::Regex::new(r"^(\s*)for (_k\d+) := (range _r\d+|_n\d+ - 1; _k\d+ >= 0; _k\d+--) \{$").unwrap();
     let cut = regex::Regex::new(r"^\s*(_r\d+) := (\w+)\[(.+):\]\[:_n\d+\]$").unwrap();
     let lines: Vec<&str> = body.lines().collect();
     let mut out = Vec::new();
@@ -189,7 +189,7 @@ fn re_sliced_loops(body: &str) -> Vec<ReSliced> {
         let Some(c) = head.captures(line) else { continue };
         let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
         let cuts = lines[..h].iter().rev().map_while(|l| cut.captures(l)).map(|r| (r[1].to_string(), r[2].to_string(), r[3].to_string())).collect();
-        out.push((lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), cuts, c[2].to_string()));
+        out.push((lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), cuts, c[2].to_string(), !c[3].starts_with("range")));
     }
     out
 }
@@ -214,7 +214,7 @@ fn go_lockstep_loops_range_over_re_slices() {
         for (name, arrays, cuts) in [("add", &["inReal0", "inReal1", "outReal"][..], 3), ("mom", &["inReal", "outReal"], 3), ("obv", &["inReal", "inVolume", "outReal"], 3), ("ad", &["inHigh", "inLow", "inClose", "inVolume", "outReal"], 5)] {
             let body = batch_body(name);
             let loops = re_sliced_loops(&body);
-            let (pass, cut, k) = loops.iter().find(|(_, c, _)| c.len() == cuts).unwrap_or_else(|| panic!("{name}: no loop over {cuts} re-slices:\n{body}"));
+            let (pass, cut, k, _) = loops.iter().find(|(_, c, _, _)| c.len() == cuts).unwrap_or_else(|| panic!("{name}: no loop over {cuts} re-slices:\n{body}"));
             for a in arrays {
                 assert!(cut.iter().any(|(_, x, _)| x == a), "{name}: `{a}` is not re-sliced:\n{body}");
                 assert!(!pass.iter().any(|l| l.contains(&format!("{a}["))), "{name}: `{a}` is indexed in the loop:\n{body}");
@@ -227,7 +227,7 @@ fn go_lockstep_loops_range_over_re_slices() {
     for name in common::discover_indicators() {
         let body = batch_body(&name);
         let loops = re_sliced_loops(&body);
-        for (pass, cuts, _) in &loops {
+        for (pass, cuts, _, _) in &loops {
             for (_, _, start) in cuts {
                 for base in ident.find_iter(start).map(|m| m.as_str()) {
                     let written = regex::Regex::new(&format!(r"^\s*{}(\+\+|--| [-+*/]?= )", regex::escape(base))).unwrap();
@@ -271,4 +271,112 @@ fn go_padded_loops_stop_at_their_guard() {
         }
     }
     assert!(common::sweep_filtered() || capped >= 8, "only {capped} capped loops");
+}
+
+/// A function, the arrays each of its scan passes re-slices, and the arrays
+/// no pass indexes.
+type BlockScan = (&'static str, &'static [&'static [&'static str]], &'static [&'static str]);
+
+/// The block scans of the window extrema: the backward suffix pass counts
+/// down over re-slices of its inputs and suffix scratch, the forward prefix
+/// pass and the merge range over theirs, and none of the three indexes an
+/// input, an output or a scratch array (WILLR's close, read on one arm only,
+/// keeps its check). Over the corpus no ring is re-sliced.
+#[test]
+fn go_block_scans_range_over_re_slices() {
+    if !common::sweep_filtered() {
+        let scans: [BlockScan; 2] = [
+            ("max", &[&["inReal", "sufHighest"], &["inReal", "preHighest"], &["sufHighest", "preHighest", "outReal"]], &["inReal", "outReal", "sufHighest", "preHighest"]),
+            (
+                "willr",
+                &[&["inHigh", "inLow", "sufHighest", "sufLowest"], &["inHigh", "inLow", "preHighest", "preLowest"], &["sufHighest", "preHighest", "sufLowest", "preLowest", "outReal"]],
+                &["inHigh", "inLow", "outReal", "sufHighest", "sufLowest", "preHighest", "preLowest"],
+            ),
+        ];
+        for (name, passes, unindexed) in scans {
+            let body = batch_body(name);
+            let loops = re_sliced_loops(&body);
+            for (n, arrays) in passes.iter().enumerate() {
+                let (pass, _, k, down) = loops
+                    .iter()
+                    .find(|(_, cuts, _, _)| cuts.len() == arrays.len() && arrays.iter().all(|a| cuts.iter().any(|(_, x, _)| x == a)))
+                    .unwrap_or_else(|| panic!("{name}: no loop over re-slices of {arrays:?}:\n{body}"));
+                assert_eq!(*down, n == 0, "{name}: the suffix pass, and only it, counts down:\n{body}");
+                assert!(pass.iter().any(|l| l.contains(&format!("[{k}]"))), "{name}: no element at the counter");
+                for a in unindexed {
+                    assert!(!pass.iter().any(|l| l.contains(&format!("{a}["))), "{name}: `{a}` is indexed in a scan:\n{body}");
+                }
+                assert!(!pass.iter().any(|l| l.trim_start().starts_with("outIdx")), "{name}: the output index steps in the loop:\n{body}");
+            }
+        }
+    }
+    let mut down = 0usize;
+    for name in common::discover_indicators() {
+        let body = batch_body(&name);
+        for (_, cuts, _, d) in re_sliced_loops(&body) {
+            for (_, array, _) in &cuts {
+                assert!(!body.contains(&format!("{array}_Idx")), "{name}: the ring `{array}` is re-sliced:\n{body}");
+            }
+            down += usize::from(d);
+        }
+    }
+    assert!(common::sweep_filtered() || down >= 13, "only {down} loops count down over re-slices");
+}
+
+/// The factors of each `math.FMA(` call in `src`.
+fn fma_factors(src: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for (at, _) in src.match_indices("math.FMA(") {
+        let mut args = vec![String::new()];
+        let mut depth = 0i32;
+        for ch in src[at + "math.FMA(".len()..].chars() {
+            match ch {
+                '(' => depth += 1,
+                ')' if depth == 0 => break,
+                ')' => depth -= 1,
+                ',' if depth == 0 => {
+                    args.push(String::new());
+                    continue;
+                }
+                _ => {}
+            }
+            args.last_mut().expect("an argument").push(ch);
+        }
+        assert_eq!(args.len(), 3, "`math.FMA` takes three arguments: {args:?}");
+        out.push((args[0].trim().to_string(), args[1].trim().to_string()));
+    }
+    out
+}
+
+/// A product by `2^k`, `k >= 1`, is exact, so Go renders that site as the
+/// plain multiply-add C's fused one rounds to; every other site keeps C's
+/// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
+/// sites in each of its four frames and fuses no other product in their
+/// place, which no value gate could see; C and Rust keep fusing WCLPRICE.
+#[test]
+fn go_renders_an_exact_product_unfused() {
+    let (registry, helpers) = (common::make_registry(), common::make_helpers());
+    let exact = |a: &str| a.trim_start_matches('-').parse::<f64>().is_ok_and(|v| v >= 2.0 && v.to_bits() & ((1u64 << 52) - 1) == 0);
+    let mut sites = 0usize;
+    for name in common::discover_indicators() {
+        let (func, enums) = common::load_indicator(&name);
+        let src = backends::go::generate(&func, &enums, registry, helpers);
+        for (a, b) in fma_factors(&src) {
+            assert!(!exact(&a) && !exact(&b), "{name}: `math.FMA({a}, {b}, ..)` fuses an exact product");
+            sites += 1;
+        }
+        match name.as_str() {
+            "wclprice" => assert!(!src.contains("math.FMA"), "wclprice: a fused site is left"),
+            "ht_trendline" => {
+                assert_eq!(src.matches("math.FMA(").count(), 48 - 8, "ht_trendline: its fused sites but the 4.0 and 2.0 ones");
+                assert!(!src.contains("math.FMA(3.0,"), "ht_trendline: the 3.0 product took the exact one's place");
+            }
+            _ => {}
+        }
+    }
+    assert!(common::sweep_filtered() || sites >= 1000, "only {sites} fused sites");
+
+    let (func, enums) = common::load_indicator("wclprice");
+    assert!(backends::c::generate(&func, &enums, registry, helpers).contains("fma(inClose[i], 2.0,"), "C stops fusing WCLPRICE");
+    assert!(backends::rust_lang::generate(&func, &enums, registry, helpers).contains("fmadd!(inClose, 2.0,"), "Rust stops fusing WCLPRICE");
 }

@@ -73,16 +73,16 @@ func (c *Core) rocImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	trailingIdx = startIdx - optInTimePeriod
 	if _n0 := int(endIdx) - int(inIdx) + 1; _n0 > 0 {
 		_r2 := inReal[trailingIdx:][:_n0]
+		_r3 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			tempReal = _r2[_k1]
 			if tempReal != 0.0 {
-				outReal[outIdx] = float64((inReal[inIdx+int32(_k1)]/tempReal - 1.0) * 100.0)
-				outIdx++
+				_r3[_k1] = float64((inReal[inIdx+int32(_k1)]/tempReal - 1.0) * 100.0)
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r3[_k1] = 0.0
 			}
 		}
+		outIdx += int32(_n0)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx

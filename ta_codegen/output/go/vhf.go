@@ -80,6 +80,7 @@ func (c *Core) vhfImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	today = startIdx
 	if _n0 := int(endIdx) - int(today) + 1; _n0 > 0 {
 		_r2 := inReal[today:][:_n0]
+		_r3 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			highest = _r2[_k1]
 			lowest = highest
@@ -99,9 +100,9 @@ func (c *Core) vhfImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 				prev = tempReal
 			}
 			if sumChange > 0.0 {
-				outReal[outIdx+int32(_k1)] = (highest - lowest) / sumChange
+				_r3[_k1] = (highest - lowest) / sumChange
 			} else {
-				outReal[outIdx+int32(_k1)] = 0.0
+				_r3[_k1] = 0.0
 			}
 		}
 		outIdx += int32(_n0)

@@ -145,19 +145,24 @@ func (c *Core) fisherImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 		lowest = highest
 		sufHighest[optInTimePeriod-1] = highest
 		sufLowest[optInTimePeriod-1] = lowest
-		for i > blockStart {
-			i -= 1
-			tempHigh = inHigh[i]
-			tempLow = inLow[i]
-			tempReal = (tempHigh + tempLow) / 2.0
-			if tempReal > highest {
-				highest = tempReal
+		if _n0 := int(i) - int(blockStart); _n0 > 0 {
+			_r2 := inHigh[i-int32(_n0):][:_n0]
+			_r3 := inLow[i-int32(_n0):][:_n0]
+			_r4 := sufHighest[i-blockStart-int32(_n0):][:_n0]
+			_r5 := sufLowest[i-blockStart-int32(_n0):][:_n0]
+			for _k1 := _n0 - 1; _k1 >= 0; _k1-- {
+				tempHigh = _r2[_k1]
+				tempLow = _r3[_k1]
+				tempReal = (tempHigh + tempLow) / 2.0
+				if tempReal > highest {
+					highest = tempReal
+				}
+				if tempReal < lowest {
+					lowest = tempReal
+				}
+				_r4[_k1] = highest
+				_r5[_k1] = lowest
 			}
-			if tempReal < lowest {
-				lowest = tempReal
-			}
-			sufHighest[i-blockStart] = highest
-			sufLowest[i-blockStart] = lowest
 		}
 		blockNext = blockStart + optInTimePeriod
 		nAvail = endIdx + 1 - blockNext
@@ -174,12 +179,14 @@ func (c *Core) fisherImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 			preHighest[1] = highest
 			preLowest[1] = lowest
 			i = 1
-			if _n0 := int(nAvail) - int(i); _n0 > 0 {
-				_r2 := inHigh[blockNext+i:][:_n0]
-				_r3 := inLow[blockNext+i:][:_n0]
-				for _k1 := range _r2 {
-					tempHigh = _r2[_k1]
-					tempLow = _r3[_k1]
+			if _n6 := int(nAvail) - int(i); _n6 > 0 {
+				_r8 := inHigh[blockNext+i:][:_n6]
+				_r9 := inLow[blockNext+i:][:_n6]
+				_r10 := preHighest[i+1:][:_n6]
+				_r11 := preLowest[i+1:][:_n6]
+				for _k7 := range _r8 {
+					tempHigh = _r8[_k7]
+					tempLow = _r9[_k7]
 					tempReal = (tempHigh + tempLow) / 2.0
 					if tempReal > highest {
 						highest = tempReal
@@ -187,26 +194,30 @@ func (c *Core) fisherImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 					if tempReal < lowest {
 						lowest = tempReal
 					}
-					preHighest[i+int32(_k1)+1] = highest
-					preLowest[i+int32(_k1)+1] = lowest
+					_r10[_k7] = highest
+					_r11[_k7] = lowest
 				}
 			}
 		}
 		m = 0
-		if _n4 := int(nAvail) - int(m) + 1; _n4 > 0 {
-			_r6 := inHigh[today+m:][:_n4]
-			_r7 := inLow[today+m:][:_n4]
-			for _k5 := range _r6 {
-				highest = sufHighest[m+int32(_k5)]
-				if preHighest[m+int32(_k5)] > highest {
-					highest = preHighest[m+int32(_k5)]
+		if _n12 := int(nAvail) - int(m) + 1; _n12 > 0 {
+			_r14 := sufHighest[m:][:_n12]
+			_r15 := preHighest[m:][:_n12]
+			_r16 := sufLowest[m:][:_n12]
+			_r17 := preLowest[m:][:_n12]
+			_r18 := inHigh[today+m:][:_n12]
+			_r19 := inLow[today+m:][:_n12]
+			for _k13 := range _r14 {
+				highest = _r14[_k13]
+				if _r15[_k13] > highest {
+					highest = _r15[_k13]
 				}
-				lowest = sufLowest[m+int32(_k5)]
-				if preLowest[m+int32(_k5)] < lowest {
-					lowest = preLowest[m+int32(_k5)]
+				lowest = _r16[_k13]
+				if _r17[_k13] < lowest {
+					lowest = _r17[_k13]
 				}
-				tempHigh = _r6[_k5]
-				tempLow = _r7[_k5]
+				tempHigh = _r18[_k13]
+				tempLow = _r19[_k13]
 				price = (tempHigh + tempLow) / 2.0
 				tempReal = highest - lowest
 				if !isZeroScaled(tempReal, math.Abs(highest)+math.Abs(lowest)) {
@@ -222,7 +233,7 @@ func (c *Core) fisherImpl(startIdx, endIdx int32, inHigh, inLow []float64, optIn
 					smoothed = -0.999
 				}
 				fish = math.FMA(0.5, math.Log((1.0+smoothed)/(1.0-smoothed)), float64(0.5*prevFish))
-				if today+(m+int32(_k5)) >= startIdx {
+				if today+(m+int32(_k13)) >= startIdx {
 					outFisher[outIdx] = fish
 					outTrigger[outIdx] = prevFish
 					outIdx = outIdx + 1

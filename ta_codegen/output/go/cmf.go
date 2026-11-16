@@ -148,6 +148,7 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 		_r9 := inLow[today:][:_n6]
 		_r10 := inClose[today:][:_n6]
 		_r11 := inVolume[today:][:_n6]
+		_r12 := outReal[outIdx:][:_n6]
 		for _k7 := range _r8 {
 			sumMFV -= mfv_flow[mfv_Idx]
 			sumVol -= mfv_volume[mfv_Idx]
@@ -170,20 +171,18 @@ func (c *Core) cmfImpl(startIdx, endIdx int32, inHigh, inLow, inClose, inVolume 
 				nullRun = optInTimePeriod
 				sumMFV = 0.0
 				sumVol = 0.0
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r12[_k7] = 0.0
 			} else if sumVol > 0.0 {
-				outReal[outIdx] = sumMFV / sumVol
-				outIdx++
+				_r12[_k7] = sumMFV / sumVol
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r12[_k7] = 0.0
 			}
 			mfv_Idx++
 			if mfv_Idx > maxIdx_mfv {
 				mfv_Idx = 0
 			}
 		}
+		outIdx += int32(_n6)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

@@ -163,18 +163,23 @@ func (c *Core) psoImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 		lowest = inLow[i]
 		sufHighest[optInFastK_Period-1] = highest
 		sufLowest[optInFastK_Period-1] = lowest
-		for i > blockStart {
-			i -= 1
-			tmp = inHigh[i]
-			if tmp > highest {
-				highest = tmp
+		if _n0 := int(i) - int(blockStart); _n0 > 0 {
+			_r2 := inHigh[i-int32(_n0):][:_n0]
+			_r3 := inLow[i-int32(_n0):][:_n0]
+			_r4 := sufHighest[i-blockStart-int32(_n0):][:_n0]
+			_r5 := sufLowest[i-blockStart-int32(_n0):][:_n0]
+			for _k1 := _n0 - 1; _k1 >= 0; _k1-- {
+				tmp = _r2[_k1]
+				if tmp > highest {
+					highest = tmp
+				}
+				tmp = _r3[_k1]
+				if tmp < lowest {
+					lowest = tmp
+				}
+				_r4[_k1] = highest
+				_r5[_k1] = lowest
 			}
-			tmp = inLow[i]
-			if tmp < lowest {
-				lowest = tmp
-			}
-			sufHighest[i-blockStart] = highest
-			sufLowest[i-blockStart] = lowest
 		}
 		blockNext = blockStart + optInFastK_Period
 		nAvail = endIdx + 1 - blockNext
@@ -189,81 +194,88 @@ func (c *Core) psoImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 			lowest = inLow[blockNext]
 			preHighest[1] = highest
 			preLowest[1] = lowest
-			if _n0 := int(nAvail) - int(i); _n0 > 0 {
-				_r2 := inHigh[blockNext+i:][:_n0]
-				_r3 := inLow[blockNext+i:][:_n0]
-				for _k1 := range _r2 {
-					tmp = _r2[_k1]
+			if _n6 := int(nAvail) - int(i); _n6 > 0 {
+				_r8 := inHigh[blockNext+i:][:_n6]
+				_r9 := inLow[blockNext+i:][:_n6]
+				_r10 := preHighest[i+1:][:_n6]
+				_r11 := preLowest[i+1:][:_n6]
+				for _k7 := range _r8 {
+					tmp = _r8[_k7]
 					if tmp > highest {
 						highest = tmp
 					}
-					tmp = _r3[_k1]
+					tmp = _r9[_k7]
 					if tmp < lowest {
 						lowest = tmp
 					}
-					preHighest[i+int32(_k1)+1] = highest
-					preLowest[i+int32(_k1)+1] = lowest
+					_r10[_k7] = highest
+					_r11[_k7] = lowest
 				}
 			}
 		}
 		nOut = 0
 		m = 0
-		for m <= nAvail {
-			highest = sufHighest[m]
-			if preHighest[m] > highest {
-				highest = preHighest[m]
-			}
-			lowest = sufLowest[m]
-			if preLowest[m] < lowest {
-				lowest = preLowest[m]
-			}
-			tempReal = highest - lowest
-			if !isZeroScaled(tempReal, math.Abs(highest)+math.Abs(lowest)) {
-				fastK = float64((inClose[today+m] - lowest) / tempReal * 100.0)
-			} else {
-				fastK = 50.0
-			}
-			nsk = float64(0.1 * (fastK - 50.0))
-			if nBar > warmBars {
-				ema1 = math.FMA(emaBeta, ema1, float64(emaK*nsk))
-				ema2 = math.FMA(emaBeta, ema2, float64(emaK*ema1))
-				outReal[outIdx+nOut] = float64(0.5 * ema2)
-				nOut = nOut + 1
-			} else {
-				if nBar < optInEMAPeriod {
-					sum1 = sum1 + nsk
-					if nBar == optInEMAPeriod-1 {
-						ema1 = sum1 / float64(optInEMAPeriod)
-					}
+		if _n12 := int(nAvail) - int(m) + 1; _n12 > 0 {
+			_r14 := sufHighest[m:][:_n12]
+			_r15 := preHighest[m:][:_n12]
+			_r16 := sufLowest[m:][:_n12]
+			_r17 := preLowest[m:][:_n12]
+			for _k13 := range _r14 {
+				highest = _r14[_k13]
+				if _r15[_k13] > highest {
+					highest = _r15[_k13]
+				}
+				lowest = _r16[_k13]
+				if _r17[_k13] < lowest {
+					lowest = _r17[_k13]
+				}
+				tempReal = highest - lowest
+				if !isZeroScaled(tempReal, math.Abs(highest)+math.Abs(lowest)) {
+					fastK = float64((inClose[today+(m+int32(_k13))] - lowest) / tempReal * 100.0)
 				} else {
+					fastK = 50.0
+				}
+				nsk = float64(0.1 * (fastK - 50.0))
+				if nBar+int32(_k13) > warmBars {
 					ema1 = math.FMA(emaBeta, ema1, float64(emaK*nsk))
-				}
-				if nBar >= lookbackEMA {
-					n2 = nBar - lookbackEMA
-					if n2 < optInEMAPeriod {
-						sum2 = sum2 + ema1
-						if n2 == optInEMAPeriod-1 {
-							ema2 = sum2 / float64(optInEMAPeriod)
-						}
-					} else {
-						ema2 = math.FMA(emaBeta, ema2, float64(emaK*ema1))
-					}
-				}
-				if nBar == warmBars {
+					ema2 = math.FMA(emaBeta, ema2, float64(emaK*ema1))
 					outReal[outIdx+nOut] = float64(0.5 * ema2)
 					nOut = nOut + 1
+				} else {
+					if nBar+int32(_k13) < optInEMAPeriod {
+						sum1 = sum1 + nsk
+						if nBar+int32(_k13) == optInEMAPeriod-1 {
+							ema1 = sum1 / float64(optInEMAPeriod)
+						}
+					} else {
+						ema1 = math.FMA(emaBeta, ema1, float64(emaK*nsk))
+					}
+					if nBar+int32(_k13) >= lookbackEMA {
+						n2 = nBar + int32(_k13) - lookbackEMA
+						if n2 < optInEMAPeriod {
+							sum2 = sum2 + ema1
+							if n2 == optInEMAPeriod-1 {
+								ema2 = sum2 / float64(optInEMAPeriod)
+							}
+						} else {
+							ema2 = math.FMA(emaBeta, ema2, float64(emaK*ema1))
+						}
+					}
+					if nBar+int32(_k13) == warmBars {
+						outReal[outIdx+nOut] = float64(0.5 * ema2)
+						nOut = nOut + 1
+					}
 				}
 			}
-			nBar = nBar + 1
-			m += 1
+			nBar += int32(_n12)
 		}
 		i = 0
-		if _n4 := int(nOut) - int(i); _n4 > 0 {
-			_r6 := outReal[outIdx:][:_n4]
-			for _k5 := range _r6 {
-				_r6[_k5] = math.Tanh(_r6[_k5])
+		if _n18 := int(nOut) - int(i); _n18 > 0 {
+			_r20 := outReal[outIdx:][:_n18]
+			for _k19 := range _r20 {
+				_r20[_k19] = math.Tanh(_r20[_k19])
 			}
-			outIdx += int32(_n4)
+			outIdx += int32(_n18)
 		}
 		today = today + nAvail + 1
 		blockStart = blockNext

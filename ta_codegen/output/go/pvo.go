@@ -163,14 +163,15 @@ func (c *Core) pvoImpl(startIdx, endIdx int32, inVolume []float64, optInFastPeri
 			_r13 := inVolume[_i:][:_n11]
 			_r14 := inVolume[_fastTrailing:][:_n11]
 			_r15 := inVolume[_slowTrailing:][:_n11]
+			_r16 := outReal[_outIdx:][:_n11]
 			for _k12 := range _r13 {
-				var _T16 int32
+				var _T17 int32
 				if math.Abs(_r13[_k12]) <= 0.0 {
-					_T16 = _zeroRun + 1
+					_T17 = _zeroRun + 1
 				} else {
-					_T16 = 0
+					_T17 = 0
 				}
-				_zeroRun = _T16
+				_zeroRun = _T17
 				_fastTotal += _r13[_k12]
 				_fastValue = _fastTotal
 				_fastTotal -= _r14[_k12]
@@ -180,11 +181,11 @@ func (c *Core) pvoImpl(startIdx, endIdx int32, inVolume []float64, optInFastPeri
 				_slowMA = _slowValue / float64(optInSlowPeriod)
 				if _zeroRun > _slowLookback {
 					_zeroRun = _slowLookback
-					outReal[_outIdx+int32(_k12)] = 0.0
+					_r16[_k12] = 0.0
 				} else if !isZero(_slowMA) {
-					outReal[_outIdx+int32(_k12)] = float64((_fastValue/float64(optInFastPeriod) - _slowMA) / _slowMA * 100.0)
+					_r16[_k12] = float64((_fastValue/float64(optInFastPeriod) - _slowMA) / _slowMA * 100.0)
 				} else {
-					outReal[_outIdx+int32(_k12)] = 0.0
+					_r16[_k12] = 0.0
 				}
 			}
 			_outIdx += int32(_n11)
@@ -234,34 +235,34 @@ func (c *Core) pvoImpl(startIdx, endIdx int32, inVolume []float64, optInFastPeri
 		_eSlowToday = _eSlowStart - c.emaLookback(optInSlowPeriod)
 		_eFast = 0.0
 		_eN = 0
-		if _n17 := int(optInFastPeriod) - int(_eN); _n17 > 0 {
-			_r19 := inVolume[_eFastToday:][:_n17]
-			for _k18 := range _r19 {
-				_eFast += _r19[_k18]
+		if _n18 := int(optInFastPeriod) - int(_eN); _n18 > 0 {
+			_r20 := inVolume[_eFastToday:][:_n18]
+			for _k19 := range _r20 {
+				_eFast += _r20[_k19]
 			}
-			_eFastToday += int32(_n17)
+			_eFastToday += int32(_n18)
 		}
 		_eFast = _eFast / float64(optInFastPeriod)
-		if _n20 := int(_eSlowStart) - int(_eFastToday) + 1; _n20 > 0 {
-			_r22 := inVolume[_eFastToday:][:_n20]
-			for _k21 := range _r22 {
-				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r22[_k21]))
+		if _n21 := int(_eSlowStart) - int(_eFastToday) + 1; _n21 > 0 {
+			_r23 := inVolume[_eFastToday:][:_n21]
+			for _k22 := range _r23 {
+				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r23[_k22]))
 			}
 		}
 		_eSlow = 0.0
 		_eN = 0
-		if _n23 := int(optInSlowPeriod) - int(_eN); _n23 > 0 {
-			_r25 := inVolume[_eSlowToday:][:_n23]
-			for _k24 := range _r25 {
-				_eSlow += _r25[_k24]
+		if _n24 := int(optInSlowPeriod) - int(_eN); _n24 > 0 {
+			_r26 := inVolume[_eSlowToday:][:_n24]
+			for _k25 := range _r26 {
+				_eSlow += _r26[_k25]
 			}
-			_eSlowToday += int32(_n23)
+			_eSlowToday += int32(_n24)
 		}
 		_eSlow = _eSlow / float64(optInSlowPeriod)
-		if _n26 := int(_eSlowStart) - int(_eSlowToday) + 1; _n26 > 0 {
-			_r28 := inVolume[_eSlowToday:][:_n26]
-			for _k27 := range _r28 {
-				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r28[_k27]))
+		if _n27 := int(_eSlowStart) - int(_eSlowToday) + 1; _n27 > 0 {
+			_r29 := inVolume[_eSlowToday:][:_n27]
+			for _k28 := range _r29 {
+				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r29[_k28]))
 			}
 		}
 		_eOutIdx = 0
@@ -272,19 +273,20 @@ func (c *Core) pvoImpl(startIdx, endIdx int32, inVolume []float64, optInFastPeri
 		}
 		_eOutIdx += 1
 		_eToday = _eSlowStart + 1
-		if _n29 := int(endIdx) - int(_eToday) + 1; _n29 > 0 {
-			_r31 := inVolume[_eToday:][:_n29]
-			for _k30 := range _r31 {
-				_eX = _r31[_k30]
+		if _n30 := int(endIdx) - int(_eToday) + 1; _n30 > 0 {
+			_r32 := inVolume[_eToday:][:_n30]
+			_r33 := outReal[_eOutIdx:][:_n30]
+			for _k31 := range _r32 {
+				_eX = _r32[_k31]
 				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
 				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
 				if !isZero(_eSlow) {
-					outReal[_eOutIdx+int32(_k30)] = float64((_eFast - _eSlow) / _eSlow * 100.0)
+					_r33[_k31] = float64((_eFast - _eSlow) / _eSlow * 100.0)
 				} else {
-					outReal[_eOutIdx+int32(_k30)] = 0.0
+					_r33[_k31] = 0.0
 				}
 			}
-			_eOutIdx += int32(_n29)
+			_eOutIdx += int32(_n30)
 		}
 		*outBegIdx = _eSlowStart
 		*outNBElement = _eOutIdx
@@ -296,68 +298,68 @@ func (c *Core) pvoImpl(startIdx, endIdx int32, inVolume []float64, optInFastPeri
 		optInSlowPeriod = optInFastPeriod
 		optInFastPeriod = tempInteger
 	}
-	_X32, _E32 := c.MA(int(startIdx), int(endIdx), inVolume, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
-	if _E32 != nil {
-		return _E32.(RetCode)
+	_X34, _E34 := c.MA(int(startIdx), int(endIdx), inVolume, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
+	if _E34 != nil {
+		return _E34.(RetCode)
 	}
-	fastNb = int32(_X32.NBElement)
-	_X33, _E33 := c.MA(int(startIdx), int(endIdx), inVolume, int(optInSlowPeriod), MAType(optInMAType), outReal)
-	if _E33 != nil {
-		return _E33.(RetCode)
+	fastNb = int32(_X34.NBElement)
+	_X35, _E35 := c.MA(int(startIdx), int(endIdx), inVolume, int(optInSlowPeriod), MAType(optInMAType), outReal)
+	if _E35 != nil {
+		return _E35.(RetCode)
 	}
-	*outBegIdx = int32(_X33.BegIdx)
-	*outNBElement = int32(_X33.NBElement)
+	*outBegIdx = int32(_X35.BegIdx)
+	*outNBElement = int32(_X35.NBElement)
 	offset = fastNb - *outNBElement
 	slowLookback = c.maLookback(optInSlowPeriod, optInMAType)
 	windowed = b2i(optInMAType == int32(MATypeSMA) || optInMAType == int32(MATypeWMA) || optInMAType == int32(MATypeTRIMA) || optInMAType == int32(MATypeHMA))
 	zeroRun = 0
 	i = *outBegIdx - slowLookback
-	if _n34 := int(*outBegIdx) - int(i); _n34 > 0 {
-		_r36 := inVolume[i:][:_n34]
-		for _k35 := range _r36 {
-			var _T37 int32
-			if math.Abs(_r36[_k35]) <= 0.0 {
-				_T37 = zeroRun + 1
+	if _n36 := int(*outBegIdx) - int(i); _n36 > 0 {
+		_r38 := inVolume[i:][:_n36]
+		for _k37 := range _r38 {
+			var _T39 int32
+			if math.Abs(_r38[_k37]) <= 0.0 {
+				_T39 = zeroRun + 1
 			} else {
-				_T37 = 0
+				_T39 = 0
 			}
-			zeroRun = _T37
+			zeroRun = _T39
 		}
 	}
 	if windowed != 0 {
 		i = 0
-		if _n38 := int(*outNBElement) - int(i); _n38 > 0 {
-			_r40 := inVolume[*outBegIdx+i:][:_n38]
-			_r41 := outReal[i:][:_n38]
-			for _k39 := range _r40 {
-				var _T42 int32
-				if math.Abs(_r40[_k39]) <= 0.0 {
-					_T42 = zeroRun + 1
+		if _n40 := int(*outNBElement) - int(i); _n40 > 0 {
+			_r42 := inVolume[*outBegIdx+i:][:_n40]
+			_r43 := outReal[i:][:_n40]
+			for _k41 := range _r42 {
+				var _T44 int32
+				if math.Abs(_r42[_k41]) <= 0.0 {
+					_T44 = zeroRun + 1
 				} else {
-					_T42 = 0
+					_T44 = 0
 				}
-				zeroRun = _T42
-				tempReal = _r41[_k39]
+				zeroRun = _T44
+				tempReal = _r43[_k41]
 				if zeroRun > slowLookback {
 					zeroRun = slowLookback
-					_r41[_k39] = 0.0
+					_r43[_k41] = 0.0
 				} else if !isZero(tempReal) {
-					_r41[_k39] = float64((tempBuffer[i+int32(_k39)+offset] - tempReal) / tempReal * 100.0)
+					_r43[_k41] = float64((tempBuffer[i+int32(_k41)+offset] - tempReal) / tempReal * 100.0)
 				} else {
-					_r41[_k39] = 0.0
+					_r43[_k41] = 0.0
 				}
 			}
 		}
 	} else {
 		i = 0
-		if _n43 := int(*outNBElement) - int(i); _n43 > 0 {
-			_r45 := outReal[i:][:_n43]
-			for _k44 := range _r45 {
-				tempReal = _r45[_k44]
+		if _n45 := int(*outNBElement) - int(i); _n45 > 0 {
+			_r47 := outReal[i:][:_n45]
+			for _k46 := range _r47 {
+				tempReal = _r47[_k46]
 				if !isZero(tempReal) {
-					_r45[_k44] = float64((tempBuffer[i+int32(_k44)+offset] - tempReal) / tempReal * 100.0)
+					_r47[_k46] = float64((tempBuffer[i+int32(_k46)+offset] - tempReal) / tempReal * 100.0)
 				} else {
-					_r45[_k44] = 0.0
+					_r47[_k46] = 0.0
 				}
 			}
 		}

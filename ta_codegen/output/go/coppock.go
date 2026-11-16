@@ -175,23 +175,24 @@ func (c *Core) coppockImpl(startIdx, endIdx int32, inReal []float64, optInWMAPer
 	if _n6 := int(endIdx) - int(inIdx) + 1; _n6 > 0 {
 		_r8 := inReal[roc1Idx:][:_n6]
 		_r9 := inReal[roc2Idx:][:_n6]
+		_r10 := outReal[outIdx:][:_n6]
 		for _k7 := range _r8 {
 			base1 = _r8[_k7]
 			base2 = _r9[_k7]
-			var _T10 float64
-			if base1 != 0.0 {
-				_T10 = float64((inReal[inIdx+int32(_k7)]/base1 - 1.0) * 100.0)
-			} else {
-				_T10 = 0.0
-			}
-			roc1 = _T10
 			var _T11 float64
-			if base2 != 0.0 {
-				_T11 = float64((inReal[inIdx+int32(_k7)]/base2 - 1.0) * 100.0)
+			if base1 != 0.0 {
+				_T11 = float64((inReal[inIdx+int32(_k7)]/base1 - 1.0) * 100.0)
 			} else {
 				_T11 = 0.0
 			}
-			roc2 = _T11
+			roc1 = _T11
+			var _T12 float64
+			if base2 != 0.0 {
+				_T12 = float64((inReal[inIdx+int32(_k7)]/base2 - 1.0) * 100.0)
+			} else {
+				_T12 = 0.0
+			}
+			roc2 = _T12
 			tempReal = roc1 + roc2
 			periodSub += tempReal
 			periodSub -= trailingValue
@@ -223,9 +224,9 @@ func (c *Core) coppockImpl(startIdx, endIdx int32, inReal []float64, optInWMAPer
 				sRing_Idx = 0
 			}
 			if optInWMAPeriod == 1 {
-				outReal[outIdx+int32(_k7)] = tempReal
+				_r10[_k7] = tempReal
 			} else {
-				outReal[outIdx+int32(_k7)] = periodSum / divider
+				_r10[_k7] = periodSum / divider
 			}
 			periodSum -= periodSub
 		}

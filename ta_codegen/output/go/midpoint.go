@@ -127,17 +127,21 @@ func (c *Core) midpointImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 		lowest = highest
 		sufHighest[optInTimePeriod-1] = highest
 		sufLowest[optInTimePeriod-1] = lowest
-		for i > blockStart {
-			i -= 1
-			tmpHigh = inReal[i]
-			if tmpHigh > highest {
-				highest = tmpHigh
+		if _n0 := int(i) - int(blockStart); _n0 > 0 {
+			_r2 := inReal[i-int32(_n0):][:_n0]
+			_r3 := sufHighest[i-blockStart-int32(_n0):][:_n0]
+			_r4 := sufLowest[i-blockStart-int32(_n0):][:_n0]
+			for _k1 := _n0 - 1; _k1 >= 0; _k1-- {
+				tmpHigh = _r2[_k1]
+				if tmpHigh > highest {
+					highest = tmpHigh
+				}
+				if tmpHigh < lowest {
+					lowest = tmpHigh
+				}
+				_r3[_k1] = highest
+				_r4[_k1] = lowest
 			}
-			if tmpHigh < lowest {
-				lowest = tmpHigh
-			}
-			sufHighest[i-blockStart] = highest
-			sufLowest[i-blockStart] = lowest
 		}
 		outReal[outIdx] = (sufHighest[0] + sufLowest[0]) / 2.0
 		outIdx++
@@ -156,35 +160,41 @@ func (c *Core) midpointImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 			preHighest[0] = highest
 			preLowest[0] = lowest
 			i = 1
-			if _n0 := int(nAvail) - int(i); _n0 > 0 {
-				_r2 := inReal[blockNext+i:][:_n0]
-				for _k1 := range _r2 {
-					tmpHigh = _r2[_k1]
+			if _n5 := int(nAvail) - int(i); _n5 > 0 {
+				_r7 := inReal[blockNext+i:][:_n5]
+				_r8 := preHighest[i:][:_n5]
+				_r9 := preLowest[i:][:_n5]
+				for _k6 := range _r7 {
+					tmpHigh = _r7[_k6]
 					if tmpHigh > highest {
 						highest = tmpHigh
 					}
 					if tmpHigh < lowest {
 						lowest = tmpHigh
 					}
-					preHighest[i+int32(_k1)] = highest
-					preLowest[i+int32(_k1)] = lowest
+					_r8[_k6] = highest
+					_r9[_k6] = lowest
 				}
 			}
 			m = 1
-			if _n3 := int(nAvail) - int(m) + 1; _n3 > 0 {
-				_r5 := outReal[outIdx:][:_n3]
-				for _k4 := range _r5 {
-					highest = sufHighest[m+int32(_k4)]
-					if preHighest[m+int32(_k4)-1] > highest {
-						highest = preHighest[m+int32(_k4)-1]
+			if _n10 := int(nAvail) - int(m) + 1; _n10 > 0 {
+				_r12 := sufHighest[m:][:_n10]
+				_r13 := preHighest[m-1:][:_n10]
+				_r14 := sufLowest[m:][:_n10]
+				_r15 := preLowest[m-1:][:_n10]
+				_r16 := outReal[outIdx:][:_n10]
+				for _k11 := range _r12 {
+					highest = _r12[_k11]
+					if _r13[_k11] > highest {
+						highest = _r13[_k11]
 					}
-					lowest = sufLowest[m+int32(_k4)]
-					if preLowest[m+int32(_k4)-1] < lowest {
-						lowest = preLowest[m+int32(_k4)-1]
+					lowest = _r14[_k11]
+					if _r15[_k11] < lowest {
+						lowest = _r15[_k11]
 					}
-					_r5[_k4] = (highest + lowest) / 2.0
+					_r16[_k11] = (highest + lowest) / 2.0
 				}
-				outIdx += int32(_n3)
+				outIdx += int32(_n10)
 			}
 			trailingIdx = trailingIdx + nAvail
 			today = today + nAvail

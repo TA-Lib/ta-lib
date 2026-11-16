@@ -102,7 +102,7 @@ func (c *Core) swakButterImpl(startIdx, endIdx int32, inReal []float64, optInTim
 		_r2 := inReal[today:][:_n0]
 		for _k1 := range _r2 {
 			x0 = _r2[_k1]
-			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(math.FMA(2.0, x1, x0)+x2))))
+			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0+float64(2.0*x1)+x2))))
 			x2 = x1
 			x1 = x0
 			y2 = y1
@@ -116,7 +116,7 @@ func (c *Core) swakButterImpl(startIdx, endIdx int32, inReal []float64, optInTim
 		_r6 := outReal[outIdx:][:_n3]
 		for _k4 := range _r5 {
 			x0 = _r5[_k4]
-			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(math.FMA(2.0, x1, x0)+x2))))
+			y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0+float64(2.0*x1)+x2))))
 			x2 = x1
 			x1 = x0
 			y2 = y1
@@ -291,7 +291,7 @@ func (sp *SWAK_BUTTERStream) Update(inReal float64) (float64, error) {
 	var x0 float64
 	var y float64
 	x0 = inReal
-	y = math.FMA(sp.a1, sp.y1, math.FMA(sp.a2, sp.y2, float64(sp.c0*(math.FMA(2.0, sp.x1, x0)+sp.x2))))
+	y = math.FMA(sp.a1, sp.y1, math.FMA(sp.a2, sp.y2, float64(sp.c0*(x0+float64(2.0*sp.x1)+sp.x2))))
 	sp.x2 = sp.x1
 	sp.x1 = x0
 	sp.y2 = sp.y1
@@ -314,7 +314,7 @@ func (sp *SWAK_BUTTERStream) Peek(inReal float64) (float64, error) {
 	y1 := sp.y1
 	y2 := sp.y2
 	x0 = inReal
-	y = math.FMA(sp.a1, y1, math.FMA(sp.a2, y2, float64(sp.c0*(math.FMA(2.0, x1, x0)+x2))))
+	y = math.FMA(sp.a1, y1, math.FMA(sp.a2, y2, float64(sp.c0*(x0+float64(2.0*x1)+x2))))
 	x2 = x1
 	x1 = x0
 	y2 = y1
@@ -393,7 +393,7 @@ func (c *Core) swakButterOpenImpl(sp *SWAK_BUTTERStream, inReal []float64, start
 	i = lookbackTotal
 	for i != 0 {
 		x0 = inReal[today]
-		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(math.FMA(2.0, x1, x0)+x2))))
+		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0+float64(2.0*x1)+x2))))
 		x2 = x1
 		x1 = x0
 		y2 = y1
@@ -404,7 +404,7 @@ func (c *Core) swakButterOpenImpl(sp *SWAK_BUTTERStream, inReal []float64, start
 	outIdx = 0
 	for today <= endIdx {
 		x0 = inReal[today]
-		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(math.FMA(2.0, x1, x0)+x2))))
+		y = math.FMA(a1, y1, math.FMA(a2, y2, float64(c0*(x0+float64(2.0*x1)+x2))))
 		x2 = x1
 		x1 = x0
 		y2 = y1

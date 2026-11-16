@@ -35,8 +35,6 @@
 
 package talib
 
-import "math"
-
 func (c *Core) wclpriceLookback() int32 {
 	return 0
 }
@@ -58,7 +56,7 @@ func (c *Core) wclpriceImpl(startIdx, endIdx int32, inHigh, inLow, inClose []flo
 		_r4 := inClose[i:][:_n0]
 		_r5 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
-			_r5[_k1] = math.FMA(_r4[_k1], 2.0, _r2[_k1]+_r3[_k1]) / 4.0
+			_r5[_k1] = (_r2[_k1] + _r3[_k1] + float64(_r4[_k1]*2.0)) / 4.0
 		}
 		outIdx += int32(_n0)
 	}
@@ -198,7 +196,7 @@ func (sp *WCLPRICEStream) Update(inHigh, inLow, inClose float64) (float64, error
 		return 0, BadParam
 	}
 	sp.outRangeCount++
-	sp.cur_outReal = math.FMA(inClose, 2.0, inHigh+inLow) / 4.0
+	sp.cur_outReal = (inHigh + inLow + float64(inClose*2.0)) / 4.0
 	return sp.cur_outReal, nil
 }
 
@@ -210,7 +208,7 @@ func (sp *WCLPRICEStream) Peek(inHigh, inLow, inClose float64) (float64, error) 
 		return 0, BadParam
 	}
 	var cur_outReal float64
-	cur_outReal = math.FMA(inClose, 2.0, inHigh+inLow) / 4.0
+	cur_outReal = (inHigh + inLow + float64(inClose*2.0)) / 4.0
 	return cur_outReal, nil
 }
 
@@ -244,7 +242,7 @@ func (c *Core) wclpriceOpenImpl(sp *WCLPRICEStream, inHigh, inLow, inClose []flo
 	}
 	outIdx = 0
 	for i = startIdx; i <= endIdx; i += 1 {
-		outReal[outIdx*outStride] = math.FMA(inClose[i], 2.0, inHigh[i]+inLow[i]) / 4.0
+		outReal[outIdx*outStride] = (inHigh[i] + inLow[i] + float64(inClose[i]*2.0)) / 4.0
 		outIdx++
 	}
 	*outNBElement = outIdx

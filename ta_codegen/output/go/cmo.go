@@ -135,6 +135,7 @@ func (c *Core) cmoImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 	}
 	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
 		_r8 := inReal[today:][:_n6]
+		_r9 := outReal[outIdx:][:_n6]
 		for _k7 := range _r8 {
 			tempValue1 = _r8[_k7]
 			tempValue2 = tempValue1 - prevValue
@@ -144,13 +145,12 @@ func (c *Core) cmoImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			prevLoss += float64((gainDelta-tempValue2)*invPeriod) - float64(prevLoss*invPeriod)
 			tempValue1 = prevGain + prevLoss
 			if tempValue1 > 0.0 {
-				outReal[outIdx] = float64(100.0 * ((prevGain - prevLoss) / tempValue1))
-				outIdx++
+				_r9[_k7] = float64(100.0 * ((prevGain - prevLoss) / tempValue1))
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r9[_k7] = 0.0
 			}
 		}
+		outIdx += int32(_n6)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

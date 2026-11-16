@@ -54,15 +54,15 @@ func (c *Core) marketfiImpl(startIdx, endIdx int32, inHigh, inLow, inVolume []fl
 		_r2 := inVolume[i:][:_n0]
 		_r3 := inHigh[i:][:_n0]
 		_r4 := inLow[i:][:_n0]
+		_r5 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			if _r2[_k1] != 0.0 {
-				outReal[outIdx] = (_r3[_k1] - _r4[_k1]) / _r2[_k1]
-				outIdx++
+				_r5[_k1] = (_r3[_k1] - _r4[_k1]) / _r2[_k1]
 			} else {
-				outReal[outIdx] = 0.0
-				outIdx++
+				_r5[_k1] = 0.0
 			}
 		}
+		outIdx += int32(_n0)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

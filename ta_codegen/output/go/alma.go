@@ -134,13 +134,21 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	s = float64(optInTimePeriod) / optInSigma
 	twoSSq = float64(float64(2.0*s) * s)
 	norm = 0.0
-	for j = 0; j < optInTimePeriod; j += 1 {
-		d = float64(j - m)
-		weights[j] = math.Exp(-float64(d*d) / twoSSq)
-		norm += weights[j]
+	j = 0
+	if _n4 := int(optInTimePeriod) - int(j); _n4 > 0 {
+		_r6 := weights[j:][:_n4]
+		for _k5 := range _r6 {
+			d = float64(j + int32(_k5) - m)
+			_r6[_k5] = math.Exp(-float64(d*d) / twoSSq)
+			norm += _r6[_k5]
+		}
 	}
-	for j = 0; j < optInTimePeriod; j += 1 {
-		weights[j] = weights[j] / norm
+	j = 0
+	if _n7 := int(optInTimePeriod) - int(j); _n7 > 0 {
+		_r9 := weights[j:][:_n7]
+		for _k8 := range _r9 {
+			_r9[_k8] = _r9[_k8] / norm
+		}
 	}
 	outIdx = 0
 	i = startIdx
@@ -151,17 +159,18 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		s3 = 0.0
 		b = i - lookbackTotal
 		j = 0
-		if _n4 := int(optInTimePeriod) - int(j); _n4 > 0 {
-			_r6 := inReal[b:][:_n4]
-			_r7 := inReal[b+1:][:_n4]
-			_r8 := inReal[b+2:][:_n4]
-			_r9 := inReal[b+3:][:_n4]
-			for _k5 := range _r6 {
-				wj = weights[j+int32(_k5)]
-				s0 += float64(wj * _r6[_k5])
-				s1 += float64(wj * _r7[_k5])
-				s2 += float64(wj * _r8[_k5])
-				s3 += float64(wj * _r9[_k5])
+		if _n10 := int(optInTimePeriod) - int(j); _n10 > 0 {
+			_r12 := weights[j:][:_n10]
+			_r13 := inReal[b:][:_n10]
+			_r14 := inReal[b+1:][:_n10]
+			_r15 := inReal[b+2:][:_n10]
+			_r16 := inReal[b+3:][:_n10]
+			for _k11 := range _r12 {
+				wj = _r12[_k11]
+				s0 += float64(wj * _r13[_k11])
+				s1 += float64(wj * _r14[_k11])
+				s2 += float64(wj * _r15[_k11])
+				s3 += float64(wj * _r16[_k11])
 			}
 		}
 		outReal[outIdx] = s0
@@ -171,18 +180,18 @@ func (c *Core) almaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 		outIdx += 4
 		i += 4
 	}
-	if _n10 := int(endIdx) - int(i) + 1; _n10 > 0 {
-		_r12 := outReal[outIdx:][:_n10]
-		for _k11 := range _r12 {
+	if _n17 := int(endIdx) - int(i) + 1; _n17 > 0 {
+		_r19 := outReal[outIdx:][:_n17]
+		for _k18 := range _r19 {
 			sum = 0.0
 			w = 0
-			for j = i + int32(_k11) - lookbackTotal; j <= i+int32(_k11); j += 1 {
+			for j = i + int32(_k18) - lookbackTotal; j <= i+int32(_k18); j += 1 {
 				sum += float64(weights[w] * inReal[j])
 				w += 1
 			}
-			_r12[_k11] = sum
+			_r19[_k18] = sum
 		}
-		outIdx += int32(_n10)
+		outIdx += int32(_n17)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx
