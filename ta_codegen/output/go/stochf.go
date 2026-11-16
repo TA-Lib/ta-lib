@@ -388,16 +388,18 @@ func (sp *STOCHFStream) Update(inHigh, inLow, inClose float64) (float64, float64
 		sp.lowestIdx = sp.trailingIdx
 		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
 		sp.i = sp.lowestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
+		sp.i++
+	scan2:
+		if sp.i <= sp.today {
 			tmp = sp.x_inLow[sp.i&sp.xMask]
 			if tmp < sp.lowest {
 				sp.lowestIdx = sp.i
 				sp.lowest = tmp
+				sp.i++
+				goto scan2
 			}
+			sp.i++
+			goto scan2
 		}
 	} else if tmp <= sp.lowest {
 		sp.lowestIdx = sp.today
@@ -408,16 +410,18 @@ func (sp *STOCHFStream) Update(inHigh, inLow, inClose float64) (float64, float64
 		sp.highestIdx = sp.trailingIdx
 		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
 		sp.i = sp.highestIdx
-		for {
-			sp.i++
-			if !(sp.i <= sp.today) {
-				break
-			}
+		sp.i++
+	scan3:
+		if sp.i <= sp.today {
 			tmp = sp.x_inHigh[sp.i&sp.xMask]
 			if tmp > sp.highest {
 				sp.highestIdx = sp.i
 				sp.highest = tmp
+				sp.i++
+				goto scan3
 			}
+			sp.i++
+			goto scan3
 		}
 	} else if tmp >= sp.highest {
 		sp.highestIdx = sp.today
@@ -493,11 +497,9 @@ func (sp *STOCHFStream) Peek(inHigh, inLow, inClose float64) (float64, float64, 
 		today = sp.today
 		xMask = sp.xMask
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T2 float64
 			if i&xMask != pkSlot1 {
 				_T2 = x_inLow[i&xMask]
@@ -508,7 +510,11 @@ func (sp *STOCHFStream) Peek(inHigh, inLow, inClose float64) (float64, float64, 
 			if tmp < lowest {
 				lowestIdx = i
 				lowest = tmp
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if tmp <= lowest {
 		lowestIdx = sp.today
@@ -534,11 +540,9 @@ func (sp *STOCHFStream) Peek(inHigh, inLow, inClose float64) (float64, float64, 
 		today = sp.today
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			var _T5 float64
 			if i&xMask != pkSlot0 {
 				_T5 = x_inHigh[i&xMask]
@@ -549,7 +553,11 @@ func (sp *STOCHFStream) Peek(inHigh, inLow, inClose float64) (float64, float64, 
 			if tmp > highest {
 				highestIdx = i
 				highest = tmp
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 	} else if tmp >= highest {
 		highestIdx = sp.today
@@ -678,16 +686,18 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 			lowestIdx = trailingIdx
 			lowest = inLow[lowestIdx]
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan4:
+			if i <= today {
 				tmp = inLow[i]
 				if tmp < lowest {
 					lowestIdx = i
 					lowest = tmp
+					i++
+					goto scan4
 				}
+				i++
+				goto scan4
 			}
 		} else if tmp <= lowest {
 			lowestIdx = today
@@ -698,16 +708,18 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 			highestIdx = trailingIdx
 			highest = inHigh[highestIdx]
 			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan5:
+			if i <= today {
 				tmp = inHigh[i]
 				if tmp > highest {
 					highestIdx = i
 					highest = tmp
+					i++
+					goto scan5
 				}
+				i++
+				goto scan5
 			}
 		} else if tmp >= highest {
 			highestIdx = today

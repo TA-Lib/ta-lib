@@ -395,16 +395,18 @@ func (sp *MIDPRICEStream) Update(inHigh, inLow float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan2:
+		if i <= today {
 			tmpHigh = x_inHigh[i&xMask]
 			if tmpHigh > highest {
 				highestIdx = i
 				highest = tmpHigh
+				i++
+				goto scan2
 			}
+			i++
+			goto scan2
 		}
 		sp.highest = highest
 		sp.highestIdx = highestIdx
@@ -423,16 +425,18 @@ func (sp *MIDPRICEStream) Update(inHigh, inLow float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan3:
+		if i <= today {
 			tmpLow = x_inLow[i&xMask]
 			if tmpLow < lowest {
 				lowestIdx = i
 				lowest = tmpLow
+				i++
+				goto scan3
 			}
+			i++
+			goto scan3
 		}
 		sp.i = i
 		sp.lowest = lowest
@@ -500,11 +504,9 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T3 float64
 			if i&xMask != pkSlot0 {
 				_T3 = x_inHigh[i&xMask]
@@ -515,7 +517,11 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 			if tmpHigh > highest {
 				highestIdx = i
 				highest = tmpHigh
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if tmpHigh >= highest {
 		highestIdx = sp.today
@@ -534,11 +540,9 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			var _T5 float64
 			if i&xMask != pkSlot1 {
 				_T5 = x_inLow[i&xMask]
@@ -549,7 +553,11 @@ func (sp *MIDPRICEStream) Peek(inHigh, inLow float64) (float64, error) {
 			if tmpLow < lowest {
 				lowestIdx = i
 				lowest = tmpLow
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 	} else if tmpLow <= lowest {
 		lowestIdx = sp.today
@@ -626,16 +634,18 @@ func (c *Core) midpriceOpenImpl(sp *MIDPRICEStream, inHigh, inLow []float64, sta
 			highestIdx = trailingIdx
 			highest = inHigh[highestIdx]
 			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan4:
+			if i <= today {
 				tmpHigh = inHigh[i]
 				if tmpHigh > highest {
 					highestIdx = i
 					highest = tmpHigh
+					i++
+					goto scan4
 				}
+				i++
+				goto scan4
 			}
 		} else if tmpHigh >= highest {
 			highestIdx = today
@@ -645,16 +655,18 @@ func (c *Core) midpriceOpenImpl(sp *MIDPRICEStream, inHigh, inLow []float64, sta
 			lowestIdx = trailingIdx
 			lowest = inLow[lowestIdx]
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan5:
+			if i <= today {
 				tmpLow = inLow[i]
 				if tmpLow < lowest {
 					lowestIdx = i
 					lowest = tmpLow
+					i++
+					goto scan5
 				}
+				i++
+				goto scan5
 			}
 		} else if tmpLow <= lowest {
 			lowestIdx = today

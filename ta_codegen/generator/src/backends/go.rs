@@ -249,6 +249,9 @@ pub(super) struct Ctx<'a> {
     pub(super) float_selects: Cell<bool>,
     /// A stream Update frame, as against a Peek.
     pub(super) update_frame: Cell<bool>,
+    /// A stream frame or open body: its update scans take their own back edge,
+    /// labelled from this counter, by [`Ctx::back_edge_scan`].
+    pub(super) back_edges: Option<&'a Cell<usize>>,
     /// A batch or open body: a real pick in an outermost loop may take no
     /// branch, by the rule in [`super::go_select`].
     pub(super) loop_selects: Cell<bool>,
@@ -453,6 +456,7 @@ impl<'a> Ctx<'a> {
             colour_selects: Cell::new(false),
             float_selects: Cell::new(false),
             update_frame: Cell::new(false),
+            back_edges: None,
             loop_selects: Cell::new(false),
             loop_depth: Cell::new(0),
             loop_out: Cell::new(false),
@@ -501,6 +505,7 @@ impl<'a> Ctx<'a> {
             colour_selects: Cell::new(false),
             float_selects: Cell::new(false),
             update_frame: Cell::new(false),
+            back_edges: None,
             loop_selects: Cell::new(false),
             loop_depth: Cell::new(0),
             loop_out: Cell::new(false),
@@ -1286,6 +1291,7 @@ impl<'a> Ctx<'a> {
                     out.extend(sc.post);
                 }
             }
+            Statement::While { condition, body } if self.back_edge_scan(condition, body, out) => {}
             Statement::Assign { target, value, compound } => self.assign(target, value, *compound, out),
             Statement::Expr(e) => self.expr_stmt(e, out),
             Statement::While { condition, body } if self.lockstep_loop(s, None, condition, body, None, out) || self.scan_rescan(condition, body, out) => {}

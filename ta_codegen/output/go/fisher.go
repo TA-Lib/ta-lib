@@ -451,18 +451,20 @@ func (sp *FISHERStream) Update(inHigh, inLow float64) (float64, float64, error) 
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan2:
+		if i <= today {
 			tempHigh = x_inHigh[i&xMask]
 			tempLow = x_inLow[i&xMask]
 			tempReal = (tempHigh + tempLow) / 2.0
 			if tempReal > highest {
 				highestIdx = i
 				highest = tempReal
+				i++
+				goto scan2
 			}
+			i++
+			goto scan2
 		}
 		sp.highest = highest
 		sp.highestIdx = highestIdx
@@ -484,18 +486,20 @@ func (sp *FISHERStream) Update(inHigh, inLow float64) (float64, float64, error) 
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan3:
+		if i <= today {
 			tempHigh = x_inHigh[i&xMask]
 			tempLow = x_inLow[i&xMask]
 			tempReal = (tempHigh + tempLow) / 2.0
 			if tempReal < lowest {
 				lowestIdx = i
 				lowest = tempReal
+				i++
+				goto scan3
 			}
+			i++
+			goto scan3
 		}
 		sp.i = i
 		sp.lowest = lowest
@@ -593,11 +597,9 @@ func (sp *FISHERStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T4 float64
 			if i&xMask != pkSlot0 {
 				_T4 = x_inHigh[i&xMask]
@@ -616,7 +618,11 @@ func (sp *FISHERStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 			if tempReal > highest {
 				highestIdx = i
 				highest = tempReal
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if price >= highest {
 		highestIdx = sp.today
@@ -644,11 +650,9 @@ func (sp *FISHERStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			var _T8 float64
 			if i&xMask != pkSlot0 {
 				_T8 = x_inHigh[i&xMask]
@@ -667,7 +671,11 @@ func (sp *FISHERStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 			if tempReal < lowest {
 				lowestIdx = i
 				lowest = tempReal
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 	} else if price <= lowest {
 		lowestIdx = sp.today
@@ -773,18 +781,20 @@ func (c *Core) fisherOpenImpl(sp *FISHERStream, inHigh, inLow []float64, startId
 			tempLow = inLow[highestIdx]
 			highest = (tempHigh + tempLow) / 2.0
 			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan4:
+			if i <= today {
 				tempHigh = inHigh[i]
 				tempLow = inLow[i]
 				tempReal = (tempHigh + tempLow) / 2.0
 				if tempReal > highest {
 					highestIdx = i
 					highest = tempReal
+					i++
+					goto scan4
 				}
+				i++
+				goto scan4
 			}
 		} else if price >= highest {
 			highestIdx = today
@@ -796,18 +806,20 @@ func (c *Core) fisherOpenImpl(sp *FISHERStream, inHigh, inLow []float64, startId
 			tempLow = inLow[lowestIdx]
 			lowest = (tempHigh + tempLow) / 2.0
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan5:
+			if i <= today {
 				tempHigh = inHigh[i]
 				tempLow = inLow[i]
 				tempReal = (tempHigh + tempLow) / 2.0
 				if tempReal < lowest {
 					lowestIdx = i
 					lowest = tempReal
+					i++
+					goto scan5
 				}
+				i++
+				goto scan5
 			}
 		} else if price <= lowest {
 			lowestIdx = today

@@ -277,16 +277,18 @@ func (sp *MININDEXStream) Update(inReal float64) (int32, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			tmp = x_inReal[i&xMask]
 			if tmp <= lowest {
 				lowestIdx = i
 				lowest = tmp
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 		sp.i = i
 		sp.lowest = lowest
@@ -339,11 +341,9 @@ func (sp *MININDEXStream) Peek(inReal float64) (int32, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T2 float64
 			if i&xMask != pkSlot0 {
 				_T2 = x_inReal[i&xMask]
@@ -354,7 +354,11 @@ func (sp *MININDEXStream) Peek(inReal float64) (int32, error) {
 			if tmp <= lowest {
 				lowestIdx = i
 				lowest = tmp
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if tmp <= lowest {
 		lowestIdx = sp.today
@@ -421,16 +425,18 @@ func (c *Core) minindexOpenImpl(sp *MININDEXStream, inReal []float64, startIdx, 
 			lowestIdx = trailingIdx
 			lowest = inReal[lowestIdx]
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan2:
+			if i <= today {
 				tmp = inReal[i]
 				if tmp <= lowest {
 					lowestIdx = i
 					lowest = tmp
+					i++
+					goto scan2
 				}
+				i++
+				goto scan2
 			}
 		} else if tmp <= lowest {
 			lowestIdx = today

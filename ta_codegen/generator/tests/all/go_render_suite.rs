@@ -742,3 +742,62 @@ fn go_a_two_variable_shift_into_a_fused_sum_is_not_re_sliced() {
     }
     assert!(common::sweep_filtered() || loops >= 99, "only {loops} re-sliced loops fuse");
 }
+
+/// The labelled scans of `body`: each label's step, its test, and the lines
+/// of the `if` it labels.
+fn back_edge_scans(body: &str) -> Vec<(String, String, Vec<String>)> {
+    let label = regex::Regex::new(r"^(\t*)(scan\d+):$").unwrap();
+    let lines: Vec<&str> = body.lines().collect();
+    let mut found = Vec::new();
+    for (k, l) in lines.iter().enumerate() {
+        let Some(c) = label.captures(l) else { continue };
+        let close = format!("{}\t}}", &c[1]);
+        let end = k + lines[k..].iter().position(|x| *x == close).expect("the labelled if closes");
+        let block: Vec<String> = lines[k + 1..=end].iter().map(|x| x.to_string()).collect();
+        found.push((lines[k - 1].trim().to_string(), c[2].to_string(), block));
+    }
+    found
+}
+
+/// A stream frame's update scan gives the path that updates nothing its own
+/// back edge: a label on the loop test, and in each exit the step then a
+/// `goto` to it, the comparison unchanged. A block scan's batch body keeps its
+/// loops: there the form timed slower.
+#[test]
+fn go_stream_update_scans_take_their_own_back_edge() {
+    let source = |name: &str| {
+        let (func, enums) = common::load_indicator(name);
+        backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers())
+    };
+    let cases: [(&str, &str, &[&str]); 3] = [
+        ("max", "func (sp *MAXStream) Update(", &["if tmp > highest {"]),
+        ("max", "func (sp *MAXStream) Peek(", &["if tmp > highest {"]),
+        ("willr", "func (sp *WILLRStream) Update(", &["if tmp < lowest {", "if tmp > highest {"]),
+    ];
+    for (name, decl, compares) in cases {
+        let src = source(name);
+        let body = go_body(&src, decl);
+        let scans = back_edge_scans(body);
+        assert_eq!(scans.len(), compares.len(), "{decl}: one label per rescan:\n{body}");
+        assert!(!body.lines().any(|l| l.trim() == "for {"), "{decl}: a rescan kept its `for`:\n{body}");
+        for ((step, label, block), cmp) in scans.iter().zip(compares) {
+            assert_eq!((step.as_str(), block[0].trim()), ("i++", "if i <= today {"), "{decl}: {label} is not stepped then tested:\n{body}");
+            let goto = format!("goto {label}");
+            let at: Vec<usize> = block.iter().enumerate().filter(|(_, l)| l.trim() == goto).map(|(i, _)| i).collect();
+            assert_eq!(at.len(), 2, "{decl}: {label} has not two back edges:\n{body}");
+            assert!(at.iter().all(|&i| block[i - 1].trim() == "i++"), "{decl}: a back edge of {label} skips the step:\n{body}");
+            assert!(block.iter().any(|l| l.trim() == *cmp), "{decl}: `{cmp}` is lost:\n{body}");
+        }
+    }
+    let max = source("max");
+    let batch = go_body(&max, "func (c *Core) maxImpl(");
+    assert!(!batch.contains("goto ") && back_edge_scans(batch).is_empty(), "maxImpl took a back edge:\n{batch}");
+    if common::sweep_filtered() {
+        return;
+    }
+    let mut rewritten = 0usize;
+    for name in common::discover_indicators() {
+        rewritten += back_edge_scans(&source(&name)).len();
+    }
+    assert!(rewritten >= 94, "only {rewritten} stream rescans take their own back edge");
+}

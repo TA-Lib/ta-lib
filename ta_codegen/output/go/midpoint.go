@@ -381,16 +381,18 @@ func (sp *MIDPOINTStream) Update(inReal float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan2:
+		if i <= today {
 			tmpHigh = x_inReal[i&xMask]
 			if tmpHigh > highest {
 				highestIdx = i
 				highest = tmpHigh
+				i++
+				goto scan2
 			}
+			i++
+			goto scan2
 		}
 		sp.highest = highest
 		sp.highestIdx = highestIdx
@@ -409,16 +411,18 @@ func (sp *MIDPOINTStream) Update(inReal float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan3:
+		if i <= today {
 			tmpLow = x_inReal[i&xMask]
 			if tmpLow < lowest {
 				lowestIdx = i
 				lowest = tmpLow
+				i++
+				goto scan3
 			}
+			i++
+			goto scan3
 		}
 		sp.i = i
 		sp.lowest = lowest
@@ -475,11 +479,9 @@ func (sp *MIDPOINTStream) Peek(inReal float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T2 float64
 			if i&xMask != pkSlot0 {
 				_T2 = x_inReal[i&xMask]
@@ -490,7 +492,11 @@ func (sp *MIDPOINTStream) Peek(inReal float64) (float64, error) {
 			if tmpHigh > highest {
 				highestIdx = i
 				highest = tmpHigh
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if tmpHigh >= highest {
 		highestIdx = sp.today
@@ -509,11 +515,9 @@ func (sp *MIDPOINTStream) Peek(inReal float64) (float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inReal = sp.x_inReal
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			var _T4 float64
 			if i&xMask != pkSlot0 {
 				_T4 = x_inReal[i&xMask]
@@ -524,7 +528,11 @@ func (sp *MIDPOINTStream) Peek(inReal float64) (float64, error) {
 			if tmpLow < lowest {
 				lowestIdx = i
 				lowest = tmpLow
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 	} else if tmpLow <= lowest {
 		lowestIdx = sp.today
@@ -597,16 +605,18 @@ func (c *Core) midpointOpenImpl(sp *MIDPOINTStream, inReal []float64, startIdx, 
 			highestIdx = trailingIdx
 			highest = inReal[highestIdx]
 			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan4:
+			if i <= today {
 				tmpHigh = inReal[i]
 				if tmpHigh > highest {
 					highestIdx = i
 					highest = tmpHigh
+					i++
+					goto scan4
 				}
+				i++
+				goto scan4
 			}
 		} else if tmpHigh >= highest {
 			highestIdx = today
@@ -616,16 +626,18 @@ func (c *Core) midpointOpenImpl(sp *MIDPOINTStream, inReal []float64, startIdx, 
 			lowestIdx = trailingIdx
 			lowest = inReal[lowestIdx]
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan5:
+			if i <= today {
 				tmpLow = inReal[i]
 				if tmpLow < lowest {
 					lowestIdx = i
 					lowest = tmpLow
+					i++
+					goto scan5
 				}
+				i++
+				goto scan5
 			}
 		} else if tmpLow <= lowest {
 			lowestIdx = today

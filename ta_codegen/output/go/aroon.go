@@ -336,16 +336,18 @@ func (sp *AROONStream) Update(inHigh, inLow float64) (float64, float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan2:
+		if i <= today {
 			tmp = x_inLow[i&xMask]
 			if tmp <= lowest {
 				lowestIdx = i
 				lowest = tmp
+				i++
+				goto scan2
 			}
+			i++
+			goto scan2
 		}
 		sp.i = i
 		sp.lowest = lowest
@@ -365,16 +367,18 @@ func (sp *AROONStream) Update(inHigh, inLow float64) (float64, float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan3:
+		if i <= today {
 			tmp = x_inHigh[i&xMask]
 			if tmp >= highest {
 				highestIdx = i
 				highest = tmp
+				i++
+				goto scan3
 			}
+			i++
+			goto scan3
 		}
 		sp.highest = highest
 		sp.highestIdx = highestIdx
@@ -436,11 +440,9 @@ func (sp *AROONStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inLow = sp.x_inLow
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan0:
+		if i <= today {
 			var _T2 float64
 			if i&xMask != pkSlot1 {
 				_T2 = x_inLow[i&xMask]
@@ -451,7 +453,11 @@ func (sp *AROONStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 			if tmp <= lowest {
 				lowestIdx = i
 				lowest = tmp
+				i++
+				goto scan0
 			}
+			i++
+			goto scan0
 		}
 	} else if tmp <= lowest {
 		lowestIdx = sp.today
@@ -477,11 +483,9 @@ func (sp *AROONStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 		today = sp.today
 		xMask = sp.xMask
 		x_inHigh = sp.x_inHigh
-		for {
-			i++
-			if !(i <= today) {
-				break
-			}
+		i++
+	scan1:
+		if i <= today {
 			var _T5 float64
 			if i&xMask != pkSlot0 {
 				_T5 = x_inHigh[i&xMask]
@@ -492,7 +496,11 @@ func (sp *AROONStream) Peek(inHigh, inLow float64) (float64, float64, error) {
 			if tmp >= highest {
 				highestIdx = i
 				highest = tmp
+				i++
+				goto scan1
 			}
+			i++
+			goto scan1
 		}
 	} else if tmp >= highest {
 		highestIdx = sp.today
@@ -569,16 +577,18 @@ func (c *Core) aroonOpenImpl(sp *AROONStream, inHigh, inLow []float64, startIdx,
 			lowestIdx = trailingIdx
 			lowest = inLow[lowestIdx]
 			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan4:
+			if i <= today {
 				tmp = inLow[i]
 				if tmp <= lowest {
 					lowestIdx = i
 					lowest = tmp
+					i++
+					goto scan4
 				}
+				i++
+				goto scan4
 			}
 		} else if tmp <= lowest {
 			lowestIdx = today
@@ -589,16 +599,18 @@ func (c *Core) aroonOpenImpl(sp *AROONStream, inHigh, inLow []float64, startIdx,
 			highestIdx = trailingIdx
 			highest = inHigh[highestIdx]
 			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
-				}
+			i++
+		scan5:
+			if i <= today {
 				tmp = inHigh[i]
 				if tmp >= highest {
 					highestIdx = i
 					highest = tmp
+					i++
+					goto scan5
 				}
+				i++
+				goto scan5
 			}
 		} else if tmp >= highest {
 			highestIdx = today

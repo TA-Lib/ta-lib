@@ -10,8 +10,11 @@
 
 const ASSIGN_OPS: &[&str] = &["=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="];
 
+/// A label sits one tab left of the statement it labels, inside its scope.
 fn indent_of(line: &str) -> usize {
-    line.chars().take_while(|c| *c == '\t').count()
+    let tabs = line.chars().take_while(|c| *c == '\t').count();
+    let label = line[tabs..].strip_suffix(':').is_some_and(|l| l != "default" && !l.is_empty() && l.chars().all(is_ident_char));
+    tabs + usize::from(label)
 }
 
 fn is_ident_char(c: char) -> bool {

@@ -9,7 +9,7 @@
 //! drove it.
 
 use std::cell::Cell;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use crate::candle_settings::detect_candle_settings;
 use crate::ir::{BinOp, CircBuf, Expr, FuncDef, Lang, ParamType, Statement, Tier, VarType};
@@ -372,6 +372,7 @@ struct Em<'a> {
     svc: &'a Services<'a>,
     fma: &'a FmaVarSets,
     counter: &'a Cell<usize>,
+    labels: &'a Cell<usize>,
     names: GoStreamNames,
     camel: String,
 }
@@ -425,7 +426,9 @@ impl<'a> Em<'a> {
     }
 
     fn ctx(&self, body: &[Statement], ret: Ret) -> Ctx<'a> {
-        Ctx::for_stream(self.svc, &self.func.name, body, self.fma, self.counter, ret)
+        let mut ctx = Ctx::for_stream(self.svc, &self.func.name, body, self.fma, self.counter, ret);
+        ctx.back_edges = Some(self.labels);
+        ctx
     }
 
     /// A context for step and peek code: every handle field under `sp.` and
@@ -493,6 +496,97 @@ impl<'a> Em<'a> {
     }
 }
 
+/// Opens a label line, which `generate` outdents one tab from the statement it labels.
+const LABEL: char = '\u{1}';
+
+impl Ctx<'_> {
+    /// A rescan `while( ++i <= b )` whose pass ends in `if( x OP best )` with
+    /// no else, `x` a loaded element and `best` a scalar the `if` assigns among
+    /// nothing but scalars, rendered as
+    /// `i++; L: if i <= b { ..; if x OP best { ..; i++; goto L }; i++; goto L }`.
+    /// gc sets a loop's merge block up from the predecessor first in layout,
+    /// which in `for` form is the rare update, so every element pays its
+    /// register moves; the no-update path's own back edge removes them, where
+    /// `continue` or a negated `if` do not. Test, step and comparison are the
+    /// loop's own, so ties resolve as before.
+    pub(super) fn back_edge_scan(&self, condition: &Expr, body: &[Statement], out: &mut Vec<String>) -> bool {
+        let Some(labels) = self.back_edges else { return false };
+        if !update_scan(condition, body) {
+            return false;
+        }
+        self.check_steps(&[condition]);
+        let mut sc = Scope::default();
+        let c = self.cond(condition, &mut sc);
+        let lines = self.block(body);
+        let plain_if = lines.iter().rposition(|l| l.starts_with("if ")).is_some_and(|k| {
+            let tail = &lines[k + 1..];
+            tail.last().is_some_and(|l| l == "}") && tail[..tail.len() - 1].iter().all(|l| l.starts_with('\t'))
+        });
+        if !plain_if || !sc.post.is_empty() {
+            out.extend(sc.pre);
+            out.push("for {".to_string());
+            out.push(format!("\tif {} {{", GExpr::not(c).render()));
+            out.push("\t\tbreak".to_string());
+            out.push("\t}".to_string());
+            out.extend(go::indented(&lines));
+            out.push("}".to_string());
+            return true;
+        }
+        let label = format!("scan{}", labels.get());
+        labels.set(labels.get() + 1);
+        let back: Vec<String> = sc.pre.iter().cloned().chain([format!("goto {label}")]).collect();
+        out.extend(sc.pre);
+        out.push(format!("{LABEL}{label}:"));
+        out.push(format!("if {} {{", go::strip_paren(c).render()));
+        out.extend(go::indented(&lines[..lines.len() - 1]));
+        out.extend(back.iter().map(|l| format!("\t\t{l}")));
+        out.push("\t}".to_string());
+        out.extend(go::indented(&back));
+        out.push("}".to_string());
+        true
+    }
+}
+
+/// [`Ctx::back_edge_scan`]'s shape, on the IR.
+fn update_scan(condition: &Expr, body: &[Statement]) -> bool {
+    let Expr::BinOp(step, _, bound) = condition else { return false };
+    if !matches!(step.as_ref(), Expr::PreIncrement(v) | Expr::PreDecrement(v) if matches!(v.as_ref(), Expr::Var(_))) || !pure(bound) {
+        return false;
+    }
+    let Some((Statement::If { condition: test, then_body, else_body, .. }, before)) = body.split_last() else { return false };
+    let Expr::BinOp(l, BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq, r) = test else { return false };
+    let flat = before.iter().all(|s| match s {
+        Statement::Assign { value, .. } => pure(value),
+        Statement::VarDecl { init, .. } => init.as_ref().is_none_or(pure),
+        Statement::Comment(_) => true,
+        _ => false,
+    });
+    let scalars = !then_body.is_empty()
+        && then_body.iter().all(|s| matches!(s, Statement::Assign { target: Expr::Var(_), value, compound: false } if pure(value)));
+    let assigned = |e: &Expr| matches!(e, Expr::Var(n) if then_body.iter().any(|s| matches!(s, Statement::Assign { target: Expr::Var(t), .. } if t == n)));
+    let mut elements = HashSet::new();
+    for s in before {
+        if let Statement::Assign { target: Expr::Var(t), value, .. } = s {
+            let mut reads = false;
+            streaming::walk_expr(value, &mut |x| reads |= matches!(x, Expr::ArrayAccess(..)) || matches!(x, Expr::Var(n) if elements.contains(n)));
+            if reads {
+                elements.insert(t.clone());
+            }
+        }
+    }
+    let loaded = |e: &Expr| matches!(e, Expr::ArrayAccess(..)) || matches!(e, Expr::Var(n) if elements.contains(n));
+    else_body.is_empty() && flat && scalars && pure(l) && pure(r) && ((loaded(l) && assigned(r)) || (assigned(l) && loaded(r)))
+}
+
+/// No step or call.
+fn pure(e: &Expr) -> bool {
+    let mut ok = true;
+    streaming::walk_expr(e, &mut |x| {
+        ok &= !matches!(x, Expr::PreIncrement(_) | Expr::PreDecrement(_) | Expr::PostIncrement(_) | Expr::PostDecrement(_) | Expr::FuncCall(..));
+    });
+    ok
+}
+
 /// A function with its doc comment, as `go_doc` renders it, directly above it.
 fn doc_fn(o: &mut String, doc: &str, sig: &str, lines: &[String]) {
     o.push_str(doc);
@@ -547,11 +641,13 @@ pub(super) fn generate(func: &FuncDef, svc: &Services) -> String {
         stream_fma.real_vars.extend(streaming::lag_fma_reals(cp));
     }
     let counter = Cell::new(0usize);
+    let labels = Cell::new(0usize);
     let em = Em {
         func,
         svc,
         fma: &stream_fma,
         counter: &counter,
+        labels: &labels,
         names: go_stream_names(&func.name),
         camel: common::camel_words(&func.name),
     };
@@ -567,7 +663,7 @@ pub(super) fn generate(func: &FuncDef, svc: &Services) -> String {
         StreamPlan::PeriodBank(pb) => emit_period_bank(&mut o, &em, pb),
         StreamPlan::Composed(cp) => emit_composed(&mut o, &em, cp),
     }
-    o
+    o.replace(&format!("\t{LABEL}"), "")
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
