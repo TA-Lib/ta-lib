@@ -35,6 +35,8 @@
 
 package talib
 
+import "math"
+
 func (c *Core) obvLookback() int32 {
 	return 0
 }
@@ -61,11 +63,7 @@ func (c *Core) obvImpl(startIdx, endIdx int32, inReal, inVolume []float64, outBe
 		_r4 := outReal[outIdx:][:_n0]
 		for _k1 := range _r2 {
 			tempReal = _r2[_k1]
-			if tempReal > prevReal {
-				prevOBV += _r3[_k1]
-			} else if tempReal < prevReal {
-				prevOBV -= _r3[_k1]
-			}
+			prevOBV = prevOBV + selF(tempReal > prevReal, _r3[_k1], math.Float64frombits(1<<63)) - selF(tempReal < prevReal, _r3[_k1], 0.0)
 			_r4[_k1] = prevOBV
 			prevReal = tempReal
 		}
@@ -205,11 +203,7 @@ func (sp *OBVStream) Update(inReal, inVolume float64) (float64, error) {
 	sp.outRangeCount++
 	var tempReal float64
 	tempReal = inReal
-	if tempReal > sp.prevReal {
-		sp.prevOBV += inVolume
-	} else if tempReal < sp.prevReal {
-		sp.prevOBV -= inVolume
-	}
+	sp.prevOBV = sp.prevOBV + selF(tempReal > sp.prevReal, inVolume, math.Float64frombits(1<<63)) - selF(tempReal < sp.prevReal, inVolume, 0.0)
 	sp.cur_outReal = sp.prevOBV
 	sp.prevReal = tempReal
 	return sp.cur_outReal, nil
@@ -225,11 +219,7 @@ func (sp *OBVStream) Peek(inReal, inVolume float64) (float64, error) {
 	var cur_outReal float64
 	prevOBV := sp.prevOBV
 	tempReal = inReal
-	if tempReal > sp.prevReal {
-		prevOBV += inVolume
-	} else if tempReal < sp.prevReal {
-		prevOBV -= inVolume
-	}
+	prevOBV = prevOBV + selF(tempReal > sp.prevReal, inVolume, math.Float64frombits(1<<63)) - selF(tempReal < sp.prevReal, inVolume, 0.0)
 	cur_outReal = prevOBV
 	return cur_outReal, nil
 }
@@ -270,11 +260,7 @@ func (c *Core) obvOpenImpl(sp *OBVStream, inReal, inVolume []float64, startIdx i
 	outIdx = 0
 	for i = startIdx; i <= endIdx; i += 1 {
 		tempReal = inReal[i]
-		if tempReal > prevReal {
-			prevOBV += inVolume[i]
-		} else if tempReal < prevReal {
-			prevOBV -= inVolume[i]
-		}
+		prevOBV = prevOBV + selF(tempReal > prevReal, inVolume[i], math.Float64frombits(1<<63)) - selF(tempReal < prevReal, inVolume[i], 0.0)
 		outReal[outIdx*outStride] = prevOBV
 		outIdx++
 		prevReal = tempReal

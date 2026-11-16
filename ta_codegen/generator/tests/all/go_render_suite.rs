@@ -140,6 +140,46 @@ fn go_batch_bodies_select_only_in_bar_loops() {
     assert!(common::sweep_filtered() || bar_loop >= 110, "only {bar_loop} selects in bar loops");
 }
 
+/// OBV's volume is added or subtracted on whether the close rose, a coin flip:
+/// batch, open, Update and Peek select the addends, the subtrahend still
+/// subtracted (an added negation flips a NaN's sign). AD's and PVT's divisor
+/// guards keep their branch. Over the corpus no accumulation is left with a
+/// constant `-0.0`, which Go reads as +0.0.
+#[test]
+fn go_accumulates_a_coin_flip_by_selected_addends() {
+    let accrual = regex::Regex::new(r"(?m)^\s*([\w.]+) = ([\w.]+) [-+] selF\(").unwrap();
+    let neg_zero = regex::Regex::new(r"(^|[^\w.])-\s*0(\.0*)?([eE][-+]?\d+)?([^\w.]|$)").unwrap();
+    let (registry, helpers) = (common::make_registry(), common::make_helpers());
+    let mut sites = 0usize;
+    for name in common::discover_indicators() {
+        let (func, enums) = common::load_indicator(&name);
+        let src = backends::go::generate(&func, &enums, registry, helpers);
+        for line in src.lines() {
+            assert!(!neg_zero.is_match(line), "{name}: a constant negative zero is +0.0 in Go: {line}");
+        }
+        sites += accrual.captures_iter(&src).filter(|c| c[1] == c[2]).count();
+        let tiers = match name.as_str() {
+            "obv" => [
+                ("func (c *Core) obvImpl(", "prevOBV = prevOBV + selF(tempReal > prevReal, _r3[_k1], math.Float64frombits(1<<63)) - selF(tempReal < prevReal, _r3[_k1], 0.0)"),
+                ("func (c *Core) obvOpenImpl(", "prevOBV = prevOBV + selF(tempReal > prevReal, inVolume[i], math.Float64frombits(1<<63)) - selF(tempReal < prevReal, inVolume[i], 0.0)"),
+                ("func (sp *OBVStream) Update(", "sp.prevOBV = sp.prevOBV + selF(tempReal > sp.prevReal, inVolume, math.Float64frombits(1<<63)) - selF(tempReal < sp.prevReal, inVolume, 0.0)"),
+                ("func (sp *OBVStream) Peek(", "prevOBV = prevOBV + selF(tempReal > sp.prevReal, inVolume, math.Float64frombits(1<<63)) - selF(tempReal < sp.prevReal, inVolume, 0.0)"),
+            ],
+            "ad" | "pvt" => {
+                let branch = if name == "ad" { "if tmp > 0.0 {" } else { "if prevClose != 0.0 {" };
+                assert!(go_body(&src, &format!("func (c *Core) {name}Impl(")).contains(branch), "{name}: its divisor guard selects");
+                continue;
+            }
+            _ => continue,
+        };
+        for (decl, line) in tiers {
+            let body = go_body(&src, decl);
+            assert!(body.contains(line) && !body.contains("if tempReal "), "{decl}: OBV's accumulation branches:\n{body}");
+        }
+    }
+    assert!(common::sweep_filtered() || sites >= 28, "only {sites} accumulations select their addends");
+}
+
 /// A candle's colour is a coin flip on real bars: the batch and open bodies
 /// pick each colour bound through `selF`, and the stream step keeps the
 /// branch. A range type is folded where C folds it.

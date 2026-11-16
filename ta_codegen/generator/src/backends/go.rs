@@ -2002,7 +2002,7 @@ impl<'a> Ctx<'a> {
         }
         let (condition, _) = super::builtins::strip_unlikely(condition);
         self.check_steps(&[condition]);
-        if self.if_as_select(condition, then_body, else_body, out) {
+        if self.if_as_select(condition, then_body, else_body, out) || self.if_as_accrual(condition, then_body, else_body, out) {
             return;
         }
         let (condition, hoisted) = self.hoist(condition);
@@ -2086,6 +2086,57 @@ impl<'a> Ctx<'a> {
         }
         out.extend(sc.pre);
         out.push(format!("{} = {}", t.render(), GExpr::call("selF", vec![strip_paren(c), a, b]).render()));
+        true
+    }
+
+    /// `if c1 { acc += a } [else if c2 { acc -= b }]` over a real `acc` as
+    /// `acc = acc + selF(c1, a, -0.0) - selF(c2, b, 0.0)`, by the rule in
+    /// [`super::go_select`].
+    fn if_as_accrual(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], out: &mut Vec<String>) -> bool {
+        let frame = self.float_selects.get() && self.loop_depth.get() == 0;
+        let bar_loop = self.loop_selects.get() && self.loop_depth.get() == 1 && self.loop_out.get();
+        if !(frame || bar_loop) {
+            return false;
+        }
+        let Some((acc, arms)) = super::go_select::accrual(condition, then_body, else_body) else { return false };
+        let real = |e: &Expr| self.env.type_of(e) == CType::Real;
+        let real_ops = |c: &Expr| matches!(c, Expr::BinOp(l, _, r) if arith(self.env.type_of(l), self.env.type_of(r)) == CType::Real);
+        let int_div = |v: &Expr| {
+            let mut found = false;
+            crate::streaming::walk_expr(v, &mut |x| found |= matches!(x, Expr::BinOp(_, BinOp::Div, _)) && !real(x));
+            found
+        };
+        if self.env.lookup(acc) != Some(CType::Real) || !arms.iter().all(|(c, _, v)| real_ops(c) && !int_div(v)) {
+            return false;
+        }
+        if !self.scan.borrow().around.get(&self.cur_stmt.get()).is_some_and(|a| a.accrual_free(acc, &arms)) {
+            return false;
+        }
+        let saved = self.counter().get();
+        let mut sc = Scope::default();
+        let (t, _) = self.target(&Expr::Var(acc.to_string()), &mut sc);
+        let mut sum = t.clone();
+        for (c, op, v) in arms {
+            let (c, hoisted) = self.hoist(c);
+            if !hoisted.is_empty() {
+                self.counter().set(saved);
+                return false;
+            }
+            let c = self.cond(&c, &mut sc);
+            let (v, vt) = self.lower(v, &mut sc);
+            let v = self.conv(v, vt, CType::Real);
+            // A Go constant `-0.0` is +0.0: the negative zero is spelled by its bits.
+            let (gop, zero) = match op {
+                BinOp::Add => (GOp::Add, GExpr::call("math.Float64frombits", vec![GExpr::bin(GExpr::name("1"), GOp::Shl, GExpr::name("63"))])),
+                _ => (GOp::Sub, GExpr::name("0.0")),
+            };
+            sum = GExpr::bin(sum, gop, GExpr::call("selF", vec![strip_paren(c), v, zero]));
+        }
+        if !sc.is_empty() {
+            self.counter().set(saved);
+            return false;
+        }
+        out.push(format!("{} = {}", t.render(), sum.render()));
         true
     }
 

@@ -397,17 +397,11 @@ func (c *Core) htTrendmodeImpl(startIdx, endIdx int32, inReal []float64, outBegI
 			if tempReal > 0.0 {
 				DCPhase = float64(math.Atan(realPart/imagPart) * rad2Deg)
 			} else if tempReal <= 0.01 {
-				if realPart < 0.0 {
-					DCPhase -= 90.0
-				} else if realPart > 0.0 {
-					DCPhase += 90.0
-				}
+				DCPhase = DCPhase - selF(realPart < 0.0, 90.0, 0.0) + selF(realPart > 0.0, 90.0, math.Float64frombits(1<<63))
 			}
 			DCPhase += 90.0
 			DCPhase += 360.0 / smoothPeriod
-			if imagPart < 0.0 {
-				DCPhase += 180.0
-			}
+			DCPhase = DCPhase + selF(imagPart < 0.0, 180.0, math.Float64frombits(1<<63))
 			if DCPhase > 315.0 {
 				DCPhase -= 360.0
 			}
@@ -825,17 +819,11 @@ func (sp *HT_TRENDMODEStream) Update(inReal float64) (int32, error) {
 	if tempReal > 0.0 {
 		sp.DCPhase = float64(math.Atan(realPart/imagPart) * sp.rad2Deg)
 	} else if tempReal <= 0.01 {
-		if realPart < 0.0 {
-			sp.DCPhase -= 90.0
-		} else if realPart > 0.0 {
-			sp.DCPhase += 90.0
-		}
+		sp.DCPhase = sp.DCPhase - selF(realPart < 0.0, 90.0, 0.0) + selF(realPart > 0.0, 90.0, math.Float64frombits(1<<63))
 	}
 	sp.DCPhase += 90.0
 	sp.DCPhase += 360.0 / sp.smoothPeriod
-	if imagPart < 0.0 {
-		sp.DCPhase += 180.0
-	}
+	sp.DCPhase = sp.DCPhase + selF(imagPart < 0.0, 180.0, math.Float64frombits(1<<63))
 	if sp.DCPhase > 315.0 {
 		sp.DCPhase -= 360.0
 	}
@@ -1132,17 +1120,11 @@ func (sp *HT_TRENDMODEStream) Peek(inReal float64) (int32, error) {
 	if tempReal > 0.0 {
 		DCPhase = float64(math.Atan(realPart/imagPart) * sp.rad2Deg)
 	} else if tempReal <= 0.01 {
-		if realPart < 0.0 {
-			DCPhase -= 90.0
-		} else if realPart > 0.0 {
-			DCPhase += 90.0
-		}
+		DCPhase = DCPhase - selF(realPart < 0.0, 90.0, 0.0) + selF(realPart > 0.0, 90.0, math.Float64frombits(1<<63))
 	}
 	DCPhase += 90.0
 	DCPhase += 360.0 / smoothPeriod
-	if imagPart < 0.0 {
-		DCPhase += 180.0
-	}
+	DCPhase = DCPhase + selF(imagPart < 0.0, 180.0, math.Float64frombits(1<<63))
 	if DCPhase > 315.0 {
 		DCPhase -= 360.0
 	}
@@ -1588,17 +1570,11 @@ func (c *Core) htTrendmodeOpenImpl(sp *HT_TRENDMODEStream, inReal []float64, sta
 		if tempReal > 0.0 {
 			DCPhase = float64(math.Atan(realPart/imagPart) * rad2Deg)
 		} else if tempReal <= 0.01 {
-			if realPart < 0.0 {
-				DCPhase -= 90.0
-			} else if realPart > 0.0 {
-				DCPhase += 90.0
-			}
+			DCPhase = DCPhase - selF(realPart < 0.0, 90.0, 0.0) + selF(realPart > 0.0, 90.0, math.Float64frombits(1<<63))
 		}
 		DCPhase += 90.0
 		DCPhase += 360.0 / smoothPeriod
-		if imagPart < 0.0 {
-			DCPhase += 180.0
-		}
+		DCPhase = DCPhase + selF(imagPart < 0.0, 180.0, math.Float64frombits(1<<63))
 		if DCPhase > 315.0 {
 			DCPhase -= 360.0
 		}

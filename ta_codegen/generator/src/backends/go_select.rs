@@ -23,6 +23,18 @@
 //! almost always wins. So do a true range's raises in a stream Update, which
 //! sees consecutive bars, but not in a Peek, whose bar need not follow the
 //! handle's last one.
+//!
+//! A real accumulation under the same kind of condition, `if c1 { acc += a }
+//! else if c2 { acc -= b }` with each arm that one statement, selects its
+//! addend instead: `acc + selF(c1, a, -0.0) - selF(c2, b, +0.0)`. No select is
+//! on the accumulator's chain, which is one add or subtract per arm, so the
+//! handle-field limit above does not apply. A not-taken arm leaves every
+//! quiet value's bits as they were, but quiets a signaling NaN. Two arms
+//! must never both be true. The addend is computed on every bar: it may not
+//! call, except for an intrinsic Go inlines, nor read an array but an input
+//! at an index the bar already read, and a condition keeping its divisor or
+//! root in domain is a guard. An accumulator its own statement list also
+//! assigns holds this bar's value, not a sum carried in, and keeps its branch.
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -150,6 +162,8 @@ pub(super) struct Around {
     later: BTreeSet<String>,
     /// `(value, literal)` compared by an enclosing condition.
     tested: Vec<(Expr, Expr)>,
+    /// Names the other statements of the pick's own list define.
+    siblings: BTreeSet<String>,
 }
 
 impl Around {
@@ -212,6 +226,111 @@ impl Around {
         against_literal(cond, &mut mine);
         mine.iter().any(|m| self.tested.contains(m))
     }
+
+    /// Whether the accumulation `arms` on `acc` selects its addends.
+    pub(super) fn accrual_free(&self, acc: &str, arms: &[Accrual]) -> bool {
+        let names = |e: &Expr| {
+            let mut n = BTreeSet::new();
+            expr_var_names(e, &mut n);
+            n
+        };
+        let apart = match arms {
+            [_] => true,
+            [(a, ..), (b, ..)] => exclusive(a, b),
+            _ => false,
+        };
+        apart
+            && !self.siblings.contains(acc)
+            && arms.iter().all(|(c, _, v)| {
+                let mut domain = BTreeSet::new();
+                domain_names(v, &mut domain);
+                let ops = names(c);
+                data_driven(c)
+                    && !ops.contains(acc)
+                    && !names(v).contains(acc)
+                    && self.addend(v)
+                    && ops.is_disjoint(&domain)
+                    && !self.guard(c, v, &Expr::Literal(0.0), Some(acc))
+                    && !self.retest(c)
+            })
+    }
+
+    fn addend(&self, e: &Expr) -> bool {
+        match e {
+            Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) => true,
+            Expr::Cast(_, x) | Expr::Neg(x) => self.addend(x),
+            Expr::BinOp(l, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div, r) => self.addend(l) && self.addend(r),
+            Expr::FuncCall(n, args) => matches!(MathFn::from_name(n), Some(MathFn::Abs | MathFn::Sqrt)) && args.iter().all(|a| self.addend(a)),
+            Expr::ArrayAccess(a, at) => is_input(a) && self.defs.values().any(|d| reads_input_at(d, at)),
+            _ => false,
+        }
+    }
+}
+
+/// One arm of an accumulation: its condition, `Add` or `Sub`, and the addend.
+pub(super) type Accrual<'s> = (&'s Expr, BinOp, &'s Expr);
+
+/// `if c1 { acc op= a } [else if c2 { acc op= b }]`, each arm that one
+/// statement on one variable: the variable and the arms in order.
+pub(super) fn accrual<'s>(cond: &'s Expr, then_body: &'s [Statement], else_body: &'s [Statement]) -> Option<(&'s str, Vec<Accrual<'s>>)> {
+    let code = |body: &'s [Statement]| -> Vec<&'s Statement> { body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect() };
+    let one = |body: &'s [Statement]| -> Option<(&'s str, BinOp, &'s Expr)> {
+        match code(body).as_slice() {
+            [Statement::Assign { target: Expr::Var(v), value: Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub), r), compound: true }] if matches!(l.as_ref(), Expr::Var(n) if n == v) => {
+                Some((v, op.clone(), r))
+            }
+            _ => None,
+        }
+    };
+    let (acc, op, a) = one(then_body)?;
+    let mut arms = vec![(strip_unlikely(cond).0, op, a)];
+    match code(else_body).as_slice() {
+        [] => {}
+        [Statement::If { condition, then_body, else_body, .. }] if else_body.is_empty() => match one(then_body)? {
+            (w, op, b) if w == acc => arms.push((strip_unlikely(condition).0, op, b)),
+            _ => return None,
+        },
+        _ => return None,
+    }
+    Some((acc, arms))
+}
+
+/// Two comparisons of the same operands in opposite directions, at most one
+/// of them admitting a tie.
+fn exclusive(a: &Expr, b: &Expr) -> bool {
+    fn side(e: &Expr) -> Option<(&Expr, &Expr, bool, bool)> {
+        let Expr::BinOp(l, op, r) = e else { return None };
+        let (up, strict) = match op {
+            BinOp::Greater => (true, true),
+            BinOp::GreaterEq => (true, false),
+            BinOp::Less => (false, true),
+            BinOp::LessEq => (false, false),
+            _ => return None,
+        };
+        Some((l, r, up, strict))
+    }
+    let (Some((l1, r1, up1, strict1)), Some((l2, r2, up2, strict2))) = (side(a), side(b)) else { return false };
+    let up2 = if l1 == l2 && r1 == r2 {
+        up2
+    } else if l1 == r2 && r1 == l2 {
+        !up2
+    } else {
+        return false;
+    };
+    up1 != up2 && (strict1 || strict2)
+}
+
+fn is_input(name: &str) -> bool {
+    name.strip_prefix("in").is_some_and(|r| r.starts_with(|c: char| c.is_ascii_uppercase() || c.is_ascii_digit()))
+}
+
+/// Whether `e` reads an input at `at`, an index free of steps and calls.
+fn reads_input_at(e: &Expr, at: &Expr) -> bool {
+    let mut pure = true;
+    walk_expr(at, &mut |x| pure &= !matches!(x, Expr::PostIncrement(_) | Expr::PostDecrement(_) | Expr::PreIncrement(_) | Expr::PreDecrement(_) | Expr::FuncCall(..)));
+    let mut found = false;
+    walk_expr(e, &mut |x| found |= matches!(x, Expr::ArrayAccess(a, i) if is_input(a) && i.as_ref() == at));
+    pure && found
 }
 
 /// A frame body's picks, keyed by the address of the statement holding each.
@@ -433,6 +552,9 @@ fn around(path: &[(&[Statement], usize)], tests: &[&Expr]) -> Around {
         }
     }
     a.later.extend(step);
+    if let Some((blk, idx)) = path.last() {
+        a.siblings = blk.iter().enumerate().filter(|(j, _)| j != idx).filter_map(|(_, st)| definition(st)).map(|(v, _)| v.to_string()).collect();
+    }
     for c in tests {
         against_literal(c, &mut a.tested);
     }
