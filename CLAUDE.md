@@ -187,7 +187,7 @@ public overload, like C's frames and Java's `Dispatch`).
 
 **Every metadata tier calls the public tier.** C (`ta_frame.c`), Java
 (`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk), Rust
-(`ParamHolder::call`), TypeScript (`ParamHolder.call`) and Go (the `metadata`
+(`ParamHolder::call`), TypeScript (`ParamHolder.call`) and Go (the `abstract`
 package's thunks) all do, so binding a leg shorter than the requested range is
 `TA_BAD_PARAM` in every port and inexpressible in C, whose setters take a bare
 pointer and carry no length.

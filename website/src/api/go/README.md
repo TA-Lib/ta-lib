@@ -184,7 +184,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The package `ta-lib.github.io/go/metadata` is the [Abstract API](/api/abstract/) in Go: `metadata.Lookup` and `metadata.All` describe every function at run time (group, flags, inputs, parameters with their domains and defaults, outputs), and a `ParamHolder` from `NewCall` binds the arguments of a function chosen by name and calls it through the same method on `talib.Core` a direct call uses. It is a package of its own, so a program that imports only `talib` links none of it.
+The package `ta-lib.github.io/go/abstract` is the [Abstract API](/api/abstract/) in Go: `abstract.Lookup` and `abstract.All` describe every function at run time (group, flags, inputs, parameters with their domains and defaults, outputs), and a `ParamHolder` from `NewCall` binds the arguments of a function chosen by name and calls it through the same method on `talib.Core` a direct call uses. It is a package of its own, so a program that imports only `talib` links none of it.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

@@ -33,7 +33,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package metadata
+package abstract
 
 // FunctionDescriptionXML returns the machine-readable description of every
 // function: the XML document C's TA_FunctionDescriptionXML returns, byte for

@@ -774,7 +774,7 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/go/sma.go',
     'ta_codegen/output/go/enums.go',
     'ta_codegen/output/go/example_test.go',
-    'ta_codegen/output/go/metadata/functions.go',
+    'ta_codegen/output/go/abstract/functions.go',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',
     'ta_codegen/output/java/tools/TaCodegenServe.java',
     'ta_codegen/output/csharp/tools/TaCodegenServe.cs',

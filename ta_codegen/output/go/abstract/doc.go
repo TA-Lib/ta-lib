@@ -33,7 +33,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Package metadata describes every TA-Lib function at run time and calls one
+// Package abstract describes every TA-Lib function at run time and calls one
 // chosen by name: the Go form of TA-Lib's Abstract API.
 //
 // [Lookup] finds a function by name, and [All] and [InGroup] enumerate them.
@@ -42,7 +42,7 @@
 // [FuncInfo.NewCall] returns a [ParamHolder]: bind the inputs, the parameters
 // and the outputs, then call it.
 //
-//	f, _ := metadata.Lookup("SMA")
+//	f, _ := abstract.Lookup("SMA")
 //	call := f.NewCall(talib.NewCore())
 //	_ = call.SetInput(0, closes)
 //	_ = call.SetOptInputInteger(0, 30)
@@ -57,4 +57,4 @@
 // ParamHolder belongs to one goroutine.
 //
 // Documentation: https://ta-lib.org/api/abstract/
-package metadata
+package abstract

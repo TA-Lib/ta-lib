@@ -90,11 +90,11 @@ for (const fi of Functions.all()) {
 @tab Go
 
 ```go
-import "ta-lib.github.io/go/metadata"
+import "ta-lib.github.io/go/abstract"
 
-f, ok := metadata.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
+f, ok := abstract.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
 
-for _, fi := range metadata.All() {
+for _, fi := range abstract.All() {
 	fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
 }
 ```
@@ -171,7 +171,7 @@ const r = Functions.byName('SMA')!.newCall()
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("SMA")
+f, _ := abstract.Lookup("SMA")
 call := f.NewCall(talib.NewCore())
 if err := errors.Join(
 	call.SetInput(0, closes),
@@ -249,7 +249,7 @@ const shift = call.displayShift(0);   // output 0: -11
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("DPO")
+f, _ := abstract.Lookup("DPO")
 call := f.NewCall(talib.NewCore())
 if err := call.SetOptInputInteger(0, 20); err != nil {
 	log.Fatal(err)

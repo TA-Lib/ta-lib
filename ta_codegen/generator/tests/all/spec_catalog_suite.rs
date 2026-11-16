@@ -110,7 +110,7 @@ fn the_spec_flag_catalog_is_complete() {
     let rust_src = read("ta_codegen/output/rust/library/src/abstract_api.rs");
     let ts_src = read("ta_codegen/output/ts/library/src/metadata/flags.ts");
     let csharp_src = read("ta_codegen/output/csharp/library/src/metadata/Vocabulary.g.cs");
-    let go_src = read("ta_codegen/output/go/metadata/vocabulary.go");
+    let go_src = read("ta_codegen/output/go/abstract/vocabulary.go");
     let page = read(PAGE);
 
     // `| `TA_X` | meaning |` on the catalog page; `| owner | `TA_X_` | rust, java | c# |`
@@ -238,7 +238,7 @@ fn the_spec_flag_catalog_is_complete() {
         let ts_values: BTreeSet<u32> = ts.values().copied().collect();
 
         // Go, the newest port with TypeScript, carries exactly TypeScript's flags,
-        // as `\tName <family> = 0x...` constants of package metadata.
+        // as `\tName <family> = 0x...` constants of package abstract.
         let go_suffix = format!(" {} = ", fam.csharp);
         let go: Vec<u32> = go_src
             .lines()

@@ -206,7 +206,7 @@ pub fn ts_fn() -> String {
     )
 }
 
-/// The body of the Go package `metadata`'s `runtimeinfo.go`, after its imports.
+/// The body of the Go package `abstract`'s `runtimeinfo.go`, after its imports.
 #[must_use]
 pub fn go_fn() -> String {
     format!(

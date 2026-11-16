@@ -34,7 +34,7 @@
 /* Hand-written: ta_codegen never writes this file. Values are ta_regtest's,
  * through the JSON-RPC server; this holds what the server cannot reach. */
 
-package metadata
+package abstract
 
 import (
 	"errors"
@@ -376,7 +376,7 @@ func TestEveryExportedIdentifierIsDocumented(t *testing.T) {
 		}
 		files = append(files, f)
 	}
-	p, err := doc.NewFromFiles(fset, files, "ta-lib.github.io/go/metadata")
+	p, err := doc.NewFromFiles(fset, files, "ta-lib.github.io/go/abstract")
 	if err != nil {
 		t.Fatal(err)
 	}

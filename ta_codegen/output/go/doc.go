@@ -75,9 +75,9 @@
 // A call that fails returns a [RetCode] as its error, such as [BadParam] for a
 // parameter out of range; test for one with errors.Is.
 //
-// # Metadata
+// # Abstract API
 //
-// The package [ta-lib.github.io/go/metadata] describes every function at run
+// The package [ta-lib.github.io/go/abstract] describes every function at run
 // time and calls one chosen by name: list the functions, read each one's
 // inputs, parameters, outputs and flags, then bind the arguments and call it.
 // A program that does not import it links none of it. See

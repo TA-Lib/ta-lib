@@ -106,7 +106,7 @@ What each flag means: [flags](/spec/abstract/#flags).
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust, Java and TypeScript, UpperCamel in C#, and UpperCamel constants of package `metadata` in Go, prefixed `Func`, `Price`, `Opt` and `Out` (`metadata.FuncStream`), and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
+Members are upper case in Rust, Java and TypeScript, UpperCamel in C#, and UpperCamel constants of package `abstract` in Go, prefixed `Func`, `Price`, `Opt` and `Out` (`abstract.FuncStream`), and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
 
 ## How a failure reaches the caller {#failures}
 

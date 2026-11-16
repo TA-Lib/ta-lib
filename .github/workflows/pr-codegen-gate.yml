@@ -320,7 +320,7 @@ jobs:
         run: |
           go version
           if ! { go build ./... && go vet ./...; }; then
-            echo "::error::The generated Go module does not compile or vet on Go 1.22. Fix the emitter (ta_codegen/generator/src/backends/go*.rs), never the generated file; core.go, doc.go, retcode.go, runtime.go, talib_test.go and metadata/metadata_test.go are hand-written."
+            echo "::error::The generated Go module does not compile or vet on Go 1.22. Fix the emitter (ta_codegen/generator/src/backends/go*.rs), never the generated file; core.go, doc.go, retcode.go, runtime.go, talib_test.go and abstract/abstract_test.go are hand-written."
             exit 1
           fi
 

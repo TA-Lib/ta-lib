@@ -626,7 +626,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
    }
    /* Go abstract parity: the same two passes, against the package
-    * `ta-lib.github.io/go/metadata`. */
+    * `ta-lib.github.io/go/abstract`. */
    if( retValue == TA_TEST_PASS && doCodegenTest &&
        svLanguageEnabled( codegenLanguageFilter, "go" ) )
    {

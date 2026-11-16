@@ -21,7 +21,7 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 
 ## What it provides {#provides}
 
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` | Go `ta-lib.github.io/go/metadata` |
+| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` | Go `ta-lib.github.io/go/abstract` |
 |---|---|---|---|---|---|---|
 | look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` | `Functions.byName` | `Lookup` |
 | enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` | `Functions.all()` | `All()` |
@@ -88,7 +88,7 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 ## Run-time information {#runtime-info}
 
-One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `metadata.RuntimeInfo`. It reports state and promises no output value and no speed.
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `abstract.RuntimeInfo`. It reports state and promises no output value and no speed.
 
 A common key is answered in every language, and the answer can differ with the language and the platform. A language may also answer a key of its own, for something only that language has, and every other language treats that key as unknown. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 

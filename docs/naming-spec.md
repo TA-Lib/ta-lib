@@ -138,8 +138,8 @@ Go returns the `RetCode` itself as the `error`; `errors.Is` matches it.
 
 | surface | C (frozen) | Rust | Java | C# | TypeScript | Go |
 |---|---|---|---|---|---|---|
-| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` | `Functions.byName` | `metadata.Lookup` |
-| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` | `Functions.all`, `Functions.groups` | `metadata.All`, `metadata.Groups`, `metadata.InGroup` |
+| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` | `Functions.byName` | `abstract.Lookup` |
+| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` | `Functions.all`, `Functions.groups` | `abstract.All`, `abstract.Groups`, `abstract.InGroup` |
 | holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
 | set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` | `setInput` | `SetInput` |
 | set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` | `setOptInput` | `SetOptInputInteger`, `SetOptInputReal` |

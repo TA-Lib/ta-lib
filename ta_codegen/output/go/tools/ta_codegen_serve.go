@@ -51,7 +51,7 @@ import (
 	"time"
 
 	talib "ta-lib.github.io/go"
-	"ta-lib.github.io/go/metadata"
+	"ta-lib.github.io/go/abstract"
 )
 
 const maxArraySize = 200000
@@ -517,7 +517,7 @@ func main() {
 }
 
 func runtimeInfo(p params) string {
-	v, err := metadata.RuntimeInfo(p.str("key"))
+	v, err := abstract.RuntimeInfo(p.str("key"))
 	rc := 0
 	if err != nil {
 		rc = retCodeOf(err)
@@ -540,8 +540,8 @@ func num(v float64) string {
 
 const absNotFound = `{"retCode":2}`
 
-func absLookup(p params) (metadata.FuncInfo, bool) {
-	return metadata.Lookup(p.str("funcName"))
+func absLookup(p params) (abstract.FuncInfo, bool) {
+	return abstract.Lookup(p.str("funcName"))
 }
 
 func absFuncInfo(p params) string {
@@ -595,17 +595,17 @@ func absOptInputInfo(p params) string {
 		`,"flags":` + strconv.FormatUint(uint64(o.Flags), 10) + `,"displayName":` + jstr(o.DisplayName) +
 		`,"hint":` + jstr(o.Hint) + `,"defaultValue":` + num(o.DefaultValue)
 	switch d := o.Domain.(type) {
-	case metadata.RealRange:
+	case abstract.RealRange:
 		s += `,"min":` + num(d.Min) + `,"max":` + num(d.Max) + `,"precision":` + strconv.Itoa(d.Precision) +
 			`,"suggestedStart":` + num(d.SuggestedStart) + `,"suggestedEnd":` + num(d.SuggestedEnd) +
 			`,"suggestedIncrement":` + num(d.SuggestedIncrement)
-	case metadata.IntegerRange:
+	case abstract.IntegerRange:
 		s += `,"min":` + strconv.Itoa(d.Min) + `,"max":` + strconv.Itoa(d.Max) +
 			`,"suggestedStart":` + strconv.Itoa(d.SuggestedStart) + `,"suggestedEnd":` + strconv.Itoa(d.SuggestedEnd) +
 			`,"suggestedIncrement":` + strconv.Itoa(d.SuggestedIncrement)
-	case metadata.IntegerList:
+	case abstract.IntegerList:
 		s += `,"valueList":` + jstr(d.ValueList())
-	case metadata.RealList:
+	case abstract.RealList:
 		s += `,"valueList":` + jstr(d.ValueList())
 	default:
 		panic(fmt.Sprintf("unhandled optional-parameter domain %T", d))
@@ -615,7 +615,7 @@ func absOptInputInfo(p params) string {
 
 func absForEachFunc() string {
 	b := []byte(`{"functions":[`)
-	for k, f := range metadata.All() {
+	for k, f := range abstract.All() {
 		if k > 0 {
 			b = append(b, ',')
 		}
@@ -627,7 +627,7 @@ func absForEachFunc() string {
 }
 
 func absDescriptionXML() string {
-	xml := metadata.FunctionDescriptionXML()
+	xml := abstract.FunctionDescriptionXML()
 	var sum uint64
 	for i := 0; i < len(xml); i++ {
 		sum += uint64(xml[i])
@@ -637,7 +637,7 @@ func absDescriptionXML() string {
 
 // absBindOpts binds every optional parameter the request carries; an absent
 // one stays unset, which is its default. The first rejection is returned.
-func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
+func absBindOpts(f abstract.FuncInfo, h *abstract.ParamHolder, p params) error {
 	for k, o := range f.OptInputs() {
 		raw, ok := p[o.ParamName]
 		if !ok {
@@ -645,7 +645,7 @@ func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
 		}
 		var err error
 		switch o.Kind {
-		case metadata.OptRealRange, metadata.OptRealList:
+		case abstract.OptRealRange, abstract.OptRealList:
 			v, perr := strconv.ParseFloat(string(raw), 64)
 			if perr != nil {
 				return talib.BadParam
@@ -665,7 +665,7 @@ func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
 	return nil
 }
 
-func (s *server) absHolder(p params) (*metadata.ParamHolder, bool) {
+func (s *server) absHolder(p params) (*abstract.ParamHolder, bool) {
 	f, ok := absLookup(p)
 	if !ok {
 		return nil, false
@@ -739,7 +739,7 @@ func (s *server) absCall(p params) string {
 	skipIn, skipOut := int(p.i32("skipInput", 0)), int(p.i32("skipOutput", 0))
 	generic := 0
 	for _, in := range inputs {
-		if in.Kind != metadata.InputPrice {
+		if in.Kind != abstract.InputPrice {
 			generic++
 		}
 	}
@@ -749,19 +749,19 @@ func (s *server) absCall(p params) string {
 		if generic > 1 {
 			key = "inReal" + strconv.Itoa(gi)
 		}
-		if in.Kind != metadata.InputPrice {
+		if in.Kind != abstract.InputPrice {
 			gi++
 		}
 		if slot+1 == skipIn {
 			continue
 		}
 		switch in.Kind {
-		case metadata.InputPrice:
-			note(h.SetPriceInput(slot, metadata.PriceInput{
+		case abstract.InputPrice:
+			note(h.SetPriceInput(slot, abstract.PriceInput{
 				Open: p.f64Array("inOpen"), High: p.f64Array("inHigh"), Low: p.f64Array("inLow"),
 				Close: p.f64Array("inClose"), Volume: p.f64Array("inVolume"), OpenInterest: p.f64Array("inOpenInterest"),
 			}))
-		case metadata.InputReal:
+		case abstract.InputReal:
 			note(h.SetInput(slot, p.f64Array(key)))
 		default:
 			src := p.f64Array(key)
@@ -776,7 +776,7 @@ func (s *server) absCall(p params) string {
 	reals := make([][]float64, len(outputs))
 	ints := make([][]int32, len(outputs))
 	for k, o := range outputs {
-		if o.Kind == metadata.OutputReal {
+		if o.Kind == abstract.OutputReal {
 			reals[k] = make([]float64, n)
 			if k+1 != skipOut {
 				note(h.SetOutput(k, reals[k]))
@@ -804,7 +804,7 @@ func (s *server) absCall(p params) string {
 		`,"outBegIdx":` + strconv.Itoa(beg) + `,"outNBElement":` + strconv.Itoa(nb))
 	kr, ki := 0, 0
 	for k, o := range outputs {
-		if o.Kind == metadata.OutputReal {
+		if o.Kind == abstract.OutputReal {
 			b = append(b, `,"outReal`...)
 			if kr > 0 {
 				b = strconv.AppendInt(b, int64(kr), 10)

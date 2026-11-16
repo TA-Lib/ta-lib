@@ -134,7 +134,7 @@ fn abstract_rows_unreachable_domains_stay_unreachable() {
                 !matches!(o.domain, OptDomain::RealList { .. }),
                 "{}.{} is the first real-list parameter — re-check the RealList arm in \
                  rust_abstract, java_abstract, java_metadata, csharp_metadata, ts_metadata \
-                 and go_metadata",
+                 and go_abstract",
                 r.name,
                 o.param_name
             );
@@ -611,7 +611,7 @@ fn function_group_values_are_pinned() {
     .iter()
     .map(|rel| (*rel, std::fs::read_to_string(root.join(rel)).expect(rel)))
     .collect();
-    let go_rel = "go/metadata/vocabulary.go";
+    let go_rel = "go/abstract/vocabulary.go";
     let go = std::fs::read_to_string(root.join(go_rel)).expect(go_rel);
     for (g, value) in pinned {
         assert_eq!(g as u32, value, "Group::{} moved", g.ident());

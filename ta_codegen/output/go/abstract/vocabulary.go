@@ -33,7 +33,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package metadata
+package abstract
 
 import "strconv"
 

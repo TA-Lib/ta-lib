@@ -1,4 +1,4 @@
-//! The Go introspection package `ta-lib.github.io/go/metadata`, rendered from
+//! The Go introspection package `ta-lib.github.io/go/abstract`, rendered from
 //! [`abstract_rows::rows`]. A package of its own, so a program importing only
 //! `talib` links none of it.
 //!
@@ -15,7 +15,7 @@ use super::abstract_rows::{
 use crate::ir::{EnumDef, FuncDef, ParamType, PriceComponent};
 
 /// The package's import path.
-pub const IMPORT_PATH: &str = "ta-lib.github.io/go/metadata";
+pub const IMPORT_PATH: &str = "ta-lib.github.io/go/abstract";
 
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path) {
@@ -26,7 +26,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
     }
     let keep: Vec<&str> = files.iter().map(|(n, _)| *n).collect();
     clean_stale(dir, &keep);
-    println!("  Go metadata package -> {} ({} functions)", dir.display(), funcs.len());
+    println!("  Go abstract package -> {} ({} functions)", dir.display(), funcs.len());
 }
 
 /// Every emitted file, by name.
@@ -60,13 +60,13 @@ fn clean_stale(dir: &Path, keep: &[&str]) {
             std::fs::read_to_string(entry.path()).is_ok_and(|t| t.starts_with(super::go::GENERATED_HEADER));
         if generated {
             std::fs::remove_file(entry.path()).ok();
-            println!("  removed stale Go metadata file {name}");
+            println!("  removed stale Go abstract file {name}");
         }
     }
 }
 
 fn head(imports: &[&str]) -> String {
-    let mut s = format!("{}\n\n{}package metadata\n", super::go::GENERATED_HEADER, super::ta_abstract_c::LICENSE);
+    let mut s = format!("{}\n\n{}package abstract\n", super::go::GENERATED_HEADER, super::ta_abstract_c::LICENSE);
     match imports {
         [] => {}
         [one] => {
@@ -115,7 +115,7 @@ fn num(v: f64) -> String {
 // doc.go
 // ---------------------------------------------------------------------------
 
-const DOC: &str = r#"// Package metadata describes every TA-Lib function at run time and calls one
+const DOC: &str = r#"// Package abstract describes every TA-Lib function at run time and calls one
 // chosen by name: the Go form of TA-Lib's Abstract API.
 //
 // [Lookup] finds a function by name, and [All] and [InGroup] enumerate them.
@@ -124,7 +124,7 @@ const DOC: &str = r#"// Package metadata describes every TA-Lib function at run 
 // [FuncInfo.NewCall] returns a [ParamHolder]: bind the inputs, the parameters
 // and the outputs, then call it.
 //
-//	f, _ := metadata.Lookup("SMA")
+//	f, _ := abstract.Lookup("SMA")
 //	call := f.NewCall(talib.NewCore())
 //	_ = call.SetInput(0, closes)
 //	_ = call.SetOptInputInteger(0, 30)
@@ -139,7 +139,7 @@ const DOC: &str = r#"// Package metadata describes every TA-Lib function at run 
 // ParamHolder belongs to one goroutine.
 //
 // Documentation: https://ta-lib.org/api/abstract/
-package metadata
+package abstract
 "#;
 
 // ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ fn member_doc(s: &mut String, name: &str, sentence: &str) {
 fn flag_block(s: &mut String, ty: &str, doc: &str, members: &[(&str, u32, &str)]) {
     let _ = write!(s, "\n// {doc}\ntype {ty} uint32\n\n// The {ty} bits.\nconst (\n");
     for (name, bits, mdoc) in members {
-        assert_ne!(*bits, 0, "go_metadata: {name} maps to no bit");
+        assert_ne!(*bits, 0, "go_abstract: {name} maps to no bit");
         member_doc(s, name, mdoc);
         let _ = writeln!(s, "\t{name} {ty} = 0x{bits:08X}");
     }
