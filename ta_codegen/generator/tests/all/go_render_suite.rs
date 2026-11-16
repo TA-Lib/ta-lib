@@ -570,13 +570,35 @@ fn go_independent_passes_are_unrolled() {
 
 /// An index-tracking scan cuts each input once to `endIdx + 1`, runs an
 /// `int` bar cursor to that length and each rescan on a fresh `int` counter
-/// over the cut itself, never a cut of its window, and writes its output
-/// through a cut at the bars since entry: MAXINDEX and AROONOSC, each rescan
-/// keeping its tie rule.
+/// over the cut itself, never a cut of its window: MAXINDEX and AROONOSC,
+/// each rescan keeping its tie rule. Over the corpus, every rescan loops
+/// through its own label, each path stepping its counter before its back
+/// edge, and every output lane is written at one counter, the later lanes
+/// cut to the first's length.
 #[test]
 fn go_index_tracking_scans_use_native_cursors() {
     let bar = regex::Regex::new(r"^(\s*)for (_t\d+) := (_s\d+); _t\d+ < len\(_x\d+\); _t\d+\+\+ \{$").unwrap();
-    let rescan = regex::Regex::new(r"^\s*for _j\d+ := _i\d+ \+ 1; _j\d+ <= (_t\d+); _j\d+\+\+ \{$").unwrap();
+    let start = regex::Regex::new(r"^(\s*)(_j\d+) := _i\d+ \+ 1$").unwrap();
+    let lane = regex::Regex::new(r"^\t\t(_r\d+) := \w+\[outIdx:\]\[:(.+)\]$").unwrap();
+    let out = regex::Regex::new(r"^\t\t(_o\d+) := 0$").unwrap();
+    let window = regex::Regex::new(r"\[_t\d+-_s\d+\]").unwrap();
+    let rescans_of = |body: &str, cursor: &str| -> usize {
+        let lines: Vec<&str> = body.lines().collect();
+        let mut n = 0;
+        for (k, l) in lines.iter().enumerate() {
+            let Some(c) = start.captures(l) else { continue };
+            let (ind, j) = (&c[1], &c[2]);
+            let label = format!("L{j}");
+            assert_eq!(lines.get(k + 1).copied(), Some(format!("{}{label}:", &ind[1..]).as_str()), "`{j}` loops through no label:\n{body}");
+            assert_eq!(lines.get(k + 2).copied(), Some(format!("{ind}if {j} <= {cursor} {{").as_str()), "`{j}` does not run to the bar cursor:\n{body}");
+            assert_eq!(body.matches(&format!("{label}:")).count(), 1, "`{label}` labels more than its rescan:\n{body}");
+            let gotos: Vec<usize> = lines.iter().enumerate().filter(|(_, l)| l.trim() == format!("goto {label}")).map(|(g, _)| g).collect();
+            assert_eq!(gotos.len(), 2, "`{label}` has not one back edge per path:\n{body}");
+            assert!(gotos.iter().all(|g| lines[g - 1].trim() == format!("{j}++")), "a back edge to `{label}` skips the step:\n{body}");
+            n += 1;
+        }
+        n
+    };
     if !common::sweep_filtered() {
         let cases: [(&str, &[&str], &[&str]); 2] = [("maxindex", &["inReal"], &["if tmp >= highest {"]), ("aroonosc", &["inHigh", "inLow"], &["if tmp <= lowest {", "if tmp >= highest {"])];
         for (name, inputs, ties) in cases {
@@ -590,17 +612,31 @@ fn go_index_tracking_scans_use_native_cursors() {
                 assert!(body.contains(&format!(" := {a}[:int(endIdx)+1]")) || body.contains(&format!(" := {a}[:len(_x")), "{name}: `{a}` is not cut to endIdx+1:\n{body}");
                 assert!(!pass.iter().any(|l| l.contains(&format!("{a}["))), "{name}: `{a}` is indexed in the loop:\n{body}");
             }
-            let rescans: Vec<_> = pass.iter().filter_map(|l| rescan.captures(l)).collect();
-            assert!(rescans.len() == inputs.len() && rescans.iter().all(|r| r[1] == c[2]), "{name}: not one rescan per input to the bar cursor:\n{body}");
+            assert_eq!(rescans_of(&pass.join("\n"), &c[2]), inputs.len(), "{name}: not one rescan per input:\n{body}");
             assert!(!pass.iter().any(|l| l.contains("[:") || l.contains(":]")), "{name}: a window is cut in the loop:\n{body}");
-            assert!(pass.iter().any(|l| l.contains(&format!("[{}-{}] = ", &c[2], &c[3]))), "{name}: the output is not written at the bars since entry:\n{body}");
             for t in ties {
                 assert!(pass.iter().any(|l| l.trim() == *t), "{name}: `{t}` is lost:\n{body}");
             }
         }
     }
-    let scans = common::discover_indicators().iter().filter(|n| batch_body(n).lines().any(|l| bar.is_match(l))).count();
-    assert!(common::sweep_filtered() || scans >= 9, "only {scans} index-tracking scans");
+    let (mut scans, mut rescans, mut laned) = (0, 0, 0);
+    for name in common::discover_indicators() {
+        let body = batch_body(&name);
+        assert!(!window.is_match(&body), "{name}: an output is written at the bars since entry:\n{body}");
+        let Some(c) = body.lines().find_map(|l| bar.captures(l)) else { continue };
+        scans += 1;
+        assert!(!body.contains("for _j"), "{name}: a rescan keeps its `for`:\n{body}");
+        rescans += rescans_of(&body, &c[2]);
+        let lanes: Vec<(String, String)> = body.lines().filter_map(|l| lane.captures(l)).map(|l| (l[1].to_string(), l[2].to_string())).collect();
+        let Some((first, _)) = lanes.first() else { continue };
+        laned += 1;
+        assert!(lanes[1..].iter().all(|(_, cut)| *cut == format!("len({first})")), "{name}: a later lane is not cut to `{first}`:\n{body}");
+        let o: Vec<String> = body.lines().filter_map(|l| out.captures(l)).map(|l| l[1].to_string()).collect();
+        assert_eq!(o.len(), 1, "{name}: not one output counter:\n{body}");
+        assert_eq!(body.lines().filter(|l| l.trim() == format!("{}++", o[0])).count(), 1, "{name}: the output counter is not stepped once a pass:\n{body}");
+        assert!(body.contains(&format!("outIdx += int32(len({first}))")), "{name}: outIdx does not move by the lanes' length:\n{body}");
+    }
+    assert!(common::sweep_filtered() || (scans >= 9 && rescans >= scans && laned >= 7), "only {scans} index-tracking scans, {rescans} rescans, {laned} with output lanes");
 }
 
 /// A loop that calls a math function gc keeps a call stores the

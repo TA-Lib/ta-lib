@@ -134,12 +134,18 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 			if _i6 < _i8 {
 				_i6 = _i8
 				lowest = _x2[_i6]
-				for _j9 := _i6 + 1; _j9 <= _t4; _j9++ {
+				_j9 := _i6 + 1
+			L_j9:
+				if _j9 <= _t4 {
 					tmp = _x2[_j9]
 					if tmp < lowest {
 						_i6 = _j9
 						lowest = tmp
+						_j9++
+						goto L_j9
 					}
+					_j9++
+					goto L_j9
 				}
 			} else if tmp <= lowest {
 				_i6 = _t4
@@ -149,12 +155,18 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 			if _i5 < _i8 {
 				_i5 = _i8
 				highest = _x1[_i5]
-				for _j10 := _i5 + 1; _j10 <= _t4; _j10++ {
+				_j10 := _i5 + 1
+			L_j10:
+				if _j10 <= _t4 {
 					tmp = _x1[_j10]
 					if tmp > highest {
 						_i5 = _j10
 						highest = tmp
+						_j10++
+						goto L_j10
 					}
+					_j10++
+					goto L_j10
 				}
 			} else if tmp >= highest {
 				_i5 = _t4

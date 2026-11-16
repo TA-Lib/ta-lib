@@ -90,48 +90,62 @@ func (c *Core) donchianImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 		_x1 := inLow[:len(_x0)]
 		_s2 := int(today)
 		_r4 := outRealUpperBand[outIdx:][:len(_x0)-_s2]
-		_r5 := outRealLowerBand[outIdx:][:len(_x0)-_s2]
-		_r6 := outRealMiddleBand[outIdx:][:len(_x0)-_s2]
-		_i7 := int(highestIdx)
-		_i8 := int(lowestIdx)
-		_i9 := int(trailingIdx)
+		_r5 := outRealLowerBand[outIdx:][:len(_r4)]
+		_r6 := outRealMiddleBand[outIdx:][:len(_r4)]
+		_o7 := 0
+		_i8 := int(highestIdx)
+		_i9 := int(lowestIdx)
+		_i10 := int(trailingIdx)
 		for _t3 := _s2; _t3 < len(_x0); _t3++ {
 			tmpHigh = _x0[_t3]
 			tmpLow = _x1[_t3]
-			if _i7 < _i9 {
-				_i7 = _i9
-				highest = _x0[_i7]
-				for _j10 := _i7 + 1; _j10 <= _t3; _j10++ {
-					tmpHigh = _x0[_j10]
+			if _i8 < _i10 {
+				_i8 = _i10
+				highest = _x0[_i8]
+				_j11 := _i8 + 1
+			L_j11:
+				if _j11 <= _t3 {
+					tmpHigh = _x0[_j11]
 					if tmpHigh > highest {
-						_i7 = _j10
+						_i8 = _j11
 						highest = tmpHigh
+						_j11++
+						goto L_j11
 					}
+					_j11++
+					goto L_j11
 				}
 			} else if tmpHigh >= highest {
-				_i7 = _t3
+				_i8 = _t3
 				highest = tmpHigh
 			}
-			if _i8 < _i9 {
-				_i8 = _i9
-				lowest = _x1[_i8]
-				for _j11 := _i8 + 1; _j11 <= _t3; _j11++ {
-					tmpLow = _x1[_j11]
+			if _i9 < _i10 {
+				_i9 = _i10
+				lowest = _x1[_i9]
+				_j12 := _i9 + 1
+			L_j12:
+				if _j12 <= _t3 {
+					tmpLow = _x1[_j12]
 					if tmpLow < lowest {
-						_i8 = _j11
+						_i9 = _j12
 						lowest = tmpLow
+						_j12++
+						goto L_j12
 					}
+					_j12++
+					goto L_j12
 				}
 			} else if tmpLow <= lowest {
-				_i8 = _t3
+				_i9 = _t3
 				lowest = tmpLow
 			}
-			_r4[_t3-_s2] = highest
-			_r5[_t3-_s2] = lowest
-			_r6[_t3-_s2] = (highest + lowest) / 2.0
-			_i9++
+			_r4[_o7] = highest
+			_r5[_o7] = lowest
+			_r6[_o7] = (highest + lowest) / 2.0
+			_i10++
+			_o7++
 		}
-		outIdx += int32(len(_x0) - _s2)
+		outIdx += int32(len(_r4))
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

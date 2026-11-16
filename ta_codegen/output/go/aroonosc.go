@@ -87,45 +87,59 @@ func (c *Core) aroonoscImpl(startIdx, endIdx int32, inHigh, inLow []float64, opt
 		_x1 := inLow[:len(_x0)]
 		_s2 := int(today)
 		_r4 := outReal[outIdx:][:len(_x0)-_s2]
-		_i5 := int(highestIdx)
-		_i6 := int(lowestIdx)
-		_i7 := int(trailingIdx)
+		_o5 := 0
+		_i6 := int(highestIdx)
+		_i7 := int(lowestIdx)
+		_i8 := int(trailingIdx)
 		for _t3 := _s2; _t3 < len(_x0); _t3++ {
 			tmp = _x1[_t3]
-			if _i6 < _i7 {
-				_i6 = _i7
-				lowest = _x1[_i6]
-				for _j8 := _i6 + 1; _j8 <= _t3; _j8++ {
-					tmp = _x1[_j8]
+			if _i7 < _i8 {
+				_i7 = _i8
+				lowest = _x1[_i7]
+				_j9 := _i7 + 1
+			L_j9:
+				if _j9 <= _t3 {
+					tmp = _x1[_j9]
 					if tmp <= lowest {
-						_i6 = _j8
+						_i7 = _j9
 						lowest = tmp
+						_j9++
+						goto L_j9
 					}
+					_j9++
+					goto L_j9
 				}
 			} else if tmp <= lowest {
-				_i6 = _t3
+				_i7 = _t3
 				lowest = tmp
 			}
 			tmp = _x0[_t3]
-			if _i5 < _i7 {
-				_i5 = _i7
-				highest = _x0[_i5]
-				for _j9 := _i5 + 1; _j9 <= _t3; _j9++ {
-					tmp = _x0[_j9]
+			if _i6 < _i8 {
+				_i6 = _i8
+				highest = _x0[_i6]
+				_j10 := _i6 + 1
+			L_j10:
+				if _j10 <= _t3 {
+					tmp = _x0[_j10]
 					if tmp >= highest {
-						_i5 = _j9
+						_i6 = _j10
 						highest = tmp
+						_j10++
+						goto L_j10
 					}
+					_j10++
+					goto L_j10
 				}
 			} else if tmp >= highest {
-				_i5 = _t3
+				_i6 = _t3
 				highest = tmp
 			}
-			aroon = float64(factor * float64(int32(_i5)-int32(_i6)))
-			_r4[_t3-_s2] = aroon
-			_i7++
+			aroon = float64(factor * float64(int32(_i6)-int32(_i7)))
+			_r4[_o5] = aroon
+			_i8++
+			_o5++
 		}
-		outIdx += int32(len(_x0) - _s2)
+		outIdx += int32(len(_r4))
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

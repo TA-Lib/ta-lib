@@ -81,28 +81,36 @@ func (c *Core) minindexImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 		_x0 := inReal[:int(endIdx)+1]
 		_s1 := int(today)
 		_r3 := outInteger[outIdx:][:len(_x0)-_s1]
-		_i4 := int(lowestIdx)
-		_i5 := int(trailingIdx)
+		_o4 := 0
+		_i5 := int(lowestIdx)
+		_i6 := int(trailingIdx)
 		for _t2 := _s1; _t2 < len(_x0); _t2++ {
 			tmp = _x0[_t2]
-			if _i4 < _i5 {
-				_i4 = _i5
-				lowest = _x0[_i4]
-				for _j6 := _i4 + 1; _j6 <= _t2; _j6++ {
-					tmp = _x0[_j6]
+			if _i5 < _i6 {
+				_i5 = _i6
+				lowest = _x0[_i5]
+				_j7 := _i5 + 1
+			L_j7:
+				if _j7 <= _t2 {
+					tmp = _x0[_j7]
 					if tmp <= lowest {
-						_i4 = _j6
+						_i5 = _j7
 						lowest = tmp
+						_j7++
+						goto L_j7
 					}
+					_j7++
+					goto L_j7
 				}
 			} else if tmp <= lowest {
-				_i4 = _t2
+				_i5 = _t2
 				lowest = tmp
 			}
-			_r3[_t2-_s1] = int32(_i4)
-			_i5++
+			_r3[_o4] = int32(_i5)
+			_i6++
+			_o4++
 		}
-		outIdx += int32(len(_x0) - _s1)
+		outIdx += int32(len(_r3))
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx

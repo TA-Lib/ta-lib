@@ -174,7 +174,7 @@ pub fn generate(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Reg
     if super::go_stream::emits_stream(func, registry) {
         body.push_str(&super::go_stream::generate(func, &svc));
     }
-    let body = super::go_prune::prune(&body);
+    let body = super::go_prune::prune(&body).replace(&format!("\t{LABEL_DEDENT}"), "");
 
     let mut out = file_head();
     if body.contains("math.") {
@@ -205,6 +205,10 @@ impl Scope {
         self.pre.is_empty() && self.post.is_empty()
     }
 }
+
+/// Leads a label's line: the tab before it is dropped once the file is
+/// pruned, which reads every line's indentation as its scope.
+const LABEL_DEDENT: char = '\u{1}';
 
 pub(super) fn indented(lines: &[String]) -> impl Iterator<Item = String> + '_ {
     lines.iter().map(|l| format!("\t{l}"))
@@ -300,9 +304,8 @@ struct ScanNames {
     ints: std::cell::RefCell<HashMap<String, String>>,
     /// Each input's cut.
     inputs: HashMap<String, String>,
-    cursor: String,
-    /// The cursor on entry.
-    entry: String,
+    /// The output lanes' index, stepped once a pass.
+    out: String,
     /// The start the rescan about to render was given.
     start: std::cell::RefCell<Option<Expr>>,
     /// Rescan counters read after the loop.
@@ -1459,7 +1462,7 @@ impl<'a> Ctx<'a> {
             return Some(GExpr::index(GExpr::name(x.clone()), self.scan_int(idx)?));
         }
         if let Some(lane) = j.map(|j| lock.lanes.borrow()[j].clone()).filter(|l| !l.is_empty()) {
-            return Some(GExpr::index(GExpr::name(lane), GExpr::bin(GExpr::name(sc.cursor.clone()), GOp::Sub, GExpr::name(sc.entry.clone()))));
+            return Some(GExpr::index(GExpr::name(lane), GExpr::name(sc.out.clone())));
         }
         Some(GExpr::index(GExpr::name(go_ident(array)), self.scan_int(idx)?))
     }
@@ -1510,7 +1513,9 @@ impl<'a> Ctx<'a> {
     }
 
     /// A scan's rescan `while( ++c <= b )` after `c = a`: a fresh counter
-    /// from `a + 1` through `b`, and `c` its last value where read later.
+    /// from `a + 1` through `b`, and `c` its last value where read later. A
+    /// body ending in an `if` without `else`, with no `break` or `continue`,
+    /// loops through a label, each path taking its own back edge.
     fn scan_rescan(&self, condition: &Expr, body: &[Statement], out: &mut Vec<String>) -> bool {
         let Some(lock) = self.lock.borrow().clone() else { return false };
         let Some(sc) = &lock.scan else { return false };
@@ -1520,10 +1525,26 @@ impl<'a> Ctx<'a> {
         let j = self.temp("j");
         let first = GExpr::bin(a, GOp::Add, GExpr::name("1"));
         sc.ints.borrow_mut().insert(c.to_string(), j.clone());
-        let lines = self.block(body);
+        let mut lines = self.block(body);
         sc.ints.borrow_mut().remove(c);
         let keep = sc.keep.contains(c);
-        if keep {
+        let ends_in_if = matches!(body.iter().rfind(|s| !matches!(s, Statement::Comment(_))), Some(Statement::If { else_body, .. }) if else_body.is_empty()) && !jumps(body);
+        let opener = lines.iter().rposition(|l| !l.starts_with('\t') && l != "}");
+        if ends_in_if && lines.last().is_some_and(|l| l == "}") && opener.is_some_and(|k| lines[k].starts_with("if ")) {
+            // gc sets a loop's merge block up from its first predecessor in
+            // layout, in a `for` the rare update branch, so every element
+            // pays its register moves. The no-update path's own back edge
+            // avoids them; a `continue` or a negated `if` does not.
+            let label = format!("L{j}");
+            let back = [format!("{j}++"), format!("goto {label}")];
+            let close = lines.pop().expect("the if closes");
+            lines.extend(back.iter().map(|l| format!("\t{l}")));
+            lines.push(close);
+            lines.extend(back);
+            out.push(format!("{j} := {}", first.render()));
+            out.push(format!("{LABEL_DEDENT}{label}:"));
+            out.push(format!("if {j} <= {} {{", b.render()));
+        } else if keep {
             out.push(format!("{j} := {}", first.render()));
             out.push(format!("for ; {j} <= {}; {j}++ {{", b.render()));
         } else {
@@ -1807,6 +1828,7 @@ impl<'a> Ctx<'a> {
         let cursor = self.temp("t");
         out.push(format!("\t{entry} := int({counter})"));
         let mut lanes = Vec::new();
+        let mut first_lane = None::<String>;
         for (lane, start) in plan.lanes.iter().zip(starts) {
             let Some(start) = start else {
                 lanes.push(String::new());
@@ -1814,8 +1836,16 @@ impl<'a> Ctx<'a> {
             };
             let o = self.temp("r");
             let cut = GExpr::slice(GExpr::name(go_ident(&lane.array)), Some(strip_paren(start)), None).render();
-            out.push(format!("\t{o} := {cut}[:{len}-{entry}]"));
+            match &first_lane {
+                None => out.push(format!("\t{o} := {cut}[:{len}-{entry}]")),
+                Some(f) => out.push(format!("\t{o} := {cut}[:len({f})]")),
+            }
+            first_lane.get_or_insert(o.clone());
             lanes.push(o);
+        }
+        let out_idx = first_lane.as_ref().map_or_else(String::new, |_| self.temp("o"));
+        if first_lane.is_some() {
+            out.push(format!("\t{out_idx} := 0"));
         }
         let mut ints = HashMap::new();
         ints.insert(plan.counter.clone(), cursor.clone());
@@ -1833,7 +1863,7 @@ impl<'a> Ctx<'a> {
             lanes: std::cell::RefCell::new(lanes),
             at: Cell::new(0),
             exit: Cell::new(false),
-            scan: Some(ScanNames { ints: std::cell::RefCell::new(ints), inputs, cursor: cursor.clone(), entry: entry.clone(), start: std::cell::RefCell::new(None), keep }),
+            scan: Some(ScanNames { ints: std::cell::RefCell::new(ints), inputs, out: out_idx.clone(), start: std::cell::RefCell::new(None), keep }),
         });
         let mut inner = HashMap::new();
         if let Some(after) = &live {
@@ -1861,11 +1891,15 @@ impl<'a> Ctx<'a> {
         for key in inner_keys {
             self.live_after.borrow_mut().remove(&key);
         }
+        if first_lane.is_some() {
+            rendered.push(format!("{out_idx}++"));
+        }
         out.extend(rendered.into_iter().map(|l| format!("\t\t{l}")));
         out.push("\t}".to_string());
+        let passes = first_lane.map_or_else(|| format!("{len} - {entry}"), |f| format!("len({f})"));
         for (v, d) in &lock.plan.steps {
             if read_later(v) && !shadows.iter().any(|(name, _)| name == v) {
-                out.push(format!("\t{} {}= int32({len} - {entry})", go_ident(v), if *d > 0 { "+" } else { "-" }));
+                out.push(format!("\t{} {}= int32({passes})", go_ident(v), if *d > 0 { "+" } else { "-" }));
             }
         }
         for (v, i) in &shadows {
@@ -2673,6 +2707,17 @@ fn strip_trailing_break(body: &[Statement]) -> &[Statement] {
         Some(Statement::Break) => &body[..body.len() - 1],
         _ => body,
     }
+}
+
+/// Whether `body` holds a `break` or `continue` at any depth.
+fn jumps(body: &[Statement]) -> bool {
+    body.iter().any(|s| match s {
+        Statement::Break | Statement::Continue => true,
+        Statement::If { then_body: a, else_body: b, .. } => jumps(a) || jumps(b),
+        Statement::Block { body } | Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } | Statement::ForC { body, .. } => jumps(body),
+        Statement::Switch { cases, default, .. } => cases.iter().any(|(_, b)| jumps(b)) || jumps(default),
+        _ => false,
+    })
 }
 
 /// Whether `body` holds a `continue` for the loop it is the body of.

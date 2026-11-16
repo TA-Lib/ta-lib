@@ -269,39 +269,52 @@ func (c *Core) smiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 		_x2 := inLow[:len(_x0)]
 		_s3 := int(today)
 		_r5 := outSMI[outIdx:][:len(_x0)-_s3]
-		_r6 := outSMISignal[outIdx:][:len(_x0)-_s3]
-		_i7 := int(highestIdx)
-		_i8 := int(lowestIdx)
-		_i9 := int(trailingIdx)
+		_r6 := outSMISignal[outIdx:][:len(_r5)]
+		_o7 := 0
+		_i8 := int(highestIdx)
+		_i9 := int(lowestIdx)
+		_i10 := int(trailingIdx)
 		for _t4 := _s3; _t4 < len(_x0); _t4++ {
 			tmp = _x2[_t4]
-			if _i8 < _i9 {
-				_i8 = _i9
-				lowest = _x2[_i8]
-				for _j10 := _i8 + 1; _j10 <= _t4; _j10++ {
-					tmp = _x2[_j10]
+			if _i9 < _i10 {
+				_i9 = _i10
+				lowest = _x2[_i9]
+				_j11 := _i9 + 1
+			L_j11:
+				if _j11 <= _t4 {
+					tmp = _x2[_j11]
 					if tmp < lowest {
-						_i8 = _j10
+						_i9 = _j11
 						lowest = tmp
+						_j11++
+						goto L_j11
 					}
+					_j11++
+					goto L_j11
 				}
 			} else if tmp <= lowest {
-				_i8 = _t4
+				_i9 = _t4
 				lowest = tmp
 			}
 			tmp = _x1[_t4]
-			if _i7 < _i9 {
-				_i7 = _i9
-				highest = _x1[_i7]
-				for _j11 := _i7 + 1; _j11 <= _t4; _j11++ {
-					tmp = _x1[_j11]
+			if _i8 < _i10 {
+				_i8 = _i10
+				highest = _x1[_i8]
+				_j12 := _i8 + 1
+			L_j12:
+				if _j12 <= _t4 {
+					tmp = _x1[_j12]
 					if tmp > highest {
-						_i7 = _j11
+						_i8 = _j12
 						highest = tmp
+						_j12++
+						goto L_j12
 					}
+					_j12++
+					goto L_j12
 				}
 			} else if tmp >= highest {
-				_i7 = _t4
+				_i8 = _t4
 				highest = tmp
 			}
 			den = highest - lowest
@@ -317,11 +330,12 @@ func (c *Core) smiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 				smiValue = 0.0
 			}
 			prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
-			_r5[_t4-_s3] = smiValue
-			_r6[_t4-_s3] = prevSignal
-			_i9++
+			_r5[_o7] = smiValue
+			_r6[_o7] = prevSignal
+			_i10++
+			_o7++
 		}
-		outIdx += int32(len(_x0) - _s3)
+		outIdx += int32(len(_r5))
 	}
 	*outNBElement = outIdx
 	return Success

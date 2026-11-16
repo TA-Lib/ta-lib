@@ -89,46 +89,60 @@ func (c *Core) minmaxindexImpl(startIdx, endIdx int32, inReal []float64, optInTi
 		_x0 := inReal[:int(endIdx)+1]
 		_s1 := int(today)
 		_r3 := outMaxIdx[outIdx:][:len(_x0)-_s1]
-		_r4 := outMinIdx[outIdx:][:len(_x0)-_s1]
-		_i5 := int(highestIdx)
-		_i6 := int(lowestIdx)
-		_i7 := int(trailingIdx)
+		_r4 := outMinIdx[outIdx:][:len(_r3)]
+		_o5 := 0
+		_i6 := int(highestIdx)
+		_i7 := int(lowestIdx)
+		_i8 := int(trailingIdx)
 		for _t2 := _s1; _t2 < len(_x0); _t2++ {
 			tmpHigh = _x0[_t2]
 			tmpLow = tmpHigh
-			if _i5 < _i7 {
-				_i5 = _i7
-				highest = _x0[_i5]
-				for _j8 := _i5 + 1; _j8 <= _t2; _j8++ {
-					tmpHigh = _x0[_j8]
+			if _i6 < _i8 {
+				_i6 = _i8
+				highest = _x0[_i6]
+				_j9 := _i6 + 1
+			L_j9:
+				if _j9 <= _t2 {
+					tmpHigh = _x0[_j9]
 					if tmpHigh >= highest {
-						_i5 = _j8
+						_i6 = _j9
 						highest = tmpHigh
+						_j9++
+						goto L_j9
 					}
+					_j9++
+					goto L_j9
 				}
 			} else if tmpHigh >= highest {
-				_i5 = _t2
+				_i6 = _t2
 				highest = tmpHigh
 			}
-			if _i6 < _i7 {
-				_i6 = _i7
-				lowest = _x0[_i6]
-				for _j9 := _i6 + 1; _j9 <= _t2; _j9++ {
-					tmpLow = _x0[_j9]
+			if _i7 < _i8 {
+				_i7 = _i8
+				lowest = _x0[_i7]
+				_j10 := _i7 + 1
+			L_j10:
+				if _j10 <= _t2 {
+					tmpLow = _x0[_j10]
 					if tmpLow <= lowest {
-						_i6 = _j9
+						_i7 = _j10
 						lowest = tmpLow
+						_j10++
+						goto L_j10
 					}
+					_j10++
+					goto L_j10
 				}
 			} else if tmpLow <= lowest {
-				_i6 = _t2
+				_i7 = _t2
 				lowest = tmpLow
 			}
-			_r3[_t2-_s1] = int32(_i5)
-			_r4[_t2-_s1] = int32(_i6)
-			_i7++
+			_r3[_o5] = int32(_i6)
+			_r4[_o5] = int32(_i7)
+			_i8++
+			_o5++
 		}
-		outIdx += int32(len(_x0) - _s1)
+		outIdx += int32(len(_r3))
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx
