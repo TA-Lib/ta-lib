@@ -521,6 +521,7 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         "static boolean keyable(float[] a, int from, int to) {",
         "static long keyMin(long a, long b) {",
         "static long keyMax(long a, long b) {",
+        "static double candleRange(int rangeType, double open, double high, double low, double close) {",
         "static int openFillCount(String funcName, int historyLen, int lookback) {",
         "static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {",
         "static void requireHistory(String funcName, int historyLen) {",

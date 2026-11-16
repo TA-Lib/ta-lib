@@ -1348,16 +1348,11 @@ import io.github.talib.TALibArgumentException;
 final class Dispatch {
 
    private Dispatch() { }
-
-   static OutRange call(ParamHolder h, int startIdx, int endIdx) {
-      Core core = h.core();
-      switch (h.info().name()) {
 ",
     );
 
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
-
+    let call = DispatchEntry { doc: "", ret: "OutRange", name: "call", params: "ParamHolder h, int startIdx, int endIdx", pass: "h, startIdx, endIdx" };
+    dispatch_frames(&mut s, &call, rows, |f| {
         // Argument order comes STRAIGHT from the row the registry publishes:
         // a price bundle is one slot, and `signature_components` is the order
         // the typed method takes its arrays in. Do not re-fold `FuncDef` with a
@@ -1377,76 +1372,95 @@ final class Dispatch {
                 InputKind::Integer => args.push(format!("h.intInput({slot})")),
             }
         }
-        for (k, opt) in f.opt_inputs.iter().enumerate() {
-            match &opt.domain {
-                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
-                    args.push(format!("h.realOpt({k})"));
-                }
-                OptDomain::IntegerList { .. } => args.push(format!("h.maTypeOpt({k})")),
-                OptDomain::IntegerRange { .. } => args.push(format!("h.intOpt({k})")),
-            }
-        }
+        args.extend(opt_holder_args(f));
         for (k, out) in f.outputs.iter().enumerate() {
             match out.kind {
                 OutputKind::Integer => args.push(format!("h.intOutput({k})")),
                 OutputKind::Real => args.push(format!("h.realOutput({k})")),
             }
         }
+        format!("            return core.{}(\n               {});\n", super::common::camel_words(&f.name), args.join(", "))
+    });
 
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}(");
-        let _ = writeln!(s, "               {});", args.join(", "));
-    }
-
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-
-   /* The lookback tier. Separate from call() because it takes only the optional
+    let lookback = DispatchEntry {
+        doc: "   /* The lookback tier. Separate from call() because it takes only the optional
       parameters -- no inputs, no outputs, no range -- so a caller can size its
       output arrays before binding them, exactly as TA_GetLookback allows. */
-   static int lookback(ParamHolder h) {
-      Core core = h.core();
-      switch (h.info().name()) {
-"#,
-    );
+",
+        ret: "int",
+        name: "lookback",
+        params: "ParamHolder h",
+        pass: "h",
+    };
+    dispatch_frames(&mut s, &lookback, rows, |f| {
+        format!(
+            "            return core.{}Lookback({});\n",
+            super::common::camel_words(&f.name),
+            opt_holder_args(f).join(", ")
+        )
+    });
 
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
-        let args = opt_holder_args(f);
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
-    }
-
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-
-   static int displayShift(ParamHolder h, int outputIdx) {
-      Core core = h.core();
-      switch (h.info().name()) {
-"#,
-    );
-
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
+    let shift = DispatchEntry { doc: "", ret: "int", name: "displayShift", params: "ParamHolder h, int outputIdx", pass: "h, outputIdx" };
+    dispatch_frames(&mut s, &shift, rows, |f| {
         let mut args = opt_holder_args(f);
         args.push("outputIdx".into());
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}DisplayShift({});", args.join(", "));
-    }
+        format!(
+            "            return core.{}DisplayShift({});\n",
+            super::common::camel_words(&f.name),
+            args.join(", ")
+        )
+    });
 
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-}
-"#,
-    );
+    s.push_str("}\n");
     s
+}
+
+/// Functions one `Dispatch` frame routes before handing the rest to the next.
+///
+/// HotSpot never JIT-compiles a method over 8000 bytes of bytecode, and one
+/// `switch` over all 244 functions was 15284 bytes in `call`, 10027 in
+/// `displayShift` and 9535 in `lookback`. At 64 the largest frame of each is
+/// 4170, 2814 and 2681. `scripts/check_java_method_size.py` is the gate.
+const DISPATCH_FRAME_ARMS: usize = 64;
+
+/// One `Dispatch` entry point: the comment over it, its return type, name and
+/// parameter list, and that list as the arguments a frame passes on.
+#[derive(Clone, Copy)]
+struct DispatchEntry {
+    doc: &'static str,
+    ret: &'static str,
+    name: &'static str,
+    params: &'static str,
+    pass: &'static str,
+}
+
+/// One `Dispatch` entry point as a chain of frames, each a `switch` over the
+/// next [`DISPATCH_FRAME_ARMS`] names whose `default` calls the frame after it.
+/// The last frame's `default` rejects the name.
+fn dispatch_frames(s: &mut String, entry: &DispatchEntry, rows: &[FuncRow], arm: impl Fn(&FuncRow) -> String) {
+    let DispatchEntry { doc, ret, name, params, pass } = *entry;
+    let frames: Vec<&[FuncRow]> = rows.chunks(DISPATCH_FRAME_ARMS).collect();
+    for (k, frame) in frames.iter().enumerate() {
+        s.push('\n');
+        if k == 0 {
+            s.push_str(doc);
+            let _ = writeln!(s, "   static {ret} {name}({params}) {{");
+        } else {
+            let _ = writeln!(s, "   private static {ret} {name}{}({params}) {{", k + 1);
+        }
+        s.push_str("      Core core = h.core();\n      switch (h.info().name()) {\n");
+        for f in *frame {
+            let _ = writeln!(s, "         case {}:", js(&f.name));
+            s.push_str(&arm(f));
+        }
+        s.push_str("         default:\n");
+        if k + 1 < frames.len() {
+            let _ = writeln!(s, "            return {name}{}({pass});", k + 2);
+        } else {
+            s.push_str(
+                "            throw new TALibArgumentException(\"no such function: \" + h.info().name(), RetCode.INVALID_HANDLE);\n",
+            );
+        }
+        s.push_str("      }\n   }\n");
+    }
 }
