@@ -27,8 +27,28 @@ const READ_ONLY_METHODS: &[&str] = &[
     "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "mul_add", "to_bits",
 ];
 
+// Called on every line of every scope scan, so these stay plain byte loops.
 fn indent_of(line: &str) -> usize {
-    line.chars().take_while(|c| *c == ' ').count()
+    let b = line.as_bytes();
+    let mut n = 0;
+    while n < b.len() && b[n] == b' ' {
+        n += 1;
+    }
+    n
+}
+
+/// `line.trim_start()`.
+fn trim_lead(line: &str) -> &str {
+    let t = &line[indent_of(line)..];
+    match t.as_bytes().first() {
+        Some(&c) if c.is_ascii() && !matches!(c, b'\t' | b'\n' | 0x0B | 0x0C | b'\r') => t,
+        _ => t.trim_start(),
+    }
+}
+
+/// `line.trim().is_empty()`.
+fn is_blank(line: &str) -> bool {
+    trim_lead(line).is_empty()
 }
 
 fn is_ident_char(c: char) -> bool {
@@ -59,6 +79,9 @@ fn code_of(line: &str) -> &str {
 /// Byte offsets where `name` appears in `line` as an identifier of its own
 /// (not a field after `.`), outside a `//` comment.
 fn positions(line: &str, name: &str) -> Vec<usize> {
+    if !line.contains(name) {
+        return Vec::new();
+    }
     let code = code_of(line);
     let b = code.as_bytes();
     let mut out = Vec::new();
@@ -89,7 +112,7 @@ struct Decl<'a> {
 
 /// `let [mut] <name>[: T][ = <value>];` on one line.
 fn declared(line: &str) -> Option<Decl<'_>> {
-    let t = line.trim_start().strip_prefix("let ")?;
+    let t = trim_lead(line).strip_prefix("let ")?;
     let (mutable, t) = match t.strip_prefix("mut ") {
         Some(rest) => (true, rest),
         None => (false, t),
@@ -113,7 +136,7 @@ fn declared(line: &str) -> Option<Decl<'_>> {
 
 /// The value `line` stores into `name` when the line does nothing else.
 fn write_value<'a>(line: &'a str, name: &str) -> Option<(&'a str, &'a str)> {
-    let t = line.trim_start();
+    let t = trim_lead(line);
     let rest = t.strip_prefix(name)?.strip_prefix(' ')?;
     let (op, value) = rest.split_once(' ')?;
     let value = value.strip_suffix(';')?;
@@ -123,7 +146,7 @@ fn write_value<'a>(line: &'a str, name: &str) -> Option<(&'a str, &'a str)> {
 /// The value `line` stores into `name` when the line does nothing else, its
 /// own old value allowed: what a store to drop may read.
 fn store_value<'a>(line: &'a str, name: &str) -> Option<&'a str> {
-    let rest = line.trim_start().strip_prefix(name)?.strip_prefix(' ')?;
+    let rest = trim_lead(line).strip_prefix(name)?.strip_prefix(' ')?;
     let (op, value) = rest.split_once(' ')?;
     ASSIGN_OPS.contains(&op).then_some(())?;
     value.strip_suffix(';')
@@ -162,7 +185,7 @@ fn is_pure(value: &str) -> bool {
 fn scope_end(lines: &[String], i: usize) -> usize {
     let depth = indent_of(&lines[i]);
     let mut end = i + 1;
-    while end < lines.len() && (lines[end].trim().is_empty() || indent_of(&lines[end]) >= depth) {
+    while end < lines.len() && (is_blank(&lines[end]) || indent_of(&lines[end]) >= depth) {
         end += 1;
     }
     end
@@ -223,7 +246,7 @@ fn statement_at(lines: &[String], j: usize) -> String {
 
 /// The next line at or after `k` that is not blank.
 fn next_code(lines: &[String], mut k: usize, end: usize) -> usize {
-    while k < end && lines[k].trim().is_empty() {
+    while k < end && is_blank(&lines[k]) {
         k += 1;
     }
     k
@@ -235,10 +258,10 @@ fn statement_end(lines: &[String], k: usize, end: usize) -> usize {
     let depth = indent_of(&lines[k]);
     let mut e = k + 1;
     loop {
-        while e < end && (lines[e].trim().is_empty() || indent_of(&lines[e]) > depth) {
+        while e < end && (is_blank(&lines[e]) || indent_of(&lines[e]) > depth) {
             e += 1;
         }
-        if e < end && indent_of(&lines[e]) == depth && lines[e].trim_start().starts_with('}') {
+        if e < end && indent_of(&lines[e]) == depth && trim_lead(&lines[e]).starts_with('}') {
             let closes = lines[e].trim_end().ends_with('{');
             e += 1;
             if closes {
@@ -266,10 +289,12 @@ fn loop_label(t: &str) -> Option<&str> {
 /// Whether line `k` opens a `for name in` loop, whose binding shadows the
 /// local `name` in its body: `Some(true)` when its header reads the local.
 fn shadowing_for(lines: &[String], k: usize, name: &str) -> Option<bool> {
-    let shadow = format!("for {name} in ");
-    lines[k].trim_start().strip_prefix(&shadow)?;
+    fn after_for<'a>(t: &'a str, name: &str) -> Option<&'a str> {
+        t.strip_prefix("for ")?.strip_prefix(name)?.strip_prefix(" in ")
+    }
+    after_for(trim_lead(&lines[k]), name)?;
     let header = statement_at(lines, k);
-    let iter = header.trim_start().strip_prefix(&shadow).unwrap_or(&header);
+    let iter = after_for(header.trim_start(), name).unwrap_or(&header);
     Some(occurs(iter, name))
 }
 
@@ -301,11 +326,11 @@ fn stores_once(lines: &[String], decl: usize, writes: &[usize]) -> bool {
     for &w in writes {
         let mut depth = indent_of(&lines[w]);
         for k in (decl + 1..w).rev() {
-            if lines[k].trim().is_empty() || indent_of(&lines[k]) >= depth {
+            if is_blank(&lines[k]) || indent_of(&lines[k]) >= depth {
                 continue;
             }
             depth = indent_of(&lines[k]);
-            if loop_label(lines[k].trim_start()).is_some() {
+            if loop_label(trim_lead(&lines[k])).is_some() {
                 return false;
             }
         }
@@ -324,13 +349,13 @@ fn stores_once(lines: &[String], decl: usize, writes: &[usize]) -> bool {
 /// Drops `mut` from each parameter of the `fn` signature opening on line `i`
 /// that its body never writes.
 fn tidy_params(lines: &mut [String], i: usize) -> bool {
-    let t = lines[i].trim_start();
+    let t = trim_lead(&lines[i]);
     if !(t.starts_with("fn ") || t.starts_with("pub fn ") || t.starts_with("pub(crate) fn ") || t.starts_with("pub(super) fn ")) {
         return false;
     }
     let Some(open) = (i..lines.len().min(i + 64)).find(|&k| code_of(&lines[k]).trim_end().ends_with('{')) else { return false };
     let depth = indent_of(&lines[i]);
-    let body_end = (open + 1..lines.len()).find(|&k| !lines[k].trim().is_empty() && indent_of(&lines[k]) <= depth).unwrap_or(lines.len());
+    let body_end = (open + 1..lines.len()).find(|&k| !is_blank(&lines[k]) && indent_of(&lines[k]) <= depth).unwrap_or(lines.len());
     let body_depth = indent_of(&lines[next_code(lines, open + 1, body_end).min(lines.len() - 1)]);
     let mut changed = false;
     // A parameter its function never uses keeps its slot in a shared calling
@@ -376,8 +401,9 @@ fn tidy_params(lines: &mut [String], i: usize) -> bool {
             }
             let redecl = (open + 1..body_end).find(|&j| {
                 indent_of(&lines[j]) == body_depth && {
-                    let l = lines[j].trim_start();
-                    l.starts_with(&format!("let {pname} ")) || l.starts_with(&format!("let mut {pname} ")) || l.starts_with(&format!("let {pname}:")) || l.starts_with(&format!("let mut {pname}:"))
+                    let l = trim_lead(&lines[j]);
+                    let l = l.strip_prefix("let ").map(|r| r.strip_prefix("mut ").unwrap_or(r));
+                    l.and_then(|r| r.strip_prefix(pname)).is_some_and(|r| r.starts_with([' ', ':']))
                 }
             });
             let scan_end = redecl.unwrap_or(body_end);
@@ -419,7 +445,7 @@ fn chain_end(lines: &[String], k: usize, end: usize) -> Option<usize> {
         let mut open = a.ends_with('{');
         j += 1;
         loop {
-            while j < end && (lines[j].trim().is_empty() || indent_of(&lines[j]) > d) {
+            while j < end && (is_blank(&lines[j]) || indent_of(&lines[j]) > d) {
                 j += 1;
             }
             if j >= end || indent_of(&lines[j]) != d {
@@ -447,7 +473,7 @@ fn next_reachable_use(lines: &[String], w: usize, end: usize, name: &str) -> Opt
     let mut floor = indent_of(&lines[w]);
     let mut k = w + 1;
     while k < end {
-        if lines[k].trim().is_empty() {
+        if is_blank(&lines[k]) {
             k += 1;
             continue;
         }
@@ -491,11 +517,11 @@ fn jumps_stay_before(lines: &[String], k: usize, n: usize) -> bool {
         let label = code[after..].trim_start().strip_prefix('\'').map(|r| &r[..r.find(|c: char| !is_ident_char(c)).unwrap_or(r.len())]);
         let mut depth = indent_of(&lines[k]);
         let target = (0..k).rev().find(|&j| {
-            if lines[j].trim().is_empty() || indent_of(&lines[j]) >= depth {
+            if is_blank(&lines[j]) || indent_of(&lines[j]) >= depth {
                 return false;
             }
             depth = indent_of(&lines[j]);
-            loop_label(lines[j].trim_start()).is_some_and(|l| label.is_none_or(|want| l == want))
+            loop_label(trim_lead(&lines[j])).is_some_and(|l| label.is_none_or(|want| l == want))
         });
         target.is_some_and(|j| statement_end(lines, j, lines.len()) <= n)
     })
@@ -515,7 +541,7 @@ fn dead_store(lines: &[String], decl: usize, w: usize, end: usize, name: &str) -
             let overwrites = matches!(write_value(&lines[n], name), Some(("=", _)));
             let d = indent_of(&lines[n]);
             let reached = d <= indent_of(&lines[w])
-                && (w + 1..n).all(|k| lines[k].trim().is_empty() || indent_of(&lines[k]) >= d)
+                && (w + 1..n).all(|k| is_blank(&lines[k]) || indent_of(&lines[k]) >= d)
                 && (w + 1..n).all(|k| jumps_stay_before(lines, k, n));
             if !(overwrites && reached) {
                 return false;
@@ -525,11 +551,11 @@ fn dead_store(lines: &[String], decl: usize, w: usize, end: usize, name: &str) -
     };
     let mut depth = indent_of(&lines[w]);
     for k in (decl + 1..w).rev() {
-        if lines[k].trim().is_empty() || indent_of(&lines[k]) >= depth {
+        if is_blank(&lines[k]) || indent_of(&lines[k]) >= depth {
             continue;
         }
         depth = indent_of(&lines[k]);
-        if loop_label(lines[k].trim_start()).is_some() {
+        if loop_label(trim_lead(&lines[k])).is_some() {
             let e = statement_end(lines, k, end);
             if e > until {
                 // The loop holds the overwrite too, so every pass reaches it first.
@@ -602,7 +628,7 @@ fn drop_unread_field(lines: &mut Vec<String>) -> bool {
                 let after = &l[at + open.len()..];
                 if after.trim().is_empty() {
                     let pad = indent_of(l);
-                    let end = (j + 1..lines.len()).find(|&e| indent_of(&lines[e]) <= pad && lines[e].trim_start().starts_with('}')).unwrap_or(lines.len());
+                    let end = (j + 1..lines.len()).find(|&e| indent_of(&lines[e]) <= pad && trim_lead(&lines[e]).starts_with('}')).unwrap_or(lines.len());
                     let hit = (j + 1..end).find(|&e| entry_value(lines[e].trim().trim_end_matches(','), field).is_some());
                     match hit {
                         Some(e) if entry_value(lines[e].trim().trim_end_matches(','), field).is_some_and(is_pure) => edits.push((e, None)),
@@ -707,13 +733,14 @@ fn is_number(t: &str) -> bool {
 /// Whether `inner` is one operand that no operator could split: a name or
 /// path, a number, or either followed by indexes, fields and calls, or a
 /// dereferenced name.
-fn is_atom(m: &[u8], from: usize, to: usize) -> bool {
+fn is_atom(ms: &str, from: usize, to: usize) -> bool {
+    let m = ms.as_bytes();
     let mut k = from;
     if m.get(k) == Some(&b'*') {
         k += 1;
     }
     let start = k;
-    let text = std::str::from_utf8(&m[from..to]).unwrap_or("");
+    let text = &ms[from..to];
     if text.trim() != text || text.is_empty() {
         return false;
     }
@@ -743,7 +770,8 @@ fn is_atom(m: &[u8], from: usize, to: usize) -> bool {
 
 /// Whether the parenthesis pair at `open`..`close` of `m` can go without
 /// changing how the line parses.
-fn redundant_parens(m: &[u8], open: usize, close: usize) -> bool {
+fn redundant_parens(ms: &str, open: usize, close: usize) -> bool {
+    let m = ms.as_bytes();
     let before = &m[..open];
     let prev = before.last().copied();
     // A call's, a macro's or a generic's own parenthesis.
@@ -758,8 +786,8 @@ fn redundant_parens(m: &[u8], open: usize, close: usize) -> bool {
         return false;
     }
     let next = m.get(close + 1).copied();
-    let trimmed_before = std::str::from_utf8(before).unwrap_or("").trim_end();
-    let after = std::str::from_utf8(&m[close + 1..]).unwrap_or("").trim_start();
+    let trimmed_before = ms[..open].trim_end();
+    let after = ms[close + 1..].trim_start();
     let top_comma = {
         let mut depth = 0i32;
         inner.iter().any(|&c| {
@@ -774,8 +802,8 @@ fn redundant_parens(m: &[u8], open: usize, close: usize) -> bool {
     if top_comma || inner.contains(&b'{') && !trimmed_before.ends_with(['(', ',', '[']) && !trimmed_before.ends_with('=') {
         return false;
     }
-    if is_atom(m, open + 1, close) {
-        let num = is_number(std::str::from_utf8(inner).unwrap_or(""));
+    if is_atom(ms, open + 1, close) {
+        let num = is_number(&ms[open + 1..close]);
         let deref = inner.first() == Some(&b'*');
         let calls = next == Some(b'(');
         let member = matches!(next, Some(b'.' | b'['));
@@ -792,7 +820,7 @@ fn redundant_parens(m: &[u8], open: usize, close: usize) -> bool {
         || trimmed_before.ends_with(" return")
         || trimmed_before == "return";
     let assigned = assigned && after.starts_with(';');
-    let keyword = |k: &str| trimmed_before == k || trimmed_before.ends_with(&format!(" {k}"));
+    let keyword = |k: &str| trimmed_before.strip_suffix(k).is_some_and(|p| p.is_empty() || p.ends_with(' '));
     let condition = (keyword("if") || keyword("while") || keyword("match")) && after.starts_with('{');
     element || assigned || condition
 }
@@ -801,31 +829,43 @@ fn redundant_parens(m: &[u8], open: usize, close: usize) -> bool {
 fn drop_parens(line: &str) -> String {
     let mut cur = line.to_string();
     loop {
-        let m = masked(&cur);
+        // Masking blanks whole characters, so `ms` stays valid UTF-8.
+        let ms = String::from_utf8(masked(&cur)).expect("masking keeps UTF-8");
+        let m = ms.as_bytes();
         // A macro's arguments are tokens whose grouping its rules may match,
         // except in the generated macros that take only `$x:expr` fragments.
-        let mut in_macro = vec![false; m.len()];
-        let mut stack: Vec<bool> = Vec::new();
         let opaque_macro = |k: usize| {
             if k < 2 || m[k - 1] != b'!' {
                 return false;
             }
             let start = m[..k - 1].iter().rposition(|c| !(c.is_ascii_alphanumeric() || *c == b'_')).map_or(0, |p| p + 1);
-            start < k - 1 && !EXPR_MACROS.contains(&std::str::from_utf8(&m[start..k - 1]).unwrap_or(""))
+            start < k - 1 && !EXPR_MACROS.contains(&&ms[start..k - 1])
         };
+        // Each opener's closer counts every bracket kind, as [`closing`] does.
+        let mut close_of = vec![usize::MAX; m.len()];
+        let mut in_macro = vec![false; m.len()];
+        let mut stack: Vec<(usize, bool)> = Vec::new();
+        let mut opaque_open = 0usize;
         for k in 0..m.len() {
-            in_macro[k] = stack.iter().any(|&f| f);
+            in_macro[k] = opaque_open > 0;
             match m[k] {
-                b'(' | b'[' | b'{' => stack.push(opaque_macro(k)),
+                b'(' | b'[' | b'{' => {
+                    let opaque = opaque_macro(k);
+                    opaque_open += usize::from(opaque);
+                    stack.push((k, opaque));
+                }
                 b')' | b']' | b'}' => {
-                    stack.pop();
+                    if let Some((o, opaque)) = stack.pop() {
+                        close_of[o] = k;
+                        opaque_open -= usize::from(opaque);
+                    }
                 }
                 _ => {}
             }
         }
         let found = (0..m.len()).filter(|&k| m[k] == b'(' && !in_macro[k]).find_map(|o| {
-            let c = closing(&m, o)?;
-            (m[c] == b')' && redundant_parens(&m, o, c)).then_some((o, c))
+            let c = close_of[o];
+            (c != usize::MAX && m[c] == b')' && redundant_parens(&ms, o, c)).then_some((o, c))
         });
         let Some((o, c)) = found else { return cur };
         cur.remove(c);
@@ -837,7 +877,7 @@ fn drop_parens(line: &str) -> String {
 fn remove_with_attrs(lines: &mut Vec<String>, i: usize) {
     lines.remove(i);
     let mut k = i;
-    while k > 0 && lines[k - 1].trim_start().starts_with("#[allow(") {
+    while k > 0 && trim_lead(&lines[k - 1]).starts_with("#[allow(") {
         lines.remove(k - 1);
         k -= 1;
     }
@@ -874,11 +914,11 @@ fn fold_empty_then(lines: &mut Vec<String>, k: usize) -> bool {
     if indent_of(next) != pad {
         return false;
     }
-    let arm_end = (k + 2..lines.len()).find(|&j| !lines[j].trim().is_empty() && indent_of(&lines[j]) <= pad);
+    let arm_end = (k + 2..lines.len()).find(|&j| !is_blank(&lines[j]) && indent_of(&lines[j]) <= pad);
     if arm_end.is_none_or(|j| {
         indent_of(&lines[j]) != pad
             || lines[j].trim() != "}"
-            || (j + 1..lines.len()).find(|&m| !code_of(&lines[m]).trim().is_empty()).is_some_and(|m| lines[m].trim_start().starts_with("else"))
+            || (j + 1..lines.len()).find(|&m| !code_of(&lines[m]).trim().is_empty()).is_some_and(|m| trim_lead(&lines[m]).starts_with("else"))
     }) {
         return false;
     }
@@ -1009,7 +1049,7 @@ fn misplaced_line(lines: &[String]) -> Option<usize> {
     let mut stmt_indent = 0;
     let mut stmt_ended = true;
     for (k, line) in lines.iter().enumerate() {
-        let t = line.trim_start();
+        let t = trim_lead(line);
         if t.is_empty() || t.starts_with("//") || t.starts_with('*') || t.starts_with("/*") {
             continue;
         }
@@ -1065,7 +1105,7 @@ pub fn tidy(src: &str) -> String {
         }
     }
     for line in &mut lines {
-        if line.contains('(') && !line.trim_start().starts_with("//") {
+        if line.contains('(') && !trim_lead(line).starts_with("//") {
             *line = drop_parens(line);
         }
     }
