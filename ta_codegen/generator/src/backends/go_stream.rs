@@ -508,7 +508,8 @@ impl Ctx<'_> {
     /// which in `for` form is the rare update, so every element pays its
     /// register moves; the no-update path's own back edge removes them, where
     /// `continue` or a negated `if` do not. Test, step and comparison are the
-    /// loop's own, so ties resolve as before.
+    /// loop's own, so ties resolve as before. A final `if` that does not render
+    /// as a branch writes nothing and leaves the loop to the `while` arms.
     pub(super) fn back_edge_scan(&self, condition: &Expr, body: &[Statement], out: &mut Vec<String>) -> bool {
         let Some(labels) = self.back_edges else { return false };
         if !update_scan(condition, body) {
@@ -523,14 +524,7 @@ impl Ctx<'_> {
             tail.last().is_some_and(|l| l == "}") && tail[..tail.len() - 1].iter().all(|l| l.starts_with('\t'))
         });
         if !plain_if || !sc.post.is_empty() {
-            out.extend(sc.pre);
-            out.push("for {".to_string());
-            out.push(format!("\tif {} {{", GExpr::not(c).render()));
-            out.push("\t\tbreak".to_string());
-            out.push("\t}".to_string());
-            out.extend(go::indented(&lines));
-            out.push("}".to_string());
-            return true;
+            return false;
         }
         let label = format!("scan{}", labels.get());
         labels.set(labels.get() + 1);

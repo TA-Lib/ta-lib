@@ -801,3 +801,27 @@ fn go_stream_update_scans_take_their_own_back_edge() {
     }
     assert!(rewritten >= 94, "only {rewritten} stream rescans take their own back edge");
 }
+
+/// An update scan whose comparison renders as a select keeps its step inside
+/// its loop.
+#[test]
+fn go_an_update_scan_rendered_with_a_select_steps_in_its_loop() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input/max/max.c");
+    let anchor = "   outIdx = 0;\n   today       = startIdx;\n   trailingIdx = startIdx-nbInitialElementNeeded;\n";
+    let scan = "   i = trailingIdx;\n   highest = inReal[i];\n   while( ++i<today )\n   {\n      tmp = inReal[i];\n      outReal[0] = tmp;\n      if( tmp > highest )\n      {\n         highest = tmp;\n      }\n   }\n";
+    let base = std::fs::read_to_string(path).unwrap();
+    let at = base.rfind(anchor).expect("max.c moved its anchor") + anchor.len();
+    let source = format!("{}{scan}{}", &base[..at], &base[at..]);
+    let (mut func, enums) = common::load_indicator_with_source("max", &source);
+    func.streaming = true;
+    let src = backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers());
+    let body = go_body(&src, "func (c *Core) maxOpenImpl(");
+    let lines: Vec<&str> = body.lines().collect();
+    let at = lines.iter().position(|l| l.trim().starts_with("outReal[0") && l.ends_with("] = tmp")).unwrap_or_else(|| panic!("the scan is lost:\n{body}"));
+    let indent = |l: &str| l.len() - l.trim_start_matches('\t').len();
+    let open = (0..at).rev().find(|&k| lines[k].trim() == "for {" && indent(lines[k]) < indent(lines[at])).expect("the scan is a loop");
+    let close = format!("{}}}", &lines[open][..indent(lines[open])]);
+    let end = open + lines[open..].iter().position(|l| *l == close).expect("the loop closes");
+    let stepped = lines[open..end].iter().any(|l| matches!(l.trim(), "i++" | "i += 1"));
+    assert!(stepped && !lines[open..end].iter().any(|l| l.contains("goto ")), "the scan's loop does not step:\n{body}");
+}
