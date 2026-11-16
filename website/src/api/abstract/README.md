@@ -78,7 +78,7 @@ foreach (var fi in Core.Functions)
 @tab TypeScript
 
 ```ts
-import { Functions } from 'ta-lib/metadata';
+import { Functions } from 'ta-lib/abstract';
 
 const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 

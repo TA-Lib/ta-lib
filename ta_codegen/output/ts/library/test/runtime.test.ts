@@ -53,7 +53,7 @@ import { cdldoji, cdldojiLookback } from '../src/func/cdldoji.ts';
 import { ema, emaLookback } from '../src/func/ema.ts';
 import { CandleSetting, CandleSettingType, Core, CoreBuilder, RangeType } from '../src/runtime/core.ts';
 import { RetCode, TALibError } from '../src/runtime/errors.ts';
-import * as flags from '../src/metadata/flags.ts';
+import * as flags from '../src/abstract/flags.ts';
 import { OutRange } from '../src/runtime/outRange.ts';
 
 type OneFunc = Exclude<FuncUnstId, typeof FuncUnstId.ALL>;

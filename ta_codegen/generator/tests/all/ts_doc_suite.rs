@@ -242,7 +242,7 @@ fn sweep_all() -> Sweep {
     // `const` and `type` each, under one name.
     expected.insert("enums".to_string(), 2 * public.len());
     sweep_module("enums", &enums_src, &public, &mut sweep);
-    sweep_metadata(&funcs, &enums, &mut sweep);
+    sweep_abstract(&funcs, &enums, &mut sweep);
     let missing: Vec<String> = expected
         .iter()
         .filter(|(m, n)| sweep.public_exports.get(*m) != Some(n))
@@ -252,24 +252,24 @@ fn sweep_all() -> Sweep {
     sweep
 }
 
-/// The `./metadata` modules, public by the subpath's barrel.
-fn sweep_metadata(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, sweep: &mut Sweep) {
-    let files = backends::ts_metadata::render_all(funcs, enums);
-    let index = &files.iter().find(|(n, _)| *n == "index.ts").expect("metadata/index.ts").1;
+/// The `./abstract` modules, public by the subpath's barrel.
+fn sweep_abstract(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, sweep: &mut Sweep) {
+    let files = backends::ts_abstract::render_all(funcs, enums);
+    let index = &files.iter().find(|(n, _)| *n == "index.ts").expect("abstract/index.ts").1;
     let mut public = BTreeSet::new();
     for list in index.split("export ").skip(1) {
         let list = list.trim_start_matches("type ");
         let Some(body) = list.strip_prefix('{').and_then(|l| l.split_once('}')) else { continue };
         public.extend(body.0.split(',').map(str::trim).filter(|n| !n.is_empty()).map(String::from));
     }
-    assert!(public.len() > 10, "metadata/index.ts: only {public:?}");
+    assert!(public.len() > 10, "abstract/index.ts: only {public:?}");
     let before: usize = sweep.public_exports.values().sum();
     for (name, text) in files.iter().filter(|(n, _)| *n != "index.ts") {
-        sweep_module(&format!("metadata/{name}"), text, &public, sweep);
+        sweep_module(&format!("abstract/{name}"), text, &public, sweep);
     }
     let documented: usize = sweep.public_exports.values().sum::<usize>() - before;
     if documented < public.len() {
-        sweep.failures.push(format!("metadata: {} barrel name(s), {documented} documented declaration(s)", public.len()));
+        sweep.failures.push(format!("abstract: {} barrel name(s), {documented} documented declaration(s)", public.len()));
     }
 }
 

@@ -54,7 +54,7 @@ import { test } from 'node:test';
 
 import { sma } from 'ta-lib';
 import * as js from 'ta-lib/js';
-import { getRuntimeInfo } from 'ta-lib/metadata';
+import { getRuntimeInfo } from 'ta-lib/abstract';
 import { hooks } from './engineHooks.ts';
 
 const close = Float64Array.from({ length: 50 }, (_, i) => Math.round((20 + 3 * Math.sin(i / 4)) * 100) / 100);

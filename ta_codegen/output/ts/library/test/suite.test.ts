@@ -53,9 +53,11 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { FuncFlags, Functions } from '../src/metadata/index.ts';
+import { FuncFlags, Functions } from '../src/abstract/index.ts';
 
 const TESTS: Record<string, number> = {
+  'abstract.test.ts': 12,
+  'abstractSweep.test.ts': 6,
   'batchArgs.test.ts': 10,
   'batchContract.test.ts': 10,
   'engineBytes.test.ts': 2,
@@ -66,8 +68,6 @@ const TESTS: Record<string, number> = {
   'engineTraps.test.ts': 3,
   'inputForms.test.ts': 1,
   'mavpBank.test.ts': 2,
-  'metadata.test.ts': 12,
-  'metadataSweep.test.ts': 6,
   'options.test.ts': 8,
   'phantomIo.test.ts': 5,
   'publicApi.test.ts': 6,

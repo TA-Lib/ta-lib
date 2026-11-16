@@ -840,7 +840,7 @@ fn metadata_price_setter_validates_before_writing() {
     assert!(j_check < j_write, "java: the bundle is committed before validation");
 
     // TypeScript: read every component once, validate them all, commit the bundle whole.
-    let ts = backends::ts_metadata::render_param_holder();
+    let ts = backends::ts_abstract::render_param_holder();
     let t_sec = extract_section(&ts, "  setPriceInput(idx: number, price: PriceInput): this {", "\n  /**");
     let t_check = t_sec.find("requires ${COMPONENTS[k][0]}").expect("ts: no per-component validation");
     let t_write = t_sec.find("this.prices[idx] = given;").expect(

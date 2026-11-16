@@ -89,7 +89,7 @@ that names no indicator.
 | `backends/ir_cleanup.rs` | Backend-selected, length-preserving IR passes between the streaming decision and rendering |
 | `attributes` | The attribute keys (`levels`, ...): one row per key, and the canonical JSON form of a value |
 | `backends/abstract_rows.rs` | The backend-neutral `ta_abstract` row model, rendered by Rust, Java, C#, TS and Go, but deliberately not by C (below) |
-| `backends/{rust,java,csharp,ts}_metadata.rs`, `java_abstract.rs`, `go_abstract.rs` | The per-language introspection registries |
+| `backends/{java,csharp}_metadata.rs`, `{rust,java,ts,go}_abstract.rs` | The per-language introspection registries |
 | `backends/ta_abstract_c.rs` | C's `ta_abstract` layer: tables, frames, group index, runtime API |
 | `backends/price_bundle.rs` | Folds expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags) — **public ABI**, so derived once from each `Input`'s `PriceRef` and never re-inferred from argument names |
 | `backends/func_api_xml.rs` | `ta_func_api.xml` |
@@ -192,7 +192,7 @@ always-alternate bug satisfies both.
 ## The abstract layer: one row model, and one independent oracle
 
 Rust's `abstract_api`, Java's server table and shipped registry, C#'s
-`TALib.Metadata`, TS's `ta-lib/metadata` and Go's `abstract` package all render
+`TALib.Metadata`, TS's `ta-lib/abstract` and Go's `abstract` package all render
 `abstract_rows.rs`. **C's `ta_abstract_c` does not,
 and that is the point:** `test_abstract.c` proves each server's metadata against
 the C library at run time, and folding C into the shared rows would leave a

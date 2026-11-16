@@ -133,7 +133,7 @@ fn abstract_rows_unreachable_domains_stay_unreachable() {
             assert!(
                 !matches!(o.domain, OptDomain::RealList { .. }),
                 "{}.{} is the first real-list parameter — re-check the RealList arm in \
-                 rust_abstract, java_abstract, java_metadata, csharp_metadata, ts_metadata \
+                 rust_abstract, java_abstract, java_metadata, csharp_metadata, ts_abstract \
                  and go_abstract",
                 r.name,
                 o.param_name

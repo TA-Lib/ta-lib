@@ -5,7 +5,7 @@ import { float64ArrayFromHex, float64ArrayToHex, float64Bits, float64FromBits, f
 import { Core, type CoreBuilder, type CandleSettingType, RangeType } from '../library/src/runtime/core.ts';
 import { RetCode, TALibError } from '../library/src/runtime/errors.ts';
 import { MInteger } from '../library/src/runtime/mInteger.ts';
-import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';
+import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/abstract/index.ts';
 import { BUDGET, engineStatus, fallThroughCount, lastFallThrough, moduleCalls, ready, setEngineMode } from '../library/src/runtime/wasm.ts';
 import * as ENGINE from '../library/src/engine/index.ts';
 import { FuncUnstId, MAType } from '../library/src/enums.ts';

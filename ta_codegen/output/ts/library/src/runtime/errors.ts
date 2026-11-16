@@ -54,13 +54,13 @@ export const RetCode = Object.freeze({
   BAD_PARAM: 2,
   /** C parity only: never thrown here. */
   ALLOC_ERR: 3,
-  /** Metadata API only: the function handle is not a registry row. */
+  /** Abstract API only: the function handle is not a registry row. */
   INVALID_HANDLE: 6,
-  /** Metadata API only: a setter was given a value of another kind than its slot. */
+  /** Abstract API only: a setter was given a value of another kind than its slot. */
   INVALID_PARAM_HOLDER_TYPE: 8,
-  /** Metadata API only: an input is not bound. */
+  /** Abstract API only: an input is not bound. */
   INPUT_NOT_ALL_INITIALIZE: 10,
-  /** Metadata API only: an output is not bound. */
+  /** Abstract API only: an output is not bound. */
   OUTPUT_NOT_ALL_INITIALIZE: 11,
   OUT_OF_RANGE_START_INDEX: 12,
   OUT_OF_RANGE_END_INDEX: 13,

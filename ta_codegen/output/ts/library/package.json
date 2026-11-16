@@ -39,9 +39,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./metadata": {
-      "types": "./dist/metadata/index.d.ts",
-      "default": "./dist/metadata/index.js"
+    "./abstract": {
+      "types": "./dist/abstract/index.d.ts",
+      "default": "./dist/abstract/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -51,8 +51,8 @@
       "js": [
         "./dist/index.d.ts"
       ],
-      "metadata": [
-        "./dist/metadata/index.d.ts"
+      "abstract": [
+        "./dist/abstract/index.d.ts"
       ]
     }
   },

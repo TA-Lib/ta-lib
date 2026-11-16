@@ -269,7 +269,7 @@ jobs:
         shell: bash
         working-directory: ta_codegen/output/ts
         run: |
-          if ! node -e "require('./library/dist/index.js'); require('./library/dist/metadata/index.js')"; then
+          if ! node -e "require('./library/dist/index.js'); require('./library/dist/abstract/index.js')"; then
             echo "::error::The compiled TypeScript package does not load through require(): a top-level await, a module-evaluation error or a broken emitted import. Fix the emitter or src/runtime/, never dist/."
             exit 1
           fi

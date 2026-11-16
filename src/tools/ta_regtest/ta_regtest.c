@@ -597,7 +597,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
    }
    /* TypeScript abstract parity: the same two passes, against the registry the
-    * package ships under `./metadata`. The success line carries the function
+    * package ships under `./abstract`. The success line carries the function
     * count, so a gate can grep it under --language=c,ts, where a missing server
     * is already a failure. */
    if( retValue == TA_TEST_PASS && doCodegenTest &&

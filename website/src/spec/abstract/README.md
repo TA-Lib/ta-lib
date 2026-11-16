@@ -21,7 +21,7 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 
 ## What it provides {#provides}
 
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` | Go `ta-lib.github.io/go/abstract` |
+| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/abstract` | Go `ta-lib.github.io/go/abstract` |
 |---|---|---|---|---|---|---|
 | look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` | `Functions.byName` | `Lookup` |
 | enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` | `Functions.all()` | `All()` |

@@ -1,7 +1,7 @@
 import { Core, CoreBuilder, FuncUnstId, MAType, TALibError, atr, ema, macd, macdOpen, MacdOut, ready, sma, smaLookback } from 'ta-lib';
 import type { EngineStatus, FailureRetCode, MacdResult, RetCodeName, SmaOptions, SmaResult } from 'ta-lib';
 import * as js from 'ta-lib/js';
-import { Functions } from 'ta-lib/metadata';
+import { Functions } from 'ta-lib/abstract';
 
 const close = new Float64Array(10);
 const out = new Float64Array(close.length);

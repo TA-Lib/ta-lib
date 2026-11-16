@@ -42,7 +42,7 @@ beta(seriesA, seriesB, { timePeriod: 5 })                // plain series: positi
 mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 ```
 
-- **Inputs.** The positional arguments are the function's inputs as the Abstract API lists them: a price input is one object holding the components it reads, keyed `open`, `high`, `low`, `close`, `volume`, `openInterest` as the metadata API's `PriceInput` is, the components it does not read optional and ignored, so a whole bar object passes; any other input is an `ArrayLike<number>`. So `obv(closes, { volume })`, and swapped price arrays cannot compile. Positional names drop C's `in` (`real`, `real0`, `periods`); a price input is `prices`.
+- **Inputs.** The positional arguments are the function's inputs as the Abstract API lists them: a price input is one object holding the components it reads, keyed `open`, `high`, `low`, `close`, `volume`, `openInterest` as the Abstract API's `PriceInput` is, the components it does not read optional and ignored, so a whole bar object passes; any other input is an `ArrayLike<number>`. So `obv(closes, { volume })`, and swapped price arrays cannot compile. Positional names drop C's `in` (`real`, `real0`, `periods`); a price input is `prices`.
 - **Parameter keys.** C's name without `optIn`, in camelCase by the word split of [rJ1](../website/src/spec/README.md#rj1): `timePeriod`, `nbDevUp`, `maType`, `fastDMaType`.
 - **Range.** `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. `endIdx` is inclusive, as in every TA-Lib API; the TSDoc says so because `slice` is not. Bars before `startIdx` are still read as warm-up, which slicing the input would lose.
 - **`core`** defaults to `Core.DEFAULT`.
@@ -141,7 +141,7 @@ The spec's [TypeScript Caveats](../website/src/spec/README.md#typescript) state 
 | Input-aligned result (`align: 'input'`, NaN warm-up) | An exception to rW3 |
 | A stream opened before warm-up (`rsiStream(14)`, `undefined` until warm) | An exception to rS7 |
 | A shared stream interface type | For `Map<string, Stream>` and generic drivers |
-| Metadata: a `FunctionName` union for `byName` | |
+| Abstract API: a `FunctionName` union for `byName` | |
 | `Core.create({ unstablePeriods, candleSettings })` beside the builder | |
 | Display shift by output name | |
 | `TALibError` fields `funcName`, `argName` | |

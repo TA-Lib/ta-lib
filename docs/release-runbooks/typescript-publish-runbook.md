@@ -12,7 +12,7 @@ This is a **per-release** procedure. The package version is locked to the repo `
 ## What ships
 
 One package publishes: `ta_codegen/output/ts/library/`, with three entry points: `ta-lib`,
-`ta-lib/js` and `ta-lib/metadata`. The tarball holds `package.json`, `README.md`, `LICENSE` and the compiled
+`ta-lib/js` and `ta-lib/abstract`. The tarball holds `package.json`, `README.md`, `LICENSE` and the compiled
 `dist/`; sources and tests stay out. The tooling root, `ta_codegen/output/ts/package.json`, is
 private and never publishes.
 

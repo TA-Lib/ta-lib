@@ -70,13 +70,13 @@ pub mod ta_abstract_c;
 pub mod ta_defs;
 pub mod ctype;
 pub mod ts;
+pub mod ts_abstract;
 pub mod ts_doc;
 pub mod ts_engine;
 pub mod ts_enums;
 pub mod ts_phantom_io;
 pub mod ts_prune;
 pub mod ts_stream;
-pub mod ts_metadata;
 pub mod meta_frame;
 pub mod variant_frame;
 pub mod wasm;
@@ -496,7 +496,7 @@ impl LanguageBackend for TsBackend {
         ts::generate(func, enums, registry, helpers)
     }
     /// Generated indicator modules only; the hand-written runtime and the
-    /// generated enums, metadata and barrel sit beside `func/`, outside the sweep.
+    /// generated enums, abstract registry and barrel sit beside `func/`, outside the sweep.
     fn out_subdir(&self) -> &'static str {
         "ts/library/src/func"
     }

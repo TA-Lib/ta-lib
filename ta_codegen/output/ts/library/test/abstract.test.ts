@@ -56,8 +56,8 @@ import { sma, smaLookback } from '../src/func/sma.ts';
 import { Core } from '../src/runtime/core.ts';
 import { OutRange } from '../src/index.ts';
 import { TALibError } from '../src/runtime/errors.ts';
-import { FuncFlags, FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType } from '../src/metadata/index.ts';
-import type { FuncInfo } from '../src/metadata/index.ts';
+import { FuncFlags, FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType } from '../src/abstract/index.ts';
+import type { FuncInfo } from '../src/abstract/index.ts';
 
 const N = 300;
 

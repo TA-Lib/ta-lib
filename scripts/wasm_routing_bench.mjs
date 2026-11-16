@@ -55,7 +55,7 @@ const exp = manifest.exports;
 const nodeEntry = fileOf(exp['.'].node.default);
 const engine = await import(nodeEntry);
 const js = await import(fileOf(exp['./js'].default));
-const meta = await import(fileOf(exp['./metadata'].default));
+const meta = await import(fileOf(exp['./abstract'].default));
 // The hooks must be the module instance the entry itself imports, or setting the
 // mode changes nothing; engineStatus() after a forced call proves it below.
 const hooks = await import(new URL('../runtime/wasm.js', nodeEntry).href);

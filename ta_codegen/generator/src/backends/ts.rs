@@ -62,7 +62,7 @@ pub fn func_ident(func_name: &str) -> String {
 }
 
 /// Every symbol a function module exports, in one place: the emitter, the
-/// barrel, the server and the metadata registry all spell them from here.
+/// barrel, the server and the abstract registry all spell them from here.
 pub struct TsNames {
     /// File stem under `src/func/` (`var`).
     pub module: String,
@@ -248,7 +248,7 @@ pub(crate) fn ts_license() -> String {
 /// The name of the one object parameter a price group is passed as.
 pub const PRICES_PARAM: &str = "prices";
 
-/// The keys of a price object, in the order the metadata API's `PriceInput` lists them.
+/// The keys of a price object, in the order the Abstract API's `PriceInput` lists them.
 const PRICE_COMPONENT_ORDER: [crate::ir::PriceComponent; 6] = [
     crate::ir::PriceComponent::Open,
     crate::ir::PriceComponent::High,
@@ -2683,9 +2683,9 @@ pub fn render_package_json(version: &str) -> String {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }},
-    "./metadata": {{
-      "types": "./dist/metadata/index.d.ts",
-      "default": "./dist/metadata/index.js"
+    "./abstract": {{
+      "types": "./dist/abstract/index.d.ts",
+      "default": "./dist/abstract/index.js"
     }},
     "./package.json": "./package.json"
   }},
@@ -2695,8 +2695,8 @@ pub fn render_package_json(version: &str) -> String {
       "js": [
         "./dist/index.d.ts"
       ],
-      "metadata": [
-        "./dist/metadata/index.d.ts"
+      "abstract": [
+        "./dist/abstract/index.d.ts"
       ]
     }}
   }},

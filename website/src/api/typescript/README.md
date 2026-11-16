@@ -87,7 +87,7 @@ import { ready } from 'ta-lib';
 const { engine, reason } = await ready();   // 'wasm', or 'js' and the reason
 ```
 
-Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
 
 Streaming calls run in TypeScript today.
 
@@ -209,7 +209,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The `ta-lib/metadata` entry point describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
+The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

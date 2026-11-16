@@ -5483,7 +5483,7 @@ function engineEvidence(): string {
 "#;
 
 /// The TypeScript server's `ta_abstract` handlers. Every answer comes from the
-/// shipped `metadata` registry, which `build_ts` compiles with the server.
+/// shipped `abstract` registry, which `build_ts` compiles with the server.
 const TS_ABSTRACT_HANDLERS: &str = r#"function absLookup(p: Params): FuncInfo | undefined {
   const name = p['funcName'];
   return typeof name === 'string' ? Functions.byName(name) : undefined;
@@ -5697,7 +5697,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str("import { Core, type CoreBuilder, type CandleSettingType, RangeType } from '../library/src/runtime/core.ts';\n");
     s.push_str("import { RetCode, TALibError } from '../library/src/runtime/errors.ts';\n");
     s.push_str("import { MInteger } from '../library/src/runtime/mInteger.ts';\n");
-    s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';\n");
+    s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/abstract/index.ts';\n");
     s.push_str("import { BUDGET, engineStatus, fallThroughCount, lastFallThrough, moduleCalls, ready, setEngineMode } from '../library/src/runtime/wasm.ts';\n");
     s.push_str("import * as ENGINE from '../library/src/engine/index.ts';\n");
     let mut enum_types: Vec<&str> = funcs

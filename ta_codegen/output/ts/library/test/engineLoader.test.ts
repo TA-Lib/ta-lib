@@ -54,7 +54,7 @@ import { test } from 'node:test';
 
 import type { EngineStatus } from 'ta-lib';
 import * as js from 'ta-lib/js';
-import { getRuntimeInfo } from 'ta-lib/metadata';
+import { getRuntimeInfo } from 'ta-lib/abstract';
 import { defaultEntry, hooks } from './engineHooks.ts';
 
 const lib = (await import(defaultEntry)) as typeof import('ta-lib');

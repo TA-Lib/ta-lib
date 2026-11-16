@@ -89,7 +89,7 @@ const { engine, reason } = await ready(); // 'wasm', or 'js' and the reason
 Where WebAssembly or the CPU feature the engine needs is unavailable, or a page's
 Content-Security-Policy forbids it, the package runs its TypeScript code with no error.
 `ta-lib/js` is the same API with WebAssembly never loaded, for strict-CSP pages and size
-budgets. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` says which engine is running:
+budgets. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` says which engine is running:
 1 for WebAssembly, 0 for TypeScript.
 
 Streaming calls run in TypeScript today.

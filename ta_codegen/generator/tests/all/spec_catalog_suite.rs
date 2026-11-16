@@ -108,7 +108,7 @@ fn the_spec_flag_catalog_is_complete() {
 
     let header = read("include/ta_abstract.h");
     let rust_src = read("ta_codegen/output/rust/library/src/abstract_api.rs");
-    let ts_src = read("ta_codegen/output/ts/library/src/metadata/flags.ts");
+    let ts_src = read("ta_codegen/output/ts/library/src/abstract/flags.ts");
     let csharp_src = read("ta_codegen/output/csharp/library/src/metadata/Vocabulary.g.cs");
     let go_src = read("ta_codegen/output/go/abstract/vocabulary.go");
     let page = read(PAGE);

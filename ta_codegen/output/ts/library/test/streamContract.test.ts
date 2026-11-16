@@ -55,7 +55,7 @@ import { type Arr, L, N, type Param, type Range, series } from './corpus.ts';
 import { assertNamesRange, bytes, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, untouched } from './contract.ts';
 import * as lib from '../src/index.ts';
 import { Core, MAType } from '../src/index.ts';
-import { FuncFlags, Functions } from '../src/metadata/index.ts';
+import { FuncFlags, Functions } from '../src/abstract/index.ts';
 
 type Stream = {
   update(...args: unknown[]): unknown;

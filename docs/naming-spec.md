@@ -183,7 +183,7 @@ domain (`Domain`, `InputKind`), where Rust, Java and TypeScript use enumerations
 | Rust | crate `ta-lib`, lib target `ta_lib` |
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
 | C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
-| TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js` and `ta-lib/metadata` |
+| TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js` and `ta-lib/abstract` |
 | Go | module `ta-lib.github.io/go`, package `talib`, version tags `ta_codegen/output/go/vX.Y.Z` |
 
 ## 10. Exceptions: idiom loses
@@ -211,7 +211,7 @@ none is inherited by default.
   `OpenAndFill` / `Update` / `Peek` / `Value` / `OutRange` / `Advance` are the
   streaming verbs. Backends recase these; none of them invents a synonym.
   TypeScript adds `Positional`, the C-shaped checked tier behind its options
-  object: the metadata API and cross-calls use it, since a body calls by
+  object: the Abstract API and cross-calls use it, since a body calls by
   position.
 - **E5. A two-letter acronym keeps both capitals in identifiers**, so `MAType`
   and `TALib` in every backend, as `IOException` does in both standard
@@ -221,7 +221,7 @@ none is inherited by default.
   [rJ1](../website/src/spec/README.md#rj1), and its positional inputs without
   C's `in` (`real`, `real0`, `periods`; a price input is `prices`)**, in every
   call that takes the options object: one options object reads best with
-  camelCase keys. Its metadata and stream `update` and `peek` keep C's names
+  camelCase keys. Its Abstract API and stream `update` and `peek` keep C's names
   (E1).
 
 Also deliberate, and cheaper to state than to re-litigate: file names track the

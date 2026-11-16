@@ -302,7 +302,7 @@ and fill, and the lookback and display-shift throws (rJ4, rJ5). rJ1:
 `ts_keys_follow_the_naming_rule` (`enums_suite.rs`) holds the naming functions
 to the rule on each word shape; the corpus suites read each key off the
 generated source, so a key's spelling in a function is held only where a test
-hard-codes it (`batchArgs.test.ts`, `publicApi.test.ts`, `metadata.test.ts`,
+hard-codes it (`batchArgs.test.ts`, `publicApi.test.ts`, `abstract.test.ts`,
 `ts_stream_suite.rs`, `scripts/ts_consumer_check`).
 
 rW7: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
