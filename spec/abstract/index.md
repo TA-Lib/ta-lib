@@ -26,13 +26,14 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 
 ## What it provides {#provides}
 
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` | Go `ta-lib.github.io/go/metadata` |
+| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/abstract` | Go `ta-lib.github.io/go/abstract` |
 |---|---|---|---|---|---|---|
 | look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` | `Functions.byName` | `Lookup` |
 | enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` | `Functions.all()` | `All()` |
 | enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` | `Groups()` |
 | functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` | `InGroup` |
 | function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| a function's [flags](/spec/abstract/#flags) | `flags` of `TA_FuncInfo` | `flags` | `flags()`, `hasFlags` | `Flags` | `flags`, `hasFlags` | `Flags()`, `HasFlags` |
 | a function's [attributes](/spec/abstract/#attributes) | `TA_GetFuncAttributes` | `attributes` | `attributes()` | `Attributes` | `attributes` | `Attributes()` |
 | input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` | `Inputs()`, `OptInputs()`, `Outputs()` |
 | make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` | `FuncInfo.NewCall` |
@@ -93,7 +94,7 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 ## Run-time information {#runtime-info}
 
-One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `metadata.RuntimeInfo`. It reports state and promises no output value and no speed.
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `abstract.RuntimeInfo`. It reports state and promises no output value and no speed.
 
 A common key is answered in every language, and the answer can differ with the language and the platform. A language may also answer a key of its own, for something only that language has, and every other language treats that key as unknown. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 

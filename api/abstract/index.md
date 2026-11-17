@@ -30,39 +30,82 @@ Look a function up by name, or enumerate them all. Each one reports its group, i
 ```c
 #include <ta_abstract.h>
 
+static void printIfTranscendental( const TA_FuncInfo *fi, void *opaqueData )
+{
+   if( fi->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL )
+      printf( "%s (%s)\n", fi->name, fi->group );
+}
+
 const TA_FuncHandle *handle;
 const TA_FuncInfo *info;
 const TA_OptInputParameterInfo *opt;
+const TA_IntegerRange *range;
 const char *json;
 
 TA_GetFuncHandle( "SMA", &handle );
 TA_GetFuncInfo( handle, &info );          /* name, group, hint, flags, nbInput, nbOptInput, nbOutput */
-TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet (range), defaultValue */
 TA_GetFuncAttributes( handle, &json );            /* "{}"; RSI: {"outputs":{"outReal":{"levels":[30,70]}}} */
 
-/* Every function: TA_ForEachFunc( callback, opaqueData ); */
+int overlay = (info->flags & TA_FUNC_FLG_OVERLAP) != 0;   /* 1: drawn over the price chart */
+
+TA_GetOptInputParameterInfo( handle, 0, &opt );   /* paramName "optInTimePeriod" */
+if( opt->type == TA_OptInput_IntegerRange )
+{
+   range = (const TA_IntegerRange *)opt->dataSet;
+   printf( "%d %d %g\n", range->min, range->max, opt->defaultValue );   /* 1 100000 30 */
+}
+
+/* Every function that uses a transcendental math function. */
+TA_ForEachFunc( printIfTranscendental, NULL );
 ```
 
 @tab Rust
 
 ```rust
-use ta_lib::abstract_api::{for_each_func, get_func_handle};
+use ta_lib::abstract_api::{for_each_func, get_func_handle, FuncFlags, OptInputType};
 
 let id = get_func_handle("SMA").expect("unknown function");
 let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs, attributes
 
-for_each_func(|f| println!("{} ({:?})", f.name, f.group));
+let overlay = info.flags.contains(FuncFlags::OVERLAP);   // true: drawn over the price chart
+
+let opt = &info.opt_inputs[0];   // param_name "optInTimePeriod"
+if let OptInputType::IntegerRange { min, max, default, .. } = opt.kind {
+    println!("{min} {max} {default}");   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
+for_each_func(|f| {
+    if f.flags.contains(FuncFlags::USES_TRANSCENDENTAL) {
+        println!("{} ({:?})", f.name, f.group);
+    }
+});
 ```
 
 @tab Java
 
 ```java
+import io.github.talib.metadata.FuncFlags;
 import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
+import io.github.talib.metadata.OptInputInfo;
+import io.github.talib.metadata.OptInputType;
 
 FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs(), attributes()
 
-Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
+boolean overlay = f.hasFlags(FuncFlags.OVERLAP_STUDY);   // true: drawn over the price chart
+
+OptInputInfo opt = f.optInputs().get(0);   // paramName() "optInTimePeriod"
+if (opt.type() == OptInputType.INTEGER_RANGE) {
+    System.out.println(opt.intMin() + " " + opt.intMax() + " " + opt.defaultValue());   // 1 100000 30.0
+}
+
+// Every function that uses a transcendental math function.
+for (FuncInfo fi : Functions.all()) {
+    if (fi.hasFlags(FuncFlags.USES_TRANSCENDENTAL)) {
+        System.out.println(fi.name() + " (" + fi.group() + ")");
+    }
+}
 ```
 
 @tab C#
@@ -73,33 +116,65 @@ using TALib.Metadata;
 
 FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs, Attributes
 
+bool overlay = f.Flags.HasFlag(FuncFlags.Overlap);   // true: drawn over the price chart
+
+OptInputInfo opt = f.OptInputs[0];   // ParamName "optInTimePeriod"
+if (opt.Domain is OptInputDomain.IntegerRange d)
+{
+    Console.WriteLine($"{d.Min} {d.Max} {d.Default}");   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
 foreach (var fi in Core.Functions)
 {
-    Console.WriteLine($"{fi.Name} ({fi.Group})");
+    if (fi.Flags.HasFlag(FuncFlags.UsesTranscendental))
+    {
+        Console.WriteLine($"{fi.Name} ({fi.Group})");
+    }
 }
 ```
 
 @tab TypeScript
 
 ```ts
-import { Functions } from 'ta-lib/metadata';
+import { FuncFlags, Functions, OptInputType } from 'ta-lib/abstract';
 
-const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs, attributes
+const f = Functions.byName('SMA')!;   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 
+const overlay = f.hasFlags(FuncFlags.OVERLAP_STUDY);   // true: drawn over the price chart
+
+const opt = f.optInputs[0];   // paramName 'optInTimePeriod'
+if (opt.type === OptInputType.INTEGER_RANGE) {
+  console.log(opt.min, opt.max, opt.defaultValue);   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
 for (const fi of Functions.all()) {
-  console.log(`${fi.name} (${fi.group})`);
+  if (fi.hasFlags(FuncFlags.USES_TRANSCENDENTAL)) {
+    console.log(`${fi.name} (${fi.group})`);
+  }
 }
 ```
 
 @tab Go
 
 ```go
-import "ta-lib.github.io/go/metadata"
+import "ta-lib.github.io/go/abstract"
 
-f, ok := metadata.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
+f, ok := abstract.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
 
-for _, fi := range metadata.All() {
-	fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+overlay := f.HasFlags(abstract.FuncOverlap)   // true: drawn over the price chart
+
+opt := f.OptInputs()[0]   // ParamName "optInTimePeriod"
+if d, isRange := opt.Domain.(abstract.IntegerRange); isRange {
+	fmt.Println(d.Min, d.Max, d.Default)   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
+for _, fi := range abstract.All() {
+	if fi.HasFlags(abstract.FuncUsesTranscendental) {
+		fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+	}
 }
 ```
 
@@ -175,7 +250,7 @@ const r = Functions.byName('SMA')!.newCall()
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("SMA")
+f, _ := abstract.Lookup("SMA")
 call := f.NewCall(talib.NewCore())
 if err := errors.Join(
 	call.SetInput(0, closes),
@@ -253,7 +328,7 @@ const shift = call.displayShift(0);   // output 0: -11
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("DPO")
+f, _ := abstract.Lookup("DPO")
 call := f.NewCall(talib.NewCore())
 if err := call.SetOptInputInteger(0, 20); err != nil {
 	log.Fatal(err)

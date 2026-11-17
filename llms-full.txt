@@ -1439,11 +1439,11 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | `stream.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is **no `Dispose`**: a stream owns only managed state — its arrays, its sub-streams and a `Core` reference — so an unreferenced stream is simply collected. The stream types deliberately do not implement `IDisposable`.
+There is **no `Dispose`**: a stream owns only managed state (its arrays, its sub-streams and a `Core` reference), so an unreferenced stream is simply collected. The stream types deliberately do not implement `IDisposable`.
 
 ## Example (SMA)
 
@@ -1463,14 +1463,14 @@ double v = s.Update(newClose);                   // throws on a non-finite bar, 
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.IndexMax`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.IndexMax`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
-* **Warm-up.** `Open` succeeds only if `history.Length >= <Name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
-* **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing — call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
+* **Warm-up.** `Open` succeeds only if `history.Length >= <Name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded: the stream keeps everything it needs.
+* **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing: call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
 * **The unstable period is resolved once, at `Open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `Open` needs that many bars plus one.
-* **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+* **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream. To stream with different settings, build a new `Core` and open from that.
 * **Threads.** A stream is single-writer: `Update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 * **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SmaOpen(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
 
@@ -1494,7 +1494,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 
 ## Array-Fill Open
 
-`Open` and `Update` each write a single value. One more call writes a full array instead — the same shape the [batch method](/api/csharp/) would produce — while still opening the stream:
+`Open` and `Update` each write a single value. One more call writes a full array instead, the same shape the [batch method](/api/csharp/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -1519,7 +1519,7 @@ The output arguments are the batch call's, in the same order. An output must not
 |------|------|------|
 | `stream.Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.Clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.OutRange` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.Advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```csharp
@@ -1531,14 +1531,14 @@ OutRange r = s.OutRange;            // the bars s has an output for
 s.Advance();                        // a bar you skipped, counted
 ```
 
-`Clone()` is a typed `Clone()`, deliberately not `ICloneable` — that interface
+`Clone()` is a typed `Clone()`, deliberately not `ICloneable`: that interface
 returns `object` and leaves deep-versus-shallow unsaid, and this is neither.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.IndexMax`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.IndexMax`. A rejection changes nothing at all: no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
 
 | Condition | Exception |
 |---|---|
@@ -1550,13 +1550,13 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
-`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
+`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically (it is the one routine, data-dependent rejection) or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
 Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 
 ## Absolute-index outputs
 
-`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array — so treat an index as a position within this handle's own window, not as one you can compare against an index a different handle reported.
+`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array, so treat an index as a position within this handle's own window, not as one you can compare against an index a different handle reported.
 
 ## Discovering streamable functions
 
@@ -1575,7 +1575,7 @@ foreach (var f in Core.Functions)
 }
 ```
 
-That is discovery only. Unlike the batch tier, there is no name-based way to *open* a stream — `ParamHolder` binds batch calls, and nothing binds streams. Opening one means calling its typed `<Name>Open` directly.
+That is discovery only. Unlike the batch tier, there is no name-based way to *open* a stream: `ParamHolder` binds batch calls, and nothing binds streams. Opening one means calling its typed `<Name>Open` directly.
 
 This is deliberate rather than an oversight, and the same is true of the other language bindings. A generic opener would have to return a stream whose type varies per function, and `Update` varies in both arity and return type, so the values would have to be boxed, an allocation on every Update. Worth designing properly if there is a call for it; not worth guessing at.
 
@@ -1674,7 +1674,7 @@ import { ready } from 'ta-lib';
 const { engine, reason } = await ready();   // 'wasm', or 'js' and the reason
 ```
 
-Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
 
 Streaming calls run in TypeScript today.
 
@@ -1796,7 +1796,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The `ta-lib/metadata` entry point describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
+The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -2047,6 +2047,8 @@ import talib "ta-lib.github.io/go"
 
 It needs Go 1.22 or later.
 
+On x86-64, build with `GOAMD64=v3` when every machine that runs the program has AVX2 and FMA: the functions that use a fused multiply-add, such as T3, MACD and TEMA, run faster, with the same results. A v3 binary does not start on an older CPU.
+
 ## 3.0 Calling into TA-Lib {#ta_func}
 
 ### 3.1 Batch Processing {#direct_call}
@@ -2173,7 +2175,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The package `ta-lib.github.io/go/metadata` is the [Abstract API](/api/abstract/) in Go: `metadata.Lookup` and `metadata.All` describe every function at run time (group, flags, inputs, parameters with their domains and defaults, outputs), and a `ParamHolder` from `NewCall` binds the arguments of a function chosen by name and calls it through the same method on `talib.Core` a direct call uses. It is a package of its own, so a program that imports only `talib` links none of it.
+The package `ta-lib.github.io/go/abstract` is the [Abstract API](/api/abstract/) in Go: `abstract.Lookup` and `abstract.All` describe every function at run time (group, flags, inputs, parameters with their domains and defaults, outputs), and a `ParamHolder` from `NewCall` binds the arguments of a function chosen by name and calls it through the same method on `talib.Core` a direct call uses. It is a package of its own, so a program that imports only `talib` links none of it.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -2388,39 +2390,82 @@ Look a function up by name, or enumerate them all. Each one reports its group, i
 ```c
 #include <ta_abstract.h>
 
+static void printIfTranscendental( const TA_FuncInfo *fi, void *opaqueData )
+{
+   if( fi->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL )
+      printf( "%s (%s)\n", fi->name, fi->group );
+}
+
 const TA_FuncHandle *handle;
 const TA_FuncInfo *info;
 const TA_OptInputParameterInfo *opt;
+const TA_IntegerRange *range;
 const char *json;
 
 TA_GetFuncHandle( "SMA", &handle );
 TA_GetFuncInfo( handle, &info );          /* name, group, hint, flags, nbInput, nbOptInput, nbOutput */
-TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet (range), defaultValue */
 TA_GetFuncAttributes( handle, &json );            /* "{}"; RSI: {"outputs":{"outReal":{"levels":[30,70]}}} */
 
-/* Every function: TA_ForEachFunc( callback, opaqueData ); */
+int overlay = (info->flags & TA_FUNC_FLG_OVERLAP) != 0;   /* 1: drawn over the price chart */
+
+TA_GetOptInputParameterInfo( handle, 0, &opt );   /* paramName "optInTimePeriod" */
+if( opt->type == TA_OptInput_IntegerRange )
+{
+   range = (const TA_IntegerRange *)opt->dataSet;
+   printf( "%d %d %g\n", range->min, range->max, opt->defaultValue );   /* 1 100000 30 */
+}
+
+/* Every function that uses a transcendental math function. */
+TA_ForEachFunc( printIfTranscendental, NULL );
 ```
 
 @tab Rust
 
 ```rust
-use ta_lib::abstract_api::{for_each_func, get_func_handle};
+use ta_lib::abstract_api::{for_each_func, get_func_handle, FuncFlags, OptInputType};
 
 let id = get_func_handle("SMA").expect("unknown function");
 let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs, attributes
 
-for_each_func(|f| println!("{} ({:?})", f.name, f.group));
+let overlay = info.flags.contains(FuncFlags::OVERLAP);   // true: drawn over the price chart
+
+let opt = &info.opt_inputs[0];   // param_name "optInTimePeriod"
+if let OptInputType::IntegerRange { min, max, default, .. } = opt.kind {
+    println!("{min} {max} {default}");   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
+for_each_func(|f| {
+    if f.flags.contains(FuncFlags::USES_TRANSCENDENTAL) {
+        println!("{} ({:?})", f.name, f.group);
+    }
+});
 ```
 
 @tab Java
 
 ```java
+import io.github.talib.metadata.FuncFlags;
 import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
+import io.github.talib.metadata.OptInputInfo;
+import io.github.talib.metadata.OptInputType;
 
 FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs(), attributes()
 
-Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
+boolean overlay = f.hasFlags(FuncFlags.OVERLAP_STUDY);   // true: drawn over the price chart
+
+OptInputInfo opt = f.optInputs().get(0);   // paramName() "optInTimePeriod"
+if (opt.type() == OptInputType.INTEGER_RANGE) {
+    System.out.println(opt.intMin() + " " + opt.intMax() + " " + opt.defaultValue());   // 1 100000 30.0
+}
+
+// Every function that uses a transcendental math function.
+for (FuncInfo fi : Functions.all()) {
+    if (fi.hasFlags(FuncFlags.USES_TRANSCENDENTAL)) {
+        System.out.println(fi.name() + " (" + fi.group() + ")");
+    }
+}
 ```
 
 @tab C#
@@ -2431,33 +2476,65 @@ using TALib.Metadata;
 
 FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs, Attributes
 
+bool overlay = f.Flags.HasFlag(FuncFlags.Overlap);   // true: drawn over the price chart
+
+OptInputInfo opt = f.OptInputs[0];   // ParamName "optInTimePeriod"
+if (opt.Domain is OptInputDomain.IntegerRange d)
+{
+    Console.WriteLine($"{d.Min} {d.Max} {d.Default}");   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
 foreach (var fi in Core.Functions)
 {
-    Console.WriteLine($"{fi.Name} ({fi.Group})");
+    if (fi.Flags.HasFlag(FuncFlags.UsesTranscendental))
+    {
+        Console.WriteLine($"{fi.Name} ({fi.Group})");
+    }
 }
 ```
 
 @tab TypeScript
 
 ```ts
-import { Functions } from 'ta-lib/metadata';
+import { FuncFlags, Functions, OptInputType } from 'ta-lib/abstract';
 
-const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs, attributes
+const f = Functions.byName('SMA')!;   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 
+const overlay = f.hasFlags(FuncFlags.OVERLAP_STUDY);   // true: drawn over the price chart
+
+const opt = f.optInputs[0];   // paramName 'optInTimePeriod'
+if (opt.type === OptInputType.INTEGER_RANGE) {
+  console.log(opt.min, opt.max, opt.defaultValue);   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
 for (const fi of Functions.all()) {
-  console.log(`${fi.name} (${fi.group})`);
+  if (fi.hasFlags(FuncFlags.USES_TRANSCENDENTAL)) {
+    console.log(`${fi.name} (${fi.group})`);
+  }
 }
 ```
 
 @tab Go
 
 ```go
-import "ta-lib.github.io/go/metadata"
+import "ta-lib.github.io/go/abstract"
 
-f, ok := metadata.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
+f, ok := abstract.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
 
-for _, fi := range metadata.All() {
-	fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+overlay := f.HasFlags(abstract.FuncOverlap)   // true: drawn over the price chart
+
+opt := f.OptInputs()[0]   // ParamName "optInTimePeriod"
+if d, isRange := opt.Domain.(abstract.IntegerRange); isRange {
+	fmt.Println(d.Min, d.Max, d.Default)   // 1 100000 30
+}
+
+// Every function that uses a transcendental math function.
+for _, fi := range abstract.All() {
+	if fi.HasFlags(abstract.FuncUsesTranscendental) {
+		fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+	}
 }
 ```
 
@@ -2533,7 +2610,7 @@ const r = Functions.byName('SMA')!.newCall()
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("SMA")
+f, _ := abstract.Lookup("SMA")
 call := f.NewCall(talib.NewCore())
 if err := errors.Join(
 	call.SetInput(0, closes),
@@ -2611,7 +2688,7 @@ const shift = call.displayShift(0);   // output 0: -11
 @tab Go
 
 ```go
-f, _ := metadata.Lookup("DPO")
+f, _ := abstract.Lookup("DPO")
 call := f.NewCall(talib.NewCore())
 if err := call.SetOptInputInteger(0, 20); err != nil {
 	log.Fatal(err)
@@ -3357,7 +3434,7 @@ What each flag means: [flags](/spec/abstract/#flags).
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust, Java and TypeScript, UpperCamel in C#, and UpperCamel constants of package `metadata` in Go, prefixed `Func`, `Price`, `Opt` and `Out` (`metadata.FuncStream`), and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
+Members are upper case in Rust, Java and TypeScript, UpperCamel in C#, and UpperCamel constants of package `abstract` in Go, prefixed `Func`, `Price`, `Opt` and `Out` (`abstract.FuncStream`), and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
 
 ## How a failure reaches the caller {#failures}
 
@@ -3764,13 +3841,14 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 
 ## What it provides {#provides}
 
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` | Go `ta-lib.github.io/go/metadata` |
+| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/abstract` | Go `ta-lib.github.io/go/abstract` |
 |---|---|---|---|---|---|---|
 | look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` | `Functions.byName` | `Lookup` |
 | enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` | `Functions.all()` | `All()` |
 | enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` | `Groups()` |
 | functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` | `InGroup` |
 | function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| a function's [flags](/spec/abstract/#flags) | `flags` of `TA_FuncInfo` | `flags` | `flags()`, `hasFlags` | `Flags` | `flags`, `hasFlags` | `Flags()`, `HasFlags` |
 | a function's [attributes](/spec/abstract/#attributes) | `TA_GetFuncAttributes` | `attributes` | `attributes()` | `Attributes` | `attributes` | `Attributes()` |
 | input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` | `Inputs()`, `OptInputs()`, `Outputs()` |
 | make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` | `FuncInfo.NewCall` |
@@ -3831,7 +3909,7 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 ## Run-time information {#runtime-info}
 
-One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `metadata.RuntimeInfo`. It reports state and promises no output value and no speed.
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`, Go's `abstract.RuntimeInfo`. It reports state and promises no output value and no speed.
 
 A common key is answered in every language, and the answer can differ with the language and the platform. A language may also answer a key of its own, for something only that language has, and every other language treats that key as unknown. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 
