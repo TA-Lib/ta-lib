@@ -2725,9 +2725,10 @@ pub(super) fn copy_call(d: GExpr, doff: GExpr, s: GExpr, soff: GExpr, n: GExpr) 
 /// The batch body's circular buffers that may live in a stack array of their
 /// static size, as C's `CIRCBUF_PROLOG` keeps them, and that size. A fresh
 /// array is zero like `make`'s only on the first initialisation, so a buffer
-/// initialised more than once, or inside a loop, stays on `make`; one named
-/// in a call stays there too, since a slice that escapes would move the array
-/// to the heap on every call.
+/// initialised more than once, or inside a loop, stays on `make`; one handed
+/// to a call, whole or by an element's address, stays there too, since a slice
+/// that escapes would move the array to the heap on every call. An element
+/// read in an argument hands the callee a value, not the buffer.
 fn stack_circbufs(body: &[Statement]) -> HashMap<String, i64> {
     fn walk(list: &[Statement], in_loop: bool, inits: &mut HashMap<String, (usize, bool)>, called: &mut HashSet<String>) {
         for st in list {
@@ -2740,10 +2741,16 @@ fn stack_circbufs(body: &[Statement]) -> HashMap<String, i64> {
                 crate::streaming::walk_expr(top, &mut |e| {
                     if let Expr::FuncCall(_, args) = e {
                         for a in args {
-                            crate::streaming::walk_expr(a, &mut |x| {
-                                if let Expr::Var(v) | Expr::ArrayAccess(v, _) = x {
+                            crate::streaming::walk_expr(a, &mut |x| match x {
+                                Expr::Var(v) => {
                                     called.insert(v.clone());
                                 }
+                                Expr::AddressOf(inner) => {
+                                    if let Expr::ArrayAccess(v, _) = &**inner {
+                                        called.insert(v.clone());
+                                    }
+                                }
+                                _ => {}
                             });
                         }
                     }

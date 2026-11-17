@@ -63,6 +63,7 @@ func (c *Core) cciImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	var sumDirty int32
 	var flatRun int32
 	var circBuffer []float64
+	var local_circBuffer [30]float64
 	var circBuffer_Idx int32
 	var maxIdx_circBuffer int32
 	maxIdx_circBuffer = 29
@@ -89,7 +90,11 @@ func (c *Core) cciImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	if optInTimePeriod < 1 {
 		return InternalError
 	}
-	circBuffer = make([]float64, optInTimePeriod)
+	if optInTimePeriod <= 30 {
+		circBuffer = local_circBuffer[:optInTimePeriod]
+	} else {
+		circBuffer = make([]float64, optInTimePeriod)
+	}
 	maxIdx_circBuffer = optInTimePeriod - 1
 	circBuffer_Idx = 0
 	i = startIdx - lookbackTotal
