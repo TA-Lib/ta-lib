@@ -433,6 +433,14 @@ def build_wasm(root_dir: str) -> int:
     crate = os.path.join(root_dir, 'ta_codegen', 'output', 'wasm')
     # Panic locations embed source paths; the shipped module must not carry the build machine's.
     rustflags = WASM_RUSTFLAGS + [f'--remap-path-prefix={root_dir}=/ta-lib']
+    # Installed rust-src replaces /rustc/<commit> in std's panic locations with the sysroot's path.
+    sysroot = subprocess.run(['rustc', '--print', 'sysroot'], cwd=root_dir,
+                             capture_output=True, text=True, check=True).stdout.strip()
+    commit = re.search(r'^commit-hash: (\w+)$', subprocess.run(
+        ['rustc', '-vV'], cwd=root_dir, capture_output=True, text=True, check=True).stdout, re.M)
+    if commit:
+        rust_src = os.path.join(sysroot, 'lib', 'rustlib', 'src', 'rust')
+        rustflags.append(f'--remap-path-prefix={rust_src}=/rustc/{commit.group(1)}')
     env = dict(JOBS.env, CARGO_ENCODED_RUSTFLAGS='\x1f'.join(rustflags))
     env.pop('RUSTFLAGS', None)
     out = os.path.join(root_dir, 'bin', 'ta_lib.wasm')
