@@ -365,6 +365,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             circbuf_hybrid_static: HashMap::new(),
             circbuf_len_of: HashMap::new(),
             stream_step: false,
+            one_path_open: false,
         },
         extrema_i32,
         stride: Stride::Param,
@@ -577,7 +578,7 @@ pub fn generate(
     }
     match &plan {
         StreamPlan::Loop(model) => {
-            emit_loop(&mut o, func, model, enums, registry, helpers, &counter);
+            emit_loop(&mut o, func, model, open_keeps_one_path(func, &plan), enums, registry, helpers, &counter);
         }
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, enums, registry, helpers, &counter);
@@ -758,12 +759,14 @@ fn emit_loop(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
+    one_path_open: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    let typing = build_typing(func, model);
+    let mut typing = build_typing(func, model);
+    typing.ctx.one_path_open = one_path_open;
     let fields = state_fields(func, model, &typing);
     let split = StateSplit::of(func, &fields, &[model]);
     emit_handle_struct(o, func);
@@ -4099,6 +4102,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         circbuf_hybrid_static: HashMap::new(),
         circbuf_len_of: HashMap::new(),
         stream_step: false,
+        one_path_open: false,
     }
 }
 

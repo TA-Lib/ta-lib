@@ -165,6 +165,8 @@ pub struct RustRenderCtx {
     /// The body advances or peeks a stream by one bar, where a candle's colour
     /// bound keeps the `if` form and an exact product is not fused.
     pub stream_step: bool,
+    /// An open frame kept on one path (no FMA dispatch): an exact product is not fused.
+    pub one_path_open: bool,
 }
 
 /// Locals that carry an enum value, mapped to their Rust type.
@@ -287,6 +289,7 @@ impl RustRenderCtx {
             circbuf_hybrid_static: std::collections::HashMap::new(),
             circbuf_len_of: std::collections::HashMap::new(),
             stream_step: false,
+            one_path_open: false,
         }
     }
 
@@ -700,6 +703,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         circbuf_hybrid_static: collect_circbuf_static(&func.body),
         circbuf_len_of: collect_circbuf_len_of(&func.body),
         stream_step: false,
+        one_path_open: false,
     };
 
     // `_private` holds the algorithm for the functions that declare one (Rust has
@@ -1134,6 +1138,7 @@ fn gen_guarded_func(
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
             circbuf_len_of: collect_circbuf_len_of(&func.body),
             stream_step: false,
+            one_path_open: false,
         };
         let g_for_loop_vars = collect_for_loop_vars(&func.body);
         let g_var_inits: std::collections::HashMap<String, &Expr> = func
@@ -1240,6 +1245,7 @@ fn gen_guarded_func(
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
             circbuf_len_of: collect_circbuf_len_of(&func.body),
             stream_step: false,
+            one_path_open: false,
         };
 
         // Use the same full rendering as the `_private` body
@@ -4614,7 +4620,7 @@ fn render_binop(
     // `real_vars` was too and the detector could never fire; populating it is
     // what made this reachable.
     if fma::EMIT_FMA && !ctx.is_lookback {
-        let fuse = if ctx.stream_step { fma::fuse_inexact_operands } else { fma::fuse_operands };
+        let fuse = if ctx.stream_step || ctx.one_path_open { fma::fuse_inexact_operands } else { fma::fuse_operands };
         if let Some((a, b, c)) = fuse(left, op, right, &ctx.fma_view()) {
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
