@@ -65,6 +65,8 @@ public partial class Core
     *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
     *  093026 MF,CC #480 Answer the neutral 50 instead of 0 when neither a gain nor
     *               a loss has been seen; 0 read as extremely oversold.
+    *  111726 MF,CC #573 Compute the gain select ahead of the stores to prevValue and
+    *               the carried sums.
     */
    /// <summary>
    /// Number of leading input bars <c>Rsi</c> consumes before it can produce its
@@ -179,8 +181,8 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
          gainDelta = MaxGt(tempValue2, 0.0);
+         prevValue = tempValue1;
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -191,6 +193,9 @@ public partial class Core
        *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
        *     for every finite tempValue2, so no branch on a 50/50 predicate.
        *  3) Scale by 1/'period'.
+       * Keep the gain select ahead of every store to the carried state: a stream
+       * step that reads a sum back after the select pays a store-to-load round
+       * trip per bar.
        */
       prevLoss *= invPeriod;
       prevGain *= invPeriod;
@@ -228,10 +233,10 @@ public partial class Core
          while( today < startIdx ) {
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -246,10 +251,10 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;
@@ -322,8 +327,8 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
          gainDelta = MaxGt(tempValue2, 0.0);
+         prevValue = tempValue1;
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -342,10 +347,10 @@ public partial class Core
          while( today < startIdx ) {
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -357,10 +362,10 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;
@@ -669,10 +674,10 @@ public partial class Core
          double prevValue = sp.prevValue;
          tempValue1 = (double)inReal;
          tempValue2 = tempValue1 - prevValue;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevValue = tempValue1;
          prevLoss *= (double)(sp.optInTimePeriod - 1);
          prevGain *= (double)(sp.optInTimePeriod - 1);
-         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= sp.invPeriod;
@@ -710,10 +715,10 @@ public partial class Core
       double tempValue2 = 0.0;
       tempValue1 = (double)inReal;
       tempValue2 = tempValue1 - sp.prevValue;
+      gainDelta = MaxGt(tempValue2, 0.0);
       sp.prevValue = tempValue1;
       sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
       sp.prevGain *= (double)(sp.optInTimePeriod - 1);
-      gainDelta = MaxGt(tempValue2, 0.0);
       sp.prevGain += gainDelta;
       sp.prevLoss += gainDelta - tempValue2;
       sp.prevLoss *= sp.invPeriod;
@@ -786,8 +791,8 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
          gainDelta = MaxGt(tempValue2, 0.0);
+         prevValue = tempValue1;
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -798,6 +803,9 @@ public partial class Core
        *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
        *     for every finite tempValue2, so no branch on a 50/50 predicate.
        *  3) Scale by 1/'period'.
+       * Keep the gain select ahead of every store to the carried state: a stream
+       * step that reads a sum back after the select pays a store-to-load round
+       * trip per bar.
        */
       prevLoss *= invPeriod;
       prevGain *= invPeriod;
@@ -835,10 +843,10 @@ public partial class Core
          while( today < startIdx ) {
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -853,10 +861,10 @@ public partial class Core
          tempValue1 = (double)inReal[today];
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;

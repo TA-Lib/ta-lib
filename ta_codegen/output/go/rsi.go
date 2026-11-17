@@ -101,8 +101,8 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		for _k1 := range _r2 {
 			tempValue1 = _r2[_k1]
 			tempValue2 = tempValue1 - prevValue
-			prevValue = tempValue1
 			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+			prevValue = tempValue1
 			prevGain += gainDelta
 			prevLoss += gainDelta - tempValue2
 		}
@@ -125,10 +125,10 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 			for _k4 := range _r5 {
 				tempValue1 = _r5[_k4]
 				tempValue2 = tempValue1 - prevValue
+				gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 				prevValue = tempValue1
 				prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 				prevGain = float64(prevGain * float64(optInTimePeriod-1))
-				gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 				prevGain += gainDelta
 				prevLoss += gainDelta - tempValue2
 				prevLoss = float64(prevLoss * invPeriod)
@@ -143,10 +143,10 @@ func (c *Core) rsiImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		for _k7 := range _r8 {
 			tempValue1 = _r8[_k7]
 			tempValue2 = tempValue1 - prevValue
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevValue = tempValue1
 			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 			prevGain = float64(prevGain * float64(optInTimePeriod-1))
-			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevGain += gainDelta
 			prevLoss += gainDelta - tempValue2
 			prevLoss = float64(prevLoss * invPeriod)
@@ -318,10 +318,10 @@ func (sp *RSIStream) Update(inReal float64) (float64, error) {
 	var tempValue2 float64
 	tempValue1 = inReal
 	tempValue2 = tempValue1 - sp.prevValue
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	sp.prevValue = tempValue1
 	sp.prevLoss = float64(sp.prevLoss * float64(sp.optInTimePeriod-1))
 	sp.prevGain = float64(sp.prevGain * float64(sp.optInTimePeriod-1))
-	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	sp.prevGain += gainDelta
 	sp.prevLoss += gainDelta - tempValue2
 	sp.prevLoss = float64(sp.prevLoss * sp.invPeriod)
@@ -350,10 +350,10 @@ func (sp *RSIStream) Peek(inReal float64) (float64, error) {
 	prevValue := sp.prevValue
 	tempValue1 = inReal
 	tempValue2 = tempValue1 - prevValue
+	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	prevValue = tempValue1
 	prevLoss = float64(prevLoss * float64(sp.optInTimePeriod-1))
 	prevGain = float64(prevGain * float64(sp.optInTimePeriod-1))
-	gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 	prevGain += gainDelta
 	prevLoss += gainDelta - tempValue2
 	prevLoss = float64(prevLoss * sp.invPeriod)
@@ -426,8 +426,8 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 		tempValue1 = inReal[today]
 		today = today + 1
 		tempValue2 = tempValue1 - prevValue
-		prevValue = tempValue1
 		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
+		prevValue = tempValue1
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 	}
@@ -446,10 +446,10 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 		for today < startIdx {
 			tempValue1 = inReal[today]
 			tempValue2 = tempValue1 - prevValue
+			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevValue = tempValue1
 			prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 			prevGain = float64(prevGain * float64(optInTimePeriod-1))
-			gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 			prevGain += gainDelta
 			prevLoss += gainDelta - tempValue2
 			prevLoss = float64(prevLoss * invPeriod)
@@ -461,10 +461,10 @@ func (c *Core) rsiOpenImpl(sp *RSIStream, inReal []float64, startIdx, optInTimeP
 		tempValue1 = inReal[today]
 		today = today + 1
 		tempValue2 = tempValue1 - prevValue
+		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevValue = tempValue1
 		prevLoss = float64(prevLoss * float64(optInTimePeriod-1))
 		prevGain = float64(prevGain * float64(optInTimePeriod-1))
-		gainDelta = selF(tempValue2 > 0.0, tempValue2, 0.0)
 		prevGain += gainDelta
 		prevLoss += gainDelta - tempValue2
 		prevLoss = float64(prevLoss * invPeriod)

@@ -806,6 +806,20 @@ fn go_a_composed_update_rescans_on_locals() {
     }
 }
 
+/// RSI's Update computes its gain select before it stores any handle field:
+/// a select after the stores reads each carried sum back from the handle, a
+/// reload per bar.
+#[test]
+fn go_rsi_update_selects_ahead_of_its_stores() {
+    let (func, enums) = common::load_indicator("rsi");
+    let src = backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers());
+    let body = go_body(&src, "func (sp *RSIStream) Update(");
+    let lines: Vec<&str> = body.lines().collect();
+    let select = lines.iter().position(|l| l.contains("selF(")).unwrap_or_else(|| panic!("RSI's Update has no select:\n{body}"));
+    let store = lines.iter().position(|l| l.trim().starts_with("sp.prev")).unwrap_or_else(|| panic!("RSI's Update stores no carried field:\n{body}"));
+    assert!(select < store, "RSI's Update stores a carried field before its gain select:\n{body}");
+}
+
 /// An update scan whose comparison renders as a select keeps its step inside
 /// its loop.
 #[test]

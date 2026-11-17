@@ -197624,6 +197624,8 @@ class Core {
      *  092826 MF,CC #466 Drop the period-1 copy-through; the range starts at 2.
      *  093026 MF,CC #480 Answer the neutral 50 instead of 0 when neither a gain nor
      *               a loss has been seen; 0 read as extremely oversold.
+     *  111726 MF,CC #573 Compute the gain select ahead of the stores to prevValue and
+     *               the carried sums.
      */
 
        /**
@@ -197732,8 +197734,8 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
-             prevValue = tempValue1;
              gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevValue = tempValue1;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
           }
@@ -197744,6 +197746,9 @@ class Core {
            *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
            *     for every finite tempValue2, so no branch on a 50/50 predicate.
            *  3) Scale by 1/'period'.
+           * Keep the gain select ahead of every store to the carried state: a stream
+           * step that reads a sum back after the select pays a store-to-load round
+           * trip per bar.
            */
           prevLoss *= invPeriod;
           prevGain *= invPeriod;
@@ -197781,10 +197786,10 @@ class Core {
              while( today < startIdx ) {
                 tempValue1 = (double)inReal[today];
                 tempValue2 = tempValue1 - prevValue;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevGain += gainDelta;
                 prevLoss += gainDelta - tempValue2;
                 prevLoss *= invPeriod;
@@ -197799,10 +197804,10 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
              prevLoss *= invPeriod;
@@ -197870,8 +197875,8 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
-             prevValue = tempValue1;
              gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevValue = tempValue1;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
           }
@@ -197890,10 +197895,10 @@ class Core {
              while( today < startIdx ) {
                 tempValue1 = (double)inReal[today];
                 tempValue2 = tempValue1 - prevValue;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevGain += gainDelta;
                 prevLoss += gainDelta - tempValue2;
                 prevLoss *= invPeriod;
@@ -197905,10 +197910,10 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
              prevLoss *= invPeriod;
@@ -198175,10 +198180,10 @@ class Core {
              double prevValue = sp.prevValue;
              tempValue1 = (double)inReal;
              tempValue2 = tempValue1 - prevValue;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevValue = tempValue1;
              prevLoss *= (double)(sp.optInTimePeriod - 1);
              prevGain *= (double)(sp.optInTimePeriod - 1);
-             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
              prevLoss *= sp.invPeriod;
@@ -198225,10 +198230,10 @@ class Core {
           double tempValue2 = 0.0;
           tempValue1 = (double)inReal;
           tempValue2 = tempValue1 - sp.prevValue;
+          gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
           sp.prevValue = tempValue1;
           sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
           sp.prevGain *= (double)(sp.optInTimePeriod - 1);
-          gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
           sp.prevGain += gainDelta;
           sp.prevLoss += gainDelta - tempValue2;
           sp.prevLoss *= sp.invPeriod;
@@ -198298,8 +198303,8 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
-             prevValue = tempValue1;
              gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevValue = tempValue1;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
           }
@@ -198310,6 +198315,9 @@ class Core {
            *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
            *     for every finite tempValue2, so no branch on a 50/50 predicate.
            *  3) Scale by 1/'period'.
+           * Keep the gain select ahead of every store to the carried state: a stream
+           * step that reads a sum back after the select pays a store-to-load round
+           * trip per bar.
            */
           prevLoss *= invPeriod;
           prevGain *= invPeriod;
@@ -198347,10 +198355,10 @@ class Core {
              while( today < startIdx ) {
                 tempValue1 = (double)inReal[today];
                 tempValue2 = tempValue1 - prevValue;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
                 prevGain += gainDelta;
                 prevLoss += gainDelta - tempValue2;
                 prevLoss *= invPeriod;
@@ -198365,10 +198373,10 @@ class Core {
              tempValue1 = (double)inReal[today];
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
              prevGain += gainDelta;
              prevLoss += gainDelta - tempValue2;
              prevLoss *= invPeriod;
@@ -250246,7 +250254,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "99c8e4b11b312723";
+    static final String SPLICED_GENCODE_DIGEST = "49a60ecd1ce6a12d";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
