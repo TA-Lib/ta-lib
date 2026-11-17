@@ -23,6 +23,9 @@ import subprocess
 import sys
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from utilities.net import fetch_retrying  # noqa: E402
+
 API = "https://api.github.com"
 # Each caller, and the one reusable definition a run of it must have run.
 WORKFLOWS = {
@@ -51,9 +54,12 @@ def get(path, tok):
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
     if tok:
         headers["Authorization"] = f"Bearer {tok}"
-    with urllib.request.urlopen(urllib.request.Request(API + path, headers=headers),
-                                timeout=30) as r:
-        return json.load(r)
+
+    def once():
+        with urllib.request.urlopen(urllib.request.Request(API + path, headers=headers),
+                                    timeout=30) as r:
+            return json.load(r)
+    return fetch_retrying(once, API + path)
 
 
 def tested_green(repo, workflow, reusable, branch, tok):

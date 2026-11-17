@@ -88,9 +88,31 @@ def _token() -> str:
     return tok
 
 
+_GET_RETRY_DELAYS = (2, 6)
+
+
 def _api(path: str, method: str = "GET", body: bytes | None = None,
          content_type: str | None = None, root: str = API_ROOT,
          expect: tuple[int, ...] = (200, 201)) -> tuple[int, dict | list | None]:
+    """_api_once, with a transient failure of a GET retried.
+
+    Only a GET is retried: another method may have taken effect before it failed.
+    """
+    delays = _GET_RETRY_DELAYS if method == "GET" else ()
+    for attempt in range(1, len(delays) + 2):
+        try:
+            return _api_once(path, method, body, content_type, root, expect)
+        except PoolError as e:
+            if not e.transient or attempt > len(delays):
+                raise
+            delay = delays[attempt - 1]
+            print(f"Warning: GET {path} attempt {attempt}/{len(delays) + 1} failed "
+                  f"({e}); retrying in {delay}s")
+            time.sleep(delay)
+
+
+def _api_once(path: str, method: str, body: bytes | None, content_type: str | None,
+              root: str, expect: tuple[int, ...]) -> tuple[int, dict | list | None]:
     """One authenticated GitHub API call. Returns (status, parsed_json_or_None).
 
     Raises PoolError on any status outside `expect`, EXCEPT 404 and 422 which are

@@ -2207,6 +2207,38 @@ fn copy_tree(from: &Path, to: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Run the Maven wrapper until its pinned distribution is installed, up to three
+/// times. Any failure is left for the build that follows to report, so the
+/// failure a machine without network sees is the build's own.
+fn fetch_maven_distribution(mvnw: &Path, lib_dir: &Path) {
+    const DELAYS: [u64; 2] = [5, 15];
+    let attempts = DELAYS.len() + 1;
+    for attempt in 1..=attempts {
+        let last = attempt == attempts;
+        let status = std::process::Command::new(mvnw)
+            .args(["-q", "--version"])
+            .current_dir(lib_dir)
+            .stdout(std::process::Stdio::null())
+            .stderr(if last { std::process::Stdio::inherit() } else { std::process::Stdio::null() })
+            .status();
+        match status {
+            Ok(s) if s.success() => return,
+            Ok(_) if !last => {
+                let delay = DELAYS[attempt - 1];
+                println!(
+                    "  Fetching the pinned Maven distribution: attempt {attempt}/{attempts} \
+                     failed; retrying in {delay}s"
+                );
+                std::thread::sleep(std::time::Duration::from_secs(delay));
+            }
+            Ok(_) => println!(
+                "  Fetching the pinned Maven distribution: attempt {attempt}/{attempts} failed"
+            ),
+            Err(_) => return,
+        }
+    }
+}
+
 /// Compile the **shipped** Java library and run its junit-free tests.
 ///
 /// The JSON-RPC server above is self-contained (it splices the same per-function
@@ -2270,11 +2302,12 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         return false;
     }
 
-    print!("  Building Java library (./mvnw clean package)... ");
     // Absolute path on purpose: Command::new resolves a relative program against
     // the PARENT's cwd, not `current_dir`, so "./mvnw" would look in the wrong
     // place from anywhere but the library directory.
     let mvnw = lib_dir.join("mvnw");
+    fetch_maven_distribution(&mvnw, &lib_dir);
+    print!("  Building Java library (./mvnw clean package)... ");
     match std::process::Command::new(&mvnw)
         .args(["-B", "-q", "clean", "package", "-Dmaven.test.skip=true"])
         .current_dir(&lib_dir)

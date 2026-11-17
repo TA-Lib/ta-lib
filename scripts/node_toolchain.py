@@ -25,6 +25,9 @@ import tarfile
 import tempfile
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from utilities.net import fetch_retrying  # noqa: E402
+
 PIN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "node_toolchain.json")
 DIST_URL = "https://nodejs.org/dist"
 
@@ -64,7 +67,7 @@ def install(version: str, name: str, sha256: str, cache: str, dest: str):
         url = f"{DIST_URL}/v{version}/{name}.tar.gz"
         archive = os.path.join(tmp, f"{name}.tar.gz")
         print(f"node_toolchain: downloading {url}", file=sys.stderr)
-        actual = download(url, archive)
+        actual = fetch_retrying(lambda: download(url, archive), "node_toolchain")
         if actual != sha256:
             fail(f"SHA-256 mismatch for {url}\n  expected {sha256}\n  actual   {actual}\n"
                  f"The download was deleted.")

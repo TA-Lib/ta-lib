@@ -399,7 +399,7 @@ jobs:
         run: |
           # ABI.released is re-measured from its release commit, which a shallow checkout lacks.
           T=$(sed -n 's/^release \(v[0-9.]*\) .*/\1/p' ABI.released 2>/dev/null || true)
-          git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
+          python3 scripts/retry.py -- git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
           if ! python3 scripts/abi.py check --require-artifact; then
             echo "::error::The public C ABI gate failed; the abi: message above says why and what to do."
             exit 1

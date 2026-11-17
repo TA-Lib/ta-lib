@@ -14,6 +14,9 @@ import json, os, re, sys, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from utilities.net import fetch_retrying  # noqa: E402
+
 REPO = 'TA-Lib/ta-lib'
 SINCE = 2025
 OUT = Path(__file__).resolve().parent.parent / 'website/src/.vuepress/public/assets/images/star-history.svg'
@@ -31,8 +34,11 @@ def fetch():
             headers={'Accept': 'application/vnd.github.star+json', 'User-Agent': 'ta-lib-star-history'})
         if token:
             req.add_header('Authorization', f'Bearer {token}')
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            rows = json.load(resp)
+
+        def once():
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.load(resp)
+        rows = fetch_retrying(once, req.full_url)
         if not rows:
             return sorted(stamps)
         stamps += [datetime.strptime(r['starred_at'], '%Y-%m-%dT%H:%M:%SZ')

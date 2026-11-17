@@ -66,6 +66,9 @@ import tarfile
 import urllib.error
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from utilities.net import fetch_retrying  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKSPACE = os.path.join(ROOT, "ta_codegen/output/rust")
 
@@ -222,9 +225,11 @@ def check_crate(name, subdir):
 
 
 def fetch(url):
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return response.read()
+    def once():
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return response.read()
+    return fetch_retrying(once, url)
 
 
 def check_published_dispatch():

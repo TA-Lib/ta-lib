@@ -158,7 +158,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         working-directory: ${{ runner.temp }}
-        run: dotnet tool install --global wix --version 7.0.0 && echo %USERPROFILE%\.dotnet\tools>>%GITHUB_PATH%
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\retry.py -- dotnet tool install --global wix --version 7.0.0 && echo %USERPROFILE%\.dotnet\tools>>%GITHUB_PATH%'
 
       # TA-Lib generates no revenue, so the Open Source Maintenance Fee does
       # not apply (the OSMF exempts organizations under USD 10k/year), but
@@ -172,7 +172,7 @@ jobs:
       - name: Add WiX UI extension (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
-        run: wix extension add --global WixToolset.UI.wixext/7.0.0 && wix extension list --global
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\retry.py -- wix extension add --global WixToolset.UI.wixext/7.0.0 && wix extension list --global'
 
       # See the Linux fetch step above for why this must precede package.py.
       - name: Fetch dist packages from the asset pool (Windows x64)
@@ -1422,8 +1422,9 @@ jobs:
           # rust-toolchain.toml pins the version; --default-toolchain none lets
           # rustup honour the pin on first use instead of fetching stable twice.
           if ! command -v cargo >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-              | sh -s -- -y --default-toolchain none
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-connrefused --retry-delay 5 \
+              -o "$RUNNER_TEMP/rustup-init.sh" https://sh.rustup.rs
+            sh "$RUNNER_TEMP/rustup-init.sh" -y --default-toolchain none
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           fi
 
@@ -1509,8 +1510,9 @@ jobs:
           # rust-toolchain.toml pins the version; --default-toolchain none lets
           # rustup honour the pin on first use instead of fetching stable twice.
           if ! command -v cargo >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-              | sh -s -- -y --default-toolchain none
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-connrefused --retry-delay 5 \
+              -o "$RUNNER_TEMP/rustup-init.sh" https://sh.rustup.rs
+            sh "$RUNNER_TEMP/rustup-init.sh" -y --default-toolchain none
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           fi
 
@@ -1625,7 +1627,17 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/src -w /src alpine:3.20 sh -c '
             set -e
-            apk add --no-cache build-base cmake >/dev/null
+            attempt=1
+            until apk add --no-cache build-base cmake >/dev/null; do
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::apk add failed after 3 attempts"
+                exit 1
+              fi
+              delay=$((10 * attempt - 5))
+              echo "apk add failed (attempt $attempt/3); retrying in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+            done
             echo "== musl target: alpine $(cat /etc/alpine-release) =="
             # (1) Must COMPILE. A guard wrongly widened to include musl would
             #     hard-error here on the target_clones attribute in the fused .c.
@@ -1802,8 +1814,8 @@ jobs:
           LD_LIBRARY_PATH: ${{ github.workspace }}/_wrapper/c/lib
         run: |
           set -euo pipefail
-          git clone -q --depth 1 -b dev \
-              https://github.com/TA-Lib/ta-lib-python.git _wrapper/src
+          python3 scripts/retry.py -- bash -c 'rm -rf _wrapper/src && git clone -q --depth 1 -b dev \
+              https://github.com/TA-Lib/ta-lib-python.git _wrapper/src'
           echo "wrapper dev at $(git -C _wrapper/src rev-parse HEAD)"
           cd _wrapper/src
           pip install --upgrade pip wheel setuptools
@@ -1855,7 +1867,7 @@ jobs:
           python3 scripts/build.py
           # ABI.released is re-measured from its release commit, which a shallow checkout lacks.
           T=$(sed -n 's/^release \(v[0-9.]*\) .*/\1/p' ABI.released 2>/dev/null || true)
-          git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
+          python3 scripts/retry.py -- git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
           if ! python3 scripts/abi.py check --require-artifact; then
             echo "::error::The public C ABI gate failed; the abi: message above says why and what to do."
             exit 1

@@ -44,14 +44,31 @@ jobs:
   secret-scan:
     name: Scan for secrets (Betterleaks)
     runs-on: ubuntu-latest
+    env:
+      # Image pinned to v1.7.4 by digest, not `:latest`: bump both together
+      # (`docker buildx imagetools inspect ghcr.io/betterleaks/betterleaks:<new tag>`
+      # to resolve a new digest).
+      BETTERLEAKS_IMAGE: ghcr.io/betterleaks/betterleaks@sha256:16f903f0100ce7358ef1f870858777e55bec94cf04c6b65c45d013274ea3311c
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      # Image pinned to v1.7.4 by digest, not `:latest` — bump both together
-      # (`docker buildx imagetools inspect ghcr.io/betterleaks/betterleaks:<new tag>`
-      # to resolve a new digest).
+      - name: Pull the Betterleaks image (retried)
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if docker pull --quiet "$BETTERLEAKS_IMAGE"; then
+              echo "pulled $BETTERLEAKS_IMAGE on attempt $attempt"
+              exit 0
+            fi
+            delay=$((attempt * 15))
+            echo "docker pull failed (attempt $attempt/5); retrying in ${delay}s"
+            sleep "$delay"
+          done
+          echo "::error::could not pull $BETTERLEAKS_IMAGE after 5 attempts"
+          exit 1
+
       # --redact: `-v` alone prints matched secret text verbatim; on a public
       # repo that would leak the finding into a permanent public log, worse
       # than the original exposure.
@@ -64,5 +81,5 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-            ghcr.io/betterleaks/betterleaks@sha256:16f903f0100ce7358ef1f870858777e55bec94cf04c6b65c45d013274ea3311c \
+            "$BETTERLEAKS_IMAGE" \
             git . -v --redact --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
