@@ -814,8 +814,8 @@ Scope rules (deliberate):
   inert on any other host: on Apple Silicon Go's KSTEXT stays within 1e-9 there.
 - **Integer periods sweep from each parameter's declared minimum**, period 1
   included, and reach default+50/+51.
-- Expected GREEN because every backend fuses the identical `a*b+c` sites via the
-  shared `backends/fma.rs` detector and builds with `-ffp-contract=off`, and
+- Expected GREEN because every backend rounds the identical `a*b+c` sites once, via the
+  shared `backends/fma.rs` detector (an exact product left plain returns the fused bits), and builds with `-ffp-contract=off`, and
   `fma`/`mul_add` are IEEE correctly-rounded, hence bit-identical for equal
   operands.
 

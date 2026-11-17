@@ -4592,7 +4592,7 @@ fn wrap_cast(operand: &str, ty: &str) -> String {
 }
 
 /// Render an `Expr::BinOp` to Rust, including the FMA fusion (via the shared
-/// [`fma::fuse_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
+/// [`fma`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
 /// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
 /// by [`RustExpr::binop`].
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]

@@ -1,5 +1,5 @@
 //! Shared fused-multiply-add (FMA) fusion detection — the single source of truth
-//! for WHICH `a*b + c` sites every backend fuses.
+//! for WHICH `a*b + c` sites a backend may fuse.
 //!
 //! TA-Lib adopted an explicit-FMA numerical contract (PR #96,
 //! `docs/studies/fma-readiness-audit.md`): each function faithfully implements
