@@ -44,7 +44,7 @@ import { hooks } from './engineHooks.ts';
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
-type Row = { name: string; fn: string; bars: number; args: (d: Data) => unknown[] };
+type Row = { name: string; fn: string; bars: number; to?: number; args: (d: Data) => unknown[] };
 
 const TABLED: Row[] = [
   { name: 'ACCBANDS', fn: 'accbands', bars: 5000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
@@ -172,7 +172,7 @@ const TABLED: Row[] = [
   { name: 'VIDYA', fn: 'vidya', bars: 125, args: (d) => [d.close] },
   { name: 'VWMA', fn: 'vwma', bars: 10000, args: (d) => [d.close, { volume: d.volume }] },
   { name: 'WAVETREND', fn: 'wavetrend', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'WCLPRICE', fn: 'wclprice', bars: 250, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
+  { name: 'WCLPRICE', fn: 'wclprice', bars: 500, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
   { name: 'ZIGZAG', fn: 'zigzag', bars: 2500, args: (d) => [{ high: d.high, low: d.low }] },
   { name: 'ZLEMA', fn: 'zlema', bars: 250, args: (d) => [d.close] },
 ];
@@ -239,7 +239,7 @@ function call(row: Row, n: number): { ran: number; fell: number } {
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
+/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
 function sweep(mode: string): number {
   let checked = 0;
   for (const row of TABLED) {
@@ -251,6 +251,14 @@ function sweep(mode: string): number {
     const at = call(row, row.bars);
     assert.equal(at.ran, 1, `${mode}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
     assert.equal(at.fell, 0, `${mode}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
+    if (row.to !== undefined) {
+      const end = call(row, row.to);
+      assert.equal(end.ran, 1, `${mode}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
+      assert.equal(end.fell, 0, `${mode}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
+      const over = call(row, row.to + 1);
+      assert.equal(over.ran, 0, `${mode}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
+      assert.equal(over.fell, 0, `${mode}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
+    }
     checked++;
   }
   const off = call(UNTABLED, UNTABLED.bars);
@@ -259,7 +267,7 @@ function sweep(mode: string): number {
   return checked;
 }
 
-test('a fresh engine routes by the table: each tabled function from its bar count on, and no other function', () => {
+test('a fresh engine routes by the table: each tabled function over its bar counts, and no other function', () => {
   const checked = sweep('fresh');
   assert.ok(checked >= TABLED_FLOOR, `${checked} tabled functions checked; the table names ${TABLED_FLOOR}`);
   if (TABLED_FLOOR > 0) assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });

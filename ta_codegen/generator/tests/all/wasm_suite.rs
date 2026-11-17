@@ -6,6 +6,7 @@ use crate::common::{
     all_indicators, discover_indicators, load_enums, load_indicator, make_helpers, make_registry,
 };
 use std::collections::{BTreeMap, BTreeSet};
+use ta_codegen_lib::backends::ts_engine::{self, Route};
 use ta_codegen_lib::backends::{self, wasm};
 use ta_codegen_lib::ir::{FuncDef, Statement};
 
@@ -203,8 +204,9 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let funcs = corpus();
     let enums = load_enums();
     let sma = funcs.iter().find(|f| f.name == "SMA").unwrap();
-    let text = backends::ts_engine::render_routed(sma, &enums, make_registry(), Some(37));
+    let text = backends::ts_engine::render_routed(sma, &enums, make_registry(), Some(Route { from: 37, to: None }));
     assert!(text.contains("\nconst WASM_FROM_BARS = 37;\n"), "{text}");
+    assert!(!text.contains("WASM_TO_BARS"), "an open entry has no upper bound:\n{text}");
     let public = &text[text.find("export function sma(").unwrap()..text.find("function smaWasm(").unwrap()];
     assert!(!public.contains("engineRoute.mode !== 0"), "a tabled function routes in table mode:\n{public}");
     let body = &text[text.find("function smaWasm(").unwrap()..];
@@ -219,4 +221,60 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let untabled = backends::ts_engine::render_routed(sma, &enums, make_registry(), None);
     assert!(!untabled.contains("WASM_FROM_BARS"));
     assert!(untabled.contains("  if (engineRoute.mode !== 0) {\n"));
+}
+
+/// A ranged entry: the same check, closed above, so a call over the range
+/// stays in `./js` exactly as one under it does.
+#[test]
+fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
+    let (sma, _) = load_indicator("sma");
+    let enums = load_enums();
+    let text = ts_engine::render_routed(&sma, &enums, make_registry(), Some(Route { from: 37, to: Some(90) }));
+    assert!(text.contains("\nconst WASM_FROM_BARS = 37;\nconst WASM_TO_BARS = 90;\n"), "{text}");
+    let body = &text[text.find("function smaWasm(").unwrap()..];
+    let gate = "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n";
+    let at = body.find(gate).unwrap_or_else(|| panic!("no bounded check:\n{body}"));
+    assert_eq!(body.matches("WASM_TO_BARS").count(), 1, "{body}");
+    assert!(at < body.find("wasmFrame(").unwrap(), "the range check is below wasmFrame:\n{body}");
+}
+
+#[test]
+fn ts_engine_routing_test_checks_both_ends_of_a_ranged_entry() {
+    let funcs: Vec<FuncDef> = ["sma", "ema", "wma"].iter().map(|n| load_indicator(n).0).collect();
+    let table = BTreeMap::from([
+        ("SMA".to_string(), Route { from: 5, to: Some(200_000) }),
+        ("EMA".to_string(), Route { from: 7, to: None }),
+    ]);
+    let text = ts_engine::render_routing_test(&funcs, &table);
+    assert!(text.contains("{ name: 'SMA', fn: 'sma', bars: 5, to: 200000, args: "), "{text}");
+    assert!(text.contains("{ name: 'EMA', fn: 'ema', bars: 7, args: "), "{text}");
+    assert!(text.contains("\nconst MAX_BARS = 200001;\n"), "MAX_BARS must reach one bar over the range:\n{text}");
+    assert!(text.contains("const over = call(row, row.to + 1);"), "{text}");
+}
+
+fn load_table(tag: &str, yaml: &str) -> BTreeMap<String, Route> {
+    let path = std::env::temp_dir().join(format!("ta_wasm_routing_{}_{tag}.yaml", std::process::id()));
+    std::fs::write(&path, yaml).unwrap();
+    let funcs = vec![load_indicator("sma").0];
+    let table = std::panic::catch_unwind(|| ts_engine::load_routing(&path, &funcs));
+    let _ = std::fs::remove_file(&path);
+    table.unwrap_or_else(|e| std::panic::resume_unwind(e))
+}
+
+#[test]
+fn ts_engine_load_routing_reads_both_forms() {
+    assert_eq!(load_table("open", "batch:\n  SMA: 4\n")["SMA"], Route { from: 4, to: None });
+    assert_eq!(load_table("one", "batch:\n  SMA: [4, 4]\n")["SMA"], Route { from: 4, to: Some(4) });
+}
+
+#[test]
+#[should_panic(expected = "the range ends below its start")]
+fn ts_engine_load_routing_rejects_a_range_ending_below_its_start() {
+    let _ = load_table("inverted", "batch:\n  SMA: [10, 9]\n");
+}
+
+#[test]
+#[should_panic(expected = "the least is 1")]
+fn ts_engine_load_routing_rejects_a_range_from_zero() {
+    let _ = load_table("zero", "batch:\n  SMA: [0, 9]\n");
 }

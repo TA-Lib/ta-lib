@@ -1,7 +1,9 @@
-# Per function, the bar count from which the npm package's default entry sends
-# the batch call to the WASM engine; a function not listed never goes. Set an
-# entry only from timings of the public call where WASM is faster on every
-# timed host.
+# Per function, the bar counts at which the npm package's default entry sends
+# the batch call to the WASM engine; a function not listed never goes. `F: N`
+# means from N bars on; `F: [LO, HI]` means from LO through HI bars, inclusive.
+# Entries come from scripts/wasm_routing_table.py over timings of the public
+# call on every timing host; an entry may cover sizes where no host loses by
+# more than the script's tolerance.
 batch:
   ACCBANDS: 5000
   ADOSC: 60
@@ -128,6 +130,6 @@ batch:
   VIDYA: 125
   VWMA: 10000
   WAVETREND: 60
-  WCLPRICE: 250
+  WCLPRICE: 500
   ZIGZAG: 2500
   ZLEMA: 250

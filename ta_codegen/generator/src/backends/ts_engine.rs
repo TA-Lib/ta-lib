@@ -17,25 +17,54 @@ use std::path::Path;
 /// The routing table's file under `ta_codegen/input/`.
 pub const ROUTING_FILE: &str = "wasm_routing.yaml";
 
+/// The bar counts at which one function's batch call goes to the engine:
+/// `from` on, through `to` inclusive when it is set.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(from = "RouteEntry")]
+pub struct Route {
+    pub from: u32,
+    pub to: Option<u32>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(untagged)]
+enum RouteEntry {
+    From(u32),
+    Within([u32; 2]),
+}
+
+impl From<RouteEntry> for Route {
+    fn from(e: RouteEntry) -> Self {
+        match e {
+            RouteEntry::From(from) => Route { from, to: None },
+            RouteEntry::Within([from, to]) => Route { from, to: Some(to) },
+        }
+    }
+}
+
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RoutingFile {
-    batch: BTreeMap<String, u32>,
+    batch: BTreeMap<String, Route>,
 }
 
-/// Per function, the bar count from which its batch call goes to the engine.
+/// Per function, the bar counts at which its batch call goes to the engine.
 ///
 /// # Panics
 /// When the file cannot be read or parsed, names a function without a WASM
-/// export, or gives a count below 1.
+/// export, gives a count below 1, or closes a range below its start.
 #[must_use]
-pub fn load_routing(path: &Path, funcs: &[FuncDef]) -> BTreeMap<String, u32> {
+pub fn load_routing(path: &Path, funcs: &[FuncDef]) -> BTreeMap<String, Route> {
     let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
     let file: RoutingFile = serde_yaml::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
     let exported: BTreeSet<&str> = wasm::exported(funcs).iter().map(|f| f.name.as_str()).collect();
-    for (name, bars) in &file.batch {
+    for (name, route) in &file.batch {
+        let bars = route.from;
         assert!(exported.contains(name.as_str()), "{}: {name} has no WASM export", path.display());
-        assert!(*bars >= 1, "{}: {name} routes from {bars} bars; the least is 1", path.display());
+        assert!(bars >= 1, "{}: {name} routes from {bars} bars; the least is 1", path.display());
+        if let Some(to) = route.to {
+            assert!(to >= bars, "{}: {name} routes from {bars} bars to {to}; the range ends below its start", path.display());
+        }
     }
     file.batch
 }
@@ -90,7 +119,7 @@ fn plus(base: &str, terms: &[(u32, &str)]) -> String {
 /// One routed module.
 #[allow(clippy::implicit_hasher, clippy::too_many_lines, clippy::cast_possible_truncation)]
 #[must_use]
-pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Registry, from_bars: Option<u32>) -> String {
+pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Registry, route: Option<Route>) -> String {
     super::ts_doc::seed_function_names(registry.names());
     let names = ts_names(&func.name);
     let stem = module_stem(func);
@@ -119,8 +148,12 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
         }
     }
     let _ = writeln!(b, "  const n = seriesLength({});\n  if (n < 1) {{\n    return fellThrough('input');\n  }}", raw[0]);
-    if from_bars.is_some() {
-        b.push_str("  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n");
+    match route {
+        Some(Route { to: None, .. }) => b.push_str("  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n"),
+        Some(Route { to: Some(_), .. }) => {
+            b.push_str("  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n");
+        }
+        None => {}
     }
     b.push_str("  const o = routedOptions(options);\n");
     let mut buffers = String::new();
@@ -213,12 +246,15 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
     }
     let _ = writeln!(s, "import {{ {} }} from '{RUNTIME}';\n", imports.join(", "));
     let _ = writeln!(s, "export * from '{js_module}';");
-    if let Some(bars) = from_bars {
-        let _ = writeln!(s, "\nconst WASM_FROM_BARS = {bars};");
+    if let Some(r) = route {
+        let _ = writeln!(s, "\nconst WASM_FROM_BARS = {};", r.from);
+        if let Some(to) = r.to {
+            let _ = writeln!(s, "const WASM_TO_BARS = {to};");
+        }
     }
     // A caller's getter or trap that throws while the WASM path reads the
     // arguments is a fall-through: `./js` then throws its own error.
-    let (open, pad, close) = if from_bars.is_some() { ("", "  ", "") } else { ("  if (engineRoute.mode !== 0) {\n", "    ", "  }\n") };
+    let (open, pad, close) = if route.is_some() { ("", "  ", "") } else { ("  if (engineRoute.mode !== 0) {\n", "    ", "  }\n") };
     let _ = write!(
         s,
         "\n{docs}export function {public}({sig}): {result} {{\n{open}\
@@ -408,22 +444,23 @@ pub fn generate_parity_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>,
     super::write_if_changed(&test_dir.join("engineParity.test.ts"), &render_parity_test(funcs, enums), "engineParity.test.ts", routed(funcs).len());
 }
 
-fn routing_row(f: &FuncDef, bars: u32) -> String {
-    format!("{{ name: '{}', fn: '{}', bars: {bars}, args: {} }}", f.name, ts_names(&f.name).public, args_row(f))
+fn routing_row(f: &FuncDef, route: Route) -> String {
+    let to = route.to.map_or(String::new(), |to| format!(" to: {to},"));
+    format!("{{ name: '{}', fn: '{}', bars: {},{to} args: {} }}", f.name, ts_names(&f.name).public, route.from, args_row(f))
 }
 
 /// `test/engineRouting.test.ts`: the table mode against the routing table,
 /// read here and not from what [`render_routed`] was handed, so a routed
-/// module whose threshold drifted from the table fails it.
+/// module whose bounds drifted from the table fails it.
 ///
 /// # Panics
 /// When no function has a WASM export.
 #[must_use]
-pub fn render_routing_test(funcs: &[FuncDef], table: &BTreeMap<String, u32>) -> String {
+pub fn render_routing_test(funcs: &[FuncDef], table: &BTreeMap<String, Route>) -> String {
     let mut sorted = routed(funcs);
     sorted.sort_by_key(|f| module_stem(f));
     let untabled = sorted.iter().find(|f| !table.contains_key(&f.name)).expect("an exported function the table does not name");
-    let max = table.values().copied().max().unwrap_or(0).max(UNTABLED_BARS);
+    let max = table.values().map(|r| r.to.map_or(r.from, |to| to.saturating_add(1))).max().unwrap_or(0).max(UNTABLED_BARS);
     let mut o = String::from(super::ta_abstract_c::LICENSE);
     o.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
     o.push_str(ROUTING_HEAD);
@@ -436,7 +473,7 @@ pub fn render_routing_test(funcs: &[FuncDef], table: &BTreeMap<String, u32>) -> 
         o,
         "const TABLED_FLOOR = {};\nconst UNTABLED: Row = {};\nconst MAX_BARS = {max};\n",
         table.len(),
-        routing_row(untabled, UNTABLED_BARS)
+        routing_row(untabled, Route { from: UNTABLED_BARS, to: None })
     );
     o.push_str(WALK);
     o.push_str(ROUTING_DRIVER);
@@ -465,7 +502,7 @@ import { hooks } from './engineHooks.ts';
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
-type Row = { name: string; fn: string; bars: number; args: (d: Data) => unknown[] };
+type Row = { name: string; fn: string; bars: number; to?: number; args: (d: Data) => unknown[] };
 ";
 
 const ROUTING_DRIVER: &str = r"
@@ -495,7 +532,7 @@ function call(row: Row, n: number): { ran: number; fell: number } {
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
+/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
 function sweep(mode: string): number {
   let checked = 0;
   for (const row of TABLED) {
@@ -507,6 +544,14 @@ function sweep(mode: string): number {
     const at = call(row, row.bars);
     assert.equal(at.ran, 1, `${mode}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
     assert.equal(at.fell, 0, `${mode}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
+    if (row.to !== undefined) {
+      const end = call(row, row.to);
+      assert.equal(end.ran, 1, `${mode}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
+      assert.equal(end.fell, 0, `${mode}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
+      const over = call(row, row.to + 1);
+      assert.equal(over.ran, 0, `${mode}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
+      assert.equal(over.fell, 0, `${mode}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
+    }
     checked++;
   }
   const off = call(UNTABLED, UNTABLED.bars);
@@ -515,7 +560,7 @@ function sweep(mode: string): number {
   return checked;
 }
 
-test('a fresh engine routes by the table: each tabled function from its bar count on, and no other function', () => {
+test('a fresh engine routes by the table: each tabled function over its bar counts, and no other function', () => {
   const checked = sweep('fresh');
   assert.ok(checked >= TABLED_FLOOR, `${checked} tabled functions checked; the table names ${TABLED_FLOOR}`);
   if (TABLED_FLOOR > 0) assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
