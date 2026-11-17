@@ -45,12 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090812 AB     Initial Version
+ *  111726 MF,CC  Bind the window mean once per bar, before the deviation loop.
  */
 
 // Import types from parent module
@@ -155,6 +158,7 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             let mut todaySum: f64 = 0.0_f64;
+            let mut todayMean: f64 = 0.0_f64;
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
@@ -164,11 +168,12 @@ impl Core {
                 todaySum += inReal[today - i];
                 i += 1;
             }
+            todayMean = todaySum / (optInTimePeriod as f64);
             todayDev = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
             while i < (optInTimePeriod as usize) {
-                todayDev += (inReal[today - i] - todaySum / (optInTimePeriod as f64)).abs();
+                todayDev += (inReal[today - i] - todayMean).abs();
                 i += 1;
             }
             outReal[outIdx] = todayDev / (optInTimePeriod as f64);
@@ -314,6 +319,7 @@ struct AvgdevStreamState {
 impl Core {
     fn avgdev_step_impl(sp: &mut AvgdevStreamState, inReal: f64, outReal: &mut f64) {
         let mut todaySum: f64 = 0.0_f64;
+        let mut todayMean: f64 = 0.0_f64;
         let mut todayDev: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         sp.win_i_inReal[sp.winPos_i] = inReal;
@@ -324,11 +330,12 @@ impl Core {
             todaySum += sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize];
             i += 1;
         }
+        todayMean = todaySum / (sp.optInTimePeriod as f64);
         todayDev = 0.0;
         // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
         i = 0;
         while i < (sp.optInTimePeriod as usize) {
-            todayDev += (sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] - todaySum / (sp.optInTimePeriod as f64)).abs();
+            todayDev += (sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] - todayMean).abs();
             i += 1;
         }
         *outReal = todayDev / (sp.optInTimePeriod as f64);
@@ -379,6 +386,7 @@ impl Core {
         outIdx = 0;
         while today <= endIdx {
             let mut todaySum: f64 = 0.0_f64;
+            let mut todayMean: f64 = 0.0_f64;
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
@@ -388,11 +396,12 @@ impl Core {
                 todaySum += inReal[today - i];
                 i += 1;
             }
+            todayMean = todaySum / (optInTimePeriod as f64);
             todayDev = 0.0;
             // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
             while i < (optInTimePeriod as usize) {
-                todayDev += (inReal[today - i] - todaySum / (optInTimePeriod as f64)).abs();
+                todayDev += (inReal[today - i] - todayMean).abs();
                 i += 1;
             }
             outReal[outIdx * outStride] = todayDev / (optInTimePeriod as f64);
@@ -580,6 +589,7 @@ impl AvgdevStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut todaySum: f64 = 0.0_f64;
+            let mut todayMean: f64 = 0.0_f64;
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             let mut pkSlot0: usize = usize::MAX;
@@ -593,11 +603,12 @@ impl AvgdevStream {
                 todaySum += if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 };
                 i += 1;
             }
+            todayMean = todaySum / (sp.optInTimePeriod as f64);
             todayDev = 0.0;
             // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
             i = 0;
             while i < (sp.optInTimePeriod as usize) {
-                todayDev += ((if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 }) - todaySum / (sp.optInTimePeriod as f64)).abs();
+                todayDev += ((if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[(if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize] } else { pkVal0 }) - todayMean).abs();
                 i += 1;
             }
             *outReal = todayDev / (sp.optInTimePeriod as f64);

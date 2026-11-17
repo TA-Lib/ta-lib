@@ -47,12 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AB       Anatoliy Belsky
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090812 AB     Initial Version
+    *  111726 MF,CC  Bind the window mean once per bar, before the deviation loop.
     */
    /// <summary>
    /// Number of leading input bars <c>Avgdev</c> consumes before it can produce
@@ -141,15 +144,17 @@ public partial class Core
       outIdx = 0;
       while( today <= endIdx ) {
          double todaySum;
+         double todayMean;
          double todayDev;
          int i;
          todaySum = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
             todaySum += inReal[today - i];
          }
+         todayMean = todaySum / optInTimePeriod;
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.Abs(inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += Math.Abs(inReal[today - i] - todayMean);
          }
          outReal[outIdx] = todayDev / optInTimePeriod;
          outIdx += 1;
@@ -199,15 +204,17 @@ public partial class Core
       outIdx = 0;
       while( today <= endIdx ) {
          double todaySum;
+         double todayMean;
          double todayDev;
          int i;
          todaySum = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
             todaySum += (double)inReal[today - i];
          }
+         todayMean = todaySum / optInTimePeriod;
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.Abs((double)inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += Math.Abs((double)inReal[today - i] - todayMean);
          }
          outReal[outIdx] = todayDev / optInTimePeriod;
          outIdx += 1;
@@ -496,6 +503,7 @@ public partial class Core
          if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("AVGDEV", "peek", nameof(inReal));
          AvgdevStream sp = this;
          double todaySum = 0.0;
+         double todayMean = 0.0;
          double todayDev = 0.0;
          int i = 0;
          double cur_outReal = 0.0;
@@ -507,9 +515,10 @@ public partial class Core
          for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
             todaySum += (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
          }
+         todayMean = todaySum / sp.optInTimePeriod;
          todayDev = 0.0;
          for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
-            todayDev += Math.Abs(((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
+            todayDev += Math.Abs(((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) - todayMean);
          }
          cur_outReal = todayDev / sp.optInTimePeriod;
          return cur_outReal;
@@ -535,6 +544,7 @@ public partial class Core
    private void AvgdevStepImpl( AvgdevStream sp, double inReal )
    {
       double todaySum = 0.0;
+      double todayMean = 0.0;
       double todayDev = 0.0;
       int i = 0;
       sp.win_i_inReal[sp.winPos_i] = inReal;
@@ -542,9 +552,10 @@ public partial class Core
       for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
          todaySum += sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
       }
+      todayMean = todaySum / sp.optInTimePeriod;
       todayDev = 0.0;
       for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
-         todayDev += Math.Abs(sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - todaySum / sp.optInTimePeriod);
+         todayDev += Math.Abs(sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - todayMean);
       }
       sp.cur_outReal = todayDev / sp.optInTimePeriod;
       sp.winPos_i = sp.winPos_i + 1;
@@ -591,15 +602,17 @@ public partial class Core
       outIdx = 0;
       while( today <= endIdx ) {
          double todaySum;
+         double todayMean;
          double todayDev;
          int i;
          todaySum = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
             todaySum += inReal[today - i];
          }
+         todayMean = todaySum / optInTimePeriod;
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.Abs(inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += Math.Abs(inReal[today - i] - todayMean);
          }
          outReal[outIdx * outStride] = todayDev / optInTimePeriod;
          outIdx += 1;

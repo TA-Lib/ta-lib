@@ -75,15 +75,17 @@ func (c *Core) avgdevImpl(startIdx, endIdx int32, inReal []float64, optInTimePer
 	outIdx = 0
 	for today <= endIdx {
 		var todaySum float64
+		var todayMean float64
 		var todayDev float64
 		var i int32
 		todaySum = 0.0
 		for i = 0; i < optInTimePeriod; i += 1 {
 			todaySum += inReal[today-i]
 		}
+		todayMean = todaySum / float64(optInTimePeriod)
 		todayDev = 0.0
 		for i = 0; i < optInTimePeriod; i += 1 {
-			todayDev += math.Abs(inReal[today-i] - todaySum/float64(optInTimePeriod))
+			todayDev += math.Abs(inReal[today-i] - todayMean)
 		}
 		outReal[outIdx] = todayDev / float64(optInTimePeriod)
 		outIdx += 1
@@ -238,6 +240,7 @@ func (sp *AVGDEVStream) Update(inReal float64) (float64, error) {
 	}
 	sp.outRangeCount++
 	var todaySum float64
+	var todayMean float64
 	var todayDev float64
 	var i int32
 	var optInTimePeriod int32
@@ -259,6 +262,7 @@ func (sp *AVGDEVStream) Update(inReal float64) (float64, error) {
 		}
 		todaySum += win_i_inReal[_T6]
 	}
+	todayMean = todaySum / float64(sp.optInTimePeriod)
 	todayDev = 0.0
 	optInTimePeriod = sp.optInTimePeriod
 	winCap_i = sp.winCap_i
@@ -271,7 +275,7 @@ func (sp *AVGDEVStream) Update(inReal float64) (float64, error) {
 		} else {
 			_T7 = winPos_i + winCap_i - i
 		}
-		todayDev += math.Abs(win_i_inReal[_T7] - todaySum/float64(optInTimePeriod))
+		todayDev += math.Abs(win_i_inReal[_T7] - todayMean)
 	}
 	sp.cur_outReal = todayDev / float64(sp.optInTimePeriod)
 	sp.winPos_i = sp.winPos_i + 1
@@ -288,6 +292,7 @@ func (sp *AVGDEVStream) Peek(inReal float64) (float64, error) {
 		return 0, BadParam
 	}
 	var todaySum float64
+	var todayMean float64
 	var todayDev float64
 	var i int32
 	var optInTimePeriod int32
@@ -325,6 +330,7 @@ func (sp *AVGDEVStream) Peek(inReal float64) (float64, error) {
 		}
 		todaySum += _T2
 	}
+	todayMean = todaySum / float64(sp.optInTimePeriod)
 	todayDev = 0.0
 	optInTimePeriod = sp.optInTimePeriod
 	winCap_i = sp.winCap_i
@@ -349,7 +355,7 @@ func (sp *AVGDEVStream) Peek(inReal float64) (float64, error) {
 		} else {
 			_T5 = pkVal0
 		}
-		todayDev += math.Abs(_T5 - todaySum/float64(optInTimePeriod))
+		todayDev += math.Abs(_T5 - todayMean)
 	}
 	cur_outReal = todayDev / float64(sp.optInTimePeriod)
 	return cur_outReal, nil
@@ -401,15 +407,17 @@ func (c *Core) avgdevOpenImpl(sp *AVGDEVStream, inReal []float64, startIdx, optI
 	outIdx = 0
 	for today <= endIdx {
 		var todaySum float64
+		var todayMean float64
 		var todayDev float64
 		var i int32
 		todaySum = 0.0
 		for i = 0; i < optInTimePeriod; i += 1 {
 			todaySum += inReal[today-i]
 		}
+		todayMean = todaySum / float64(optInTimePeriod)
 		todayDev = 0.0
 		for i = 0; i < optInTimePeriod; i += 1 {
-			todayDev += math.Abs(inReal[today-i] - todaySum/float64(optInTimePeriod))
+			todayDev += math.Abs(inReal[today-i] - todayMean)
 		}
 		outReal[outIdx*outStride] = todayDev / float64(optInTimePeriod)
 		outIdx += 1

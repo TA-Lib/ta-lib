@@ -37,12 +37,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090812 AB     Initial Version
+ *  111726 MF,CC  Bind the window mean once per bar, before the deviation loop.
  */
 
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -116,15 +119,17 @@ export function avgdevImpl(
   outIdx = 0;
   while (today <= endIdx) {
     let todaySum = 0;
+    let todayMean = 0;
     let todayDev = 0;
     let i = 0;
     todaySum = 0.0;
     for (i = 0; i < optInTimePeriod; i += 1) {
       todaySum += inReal[today - i];
     }
+    todayMean = todaySum / optInTimePeriod;
     todayDev = 0.0;
     for (i = 0; i < optInTimePeriod; i += 1) {
-      todayDev += Math.abs(inReal[today - i] - todaySum / optInTimePeriod);
+      todayDev += Math.abs(inReal[today - i] - todayMean);
     }
     outReal[outIdx] = todayDev / optInTimePeriod;
     outIdx += 1;
@@ -405,6 +410,7 @@ export class AvgdevStream {
     const sp = this;
     const inReal = real;
     let todaySum = 0;
+    let todayMean = 0;
     let todayDev = 0;
     let i = 0;
     let cur_outReal = 0;
@@ -416,9 +422,10 @@ export class AvgdevStream {
     for (i = 0; i < sp.optInTimePeriod; i += 1) {
       todaySum += (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
     }
+    todayMean = todaySum / sp.optInTimePeriod;
     todayDev = 0.0;
     for (i = 0; i < sp.optInTimePeriod; i += 1) {
-      todayDev += Math.abs(((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
+      todayDev += Math.abs(((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) - todayMean);
     }
     cur_outReal = todayDev / sp.optInTimePeriod;
     return cur_outReal;
@@ -450,6 +457,7 @@ export class AvgdevStream {
 
 function avgdevStepImpl(sp: AvgdevStream, inReal: number): void {
   let todaySum = 0;
+  let todayMean = 0;
   let todayDev = 0;
   let i = 0;
   sp.win_i_inReal[sp.winPos_i] = inReal;
@@ -457,9 +465,10 @@ function avgdevStepImpl(sp: AvgdevStream, inReal: number): void {
   for (i = 0; i < sp.optInTimePeriod; i += 1) {
     todaySum += sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
   }
+  todayMean = todaySum / sp.optInTimePeriod;
   todayDev = 0.0;
   for (i = 0; i < sp.optInTimePeriod; i += 1) {
-    todayDev += Math.abs(sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - todaySum / sp.optInTimePeriod);
+    todayDev += Math.abs(sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - todayMean);
   }
   sp.cur_outReal = todayDev / sp.optInTimePeriod;
   sp.winPos_i = sp.winPos_i + 1;
@@ -512,15 +521,17 @@ function avgdevOpenImpl(
   outIdx = 0;
   while (today <= endIdx) {
     let todaySum = 0;
+    let todayMean = 0;
     let todayDev = 0;
     let i = 0;
     todaySum = 0.0;
     for (i = 0; i < optInTimePeriod; i += 1) {
       todaySum += inReal[today - i];
     }
+    todayMean = todaySum / optInTimePeriod;
     todayDev = 0.0;
     for (i = 0; i < optInTimePeriod; i += 1) {
-      todayDev += Math.abs(inReal[today - i] - todaySum / optInTimePeriod);
+      todayDev += Math.abs(inReal[today - i] - todayMean);
     }
     outReal[((outIdx * outStride) | 0)] = todayDev / optInTimePeriod;
     outIdx += 1;

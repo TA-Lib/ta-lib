@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090812 AB     Initial Version
+ *  111726 MF,CC  Bind the window mean once per bar, before the deviation loop.
  */
 
 int avgdev_lookback(int optInTimePeriod)
@@ -44,7 +47,7 @@ TA_RetCode avgdev(int startIdx, int endIdx,
    outIdx = 0;
 
    while (today <= endIdx) {
-      double todaySum, todayDev;
+      double todaySum, todayMean, todayDev;
       int i;
 
       todaySum = 0.0;
@@ -52,9 +55,10 @@ TA_RetCode avgdev(int startIdx, int endIdx,
          todaySum += inReal[today-i];
       }
 
+      todayMean = todaySum/optInTimePeriod;
       todayDev = 0.0;
       for (i = 0; i < optInTimePeriod; i++) {
-         todayDev += fabs(inReal[today-i] - todaySum/optInTimePeriod);
+         todayDev += fabs(inReal[today-i] - todayMean);
       }
       outReal[outIdx] = todayDev/optInTimePeriod;
 

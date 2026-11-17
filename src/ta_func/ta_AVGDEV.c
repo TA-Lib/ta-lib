@@ -47,12 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AB       Anatoliy Belsky
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090812 AB     Initial Version
+ *  111726 MF,CC  Bind the window mean once per bar, before the deviation loop.
  */
 
 TA_LIB_API int TA_AVGDEV_Lookback( int optInTimePeriod )
@@ -120,6 +123,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV( int    startIdx,
    while( today <= endIdx )
    {
       double todaySum;
+      double todayMean;
       double todayDev;
       int i;
       todaySum = 0.0;
@@ -127,10 +131,11 @@ TA_LIB_API TA_RetCode TA_AVGDEV( int    startIdx,
       {
          todaySum += inReal[today - i];
       }
+      todayMean = todaySum / optInTimePeriod;
       todayDev = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+         todayDev += fabs(inReal[today - i] - todayMean);
       }
       outReal[outIdx] = todayDev / optInTimePeriod;
       outIdx += 1;
@@ -185,6 +190,7 @@ TA_RetCode TA_S_AVGDEV( int    startIdx,
    while( today <= endIdx )
    {
       double todaySum;
+      double todayMean;
       double todayDev;
       int i;
       todaySum = 0.0;
@@ -192,10 +198,11 @@ TA_RetCode TA_S_AVGDEV( int    startIdx,
       {
          todaySum += (double)inReal[today - i];
       }
+      todayMean = todaySum / optInTimePeriod;
       todayDev = 0.0;
       for( i = 0; i < optInTimePeriod; i += 1 )
       {
-         todayDev += fabs((double)inReal[today - i] - todaySum / optInTimePeriod);
+         todayDev += fabs((double)inReal[today - i] - todayMean);
       }
       outReal[outIdx] = todayDev / optInTimePeriod;
       outIdx += 1;
@@ -231,6 +238,7 @@ static void TA_AVGDEV_ReleaseImpl( struct TA_AVGDEV_Stream *sp )
 static void TA_AVGDEV_StepImpl( struct TA_AVGDEV_Stream *sp, double inReal, double *outReal )
 {
    double todaySum;
+   double todayMean;
    double todayDev;
    int i;
 
@@ -240,10 +248,11 @@ static void TA_AVGDEV_StepImpl( struct TA_AVGDEV_Stream *sp, double inReal, doub
    {
       todaySum += sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
    }
+   todayMean = todaySum / sp->optInTimePeriod;
    todayDev = 0.0;
    for( i = 0; i < sp->optInTimePeriod; i += 1 )
    {
-      todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - todaySum / sp->optInTimePeriod);
+      todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - todayMean);
    }
    *outReal= todayDev / sp->optInTimePeriod;
    sp->cur_outReal = *outReal;
@@ -284,6 +293,7 @@ static TA_OPEN_INLINE TA_RetCode TA_AVGDEV_OpenBody( struct TA_AVGDEV_Stream **s
       while( today <= endIdx )
       {
          double todaySum;
+         double todayMean;
          double todayDev;
          int i;
          todaySum = 0.0;
@@ -291,10 +301,11 @@ static TA_OPEN_INLINE TA_RetCode TA_AVGDEV_OpenBody( struct TA_AVGDEV_Stream **s
          {
             todaySum += inReal[today - i];
          }
+         todayMean = todaySum / optInTimePeriod;
          todayDev = 0.0;
          for( i = 0; i < optInTimePeriod; i += 1 )
          {
-            todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
+            todayDev += fabs(inReal[today - i] - todayMean);
          }
          outReal[outIdx * outStride] = todayDev / optInTimePeriod;
          outIdx += 1;
@@ -413,6 +424,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inR
 {
    const struct TA_AVGDEV_Stream *sp = stream;
    double todaySum;
+   double todayMean;
    double todayDev;
    int i;
    double *win_i_inReal;
@@ -429,10 +441,11 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inR
    {
       todaySum += (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0;
    }
+   todayMean = todaySum / sp->optInTimePeriod;
    todayDev = 0.0;
    for( i = 0; i < sp->optInTimePeriod; i += 1 )
    {
-      todayDev += fabs(((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) - todaySum / sp->optInTimePeriod);
+      todayDev += fabs(((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) - todayMean);
    }
    *outReal= todayDev / sp->optInTimePeriod;
    return TA_SUCCESS;
