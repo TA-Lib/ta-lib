@@ -43,7 +43,7 @@ Package layout under `ta_codegen/output/ts/` (D20):
 
 ## 3. Numerical semantics
 
-Semantics come from the type pass, never from a name heuristic. FMA site selection is the one exception: it calls `fma.rs` exactly as Java and C# do, heuristics included, because the fused sites must match C's.
+Semantics come from the type pass, never from a name heuristic. FMA site selection is the one exception: it calls `fma.rs`, heuristics included, because every site must round as C's does. A site C fuses is fused, unless its product is exact (a literal factor of 2.0 or 4.0): that one is the plain multiply-add, which returns the same bits without a software `fma`.
 
 | # | Hazard | Where | Emitter rule | Gate that catches it |
 |---|---|---|---|---|
@@ -55,7 +55,7 @@ Semantics come from the type pass, never from a name heuristic. FMA site selecti
 | H6 | Bool used as a number, or a number tested for truth | Candle helpers, `!ptr`, `!TA_IS_ZERO` | A Bool used as a value becomes `(c ? 1 : 0)`; a non-Bool condition gets an explicit `!== 0` | `tsc --strict`; an assert in the type pass |
 | H7 | Real max/min | `max(`/`min(`, `fmin`/`fmax` in the candle helpers, running extremes | `a > b ? a : b` and `a < b ? a : b`, in C's operand order. `Math.max` and `Math.min` differ from C on NaN and on ±0 | Text gate in `ts_render_statement_suite`: no `Math.max(`, `Math.min(`, `Math.round(` or `>>>` in library output |
 | H8 | Shifts and masks | TRIMA `>> 1`, `& (live-1)` | As written: JS bit operations are int32, like C `int` | Same text gate |
-| H9 | Fused-site selection | Every site C fuses | `fma.rs`'s selection, called where Java's emitter calls it. C's compound rule: `x += a*b` is not fused, `x = x + a*b` is | xlang-hash and server_verify, bitwise |
+| H9 | Fused-site selection | Every site C fuses | `fma.rs`'s selection, called where Java's emitter calls it; an exact product is declined, never traded for the expression's other product. C's compound rule: `x += a*b` is not fused, `x = x + a*b` is | xlang-hash and server_verify, bitwise |
 | H10 | Stream and batch fuse different sites | Stream step and peek bodies | State and output names keep the `sp.` / `cur_` prefixes that `fma::stream_base` strips | stream_verify same-tier, bitwise |
 | H11 | Software fma rounding | `runtime/fma.ts` | Exact and correctly rounded (D9) | `ts_fma_check.py`, then xlang-hash on every fusing function |
 | H12 | Transcendental results | Flagged functions; MAMA or ALMA through an MA-type parameter | Engine `Math.*` | The transcendental lane at 1e-11 (D11) |

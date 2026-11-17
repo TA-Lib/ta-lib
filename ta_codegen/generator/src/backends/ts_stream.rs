@@ -179,7 +179,7 @@ macro_rules! names_through {
 }
 
 /// State through `sp.`, bars as same-named scalars, outputs as `sp.cur_<name>`.
-/// `fma::stream_base` strips exactly these prefixes, so the fused sites match C.
+/// `fma::stream_base` strips exactly these prefixes, so a site is typed as C types it.
 struct TsStreamNames;
 
 names_through!(
@@ -475,8 +475,8 @@ pub(crate) fn generate_visiting(func: &FuncDef, svc: &Services, visit: Option<Vi
     let func: &FuncDef = &resolved;
     assert!(func.streaming, "ts_stream::generate called without a streaming declaration");
     let plan = streaming::validate_streamable(func, svc.registry).unwrap_or_else(|e| panic!("streaming gate: {e}"));
-    // From the body these frames render, so the fused sites are the ones
-    // every other backend's stream fuses.
+    // From the body these frames render, or the stream fuses other sites than
+    // its batch tier.
     let mut stream_fma = fma::build_fma_var_sets(func.stream_source(), &func.outputs, &fma::INDEX_PARAM_SEEDS);
     for input in streaming::input_array_names(func) {
         stream_fma.real_vars.insert(input);

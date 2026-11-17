@@ -4606,9 +4606,7 @@ fn render_binop(
     helpers: &HelperRegistry,
 ) -> String {
     // Fused multiply-add: (a * b) + c → fmadd!(a as f64, b, c). Emits ARM
-    // fmadd (1 FP op) vs fmul+fadd (2 FP ops), IEEE-754 correctly-rounded so it
-    // matches the C `fma()` / Java `Math.fma` the other backends emit at the same
-    // sites, but an exact product, left plain (`fma::fuse_inexact_operands`).
+    // fmadd (1 FP op) vs fmul+fadd (2 FP ops).
     // Never in a lookback body: C, Java and C# all pass `fma: None` there
     // ("pure integer index arithmetic", c.rs), so fusing only in Rust would
     // give one backend a different lookback — an outBegIdx/length divergence,

@@ -2232,10 +2232,6 @@ impl ExprEmitter for CsExpr<'_> {
                 }
             }
         }
-        // Fused multiply-add: (a * b) + c → Math.FusedMultiplyAdd(a, b, c).
-        // IEEE-754 correctly-rounded, so it matches C `fma()`, Rust `mul_add`
-        // and Java `Math.fma` at the same sites (site selection is the shared
-        // `fma::fuse_operands`).
         if fma::EMIT_FMA {
             if let Some(fs) = self.ctx.fma {
                 if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &fs.view()) {

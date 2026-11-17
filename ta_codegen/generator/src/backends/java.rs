@@ -2164,10 +2164,6 @@ impl ExprEmitter for JavaExpr<'_> {
                 }
             }
         }
-        // Fused multiply-add: (a * b) + c → Math.fma(a, b, c) (Java 9+). IEEE-754
-        // correctly-rounded, so it matches C `fma()` and Rust `mul_add` at the same
-        // sites (site selection is the shared `fma::fuse_operands`). `Math.fma` is a
-        // call expression (atomic), so no outer parens / wrap_child needed.
         if fma::EMIT_FMA {
             if let Some(fs) = self.ctx.fma {
                 if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &fs.view()) {

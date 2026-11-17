@@ -1,9 +1,9 @@
 //! FMA fusion-site consistency guard.
 //!
-//! Every backend fuses `a*b + c` at the sites the shared `fma::fuse_operands`
-//! detector selects (see `backends/fma.rs`, PR #96). Cross-language bit-parity
-//! therefore depends on the three independent translations (C, Rust, Java)
-//! identifying the *same* sites. The Rust backend threads its own render context
+//! Every backend selects its fused `a*b + c` sites with the shared
+//! `fma::fuse_operands` detector. Cross-language bit-parity therefore depends
+//! on the independent translations (C, Rust, Java) making the *same* decision
+//! at each site. The Rust backend threads its own render context
 //! into the detector; C and Java rebuild the equivalent name-sets from the same
 //! IR body via `build_fma_var_sets`, but — because they emit typed declarations
 //! and don't otherwise track variable types — they seed the range/count index
@@ -14,7 +14,7 @@
 //! This test proves that seed difference is immaterial: for every function body,
 //! `fuse_operands` makes the identical decision at every `a*b+c` site whether the
 //! context was built with the 2-seed or the 4-seed index-param set. So C/Java
-//! (uniform seeding) fuse exactly the sites Rust does. It also confirms every
+//! (uniform seeding) decide each site as Rust does. It also confirms every
 //! function in `fma::FUSING_INVENTORY` actually fuses.
 
 use std::cell::Cell;

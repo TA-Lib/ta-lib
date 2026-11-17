@@ -451,7 +451,7 @@ pub fn contains_call(hay: &str, name: &str) -> bool {
 pub fn fma_factors(src: &str, needle: &str) -> Vec<(String, String)> {
     let mut out = Vec::new();
     for (at, _) in src.match_indices(needle) {
-        if src[..at].chars().next_back().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_') {
+        if src[..at].chars().next_back().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.') {
             continue;
         }
         let mut args = vec![String::new()];

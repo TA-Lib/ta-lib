@@ -2252,9 +2252,7 @@ impl ExprEmitter for CExpr<'_> {
 
     fn binop(&self, left: &Expr, op: &BinOp, right: &Expr) -> String {
         // Fused multiply-add: (a * b) + c → fma(a, b, c) (C99 <math.h>, already
-        // included). IEEE-754 correctly-rounded, so it matches Rust `mul_add` and
-        // Java `Math.fma` at the same sites (site selection is the shared
-        // `fma::fuse_operands`). Both the double and single-precision (TA_S_*)
+        // included). Both the double and single-precision (TA_S_*)
         // paths compute in `double` (PR #33 widens float reads), so `fma` — never
         // `fmaf` — is correct for both. The args are rendered by `self.walk`, and
         // `fma(...)` is a call (atomic), so no outer parens / wrap_child needed.

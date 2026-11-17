@@ -6,14 +6,16 @@
 //! its algorithm within a documented ~1e-9 relative tolerance, not bit-for-bit.
 //! Explicit `fma` / `f64::mul_add` / `Math.fma` / `Math.FusedMultiplyAdd` all
 //! compute the IEEE-754 correctly-rounded fused product-sum, identical on every
-//! platform — so fusing the SAME sites in C, Rust, Java and C# keeps the four
-//! backends bit-identical to one another.
+//! platform — so every backend rounding the SAME sites as C does keeps them
+//! bit-identical to one another.
 //!
 //! The regtest cross-language comparison only enforces a 1e-6 tolerance, so it
 //! would NOT catch two backends fusing slightly different site sets (they would
 //! silently drift ~1e-10). Routing all backends through this one detector makes
 //! identical fusion a structural guarantee rather than something a tolerance gate
-//! is trusted to police. Rust feeds its render context straight into a borrowing
+//! is trusted to police. A backend may leave an exact product plain
+//! ([`fuse_inexact_operands`]): that site returns the fused bits either way.
+//! Rust feeds its render context straight into a borrowing
 //! [`FmaCtx`]; C and Java rebuild the same name-sets from the same IR body via
 //! [`build_fma_var_sets`].
 
