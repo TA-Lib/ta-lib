@@ -329,12 +329,16 @@ def die_with(parent):
     return hook
 
 
+# EPERM means no member could take the signal; macOS answers it, not ESRCH, while every member is unreaped.
+GONE = (ProcessLookupError, PermissionError)
+
+
 def stop_group(p, first, grace):
     """SIGINT first so Python tools run their cleanup, then TERM, then KILL."""
     for sig, grace in ((first, grace[0]), (signal.SIGTERM, grace[1]), (signal.SIGKILL, None)):
         try:
             os.killpg(p.pid, sig)
-        except ProcessLookupError:
+        except GONE:
             break
         try:
             p.wait(timeout=grace)
@@ -343,7 +347,7 @@ def stop_group(p, first, grace):
             pass
     try:
         os.killpg(p.pid, signal.SIGKILL)
-    except ProcessLookupError:
+    except GONE:
         pass
     p.wait()
 
