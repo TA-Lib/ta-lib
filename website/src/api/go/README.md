@@ -58,6 +58,8 @@ import talib "ta-lib.github.io/go"
 
 It needs Go 1.22 or later.
 
+On x86-64, build with `GOAMD64=v3` when every machine that runs the program has AVX2 and FMA: the functions that use a fused multiply-add, such as T3, MACD and TEMA, run faster, with the same results. A v3 binary does not start on an older CPU.
+
 ## 3.0 Calling into TA-Lib {#ta_func}
 
 ### 3.1 Batch Processing {#direct_call}
