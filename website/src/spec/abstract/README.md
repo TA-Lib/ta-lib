@@ -28,6 +28,7 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 | enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` | `Groups()` |
 | functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` | `InGroup` |
 | function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| a function's [flags](/spec/abstract/#flags) | `flags` of `TA_FuncInfo` | `flags` | `flags()`, `hasFlags` | `Flags` | `flags`, `hasFlags` | `Flags()`, `HasFlags` |
 | a function's [attributes](/spec/abstract/#attributes) | `TA_GetFuncAttributes` | `attributes` | `attributes()` | `Attributes` | `attributes` | `Attributes()` |
 | input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` | `Inputs()`, `OptInputs()`, `Outputs()` |
 | make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` | `FuncInfo.NewCall` |
