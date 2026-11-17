@@ -880,3 +880,14 @@ fn go_binds_an_expression_two_neighbouring_statements_compute() {
         .sum();
     assert!(common::sweep_filtered() || total >= 71, "the corpus binds {total} expressions");
 }
+
+/// CCI reads a ring element inside a call's argument, a value and not the
+/// buffer, so its ring is a stack array up to C's static size.
+#[test]
+fn go_a_ring_read_in_a_call_argument_lives_on_the_stack() {
+    let body = batch_body("cci");
+    assert!(body.contains("math.Abs(circBuffer["), "CCI no longer reads its ring in a call:\n{body}");
+    assert!(body.contains("\tvar local_circBuffer [30]float64\n"), "no stack array:\n{body}");
+    let pick = "\tif optInTimePeriod <= 30 {\n\t\tcircBuffer = local_circBuffer[:optInTimePeriod]\n\t} else {\n\t\tcircBuffer = make([]float64, optInTimePeriod)\n\t}\n";
+    assert!(body.contains(pick) && body.matches("circBuffer = make(").count() == 1, "the ring does not pick the stack array:\n{body}");
+}
