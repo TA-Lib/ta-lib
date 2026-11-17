@@ -51,7 +51,6 @@
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
-import { fma } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
@@ -92,7 +91,7 @@ export function wclpriceImpl(
   /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
   outIdx = 0;
   for (i = startIdx; i <= endIdx; i += 1) {
-    outReal[outIdx++] = (fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
+    outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;
@@ -369,7 +368,7 @@ export class WclpriceStream {
     const inLow = low;
     const inClose = close;
     let cur_outReal = 0;
-    cur_outReal = (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
+    cur_outReal = (inHigh + inLow + inClose * 2.0) / 4.0;
     return cur_outReal;
   }
 
@@ -394,7 +393,7 @@ export class WclpriceStream {
 }
 
 function wclpriceStepImpl(sp: WclpriceStream, inHigh: number, inLow: number, inClose: number): void {
-  sp.cur_outReal = (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
+  sp.cur_outReal = (inHigh + inLow + inClose * 2.0) / 4.0;
 }
 
 function wclpriceOpenImpl(
@@ -426,7 +425,7 @@ function wclpriceOpenImpl(
   /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
   outIdx = 0;
   for (i = startIdx; i <= endIdx; i += 1) {
-    outReal[((outIdx++ * outStride) | 0)] = (fma(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
+    outReal[((outIdx++ * outStride) | 0)] = (inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;

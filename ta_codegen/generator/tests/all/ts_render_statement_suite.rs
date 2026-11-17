@@ -1,7 +1,7 @@
 //! TypeScript statement rendering, one construct at a time, and the text gate
 //! over every generated module (H7, H8).
 
-use crate::common::{discover_indicators, load_enums, load_indicator, make_helpers, make_registry};
+use crate::common::{discover_indicators, exact_literal, fma_factors, load_enums, load_indicator, make_helpers, make_registry, sweep_filtered};
 use ta_codegen_lib::backends::ctype::CType;
 use ta_codegen_lib::backends::ts;
 use ta_codegen_lib::ir::{BinOp, Expr, Statement, VarType};
@@ -183,6 +183,47 @@ fn no_generated_module_spells_a_js_only_numeric_form() {
         modules += 1;
     }
     assert!(modules > 0, "VACUOUS: no module generated");
+}
+
+/// The two factors of each fused site of a module, called or copied in.
+fn ts_fma_factors(src: &str) -> Vec<(String, String)> {
+    let mut out = fma_factors(src, "fma(");
+    for line in src.lines() {
+        if let Some(rest) = line.trim_start().strip_prefix("const _a: number = ") {
+            let (a, rest) = rest.split_once(", _b: number = ").expect("a copied-in site names `_b`");
+            let (b, _) = rest.split_once(", _c: number = ").expect("a copied-in site names `_c`");
+            out.push((a.to_string(), b.to_string()));
+        }
+    }
+    out
+}
+
+/// A product by `2^k`, `k >= 1`, is exact, so TS renders that site as the
+/// plain multiply-add C's fused one rounds to; every other site keeps C's
+/// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
+/// sites in each of its four frames and fuses no other product in their
+/// place, which no value gate could see.
+#[test]
+fn ts_renders_an_exact_product_unfused() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    let mut sites = 0usize;
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let factors = ts_fma_factors(&ts::generate(&func, &enums, registry, helpers));
+        for (a, b) in &factors {
+            assert!(!exact_literal(a) && !exact_literal(b), "{name}: the site `{a} * {b}` fuses an exact product");
+        }
+        sites += factors.len();
+        match name.as_str() {
+            "wclprice" => assert!(factors.is_empty(), "wclprice: a fused site is left"),
+            "ht_trendline" => {
+                assert_eq!(factors.len(), 48 - 8, "ht_trendline: its fused sites but the 4.0 and 2.0 ones");
+                assert!(!factors.iter().any(|(a, b)| a == "3.0" || b == "3.0"), "ht_trendline: the 3.0 product took the exact one's place");
+            }
+            _ => {}
+        }
+    }
+    assert!(sweep_filtered() || sites >= 1000, "only {sites} fused sites");
 }
 
 /// H1: an expression the type pass cannot type stops generation; a default type

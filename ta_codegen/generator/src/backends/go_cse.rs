@@ -76,7 +76,7 @@ fn walk<'e>(e: &'e Expr, env: &TypeEnv, fs: Option<&FmaVarSets>, out: &mut Vec<&
         Expr::BinOp(l, BinOp::And | BinOp::Or, _) => walk(l, env, fs, out),
         Expr::BinOp(left, op, right) => {
             let fused = fma::EMIT_FMA.then_some(fs).flatten().and_then(|fs| {
-                fma::fuse_operands(left, op, right, &fs.view()).filter(|(x, y, _)| !super::go::exact_factor(x) && !super::go::exact_factor(y))
+                fma::fuse_inexact_operands(left, op, right, &fs.view())
             });
             let operands = match fused {
                 Some((x, y, addend)) => vec![x, y, addend],

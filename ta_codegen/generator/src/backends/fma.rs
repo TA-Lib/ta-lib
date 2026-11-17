@@ -444,3 +444,26 @@ pub fn fuse_operands<'e>(
     }
     None
 }
+
+/// [`fuse_operands`], declining a site whose product has an [`exact_factor`]:
+/// the plain multiply-add returns the fused bits. The site is declined, never
+/// re-asked without its exact product: that would fuse the other product of
+/// `a*b + c*d`, which C, whose detector stays [`fuse_operands`], leaves plain.
+pub fn fuse_inexact_operands<'e>(
+    left: &'e Expr,
+    op: &BinOp,
+    right: &'e Expr,
+    ctx: &FmaCtx,
+) -> Option<(&'e Expr, &'e Expr, &'e Expr)> {
+    fuse_operands(left, op, right, ctx).filter(|(a, b, _)| !exact_factor(a) && !exact_factor(b))
+}
+
+/// A literal `±2^k`, `k >= 1`: its product rounds nothing short of overflow.
+/// Not `2^-k`: that product rounds a subnormal.
+pub fn exact_factor(e: &Expr) -> bool {
+    match e {
+        Expr::Literal(v) => v.is_finite() && v.abs() >= 2.0 && v.abs().to_bits() & ((1u64 << 52) - 1) == 0,
+        Expr::Neg(x) => exact_factor(x),
+        _ => false,
+    }
+}

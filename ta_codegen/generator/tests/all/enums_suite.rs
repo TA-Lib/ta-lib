@@ -668,8 +668,9 @@ fn ts_resolve_call_agrees_with_the_emitted_function_names() {
 }
 
 /// TS fuses through the runtime `fma`, called or with its body copied in (whose
-/// one call is `fmaSlow`), at the sites `fma.rs` picks for every backend: the
-/// modules that do either are exactly the inventory.
+/// one call is `fmaSlow`), at the sites `fma.rs` picks for every backend but an
+/// exact product: the modules that do either are exactly the inventory but
+/// WCLPRICE, whose one site is exact.
 #[test]
 fn ts_fma_calls_fire_for_exactly_the_fusing_functions() {
     let registry = make_registry();
@@ -689,7 +690,7 @@ fn ts_fma_calls_fire_for_exactly_the_fusing_functions() {
     fused.sort();
     let mut want: Vec<String> = backends::fma::FUSING_INVENTORY
         .iter()
-        .filter(|s| common::swept(s))
+        .filter(|s| common::swept(s) && **s != "wclprice")
         .map(|s| (*s).to_string())
         .collect();
     want.sort();

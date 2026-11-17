@@ -447,6 +447,39 @@ pub fn contains_call(hay: &str, name: &str) -> bool {
     false
 }
 
+/// The two factors of each call of `needle` (its name and `(`) in `src`.
+pub fn fma_factors(src: &str, needle: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for (at, _) in src.match_indices(needle) {
+        if src[..at].chars().next_back().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_') {
+            continue;
+        }
+        let mut args = vec![String::new()];
+        let mut depth = 0i32;
+        for ch in src[at + needle.len()..].chars() {
+            match ch {
+                '(' => depth += 1,
+                ')' if depth == 0 => break,
+                ')' => depth -= 1,
+                ',' if depth == 0 => {
+                    args.push(String::new());
+                    continue;
+                }
+                _ => {}
+            }
+            args.last_mut().expect("an argument").push(ch);
+        }
+        assert_eq!(args.len(), 3, "`{needle}` takes three arguments: {args:?}");
+        out.push((args[0].trim().to_string(), args[1].trim().to_string()));
+    }
+    out
+}
+
+/// A rendered literal `±2^k`, `k >= 1`: a factor whose product is exact.
+pub fn exact_literal(a: &str) -> bool {
+    a.trim_start_matches('-').parse::<f64>().is_ok_and(|v| v >= 2.0 && v.to_bits() & ((1u64 << 52) - 1) == 0)
+}
+
 pub fn extract_section(output: &str, start_marker: &str, end_marker: &str) -> String {
     let start = output
         .find(start_marker)

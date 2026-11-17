@@ -651,7 +651,7 @@ impl<'a> TsCtx<'a> {
         let take = |x: &Expr, sites: &mut Vec<FmaSite>| Box::new(self.take_sites(x, fs, sites));
         match e {
             Expr::BinOp(left, op, right) => {
-                if let Some(operands) = fma::fuse_operands(left, op, right, fs) {
+                if let Some(operands) = fma::fuse_inexact_operands(left, op, right, fs) {
                     let a = *take(operands.0, sites);
                     let b = *take(operands.1, sites);
                     let c = *take(operands.2, sites);
@@ -813,7 +813,7 @@ fn count_fused_sites(stmts: &[Statement], fs: &fma::FmaCtx, counted: bool) -> us
     let mut sites_in = |e: &Expr| {
         crate::streaming::walk_expr(e, &mut |x| {
             if let Expr::BinOp(l, op, r) = x {
-                if fma::fuse_operands(l, op, r, fs).is_some() {
+                if fma::fuse_inexact_operands(l, op, r, fs).is_some() {
                     n += 1;
                 }
             }
@@ -2130,7 +2130,7 @@ impl ExprEmitter for TsExpr<'_> {
         let c = self.c;
         if fma::EMIT_FMA {
             if let Some(fs) = c.fma_sets() {
-                if let Some((a, b, cc)) = fma::fuse_operands(left, op, right, &fs.view()) {
+                if let Some((a, b, cc)) = fma::fuse_inexact_operands(left, op, right, &fs.view()) {
                     return format!("fma({}, {}, {})", c.num(a), c.num(b), c.num(cc));
                 }
             }

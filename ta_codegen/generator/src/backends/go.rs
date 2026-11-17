@@ -817,10 +817,7 @@ impl<'a> Ctx<'a> {
     fn binop(&self, l: &Expr, op: &BinOp, r: &Expr, sc: &mut Scope) -> (GExpr, CType) {
         if fma::EMIT_FMA {
             if let Some(fs) = self.fma_sets() {
-                // Decline the site and nothing else: re-asking the predicate
-                // without the exact product fuses the other product of
-                // `a*b + c*d`, where C's does not.
-                if let Some(operands) = fma::fuse_operands(l, op, r, &fs.view()).filter(|(a, b, _)| !exact_factor(a) && !exact_factor(b)) {
+                if let Some(operands) = fma::fuse_inexact_operands(l, op, r, &fs.view()) {
                     let args = [operands.0, operands.1, operands.2].iter().map(|x| self.lower_as(x, CType::Real, sc)).collect();
                     return (GExpr::call("math.FMA", args), CType::Real);
                 }
@@ -1665,7 +1662,7 @@ impl<'a> Ctx<'a> {
         let int_expr = |e: &Expr| self.env.type_of(e).numeric() == CType::Int32;
         let fused = |e: &Expr| {
             let Expr::BinOp(l, op, r) = e else { return false };
-            fma::EMIT_FMA && self.fma_sets().is_some_and(|fs| fma::fuse_operands(l, op, r, &fs.view()).is_some_and(|(a, b, _)| !exact_factor(a) && !exact_factor(b)))
+            fma::EMIT_FMA && self.fma_sets().is_some_and(|fs| fma::fuse_inexact_operands(l, op, r, &fs.view()).is_some())
         };
         f(&super::go_lockstep::Env {
             int_local: &int_local,
@@ -2715,18 +2712,6 @@ fn math_name(mf: MathFn) -> &'static str {
         MathFn::Log10 => "Log10",
         MathFn::Abs => "Abs",
         MathFn::Max | MathFn::Min => unreachable!("rendered as a select"),
-    }
-}
-
-/// A literal `±2^k`, `k >= 1`: its product rounds nothing short of overflow,
-/// so the plain multiply-add returns the fused bits without `math.FMA`'s
-/// per-call CPU test at GOAMD64=v1. Not `2^-k`: that product rounds a
-/// subnormal.
-pub(super) fn exact_factor(e: &Expr) -> bool {
-    match e {
-        Expr::Literal(v) => v.is_finite() && v.abs() >= 2.0 && v.abs().to_bits() & ((1u64 << 52) - 1) == 0,
-        Expr::Neg(x) => exact_factor(x),
-        _ => false,
     }
 }
 

@@ -342,10 +342,11 @@ fn clone_deep_copies_every_buffer_and_sub_stream() {
     assert!(common::sweep_filtered() || subs >= 30, "only {subs} sub-stream fields seen");
 }
 
-/// The stream fuses `a*b+c` exactly where Java's does (H9, H10): the same
-/// analysis, and the `sp.` / `cur_` prefixes `fma::stream_base` strips. Any
-/// other spelling moves a site by an ulp with nothing else pointing at it. A
-/// site with `fma`'s body copied in makes one `fmaSlow` call.
+/// The stream fuses `a*b+c` exactly where Java's does but at an exact
+/// product, which it leaves plain (H9, H10): the same analysis, and the `sp.` /
+/// `cur_` prefixes `fma::stream_base` strips. Any other spelling moves a site by
+/// an ulp with nothing else pointing at it. A site with `fma`'s body copied in
+/// makes one `fmaSlow` call.
 #[test]
 fn the_stream_fuses_where_java_s_does() {
     let registry = common::make_registry();
@@ -404,7 +405,8 @@ fn the_stream_fuses_where_java_s_does() {
             sinks_fusing += usize::from(!fused_set(&sink).is_empty());
             ts = ts.replacen(&sink, "", 1);
         }
-        let (t, j) = (fused_call(&ts, "fma(") + fused_call(&ts, "fmaSlow("), fused_call(&java, "Math.fma("));
+        let inexact = common::fma_factors(&java, "Math.fma(").iter().filter(|(a, b)| !common::exact_literal(a) && !common::exact_literal(b)).count();
+        let (t, j) = (fused_call(&ts, "fma(") + fused_call(&ts, "fmaSlow("), inexact);
         assert_eq!(t, j, "{name}: the TS stream fuses {t} sites, Java's {j}");
         fusing += usize::from(t > 0);
     }

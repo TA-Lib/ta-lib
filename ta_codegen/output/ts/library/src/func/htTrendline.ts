@@ -610,39 +610,7 @@ export function htTrendlineImpl(
     if (DCPeriodInt > 0) {
       tempReal = tempReal / DCPeriodInt;
     }
-    let _fma10: number;
-    {
-      const _a: number = 4.0, _b: number = tempReal, _c: number = 3.0 * iTrend1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma10 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma11: number;
-    {
-      const _a: number = 2.0, _b: number = iTrend2, _c: number = _fma10;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma11 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    tempReal2 = (_fma11 + iTrend3) / 10.0;
+    tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
     iTrend3 = iTrend2;
     iTrend2 = iTrend1;
     iTrend1 = tempReal;
@@ -1359,39 +1327,7 @@ export class HtTrendlineStream {
     if (DCPeriodInt > 0) {
       tempReal = tempReal / DCPeriodInt;
     }
-    let _fma10: number;
-    {
-      const _a: number = 4.0, _b: number = tempReal, _c: number = 3.0 * iTrend1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma10 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma11: number;
-    {
-      const _a: number = 2.0, _b: number = iTrend2, _c: number = _fma10;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma11 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    tempReal2 = (_fma11 + iTrend3) / 10.0;
+    tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
     iTrend3 = iTrend2;
     iTrend2 = iTrend1;
     iTrend1 = tempReal;
@@ -1668,7 +1604,7 @@ function htTrendlineStepImpl(sp: HtTrendlineStream, inReal: number): void {
     sp.I1ForEvenPrev2 = detrender;
   }
   /* Adjust the period for next price bar */
-  let _fma17: number;
+  let _fma15: number;
   {
     const _a: number = I2, _b: number = sp.prevI2, _c: number = Q2 * sp.prevQ2;
     const _p = _a * _b;
@@ -1680,12 +1616,12 @@ function htTrendlineStepImpl(sp: HtTrendlineStream, inReal: number): void {
     const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
     const _v = _tl + _pl, _v2 = _v + _v;
     const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    _fma17 = _w && (_pl === 0 || _v === 0) ? _th
+    _fma15 = _w && (_pl === 0 || _v === 0) ? _th
       : _w && _v2 !== (_th + _v2) - _th ? _th + _v
       : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
   }
   {
-    const _a: number = 0.8, _b: number = sp.Re, _c: number = 0.2 * _fma17;
+    const _a: number = 0.8, _b: number = sp.Re, _c: number = 0.2 * _fma15;
     const _p = _a * _b;
     let _t = 134217729 * _a;
     const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1792,39 +1728,7 @@ function htTrendlineStepImpl(sp: HtTrendlineStream, inReal: number): void {
   if (DCPeriodInt > 0) {
     tempReal = tempReal / DCPeriodInt;
   }
-  let _fma22: number;
-  {
-    const _a: number = 4.0, _b: number = tempReal, _c: number = 3.0 * sp.iTrend1;
-    const _p = _a * _b;
-    let _t = 134217729 * _a;
-    const _ah = _t - (_t - _a), _al = _a - _ah;
-    _t = 134217729 * _b;
-    const _bh = _t - (_t - _b), _bl = _b - _bh;
-    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-    const _v = _tl + _pl, _v2 = _v + _v;
-    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    _fma22 = _w && (_pl === 0 || _v === 0) ? _th
-      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-  }
-  let _fma23: number;
-  {
-    const _a: number = 2.0, _b: number = sp.iTrend2, _c: number = _fma22;
-    const _p = _a * _b;
-    let _t = 134217729 * _a;
-    const _ah = _t - (_t - _a), _al = _a - _ah;
-    _t = 134217729 * _b;
-    const _bh = _t - (_t - _b), _bl = _b - _bh;
-    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-    const _v = _tl + _pl, _v2 = _v + _v;
-    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    _fma23 = _w && (_pl === 0 || _v === 0) ? _th
-      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-  }
-  tempReal2 = (_fma23 + sp.iTrend3) / 10.0;
+  tempReal2 = (4.0 * tempReal + 3.0 * sp.iTrend1 + 2.0 * sp.iTrend2 + sp.iTrend3) / 10.0;
   sp.iTrend3 = sp.iTrend2;
   sp.iTrend2 = sp.iTrend1;
   sp.iTrend1 = tempReal;
@@ -2240,7 +2144,7 @@ function htTrendlineOpenImpl(
       I1ForEvenPrev2 = detrender;
     }
     /* Adjust the period for next price bar */
-    let _fma29: number;
+    let _fma25: number;
     {
       const _a: number = I2, _b: number = prevI2, _c: number = Q2 * prevQ2;
       const _p = _a * _b;
@@ -2252,12 +2156,12 @@ function htTrendlineOpenImpl(
       const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
       const _v = _tl + _pl, _v2 = _v + _v;
       const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma29 = _w && (_pl === 0 || _v === 0) ? _th
+      _fma25 = _w && (_pl === 0 || _v === 0) ? _th
         : _w && _v2 !== (_th + _v2) - _th ? _th + _v
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
     {
-      const _a: number = 0.8, _b: number = Re, _c: number = 0.2 * _fma29;
+      const _a: number = 0.8, _b: number = Re, _c: number = 0.2 * _fma25;
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -2364,39 +2268,7 @@ function htTrendlineOpenImpl(
     if (DCPeriodInt > 0) {
       tempReal = tempReal / DCPeriodInt;
     }
-    let _fma34: number;
-    {
-      const _a: number = 4.0, _b: number = tempReal, _c: number = 3.0 * iTrend1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma34 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma35: number;
-    {
-      const _a: number = 2.0, _b: number = iTrend2, _c: number = _fma34;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma35 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    tempReal2 = (_fma35 + iTrend3) / 10.0;
+    tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
     iTrend3 = iTrend2;
     iTrend2 = iTrend1;
     iTrend1 = tempReal;

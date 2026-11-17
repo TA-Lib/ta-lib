@@ -169,7 +169,7 @@ export function swakButterImpl(
     x0 = inReal[today];
     let _fma0: number;
     {
-      const _a: number = 2.0, _b: number = x1, _c: number = x0;
+      const _a: number = a2, _b: number = y2, _c: number = c0 * (x0 + 2.0 * x1 + x2);
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -183,24 +183,8 @@ export function swakButterImpl(
         : _w && _v2 !== (_th + _v2) - _th ? _th + _v
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
-    let _fma1: number;
     {
-      const _a: number = a2, _b: number = y2, _c: number = c0 * (_fma0 + x2);
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = a1, _b: number = y1, _c: number = _fma1;
+      const _a: number = a1, _b: number = y1, _c: number = _fma0;
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -229,9 +213,9 @@ export function swakButterImpl(
      * bit moves with it.
      */
     x0 = inReal[today];
-    let _fma3: number;
+    let _fma2: number;
     {
-      const _a: number = 2.0, _b: number = x1, _c: number = x0;
+      const _a: number = a2, _b: number = y2, _c: number = c0 * (x0 + 2.0 * x1 + x2);
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -241,28 +225,12 @@ export function swakButterImpl(
       const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
       const _v = _tl + _pl, _v2 = _v + _v;
       const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma3 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma4: number;
-    {
-      const _a: number = a2, _b: number = y2, _c: number = c0 * (_fma3 + x2);
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma4 = _w && (_pl === 0 || _v === 0) ? _th
+      _fma2 = _w && (_pl === 0 || _v === 0) ? _th
         : _w && _v2 !== (_th + _v2) - _th ? _th + _v
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
     {
-      const _a: number = a1, _b: number = y1, _c: number = _fma4;
+      const _a: number = a1, _b: number = y1, _c: number = _fma2;
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -597,53 +565,7 @@ export class SwakButterStream {
      * bit moves with it.
      */
     x0 = inReal;
-    let _fma0: number;
-    {
-      const _a: number = 2.0, _b: number = x1, _c: number = x0;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma0 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma1: number;
-    {
-      const _a: number = sp.a2, _b: number = y2, _c: number = sp.c0 * (_fma0 + x2);
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = sp.a1, _b: number = y1, _c: number = _fma1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      y = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
+    y = fma(sp.a1, y1, fma(sp.a2, y2, sp.c0 * (x0 + 2.0 * x1 + x2)));
     x2 = x1;
     x1 = x0;
     y2 = y1;
@@ -689,53 +611,7 @@ function swakButterStepImpl(sp: SwakButterStream, inReal: number): void {
    * bit moves with it.
    */
   x0 = inReal;
-  let _fma3: number;
-  {
-    const _a: number = 2.0, _b: number = sp.x1, _c: number = x0;
-    const _p = _a * _b;
-    let _t = 134217729 * _a;
-    const _ah = _t - (_t - _a), _al = _a - _ah;
-    _t = 134217729 * _b;
-    const _bh = _t - (_t - _b), _bl = _b - _bh;
-    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-    const _v = _tl + _pl, _v2 = _v + _v;
-    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    _fma3 = _w && (_pl === 0 || _v === 0) ? _th
-      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-  }
-  let _fma4: number;
-  {
-    const _a: number = sp.a2, _b: number = sp.y2, _c: number = sp.c0 * (_fma3 + sp.x2);
-    const _p = _a * _b;
-    let _t = 134217729 * _a;
-    const _ah = _t - (_t - _a), _al = _a - _ah;
-    _t = 134217729 * _b;
-    const _bh = _t - (_t - _b), _bl = _b - _bh;
-    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-    const _v = _tl + _pl, _v2 = _v + _v;
-    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    _fma4 = _w && (_pl === 0 || _v === 0) ? _th
-      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-  }
-  {
-    const _a: number = sp.a1, _b: number = sp.y1, _c: number = _fma4;
-    const _p = _a * _b;
-    let _t = 134217729 * _a;
-    const _ah = _t - (_t - _a), _al = _a - _ah;
-    _t = 134217729 * _b;
-    const _bh = _t - (_t - _b), _bl = _b - _bh;
-    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-    const _v = _tl + _pl, _v2 = _v + _v;
-    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-    y = _w && (_pl === 0 || _v === 0) ? _th
-      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-  }
+  y = fma(sp.a1, sp.y1, fma(sp.a2, sp.y2, sp.c0 * (x0 + 2.0 * sp.x1 + sp.x2)));
   sp.x2 = sp.x1;
   sp.x1 = x0;
   sp.y2 = sp.y1;
@@ -828,9 +704,9 @@ function swakButterOpenImpl(
   i = lookbackTotal;
   while (i !== 0) {
     x0 = inReal[today];
-    let _fma6: number;
+    let _fma0: number;
     {
-      const _a: number = 2.0, _b: number = x1, _c: number = x0;
+      const _a: number = a2, _b: number = y2, _c: number = c0 * (x0 + 2.0 * x1 + x2);
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -840,28 +716,12 @@ function swakButterOpenImpl(
       const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
       const _v = _tl + _pl, _v2 = _v + _v;
       const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma6 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma7: number;
-    {
-      const _a: number = a2, _b: number = y2, _c: number = c0 * (_fma6 + x2);
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma7 = _w && (_pl === 0 || _v === 0) ? _th
+      _fma0 = _w && (_pl === 0 || _v === 0) ? _th
         : _w && _v2 !== (_th + _v2) - _th ? _th + _v
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
     {
-      const _a: number = a1, _b: number = y1, _c: number = _fma7;
+      const _a: number = a1, _b: number = y1, _c: number = _fma0;
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -890,9 +750,9 @@ function swakButterOpenImpl(
      * bit moves with it.
      */
     x0 = inReal[today];
-    let _fma9: number;
+    let _fma2: number;
     {
-      const _a: number = 2.0, _b: number = x1, _c: number = x0;
+      const _a: number = a2, _b: number = y2, _c: number = c0 * (x0 + 2.0 * x1 + x2);
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -902,28 +762,12 @@ function swakButterOpenImpl(
       const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
       const _v = _tl + _pl, _v2 = _v + _v;
       const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma9 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    let _fma10: number;
-    {
-      const _a: number = a2, _b: number = y2, _c: number = c0 * (_fma9 + x2);
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      _fma10 = _w && (_pl === 0 || _v === 0) ? _th
+      _fma2 = _w && (_pl === 0 || _v === 0) ? _th
         : _w && _v2 !== (_th + _v2) - _th ? _th + _v
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
     {
-      const _a: number = a1, _b: number = y1, _c: number = _fma10;
+      const _a: number = a1, _b: number = y1, _c: number = _fma2;
       const _p = _a * _b;
       let _t = 134217729 * _a;
       const _ah = _t - (_t - _a), _al = _a - _ah;

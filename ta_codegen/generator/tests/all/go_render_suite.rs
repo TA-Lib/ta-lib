@@ -480,31 +480,6 @@ fn go_a_loop_on_an_arm_of_a_bar_loop_is_not_re_sliced() {
     assert!(common::sweep_filtered() || sites >= 55, "only {sites} loops on an arm of a loop keep their checks");
 }
 
-/// The factors of each `math.FMA(` call in `src`.
-fn fma_factors(src: &str) -> Vec<(String, String)> {
-    let mut out = Vec::new();
-    for (at, _) in src.match_indices("math.FMA(") {
-        let mut args = vec![String::new()];
-        let mut depth = 0i32;
-        for ch in src[at + "math.FMA(".len()..].chars() {
-            match ch {
-                '(' => depth += 1,
-                ')' if depth == 0 => break,
-                ')' => depth -= 1,
-                ',' if depth == 0 => {
-                    args.push(String::new());
-                    continue;
-                }
-                _ => {}
-            }
-            args.last_mut().expect("an argument").push(ch);
-        }
-        assert_eq!(args.len(), 3, "`math.FMA` takes three arguments: {args:?}");
-        out.push((args[0].trim().to_string(), args[1].trim().to_string()));
-    }
-    out
-}
-
 /// A product by `2^k`, `k >= 1`, is exact, so Go renders that site as the
 /// plain multiply-add C's fused one rounds to; every other site keeps C's
 /// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
@@ -513,13 +488,12 @@ fn fma_factors(src: &str) -> Vec<(String, String)> {
 #[test]
 fn go_renders_an_exact_product_unfused() {
     let (registry, helpers) = (common::make_registry(), common::make_helpers());
-    let exact = |a: &str| a.trim_start_matches('-').parse::<f64>().is_ok_and(|v| v >= 2.0 && v.to_bits() & ((1u64 << 52) - 1) == 0);
     let mut sites = 0usize;
     for name in common::discover_indicators() {
         let (func, enums) = common::load_indicator(&name);
         let src = backends::go::generate(&func, &enums, registry, helpers);
-        for (a, b) in fma_factors(&src) {
-            assert!(!exact(&a) && !exact(&b), "{name}: `math.FMA({a}, {b}, ..)` fuses an exact product");
+        for (a, b) in common::fma_factors(&src, "math.FMA(") {
+            assert!(!common::exact_literal(&a) && !common::exact_literal(&b), "{name}: `math.FMA({a}, {b}, ..)` fuses an exact product");
             sites += 1;
         }
         match name.as_str() {
