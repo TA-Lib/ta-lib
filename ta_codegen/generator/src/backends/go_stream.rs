@@ -1083,18 +1083,21 @@ fn step_body(
     };
     let transition = streaming::build_transition(model, names).unwrap_or_else(|e| panic!("streaming transition: {e}"));
     assert!(tape.is_none() || !has_return(&transition), "{}: a tape step cannot render an early exit", model.func.name);
-    let (locals, transition) = match localize_step(em.func, &transition, fields) {
-        Some((locals, body)) => (locals, body),
-        None => (Vec::new(), transition),
-    };
-    let types: HashMap<&str, &Field> = fields.iter().map(|f| (f.name.as_str(), f)).collect();
-    for name in &locals {
-        out.push(format!("var {} {}", go_ident(name), types[name.as_str()].go_ty));
-    }
+    let transition = localized_step(em.func, transition, fields, &mut out);
     let ctx = em.frame_ctx(&transition, fields, Some(model), step_settings, tape.is_some(), Ret::Code);
     ctx.update_frame.set(true);
     out.extend(render(&ctx, &transition));
     out
+}
+
+/// [`localize_step`] applied to `transition`, its locals declared into `out`.
+fn localized_step(func: &FuncDef, transition: Vec<Statement>, fields: &[Field], out: &mut Vec<String>) -> Vec<Statement> {
+    let Some((locals, body)) = localize_step(func, &transition, fields) else { return transition };
+    let types: HashMap<&str, &Field> = fields.iter().map(|f| (f.name.as_str(), f)).collect();
+    for name in &locals {
+        out.push(format!("var {} {}", go_ident(name), types[name.as_str()].go_ty));
+    }
+    body
 }
 
 /// The step with each loop on locals: every field a loop mentions is loaded
@@ -3023,6 +3026,7 @@ fn composed_step(
         } else {
             b.extend(settings_snapshot(step_settings));
             let transition = streaming::build_transition(model, &names).unwrap_or_else(|e| panic!("streaming transition: {e}"));
+            let transition = localized_step(func, transition, fields, &mut b.lines);
             let ctx = em.frame_ctx(&transition, fields, Some(model), step_settings, false, ret);
             ctx.update_frame.set(!frame);
             declare_composed(&ctx);

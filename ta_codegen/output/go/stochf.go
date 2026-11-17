@@ -380,6 +380,15 @@ func (sp *STOCHFStream) Update(inHigh, inLow, inClose float64) (float64, float64
 	var cur_tempBuffer float64
 	var cur_outFastD float64
 	var subErr error
+	var i int32
+	var lowest float64
+	var lowestIdx int32
+	var today int32
+	var xMask int32
+	var x_inLow []float64
+	var highest float64
+	var highestIdx int32
+	var x_inHigh []float64
 	sp.x_inHigh[sp.today&sp.xMask] = inHigh
 	sp.x_inLow[sp.today&sp.xMask] = inLow
 	sp.x_inClose[sp.today&sp.xMask] = inClose
@@ -388,19 +397,28 @@ func (sp *STOCHFStream) Update(inHigh, inLow, inClose float64) (float64, float64
 		sp.lowestIdx = sp.trailingIdx
 		sp.lowest = sp.x_inLow[sp.lowestIdx&sp.xMask]
 		sp.i = sp.lowestIdx
-		sp.i++
+		i = sp.i
+		lowest = sp.lowest
+		lowestIdx = sp.lowestIdx
+		today = sp.today
+		xMask = sp.xMask
+		x_inLow = sp.x_inLow
+		i++
 	scan2:
-		if sp.i <= sp.today {
-			tmp = sp.x_inLow[sp.i&sp.xMask]
-			if tmp < sp.lowest {
-				sp.lowestIdx = sp.i
-				sp.lowest = tmp
-				sp.i++
+		if i <= today {
+			tmp = x_inLow[i&xMask]
+			if tmp < lowest {
+				lowestIdx = i
+				lowest = tmp
+				i++
 				goto scan2
 			}
-			sp.i++
+			i++
 			goto scan2
 		}
+		sp.i = i
+		sp.lowest = lowest
+		sp.lowestIdx = lowestIdx
 	} else if tmp <= sp.lowest {
 		sp.lowestIdx = sp.today
 		sp.lowest = tmp
@@ -410,19 +428,28 @@ func (sp *STOCHFStream) Update(inHigh, inLow, inClose float64) (float64, float64
 		sp.highestIdx = sp.trailingIdx
 		sp.highest = sp.x_inHigh[sp.highestIdx&sp.xMask]
 		sp.i = sp.highestIdx
-		sp.i++
+		highest = sp.highest
+		highestIdx = sp.highestIdx
+		i = sp.i
+		today = sp.today
+		xMask = sp.xMask
+		x_inHigh = sp.x_inHigh
+		i++
 	scan3:
-		if sp.i <= sp.today {
-			tmp = sp.x_inHigh[sp.i&sp.xMask]
-			if tmp > sp.highest {
-				sp.highestIdx = sp.i
-				sp.highest = tmp
-				sp.i++
+		if i <= today {
+			tmp = x_inHigh[i&xMask]
+			if tmp > highest {
+				highestIdx = i
+				highest = tmp
+				i++
 				goto scan3
 			}
-			sp.i++
+			i++
 			goto scan3
 		}
+		sp.highest = highest
+		sp.highestIdx = highestIdx
+		sp.i = i
 	} else if tmp >= sp.highest {
 		sp.highestIdx = sp.today
 		sp.highest = tmp

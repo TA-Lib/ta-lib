@@ -1,6 +1,7 @@
 //! The Go emitter's refusals and lowerings on bodies no shipped indicator has.
 
 use crate::common;
+use std::collections::BTreeSet;
 use ta_codegen_lib::backends;
 
 /// CDLHIGHWAVE's signature over a loop whose store reads `ta_uppershadow`, a
@@ -770,9 +771,39 @@ fn go_stream_update_scans_take_their_own_back_edge() {
     }
     let mut rewritten = 0usize;
     for name in common::discover_indicators() {
-        rewritten += back_edge_scans(&source(&name)).len();
+        let scans = back_edge_scans(&source(&name));
+        for (_, label, block) in &scans {
+            assert!(!block.iter().any(|l| l.contains("sp.")), "{name}: {label} reads the handle:\n{}", block.join("\n"));
+        }
+        rewritten += scans.len();
     }
     assert!(rewritten >= 94, "only {rewritten} stream rescans take their own back edge");
+}
+
+/// A composed frame's rescan runs on locals as a plain frame's does: STOCH's
+/// Update renders its producer beside owned sub-streams, loads each field its
+/// scans name ahead of the label, and stores back right after the scan only
+/// the fields it writes.
+#[test]
+fn go_a_composed_update_rescans_on_locals() {
+    let (func, enums) = common::load_indicator("stoch");
+    let src = backends::go::generate(&func, &enums, common::make_registry(), common::make_helpers());
+    let body = go_body(&src, "func (sp *STOCHStream) Update(");
+    assert!(body.contains("sp.sub0.Update(") && body.contains("sp.sub1.Update("), "STOCH's Update is not composed:\n{body}");
+    let lines: Vec<&str> = body.lines().collect();
+    let scans = back_edge_scans(body);
+    assert_eq!(scans.len(), 2, "one label per rescan:\n{body}");
+    for ((_, label, block), (best, ring)) in scans.iter().zip([("lowest", "x_inLow"), ("highest", "x_inHigh")]) {
+        assert!(!block.iter().any(|l| l.contains("sp.")), "{label} reads the handle:\n{body}");
+        let at = lines.iter().position(|l| l.trim() == format!("{label}:")).expect("the label");
+        let loads: BTreeSet<String> = lines[..at].iter().rev().skip(1).map(|l| l.trim().to_string()).take_while(|l| l.split_once(" = sp.").is_some_and(|(a, b)| a == b)).collect();
+        let want: BTreeSet<String> = ["i", best, format!("{best}Idx").as_str(), "today", "xMask", ring].iter().map(|f| format!("{f} = sp.{f}")).collect();
+        assert_eq!(loads, want, "{label} does not load its fields ahead of it:\n{body}");
+        let after = at + block.len() + 1;
+        let stores: BTreeSet<String> = lines[after..].iter().map(|l| l.trim().to_string()).take_while(|l| l.strip_prefix("sp.").and_then(|r| r.split_once(" = ")).is_some_and(|(a, b)| a == b)).collect();
+        let want: BTreeSet<String> = ["i", best, format!("{best}Idx").as_str()].iter().map(|f| format!("sp.{f} = {f}")).collect();
+        assert_eq!(stores, want, "{label} does not store back exactly what it writes:\n{body}");
+    }
 }
 
 /// An update scan whose comparison renders as a select keeps its step inside
