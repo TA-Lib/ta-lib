@@ -527,7 +527,7 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     };
     let params_end = params_start + close_rel;
     let body_start = params_end + sig_close.len();
-    // Only the *body* decides (site selection lives in fma::fuse_operands;
+    // Only the *body* decides (site selection lives in fma::fuse_inexact_operands;
     // `FMA_CALL` in the rendered body is its footprint) — a mention in the
     // doc comment alone must not dispatch.
     if !text[body_start..].contains(FMA_CALL) {
@@ -4592,7 +4592,7 @@ fn wrap_cast(operand: &str, ty: &str) -> String {
 }
 
 /// Render an `Expr::BinOp` to Rust, including the FMA fusion (via the shared
-/// [`fma::fuse_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
+/// [`fma::fuse_inexact_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
 /// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
 /// by [`RustExpr::binop`].
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
@@ -4608,7 +4608,7 @@ fn render_binop(
     // Fused multiply-add: (a * b) + c → fmadd!(a as f64, b, c). Emits ARM
     // fmadd (1 FP op) vs fmul+fadd (2 FP ops), IEEE-754 correctly-rounded so it
     // matches the C `fma()` / Java `Math.fma` the other backends emit at the same
-    // sites (site selection lives in `fma::fuse_operands`, shared by all backends).
+    // sites, but an exact product, left plain (`fma::fuse_inexact_operands`).
     // Never in a lookback body: C, Java and C# all pass `fma: None` there
     // ("pure integer index arithmetic", c.rs), so fusing only in Rust would
     // give one backend a different lookback — an outBegIdx/length divergence,
@@ -4616,7 +4616,7 @@ fn render_binop(
     // `real_vars` was too and the detector could never fire; populating it is
     // what made this reachable.
     if fma::EMIT_FMA && !ctx.is_lookback {
-        if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &ctx.fma_view()) {
+        if let Some((a, b, c)) = fma::fuse_inexact_operands(left, op, right, &ctx.fma_view()) {
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
             let c_str = render_expr(c, ctx, opt_real_params, registry, helpers);

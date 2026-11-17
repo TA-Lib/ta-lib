@@ -615,7 +615,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -1088,7 +1088,7 @@ impl Core {
         } else {
             cold_arm();
         }
-        trendline = (fmadd!(2.0 as f64, sp.iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+        trendline = (4.0 * tempReal + 3.0 * sp.iTrend1 + 2.0 * sp.iTrend2 + sp.iTrend3) / 10.0;
         sp.iTrend3 = sp.iTrend2;
         sp.iTrend2 = sp.iTrend1;
         sp.iTrend1 = tempReal;
@@ -1598,7 +1598,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -2128,7 +2128,7 @@ impl HtTrendmodeStream {
             } else {
                 cold_arm();
             }
-            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             // Compute the trend Mode , and assume trend by default
             trend = 1;
             // Measure days in trend from last crossing of the SineWave Indicator lines

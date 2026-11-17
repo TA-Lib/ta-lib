@@ -2733,6 +2733,35 @@ fn rust_macd_output_loops_run_as_counted_windows() {
     }
 }
 
+/// A product by `2^k`, `k >= 1`, is exact, so Rust renders that site as the
+/// plain multiply-add C's fused one rounds to; every other site keeps C's
+/// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
+/// sites in each of its four frames and fuses no other product in their
+/// place, which no value gate could see.
+#[test]
+fn rust_renders_an_exact_product_unfused() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    let mut sites = 0usize;
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let factors = common::fma_factors(&backends::rust_lang::generate(&func, &enums, registry, helpers), backends::rust_lang::FMA_CALL);
+        let factors: Vec<(&str, &str)> = factors.iter().map(|(a, b)| (a.trim_end_matches(" as f64"), b.as_str())).collect();
+        for (a, b) in &factors {
+            assert!(!common::exact_literal(a) && !common::exact_literal(b), "{name}: `fmadd!({a}, {b}, ..)` fuses an exact product");
+        }
+        sites += factors.len();
+        match name.as_str() {
+            "wclprice" => assert!(factors.is_empty(), "wclprice: a fused site is left"),
+            "ht_trendline" => {
+                assert_eq!(factors.len(), 48 - 8, "ht_trendline: its fused sites but the 4.0 and 2.0 ones");
+                assert!(!factors.iter().any(|(a, b)| *a == "3.0" || *b == "3.0"), "ht_trendline: the 3.0 product took the exact one's place");
+            }
+            _ => {}
+        }
+    }
+    assert!(common::sweep_filtered() || sites >= 1000, "only {sites} fused sites");
+}
+
 /// A candlestick's main loop that reads through a trailing index runs over
 /// windows (#442): the reads of its pattern test sit in `&&` chains and helper
 /// arms, so the windows are cut with `get`, while what the pattern's arms read

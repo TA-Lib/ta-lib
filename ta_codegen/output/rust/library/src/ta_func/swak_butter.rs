@@ -236,7 +236,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -255,7 +255,7 @@ impl Core {
                 // is one fused step. Nested inside, it is three, and every backend's last
                 // bit moves with it.
                 x0 = _w0[_wk];
-                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -419,7 +419,6 @@ struct SwakButterStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    #[inline(always)]
     fn swak_butter_step_impl(sp: &mut SwakButterStreamState, inReal: f64, outReal: &mut f64) {
         let mut x0: f64 = 0.0_f64;
         let mut y: f64 = 0.0_f64;
@@ -428,7 +427,7 @@ impl Core {
         // is one fused step. Nested inside, it is three, and every backend's last
         // bit moves with it.
         x0 = inReal;
-        y = fmadd!(sp.a1, sp.y1, fmadd!(sp.a2, sp.y2, sp.c0 * (fmadd!(2.0 as f64, sp.x1, x0) + sp.x2)));
+        y = fmadd!(sp.a1, sp.y1, fmadd!(sp.a2, sp.y2, sp.c0 * (x0 + 2.0 * sp.x1 + sp.x2)));
         sp.x2 = sp.x1;
         sp.x1 = x0;
         sp.y2 = sp.y1;
@@ -532,7 +531,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -547,7 +546,7 @@ impl Core {
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
             x0 = inReal[today];
-            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -701,20 +700,6 @@ impl SwakButterStream {
     /// out of index domain and only a shorter history can start a new one.
     #[doc(alias = "TA_SWAK_BUTTER_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, update_fma, update_scalar, (inReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.update_scalar(inReal)
-    }
-
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn update_fma(&mut self, inReal: f64) -> Result<f64, RetCode> {
-        self.update_scalar(inReal)
-    }
-
-    #[inline(always)]
-    fn update_scalar(&mut self, inReal: f64) -> Result<f64, RetCode> {
         if self.out.beg_idx + self.out.count > Core::INDEX_MAX {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -759,7 +744,7 @@ impl SwakButterStream {
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
             x0 = inReal;
-            y = fmadd!(sp.a1, y1, fmadd!(sp.a2, y2, sp.c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
+            y = fmadd!(sp.a1, y1, fmadd!(sp.a2, y2, sp.c0 * (x0 + 2.0 * x1 + x2)));
             *outReal = y;
         }
         Ok(outReal)

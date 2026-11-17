@@ -593,7 +593,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -638,7 +638,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -691,7 +691,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -740,7 +740,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -985,7 +985,6 @@ struct KstStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    #[inline(always)]
     fn kst_step_impl(sp: &mut KstStreamState, inReal: f64, outKST: &mut f64, outKSTSignal: &mut f64) {
         let mut prior: f64 = 0.0_f64;
         let mut roc: f64 = 0.0_f64;
@@ -1051,7 +1050,7 @@ impl Core {
             sp.ring4_Idx = 0;
         }
         sp.total4 -= sp.cb_ring4[sp.ring4_Idx];
-        kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+        kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
         sp.sigTotal += kst;
         sig = sp.sigTotal / (sp.optInSignalPeriod as f64);
         sp.cb_sigRing[sp.sigRing_Idx] = kst;
@@ -1337,7 +1336,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+            kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
             sigTotal += kst;
             sigRing[sigRing_Idx] = kst;
             sigRing_Idx += 1;
@@ -1382,7 +1381,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+            kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
             sigTotal += kst;
             sig = sigTotal / (optInSignalPeriod as f64);
             sigRing[sigRing_Idx] = kst;
@@ -1631,20 +1630,6 @@ impl KstStream {
     /// out of index domain and only a shorter history can start a new one.
     #[doc(alias = "TA_KST_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, update_fma, update_scalar, (inReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.update_scalar(inReal)
-    }
-
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn update_fma(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
-        self.update_scalar(inReal)
-    }
-
-    #[inline(always)]
-    fn update_scalar(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
         if self.out.beg_idx + self.out.count > Core::INDEX_MAX {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -1734,7 +1719,7 @@ impl KstStream {
             roc = if prior != 0.0 { (inReal / prior - 1.0) * 100.0 } else { 0.0 };
             total4 += roc;
             rcma4 = total4 / (sp.optInSMA4Period as f64);
-            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
+            kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
             sigTotal += kst;
             sig = sigTotal / (sp.optInSignalPeriod as f64);
             *outKST = kst;

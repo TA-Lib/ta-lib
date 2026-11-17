@@ -700,8 +700,8 @@ fn ts_fma_calls_fire_for_exactly_the_fusing_functions() {
 /// Issue #156: the runtime FMA dispatch trio (public dispatcher +
 /// `#[target_feature(enable = "fma")]` clone + `#[inline(always)]` `_impl`)
 /// must be emitted for exactly the functions whose rendered body fuses — this
-/// is the exact-set half of the pair `fma_suite.rs` also lists — and never
-/// elsewhere.
+/// is the exact-set half of the pair `fma_suite.rs` also lists, but WCLPRICE,
+/// whose one site is exact — and never elsewhere.
 /// Guards both directions: the dispatch silently going dark, and accidental
 /// dispatch of unfused functions.
 #[test]
@@ -755,7 +755,7 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
     dispatched.sort();
     assert_eq!(
         dispatched,
-        fusing.iter().copied().filter(|n| common::swept(n)).collect::<Vec<_>>(),
+        fusing.iter().copied().filter(|n| common::swept(n) && *n != "wclprice").collect::<Vec<_>>(),
         "FMA dispatch inventory drifted"
     );
     assert!(

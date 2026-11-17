@@ -1004,7 +1004,7 @@ fn a_transcribed_open_selects_where_its_batch_body_does() {
 fn a_fused_stream_update_is_fma_dispatched() {
     let (mut dispatched, mut declined) = (0usize, 0usize);
     let (mut opens, mut fused_opens) = (0usize, 0usize);
-    let (mut one_path_maps, mut one_path_named) = (0usize, 0usize);
+    let mut one_path_named = 0usize;
     let mut drifted: Vec<String> = Vec::new();
     let mut fused_frames = 0usize;
     for name in streaming_indicators() {
@@ -1034,7 +1034,6 @@ fn a_fused_stream_update_is_fma_dispatched() {
                 .unwrap_or_else(|e| panic!("{name}: {e}"));
             let kept = backends::rust_stream::open_keeps_one_path(&func, &plan);
             let is_map = matches!(&plan, ta_codegen_lib::streaming::StreamPlan::Loop(m) if m.open_needs_last_bar_only());
-            one_path_maps += usize::from(fuses && kept && is_map);
             one_path_named += usize::from(fuses && kept && !is_map);
             let fuses = fuses && !kept;
             fused_opens += usize::from(fuses);
@@ -1074,10 +1073,6 @@ fn a_fused_stream_update_is_fma_dispatched() {
     assert!(
         common::sweep_filtered() || fused_frames >= 8,
         "only {fused_frames} fused opener frames: a split opener's fused frames went undispatched"
-    );
-    assert!(
-        common::sweep_filtered() || one_path_maps > 0,
-        "no fused stateless map keeps one path: that exemption admits nothing"
     );
     assert!(
         common::sweep_filtered() || one_path_named > 0,

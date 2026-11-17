@@ -521,7 +521,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            tempReal2 = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -897,7 +897,7 @@ impl Core {
         } else {
             cold_arm();
         }
-        tempReal2 = (fmadd!(2.0 as f64, sp.iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+        tempReal2 = (4.0 * tempReal + 3.0 * sp.iTrend1 + 2.0 * sp.iTrend2 + sp.iTrend3) / 10.0;
         sp.iTrend3 = sp.iTrend2;
         sp.iTrend2 = sp.iTrend1;
         sp.iTrend1 = tempReal;
@@ -1307,7 +1307,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            tempReal2 = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -1733,7 +1733,7 @@ impl HtTrendlineStream {
             } else {
                 cold_arm();
             }
-            tempReal2 = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            tempReal2 = (4.0 * tempReal + 3.0 * iTrend1 + 2.0 * iTrend2 + iTrend3) / 10.0;
             *outReal = tempReal2;
         }
         Ok(outReal)

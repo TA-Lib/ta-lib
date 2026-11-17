@@ -107,38 +107,6 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, wclprice_impl_fma, wclprice_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.wclprice_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn wclprice_impl_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.wclprice_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn wclprice_impl_scalar(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
         if startIdx > Self::INDEX_MAX {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -166,7 +134,7 @@ impl Core {
             let _w2 = &inLow[i..][.._wn];
             let _w3 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                _w3[_wk] = (fmadd!(_w0[_wk], 2.0, _w1[_wk] + _w2[_wk]) / 4.0) as f64;
+                _w3[_wk] = ((_w1[_wk] + _w2[_wk] + _w0[_wk] * 2.0) / 4.0) as f64;
                 outIdx += 1;
             }
         }
@@ -318,7 +286,7 @@ struct WclpriceStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn wclprice_step_impl(sp: &mut WclpriceStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
-        *outReal = fmadd!(inClose, 2.0, inHigh + inLow) / 4.0;
+        *outReal = (inHigh + inLow + inClose * 2.0) / 4.0;
         sp.cur_outReal = *outReal;
     }
 
@@ -344,7 +312,7 @@ impl Core {
         // Weighted Close Price = (High + Low + (Close*2) ) / 4
         outIdx = 0;
         for i in startIdx..endIdx + 1 {
-            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = (fmadd!(inClose[i], 2.0, inHigh[i] + inLow[i]) / 4.0) as f64;
+            outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = ((inHigh[i] + inLow[i] + inClose[i] * 2.0) / 4.0) as f64;
         }
         *outNBElement = outIdx;
         *outBegIdx = startIdx;
@@ -534,7 +502,7 @@ impl WclpriceStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            *outReal = fmadd!(inClose, 2.0, inHigh + inLow) / 4.0;
+            *outReal = (inHigh + inLow + inClose * 2.0) / 4.0;
         }
         Ok(outReal)
     }

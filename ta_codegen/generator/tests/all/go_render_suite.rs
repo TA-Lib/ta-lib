@@ -484,7 +484,7 @@ fn go_a_loop_on_an_arm_of_a_bar_loop_is_not_re_sliced() {
 /// plain multiply-add C's fused one rounds to; every other site keeps C's
 /// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
 /// sites in each of its four frames and fuses no other product in their
-/// place, which no value gate could see; C and Rust keep fusing WCLPRICE.
+/// place, which no value gate could see; C keeps fusing WCLPRICE.
 #[test]
 fn go_renders_an_exact_product_unfused() {
     let (registry, helpers) = (common::make_registry(), common::make_helpers());
@@ -509,7 +509,6 @@ fn go_renders_an_exact_product_unfused() {
 
     let (func, enums) = common::load_indicator("wclprice");
     assert!(backends::c::generate(&func, &enums, registry, helpers).contains("fma(inClose[i], 2.0,"), "C stops fusing WCLPRICE");
-    assert!(backends::rust_lang::generate(&func, &enums, registry, helpers).contains("fmadd!(inClose, 2.0,"), "Rust stops fusing WCLPRICE");
 }
 
 /// A loop whose passes depend on no other runs a group of passes over cuts
