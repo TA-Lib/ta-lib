@@ -16,11 +16,11 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | `stream.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is **no `Dispose`**: a stream owns only managed state — its arrays, its sub-streams and a `Core` reference — so an unreferenced stream is simply collected. The stream types deliberately do not implement `IDisposable`.
+There is **no `Dispose`**: a stream owns only managed state (its arrays, its sub-streams and a `Core` reference), so an unreferenced stream is simply collected. The stream types deliberately do not implement `IDisposable`.
 
 ## Example (SMA)
 
@@ -40,14 +40,14 @@ double v = s.Update(newClose);                   // throws on a non-finite bar, 
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.IndexMax`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.IndexMax`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `history.Length >= <Name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
-- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing — call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
+- **Warm-up.** `Open` succeeds only if `history.Length >= <Name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded: the stream keeps everything it needs.
+- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing: call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
 - **The unstable period is resolved once, at `Open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `Open` needs that many bars plus one.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream. To stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `Update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 - **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SmaOpen(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
 
@@ -71,7 +71,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 
 ## Array-Fill Open
 
-`Open` and `Update` each write a single value. One more call writes a full array instead — the same shape the [batch method](/api/csharp/) would produce — while still opening the stream:
+`Open` and `Update` each write a single value. One more call writes a full array instead, the same shape the [batch method](/api/csharp/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -96,7 +96,7 @@ The output arguments are the batch call's, in the same order. An output must not
 |------|------|------|
 | `stream.Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.Clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.OutRange` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.Advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```csharp
@@ -108,14 +108,14 @@ OutRange r = s.OutRange;            // the bars s has an output for
 s.Advance();                        // a bar you skipped, counted
 ```
 
-`Clone()` is a typed `Clone()`, deliberately not `ICloneable` — that interface
+`Clone()` is a typed `Clone()`, deliberately not `ICloneable`: that interface
 returns `object` and leaves deep-versus-shallow unsaid, and this is neither.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.IndexMax`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.IndexMax`. A rejection changes nothing at all: no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `IndexMax` ceiling.
 
 | Condition | Exception |
 |---|---|
@@ -127,13 +127,13 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
-`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
+`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically (it is the one routine, data-dependent rejection) or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
 Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 
 ## Absolute-index outputs
 
-`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array — so treat an index as a position within this handle's own window, not as one you can compare against an index a different handle reported.
+`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array, so treat an index as a position within this handle's own window, not as one you can compare against an index a different handle reported.
 
 ## Discovering streamable functions
 
@@ -152,6 +152,6 @@ foreach (var f in Core.Functions)
 }
 ```
 
-That is discovery only. Unlike the batch tier, there is no name-based way to *open* a stream — `ParamHolder` binds batch calls, and nothing binds streams. Opening one means calling its typed `<Name>Open` directly.
+That is discovery only. Unlike the batch tier, there is no name-based way to *open* a stream: `ParamHolder` binds batch calls, and nothing binds streams. Opening one means calling its typed `<Name>Open` directly.
 
 This is deliberate rather than an oversight, and the same is true of the other language bindings. A generic opener would have to return a stream whose type varies per function, and `Update` varies in both arity and return type, so the values would have to be boxed, an allocation on every Update. Worth designing properly if there is a call for it; not worth guessing at.
