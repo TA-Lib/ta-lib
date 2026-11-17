@@ -788,6 +788,9 @@ enum FmaInline {
 /// gets the fast path copied in, so none is left a call that boxes its
 /// operands and result. Fewer stay calls: the copy makes a step too big for
 /// `update` to inline, a call per bar where V8 would have inlined them all.
+/// An exact product counts as a site though it renders plain: a frame that
+/// switches between copies and calls moves its step and its peek time in
+/// opposite directions.
 const FMA_INLINE_MIN_SITES: usize = 3;
 
 struct FmaSite {
@@ -808,9 +811,6 @@ fn fma_inline_mode(body: &[Statement], fs: &FmaVarSets, mode: FmaInline) -> FmaI
     }
 }
 
-/// An exact product counts though it renders plain: the count picks between
-/// copies and calls, and a frame that switches moves its step and its peek
-/// time in opposite directions.
 fn count_fused_sites(stmts: &[Statement], fs: &fma::FmaCtx, counted: bool) -> usize {
     let mut n = 0;
     let mut sites_in = |e: &Expr| {
