@@ -22,6 +22,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Faster
 - ~2x to 5x, up to 7x in batch: most candlestick patterns, batch and streaming. Pre-check,
   default-settings and branch-free optimizations (#566, #580). Thanks @Yvictor !
+- WCLPRICE: faster in Rust and TypeScript (#598)
 
 ## [0.8.3] 2026-10-25
 ### Added
