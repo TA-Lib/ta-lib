@@ -163,7 +163,7 @@ pub struct RustRenderCtx {
     /// the ring's own check. A batch CIRCBUF absent here has no cursor.
     pub circbuf_len_of: std::collections::HashMap<String, String>,
     /// The body advances or peeks a stream by one bar, where a candle's colour
-    /// bound keeps the `if` form.
+    /// bound keeps the `if` form and an exact product is not fused.
     pub stream_step: bool,
 }
 
@@ -527,7 +527,7 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     };
     let params_end = params_start + close_rel;
     let body_start = params_end + sig_close.len();
-    // Only the *body* decides (site selection lives in fma::fuse_inexact_operands;
+    // Only the *body* decides (site selection lives in fma::fuse_operands;
     // `FMA_CALL` in the rendered body is its footprint) — a mention in the
     // doc comment alone must not dispatch.
     if !text[body_start..].contains(FMA_CALL) {
@@ -4592,7 +4592,7 @@ fn wrap_cast(operand: &str, ty: &str) -> String {
 }
 
 /// Render an `Expr::BinOp` to Rust, including the FMA fusion (via the shared
-/// [`fma::fuse_inexact_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
+/// [`fma::fuse_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
 /// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
 /// by [`RustExpr::binop`].
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
@@ -4614,7 +4614,8 @@ fn render_binop(
     // `real_vars` was too and the detector could never fire; populating it is
     // what made this reachable.
     if fma::EMIT_FMA && !ctx.is_lookback {
-        if let Some((a, b, c)) = fma::fuse_inexact_operands(left, op, right, &ctx.fma_view()) {
+        let fuse = if ctx.stream_step { fma::fuse_inexact_operands } else { fma::fuse_operands };
+        if let Some((a, b, c)) = fuse(left, op, right, &ctx.fma_view()) {
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
             let c_str = render_expr(c, ctx, opt_real_params, registry, helpers);

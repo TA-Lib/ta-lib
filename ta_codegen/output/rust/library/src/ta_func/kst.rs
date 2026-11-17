@@ -593,7 +593,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -638,7 +638,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -691,7 +691,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -740,7 +740,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -1336,7 +1336,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sigRing[sigRing_Idx] = kst;
             sigRing_Idx += 1;
@@ -1381,7 +1381,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = fmadd!(3.0 as f64, rcma3, rcma1 + 2.0 * rcma2) + 4.0 * rcma4;
+            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sig = sigTotal / (optInSignalPeriod as f64);
             sigRing[sigRing_Idx] = kst;

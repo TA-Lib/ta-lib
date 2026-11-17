@@ -236,7 +236,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -255,7 +255,7 @@ impl Core {
                 // is one fused step. Nested inside, it is three, and every backend's last
                 // bit moves with it.
                 x0 = _w0[_wk];
-                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
+                y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -531,7 +531,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -546,7 +546,7 @@ impl Core {
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
             x0 = inReal[today];
-            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (x0 + 2.0 * x1 + x2)));
+            y = fmadd!(a1, y1, fmadd!(a2, y2, c0 * (fmadd!(2.0 as f64, x1, x0) + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;

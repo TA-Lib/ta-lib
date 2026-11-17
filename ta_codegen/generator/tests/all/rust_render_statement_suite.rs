@@ -2733,33 +2733,53 @@ fn rust_macd_output_loops_run_as_counted_windows() {
     }
 }
 
-/// A product by `2^k`, `k >= 1`, is exact, so Rust renders that site as the
-/// plain multiply-add C's fused one rounds to; every other site keeps C's
-/// fusing. HT_TRENDLINE's `4.0*a + 3.0*b + 2.0*c + d` loses its two exact
-/// sites in each of its four frames and fuses no other product in their
-/// place, which no value gate could see.
+/// A product by `2^k`, `k >= 1`, is exact, so a stream step or peek renders
+/// that site as the plain multiply-add C's fused one rounds to; every other
+/// frame, and every other site, keeps C's fusing. HT_TRENDLINE's
+/// `4.0*a + 3.0*b + 2.0*c + d` loses its two exact sites in its step and its
+/// peek and fuses no other product in their place, which no value gate could
+/// see.
 #[test]
-fn rust_renders_an_exact_product_unfused() {
+fn rust_renders_an_exact_product_unfused_only_per_bar() {
     let (registry, helpers) = (make_registry(), make_helpers());
-    let mut sites = 0usize;
+    let decl = regex::Regex::new(r"\n    (?:pub(?:\(crate\))? )?fn (\w+)").unwrap();
+    let per_bar = regex::Regex::new(r"(?:_step_impl|_step_tape_impl|^peek|^peek_tape)$").unwrap();
+    let (mut sites, mut exact_elsewhere, mut per_bar_frames) = (0usize, 0usize, 0usize);
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
-        let factors = common::fma_factors(&backends::rust_lang::generate(&func, &enums, registry, helpers), backends::rust_lang::FMA_CALL);
-        let factors: Vec<(&str, &str)> = factors.iter().map(|(a, b)| (a.trim_end_matches(" as f64"), b.as_str())).collect();
-        for (a, b) in &factors {
-            assert!(!common::exact_literal(a) && !common::exact_literal(b), "{name}: `fmadd!({a}, {b}, ..)` fuses an exact product");
-        }
-        sites += factors.len();
-        match name.as_str() {
-            "wclprice" => assert!(factors.is_empty(), "wclprice: a fused site is left"),
-            "ht_trendline" => {
-                assert_eq!(factors.len(), 48 - 8, "ht_trendline: its fused sites but the 4.0 and 2.0 ones");
-                assert!(!factors.iter().any(|(a, b)| *a == "3.0" || *b == "3.0"), "ht_trendline: the 3.0 product took the exact one's place");
+        let src = backends::rust_lang::generate(&func, &enums, registry, helpers);
+        let starts: Vec<(usize, &str)> = decl.captures_iter(&src).map(|c| (c.get(0).unwrap().start(), c.get(1).unwrap().as_str())).collect();
+        let mut fn_factors = 0usize;
+        for (k, &(at, fname)) in starts.iter().enumerate() {
+            let frame = &src[at..starts.get(k + 1).map_or(src.len(), |n| n.0)];
+            let factors = common::fma_factors(frame, backends::rust_lang::FMA_CALL);
+            let factors: Vec<(&str, &str)> = factors.iter().map(|(a, b)| (a.trim_end_matches(" as f64"), b.as_str())).collect();
+            let exact = factors.iter().filter(|(a, b)| common::exact_literal(a) || common::exact_literal(b)).count();
+            if per_bar.is_match(fname) {
+                per_bar_frames += 1;
+                assert_eq!(exact, 0, "{name}: `{fname}` fuses an exact product");
+            } else {
+                exact_elsewhere += exact;
             }
-            _ => {}
+            fn_factors += factors.len();
+            if name == "wclprice" && fname == "wclprice_step_impl" {
+                assert!(frame.contains("inClose * 2.0") && !frame.contains("fmadd!("), "wclprice: the step fuses its exact product");
+            }
+            if name == "wclprice" && fname == "wclprice_impl_scalar" {
+                assert!(frame.contains("fmadd!(_w0[_wk], 2.0,"), "wclprice: the batch body stops fusing");
+            }
+            if name == "ht_trendline" {
+                assert!(!factors.iter().any(|(a, b)| *a == "3.0" || *b == "3.0"), "ht_trendline: the 3.0 product took an exact one's place in `{fname}`");
+            }
         }
+        if name == "ht_trendline" {
+            assert_eq!(fn_factors, 48 - 4, "ht_trendline: its fused sites but the step's and the peek's 4.0 and 2.0 ones");
+        }
+        sites += fn_factors;
     }
     assert!(common::sweep_filtered() || sites >= 1000, "only {sites} fused sites");
+    assert!(common::sweep_filtered() || per_bar_frames >= 400, "only {per_bar_frames} step and peek frames");
+    assert!(common::sweep_filtered() || exact_elsewhere > 0, "no batch or open frame fuses an exact product");
 }
 
 /// A candlestick's main loop that reads through a trailing index runs over

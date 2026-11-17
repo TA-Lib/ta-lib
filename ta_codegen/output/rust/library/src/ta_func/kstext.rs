@@ -423,7 +423,7 @@ impl Core {
             let _w0 = &mut kstBuffer[i..][.._wn];
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = _w0[_wk] + 2.0 * _w1[_wk];
+                _w0[_wk] = fmadd!(2.0 as f64, _w1[_wk], _w0[_wk]);
             }
         }
         let _xr4 = match self.roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
@@ -447,7 +447,7 @@ impl Core {
             let _w0 = &mut kstBuffer[i..][.._wn];
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = _w0[_wk] + 4.0 * _w1[_wk];
+                _w0[_wk] = fmadd!(4.0 as f64, _w1[_wk], _w0[_wk]);
             }
         }
         // Every read of inReal is done: an output may alias it.
@@ -877,7 +877,7 @@ impl Core {
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
-            kstBuffer[i] = kstBuffer[i] + 2.0 * tempBuffer[i];
+            kstBuffer[i] = fmadd!(2.0 as f64, tempBuffer[i], kstBuffer[i]);
             i += 1;
         }
         // Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
@@ -922,7 +922,7 @@ impl Core {
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
-            kstBuffer[i] = kstBuffer[i] + 4.0 * tempBuffer[i];
+            kstBuffer[i] = fmadd!(4.0 as f64, tempBuffer[i], kstBuffer[i]);
             i += 1;
         }
         // Every read of inReal is done: an output may alias it.
