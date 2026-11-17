@@ -51,7 +51,7 @@ import { MAType, MATypes } from '../enums.ts';
 import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
-import { fma } from '../runtime/fma.ts';
+import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 import { MaStream, maLookbackPositional, maOpenAndFillInternal, maOpenInternal, maPositional } from './ma.ts';
@@ -350,22 +350,36 @@ export function kstextImpl(
   tempBegIdx.value = _xr5.begIdx;
   legNb.value = _xr5.count;
   for (i = 0; i < kstNb.value; i += 1) {
-    kstBuffer[i] = fma(3.0, tempBuffer[i], kstBuffer[i]);
+    {
+      const _a: number = 3.0, _b: number = tempBuffer[i], _c: number = kstBuffer[i];
+      const _p = _a * _b;
+      let _t = 134217729 * _a;
+      const _ah = _t - (_t - _a), _al = _a - _ah;
+      _t = 134217729 * _b;
+      const _bh = _t - (_t - _b), _bl = _b - _bh;
+      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+      const _v = _tl + _pl, _v2 = _v + _v;
+      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+      kstBuffer[i] = _w && (_pl === 0 || _v === 0) ? _th
+        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    }
   }
-  const _xr6 = rocPositional(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer, core);
-  tempBegIdx.value = _xr6.begIdx;
-  rocNb.value = _xr6.count;
-  const _xr7 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr7 = rocPositional(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer, core);
   tempBegIdx.value = _xr7.begIdx;
-  legNb.value = _xr7.count;
+  rocNb.value = _xr7.count;
+  const _xr8 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  tempBegIdx.value = _xr8.begIdx;
+  legNb.value = _xr8.count;
   for (i = 0; i < kstNb.value; i += 1) {
     kstBuffer[i] = kstBuffer[i] + 4.0 * tempBuffer[i];
   }
   /* Every read of inReal is done: an output may alias it. */
   outKST.set(kstBuffer.subarray(lookbackSignal, lookbackSignal + (endIdx - startIdx + 1)), 0);
-  const _xr8 = maPositional(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, (optInSignalMAType as MAType), outKSTSignal, core);
-  tempBegIdx.value = _xr8.begIdx;
-  sigNb.value = _xr8.count;
+  const _xr9 = maPositional(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, (optInSignalMAType as MAType), outKSTSignal, core);
+  tempBegIdx.value = _xr9.begIdx;
+  sigNb.value = _xr9.count;
   outBegIdx.value = startIdx;
   outNBElement.value = sigNb.value;
   return RetCode.SUCCESS;
@@ -843,7 +857,21 @@ export class KstextStream {
     cur_kstBuffer = cur_kstBuffer + 2.0 * cur_tempBuffer;
     cur_tempBuffer = sp.sub4.peek(inReal);
     cur_tempBuffer = sp.sub5.peek(cur_tempBuffer);
-    cur_kstBuffer = fma(3.0, cur_tempBuffer, cur_kstBuffer);
+    {
+      const _a: number = 3.0, _b: number = cur_tempBuffer, _c: number = cur_kstBuffer;
+      const _p = _a * _b;
+      let _t = 134217729 * _a;
+      const _ah = _t - (_t - _a), _al = _a - _ah;
+      _t = 134217729 * _b;
+      const _bh = _t - (_t - _b), _bl = _b - _bh;
+      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+      const _v = _tl + _pl, _v2 = _v + _v;
+      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+      cur_kstBuffer = _w && (_pl === 0 || _v === 0) ? _th
+        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    }
     cur_tempBuffer = sp.sub6.peek(inReal);
     cur_tempBuffer = sp.sub7.peek(cur_tempBuffer);
     cur_kstBuffer = cur_kstBuffer + 4.0 * cur_tempBuffer;
@@ -937,7 +965,21 @@ function kstextStepImpl(sp: KstextStream, inReal: number): void {
   cur_kstBuffer = cur_kstBuffer + 2.0 * cur_tempBuffer;
   cur_tempBuffer = sp.sub4.update(inReal);
   cur_tempBuffer = sp.sub5.update(cur_tempBuffer);
-  cur_kstBuffer = fma(3.0, cur_tempBuffer, cur_kstBuffer);
+  {
+    const _a: number = 3.0, _b: number = cur_tempBuffer, _c: number = cur_kstBuffer;
+    const _p = _a * _b;
+    let _t = 134217729 * _a;
+    const _ah = _t - (_t - _a), _al = _a - _ah;
+    _t = 134217729 * _b;
+    const _bh = _t - (_t - _b), _bl = _b - _bh;
+    const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+    const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+    const _v = _tl + _pl, _v2 = _v + _v;
+    const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+    cur_kstBuffer = _w && (_pl === 0 || _v === 0) ? _th
+      : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+      : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  }
   cur_tempBuffer = sp.sub6.update(inReal);
   cur_tempBuffer = sp.sub7.update(cur_tempBuffer);
   cur_kstBuffer = cur_kstBuffer + 4.0 * cur_tempBuffer;
@@ -1111,14 +1153,14 @@ function kstextOpenImpl(
   tempBuffer = new Float64Array(tempInteger);
   const sub0 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
   const sub1 = maOpenInternal(core, kstBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA1Period, (optInROCMAType as MAType));
-  const _xr0 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
-  tempBegIdx.value = _xr0.begIdx;
-  kstNb.value = _xr0.count;
+  const _xr2 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
+  tempBegIdx.value = _xr2.begIdx;
+  kstNb.value = _xr2.count;
   const sub2 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
   const sub3 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA2Period, (optInROCMAType as MAType));
-  const _xr1 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
-  tempBegIdx.value = _xr1.begIdx;
-  legNb.value = _xr1.count;
+  const _xr3 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
+  tempBegIdx.value = _xr3.begIdx;
+  legNb.value = _xr3.count;
   lagNb0 = legNb.value;
   if (kstNb.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
@@ -1131,9 +1173,9 @@ function kstextOpenImpl(
   }
   const sub4 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
   const sub5 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA3Period, (optInROCMAType as MAType));
-  const _xr2 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
-  tempBegIdx.value = _xr2.begIdx;
-  legNb.value = _xr2.count;
+  const _xr4 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
+  tempBegIdx.value = _xr4.begIdx;
+  legNb.value = _xr4.count;
   lagNb1 = legNb.value;
   if (kstNb.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
@@ -1142,13 +1184,27 @@ function kstextOpenImpl(
     return RetCode.INTERNAL_ERROR;
   }
   for (i = 0; i < kstNb.value; i += 1) {
-    kstBuffer[i] = fma(3.0, tempBuffer[i], kstBuffer[i]);
+    {
+      const _a: number = 3.0, _b: number = tempBuffer[i], _c: number = kstBuffer[i];
+      const _p = _a * _b;
+      let _t = 134217729 * _a;
+      const _ah = _t - (_t - _a), _al = _a - _ah;
+      _t = 134217729 * _b;
+      const _bh = _t - (_t - _b), _bl = _b - _bh;
+      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+      const _v = _tl + _pl, _v2 = _v + _v;
+      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+      kstBuffer[i] = _w && (_pl === 0 || _v === 0) ? _th
+        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    }
   }
   const sub6 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
   const sub7 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA4Period, (optInROCMAType as MAType));
-  const _xr3 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
-  tempBegIdx.value = _xr3.begIdx;
-  legNb.value = _xr3.count;
+  const _xr6 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  tempBegIdx.value = _xr6.begIdx;
+  legNb.value = _xr6.count;
   lagNb2 = legNb.value;
   lagNb3 = kstNb.value;
   if (kstNb.value < 1) {

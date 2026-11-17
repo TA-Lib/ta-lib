@@ -808,12 +808,15 @@ fn fma_inline_mode(body: &[Statement], fs: &FmaVarSets, mode: FmaInline) -> FmaI
     }
 }
 
+/// An exact product counts though it renders plain: the count picks between
+/// copies and calls, and a frame that switches moves its step and its peek
+/// time in opposite directions.
 fn count_fused_sites(stmts: &[Statement], fs: &fma::FmaCtx, counted: bool) -> usize {
     let mut n = 0;
     let mut sites_in = |e: &Expr| {
         crate::streaming::walk_expr(e, &mut |x| {
             if let Expr::BinOp(l, op, r) = x {
-                if fma::fuse_inexact_operands(l, op, r, fs).is_some() {
+                if fma::fuse_operands(l, op, r, fs).is_some() {
                     n += 1;
                 }
             }
