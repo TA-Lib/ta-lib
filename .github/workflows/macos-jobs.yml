@@ -3,7 +3,7 @@
 # Windows nightlies pin nightly-jobs.yml. A separate run because GitHub's macOS
 # arm64 pool can leave a job unacquired, which fails its whole run: that must
 # not redden the other nightly. scripts/nightly_status.py requires both runs
-# green before a merge to main or a release.
+# green before a release; a merge to main tolerates an unacquired one.
 
 name: macOS nightly jobs
 

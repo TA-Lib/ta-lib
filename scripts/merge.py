@@ -33,7 +33,9 @@ def parse_args():
             "i.e. the dev-nightly job has already regenerated and committed the\n"
             "dist assets, both dev nightlies (Linux/Windows and macOS)\n"
             "passed on it, scripts/sync.py has nothing left to change, and main\n"
-            "has no commit that dev lacks."
+            "has no commit that dev lacks. A macOS nightly that got no runner on\n"
+            "it passes when its last run that got one is green and at most 3\n"
+            "days old."
         ),
         epilog="Usage: run it with no arguments, after both dev nightlies are green.",
     )
@@ -84,7 +86,8 @@ def main():
         sys.exit(1)
 
     print("Checking that every dev nightly passed on this commit...")
-    if not nightly_status.check('dev', dev, allow_tail=True, waive_absent_from='origin/main'):
+    if not nightly_status.check('dev', dev, allow_tail=True, waive_absent_from='origin/main',
+                                unacquired_days=3):
         print("Error: dev is not green. Re-run the red nightly on dev, wait for it, "
               "then re-run this merge.")
         sys.exit(1)

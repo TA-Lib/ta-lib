@@ -13,9 +13,15 @@ TA_LIB_SOURCES_DIGEST line of include/ta_common.h.
 --waive-absent-from=<ref> passes a nightly whose workflow file <ref> lacks:
 GitHub runs a scheduled workflow only from the default branch, so a nightly
 added on dev cannot have run before its first promotion to main.
+
+--unacquired-days=<n> also passes a macOS nightly whose runs on the commit
+failed only by jobs never given a runner, when the newest run before them is
+green, tested an ancestor of the commit and started at most <n> days ago, and
+no newer run is in progress. A release never passes it.
 """
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -34,6 +40,7 @@ WORKFLOWS = {
     "dev": {"dev-nightly-tests.yml": "nightly-jobs.yml",
             "dev-macos-nightly-tests.yml": "macos-jobs.yml"},
 }
+MACOS = "macos-jobs.yml"
 TAIL_PATHS = ("dist/", ".github/perf/")
 DIGEST_HEADER = "include/ta_common.h"
 DIGEST_LINE = re.compile(r"^[+-]#define TA_LIB_SOURCES_DIGEST [0-9a-f]+$")
@@ -98,7 +105,50 @@ def only_tail_since(base, sha):
     return True
 
 
-def check(branch, sha, allow_tail=False, waive_absent_from=None, repo="TA-Lib/ta-lib"):
+def unacquired(repo, run, tok):
+    """Whether a failed run failed only by jobs that were never given a runner.
+    Every attempt counts: a rerun left unacquired must not hide a job that ran
+    and failed in an earlier one."""
+    if run.get("conclusion") != "failure":
+        return False
+    page = get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?filter=all&per_page=100", tok)
+    jobs = page["jobs"]
+    if page.get("total_count", len(jobs)) > len(jobs):
+        return False
+    bad = [j for j in jobs if j.get("conclusion") not in ("success", "skipped")]
+    return bool(bad) and all(j.get("conclusion") == "cancelled" and not j.get("steps")
+                             and not j.get("runner_id") for j in bad)
+
+
+def last_ran_green(repo, workflow, reusable, branch, same, sha, days, tok):
+    """The commit the newest run with no unacquired job passed on, if `sha` was
+    tried and left unacquired; None otherwise. `same(tested)` says a run tested
+    `sha`."""
+    runs = get(f"/repos/{repo}/actions/workflows/{workflow}/runs?per_page=100",
+               tok)["workflow_runs"]
+    want = f"{repo}/.github/workflows/{reusable}@{branch}"
+    oldest = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+    tried = False
+    for run in runs:
+        tested = next((ref["sha"] for ref in run.get("referenced_workflows") or []
+                       if ref.get("path") == want), None)
+        if tested is None:
+            continue
+        if run.get("status") != "completed":
+            return None
+        if run.get("conclusion") == "success":
+            started = datetime.datetime.fromisoformat(run["created_at"].replace("Z", "+00:00"))
+            fresh = tried and started >= oldest
+            return tested if fresh and git("merge-base", "--is-ancestor",
+                                           tested, sha).returncode == 0 else None
+        if not unacquired(repo, run, tok):
+            return None
+        tried = tried or same(tested)
+    return None
+
+
+def check(branch, sha, allow_tail=False, waive_absent_from=None, repo="TA-Lib/ta-lib",
+          unacquired_days=None):
     """Print one line per nightly; True only if every one passed on `sha`."""
     tok = token()
     ok = True
@@ -113,8 +163,22 @@ def check(branch, sha, allow_tail=False, waive_absent_from=None, repo="TA-Lib/ta
             print(f"  ERROR      {wf}: could not read its runs ({e})")
             ok = False
             continue
-        hit = next((g for g in green if g == sha or (allow_tail and only_tail_since(g, sha))),
-                   None)
+        def same(g):
+            return g == sha or (allow_tail and only_tail_since(g, sha))
+
+        hit = next((g for g in green if same(g)), None)
+        if hit is None and unacquired_days is not None and reusable == MACOS:
+            try:
+                older = last_ran_green(repo, wf, reusable, branch, same, sha,
+                                       unacquired_days, tok)
+            except OSError as e:
+                print(f"  ERROR      {wf}: could not read its runs ({e})")
+                ok = False
+                continue
+            if older:
+                print(f"  no runner  {wf}: jobs left without a runner on {sha[:9]}; "
+                      f"its last complete run is green, on {older[:9]}")
+                continue
         if hit is None:
             print(f"  NOT GREEN  {wf} has no successful run on {sha[:9]}"
                   f"{' or on a commit before only what the nightly commits back' if allow_tail else ''}.")
@@ -130,9 +194,10 @@ def main():
     p.add_argument("--sha", required=True)
     p.add_argument("--allow-tail", action="store_true")
     p.add_argument("--waive-absent-from")
+    p.add_argument("--unacquired-days", type=int)
     p.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "TA-Lib/ta-lib"))
     a = p.parse_args()
-    if check(a.branch, a.sha, a.allow_tail, a.waive_absent_from, a.repo):
+    if check(a.branch, a.sha, a.allow_tail, a.waive_absent_from, a.repo, a.unacquired_days):
         return 0
     print(f"::error::Not every {a.branch} nightly passed on {a.sha}; run the red one(s) on it.")
     return 1
