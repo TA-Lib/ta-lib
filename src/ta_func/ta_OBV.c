@@ -106,13 +106,7 @@ TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
    for( i = startIdx; i <= endIdx; i += 1 )
    {
       tempReal = inReal[i];
-      if( tempReal > prevReal )
-      {
-         prevOBV += inVolume[i];
-      } else if( tempReal < prevReal )
-      {
-         prevOBV -= inVolume[i];
-      }
+      prevOBV = prevOBV + TA_ADDEND_IF_GT(tempReal, prevReal, inVolume[i]) - TA_SUBTRAHEND_IF_LT(tempReal, prevReal, inVolume[i]);
       outReal[outIdx++] = prevOBV;
       prevReal = tempReal;
    }
@@ -155,13 +149,7 @@ TA_RetCode TA_S_OBV( int    startIdx,
    for( i = startIdx; i <= endIdx; i += 1 )
    {
       tempReal = (double)inReal[i];
-      if( tempReal > prevReal )
-      {
-         prevOBV += (double)inVolume[i];
-      } else if( tempReal < prevReal )
-      {
-         prevOBV -= (double)inVolume[i];
-      }
+      prevOBV = prevOBV + TA_ADDEND_IF_GT(tempReal, prevReal, (double)inVolume[i]) - TA_SUBTRAHEND_IF_LT(tempReal, prevReal, (double)inVolume[i]);
       outReal[outIdx++] = prevOBV;
       prevReal = tempReal;
    }
@@ -188,13 +176,7 @@ static void TA_OBV_StepImpl( struct TA_OBV_Stream *sp, double inReal, double inV
    double tempReal;
 
    tempReal = inReal;
-   if( tempReal > sp->prevReal )
-   {
-      sp->prevOBV += inVolume;
-   } else if( tempReal < sp->prevReal )
-   {
-      sp->prevOBV -= inVolume;
-   }
+   sp->prevOBV = sp->prevOBV + TA_ADDEND_IF_GT(tempReal, sp->prevReal, inVolume) - TA_SUBTRAHEND_IF_LT(tempReal, sp->prevReal, inVolume);
    *outReal= sp->prevOBV;
    sp->prevReal = tempReal;
    sp->cur_outReal = *outReal;
@@ -219,13 +201,7 @@ static TA_OPEN_INLINE TA_RetCode TA_OBV_OpenBody( struct TA_OBV_Stream **stream,
       for( i = startIdx; i <= endIdx; i += 1 )
       {
          tempReal = inReal[i];
-         if( tempReal > prevReal )
-         {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal )
-         {
-            prevOBV -= inVolume[i];
-         }
+         prevOBV = prevOBV + TA_ADDEND_IF_GT(tempReal, prevReal, inVolume[i]) - TA_SUBTRAHEND_IF_LT(tempReal, prevReal, inVolume[i]);
          outReal[outIdx++ * outStride] = prevOBV;
          prevReal = tempReal;
       }

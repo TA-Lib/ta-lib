@@ -4,6 +4,7 @@
 mod common;
 
 mod abstract_rows_suite;
+mod accrual_select_suite;
 mod added_in_suite;
 mod alt_suite;
 mod arg_order_suite;
