@@ -334,7 +334,7 @@ def stop_group(p, first, grace):
     for sig, grace in ((first, grace[0]), (signal.SIGTERM, grace[1]), (signal.SIGKILL, None)):
         try:
             os.killpg(p.pid, sig)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
             break
         try:
             p.wait(timeout=grace)
@@ -343,7 +343,7 @@ def stop_group(p, first, grace):
             pass
     try:
         os.killpg(p.pid, signal.SIGKILL)
-    except ProcessLookupError:
+    except (ProcessLookupError, PermissionError):
         pass
     p.wait()
 
