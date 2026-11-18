@@ -121,7 +121,7 @@ Here is another example. This time we calculate a 14-bar exponential moving aver
 
 In this example, `range.beg_idx` will be 299, `range.count` will be 1, and only one value is written into `out`.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `range.count` is 0 — `range.is_empty()` says so directly.
+If you do not provide enough data to calculate even one value, the call still succeeds and `range.count` is 0; `range.is_empty()` says so directly.
 
 The input and the output are separate borrows, so a function cannot read and write the same buffer: pass a distinct output slice, and copy it back afterwards if you want the result in place.
 
@@ -129,13 +129,13 @@ The input and the output are separate borrows, so a function cannot read and wri
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-It is important that the output slice is large enough — an undersized slice is `Err(RetCode::BadParam)`, never a write past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
+It is important that the output slice is large enough: an undersized slice is `Err(RetCode::BadParam)`, never a write past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
 
 | Method | Description |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Input Matching   | `allocation_size = endIdx + 1;` <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when requesting a small range. |
 | Range Matching   | `allocation_size = endIdx - startIdx + 1;` <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
-| Exact Allocation | Derived from the function's lookback — see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
+| Exact Allocation | Derived from the function's lookback: see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
 
 Each TA function has a matching `<name>_lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `sma_lookback`.
 
@@ -145,7 +145,7 @@ The lookback is the number of input elements consumed before the first output ca
 let lookback = core.sma_lookback(30)?;   // 29 for a 30-period SMA
 ```
 
-A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range — the same code the function itself would answer for it.
+A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range, the same code the function itself would answer for it.
 
 Putting it together, the exact allocation for any TA function:
 
@@ -228,7 +228,7 @@ argument once, as `RetCode::BadParam`.
 
 ### 4.5 Threading {#multithreading}
 
-A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently — no locking, and no setup ordering to respect.
+A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently: no locking, and no setup ordering to respect.
 
 To change a setting, build another `Core`, or derive one from an existing `Core` with `to_builder()`.
 

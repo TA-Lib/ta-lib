@@ -17,7 +17,7 @@ Every TA function gets these calls:
 | `TA_<NAME>_Peek`   | any time on the **forming** bar     | evaluate a provisional bar **without** committing state |
 | `TA_<NAME>_Close`  | once                                | free the stream |
 
-One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
@@ -63,15 +63,15 @@ TA_SMA_Update( sma.get(), newClose, &value );
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
-- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
+- **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1`: with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed: the stream keeps everything it needs.
+- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing: call it as often as the forming bar ticks.
 - **The unstable period is resolved once, at `Open`.** The lookback above is the one in effect at that call. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `Open` needs that many bars plus one.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. The [unstable period](/api/#numerical_stability) and the [candle settings](/api/#candle_settings) are process-wide: change them only while no TA function is running and no stream is open ([specification](/spec/settings-threads/#idle-settings)).
 - **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch function — OHLCV in, one out-pointer per output:
+Inputs and outputs mirror the batch function (OHLCV in, one out-pointer per output):
 
 ```c
 /* Candlestick: OHLC in, one int out */
@@ -83,7 +83,7 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 
 ## Array-Fill Open
 
-`Open` and `Update` each write a single value per output. One more call writes a full array instead — the same shape the [batch function](/api/) would produce — while still opening the stream:
+`Open` and `Update` each write a single value per output. One more call writes a full array instead, the same shape the [batch function](/api/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -106,7 +106,7 @@ TA_SMA_Update( s, newClose, &sma );
 |------|------|------|
 | `TA_<NAME>_Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `TA_<NAME>_Clone` | any time | an independent fork of the stream, at the same bar |
-| `TA_<NAME>_OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `TA_<NAME>_OutRange` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `TA_<NAME>_Advance` | after a bar you will not feed | advances the OutRange without affecting any other internal state of the stream |
 
 ```c
@@ -126,7 +126,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Returns |
 |------|---------|
-| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1`, 0 included — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
+| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1`, 0 included (the one failure worth retrying, since another bar might fix it)</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM`: a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` from `Update` (never `Peek`) once the range has reached bar `TA_INDEX_MAX`, the last index the batch API addresses</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>Apart from `TA_ALLOC_ERR`, after which nothing is defined, a rejection changes nothing at all: no state, no output and no range. The next call sees exactly what the last accepted bar left. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_<NAME>_Value` | `TA_BAD_PARAM` on a NULL stream or a NULL out-pointer for any output. |

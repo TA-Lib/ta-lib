@@ -16,11 +16,11 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-One more call, `open_and_fill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `open_and_fill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is no `close` — dropping the stream closes it (RAII).
+There is no `close`: dropping the stream closes it (RAII).
 
 ## Example (SMA)
 
@@ -42,15 +42,15 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
+`open` returns a `Result`: `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range.
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
-- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
+- **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1`: with fewer bars there is no defined value yet. After `open`, the history can be dropped: the stream keeps everything it needs.
+- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks.
 - **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
-- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee: one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 
 ## Multi-input / multi-output
 
@@ -68,7 +68,7 @@ let pattern: i32 = s.update(o, h, l, c)?;
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still opening the stream:
+`open` and `update` each write a single value. One more call writes a full slice instead, the same shape the [batch method](/api/rust/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -91,7 +91,7 @@ let v = s.update(new_close)?;
 |------|------|------|
 | `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.out_range()` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.out_range()` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```rust
@@ -102,7 +102,7 @@ s.advance()?;               // a bar you skipped, counted
 ```
 
 The first three return no `Result`: they read what the stream already holds, so
-there is nothing to reject. `advance()` returns one — it moves the range, and the
+there is nothing to reject. `advance()` returns one: it moves the range, and the
 range cannot pass `Core::INDEX_MAX`.
 
 See [Rules](#rules) for when concurrent reads of these are safe.

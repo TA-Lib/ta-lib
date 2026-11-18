@@ -34,7 +34,7 @@ toc: false
 
 ## 1.0 Introduction {#intro}
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The Java library is a native port of TA-Lib in the `io.github.talib` package: no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -147,8 +147,8 @@ Misuse throws rather than returning a return code:
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
 | A null array | `TALibArgumentException` |
 
-Each extends the platform type you would reach for — `TALibIndexException` an
-`IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching
+Each extends the platform type you would reach for (`TALibIndexException` an
+`IndexOutOfBoundsException`, the rest an `IllegalArgumentException`), so catching
 either shape works, and every one carries its `RetCode`.
 
 A rejected call leaves every array untouched.

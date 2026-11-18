@@ -8,7 +8,7 @@ The **streaming API** is built for live feeds: open a stream once, then feed it 
 
 Every value is **bit-identical** to what the [batch method](/api/java/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
-Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
+Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream`, unrelated to `java.util.stream`):
 
 | Call | When | Does |
 |------|------|------|
@@ -17,14 +17,14 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
 A single-output function answers with a `double` (or an `int` for a candlestick
-pattern) return. A multi-output one writes into a sink you pass and own — see
+pattern) return. A multi-output one writes into a sink you pass and own: see
 [Multi-input / multi-output](#multi-input-multi-output).
 
-One more call, `openAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `openAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
+There is no `close`: a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
 ## Example (SMA)
 
@@ -44,21 +44,21 @@ double v = s.update(newClose);                  // throws on a non-finite bar, o
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
-- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
+- **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
+- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
-- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream. To stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
 
 Inputs and outputs mirror the batch method. A multi-output function writes its
-outputs into a `Core.<Name>Out` — a plain mutable object with one public field
-per output, in batch output order — that **you** allocate and pass in.
+outputs into a `Core.<Name>Out` (a plain mutable object with one public field
+per output, in batch output order) that **you** allocate and pass in.
 Candlestick patterns return `int`:
 
 ```java
@@ -76,7 +76,7 @@ int pattern = c.update(o, h, l, cl);
 Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields
 rather than allocating a new one. The price is that
 **its contents are only valid until the next call that writes it**. It is a
-buffer, not a reading — a reference kept past that call, or one put in a
+buffer, not a reading: a reference kept past that call, or one put in a
 collection, sees the value change underneath it. Copy the fields out if the
 reading has to outlive the call, or allocate one sink per slot. For the same
 reason `<Name>Out` deliberately has no `equals`/`hashCode`: value equality on a
@@ -86,7 +86,7 @@ committed.
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full array instead — the same shape the [batch method](/api/java/) would produce — while still opening the stream:
+`open` and `update` each write a single value. One more call writes a full array instead, the same shape the [batch method](/api/java/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -104,7 +104,7 @@ OutRange r = s.outRange();                      // the bars it has an output for
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned stream as `outRange()` rather than through out-parameters — see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned stream as `outRange()` rather than through out-parameters: see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
 
 ## Utility Calls
 
@@ -112,7 +112,7 @@ The optional parameters and output arrays are exactly the [batch method](/api/ja
 |------|------|------|
 | `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.outRange()` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.outRange()` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```java
@@ -124,7 +124,7 @@ OutRange r = s.outRange();          // the bars s has an output for
 s.advance();                        // a bar you skipped, counted
 ```
 
-`clone()` overrides `Object.clone()` but does not use the `Cloneable` protocol —
+`clone()` overrides `Object.clone()` but does not use the `Cloneable` protocol:
 the body is a copy constructor, so it needs no marker interface and throws no
 `CloneNotSupportedException`.
 
@@ -134,8 +134,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw `TALibArgumentException`. |
-| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
+| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException`; catch it to accumulate more bars and retry). Out-of-range parameters throw `TALibArgumentException`. |
+| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 
