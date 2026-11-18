@@ -124,11 +124,22 @@ def is_dotnet_installed() -> bool:
         return False
 
 def is_cargo_installed() -> bool:
-    try:
-        subprocess.run(['cargo', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
+    """rustup's cargo installs the toolchain rust-toolchain.toml pins on first use,
+    so a failure here can be a download that did not finish, not a missing tool:
+    retry it, and show what it said."""
+    for attempt in range(3):
+        if attempt:
+            time.sleep(10 * attempt)
+        try:
+            done = subprocess.run(['cargo', '--version'], stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True)
+        except FileNotFoundError:
+            return False
+        if done.returncode == 0:
+            return True
+        print(f"cargo --version failed (exit {done.returncode}):\n{done.stderr}",
+              file=sys.stderr, flush=True)
+    return False
 
 def is_gcc_installed() -> bool:
     try:
