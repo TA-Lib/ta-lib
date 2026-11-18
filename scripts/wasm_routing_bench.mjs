@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const DEFAULT_BARS = [30, 60, 125, 250, 500, 1000, 2500, 5000, 10000, 50000];
+const DEFAULT_BARS = [30, 60, 125, 250, 500, 1000, 2500, 5000, 10000, 50000, 100000, 200000];
 
 function usage(msg) {
   if (msg) console.error(msg);

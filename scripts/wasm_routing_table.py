@@ -3,12 +3,15 @@
 
 Usage: python3 scripts/wasm_routing_table.py <host1.jsonl> <host2.jsonl> [...]
            [--margin=0.10] [--flat=0.05] [--min-hosts=3] [--max-iqr=PERCENT]
+           [--slack=1] [--fresh] [--write]
        python3 scripts/wasm_routing_table.py --self-test
 
 One file per timing host; a file may hold several sweeps, and each (function,
 bars, arm) then takes the median over the sweeps of its median and of its IQR.
-Prints the YAML on stdout and the report on stderr; prints no YAML, and exits 1,
-when it refuses.
+Prints the YAML on stdout, or with --write writes it to
+ta_codegen/input/wasm_routing.yaml, and the report on stderr; writes no YAML,
+and exits 1, when it refuses. The table is written with --write, not by
+redirecting stdout into that file, which the shell empties before it is read.
 
 A host routes a measured bar count when WASM's upper quartile is at most
 (1 - margin) times TypeScript's lower quartile on it. A count wins when every
@@ -24,13 +27,25 @@ apart by the margin; the margin, because a host the table was not timed on
 differs by more than the noise, and a function routed at parity buys nothing
 and risks a loss.
 
+The table in the tree is the previous one, unless --fresh. A function keeps
+its previous entry P over the rule's entry E when P's first count, and a
+range's last, is a measured count, no count inside P is a loss, wins outnumber
+even counts inside P, and E has P's form (both open or both ranges) with at
+most --slack more wins and at most --slack fewer even counts than P.
+The ends of an entry move between sweeps of unchanged code, and following them
+would change the table for at most --slack winning counts. A function no host
+measures gets no entry, previous or not.
+
 --max-iqr is an optional hard ceiling, off by default: any row whose arm has an
 IQR above that percent of its median refuses the whole table.
 """
 
 import argparse
+import contextlib
+import io
 import json
 import os
+import re
 import statistics
 import sys
 import tempfile
@@ -38,6 +53,7 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROUTING_FILE = os.path.join(ROOT, "ta_codegen", "input", "wasm_routing.yaml")
 EPS = 1e-12
+SLACK = 1
 
 
 def load(path):
@@ -109,13 +125,22 @@ def is_flat(cell, flat):
     return med(cell, "wasm") <= (1 + flat) * med(cell, "js") * (1 + EPS)
 
 
-def entry(func, hosts, margin, flat, test=routes):
-    """`func`'s table entry over `hosts`: B (from B on), (LO, HI) inclusive, or None."""
+def classify(func, hosts, margin, flat, test=routes):
+    """(sizes, win, loss, even): `func`'s measured bar counts, ascending, and a flag per count for each class."""
     sizes = sorted(hosts[0]["funcs"][func])
     cells = [[h["funcs"][func][s] for h in hosts] for s in sizes]
     win = [all(test(c, margin) for c in row) for row in cells]
     loss = [not all(is_flat(c, flat) for c in row) for row in cells]
     even = [not w and not l and not any(test(c, margin) for c in row) for w, l, row in zip(win, loss, cells)]
+    return sizes, win, loss, even
+
+
+def entry(func, hosts, margin, flat, test=routes):
+    """`func`'s table entry over `hosts`: B (from B on), (LO, HI) inclusive, or None."""
+    return rule_entry(*classify(func, hosts, margin, flat, test))
+
+
+def rule_entry(sizes, win, loss, even):
     top = len(sizes) - 1
     best = None
     for lo in range(len(sizes)):
@@ -135,6 +160,30 @@ def entry(func, hosts, margin, flat, test=routes):
     return sizes[lo] if hi == top else (sizes[lo], sizes[hi])
 
 
+def inside(e, sizes):
+    """Indices of the measured counts entry `e` covers; an open entry runs through the largest."""
+    hi = sizes[-1] if isinstance(e, int) else e[1]
+    return [i for i, s in enumerate(sizes) if first(e) <= s <= hi]
+
+
+def keeps(prev, rule, classes, slack):
+    """Whether the previous entry `prev` stands in for the rule's entry `rule`."""
+    sizes, win, loss, even = classes
+    if first(prev) not in sizes or (not isinstance(prev, int) and prev[1] not in sizes):
+        return False
+    span = inside(prev, sizes)
+    if any(loss[i] for i in span):
+        return False
+    wins = sum(win[i] for i in span)
+    evens = sum(even[i] for i in span)
+    if wins <= evens or rule is None or isinstance(rule, int) != isinstance(prev, int):
+        return False
+    rule_span = inside(rule, sizes)
+    if sum(win[i] for i in rule_span) - wins > slack:
+        return False
+    return evens - sum(even[i] for i in rule_span) <= slack
+
+
 def spell(e):
     if e is None:
         return "not routed"
@@ -150,8 +199,8 @@ def quartile_ratio(cell):
     return quartiles(cell, "wasm")[1] / quartiles(cell, "js")[0]
 
 
-def decide(hosts, margin, flat, min_hosts, max_iqr=None):
-    """(table or None, report lines, refusals)."""
+def decide(hosts, margin, flat, min_hosts, max_iqr=None, prev=None, slack=SLACK):
+    """(table or None, report lines, refusals); `prev` is the previous table, {F: B | (LO, HI)}."""
     refusals = []
     report = []
     if len(hosts) < min_hosts:
@@ -196,8 +245,14 @@ def decide(hosts, margin, flat, min_hosts, max_iqr=None):
     table = {}
     left_out = []
     differs = []
+    kept = []
     for f in timed:
-        b = entry(f, hosts, margin, flat)
+        classes = classify(f, hosts, margin, flat)
+        b = rule_entry(*classes)
+        p = (prev or {}).get(f)
+        if p is not None and p != b and keeps(p, b, classes, slack):
+            kept.append((f, p, b))
+            b = p
         per_host = {h["name"]: entry(f, [h], margin, flat) for h in hosts}
         if any(e != b for e in per_host.values()):
             differs.append((f, b, per_host))
@@ -229,6 +284,9 @@ def decide(hosts, margin, flat, min_hosts, max_iqr=None):
         span = "from %6d bars" % b if isinstance(b, int) else "from %6d to %d bars (ranged)" % b
         report.append("  %-20s %s, q-ratio %.3f, WASM %s there (TS %.0f ns, WASM %.0f ns)"
                       % (f, span, quartile_ratio(worst), faster(med(worst, "js"), med(worst, "wasm")), med(worst, "js"), med(worst, "wasm")))
+    report.append("kept from the previous table (%d), with what the rule alone gives:" % len(kept))
+    for f, p, b in kept:
+        report.append("  %-20s %s (rule alone: %s)" % (f, spell(p), spell(b)))
     report.append("left out (%d), best size by the worst host's q-ratio:" % len(left_out))
     for f, (ratio, s, h) in left_out:
         cell = h["funcs"][f][s]
@@ -244,15 +302,44 @@ def decide(hosts, margin, flat, min_hosts, max_iqr=None):
     return table, report, refusals
 
 
-def header():
+def header(path):
     lines = []
-    if os.path.exists(ROUTING_FILE):
-        with open(ROUTING_FILE) as f:
+    if os.path.exists(path):
+        with open(path) as f:
             for line in f:
                 if not line.startswith("#"):
                     break
                 lines.append(line)
     return "".join(lines)
+
+
+def previous(path, fresh):
+    """The `batch:` map of the table at `path` as {F: B | (LO, HI)}; {} with --fresh or no file."""
+    table = {}
+    if not os.path.exists(path):
+        return table
+    in_batch = found = False
+    with open(path) as f:
+        for n, line in enumerate(f, 1):
+            text = line.split("#")[0].rstrip()
+            if not text:
+                continue
+            if not line[0].isspace():
+                in_batch = text == "batch:"
+                if text.startswith("batch:"):
+                    if not re.fullmatch(r"batch:(\s*\{\s*\})?", text):
+                        raise ValueError("%s line %d: the batch map is neither a block map nor {}" % (path, n))
+                    found = True
+                continue
+            if not in_batch:
+                continue
+            m = re.fullmatch(r"\s+(\w+):\s*(?:(\d+)|\[\s*(\d+)\s*,\s*(\d+)\s*\])", text)
+            if not m:
+                raise ValueError("%s line %d: not `F: N` or `F: [LO, HI]`" % (path, n))
+            table[m[1]] = int(m[2]) if m[2] else (int(m[3]), int(m[4]))
+    if not found:
+        raise ValueError("%s has no batch map; redirecting the output into it empties it first: use --write" % path)
+    return {} if fresh else table
 
 
 def emit_yaml(table, head):
@@ -274,7 +361,7 @@ def _curve(func, ratios, sizes=(100, 1000, 10000), iqr=0.0):
 
 
 def _run(case, host_rows, expect_yaml, expect_refusal=None, min_hosts=3, margin=0.10, max_iqr=None, expect_report=(),
-         flat=0.05):
+         flat=0.05, prev=None, fresh=False, slack=None):
     with tempfile.TemporaryDirectory() as d:
         hosts = []
         for i, rows in enumerate(host_rows):
@@ -282,7 +369,14 @@ def _run(case, host_rows, expect_yaml, expect_refusal=None, min_hosts=3, margin=
             with open(p, "w") as f:
                 f.write("".join(json.dumps(r) + "\n" for r in rows))
             hosts.append(load(p))
-        table, report, refusals = decide(hosts, margin, flat, min_hosts, max_iqr)
+        prev_table = None
+        if prev is not None:
+            p = os.path.join(d, "wasm_routing.yaml")
+            with open(p, "w") as f:
+                f.write("# header\n" + prev)
+            prev_table = previous(p, fresh)
+        kw = {} if slack is None else {"slack": slack}
+        table, report, refusals = decide(hosts, margin, flat, min_hosts, max_iqr, prev_table, **kw)
     got = None if table is None else emit_yaml(table, "")
     ok = (got == expect_yaml and (expect_refusal is None or any(expect_refusal in r for r in refusals))
           and all(any(e in line for line in report) for e in expect_report))
@@ -290,6 +384,63 @@ def _run(case, host_rows, expect_yaml, expect_refusal=None, min_hosts=3, margin=
     if not ok:
         print("     yaml %r, refusals %r, report %r" % (got, refusals, report))
     return ok
+
+
+def _file_cases():
+    with tempfile.TemporaryDirectory() as d:
+        host = os.path.join(d, "host1.jsonl")
+        with open(host, "w") as f:
+            f.write("".join(json.dumps(r) + "\n" for r in _curve("A", [0.5] * 3)))
+        routing = os.path.join(d, "wasm_routing.yaml")
+
+        def run(text, *args):
+            with open(routing, "w") as f:
+                f.write(text)
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = main([host, "--min-hosts=1"] + list(args), routing)
+            with open(routing) as f:
+                return rc, out.getvalue(), err.getvalue(), f.read()
+
+        def raises(text):
+            with open(routing, "w") as f:
+                f.write(text)
+            try:
+                previous(routing, False)
+            except ValueError:
+                return True
+            return False
+
+        rc, out, err, after = run("")
+        empty = rc == 1 and out == "" and "use --write" in err and after == ""
+        rc, out, err, after = run("", "--fresh")
+        empty_fresh = rc == 1 and out == "" and "use --write" in err and after == ""
+        holds = "# h\nbatch:\n  A: 1000\n"
+        kept = run(holds)[:2] == (0, holds)
+        fresh = run(holds, "--fresh")[:2] == (0, "# h\nbatch:\n  A: 100\n")
+        strict = run(holds, "--slack=0")[:2] == (0, "# h\nbatch:\n  A: 100\n")
+        rc, out, _, _ = run("# h\nbatch: {}\n")
+        flow_empty = rc == 0 and out == "# h\nbatch:\n  A: 100\n"
+        flow = raises("batch: {SMA: 100}\n")
+        rc, out, _, after = run("# h1\n# h2\nbatch:\n  A: 500\n", "--write")
+        written = rc == 0 and out == "" and after == "# h1\n# h2\nbatch:\n  A: 100\n"
+        table = "# h\nbatch:\n  A: 500\n"
+        rc, out, _, after = run(table, "--write", "--min-hosts=2")
+        refused = rc == 1 and out == "" and after == table
+    checks = [
+        ("a table file that exists but is empty refuses and names --write", empty),
+        ("a table file that exists but is empty refuses with --fresh too", empty_fresh),
+        ("through main, an entry that holds is kept", kept),
+        ("through main, --fresh replaces it", fresh),
+        ("through main, --slack=0 replaces it", strict),
+        ("`batch: {}` reads as an empty table", flow_empty),
+        ("a flow-style batch map that is not empty refuses", flow),
+        ("--write writes the header and the table to the file and nothing to stdout", written),
+        ("a refusal with --write leaves the file as it was", refused),
+    ]
+    for case, ok in checks:
+        print("%-4s %s" % ("ok" if ok else "FAIL", case))
+    return [ok for _, ok in checks]
 
 
 def self_test():
@@ -303,6 +454,8 @@ def self_test():
     noisy_low = [_row("K", 100, 100.0, 50.0, iqr=80.0), _row("K", 1000, 100.0, 50.0), _row("K", 10000, 100.0, 50.0)]
     top = lambda name, r: [_curve(name, [1.2, 0.5, 0.5, r], sizes5[:4]), _curve(name, [1.2, 0.5, 0.5, 0.5], sizes5[:4]),
                            _curve(name, [1.2, 0.5, 0.5, 0.5], sizes5[:4])]
+    z = lambda ratios: three(_curve("Z", ratios, sizes5))
+    after = lambda entries, **kw: dict(prev="batch:\n  " + entries + "\n", **kw)
     cases = [
         ("median of medians over sweeps outvotes a bad first sweep",
          [_curve("H", [2.0, 2.0, 2.0]) + _curve("H", [0.5, 0.5, 0.5]) + _curve("H", [0.6, 0.6, 0.6]),
@@ -431,13 +584,47 @@ def self_test():
          None, "host3: A at 10000 bars: js IQR 25.0%", 3, 0.10, 10.0),
         ("different bar counts refuse",
          [_curve("A", [0.5] * 3), _curve("A", [0.5] * 3), _curve("A", [0.5] * 2)], None, "different bar counts"),
+        ("kept: valid, and the rule's entry holds one more win", z([0.5] * 5), "batch:\n  Z: 1000\n",
+         after("Z: 1000", expect_report=("kept from the previous table (1)",
+                                         "Z                    from 1000 (rule alone: from 100)"))),
+        ("replaced: the rule's entry holds two more wins", z([0.5] * 5), "batch:\n  Z: 100\n", after("Z: 10000")),
+        ("replaced: a loss inside the previous entry", z([0.5, 1.2, 0.5, 0.5, 0.5]), "batch:\n  Z: 10000\n",
+         after("Z: 100")),
+        ("replaced: wins do not outnumber even counts inside the previous entry",
+         three(_curve("Z", [0.5, 1.03, 1.03, 0.5, 0.5, 1.2], sizes5 + (10000000,))), "batch:\n  Z: [100, 1000000]\n",
+         after("Z: [100, 100000]")),
+        ("replaced: the previous entry's first count is not measured", z([0.5] * 5), "batch:\n  Z: 100\n",
+         after("Z: 500")),
+        ("replaced: the previous range's last count is not measured", z([0.5] * 4 + [1.2]),
+         "batch:\n  Z: [100, 100000]\n", after("Z: [100, 50000]")),
+        ("kept: a range", z([0.5] * 4 + [1.2]), "batch:\n  Z: [1000, 100000]\n", after("Z: [1000, 100000]")),
+        ("dropped: the rule alone gives no entry, though the previous entry holds", three(_curve("R", [1.2, 0.5, 1.2])),
+         "batch: {}\n", after("R: [1000, 1000]")),
+        ("dropped: the previous entry fails and the rule alone gives no entry", three(_curve("R", [1.2, 0.5, 1.2])),
+         "batch: {}\n", after("R: 1000")),
+        ("--slack=0 replaces an entry the rule's beats by one win", z([0.5] * 5), "batch:\n  Z: 100\n",
+         after("Z: 1000", slack=0)),
+        ("--slack=0 keeps an entry with as many wins and even counts as the rule's",
+         [_curve("Z", [0.5] * 5, sizes5), _curve("Z", [1.03] + [0.5] * 4, sizes5), _curve("Z", [1.03] + [0.5] * 4, sizes5)],
+         "batch:\n  Z: 100\n", after("Z: 100", slack=0)),
+        ("replaced: an open entry against a ranged one", three(_curve("Z", [0.5, 0.5, 1.2, 0.5], sizes5[:4])), "batch:\n  Z: [100, 1000]\n", after("Z: 100000")),
+        ("replaced: a ranged entry against an open one", z([0.5] * 5), "batch:\n  Z: 100\n", after("Z: [100, 100000]")),
+        ("kept: one more even count than the rule's entry", z([1.03] + [0.5] * 4), "batch:\n  Z: 100\n",
+         after("Z: 100")),
+        ("replaced: two more even counts than the rule's entry", z([1.03, 1.03, 0.5, 0.5, 0.5]), "batch:\n  Z: 10000\n",
+         after("Z: 100")),
+        ("--fresh ignores the previous table", z([0.5] * 5), "batch:\n  Z: 100\n", after("Z: 1000", fresh=True)),
+        ("a previous entry equal to the rule's is not reported as kept", z([0.5] * 5), "batch:\n  Z: 100\n",
+         after("Z: 100", expect_report=("kept from the previous table (0)",))),
+        ("a previous entry for a function no host measures, or with no export, is dropped",
+         three([noexp] + _curve("A", [0.5] * 3)), "batch:\n  A: 100\n", after("A: 100\n  ACOS: 100\n  GONE: 100")),
     ]
-    results = [_run(*c) for c in cases]
+    results = [_run(*c[:-1], **c[-1]) if isinstance(c[-1], dict) else _run(*c) for c in cases] + _file_cases()
     print("%d/%d passed" % (sum(results), len(results)))
     return 0 if all(results) else 1
 
 
-def main():
+def main(argv=None, routing=ROUTING_FILE):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("files", nargs="*")
     ap.add_argument("--margin", type=float, default=0.10)
@@ -447,22 +634,43 @@ def main():
     ap.add_argument("--max-iqr", type=float,
                     help="percent; a hard ceiling, off by default: any row whose arm's IQR exceeds this percent of its"
                          " median refuses the whole table")
+    ap.add_argument("--slack", type=int, default=SLACK,
+                    help="a previous entry with measured ends, no loss and more wins than even counts stays only"
+                         " while the rule's own entry has its form with at most this many more wins and at most this"
+                         " many fewer even counts")
+    ap.add_argument("--fresh", action="store_true",
+                    help="ignore the table in the tree: every entry comes from the rule alone")
+    ap.add_argument("--write", action="store_true",
+                    help="write the table to ta_codegen/input/wasm_routing.yaml instead of stdout; redirecting stdout"
+                         " into that file empties it before it is read")
     ap.add_argument("--self-test", action="store_true")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
     if not 0 <= args.margin < 1:
         ap.error("--margin is in [0, 1)")
     if not 0 <= args.flat < 1:
         ap.error("--flat is in [0, 1)")
+    if args.slack < 0:
+        ap.error("--slack is at least 0")
+    try:
+        prev = previous(routing, args.fresh)
+    except ValueError as e:
+        print("refused; no table written:\n  %s" % e, file=sys.stderr)
+        return 1
     hosts = [load(p) for p in args.files]
-    table, report, refusals = decide(hosts, args.margin, args.flat, args.min_hosts, args.max_iqr)
+    table, report, refusals = decide(hosts, args.margin, args.flat, args.min_hosts, args.max_iqr, prev, args.slack)
     if refusals:
         print("refused; no table written:", file=sys.stderr)
         for r in refusals:
             print("  " + r, file=sys.stderr)
         return 1
-    sys.stdout.write(emit_yaml(table, header()))
+    text = emit_yaml(table, header(routing))
+    if args.write:
+        with open(routing, "w") as f:
+            f.write(text)
+    else:
+        sys.stdout.write(text)
     print("\n".join(report), file=sys.stderr)
     return 0
 
