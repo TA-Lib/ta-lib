@@ -5402,43 +5402,80 @@ function coreIsDefault(c: Core): boolean {
   return true;
 }
 
-// This server passes no output buffer, so 'options' under the default Core is a
-// defect unless ta-lib/js rejects the call too.
-function expectedFallThrough(
-  reason: string, exported: boolean, declined: boolean, lengthsDiffer: boolean, coreDefault: boolean, rejected: boolean,
-  bytes: number,
-): string | null {
-  if (!exported) return 'no-export';
-  if (reason === 'declined' && declined) return 'ma-type';
+function engineCore(): Core {
+  return coreIsDefault(core) ? Core.DEFAULT : core;
+}
+
+// The calls one correctness request of a function makes are numbered back from
+// the one its reply reports, which is 0: the float leg when the request has one,
+// else the last iteration. In the k-th request of that function (k from 0) call
+// j passes this server's own output buffers when k + j is odd, so every request
+// makes calls of both kinds and the kind the reply reports alternates from
+// request to request.
+const requestOrdinals = new Map<string, number>();
+
+function requestOrdinal(name: string): number {
+  const k = requestOrdinals.get(name) ?? 0;
+  requestOrdinals.set(name, k + 1);
+  return k;
+}
+
+// Each call starts from the canary, so a buffered call that skipped its copy out
+// answers the canary rather than the previous call's values.
+function refill(outs: readonly (Float64Array | Int32Array)[]): void {
+  for (const a of outs) {
+    if (a instanceof Int32Array) a.fill(TAIL_I32);
+    else a.fill(TAIL_F64);
+  }
+}
+
+interface EngineFacts {
+  readonly exported: boolean;
+  readonly declined: boolean;
+  readonly lengthsDiffer: boolean;
+  readonly bytes: number;
+  readonly buffered: boolean;
+  // The request left an input or output unbound, which the holder rejects before any front runs.
+  readonly unbound: boolean;
+}
+
+// 'options' under the default Core is a defect unless ta-lib/js rejects the
+// call too. 'buffer' is never expected: this server's buffers are plain,
+// distinct and at least as long as the call needs.
+function expectedFallThrough(reason: string, f: EngineFacts, coreDefault: boolean, rejected: boolean): string | null {
+  if (!f.exported) return 'no-export';
+  if (reason === 'declined' && f.declined) return 'ma-type';
   if (reason === 'options' && !coreDefault) return 'core';
-  if (reason === 'input' && lengthsDiffer) return 'lengths';
-  if (reason === 'budget' && bytes > BUDGET) return 'budget';
+  if (reason === 'input' && f.lengthsDiffer) return 'lengths';
+  if (reason === 'budget' && f.bytes > BUDGET) return 'budget';
   const callShaped = ['options', 'parameter', 'input', 'range', 'rejected', 'declined'];
   if (rejected && callShaped.includes(reason)) return 'js-rejects';
   return null;
 }
 
-const tally = { calls: 0, exported: -1, wasm: 0, expected: 0, why: '', defects: 0, defectWhy: '' };
+const tally = { calls: 0, exported: -1, wasm: 0, wasmBuffered: 0, expected: 0, why: '', defects: 0, defectWhy: '' };
 
 function engineTallyReset(): void {
   tally.calls = 0;
   tally.exported = -1;
   tally.wasm = 0;
+  tally.wasmBuffered = 0;
   tally.expected = 0;
   tally.why = '';
   tally.defects = 0;
   tally.defectWhy = '';
 }
 
-function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boolean, bytes: number, call: (c: Core) => T): T {
+function engineBatch<T>(f: EngineFacts, call: (c: Core) => T): T {
   const coreDefault = coreIsDefault(core);
+  const c = coreDefault ? Core.DEFAULT : core;
   const before = fallThroughCount();
   const entered = moduleCalls();
   let rejected = false;
   tally.calls++;
-  tally.exported = exported ? 1 : 0;
+  tally.exported = f.exported ? 1 : 0;
   try {
-    return call(coreDefault ? Core.DEFAULT : core);
+    return call(c);
   } catch (e) {
     rejected = e instanceof TALibError;
     throw e;
@@ -5447,25 +5484,28 @@ function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boo
     const ran = moduleCalls() - entered;
     const status = engineStatus();
     let defect: string | null = null;
+    let why: string | null = null;
     if (status.engine !== 'wasm') {
       defect = `engine-${status.engine}-${String(status.reason)}`;
     } else if (fell > 1) {
       defect = 'repeated-fall-through';
-    } else if (exported && fell === 0) {
+    } else if (fell === 0 && ran === 0 && rejected && f.unbound) {
+      why = 'unbound';
+    } else if (f.exported && fell === 0) {
       if (ran === 1) {
         tally.wasm++;
+        if (f.buffered) tally.wasmBuffered++;
       } else {
         defect = `not-in-module (the module counted ${ran} batch calls)`;
       }
     } else {
       const reason = fell === 0 ? '' : lastFallThrough();
-      const why = expectedFallThrough(reason, exported, declined, lengthsDiffer, coreDefault, rejected, bytes);
-      if (why === null) {
-        defect = reason === '' ? 'no-fall-through-reason' : reason;
-      } else {
-        tally.expected++;
-        if (tally.why === '') tally.why = why;
-      }
+      why = expectedFallThrough(reason, f, coreDefault, rejected);
+      if (why === null) defect = reason === '' ? 'no-fall-through-reason' : reason;
+    }
+    if (why !== null) {
+      tally.expected++;
+      if (tally.why === '') tally.why = why;
     }
     if (defect !== null) {
       tally.defects++;
@@ -5477,6 +5517,7 @@ function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boo
 function engineEvidence(): string {
   if (!wasmEngine) return '';
   return `,"engine_calls":${tally.calls},"engine_exported":${tally.exported},"engine_wasm":${tally.wasm}`
+    + `,"engine_wasm_buffered":${tally.wasmBuffered}`
     + `,"engine_expected":${tally.expected},"engine_why":"${tally.why}"`
     + `,"engine_defects":${tally.defects},"engine_defect_why":${JSON.stringify(tally.defectWhy)}`;
 }
@@ -5484,7 +5525,9 @@ function engineEvidence(): string {
 
 /// The TypeScript server's `ta_abstract` handlers. Every answer comes from the
 /// shipped `abstract` registry, which `build_ts` compiles with the server.
-const TS_ABSTRACT_HANDLERS: &str = r#"function absLookup(p: Params): FuncInfo | undefined {
+const TS_ABSTRACT_HANDLERS: &str = r#"const Functions = wasmEngine ? RoutedFunctions : PureFunctions;
+
+function absLookup(p: Params): FuncInfo | undefined {
   const name = p['funcName'];
   return typeof name === 'string' ? Functions.byName(name) : undefined;
 }
@@ -5589,7 +5632,7 @@ function absBindOpts(f: FuncInfo, h: ParamHolder, p: Params): void {
 // Binds inputs and outputs too. The output length is capped so a rejected range
 // reaches the library and is answered with its code, never with an allocation.
 function absBind(f: FuncInfo, p: Params, outs: (Float64Array | Int32Array)[]): ParamHolder {
-  const h = f.newCall(core);
+  const h = f.newCall(wasmEngine ? engineCore() : core);
   const n = Math.min(Math.max(int(p, 'endIdx', 0) - int(p, 'startIdx', 0) + 1, 1), MAX_ARRAY_SIZE);
   const skipInput = int(p, 'skipInput', 0);
   const skipOutput = int(p, 'skipOutput', 0);
@@ -5657,7 +5700,9 @@ function absCall(p: Params): string {
   try {
     const h = absBind(f, p, outs);
     lb = h.lookback();
-    const r = h.call(int(p, 'startIdx', 0), int(p, 'endIdx', 0));
+    const startIdx = int(p, 'startIdx', 0);
+    const endIdx = int(p, 'endIdx', 0);
+    const r = wasmEngine ? absEngineCall(f, h, p, startIdx, endIdx) : h.call(startIdx, endIdx);
     beg = r.begIdx;
     nb = r.count;
   } catch (e) {
@@ -5676,7 +5721,31 @@ function absCall(p: Params): string {
       realRank++;
     }
   }
-  return s + '}';
+  return s + engineEvidence() + '}';
+}
+
+// The holder's own facts, as the batch handlers state theirs. The holder binds
+// every output buffer unless the request skips one, which it rejects before any
+// front runs, so every call that reaches a front is a buffered one.
+function absEngineCall(f: FuncInfo, h: ParamHolder, p: Params, startIdx: number, endIdx: number): OutRange {
+  const facts = ENGINE_FACTS.get(f.name);
+  if (facts === undefined) throw new Error(`${f.name}: no engine facts`);
+  const series: ArrayLike<number>[] = [];
+  for (let i = 0; i < f.inputs.length; i++) {
+    const x = h.inputs[i];
+    const g = h.prices[i];
+    if (x !== null) series.push(x);
+    if (g !== null) for (const c of g) if (c !== undefined) series.push(c);
+  }
+  const n = series.length === 0 ? 0 : series[0].length;
+  return engineBatch({
+    exported: facts.exported,
+    declined: facts.declined(h.opts),
+    lengthsDiffer: series.some((x) => x.length !== n),
+    bytes: n * facts.perIn + (endIdx - startIdx + 1) * facts.perOut,
+    buffered: true,
+    unbound: int(p, 'skipInput', 0) !== 0 || int(p, 'skipOutput', 0) !== 0,
+  }, () => h.call(startIdx, endIdx));
 }
 
 "#;
@@ -5697,7 +5766,10 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str("import { Core, type CoreBuilder, type CandleSettingType, RangeType } from '../library/src/runtime/core.ts';\n");
     s.push_str("import { RetCode, TALibError } from '../library/src/runtime/errors.ts';\n");
     s.push_str("import { MInteger } from '../library/src/runtime/mInteger.ts';\n");
-    s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/abstract/index.ts';\n");
+    // Plain mode answers the abstract calls from ./js/abstract, which cannot enter the engine.
+    s.push_str("import { FunctionDescription, Functions as PureFunctions, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/js/abstract/index.ts';\n");
+    s.push_str("import { Functions as RoutedFunctions, getRuntimeInfo } from '../library/src/abstract/index.ts';\n");
+    s.push_str("import type { OutRange } from '../library/src/runtime/outRange.ts';\n");
     s.push_str("import { BUDGET, engineStatus, fallThroughCount, lastFallThrough, moduleCalls, ready, setEngineMode } from '../library/src/runtime/wasm.ts';\n");
     s.push_str("import * as ENGINE from '../library/src/engine/index.ts';\n");
     let mut enum_types: Vec<&str> = funcs
@@ -5728,6 +5800,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push('\n');
     s.push_str(crate::backends::runtime_info::TS_SERVER_HANDLER);
     s.push_str(TS_ABSTRACT_HANDLERS);
+    s.push_str(&ts_engine_facts(funcs, enums));
 
     // eval_predicate: the form the generated indicators use.
     s.push_str("function evalPredicate(p: Params): string {\n");
@@ -5926,9 +5999,9 @@ impl<'a> TsPublic<'a> {
         self.call(&self.names.public, self.inputs(ins), self.options(params, Some(range), core, outs))
     }
 
-    /// [`Self::batch`] through the module namespace `ns`, with no buffers.
-    pub(crate) fn batch_in<S: AsRef<str>, P: AsRef<str>>(&self, ns: &str, ins: &[S], params: &[P], range: (&str, &str), core: &str) -> String {
-        Self::call_in(ns, &self.names.public, self.inputs(ins), self.options(params, Some(range), core, &[]))
+    /// [`Self::batch`] through the module namespace `ns`.
+    pub(crate) fn batch_in<S: AsRef<str>, P: AsRef<str>>(&self, ns: &str, ins: &[S], params: &[P], range: (&str, &str), core: &str, outs: &[String]) -> String {
+        Self::call_in(ns, &self.names.public, self.inputs(ins), self.options(params, Some(range), core, outs))
     }
 
     /// `<n>Lookback(opts)`.
@@ -5950,6 +6023,36 @@ impl<'a> TsPublic<'a> {
     pub(crate) fn result_keys(&self) -> Vec<String> {
         self.func.outputs.iter().map(|o| crate::backends::ts::result_key(self.func, o)).collect()
     }
+}
+
+/// The engine facts of each function an abstract call states by name: the
+/// declined values over the holder's parameter slots, and the frame's bytes per bar.
+fn ts_engine_facts(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+    let exported = crate::backends::wasm::exported(funcs);
+    let mut s = String::from(
+        "const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut: number; declined: (o: readonly number[]) => boolean }>([\n",
+    );
+    for func in funcs {
+        let declined: Vec<String> = func
+            .optional_inputs
+            .iter()
+            .enumerate()
+            .filter_map(|(slot, o)| {
+                let values = crate::backends::wasm::declined_values(o, funcs, enums);
+                (!values.is_empty()).then(|| format!("[{}].includes(o[{slot}])", values.iter().map(i32::to_string).collect::<Vec<_>>().join(", ")))
+            })
+            .collect();
+        let declined = if declined.is_empty() { "() => false".to_string() } else { format!("(o) => {}", declined.join(" || ")) };
+        let (per_in, per_out) = crate::backends::ts_engine::frame_bytes(func);
+        let _ = writeln!(
+            s,
+            "  ['{}', {{ exported: {}, perIn: {per_in}, perOut: {per_out}, declined: {declined} }}],",
+            func.name,
+            exported.iter().any(|f| f.name == func.name)
+        );
+    }
+    s.push_str("]);\n\n");
+    s
 }
 
 /// One `TA_<NAME>` handler. A correctness request calls the public function; a
@@ -5996,8 +6099,11 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
         let _ = writeln!(s, "  const out{k} = {ctor}(outLen);");
     }
     s.push_str("  const iters = benchIters(p);\n");
+    s.push_str("  const useFloat = int(p, 'use_float', 0) !== 0;\n");
+    s.push_str("  const replyCall = useFloat ? iters + 1 : iters;\n");
     s.push_str("  const timed = int(p, 'timed', 0) !== 0;\n");
     s.push_str("  if (wasmEngine && timed) return UNSUPPORTED_MODE;\n");
+    let _ = writeln!(s, "  const ord = wasmEngine && benchMode === 0 ? requestOrdinal('{m}') : 0;");
     s.push_str("  const outBegIdx = new MInteger();\n");
     s.push_str("  const outNBElement = new MInteger();\n");
     s.push_str("  let rc: number = RetCode.SUCCESS;\n");
@@ -6030,18 +6136,30 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
     };
     let (per_in, per_out) = crate::backends::ts_engine::frame_bytes(func);
     let bytes = format!("{}.length * {per_in} + (endIdx - startIdx + 1) * {per_out}", input_names[0]);
-    let engine_call = |ins: &[String], indent: &str| -> String {
+    let range = ("startIdx", "endIdx");
+    // `j` numbers the call back from the one the reply reports, for the buffered-share rule in the prelude.
+    let engine_call = |ins: &[String], j: &str, indent: &str| -> String {
         let mut b = String::new();
+        let parity = if j == "0" { "ord".to_string() } else { format!("(ord + {j})") };
+        let _ = writeln!(b, "{indent}const buffered = ({parity} & 1) === 1;");
+        let _ = writeln!(b, "{indent}refill([{}]);", out_vars.join(", "));
         let _ = writeln!(
             b,
-            "{indent}const r = engineBatch({exported}, {declined}, {lengths_differ}, {bytes}, (c) => {});",
-            api.batch_in("ENGINE", ins, &opt_names, ("startIdx", "endIdx"), "c")
+            "{indent}const r = engineBatch({{ exported: {exported}, declined: {declined}, lengthsDiffer: {lengths_differ}, bytes: {bytes}, buffered, unbound: false }},"
+        );
+        let _ = writeln!(
+            b,
+            "{indent}  (c) => buffered ? {} : {});",
+            api.batch_in("ENGINE", ins, &opt_names, range, "c", &out_vars),
+            api.batch_in("ENGINE", ins, &opt_names, range, "c", &[])
         );
         let _ = writeln!(b, "{indent}outBegIdx.value = r.begIdx;");
         let _ = writeln!(b, "{indent}outNBElement.value = r.{first_result}.length;");
+        let _ = writeln!(b, "{indent}if (!buffered) {{");
         for (k, key) in api.result_keys().iter().enumerate() {
-            let _ = writeln!(b, "{indent}out{k}.set(r.{key});");
+            let _ = writeln!(b, "{indent}  out{k}.set(r.{key});");
         }
+        let _ = writeln!(b, "{indent}}}");
         b
     };
 
@@ -6069,7 +6187,7 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
     s.push_str("      if (timed) {\n");
     let _ = writeln!(s, "        rc = {m}.{}({});", n.body, impl_args.join(", "));
     s.push_str("      } else if (wasmEngine) {\n");
-    s.push_str(&engine_call(&input_names, "        "));
+    s.push_str(&engine_call(&input_names, "replyCall - bi", "        "));
     s.push_str("        rc = RetCode.SUCCESS;\n");
     s.push_str("      } else {\n");
     let _ = writeln!(s, "        const r = {};", public_call(&input_names));
@@ -6087,11 +6205,11 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
 
     // The float leg: the widened inputs as a Float32Array, through the same public tier.
     s.push_str("  let usedFloat = 0;\n");
-    s.push_str("  if (int(p, 'use_float', 0) !== 0) {\n");
+    s.push_str("  if (useFloat) {\n");
     let f_ins: Vec<String> = input_names.iter().map(|i| format!("Float32Array.from({i})")).collect();
     s.push_str("    try {\n");
     s.push_str("      if (wasmEngine) {\n");
-    s.push_str(&engine_call(&f_ins, "        "));
+    s.push_str(&engine_call(&f_ins, "0", "        "));
     s.push_str("      } else {\n");
     let _ = writeln!(s, "        const r = {};", public_call(&f_ins));
     s.push_str("        outBegIdx.value = r.begIdx;\n");

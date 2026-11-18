@@ -16,11 +16,24 @@
   "homepage": "https://ta-lib.org",
   "type": "module",
   "sideEffects": [
-    "./dist/engine/node.js"
+    "./dist/engine/node.js",
+    "./dist/abstract/node.js"
   ],
   "exports": {
     ".": {
       "types": "./dist/engine/index.d.ts",
+      "workerd": {
+        "types": "./dist/engine/plain.d.ts",
+        "default": "./dist/engine/plain.js"
+      },
+      "edge-light": {
+        "types": "./dist/engine/plain.d.ts",
+        "default": "./dist/engine/plain.js"
+      },
+      "react-native": {
+        "types": "./dist/engine/plain.d.ts",
+        "default": "./dist/engine/plain.js"
+      },
       "node": {
         "types": "./dist/engine/node.d.ts",
         "default": "./dist/engine/node.js"
@@ -41,10 +54,40 @@
     },
     "./abstract": {
       "types": "./dist/abstract/index.d.ts",
+      "workerd": {
+        "types": "./dist/abstract/plain.d.ts",
+        "default": "./dist/abstract/plain.js"
+      },
+      "edge-light": {
+        "types": "./dist/abstract/plain.d.ts",
+        "default": "./dist/abstract/plain.js"
+      },
+      "react-native": {
+        "types": "./dist/abstract/plain.d.ts",
+        "default": "./dist/abstract/plain.js"
+      },
+      "node": {
+        "types": "./dist/abstract/node.d.ts",
+        "default": "./dist/abstract/node.js"
+      },
+      "bun": {
+        "types": "./dist/abstract/node.d.ts",
+        "default": "./dist/abstract/node.js"
+      },
+      "deno": {
+        "types": "./dist/abstract/node.d.ts",
+        "default": "./dist/abstract/node.js"
+      },
       "default": "./dist/abstract/index.js"
+    },
+    "./js/abstract": {
+      "types": "./dist/js/abstract/index.d.ts",
+      "default": "./dist/js/abstract/index.js"
     },
     "./package.json": "./package.json"
   },
+  "main": "./dist/engine/index.js",
+  "react-native": "./dist/engine/plain.js",
   "types": "./dist/engine/index.d.ts",
   "typesVersions": {
     "*": {
@@ -53,6 +96,9 @@
       ],
       "abstract": [
         "./dist/abstract/index.d.ts"
+      ],
+      "js/abstract": [
+        "./dist/js/abstract/index.d.ts"
       ]
     }
   },

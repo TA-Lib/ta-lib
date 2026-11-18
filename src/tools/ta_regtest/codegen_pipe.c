@@ -74,7 +74,11 @@ typedef struct {
     int  exported;
     long ok;        /* successful batch replies */
     long wasm;      /* calls that ran in WASM */
+    long wasmBuf;   /* of those, calls that passed the server's own output buffers */
     char why[24];   /* the first expected fall-through label */
+    long absOk;     /* successful abstract_call replies */
+    long absWasm;   /* abstract calls that ran in WASM */
+    char absWhy[24];
 } EngineFunc;
 static EngineFunc g_engineFunc[ENGINE_MAX_FUNCS];
 static int        g_engineFuncCount;
@@ -82,11 +86,15 @@ static long       g_engineFuncDropped;
 static int        g_enginePipes;
 static long       g_engineReplies;
 static long       g_engineWasm;
+static long       g_engineWasmBuf;
+static int        g_engineAbstractPasses;
+static long       g_engineAbstractReplies;
+static long       g_engineAbstractWasm;
 static long       g_engineDefects;
 static long       g_engineExitFailures;
 
-/* The labels the server's expectedFallThrough answers with. */
-static const char *const ENGINE_WHY[] = { "no-export", "ma-type", "core", "lengths", "budget", "js-rejects" };
+/* The labels the server's engineBatch answers with. */
+static const char *const ENGINE_WHY[] = { "no-export", "ma-type", "core", "lengths", "budget", "unbound", "js-rejects" };
 #define ENGINE_NWHY ((int)(sizeof(ENGINE_WHY) / sizeof(ENGINE_WHY[0])))
 static long g_engineExpected[ENGINE_NWHY];
 
@@ -109,21 +117,30 @@ static EngineFunc *engine_func(const char *fn, int exported)
     return &g_engineFunc[i];
 }
 
-/* Every reply to a batch call of a WASM-engine server, whichever pass made it.
- * `timed` and the stream warm-up arms (`bench_mode`) are not batch calls. */
+/* Every reply to a batch call or an abstract_call of a WASM-engine server,
+ * whichever pass made it. `timed` and the stream warm-up arms (`bench_mode`) are
+ * not batch calls. An abstract_call whose holder rejected a setter made no call
+ * and says so with `engine_calls` 0. */
 static void engine_scan(const CodegenPipe *cp, const char *request, const char *response)
 {
     const TA_FuncHandle *handle;
     const TA_FuncInfo *info;
     const char *m;
     char fn[48], why[24], defectWhy[96];
-    int i = 0, exported, calls, wasm, expected, defects, w;
+    int i = 0, exported, calls, wasm, wasmBuf, expected, defects, retCode, w, abstractCall = 0;
     EngineFunc *f;
 
     if( !cp->engineWasm ) return;
     m = strstr(request, "\"method\":\"TA_");
-    if( !m ) return;
-    m += 13;
+    if( m )
+        m += 13;
+    else if( strstr(request, "\"method\":\"abstract_call\"") && (m = strstr(request, "\"funcName\":\"")) != NULL )
+    {
+        m += 12;
+        abstractCall = 1;
+    }
+    else
+        return;
     while( i < (int)sizeof(fn) - 1 && m[i] && m[i] != '"' ) { fn[i] = m[i]; i++; }
     fn[i] = '\0';
     if( TA_GetFuncHandle(fn, &handle) != TA_SUCCESS || TA_GetFuncInfo(handle, &info) != TA_SUCCESS )
@@ -133,7 +150,8 @@ static void engine_scan(const CodegenPipe *cp, const char *request, const char *
 
     exported = (info->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL) == 0;
     f = engine_func(fn, exported);
-    g_engineReplies++;
+    if( abstractCall ) g_engineAbstractReplies++;
+    else               g_engineReplies++;
     if( strncmp(response, "{\"error\"", 8) == 0 )
     {
         engine_defect(fn, "the server answered an error", response);
@@ -141,11 +159,15 @@ static void engine_scan(const CodegenPipe *cp, const char *request, const char *
     }
     calls    = json_int_field(response, "\"engine_calls\":", -1);
     wasm     = json_int_field(response, "\"engine_wasm\":", 0);
+    wasmBuf  = json_int_field(response, "\"engine_wasm_buffered\":", 0);
     expected = json_int_field(response, "\"engine_expected\":", 0);
     defects  = json_int_field(response, "\"engine_defects\":", 0);
+    retCode  = json_int_field(response, "\"retCode\":", -1);
+    if( abstractCall && calls == 0 && retCode != 0 )
+        return;
     if( calls < 1 )
     {
-        engine_defect(fn, "a batch reply without engine evidence", "");
+        engine_defect(fn, abstractCall ? "an abstract reply without engine evidence" : "a batch reply without engine evidence", "");
         return;
     }
     if( json_int_field(response, "\"engine_exported\":", -1) != exported )
@@ -154,7 +176,8 @@ static void engine_scan(const CodegenPipe *cp, const char *request, const char *
     if( defects > 0 )
     {
         json_str_field(response, "\"engine_defect_why\":", defectWhy, (int)sizeof(defectWhy));
-        engine_defect(fn, "the server reports an engine defect", defectWhy);
+        engine_defect(fn, abstractCall ? "the server reports an engine defect on the abstract path"
+                                       : "the server reports an engine defect", defectWhy);
     }
     json_str_field(response, "\"engine_why\":", why, (int)sizeof(why));
     if( expected > 0 )
@@ -166,20 +189,39 @@ static void engine_scan(const CodegenPipe *cp, const char *request, const char *
         else
             g_engineExpected[w] += expected;
     }
+    if( abstractCall )
+    {
+        g_engineAbstractWasm += wasm;
+        if( f && retCode == 0 )
+        {
+            f->absOk++;
+            f->absWasm += wasm;
+            if( !f->absWhy[0] && expected > 0 )
+                snprintf(f->absWhy, sizeof(f->absWhy), "%s", why);
+        }
+        return;
+    }
     g_engineWasm += wasm;
-    if( f && json_int_field(response, "\"retCode\":", -1) == 0 )
+    g_engineWasmBuf += wasmBuf;
+    if( f && retCode == 0 )
     {
         f->ok++;
         f->wasm += wasm;
+        f->wasmBuf += wasmBuf;
         if( !f->why[0] && expected > 0 )
             snprintf(f->why, sizeof(f->why), "%s", why);
     }
 }
 
+void codegen_engine_expect_abstract(void)
+{
+    g_engineAbstractPasses++;
+}
+
 int codegen_engine_report(void)
 {
     int failures = (int)(g_engineDefects + g_engineExitFailures + (g_engineFuncDropped > 0));
-    int covered = 0, i, w;
+    int covered = 0, absCovered = 0, i, w;
     long never[ENGINE_NWHY + 1];
 
     if( g_enginePipes == 0 ) return 0;
@@ -187,7 +229,26 @@ int codegen_engine_report(void)
     for( i = 0; i < g_engineFuncCount; i++ )
     {
         const EngineFunc *f = &g_engineFunc[i];
-        if( f->wasm > 0 ) { covered++; continue; }
+        if( f->absWasm > 0 ) absCovered++;
+        else if( f->exported && f->absOk > 0 )
+        {
+            printf("  ENGINE VACUOUS [TA_%s]: exported, %ld successful abstract call(s), none ran in "
+                   "WASM through ta-lib/abstract (first fall-through: %s)\n",
+                   f->name, f->absOk, f->absWhy[0] ? f->absWhy : "none");
+            failures++;
+        }
+        if( f->wasm > 0 )
+        {
+            covered++;
+            if( f->wasmBuf == 0 || f->wasmBuf == f->wasm )
+            {
+                printf("  ENGINE VACUOUS [TA_%s]: %ld call(s) ran in WASM, %ld of them with the server's "
+                       "own output buffers; a function needs calls of both kinds\n",
+                       f->name, f->wasm, f->wasmBuf);
+                failures++;
+            }
+            continue;
+        }
         if( f->ok == 0 ) continue;
         if( f->exported )
         {
@@ -206,14 +267,23 @@ int codegen_engine_report(void)
                g_enginePipes);
         failures++;
     }
+    if( g_engineAbstractPasses > 0 && g_engineAbstractReplies == 0 )
+    {
+        printf("  ENGINE VACUOUS: the WASM-engine abstract pass ran %d time(s) and answered no abstract call\n",
+               g_engineAbstractPasses);
+        failures++;
+    }
     if( g_engineFuncDropped > 0 )
         printf("  ENGINE TABLE FULL: %ld reply(ies) of functions past %d went unrecorded\n",
                g_engineFuncDropped, ENGINE_MAX_FUNCS);
     if( g_engineDefects > 20 )
         printf("  (%ld engine defect(s) in all; the first 20 are above)\n", g_engineDefects);
 
-    printf("  wasm engine: %ld call(s) ran in WASM, over %d function(s); expected fall-throughs:",
-           g_engineWasm, covered);
+    printf("  wasm engine: %ld call(s) ran in WASM, over %d function(s), %ld with the server's own output buffers",
+           g_engineWasm, covered, g_engineWasmBuf);
+    if( g_engineAbstractPasses > 0 )
+        printf("; through ta-lib/abstract: %ld call(s), over %d function(s)", g_engineAbstractWasm, absCovered);
+    printf("\n  wasm engine: expected fall-throughs:");
     for( w = 0; w < ENGINE_NWHY; w++ )
         printf(" %s=%ld", ENGINE_WHY[w], g_engineExpected[w]);
     printf("\n  wasm engine: functions that never ran in WASM, by first fall-through:");

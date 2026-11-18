@@ -27,7 +27,7 @@ typedef struct {
     char *rbuf;         /* CODEGEN_PIPE_RBUF bytes, owned; NULL until open */
     int  rpos;          /* next unconsumed byte in rbuf */
     int  rlen;          /* bytes valid in rbuf */
-    int  engineWasm;    /* launched with --engine=wasm: every batch reply is held to its engine evidence */
+    int  engineWasm;    /* launched with --engine=wasm: every batch and abstract_call reply is held to its engine evidence */
 } CodegenPipe;
 
 /* Start a JSON-RPC subprocess.
@@ -78,6 +78,10 @@ long codegen_tail_reports_ever(void);
 /* The failures the WASM-engine servers' evidence and exit statuses showed, after
  * printing them and the census; 0 when no such server ran. */
 int  codegen_engine_report(void);
+
+/* A WASM-engine server's abstract pass ran: the report then fails when no
+ * abstract_call reply carried evidence. */
+void codegen_engine_expect_abstract(void);
 
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,

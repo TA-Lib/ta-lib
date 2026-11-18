@@ -183,7 +183,7 @@ domain (`Domain`, `InputKind`), where Rust, Java and TypeScript use enumerations
 | Rust | crate `ta-lib`, lib target `ta_lib` |
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
 | C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
-| TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js` and `ta-lib/abstract` |
+| TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js`, `ta-lib/abstract` and `ta-lib/js/abstract` |
 | Go | module `ta-lib.github.io/go`, package `talib`, version tags `ta_codegen/output/go/vX.Y.Z` |
 
 ## 10. Exceptions: idiom loses

@@ -353,29 +353,52 @@ work while it is the last statement of `sweep_run_variant`.
 
 ## The WASM engine run — `tswasm`
 
-`tswasm` is the TypeScript server started with `--engine=wasm`: its batch
-correctness calls go through the default entry with the engine forced, and with
-no output buffer, since the default entry routes no call that passes one. It runs
-in `--codegen` and `--xlang-hash`; the stream legs, the abstract block and
-`server_verify` leave it out because what they reach is the `./js` code `ts`
-already drives, and a `"timed":1` request answers `unsupported_mode`.
+`tswasm` is the TypeScript server started with `--engine=wasm`, with the engine
+forced: its batch correctness calls go through the default entry's options form,
+and its abstract block through the routed `ta-lib/abstract`, whose holder calls
+each function's routed `<n>Positional`. The plain `ts` server answers the
+abstract calls from `ta-lib/js/abstract` and never loads the engine. `tswasm`
+runs in `--codegen` (abstract block included) and `--xlang-hash`; the stream
+legs and `server_verify` leave it out because what they reach is the `./js` code
+`ts` already drives, and a `"timed":1` request answers `unsupported_mode`.
+
+**Buffered share.** The calls one correctness request of a function makes are
+numbered back from the one its reply reports, which is 0 (the float leg when
+the request has one, else the last iteration); in the k-th request of that
+function a server process receives (k from 0), call j passes the server's own
+output buffers when k + j is odd. Every request so makes a call of each kind,
+the kind the reply reports alternates from request to request, and each call
+starts from the canary-filled buffers, so a front that skips the copy out
+answers the canary. The abstract holder binds every buffer unless the request
+skips one (`skipOutput`), which it rejects before any front runs.
 
 A fall-through still answers correctly from TypeScript, so values prove nothing
-here: the transport (`engine_scan`) holds every batch reply of a pipe launched
-with `--engine=wasm`, on every pass, to the `engine_*` evidence the server adds,
-and `main()` fails the run on a defect, a batch reply without evidence, an export
-the server reports differently from `TA_FUNC_FLG_USES_TRANSCENDENTAL`, or an
-exported function that answered successfully and never ran in WASM.
+here: the transport (`engine_scan`) holds every batch and `abstract_call` reply
+of a pipe launched with `--engine=wasm`, on every pass, to the `engine_*`
+evidence the server adds, and `main()` fails the run on a defect, a reply without
+evidence, an export the server reports differently from
+`TA_FUNC_FLG_USES_TRANSCENDENTAL`, an exported function that answered a batch
+call successfully and never ran in WASM, or ran there only with buffers or only
+without, and an exported function that answered an `abstract_call` successfully
+and never ran in WASM through `ta-lib/abstract`. An `abstract_call` whose holder
+rejected a setter makes no call and reports `engine_calls` 0; that is accepted
+only with a non-zero `retCode`.
 
 - **Ran in WASM** means the module's own count of batch calls, which only the
   exports advance, moved by exactly one across the call. The router's
   fall-through counter is never proof: glue that answers from `./js` without
   calling the module makes no fall-through.
 - **Expected fall-throughs** are decided in one place, the server's
-  `expectedFallThrough`, and only where the call's own facts explain them:
-  `budget` only when the call's bytes exceed the runtime's own budget constant,
-  never a copy of it. A trap, a throw in the glue, a load state, or a reason it
-  does not know is a defect, even on a call `./js` rejects. Never add a waiver on
+  `engineBatch` and `expectedFallThrough`, and only where the call's own facts
+  explain them: `budget` only when the call's bytes exceed the runtime's own
+  budget constant, never a copy of it; `js-rejects` only for a call the library
+  rejects too, whose fall-through names something about the call (options, a
+  parameter, an input, the range, a declined value, or the module's own
+  rejection); `unbound` only for a request that left an input or output
+  unbound, which the holder rejects before any front runs. `buffer` is a
+  defect: the server's buffers are plain, distinct and at least as long as the
+  call needs. So are `overrun`, a trap, a throw in the glue, a load state, and a
+  reason it does not know, even on a call `./js` rejects. Never add a waiver on
   this side.
 - **The exit status is evidence.** At close the WASM-engine server gets 10 s to
   exit before SIGTERM, and a non-zero exit (it exits 1 when the engine did not

@@ -36,7 +36,7 @@
 
 import { Core } from '../runtime/core.ts';
 import { RetCode, TALibError } from '../runtime/errors.ts';
-import { DISPATCH } from './dispatch.ts';
+import type { Thunks } from './dispatch.ts';
 import type { InputType, OptInputType, OutputType } from './flags.ts';
 import { ParamHolder } from './paramHolder.ts';
 
@@ -176,6 +176,7 @@ export class FuncInfo {
    * ([keys](https://ta-lib.org/spec/abstract/#attributes)).
    */
   readonly attributes: string;
+  readonly #dispatch: ReadonlyMap<string, Thunks>;
 
   private constructor(
     name: string,
@@ -186,6 +187,7 @@ export class FuncInfo {
     optInputs: readonly OptInputInfo[],
     outputs: readonly OutputInfo[],
     attributes: string,
+    dispatch: ReadonlyMap<string, Thunks>,
   ) {
     this.name = name;
     this.group = group;
@@ -195,6 +197,7 @@ export class FuncInfo {
     this.optInputs = freezeAll(optInputs);
     this.outputs = freezeAll(outputs);
     this.attributes = attributes;
+    this.#dispatch = dispatch;
     Object.freeze(this);
   }
 
@@ -208,8 +211,9 @@ export class FuncInfo {
     optInputs: readonly OptInputInfo[],
     outputs: readonly OutputInfo[],
     attributes: string,
+    dispatch: ReadonlyMap<string, Thunks>,
   ): FuncInfo {
-    return new FuncInfo(name, group, hint, flags, inputs, optInputs, outputs, attributes);
+    return new FuncInfo(name, group, hint, flags, inputs, optInputs, outputs, attributes, dispatch);
   }
 
   /**
@@ -231,7 +235,7 @@ export class FuncInfo {
     if (!(core instanceof Core)) {
       throw new TALibError(RetCode.BAD_PARAM, `${this.name}: core is not a Core`);
     }
-    const thunks = DISPATCH.get(this.name);
+    const thunks = this.#dispatch.get(this.name);
     if (thunks === undefined) {
       throw new TALibError(RetCode.INVALID_HANDLE, `${this.name}: not a registry function`);
     }

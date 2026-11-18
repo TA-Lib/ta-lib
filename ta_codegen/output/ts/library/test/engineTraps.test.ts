@@ -52,7 +52,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { sma } from 'ta-lib';
+import { ready, sma } from 'ta-lib';
 import * as js from 'ta-lib/js';
 import { getRuntimeInfo } from 'ta-lib/abstract';
 import { hooks } from './engineHooks.ts';
@@ -133,7 +133,7 @@ function trappedInWasm(where: string): void {
   assert.ok(hooks.lastTrapError() instanceof wasm.RuntimeError, `${where}: the call threw ${String(hooks.lastTrapError())}, not a WebAssembly trap`);
 }
 
-test('a trap is answered from ta-lib/js and the engine instantiated again, until the limit gives it up', () => {
+test('a trap is answered from ta-lib/js and the engine instantiated again, until the limit gives it up', async () => {
   const Instance = wasm.Instance;
   let instances = 0;
   wasm.Instance = new Proxy(Instance, {
@@ -161,6 +161,7 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
     assert.equal(instances, 1);
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     assert.deepEqual(info(), [1, 0]);
+    assert.deepEqual(await ready(), { engine: 'wasm', reason: null });
     let calls = 1;
     while (hooks.engineStatus().engine === 'wasm' && calls < hooks.MAX_TRAPS) {
       answersAsJs(`trap ${++calls}`);
@@ -171,6 +172,7 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
     assert.equal(calls, hooks.MAX_TRAPS);
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'trap' });
     assert.deepEqual(info(), [0, 6]);
+    assert.deepEqual(await ready(), { engine: 'js', reason: 'trap' }, 'a ready() after the engine was given up resolved to its status at the first ready()');
     answersAsJs('given up');
     assert.equal(hooks.moduleCalls(), entered, 'a call after the engine was given up moved moduleCalls()');
     assert.equal(instances, calls);

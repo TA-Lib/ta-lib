@@ -261,15 +261,15 @@ jobs:
             exit 1
           fi
 
-      # The three tsc steps never run the emitted JavaScript. This loads both entry
-      # points through CommonJS, which proves require(esm) (no top-level await) and
+      # The three tsc steps never run the emitted JavaScript. This loads the entry
+      # points that need no engine bytes through CommonJS, which proves require(esm) (no top-level await) and
       # evaluates every module, so an initializer that throws or a declaration read
       # before its module ran fails here rather than in the nightly's tarball run.
       - name: Load the compiled package through CommonJS
         shell: bash
         working-directory: ta_codegen/output/ts
         run: |
-          if ! node -e "require('./library/dist/index.js'); require('./library/dist/abstract/index.js')"; then
+          if ! node -e "require('./library/dist/index.js'); require('./library/dist/abstract/index.js'); require('./library/dist/js/abstract/index.js')"; then
             echo "::error::The compiled TypeScript package does not load through require(): a top-level await, a module-evaluation error or a broken emitted import. Fix the emitter or src/runtime/, never dist/."
             exit 1
           fi

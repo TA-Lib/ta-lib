@@ -52,9 +52,10 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import vm from 'node:vm';
 
 import * as routed from 'ta-lib';
-import { beta, CoreBuilder, ema, FuncUnstId, ma, macd, MAType, ready, TALibError } from 'ta-lib';
+import { beta, Core, CoreBuilder, ema, FuncUnstId, ma, macd, MAType, OutRange, ready, TALibError } from 'ta-lib';
 import * as js from 'ta-lib/js';
 import { hooks } from './engineHooks.ts';
 
@@ -89,6 +90,11 @@ function same(got: Outcome, want: Outcome, where: string): void {
   assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
   const a = got.value as Record<string, unknown>;
   const b = want.value as Record<string, unknown>;
+  if (b instanceof OutRange) {
+    assert.ok(a instanceof OutRange, `${where}: ta-lib gave no OutRange`);
+    assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count], where);
+    return;
+  }
   assert.deepEqual(Object.keys(a), Object.keys(b), where);
   assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
   for (const key of Object.keys(b).filter((k) => k !== 'begIdx')) {
@@ -123,28 +129,239 @@ function ranInWasm(r: Checked, where: string): void {
   assert.equal(r.ran, 1, `${where}: the module counted ${r.ran} batch calls, not one`);
 }
 
-test('a caller-supplied output buffer falls through, and the result is a view of it', () => {
-  const mine = new Float64Array(N);
-  const r = check('outReal', () => ema(close, { outReal: mine }), () => js.ema(close, { outReal: new Float64Array(N) }));
-  assert.equal(r.fellThrough, 1);
-  assert.equal((r.got.value?.values as Float64Array).buffer, mine.buffer);
-});
-
-test('one buffer for two outputs is rejected with the ta-lib/js error', () => {
-  const shared = new Float64Array(N);
-  const r = check(
-    'outMacd = outMacdSignal',
-    () => macd(close, { outMacd: shared, outMacdSignal: shared }),
-    () => js.macd(close, { outMacd: shared, outMacdSignal: shared }),
+test('caller output buffers are filled in WASM, and each result is a view of its buffer', () => {
+  const mine = new Float64Array(N + 7).fill(-1);
+  const r = check('outReal', () => ema(close, { outReal: mine }), () => js.ema(close, { outReal: new Float64Array(N + 7).fill(-1) }));
+  ranInWasm(r, 'outReal');
+  const values = r.got.value?.values as Float64Array;
+  assert.equal(values.buffer, mine.buffer);
+  assert.equal(values.byteOffset, 0);
+  assert.ok(mine.subarray(values.length).every((v) => v === -1), 'an element past the count was written');
+  const signal = new Float64Array(N);
+  const partial = check(
+    'outMacdSignal alone',
+    () => macd(close, { outMacdSignal: signal }),
+    () => js.macd(close, { outMacdSignal: new Float64Array(N) }),
   );
-  assert.equal(r.fellThrough, 1);
-  assert.ok(r.got.error instanceof TALibError);
+  ranInWasm(partial, 'outMacdSignal alone');
+  assert.equal((partial.got.value?.outMacdSignal as Float64Array).buffer, signal.buffer);
+  assert.notEqual((partial.got.value?.outMacd as Float64Array).buffer, signal.buffer);
 });
 
-test('a Core other than Core.DEFAULT falls through', () => {
+const wanted = N - js.emaLookback({ timePeriod: 10 });
+const sharedInput = close.slice();
+
+/** Buffers ta-lib/js rejects: each falls through before the module, and the call throws the ta-lib/js error without writing to any of them. */
+const REJECTED: [string, () => { outReal?: ArrayBufferView }][] = [
+  ['a Float32Array', () => ({ outReal: new Float32Array(N) })],
+  ['an Int32Array for a real output', () => ({ outReal: new Int32Array(N) })],
+  ['one element too short', () => ({ outReal: new Float64Array(wanted - 1) })],
+  ['empty', () => ({ outReal: new Float64Array(0) })],
+  ['overlapping the input', () => ({ outReal: new Float64Array(sharedInput.buffer, 8, N - 1) })],
+];
+
+test('an output buffer ta-lib/js rejects falls through as buffer before the module and is left untouched', () => {
+  for (const [where, make] of REJECTED) {
+    const mine = make().outReal!;
+    const before = Buffer.from(new Uint8Array(mine.buffer).slice());
+    const r = check(where, () => ema(sharedInput, { timePeriod: 10, outReal: mine as never }), () => js.ema(sharedInput, { timePeriod: 10, outReal: make().outReal as never }));
+    assert.ok(r.got.error instanceof TALibError, `${where}: ta-lib/js accepted it`);
+    assert.equal(r.fellThrough, 1, where);
+    assert.equal(hooks.lastFallThrough(), 'buffer', where);
+    assert.equal(r.ran, 0, `${where}: entered the module`);
+    assert.ok(Buffer.from(new Uint8Array(mine.buffer)).equals(before), `${where}: the buffer was written`);
+  }
+  const shared = new ArrayBuffer(N * 8 * 2);
+  const outMacd = new Float64Array(shared, 0, N);
+  const outMacdSignal = new Float64Array(shared, 8, N);
+  const r = check(
+    'two outputs overlapping',
+    () => macd(close, { outMacd, outMacdSignal }),
+    () => js.macd(close, { outMacd, outMacdSignal }),
+  );
+  assert.ok(r.got.error instanceof TALibError);
+  assert.equal(r.fellThrough, 1);
+  assert.equal(hooks.lastFallThrough(), 'buffer');
+  assert.equal(r.ran, 0);
+  assert.ok(new Float64Array(shared).every((v) => v === 0), 'two overlapping outputs: a buffer was written');
+});
+
+test('an output that is the input itself falls through as buffer and gets the ta-lib/js values; a Float64Array subclass output runs in WASM', () => {
+  const inPlace = close.slice();
+  const r = check('in place', () => ema(inPlace, { outReal: inPlace }), () => js.ema(close.slice(), { outReal: new Float64Array(N) }));
+  assert.equal(r.got.error, undefined);
+  assert.equal(r.fellThrough, 1);
+  assert.equal(hooks.lastFallThrough(), 'buffer');
+  assert.equal(r.ran, 0);
+  class Mine extends Float64Array {}
+  const mine = new Mine(N);
+  const sub = check('a Float64Array subclass', () => ema(close, { outReal: mine }), () => js.ema(close, { outReal: new Mine(N) }));
+  ranInWasm(sub, 'a Float64Array subclass');
+  assert.equal((sub.got.value?.values as Float64Array).buffer, mine.buffer);
+});
+
+type Positional = (...args: unknown[]) => OutRange;
+const entry = import.meta.resolve('ta-lib');
+const routedEma = (await import(new URL('./func/ema.js', entry).href)) as { emaPositional: Positional };
+const jsEma = (await import(new URL('../func/ema.js', entry).href)) as { emaPositional: Positional };
+const routedMacd = (await import(new URL('./func/macd.js', entry).href)) as { macdPositional: Positional };
+const jsMacd = (await import(new URL('../func/macd.js', entry).href)) as { macdPositional: Positional };
+const DEFAULTS = [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT];
+
+/** Three MACD outputs over one ArrayBuffer, and the input in it too, at the element offsets given. */
+function arena(at: [input: number, macd: number, signal: number, hist: number]): { memory: ArrayBuffer; input: Float64Array; outs: Float64Array<ArrayBuffer>[] } {
+  const memory = new ArrayBuffer(8 * (Math.max(...at) + N + 4));
+  new Float64Array(memory).fill(-3);
+  const input = new Float64Array(memory, 8 * at[0], N);
+  input.set(close);
+  return { memory, input, outs: at.slice(1).map((k) => new Float64Array(memory, 8 * k, N)) };
+}
+
+test('outputs at disjoint offsets of one ArrayBuffer, beside the input in it, run in WASM with the ta-lib/js bytes, in both call forms', () => {
+  const layouts: [string, [number, number, number, number]][] = [
+    ['apart', [3, N + 5, 2 * N + 7, 3 * N + 9]],
+    ['each touching the next', [0, N, 2 * N, 3 * N]],
+  ];
+  for (const [label, at] of layouts) {
+    const a = arena(at);
+    const b = arena(at);
+    const keyed = (x: Float64Array<ArrayBuffer>[]) => ({ outMacd: x[0], outMacdSignal: x[1], outMacdHist: x[2] });
+    const where = `options, ${label}`;
+    ranInWasm(check(where, () => macd(a.input, keyed(a.outs)), () => js.macd(b.input, keyed(b.outs))), where);
+    assert.ok(Buffer.from(a.memory).equals(Buffer.from(b.memory)), `${where}: the bytes differ`);
+    const p = arena(at);
+    const q = arena(at);
+    const pos = `positional, ${label}`;
+    const r = check(pos, () => routedMacd.macdPositional(0, N - 1, p.input, ...DEFAULTS, ...p.outs), () => jsMacd.macdPositional(0, N - 1, q.input, ...DEFAULTS, ...q.outs));
+    ranInWasm(r, pos);
+    assert.ok(Buffer.from(p.memory).equals(Buffer.from(q.memory)), `${pos}: the bytes differ`);
+  }
+});
+
+test('outputs sharing one element with each other or with the input fall through as buffer and answer as ta-lib/js does, in both call forms', () => {
+  const layouts: [string, [number, number, number, number]][] = [
+    ['two outputs sharing one element', [0, N, 2 * N - 1, 3 * N]],
+    ['an output sharing one element with the input', [0, N - 1, 2 * N, 3 * N]],
+    ['an output exactly over the input', [0, 0, N, 2 * N]],
+  ];
+  for (const [label, at] of layouts) {
+    for (const form of ['options', 'positional']) {
+      const a = arena(at);
+      const b = arena(at);
+      const run = (x: ReturnType<typeof arena>, viaJs: boolean): unknown =>
+        form === 'options'
+          ? (viaJs ? js.macd : macd)(x.input, { outMacd: x.outs[0], outMacdSignal: x.outs[1], outMacdHist: x.outs[2] })
+          : (viaJs ? jsMacd : routedMacd).macdPositional(0, N - 1, x.input, ...DEFAULTS, ...x.outs);
+      const where = `${form}, ${label}`;
+      const r = check(where, () => run(a, false), () => run(b, true));
+      assert.equal(r.fellThrough, 1, where);
+      assert.equal(hooks.lastFallThrough(), 'buffer', where);
+      assert.equal(r.ran, 0, `${where}: entered the module`);
+      assert.ok(Buffer.from(a.memory).equals(Buffer.from(b.memory)), `${where}: the bytes differ`);
+    }
+  }
+});
+
+test('a call ta-lib/js rejects for its range, or for a parameter when buffers are passed, runs no element valueOf on the routed path either, in both call forms', () => {
+  let calls = 0;
+  const counted = (): number[] =>
+    Array.from(close, (v) => ({
+      valueOf(): number {
+        calls++;
+        return v;
+      },
+    })) as unknown as number[];
+  const cases: [string, (viaJs: boolean) => unknown][] = [
+    ['options, accepted', (j) => (j ? js.ema : ema)(counted(), { timePeriod: 10 })],
+    ['options, an output one element short', (j) => (j ? js.ema : ema)(counted(), { timePeriod: 10, outReal: new Float64Array(wanted - 1) })],
+    ['options, endIdx past the input', (j) => (j ? js.ema : ema)(counted(), { endIdx: N })],
+    ['options, startIdx after endIdx', (j) => (j ? js.ema : ema)(counted(), { startIdx: 50, endIdx: 40 })],
+    ['options, timePeriod 0 into a buffer', (j) => (j ? js.ema : ema)(counted(), { timePeriod: 0, outReal: new Float64Array(N) })],
+    ['positional, an output one element short', (j) => (j ? jsEma : routedEma).emaPositional(0, N - 1, counted(), 10, new Float64Array(wanted - 1))],
+    ['positional, endIdx past the input', (j) => (j ? jsEma : routedEma).emaPositional(0, N, counted(), 10, new Float64Array(N + 1))],
+    ['positional, timePeriod 0', (j) => (j ? jsEma : routedEma).emaPositional(0, N - 1, counted(), 0, new Float64Array(N))],
+  ];
+  for (const [where, call] of cases) {
+    hooks.setEngineMode('force');
+    const before = hooks.fallThroughCount();
+    const entered = hooks.moduleCalls();
+    calls = 0;
+    let got: Outcome;
+    try {
+      got = outcome(() => call(false));
+    } finally {
+      hooks.setEngineMode('table');
+    }
+    const mine = calls;
+    const r: Checked = { fellThrough: hooks.fallThroughCount() - before, ran: hooks.moduleCalls() - entered, got };
+    calls = 0;
+    same(got, outcome(() => call(true)), where);
+    if (where.endsWith('accepted')) {
+      ranInWasm(r, where);
+      assert.equal(mine, N, `${where}: valueOf ran ${mine} times`);
+      continue;
+    }
+    assert.ok(got.error instanceof TALibError, `${where}: ta-lib/js accepted it`);
+    assert.equal(calls, 0, `${where}: ta-lib/js ran valueOf ${calls} times`);
+    assert.equal(mine, 0, `${where}: the routed call ran valueOf ${mine} times`);
+    assert.equal(r.fellThrough, 1, where);
+    assert.equal(r.ran, 0, where);
+  }
+});
+
+test('the positional tier runs in WASM into the caller buffer, and falls through as buffer, untouched, on one ta-lib/js rejects', () => {
+  const call = (f: Positional, input: Float64Array, out: unknown): Outcome => outcome(() => f(0, N - 1, input, 10, out));
+  const mine = new Float64Array(N).fill(-1);
+  const theirs = new Float64Array(N).fill(-1);
+  hooks.setEngineMode('strict');
+  let entered = hooks.moduleCalls();
+  let got: Outcome;
+  try {
+    got = call(routedEma.emaPositional, close, mine);
+  } finally {
+    hooks.setEngineMode('table');
+  }
+  assert.equal(hooks.moduleCalls() - entered, 1, 'the positional tier did not run in the module');
+  const want = call(jsEma.emaPositional, close, theirs);
+  const a = got.value as unknown as OutRange;
+  const b = want.value as unknown as OutRange;
+  assert.ok(a instanceof OutRange);
+  assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count]);
+  assert.ok(bits(mine).equals(bits(theirs)));
+  for (const [where, make] of [...REJECTED, ['absent', () => ({})]] as [string, () => { outReal?: ArrayBufferView }][]) {
+    const out = make().outReal;
+    const before = out === undefined ? null : Buffer.from(new Uint8Array(out.buffer).slice());
+    hooks.setEngineMode('force');
+    const fell = hooks.fallThroughCount();
+    entered = hooks.moduleCalls();
+    let r: Outcome;
+    try {
+      r = call(routedEma.emaPositional, sharedInput, out);
+    } finally {
+      hooks.setEngineMode('table');
+    }
+    const w = call(jsEma.emaPositional, sharedInput, make().outReal);
+    assert.ok(w.error instanceof TALibError, `${where}: ta-lib/js accepted it`);
+    assert.ok(r.error instanceof TALibError, `${where}: ${String(r.error)}`);
+    assert.equal(r.error.message, w.error.message, where);
+    assert.equal(hooks.fallThroughCount() - fell, 1, where);
+    assert.equal(hooks.lastFallThrough(), 'buffer', where);
+    assert.equal(hooks.moduleCalls(), entered, `${where}: entered the module`);
+    if (out !== undefined) assert.ok(Buffer.from(new Uint8Array(out.buffer)).equals(before!), `${where}: the buffer was written`);
+  }
+});
+
+test('a Core other than Core.DEFAULT falls through without loading the engine', () => {
   const core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 7).build();
+  hooks.resetEngine();
+  hooks.provideWasmBytes(WASM_BASE64);
   const r = check('core', () => ema(close, { timePeriod: 10, core }), () => js.ema(close, { timePeriod: 10, core }));
   assert.equal(r.fellThrough, 1);
+  assert.equal(hooks.lastFallThrough(), 'options');
+  assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' }, 'a call that fell through on its core loaded the engine');
+  assert.equal(hooks.wasmMemoryBytes(), 0);
+  ranInWasm(check('then Core.DEFAULT', () => ema(close, { timePeriod: 10 }), () => js.ema(close, { timePeriod: 10 })), 'then Core.DEFAULT');
+  assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
 });
 
 test('startIdx and endIdx are routed; out of range they are rejected as ta-lib/js rejects them', () => {
@@ -177,17 +394,36 @@ test('an empty input is rejected as ta-lib/js rejects it', () => {
   assert.ok(r.got.error instanceof TALibError);
 });
 
-test('a number[] and a Float32Array are routed and give the bits of ta-lib/js', () => {
-  const list = Array.from(close);
-  const narrow = Float32Array.from(close);
-  ranInWasm(check('number[]', () => ema(list), () => js.ema(list)), 'number[]');
-  ranInWasm(check('Float32Array', () => ema(narrow), () => js.ema(narrow)), 'Float32Array');
+test('a number[], a Float32Array, a Float64Array subclass and views over a SharedArrayBuffer and a resizable ArrayBuffer are routed and give the bits of ta-lib/js', () => {
+  class Mine extends Float64Array {}
+  const Resizable = ArrayBuffer as unknown as new (byteLength: number, options: { maxByteLength: number }) => ArrayBuffer;
+  const over = (memory: ArrayBufferLike): Float64Array => {
+    const a = new Float64Array(memory);
+    a.set(close);
+    return a;
+  };
+  const inputs: [string, ArrayLike<number>][] = [
+    ['number[]', Array.from(close)],
+    ['Float32Array', Float32Array.from(close)],
+    ['Float64Array subclass', Mine.from(close)],
+    ['SharedArrayBuffer view', over(new SharedArrayBuffer(N * 8))],
+    ['resizable ArrayBuffer view', over(new Resizable(N * 8, { maxByteLength: 2 * N * 8 }))],
+  ];
+  for (const [where, input] of inputs) {
+    ranInWasm(check(where, () => ema(input), () => js.ema(input)), where);
+    const into = `${where}, into a buffer`;
+    ranInWasm(check(into, () => ema(input, { outReal: new Float64Array(N) }), () => js.ema(input, { outReal: new Float64Array(N) })), into);
+  }
+  const out = over(new SharedArrayBuffer(N * 8)) as Float64Array<ArrayBuffer>;
+  ranInWasm(check('a SharedArrayBuffer output', () => ema(close, { outReal: out }), () => js.ema(close, { outReal: new Float64Array(N) })), 'a SharedArrayBuffer output');
 });
 
 test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js rejects it', () => {
   assert.equal(MAType.MAMA, 7);
   const mama = check('maType 7', () => ma(close, { maType: MAType.MAMA }), () => js.ma(close, { maType: MAType.MAMA }));
   assert.equal(mama.fellThrough, 1);
+  assert.equal(hooks.lastFallThrough(), 'declined');
+  assert.equal(mama.ran, 0);
   assert.equal(mama.got.error, undefined);
   const bad = 99 as MAType;
   const r = check('maType 99', () => ma(close, { maType: bad }), () => js.ma(close, { maType: bad }));
@@ -195,22 +431,7 @@ test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js r
   assert.ok(r.got.error instanceof TALibError);
 });
 
-test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entrant call, give the ta-lib/js result', () => {
-  const overList = new Proxy(Array.from(close), {});
-  ranInWasm(check('Proxy over number[]', () => ema(overList), () => js.ema(overList)), 'Proxy over number[]');
-  const target = close.slice();
-  const overTyped = new Proxy(target, {
-    get: (t, key) => {
-      const v: unknown = Reflect.get(t, key);
-      return typeof v === 'function' ? v.bind(t) : v;
-    },
-  });
-  const forwarded = check('Proxy over Float64Array', () => ema(overTyped), () => js.ema(overTyped));
-  assert.equal(forwarded.fellThrough, 1);
-  assert.equal(forwarded.got.error, undefined);
-  const bare = new Proxy(close.slice(), {});
-  assert.equal(check('Proxy over Float64Array, no traps', () => ema(bare), () => js.ema(bare)).fellThrough, 1);
-
+test('an element whose valueOf grows WASM memory by a re-entrant call gives the ta-lib/js result', () => {
   check('warm-up', () => ema(close), () => js.ema(close));
   let before = hooks.wasmMemoryBytes();
   assert.ok(before > 0, 'no live instance after a routed call');
@@ -236,6 +457,58 @@ test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entr
     assert.equal(r.ran, 2, `${where}: the module did not count the re-entrant call and the outer one`);
     before = grown;
   }
+});
+
+test('a declined MA type or a call over the budget, routed by the table, converts no input and never enters the module', () => {
+  let calls = 0;
+  const counted = (): number[] =>
+    Array.from(close, (v) => ({
+      valueOf(): number {
+        calls++;
+        return v;
+      },
+    })) as unknown as number[];
+  const count = (call: () => unknown): { got: Outcome; calls: number } => {
+    calls = 0;
+    const got = outcome(call);
+    return { got, calls };
+  };
+  const previous = hooks.setBudget(hooks.BUDGET);
+  try {
+    for (const [where, reason, budget, options] of [
+      ['maType MAMA', 'declined', hooks.BUDGET, { maType: MAType.MAMA }],
+      ['one byte over the budget', 'budget', N * 16 - 1, {}],
+    ] as const) {
+      hooks.setBudget(budget);
+      const fell = hooks.fallThroughCount();
+      const entered = hooks.moduleCalls();
+      const mine = count(() => routed.apo(counted(), options));
+      const ran = hooks.moduleCalls() - entered;
+      const fellThrough = hooks.fallThroughCount() - fell;
+      hooks.setBudget(hooks.BUDGET);
+      const theirs = count(() => js.apo(counted(), options));
+      same(mine.got, theirs.got, where);
+      assert.ok(theirs.calls > 0, `${where}: ta-lib/js converted nothing`);
+      assert.equal(mine.calls, theirs.calls, `${where}: valueOf ran ${mine.calls} times, ta-lib/js runs it ${theirs.calls} times`);
+      assert.equal(ran, 0, `${where}: entered the module`);
+      assert.equal(fellThrough, 1, where);
+      assert.equal(hooks.lastFallThrough(), reason, where);
+    }
+  } finally {
+    hooks.setBudget(previous);
+  }
+});
+
+test('a Float64Array of another realm is converted as ta-lib/js converts it, and runs in WASM with its bits, in both call forms', () => {
+  const foreign = vm.runInNewContext('new Float64Array(n)', { n: N }) as Float64Array;
+  foreign.set(close);
+  assert.ok(!(foreign instanceof Float64Array), 'the array is of this realm');
+  ranInWasm(check('options', () => ema(foreign, { timePeriod: 10 }), () => js.ema(foreign, { timePeriod: 10 })), 'options');
+  const mine = new Float64Array(N).fill(-1);
+  const theirs = new Float64Array(N).fill(-1);
+  const r = check('positional', () => routedEma.emaPositional(0, N - 1, foreign, 10, mine), () => jsEma.emaPositional(0, N - 1, foreign, 10, theirs));
+  ranInWasm(r, 'positional');
+  assert.ok(bits(mine).equals(bits(theirs)), 'positional: the buffers differ');
 });
 
 test('a real parameter that is not a number, an integer or range bound that is not an int32, and a non-object prices fall through', () => {
@@ -299,7 +572,7 @@ test('a call over the memory budget falls through as budget, and one at or under
 test('an export refuses a slice outside its frame as a frame defect, and a misaligned or overlapping one as declined', () => {
   const n = 64;
   // A scratch larger than the frame: the frame is what was asked for, not what the buffer holds.
-  assert.ok(hooks.wasmFrame(n * 64) !== null, 'no engine');
+  assert.ok(hooks.engineFor(n * 64) && hooks.wasmFrame(n * 64) !== null, 'no engine');
   const w = hooks.wasmFrame(n * 16);
   assert.ok(w !== null, 'no engine');
   const at = w.base;
@@ -323,7 +596,7 @@ test('an export that grows linear memory itself answers with the range and bits 
   hooks.provideWasmBytes(WASM_BASE64);
   const n = 2_000_000;
   const series = Float64Array.from({ length: n }, (_, i) => Math.round((100 + 10 * Math.sin(i / 9) + (i % 97) / 10) * 100) / 100);
-  assert.ok(hooks.wasmFrame(n * 24) !== null, 'no engine');
+  assert.ok(hooks.engineFor(n * 24) && hooks.wasmFrame(n * 24) !== null, 'no engine');
   const before = hooks.wasmMemoryBytes();
   const entered = hooks.moduleCalls();
   hooks.setEngineMode('strict');
@@ -337,26 +610,6 @@ test('an export that grows linear memory itself answers with the range and bits 
   same(got, outcome(() => js.stochrsi(series)), 'stochrsi over 2,000,000 bars');
   assert.equal(hooks.moduleCalls() - entered, 1);
   assert.ok(after > before, `memory ${before} -> ${after}: the export did not grow it beyond its frame`);
-});
-
-test('a Float64Array whose length property claims more elements than it has falls through', () => {
-  check('prime', () => ema(new Float64Array(400).fill(12345.5)), () => js.ema(new Float64Array(400).fill(12345.5)));
-  const a = Float64Array.from({ length: 10 }, (_, i) => i + 1);
-  Object.defineProperty(a, 'length', { value: 100 });
-  const r = check('length 100 over 10', () => routed.sma(a, { timePeriod: 5 }), () => js.sma(a, { timePeriod: 5 }));
-  assert.equal(r.fellThrough, 1);
-});
-
-test('a Float64Array whose length claims fewer elements than it has falls through, and later calls are unharmed', () => {
-  const b = new Float64Array(100_000).fill(-1e300);
-  Object.defineProperty(b, 'length', { value: 10 });
-  const r = check('length 10 over 100000', () => routed.sma(b, { timePeriod: 3 }), () => js.sma(b, { timePeriod: 3 }));
-  assert.equal(r.fellThrough, 1);
-  class Short extends Float64Array {}
-  Object.defineProperty(Short.prototype, 'length', { get: () => 10 });
-  const c = Short.from(close);
-  assert.equal(check('subclass length getter', () => routed.sma(c, { timePeriod: 3 }), () => js.sma(c, { timePeriod: 3 })).fellThrough, 1);
-  ranInWasm(check('after', () => macd(close), () => js.macd(close)), 'after');
 });
 
 test('the routed path accepts exactly the options objects ta-lib/js accepts', () => {

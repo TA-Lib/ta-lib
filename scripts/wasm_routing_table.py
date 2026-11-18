@@ -8,6 +8,10 @@ Usage: python3 scripts/wasm_routing_table.py <host1.jsonl> <host2.jsonl> [...]
 
 One file per timing host; a file may hold several sweeps, and each (function,
 bars, arm) then takes the median over the sweeps of its median and of its IQR.
+A row timed across more than MAX_MAJOR_GCS major GCs (`majorGcs`, 0 when
+absent) is dropped, and the report counts the drops per sweep; a cell whose
+every row is dropped is missing, as an unmeasured one is. Only --form=options
+sweeps set the table: a file holding rows of another form refuses.
 Prints the YAML on stdout, or with --write writes it to
 ta_codegen/input/wasm_routing.yaml, and the report on stderr; writes no YAML,
 and exits 1, when it refuses. The table is written with --write, not by
@@ -54,11 +58,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROUTING_FILE = os.path.join(ROOT, "ta_codegen", "input", "wasm_routing.yaml")
 EPS = 1e-12
 SLACK = 1
+MAX_MAJOR_GCS = 2
 
 
 def load(path):
     """{'name', 'funcs': {F: None (no export) | {bars: {arm: [median...], arm+'_iqr': [...]}}}, 'fails': [...]}."""
-    host = {"name": os.path.splitext(os.path.basename(path))[0], "path": path, "funcs": {}, "fails": []}
+    host = {"name": os.path.splitext(os.path.basename(path))[0], "path": path, "funcs": {}, "fails": [], "forms": set(),
+            "dropped": {}}
+    sweeps = {}
     env = path + ".env"
     if os.path.exists(env):
         with open(env) as f:
@@ -75,7 +82,10 @@ def load(path):
             except ValueError:
                 host["fails"].append("%s line %d: not JSON" % (path, n))
                 continue
-            if "fail" in row:
+            form = row.get("form", "options")
+            if form != "options":
+                host["forms"].add(form)
+            elif "fail" in row:
                 host["fails"].append(row["fail"])
             elif "error" in row:
                 host["fails"].append("%s at %s bars: %s" % (row.get("func"), row.get("bars"), row["error"]))
@@ -84,6 +94,10 @@ def load(path):
             elif "skip" in row:
                 continue
             else:
+                sweep = sweeps[row["func"], row["bars"]] = sweeps.get((row["func"], row["bars"]), 0) + 1
+                if row.get("majorGcs", 0) > MAX_MAJOR_GCS:
+                    host["dropped"][sweep] = host["dropped"].get(sweep, 0) + 1
+                    continue
                 sizes = host["funcs"].setdefault(row["func"], {})
                 cell = sizes.setdefault(row["bars"], {"js": [], "wasm": [], "js_iqr": [], "wasm_iqr": []})
                 for arm in ("js", "wasm"):
@@ -202,12 +216,17 @@ def quartile_ratio(cell):
 def decide(hosts, margin, flat, min_hosts, max_iqr=None, prev=None, slack=SLACK):
     """(table or None, report lines, refusals); `prev` is the previous table, {F: B | (LO, HI)}."""
     refusals = []
-    report = []
+    report = ["rows dropped for more than %d major GCs while timed: " % MAX_MAJOR_GCS
+              + ("; ".join("%s: %d%s" % (h["name"], sum(h["dropped"].values()),
+                                         " (%s)" % ", ".join("sweep %d: %d" % kv for kv in sorted(h["dropped"].items()))
+                                         if h["dropped"] else "") for h in hosts) or "none")]
     if len(hosts) < min_hosts:
         refusals.append("%d host file(s) given; the table needs %d" % (len(hosts), min_hosts))
     for h in hosts:
         for f in h["fails"]:
             refusals.append("%s: failed: %s" % (h["name"], f))
+        for form in sorted(h["forms"]):
+            refusals.append("%s: holds --form=%s rows; only --form=options sweeps set the table" % (h["name"], form))
     names = sorted(set().union(*(h["funcs"] for h in hosts))) if hosts else []
     for h in hosts:
         for f in names:
@@ -351,13 +370,13 @@ def emit_yaml(table, head):
 
 # --- self-test -------------------------------------------------------------
 
-def _row(func, bars, js, wasm, iqr=0.0, js_iqr=None):
-    return {"func": func, "bars": bars, "js": {"median": js, "iqr": iqr if js_iqr is None else js_iqr},
-            "wasm": {"median": wasm, "iqr": iqr}}
+def _row(func, bars, js, wasm, iqr=0.0, js_iqr=None, **extra):
+    return dict({"func": func, "bars": bars, "js": {"median": js, "iqr": iqr if js_iqr is None else js_iqr},
+                 "wasm": {"median": wasm, "iqr": iqr}}, **extra)
 
 
-def _curve(func, ratios, sizes=(100, 1000, 10000), iqr=0.0):
-    return [_row(func, s, 100.0, 100.0 * r, iqr) for s, r in zip(sizes, ratios)]
+def _curve(func, ratios, sizes=(100, 1000, 10000), iqr=0.0, **extra):
+    return [_row(func, s, 100.0, 100.0 * r, iqr, **extra) for s, r in zip(sizes, ratios)]
 
 
 def _run(case, host_rows, expect_yaml, expect_refusal=None, min_hosts=3, margin=0.10, max_iqr=None, expect_report=(),
@@ -618,6 +637,21 @@ def self_test():
          after("Z: 100", expect_report=("kept from the previous table (0)",))),
         ("a previous entry for a function no host measures, or with no export, is dropped",
          three([noexp] + _curve("A", [0.5] * 3)), "batch:\n  A: 100\n", after("A: 100\n  ACOS: 100\n  GONE: 100")),
+        ("a sweep timed across more than 2 major GCs is dropped, and the drops are counted per sweep",
+         [_curve("H", [2.0] * 3, majorGcs=5) + _curve("H", [0.5] * 3), _curve("H", [0.5] * 3), _curve("H", [0.5] * 3)],
+         "batch:\n  H: 100\n", None, 3, 0.10, None, ("host1: 3 (sweep 1: 3); host2: 0; host3: 0",)),
+        ("a sweep timed across exactly 2 major GCs counts",
+         [_curve("H", [2.0] * 3, majorGcs=2) + _curve("H", [0.5] * 3), _curve("H", [0.5] * 3), _curve("H", [0.5] * 3)],
+         "batch: {}\n", None, 3, 0.10, None, ("host1: 0; host2: 0; host3: 0",)),
+        ("a cell whose every row is dropped is missing: different bar counts refuse",
+         [_curve("A", [0.5] * 2) + [_row("A", 10000, 100.0, 50.0, majorGcs=3)], _curve("A", [0.5] * 3), _curve("A", [0.5] * 3)],
+         None, "different bar counts", 3, 0.10, None, ("host1: 1 (sweep 1: 1); host2: 0",)),
+        ("a function whose every row is dropped on a host is missing there: refuses",
+         [_curve("A", [0.5] * 3, majorGcs=3), _curve("A", [0.5] * 3), _curve("A", [0.5] * 3)], None, "host1: lacks A"),
+        ("rows that name --form=options load", three(_curve("A", [0.5] * 3, form="options", majorGcs=0)), "batch:\n  A: 100\n"),
+        ("a file holding --form=buffered rows refuses",
+         [_curve("A", [0.5] * 3, form="buffered"), _curve("A", [0.5] * 3), _curve("A", [0.5] * 3)], None,
+         "host1: holds --form=buffered rows"),
     ]
     results = [_run(*c[:-1], **c[-1]) if isinstance(c[-1], dict) else _run(*c) for c in cases] + _file_cases()
     print("%d/%d passed" % (sum(results), len(results)))
@@ -664,6 +698,7 @@ def main(argv=None, routing=ROUTING_FILE):
         print("refused; no table written:", file=sys.stderr)
         for r in refusals:
             print("  " + r, file=sys.stderr)
+        print("\n".join(report), file=sys.stderr)
         return 1
     text = emit_yaml(table, header(routing))
     if args.write:

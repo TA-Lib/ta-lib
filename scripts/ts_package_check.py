@@ -19,7 +19,8 @@
      `exports` subpath, and each condition nested in one, lists "types" first
      and "default" last, and each non-root one has a typesVersions entry naming
      its types; a file subpath
-     ("./package.json") ships; every target ships.
+     ("./package.json") ships; every target ships; "main" is the "." default
+     and "react-native" the "." react-native one.
      No name tagged @internal in src/ appears in a packed .d.ts, as a member of
      its class's declaration, or among any subpath's runtime exports. When
      ta_codegen/output/ts/PublicAPI.Shipped.txt exists, every declaration line
@@ -32,9 +33,15 @@
      which fails on a top-level await anywhere in the graph. Both must export
      the same names and compute the same SMA. Then engine.mjs: in strict mode a
      call through the default entry must run in WASM, with the bits of
-     ta-lib/js. Last, esbuild bundles two consumers for Node: through the
-     default entry a routed call with no ready() must run in WASM, and the
-     ta-lib/js bundle's metafile must name no engine module and not the bytes.
+     ta-lib/js. Last, esbuild bundles four consumers for Node: through the
+     default entry, and through ta-lib/abstract alone, a routed call with no
+     ready() must run in WASM with no fall-through; the metafiles of the
+     ta-lib/js and ta-lib/js/abstract bundles must name no engine module, not
+     runtime/wasm.js and not the bytes. Then, for each engine-less condition
+     (workerd, edge-light, react-native), a bundle of ta-lib and one of
+     ta-lib/abstract, still for Node: each must load its plain entry and none of
+     those modules, give the bits of ta-lib/js, and have ready() resolve to
+     {engine: 'js', reason: 'unavailable'}.
 
 Run:  python3 scripts/ts_package_check.py [--allow-dirty] [--output DIR]
       python3 scripts/ts_package_check.py --write-api-snapshot
@@ -314,6 +321,15 @@ def check_package(out_dir, ver, diff_snapshot):
                     branches.append(("%s.%s" % (where, condition), target))
                 elif "package/" + target.removeprefix("./") not in entries:
                     failures.append("exports %r points at %s, which is not packed" % (where, target))
+    # For a resolver that ignores "exports".
+    if not isinstance(exports["."], dict) or manifest.get("main") != exports["."].get("default"):
+        failures.append("the packed package.json \"main\" (%r) is not the \".\" default entry"
+                        % manifest.get("main"))
+    # Metro with package exports off reads this field, and otherwise "main".
+    native = exports["."].get("react-native") if isinstance(exports["."], dict) else None
+    if not isinstance(native, dict) or manifest.get("react-native") != native.get("default"):
+        failures.append("the packed package.json \"react-native\" (%r) is not the \".\" react-native entry"
+                        % manifest.get("react-native"))
     types = manifest.get("types")
     if not types or "package/" + types.removeprefix("./") not in entries:
         failures.append("the packed package.json \"types\" (%r) is not packed" % types)
@@ -437,25 +453,65 @@ def consume(out_dir, manifest, tops):
 def bundles(work):
     if not os.path.exists(ESBUILD):
         return ["no esbuild at %s after npm ci in %s" % (ESBUILD, TS_REL)]
-    if run([ESBUILD, "bundle_node.mjs", "--bundle", "--format=esm", "--platform=node",
-            "--outfile=bundled/node.mjs", "--log-level=warning"], cwd=work).returncode:
-        return ["esbuild could not bundle bundle_node.mjs for Node; see its output above"]
-    r = run(["node", os.path.join("bundled", "node.mjs")], cwd=work, capture=True)
-    if r.returncode:
-        return ["bundle_node.mjs, bundled for Node: a routed call did not run in WASM:\n%s%s"
-                % (r.stdout, r.stderr.strip())]
-    print("--- %s" % r.stdout.strip().splitlines()[-1])
-    if run([ESBUILD, "bundle_js.mjs", "--bundle", "--format=esm", "--platform=node",
-            "--outfile=bundled/js.mjs", "--metafile=bundled/js.meta.json", "--log-level=warning"],
-           cwd=work).returncode:
-        return ["esbuild could not bundle bundle_js.mjs for Node; see its output above"]
-    with open(os.path.join(work, "bundled", "js.meta.json")) as f:
-        inputs = json.load(f)["inputs"]
-    engine = sorted(i for i in inputs if "/dist/engine/" in i or i.endswith("/runtime/wasmBytes.js"))
-    if engine:
-        return ["a Node bundle of ta-lib/js loads %s" % ", ".join(engine[:3])]
-    print("--- bundle_js.mjs: a Node bundle of ta-lib/js loads no engine module and not the bytes")
-    return []
+    for consumer, out in (("bundle_node.mjs", "node.mjs"), ("bundle_abstract.mjs", "abstract.mjs")):
+        if run([ESBUILD, consumer, "--bundle", "--format=esm", "--platform=node",
+                "--outfile=bundled/%s" % out, "--log-level=warning"], cwd=work).returncode:
+            return ["esbuild could not bundle %s for Node; see its output above" % consumer]
+        r = run(["node", os.path.join("bundled", out)], cwd=work, capture=True)
+        if r.returncode:
+            return ["%s, bundled for Node: a routed call did not run in WASM:\n%s%s"
+                    % (consumer, r.stdout, r.stderr.strip())]
+        print("--- %s" % r.stdout.strip().splitlines()[-1])
+    for consumer, spec, forbidden in (
+            ("bundle_js.mjs", "ta-lib/js", ("/runtime/wasmBytes.js", "/runtime/wasm.js")),
+            ("bundle_js_abstract.mjs", "ta-lib/js/abstract", ("/runtime/wasmBytes.js", "/runtime/wasm.js"))):
+        meta = os.path.join("bundled", consumer.replace(".mjs", ".meta.json"))
+        if run([ESBUILD, consumer, "--bundle", "--format=esm", "--platform=node",
+                "--outfile=bundled/%s" % consumer, "--metafile=%s" % meta, "--log-level=warning"],
+               cwd=work).returncode:
+            return ["esbuild could not bundle %s for Node; see its output above" % consumer]
+        with open(os.path.join(work, meta)) as f:
+            inputs = json.load(f)["inputs"]
+        if not any("/dist/abstract/" in i or "/dist/func/" in i for i in inputs):
+            return ["the metafile of %s names no module of the package, so the check below "
+                    "checked nothing: %s" % (consumer, sorted(inputs)[:5])]
+        engine = sorted(i for i in inputs if "/dist/engine/" in i or i.endswith(forbidden))
+        if engine:
+            return ["a Node bundle of %s loads %s" % (spec, ", ".join(engine[:3]))]
+        print("--- %s: a Node bundle of %s loads none of the engine's modules (%s)"
+              % (consumer, spec, ", ".join(["dist/engine/"] + [f.lstrip("/") for f in forbidden])))
+    return plain_bundles(work)
+
+
+def plain_bundles(work):
+    """--platform=node also sets the node condition, so a plain entry is loaded
+    only if its condition precedes node in the subpath."""
+    failures = []
+    for condition in ("workerd", "edge-light", "react-native"):
+        for consumer, spec, plain in (("bundle_plain.mjs", "ta-lib", "/dist/engine/plain.js"),
+                                      ("bundle_plain_abstract.mjs", "ta-lib/abstract", "/dist/abstract/plain.js")):
+            where = "%s under --conditions=%s" % (spec, condition)
+            out = "bundled/%s-%s" % (condition, consumer)
+            meta = out.replace(".mjs", ".meta.json")
+            if run([ESBUILD, consumer, "--bundle", "--format=esm", "--platform=node",
+                    "--conditions=" + condition, "--outfile=" + out, "--metafile=" + meta,
+                    "--log-level=warning"], cwd=work).returncode:
+                failures.append("esbuild could not bundle %s; see its output above" % where)
+                continue
+            with open(os.path.join(work, meta)) as f:
+                inputs = json.load(f)["inputs"]
+            if not any(i.endswith(plain) for i in inputs):
+                failures.append("a bundle of %s does not load %s" % (where, plain.lstrip("/")))
+            engine = sorted(i for i in inputs if ("/dist/engine/" in i and not i.endswith("/dist/engine/plain.js"))
+                            or i.endswith(("/runtime/wasm.js", "/runtime/wasmBytes.js")))
+            if engine:
+                failures.append("a bundle of %s loads %s" % (where, ", ".join(engine[:3])))
+            r = run(["node", out], cwd=work, capture=True)
+            if r.returncode:
+                failures.append("a bundle of %s, run:\n%s%s" % (where, r.stdout, r.stderr.strip()))
+            elif not engine:
+                print("--- %s: %s" % (where, r.stdout.strip().splitlines()[-1]))
+    return failures
 
 
 def main():

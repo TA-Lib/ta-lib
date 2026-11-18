@@ -597,7 +597,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
    }
    /* TypeScript abstract parity: the same two passes, against the registry the
-    * package ships under `./abstract`. The success line carries the function
+    * package ships under `./js/abstract`. The success line carries the function
     * count, so a gate can grep it under --language=c,ts, where a missing server
     * is already a failure. */
    if( retValue == TA_TEST_PASS && doCodegenTest &&
@@ -623,6 +623,31 @@ static ErrorNumber regtest_main( int argc, char **argv )
       else
       {
          ABSTRACT_SERVER_MISSING("ts", codegenLanguageFilter, retValue);
+      }
+   }
+   /* The same two passes against the routed `ta-lib/abstract`, with the engine
+    * forced; the transport holds every abstract_call reply to its evidence. */
+   if( retValue == TA_TEST_PASS && doCodegenTest &&
+       svLanguageEnabled( codegenLanguageFilter, "tswasm" ) )
+   {
+      CodegenPipe tswasmAbstractPipe;
+      const char *const tswasmArgv[] = {"node", "ta_codegen_ts/tools/taCodegenServe.js", "--engine=wasm", NULL};
+      if( codegen_pipe_open(&tswasmAbstractPipe, tswasmArgv) == TA_TEST_PASS )
+      {
+         ErrorNumber e;
+         codegen_engine_expect_abstract();
+         test_abstract_set_server(&tswasmAbstractPipe, "tswasm");
+         e = test_abstract_server_metadata(functionFilter);
+         if( e == TA_TEST_PASS )
+            e = test_abstract();
+         test_abstract_set_server(NULL, NULL);
+         codegen_pipe_close(&tswasmAbstractPipe);
+         if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
+            retValue = e;
+      }
+      else
+      {
+         ABSTRACT_SERVER_MISSING("tswasm", codegenLanguageFilter, retValue);
       }
    }
    /* Go abstract parity: the same two passes, against the package

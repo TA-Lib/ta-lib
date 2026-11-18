@@ -40,19 +40,24 @@ import { test } from 'node:test';
 import * as routed from 'ta-lib';
 import * as js from 'ta-lib/js';
 import { Core, MAType, TALibError } from 'ta-lib/js';
+import * as routedAbstract from 'ta-lib/abstract';
+import * as jsAbstract from 'ta-lib/js/abstract';
 import { hooks } from './engineHooks.ts';
 
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
 type Param = { key: string; kind: 'int' | 'real' | 'enum'; dflt: number; min: number; max: number; members: number[] };
-type Row = { name: string; fn: string; args: (d: Data) => unknown[]; params: Param[]; vectors: (string | number)[][] };
+type Row = {
+  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  bufs: string[]; params: Param[]; vectors: (string | number)[][];
+};
+type Range = { begIdx: number; count: number };
 
 const ROWS: Row[] = [
   {
-    name: 'AC',
-    fn: 'ac',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'AC', fn: 'ac', pos: 'acPositional', stem: 'ac', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 5.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 34.0, min: 2.0, max: 100000.0, members: [] },
@@ -64,9 +69,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ACCBANDS',
-    fn: 'accbands',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ACCBANDS', fn: 'accbands', pos: 'accbandsPositional', stem: 'accbands', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -76,27 +80,24 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AD',
-    fn: 'ad',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'AD', fn: 'ad', pos: 'adPositional', stem: 'ad', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'ADD',
-    fn: 'add',
-    args: (d) => [d.close, d.open],
+    name: 'ADD', fn: 'add', pos: 'addPositional', stem: 'add', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'ADOSC',
-    fn: 'adosc',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'ADOSC', fn: 'adosc', pos: 'adoscPositional', stem: 'adosc', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 3.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
@@ -107,9 +108,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ADR',
-    fn: 'adr',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'ADR', fn: 'adr', pos: 'adrPositional', stem: 'adr', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -119,9 +119,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ADX',
-    fn: 'adx',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ADX', fn: 'adx', pos: 'adxPositional', stem: 'adx', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -131,9 +130,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ADXR',
-    fn: 'adxr',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ADXR', fn: 'adxr', pos: 'adxrPositional', stem: 'adxr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -143,9 +141,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ALLIGATOR',
-    fn: 'alligator',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'ALLIGATOR', fn: 'alligator', pos: 'alligatorPositional', stem: 'alligator', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f', 'f'],
+    bufs: ['outJaw', 'outTeeth', 'outLips'],
     params: [
       { key: 'jawPeriod', kind: 'int', dflt: 13.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'jawShift', kind: 'int', dflt: 8.0, min: 0.0, max: 100000.0, members: [] },
@@ -160,9 +157,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AO',
-    fn: 'ao',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'AO', fn: 'ao', pos: 'aoPositional', stem: 'ao', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 5.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 34.0, min: 2.0, max: 100000.0, members: [] },
@@ -173,9 +169,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'APO',
-    fn: 'apo',
-    args: (d) => [d.close],
+    name: 'APO', fn: 'apo', pos: 'apoPositional', stem: 'apo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -215,9 +210,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AROON',
-    fn: 'aroon',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'AROON', fn: 'aroon', pos: 'aroonPositional', stem: 'aroon', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f'],
+    bufs: ['outAroonDown', 'outAroonUp'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -227,9 +221,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AROONOSC',
-    fn: 'aroonosc',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'AROONOSC', fn: 'aroonosc', pos: 'aroonoscPositional', stem: 'aroonosc', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -239,9 +232,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ASI',
-    fn: 'asi',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'ASI', fn: 'asi', pos: 'asiPositional', stem: 'asi', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'limitMove', kind: 'real', dflt: 3.0, min: 1e-8, max: 3e37, members: [] },
     ],
@@ -251,9 +243,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ATR',
-    fn: 'atr',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ATR', fn: 'atr', pos: 'atrPositional', stem: 'atr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -263,9 +254,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AVGDEV',
-    fn: 'avgdev',
-    args: (d) => [d.close],
+    name: 'AVGDEV', fn: 'avgdev', pos: 'avgdevPositional', stem: 'avgdev', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -275,18 +265,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'AVGPRICE',
-    fn: 'avgprice',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'AVGPRICE', fn: 'avgprice', pos: 'avgpricePositional', stem: 'avgprice', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'BBANDS',
-    fn: 'bbands',
-    args: (d) => [d.close],
+    name: 'BBANDS', fn: 'bbands', pos: 'bbandsPositional', stem: 'bbands', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'nbDevUp', kind: 'real', dflt: 2.0, min: -3e37, max: 3e37, members: [] },
@@ -327,9 +315,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'BBW',
-    fn: 'bbw',
-    args: (d) => [d.close],
+    name: 'BBW', fn: 'bbw', pos: 'bbwPositional', stem: 'bbw', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'nbDevUp', kind: 'real', dflt: 2.0, min: -3e37, max: 3e37, members: [] },
@@ -370,9 +357,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'BETA',
-    fn: 'beta',
-    args: (d) => [d.close, d.open],
+    name: 'BETA', fn: 'beta', pos: 'betaPositional', stem: 'beta', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -382,18 +368,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'BOP',
-    fn: 'bop',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'BOP', fn: 'bop', pos: 'bopPositional', stem: 'bop', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CCI',
-    fn: 'cci',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'CCI', fn: 'cci', pos: 'cciPositional', stem: 'cci', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -403,72 +387,64 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDL2CROWS',
-    fn: 'cdl2crows',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL2CROWS', fn: 'cdl2crows', pos: 'cdl2crowsPositional', stem: 'cdl2crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3BLACKCROWS',
-    fn: 'cdl3blackcrows',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3BLACKCROWS', fn: 'cdl3blackcrows', pos: 'cdl3blackcrowsPositional', stem: 'cdl3blackcrows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3INSIDE',
-    fn: 'cdl3inside',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3INSIDE', fn: 'cdl3inside', pos: 'cdl3insidePositional', stem: 'cdl3inside', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3LINESTRIKE',
-    fn: 'cdl3linestrike',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3LINESTRIKE', fn: 'cdl3linestrike', pos: 'cdl3linestrikePositional', stem: 'cdl3linestrike', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3OUTSIDE',
-    fn: 'cdl3outside',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3OUTSIDE', fn: 'cdl3outside', pos: 'cdl3outsidePositional', stem: 'cdl3outside', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3STARSINSOUTH',
-    fn: 'cdl3starsinsouth',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3STARSINSOUTH', fn: 'cdl3starsinsouth', pos: 'cdl3starsinsouthPositional', stem: 'cdl3starsinsouth', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDL3WHITESOLDIERS',
-    fn: 'cdl3whitesoldiers',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDL3WHITESOLDIERS', fn: 'cdl3whitesoldiers', pos: 'cdl3whitesoldiersPositional', stem: 'cdl3whitesoldiers', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLABANDONEDBABY',
-    fn: 'cdlabandonedbaby',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLABANDONEDBABY', fn: 'cdlabandonedbaby', pos: 'cdlabandonedbabyPositional', stem: 'cdlabandonedbaby', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.3, min: 0.0, max: 3e37, members: [] },
     ],
@@ -478,63 +454,56 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLADVANCEBLOCK',
-    fn: 'cdladvanceblock',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLADVANCEBLOCK', fn: 'cdladvanceblock', pos: 'cdladvanceblockPositional', stem: 'cdladvanceblock', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLBELTHOLD',
-    fn: 'cdlbelthold',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLBELTHOLD', fn: 'cdlbelthold', pos: 'cdlbeltholdPositional', stem: 'cdlbelthold', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLBREAKAWAY',
-    fn: 'cdlbreakaway',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLBREAKAWAY', fn: 'cdlbreakaway', pos: 'cdlbreakawayPositional', stem: 'cdlbreakaway', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLCLOSINGMARUBOZU',
-    fn: 'cdlclosingmarubozu',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLCLOSINGMARUBOZU', fn: 'cdlclosingmarubozu', pos: 'cdlclosingmarubozuPositional', stem: 'cdlclosingmarubozu', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLCONCEALBABYSWALL',
-    fn: 'cdlconcealbabyswall',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLCONCEALBABYSWALL', fn: 'cdlconcealbabyswall', pos: 'cdlconcealbabyswallPositional', stem: 'cdlconcealbabyswall', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLCOUNTERATTACK',
-    fn: 'cdlcounterattack',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLCOUNTERATTACK', fn: 'cdlcounterattack', pos: 'cdlcounterattackPositional', stem: 'cdlcounterattack', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLDARKCLOUDCOVER',
-    fn: 'cdldarkcloudcover',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLDARKCLOUDCOVER', fn: 'cdldarkcloudcover', pos: 'cdldarkcloudcoverPositional', stem: 'cdldarkcloudcover', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.5, min: 0.0, max: 3e37, members: [] },
     ],
@@ -544,45 +513,40 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLDOJI',
-    fn: 'cdldoji',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLDOJI', fn: 'cdldoji', pos: 'cdldojiPositional', stem: 'cdldoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLDOJISTAR',
-    fn: 'cdldojistar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLDOJISTAR', fn: 'cdldojistar', pos: 'cdldojistarPositional', stem: 'cdldojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLDRAGONFLYDOJI',
-    fn: 'cdldragonflydoji',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLDRAGONFLYDOJI', fn: 'cdldragonflydoji', pos: 'cdldragonflydojiPositional', stem: 'cdldragonflydoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLENGULFING',
-    fn: 'cdlengulfing',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLENGULFING', fn: 'cdlengulfing', pos: 'cdlengulfingPositional', stem: 'cdlengulfing', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLEVENINGDOJISTAR',
-    fn: 'cdleveningdojistar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLEVENINGDOJISTAR', fn: 'cdleveningdojistar', pos: 'cdleveningdojistarPositional', stem: 'cdleveningdojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.3, min: 0.0, max: 3e37, members: [] },
     ],
@@ -592,9 +556,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLEVENINGSTAR',
-    fn: 'cdleveningstar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLEVENINGSTAR', fn: 'cdleveningstar', pos: 'cdleveningstarPositional', stem: 'cdleveningstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.3, min: 0.0, max: 3e37, members: [] },
     ],
@@ -604,189 +567,168 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLGAPSIDESIDEWHITE',
-    fn: 'cdlgapsidesidewhite',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLGAPSIDESIDEWHITE', fn: 'cdlgapsidesidewhite', pos: 'cdlgapsidesidewhitePositional', stem: 'cdlgapsidesidewhite', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLGRAVESTONEDOJI',
-    fn: 'cdlgravestonedoji',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLGRAVESTONEDOJI', fn: 'cdlgravestonedoji', pos: 'cdlgravestonedojiPositional', stem: 'cdlgravestonedoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHAMMER',
-    fn: 'cdlhammer',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHAMMER', fn: 'cdlhammer', pos: 'cdlhammerPositional', stem: 'cdlhammer', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHANGINGMAN',
-    fn: 'cdlhangingman',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHANGINGMAN', fn: 'cdlhangingman', pos: 'cdlhangingmanPositional', stem: 'cdlhangingman', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHARAMI',
-    fn: 'cdlharami',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHARAMI', fn: 'cdlharami', pos: 'cdlharamiPositional', stem: 'cdlharami', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHARAMICROSS',
-    fn: 'cdlharamicross',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHARAMICROSS', fn: 'cdlharamicross', pos: 'cdlharamicrossPositional', stem: 'cdlharamicross', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHIGHWAVE',
-    fn: 'cdlhighwave',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHIGHWAVE', fn: 'cdlhighwave', pos: 'cdlhighwavePositional', stem: 'cdlhighwave', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHIKKAKE',
-    fn: 'cdlhikkake',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHIKKAKE', fn: 'cdlhikkake', pos: 'cdlhikkakePositional', stem: 'cdlhikkake', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHIKKAKEMOD',
-    fn: 'cdlhikkakemod',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHIKKAKEMOD', fn: 'cdlhikkakemod', pos: 'cdlhikkakemodPositional', stem: 'cdlhikkakemod', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLHOMINGPIGEON',
-    fn: 'cdlhomingpigeon',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLHOMINGPIGEON', fn: 'cdlhomingpigeon', pos: 'cdlhomingpigeonPositional', stem: 'cdlhomingpigeon', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLIDENTICAL3CROWS',
-    fn: 'cdlidentical3crows',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLIDENTICAL3CROWS', fn: 'cdlidentical3crows', pos: 'cdlidentical3crowsPositional', stem: 'cdlidentical3crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLINNECK',
-    fn: 'cdlinneck',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLINNECK', fn: 'cdlinneck', pos: 'cdlinneckPositional', stem: 'cdlinneck', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLINVERTEDHAMMER',
-    fn: 'cdlinvertedhammer',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLINVERTEDHAMMER', fn: 'cdlinvertedhammer', pos: 'cdlinvertedhammerPositional', stem: 'cdlinvertedhammer', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLKICKING',
-    fn: 'cdlkicking',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLKICKING', fn: 'cdlkicking', pos: 'cdlkickingPositional', stem: 'cdlkicking', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLKICKINGBYLENGTH',
-    fn: 'cdlkickingbylength',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLKICKINGBYLENGTH', fn: 'cdlkickingbylength', pos: 'cdlkickingbylengthPositional', stem: 'cdlkickingbylength', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLLADDERBOTTOM',
-    fn: 'cdlladderbottom',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLLADDERBOTTOM', fn: 'cdlladderbottom', pos: 'cdlladderbottomPositional', stem: 'cdlladderbottom', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLLONGLEGGEDDOJI',
-    fn: 'cdllongleggeddoji',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLLONGLEGGEDDOJI', fn: 'cdllongleggeddoji', pos: 'cdllongleggeddojiPositional', stem: 'cdllongleggeddoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLLONGLINE',
-    fn: 'cdllongline',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLLONGLINE', fn: 'cdllongline', pos: 'cdllonglinePositional', stem: 'cdllongline', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLMARUBOZU',
-    fn: 'cdlmarubozu',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLMARUBOZU', fn: 'cdlmarubozu', pos: 'cdlmarubozuPositional', stem: 'cdlmarubozu', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLMATCHINGLOW',
-    fn: 'cdlmatchinglow',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLMATCHINGLOW', fn: 'cdlmatchinglow', pos: 'cdlmatchinglowPositional', stem: 'cdlmatchinglow', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLMATHOLD',
-    fn: 'cdlmathold',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLMATHOLD', fn: 'cdlmathold', pos: 'cdlmatholdPositional', stem: 'cdlmathold', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.5, min: 0.0, max: 3e37, members: [] },
     ],
@@ -796,9 +738,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLMORNINGDOJISTAR',
-    fn: 'cdlmorningdojistar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLMORNINGDOJISTAR', fn: 'cdlmorningdojistar', pos: 'cdlmorningdojistarPositional', stem: 'cdlmorningdojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.3, min: 0.0, max: 3e37, members: [] },
     ],
@@ -808,9 +749,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLMORNINGSTAR',
-    fn: 'cdlmorningstar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLMORNINGSTAR', fn: 'cdlmorningstar', pos: 'cdlmorningstarPositional', stem: 'cdlmorningstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'penetration', kind: 'real', dflt: 0.3, min: 0.0, max: 3e37, members: [] },
     ],
@@ -820,162 +760,144 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CDLONNECK',
-    fn: 'cdlonneck',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLONNECK', fn: 'cdlonneck', pos: 'cdlonneckPositional', stem: 'cdlonneck', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLPIERCING',
-    fn: 'cdlpiercing',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLPIERCING', fn: 'cdlpiercing', pos: 'cdlpiercingPositional', stem: 'cdlpiercing', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLRICKSHAWMAN',
-    fn: 'cdlrickshawman',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLRICKSHAWMAN', fn: 'cdlrickshawman', pos: 'cdlrickshawmanPositional', stem: 'cdlrickshawman', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLRISEFALL3METHODS',
-    fn: 'cdlrisefall3methods',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLRISEFALL3METHODS', fn: 'cdlrisefall3methods', pos: 'cdlrisefall3methodsPositional', stem: 'cdlrisefall3methods', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSEPARATINGLINES',
-    fn: 'cdlseparatinglines',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSEPARATINGLINES', fn: 'cdlseparatinglines', pos: 'cdlseparatinglinesPositional', stem: 'cdlseparatinglines', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSHOOTINGSTAR',
-    fn: 'cdlshootingstar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSHOOTINGSTAR', fn: 'cdlshootingstar', pos: 'cdlshootingstarPositional', stem: 'cdlshootingstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSHORTLINE',
-    fn: 'cdlshortline',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSHORTLINE', fn: 'cdlshortline', pos: 'cdlshortlinePositional', stem: 'cdlshortline', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSPINNINGTOP',
-    fn: 'cdlspinningtop',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSPINNINGTOP', fn: 'cdlspinningtop', pos: 'cdlspinningtopPositional', stem: 'cdlspinningtop', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSTALLEDPATTERN',
-    fn: 'cdlstalledpattern',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSTALLEDPATTERN', fn: 'cdlstalledpattern', pos: 'cdlstalledpatternPositional', stem: 'cdlstalledpattern', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLSTICKSANDWICH',
-    fn: 'cdlsticksandwich',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLSTICKSANDWICH', fn: 'cdlsticksandwich', pos: 'cdlsticksandwichPositional', stem: 'cdlsticksandwich', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLTAKURI',
-    fn: 'cdltakuri',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLTAKURI', fn: 'cdltakuri', pos: 'cdltakuriPositional', stem: 'cdltakuri', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLTASUKIGAP',
-    fn: 'cdltasukigap',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLTASUKIGAP', fn: 'cdltasukigap', pos: 'cdltasukigapPositional', stem: 'cdltasukigap', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLTHRUSTING',
-    fn: 'cdlthrusting',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLTHRUSTING', fn: 'cdlthrusting', pos: 'cdlthrustingPositional', stem: 'cdlthrusting', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLTRISTAR',
-    fn: 'cdltristar',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLTRISTAR', fn: 'cdltristar', pos: 'cdltristarPositional', stem: 'cdltristar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLUNIQUE3RIVER',
-    fn: 'cdlunique3river',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLUNIQUE3RIVER', fn: 'cdlunique3river', pos: 'cdlunique3riverPositional', stem: 'cdlunique3river', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLUPSIDEGAP2CROWS',
-    fn: 'cdlupsidegap2crows',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLUPSIDEGAP2CROWS', fn: 'cdlupsidegap2crows', pos: 'cdlupsidegap2crowsPositional', stem: 'cdlupsidegap2crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CDLXSIDEGAP3METHODS',
-    fn: 'cdlxsidegap3methods',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'CDLXSIDEGAP3METHODS', fn: 'cdlxsidegap3methods', pos: 'cdlxsidegap3methodsPositional', stem: 'cdlxsidegap3methods', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CE',
-    fn: 'ce',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'CE', fn: 'ce', pos: 'cePositional', stem: 'ce', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outLong', 'outShort'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 22.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'multiplier', kind: 'real', dflt: 3.0, min: 0.0, max: 3e37, members: [] },
@@ -986,18 +908,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CEIL',
-    fn: 'ceil',
-    args: (d) => [d.close],
+    name: 'CEIL', fn: 'ceil', pos: 'ceilPositional', stem: 'ceil', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CG',
-    fn: 'cg',
-    args: (d) => [d.close],
+    name: 'CG', fn: 'cg', pos: 'cgPositional', stem: 'cg', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1007,9 +927,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CKSP',
-    fn: 'cksp',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'CKSP', fn: 'cksp', pos: 'ckspPositional', stem: 'cksp', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outHighStop', 'outLowStop'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'multiplier', kind: 'real', dflt: 1.0, min: 0.0, max: 3e37, members: [] },
@@ -1021,9 +940,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CMF',
-    fn: 'cmf',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'CMF', fn: 'cmf', pos: 'cmfPositional', stem: 'cmf', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1033,9 +951,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CMO',
-    fn: 'cmo',
-    args: (d) => [d.close],
+    name: 'CMO', fn: 'cmo', pos: 'cmoPositional', stem: 'cmo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1045,9 +962,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CMOU',
-    fn: 'cmou',
-    args: (d) => [d.close],
+    name: 'CMOU', fn: 'cmou', pos: 'cmouPositional', stem: 'cmou', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1057,9 +973,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'COPPOCK',
-    fn: 'coppock',
-    args: (d) => [d.close],
+    name: 'COPPOCK', fn: 'coppock', pos: 'coppockPositional', stem: 'coppock', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'wmaPeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'roc1Period', kind: 'int', dflt: 11.0, min: 1.0, max: 100000.0, members: [] },
@@ -1071,9 +986,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CORREL',
-    fn: 'correl',
-    args: (d) => [d.close, d.open],
+    name: 'CORREL', fn: 'correl', pos: 'correlPositional', stem: 'correl', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1083,9 +997,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CRSI',
-    fn: 'crsi',
-    args: (d) => [d.close],
+    name: 'CRSI', fn: 'crsi', pos: 'crsiPositional', stem: 'crsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 3.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'streakPeriod', kind: 'int', dflt: 2.0, min: 2.0, max: 100000.0, members: [] },
@@ -1097,9 +1010,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CTI',
-    fn: 'cti',
-    args: (d) => [d.close],
+    name: 'CTI', fn: 'cti', pos: 'ctiPositional', stem: 'cti', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1109,18 +1021,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'CUMSUM',
-    fn: 'cumsum',
-    args: (d) => [d.close],
+    name: 'CUMSUM', fn: 'cumsum', pos: 'cumsumPositional', stem: 'cumsum', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'CVI',
-    fn: 'cvi',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'CVI', fn: 'cvi', pos: 'cviPositional', stem: 'cvi', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'rocPeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
@@ -1131,9 +1041,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'DEMA',
-    fn: 'dema',
-    args: (d) => [d.close],
+    name: 'DEMA', fn: 'dema', pos: 'demaPositional', stem: 'dema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1143,18 +1052,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'DIV',
-    fn: 'div',
-    args: (d) => [d.close, d.open],
+    name: 'DIV', fn: 'div', pos: 'divPositional', stem: 'div', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'DONCHIAN',
-    fn: 'donchian',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'DONCHIAN', fn: 'donchian', pos: 'donchianPositional', stem: 'donchian', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f', 'f'],
+    bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1164,9 +1071,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'DOSC',
-    fn: 'dosc',
-    args: (d) => [d.close],
+    name: 'DOSC', fn: 'dosc', pos: 'doscPositional', stem: 'dosc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'firstPeriod', kind: 'int', dflt: 5.0, min: 2.0, max: 100000.0, members: [] },
@@ -1179,9 +1085,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'DPO',
-    fn: 'dpo',
-    args: (d) => [d.close],
+    name: 'DPO', fn: 'dpo', pos: 'dpoPositional', stem: 'dpo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1191,9 +1096,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'DX',
-    fn: 'dx',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'DX', fn: 'dx', pos: 'dxPositional', stem: 'dx', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1203,9 +1107,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'EFI',
-    fn: 'efi',
-    args: (d) => [{ close: d.close, volume: d.volume }],
+    name: 'EFI', fn: 'efi', pos: 'efiPositional', stem: 'efi', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 13.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1215,9 +1118,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'EMA',
-    fn: 'ema',
-    args: (d) => [d.close],
+    name: 'EMA', fn: 'ema', pos: 'emaPositional', stem: 'ema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1227,9 +1129,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'EMV',
-    fn: 'emv',
-    args: (d) => [{ high: d.high, low: d.low, volume: d.volume }],
+    name: 'EMV', fn: 'emv', pos: 'emvPositional', stem: 'emv', args: (d) => [{ high: d.high, low: d.low, volume: d.volume }], legs: (d) => [d.high, d.low, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'volumeDivisor', kind: 'real', dflt: 10000.0, min: 1.0, max: 3e37, members: [] },
@@ -1240,9 +1141,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ER',
-    fn: 'er',
-    args: (d) => [d.close],
+    name: 'ER', fn: 'er', pos: 'erPositional', stem: 'er', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1252,9 +1152,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ERI',
-    fn: 'eri',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ERI', fn: 'eri', pos: 'eriPositional', stem: 'eri', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outBullPower', 'outBearPower'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 13.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1264,18 +1163,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'FLOOR',
-    fn: 'floor',
-    args: (d) => [d.close],
+    name: 'FLOOR', fn: 'floor', pos: 'floorPositional', stem: 'floor', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'FOSC',
-    fn: 'fosc',
-    args: (d) => [d.close],
+    name: 'FOSC', fn: 'fosc', pos: 'foscPositional', stem: 'fosc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 5.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1285,9 +1182,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'FRACTAL',
-    fn: 'fractal',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'FRACTAL', fn: 'fractal', pos: 'fractalPositional', stem: 'fractal', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['i', 'i'],
+    bufs: ['outSwingHigh', 'outSwingLow'],
     params: [
       { key: 'leftBars', kind: 'int', dflt: 2.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'rightBars', kind: 'int', dflt: 2.0, min: 1.0, max: 100000.0, members: [] },
@@ -1298,9 +1194,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'GATOR',
-    fn: 'gator',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'GATOR', fn: 'gator', pos: 'gatorPositional', stem: 'gator', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f'],
+    bufs: ['outUpper', 'outLower'],
     params: [
       { key: 'jawPeriod', kind: 'int', dflt: 13.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'jawShift', kind: 'int', dflt: 8.0, min: 0.0, max: 100000.0, members: [] },
@@ -1315,18 +1210,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'HA',
-    fn: 'ha',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'HA', fn: 'ha', pos: 'haPositional', stem: 'ha', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f', 'f', 'f', 'f'],
+    bufs: ['outHaOpen', 'outHaHigh', 'outHaLow', 'outHaClose'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'HMA',
-    fn: 'hma',
-    args: (d) => [d.close],
+    name: 'HMA', fn: 'hma', pos: 'hmaPositional', stem: 'hma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1336,18 +1229,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'IBS',
-    fn: 'ibs',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'IBS', fn: 'ibs', pos: 'ibsPositional', stem: 'ibs', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'ICHIMOKU',
-    fn: 'ichimoku',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'ICHIMOKU', fn: 'ichimoku', pos: 'ichimokuPositional', stem: 'ichimoku', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f', 'f', 'f'],
+    bufs: ['outTenkanSen', 'outKijunSen', 'outSenkouSpanA', 'outSenkouSpanB'],
     params: [
       { key: 'tenkanPeriod', kind: 'int', dflt: 9.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'kijunPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -1359,9 +1250,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'IMI',
-    fn: 'imi',
-    args: (d) => [{ open: d.open, close: d.close }],
+    name: 'IMI', fn: 'imi', pos: 'imiPositional', stem: 'imi', args: (d) => [{ open: d.open, close: d.close }], legs: (d) => [d.open, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1371,9 +1261,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KAMA',
-    fn: 'kama',
-    args: (d) => [d.close],
+    name: 'KAMA', fn: 'kama', pos: 'kamaPositional', stem: 'kama', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1383,9 +1272,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KC',
-    fn: 'kc',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'KC', fn: 'kc', pos: 'kcPositional', stem: 'kc', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'atrPeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
@@ -1397,9 +1285,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KDJ',
-    fn: 'kdj',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'KDJ', fn: 'kdj', pos: 'kdjPositional', stem: 'kdj', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outK', 'outD', 'outJ'],
     params: [
       { key: 'fastKPeriod', kind: 'int', dflt: 9.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'slowKPeriod', kind: 'int', dflt: 3.0, min: 1.0, max: 100000.0, members: [] },
@@ -1469,9 +1356,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KST',
-    fn: 'kst',
-    args: (d) => [d.close],
+    name: 'KST', fn: 'kst', pos: 'kstPositional', stem: 'kst', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'],
+    bufs: ['outKst', 'outKstSignal'],
     params: [
       { key: 'roc1Period', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'roc2Period', kind: 'int', dflt: 15.0, min: 1.0, max: 100000.0, members: [] },
@@ -1489,9 +1375,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KSTEXT',
-    fn: 'kstext',
-    args: (d) => [d.close],
+    name: 'KSTEXT', fn: 'kstext', pos: 'kstextPositional', stem: 'kstext', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'],
+    bufs: ['outKst', 'outKstSignal'],
     params: [
       { key: 'roc1Period', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'roc2Period', kind: 'int', dflt: 15.0, min: 1.0, max: 100000.0, members: [] },
@@ -1567,9 +1452,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KURTOSIS',
-    fn: 'kurtosis',
-    args: (d) => [d.close],
+    name: 'KURTOSIS', fn: 'kurtosis', pos: 'kurtosisPositional', stem: 'kurtosis', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 4.0, max: 10000.0, members: [] },
     ],
@@ -1579,9 +1463,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'KVO',
-    fn: 'kvo',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'KVO', fn: 'kvo', pos: 'kvoPositional', stem: 'kvo', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f', 'f'],
+    bufs: ['outKvo', 'outKvoSignal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 34.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 55.0, min: 2.0, max: 100000.0, members: [] },
@@ -1593,9 +1476,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'LINEARREG',
-    fn: 'linearreg',
-    args: (d) => [d.close],
+    name: 'LINEARREG', fn: 'linearreg', pos: 'linearregPositional', stem: 'linearreg', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1605,9 +1487,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'LINEARREG_INTERCEPT',
-    fn: 'linearregIntercept',
-    args: (d) => [d.close],
+    name: 'LINEARREG_INTERCEPT', fn: 'linearregIntercept', pos: 'linearregInterceptPositional', stem: 'linearregIntercept', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1617,9 +1498,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'LINEARREG_SLOPE',
-    fn: 'linearregSlope',
-    args: (d) => [d.close],
+    name: 'LINEARREG_SLOPE', fn: 'linearregSlope', pos: 'linearregSlopePositional', stem: 'linearregSlope', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1629,9 +1509,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MA',
-    fn: 'ma',
-    args: (d) => [d.close],
+    name: 'MA', fn: 'ma', pos: 'maPositional', stem: 'ma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'maType', kind: 'enum', dflt: 0.0, min: 0, max: 0, members: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14] },
@@ -1670,9 +1549,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MACD',
-    fn: 'macd',
-    args: (d) => [d.close],
+    name: 'MACD', fn: 'macd', pos: 'macdPositional', stem: 'macd', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -1684,9 +1562,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MACDEXT',
-    fn: 'macdext',
-    args: (d) => [d.close],
+    name: 'MACDEXT', fn: 'macdext', pos: 'macdextPositional', stem: 'macdext', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'fastMaType', kind: 'enum', dflt: 0.0, min: 0, max: 0, members: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14] },
@@ -1785,9 +1662,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MACDFIX',
-    fn: 'macdfix',
-    args: (d) => [d.close],
+    name: 'MACDFIX', fn: 'macdfix', pos: 'macdfixPositional', stem: 'macdfix', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'],
     params: [
       { key: 'signalPeriod', kind: 'int', dflt: 9.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -1797,9 +1673,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MACDV',
-    fn: 'macdv',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'MACDV', fn: 'macdv', pos: 'macdvPositional', stem: 'macdv', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'],
+    bufs: ['outMacdv', 'outMacdvSignal', 'outMacdvHist'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -1811,18 +1686,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MARKETFI',
-    fn: 'marketfi',
-    args: (d) => [{ high: d.high, low: d.low, volume: d.volume }],
+    name: 'MARKETFI', fn: 'marketfi', pos: 'marketfiPositional', stem: 'marketfi', args: (d) => [{ high: d.high, low: d.low, volume: d.volume }], legs: (d) => [d.high, d.low, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'MASSI',
-    fn: 'massi',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'MASSI', fn: 'massi', pos: 'massiPositional', stem: 'massi', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 9.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 25.0, min: 2.0, max: 100000.0, members: [] },
@@ -1833,9 +1706,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MAVP',
-    fn: 'mavp',
-    args: (d) => [d.close, d.periods],
+    name: 'MAVP', fn: 'mavp', pos: 'mavpPositional', stem: 'mavp', args: (d) => [d.close, d.periods], legs: (d) => [d.close, d.periods], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'minPeriod', kind: 'int', dflt: 2.0, min: 1.0, max: 10000.0, members: [] },
       { key: 'maxPeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 10000.0, members: [] },
@@ -1875,9 +1747,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MAX',
-    fn: 'max',
-    args: (d) => [d.close],
+    name: 'MAX', fn: 'max', pos: 'maxPositional', stem: 'max', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1887,9 +1758,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MAXINDEX',
-    fn: 'maxindex',
-    args: (d) => [d.close],
+    name: 'MAXINDEX', fn: 'maxindex', pos: 'maxindexPositional', stem: 'maxindex', args: (d) => [d.close], legs: (d) => [d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1899,9 +1769,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MCGD',
-    fn: 'mcgd',
-    args: (d) => [d.close],
+    name: 'MCGD', fn: 'mcgd', pos: 'mcgdPositional', stem: 'mcgd', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1911,9 +1780,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MEDIAN',
-    fn: 'median',
-    args: (d) => [d.close],
+    name: 'MEDIAN', fn: 'median', pos: 'medianPositional', stem: 'median', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 10000.0, members: [] },
     ],
@@ -1923,18 +1791,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MEDPRICE',
-    fn: 'medprice',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'MEDPRICE', fn: 'medprice', pos: 'medpricePositional', stem: 'medprice', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'MFI',
-    fn: 'mfi',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'MFI', fn: 'mfi', pos: 'mfiPositional', stem: 'mfi', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1944,9 +1810,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MIDPOINT',
-    fn: 'midpoint',
-    args: (d) => [d.close],
+    name: 'MIDPOINT', fn: 'midpoint', pos: 'midpointPositional', stem: 'midpoint', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1956,9 +1821,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MIDPRICE',
-    fn: 'midprice',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'MIDPRICE', fn: 'midprice', pos: 'midpricePositional', stem: 'midprice', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1968,9 +1832,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MIN',
-    fn: 'min',
-    args: (d) => [d.close],
+    name: 'MIN', fn: 'min', pos: 'minPositional', stem: 'min', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1980,9 +1843,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MININDEX',
-    fn: 'minindex',
-    args: (d) => [d.close],
+    name: 'MININDEX', fn: 'minindex', pos: 'minindexPositional', stem: 'minindex', args: (d) => [d.close], legs: (d) => [d.close], outs: ['i'],
+    bufs: ['outInteger'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -1992,9 +1854,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MINMAX',
-    fn: 'minmax',
-    args: (d) => [d.close],
+    name: 'MINMAX', fn: 'minmax', pos: 'minmaxPositional', stem: 'minmax', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'],
+    bufs: ['outMin', 'outMax'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2004,9 +1865,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MINMAXINDEX',
-    fn: 'minmaxindex',
-    args: (d) => [d.close],
+    name: 'MINMAXINDEX', fn: 'minmaxindex', pos: 'minmaxindexPositional', stem: 'minmaxindex', args: (d) => [d.close], legs: (d) => [d.close], outs: ['i', 'i'],
+    bufs: ['outMinIdx', 'outMaxIdx'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2016,9 +1876,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MINUS_DI',
-    fn: 'minusDi',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'MINUS_DI', fn: 'minusDi', pos: 'minusDiPositional', stem: 'minusDi', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2028,9 +1887,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MINUS_DM',
-    fn: 'minusDm',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'MINUS_DM', fn: 'minusDm', pos: 'minusDmPositional', stem: 'minusDm', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2040,9 +1898,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MOM',
-    fn: 'mom',
-    args: (d) => [d.close],
+    name: 'MOM', fn: 'mom', pos: 'momPositional', stem: 'mom', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2052,18 +1909,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'MULT',
-    fn: 'mult',
-    args: (d) => [d.close, d.open],
+    name: 'MULT', fn: 'mult', pos: 'multPositional', stem: 'mult', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'NATR',
-    fn: 'natr',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'NATR', fn: 'natr', pos: 'natrPositional', stem: 'natr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2073,27 +1928,24 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'NVI',
-    fn: 'nvi',
-    args: (d) => [{ close: d.close, volume: d.volume }],
+    name: 'NVI', fn: 'nvi', pos: 'nviPositional', stem: 'nvi', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'OBV',
-    fn: 'obv',
-    args: (d) => [d.close, { volume: d.volume }],
+    name: 'OBV', fn: 'obv', pos: 'obvPositional', stem: 'obv', args: (d) => [d.close, { volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'PERCENTB',
-    fn: 'percentb',
-    args: (d) => [d.close],
+    name: 'PERCENTB', fn: 'percentb', pos: 'percentbPositional', stem: 'percentb', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'nbDevUp', kind: 'real', dflt: 2.0, min: -3e37, max: 3e37, members: [] },
@@ -2134,9 +1986,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PERCENTILE',
-    fn: 'percentile',
-    args: (d) => [d.close],
+    name: 'PERCENTILE', fn: 'percentile', pos: 'percentilePositional', stem: 'percentile', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 100.0, min: 2.0, max: 10000.0, members: [] },
       { key: 'percentile', kind: 'real', dflt: 50.0, min: 0.0, max: 100.0, members: [] },
@@ -2147,9 +1998,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PERCENTRANK',
-    fn: 'percentrank',
-    args: (d) => [d.close],
+    name: 'PERCENTRANK', fn: 'percentrank', pos: 'percentrankPositional', stem: 'percentrank', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 100.0, min: 2.0, max: 10000.0, members: [] },
     ],
@@ -2159,9 +2009,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PLUS_DI',
-    fn: 'plusDi',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'PLUS_DI', fn: 'plusDi', pos: 'plusDiPositional', stem: 'plusDi', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2171,9 +2020,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PLUS_DM',
-    fn: 'plusDm',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'PLUS_DM', fn: 'plusDm', pos: 'plusDmPositional', stem: 'plusDm', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2183,9 +2031,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PPO',
-    fn: 'ppo',
-    args: (d) => [d.close],
+    name: 'PPO', fn: 'ppo', pos: 'ppoPositional', stem: 'ppo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -2225,18 +2072,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PVI',
-    fn: 'pvi',
-    args: (d) => [{ close: d.close, volume: d.volume }],
+    name: 'PVI', fn: 'pvi', pos: 'pviPositional', stem: 'pvi', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'PVO',
-    fn: 'pvo',
-    args: (d) => [{ volume: d.volume }],
+    name: 'PVO', fn: 'pvo', pos: 'pvoPositional', stem: 'pvo', args: (d) => [{ volume: d.volume }], legs: (d) => [d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 12.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 26.0, min: 2.0, max: 100000.0, members: [] },
@@ -2276,18 +2121,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'PVT',
-    fn: 'pvt',
-    args: (d) => [{ close: d.close, volume: d.volume }],
+    name: 'PVT', fn: 'pvt', pos: 'pvtPositional', stem: 'pvt', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'QSTICK',
-    fn: 'qstick',
-    args: (d) => [{ open: d.open, close: d.close }],
+    name: 'QSTICK', fn: 'qstick', pos: 'qstickPositional', stem: 'qstick', args: (d) => [{ open: d.open, close: d.close }], legs: (d) => [d.open, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2297,9 +2140,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'RMA',
-    fn: 'rma',
-    args: (d) => [d.close],
+    name: 'RMA', fn: 'rma', pos: 'rmaPositional', stem: 'rma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2309,9 +2151,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ROC',
-    fn: 'roc',
-    args: (d) => [d.close],
+    name: 'ROC', fn: 'roc', pos: 'rocPositional', stem: 'roc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2321,9 +2162,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ROCP',
-    fn: 'rocp',
-    args: (d) => [d.close],
+    name: 'ROCP', fn: 'rocp', pos: 'rocpPositional', stem: 'rocp', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2333,9 +2173,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ROCR',
-    fn: 'rocr',
-    args: (d) => [d.close],
+    name: 'ROCR', fn: 'rocr', pos: 'rocrPositional', stem: 'rocr', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2345,9 +2184,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ROCR100',
-    fn: 'rocr100',
-    args: (d) => [d.close],
+    name: 'ROCR100', fn: 'rocr100', pos: 'rocr100Positional', stem: 'rocr100', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2357,9 +2195,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'RSI',
-    fn: 'rsi',
-    args: (d) => [d.close],
+    name: 'RSI', fn: 'rsi', pos: 'rsiPositional', stem: 'rsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2369,9 +2206,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'RVI',
-    fn: 'rvi',
-    args: (d) => [d.close],
+    name: 'RVI', fn: 'rvi', pos: 'rviPositional', stem: 'rvi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'stdDevPeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
@@ -2382,9 +2218,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'RVIR',
-    fn: 'rvir',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'RVIR', fn: 'rvir', pos: 'rvirPositional', stem: 'rvir', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'stdDevPeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
@@ -2395,9 +2230,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'RVOL',
-    fn: 'rvol',
-    args: (d) => [{ volume: d.volume }],
+    name: 'RVOL', fn: 'rvol', pos: 'rvolPositional', stem: 'rvol', args: (d) => [{ volume: d.volume }], legs: (d) => [d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2407,9 +2241,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SAR',
-    fn: 'sar',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'SAR', fn: 'sar', pos: 'sarPositional', stem: 'sar', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'acceleration', kind: 'real', dflt: 0.02, min: 0.0, max: 3e37, members: [] },
       { key: 'maximum', kind: 'real', dflt: 0.2, min: 0.0, max: 3e37, members: [] },
@@ -2420,9 +2253,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SAREXT',
-    fn: 'sarext',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'SAREXT', fn: 'sarext', pos: 'sarextPositional', stem: 'sarext', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'startValue', kind: 'real', dflt: 0.0, min: -3e37, max: 3e37, members: [] },
       { key: 'offsetOnReverse', kind: 'real', dflt: 0.0, min: 0.0, max: 3e37, members: [] },
@@ -2439,9 +2271,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SHARPE',
-    fn: 'sharpe',
-    args: (d) => [d.close],
+    name: 'SHARPE', fn: 'sharpe', pos: 'sharpePositional', stem: 'sharpe', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'riskFreeRate', kind: 'real', dflt: 0.0, min: -3e37, max: 3e37, members: [] },
@@ -2453,9 +2284,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SI',
-    fn: 'si',
-    args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }],
+    name: 'SI', fn: 'si', pos: 'siPositional', stem: 'si', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'limitMove', kind: 'real', dflt: 3.0, min: 1e-8, max: 3e37, members: [] },
     ],
@@ -2465,9 +2295,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SKEW',
-    fn: 'skew',
-    args: (d) => [d.close],
+    name: 'SKEW', fn: 'skew', pos: 'skewPositional', stem: 'skew', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 3.0, max: 100000.0, members: [] },
     ],
@@ -2477,9 +2306,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SMA',
-    fn: 'sma',
-    args: (d) => [d.close],
+    name: 'SMA', fn: 'sma', pos: 'smaPositional', stem: 'sma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2489,9 +2317,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SMI',
-    fn: 'smi',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'SMI', fn: 'smi', pos: 'smiPositional', stem: 'smi', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outSmi', 'outSmiSignal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 13.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'fastPeriod', kind: 'int', dflt: 2.0, min: 2.0, max: 100000.0, members: [] },
@@ -2504,9 +2331,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SORTINO',
-    fn: 'sortino',
-    args: (d) => [d.close],
+    name: 'SORTINO', fn: 'sortino', pos: 'sortinoPositional', stem: 'sortino', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'mar', kind: 'real', dflt: 0.0, min: -3e37, max: 3e37, members: [] },
@@ -2518,18 +2344,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SQRT',
-    fn: 'sqrt',
-    args: (d) => [d.close],
+    name: 'SQRT', fn: 'sqrt', pos: 'sqrtPositional', stem: 'sqrt', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'SQZMOM',
-    fn: 'sqzmom',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'SQZMOM', fn: 'sqzmom', pos: 'sqzmomPositional', stem: 'sqzmom', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'i'],
+    bufs: ['outMomentum', 'outSqueeze'],
     params: [
       { key: 'bbPeriod', kind: 'int', dflt: 20.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'nbDev', kind: 'real', dflt: 2.0, min: 0.0, max: 3e37, members: [] },
@@ -2544,9 +2368,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'STC',
-    fn: 'stc',
-    args: (d) => [d.close],
+    name: 'STC', fn: 'stc', pos: 'stcPositional', stem: 'stc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'fastPeriod', kind: 'int', dflt: 23.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'slowPeriod', kind: 'int', dflt: 50.0, min: 2.0, max: 100000.0, members: [] },
@@ -2558,9 +2381,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'STDDEV',
-    fn: 'stddev',
-    args: (d) => [d.close],
+    name: 'STDDEV', fn: 'stddev', pos: 'stddevPositional', stem: 'stddev', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 5.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'nbDev', kind: 'real', dflt: 1.0, min: -3e37, max: 3e37, members: [] },
@@ -2571,9 +2393,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'STOCH',
-    fn: 'stoch',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'STOCH', fn: 'stoch', pos: 'stochPositional', stem: 'stoch', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outSlowK', 'outSlowD'],
     params: [
       { key: 'fastKPeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'slowKPeriod', kind: 'int', dflt: 3.0, min: 1.0, max: 100000.0, members: [] },
@@ -2643,9 +2464,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'STOCHF',
-    fn: 'stochf',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'STOCHF', fn: 'stochf', pos: 'stochfPositional', stem: 'stochf', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outFastK', 'outFastD'],
     params: [
       { key: 'fastKPeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'fastDPeriod', kind: 'int', dflt: 3.0, min: 1.0, max: 100000.0, members: [] },
@@ -2685,9 +2505,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'STOCHRSI',
-    fn: 'stochrsi',
-    args: (d) => [d.close],
+    name: 'STOCHRSI', fn: 'stochrsi', pos: 'stochrsiPositional', stem: 'stochrsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'],
+    bufs: ['outFastK', 'outFastD'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'fastKPeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
@@ -2728,18 +2547,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SUB',
-    fn: 'sub',
-    args: (d) => [d.close, d.open],
+    name: 'SUB', fn: 'sub', pos: 'subPositional', stem: 'sub', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'SUM',
-    fn: 'sum',
-    args: (d) => [d.close],
+    name: 'SUM', fn: 'sum', pos: 'sumPositional', stem: 'sum', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2749,9 +2566,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'SUPERTREND',
-    fn: 'supertrend',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'SUPERTREND', fn: 'supertrend', pos: 'supertrendPositional', stem: 'supertrend', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'i'],
+    bufs: ['outSupertrend', 'outTrend'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'multiplier', kind: 'real', dflt: 3.0, min: 0.0, max: 3e37, members: [] },
@@ -2762,9 +2578,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'T3',
-    fn: 't3',
-    args: (d) => [d.close],
+    name: 'T3', fn: 't3', pos: 't3Positional', stem: 't3', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'vFactor', kind: 'real', dflt: 0.7, min: 0.0, max: 1.0, members: [] },
@@ -2775,9 +2590,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TEMA',
-    fn: 'tema',
-    args: (d) => [d.close],
+    name: 'TEMA', fn: 'tema', pos: 'temaPositional', stem: 'tema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2787,18 +2601,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TRANGE',
-    fn: 'trange',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'TRANGE', fn: 'trange', pos: 'trangePositional', stem: 'trange', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'TRIMA',
-    fn: 'trima',
-    args: (d) => [d.close],
+    name: 'TRIMA', fn: 'trima', pos: 'trimaPositional', stem: 'trima', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2808,9 +2620,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TRIX',
-    fn: 'trix',
-    args: (d) => [d.close],
+    name: 'TRIX', fn: 'trix', pos: 'trixPositional', stem: 'trix', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2820,9 +2631,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TSF',
-    fn: 'tsf',
-    args: (d) => [d.close],
+    name: 'TSF', fn: 'tsf', pos: 'tsfPositional', stem: 'tsf', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2832,9 +2642,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TSI',
-    fn: 'tsi',
-    args: (d) => [d.close],
+    name: 'TSI', fn: 'tsi', pos: 'tsiPositional', stem: 'tsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'firstPeriod', kind: 'int', dflt: 25.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'secondPeriod', kind: 'int', dflt: 13.0, min: 2.0, max: 100000.0, members: [] },
@@ -2845,18 +2654,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'TYPPRICE',
-    fn: 'typprice',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'TYPPRICE', fn: 'typprice', pos: 'typpricePositional', stem: 'typprice', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'ULTOSC',
-    fn: 'ultosc',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'ULTOSC', fn: 'ultosc', pos: 'ultoscPositional', stem: 'ultosc', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod1', kind: 'int', dflt: 7.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'timePeriod2', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
@@ -2868,9 +2675,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'VAR',
-    fn: 'var_',
-    args: (d) => [d.close],
+    name: 'VAR', fn: 'var_', pos: 'varPositional', stem: 'var', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 5.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'nbDev', kind: 'real', dflt: 1.0, min: -3e37, max: 3e37, members: [] },
@@ -2881,9 +2687,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'VHF',
-    fn: 'vhf',
-    args: (d) => [d.close],
+    name: 'VHF', fn: 'vhf', pos: 'vhfPositional', stem: 'vhf', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 28.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2893,9 +2698,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'VIDYA',
-    fn: 'vidya',
-    args: (d) => [d.close],
+    name: 'VIDYA', fn: 'vidya', pos: 'vidyaPositional', stem: 'vidya', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 12.0, min: 1.0, max: 100000.0, members: [] },
       { key: 'cmoPeriod', kind: 'int', dflt: 9.0, min: 2.0, max: 100000.0, members: [] },
@@ -2906,9 +2710,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'VORTEX',
-    fn: 'vortex',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'VORTEX', fn: 'vortex', pos: 'vortexPositional', stem: 'vortex', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outPlusVi', 'outMinusVi'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2918,18 +2721,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'VWAP',
-    fn: 'vwap',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }],
+    name: 'VWAP', fn: 'vwap', pos: 'vwapPositional', stem: 'vwap', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'VWMA',
-    fn: 'vwma',
-    args: (d) => [d.close, { volume: d.volume }],
+    name: 'VWMA', fn: 'vwma', pos: 'vwmaPositional', stem: 'vwma', args: (d) => [d.close, { volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2939,18 +2740,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'WAD',
-    fn: 'wad',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'WAD', fn: 'wad', pos: 'wadPositional', stem: 'wad', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'WAVETREND',
-    fn: 'wavetrend',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'WAVETREND', fn: 'wavetrend', pos: 'wavetrendPositional', stem: 'wavetrend', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'],
+    bufs: ['outWt1', 'outWt2'],
     params: [
       { key: 'channelPeriod', kind: 'int', dflt: 10.0, min: 2.0, max: 100000.0, members: [] },
       { key: 'averagePeriod', kind: 'int', dflt: 21.0, min: 1.0, max: 100000.0, members: [] },
@@ -2962,18 +2761,16 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'WCLPRICE',
-    fn: 'wclprice',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'WCLPRICE', fn: 'wclprice', pos: 'wclpricePositional', stem: 'wclprice', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [],
     vectors: [
       ['defaults'],
     ],
   },
   {
-    name: 'WILLR',
-    fn: 'willr',
-    args: (d) => [{ high: d.high, low: d.low, close: d.close }],
+    name: 'WILLR', fn: 'willr', pos: 'willrPositional', stem: 'willr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 14.0, min: 2.0, max: 100000.0, members: [] },
     ],
@@ -2983,9 +2780,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'WMA',
-    fn: 'wma',
-    args: (d) => [d.close],
+    name: 'WMA', fn: 'wma', pos: 'wmaPositional', stem: 'wma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -2995,9 +2791,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ZIGZAG',
-    fn: 'zigzag',
-    args: (d) => [{ high: d.high, low: d.low }],
+    name: 'ZIGZAG', fn: 'zigzag', pos: 'zigzagPositional', stem: 'zigzag', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'i', 'i'],
+    bufs: ['outZigZag', 'outTrend', 'outPivotIdx'],
     params: [
       { key: 'sensitivity', kind: 'real', dflt: 5.0, min: 0.0, max: 100.0, members: [] },
       { key: 'minTrendLength', kind: 'int', dflt: 1.0, min: 1.0, max: 100000.0, members: [] },
@@ -3008,9 +2803,8 @@ const ROWS: Row[] = [
     ],
   },
   {
-    name: 'ZLEMA',
-    fn: 'zlema',
-    args: (d) => [d.close],
+    name: 'ZLEMA', fn: 'zlema', pos: 'zlemaPositional', stem: 'zlema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'],
+    bufs: ['outReal'],
     params: [
       { key: 'timePeriod', kind: 'int', dflt: 30.0, min: 1.0, max: 100000.0, members: [] },
     ],
@@ -3054,9 +2848,27 @@ function bytes(a: Arr): Buffer {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 }
 
+type Modules = { routed: Record<string, Fn>; js: Record<string, Fn> };
+
+/** A function's routed module and its ta-lib/js module, beside the entry 'ta-lib' resolves to: no subpath exports the positional tier. */
+async function modules(stem: string): Promise<Modules> {
+  const entry = import.meta.resolve('ta-lib');
+  return {
+    routed: (await import(new URL(`./func/${stem}.js`, entry).href)) as Record<string, Fn>,
+    js: (await import(new URL(`../func/${stem}.js`, entry).href)) as Record<string, Fn>,
+  };
+}
+
+/** Output buffers of `n` elements, each filled with a value no call computes, so an element written past the count shows. */
+function blank(outs: string[], n: number): Arr[] {
+  return outs.map((k) => (k === 'f' ? new Float64Array(n).fill(-777.25) : new Int32Array(n).fill(-777)));
+}
+
 const N = 400;
 const CALL_SHAPED = ['options', 'parameter', 'input', 'range', 'rejected', 'declined'];
 const DATA = walk(20261112, N);
+const MODULES = new Map<string, Modules>();
+for (const row of ROWS) MODULES.set(row.stem, await modules(row.stem));
 
 function draw(p: Param, rnd: () => number): number {
   if (p.kind === 'enum') return p.members[Math.floor(rnd() * p.members.length)];
@@ -3078,16 +2890,55 @@ function outcome(f: Fn, args: unknown[]): { value?: Record<string, unknown>; err
   }
 }
 
-test('every routed function answers in WASM with the bits of ta-lib/js, in strict mode', () => {
+function sameResult(a: Record<string, unknown>, b: Record<string, unknown>, where: string): void {
+  assert.deepEqual(Object.keys(a), Object.keys(b), where);
+  assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
+  for (const key of Object.keys(b).filter((x) => x !== 'begIdx')) {
+    const x = a[key] as Arr;
+    const y = b[key] as Arr;
+    assert.equal(x.constructor, y.constructor, `${where}: ${key} type`);
+    assert.equal(x.length, y.length, `${where}: ${key} length`);
+    assert.ok(bytes(x).equals(bytes(y)), `${where}: ${key} bits differ`);
+  }
+}
+
+/** Every element of each caller buffer, the ones past the count included. */
+function sameBuffers(a: Arr[], b: Arr[], where: string): void {
+  b.forEach((y, k) => assert.ok(bytes(a[k]).equals(bytes(y)), `${where}: buffer ${k} bits differ`));
+}
+
+test('every routed function answers in WASM with the bits of ta-lib/js, in strict mode, in every call form', () => {
   hooks.setEngineMode('strict');
   hooks.resetFallThroughs();
   const rnd = rng(7);
   let rejected = 0;
   let compared = 0;
+  /** Both entries' answers to one call, or `null` once ta-lib/js rejected it and ta-lib rejected it alike. */
+  const attempt = (where: string, f: Fn, g: Fn, mine: unknown[], theirs: unknown[]): [Record<string, unknown>, Record<string, unknown>] | null => {
+    const want = outcome(g, theirs);
+    const entered = hooks.moduleCalls();
+    const got = outcome(f, mine);
+    const ran = hooks.moduleCalls() - entered;
+    if (want.error !== undefined) {
+      assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
+      assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
+      assert.equal(got.error.code, want.error.code, where);
+      assert.equal(got.error.message, want.error.message, where);
+      const reason = hooks.lastFallThrough();
+      assert.ok(CALL_SHAPED.includes(reason), `${where}: fell through as '${reason}', which no rejected call explains`);
+      rejected++;
+      return null;
+    }
+    assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
+    assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
+    compared++;
+    return [got.value as Record<string, unknown>, want.value as Record<string, unknown>];
+  };
   try {
     for (const row of ROWS) {
       const f = (routed as unknown as Record<string, Fn>)[row.fn];
       const g = (js as unknown as Record<string, Fn>)[row.fn];
+      const m = MODULES.get(row.stem)!;
       const sets: (string | number)[][] = [['omitted'], ...row.vectors];
       for (let k = 0; k < 2; k++) sets.push([`drawn ${k}`, ...row.params.map((p) => draw(p, rnd))]);
       let answered = 0;
@@ -3096,38 +2947,45 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
         row.params.forEach((p, i) => {
           options[p.key] = values[i];
         });
-        for (const range of [{}, { startIdx: 37, endIdx: N - 11 }]) {
-          const args = [...row.args(DATA), { ...options, ...range }];
+        const params = row.params.map((p, i) => values[i] ?? (p.kind === 'real' ? Core.REAL_DEFAULT : Core.INTEGER_DEFAULT));
+        const ranges: { startIdx?: number; endIdx?: number }[] = [{}, { startIdx: 37, endIdx: N - 11 }];
+        for (const range of ranges) {
           const where = `${row.name} ${label} ${JSON.stringify(range)}`;
-          const want = outcome(g, args);
-          const entered = hooks.moduleCalls();
-          const got = outcome(f, args);
-          const ran = hooks.moduleCalls() - entered;
-          if (want.error !== undefined) {
-            assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
-            assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
-            assert.equal(got.error.code, want.error.code, where);
-            assert.equal(got.error.message, want.error.message, where);
-            const reason = hooks.lastFallThrough();
-            assert.ok(CALL_SHAPED.includes(reason), `${where}: fell through as '${reason}', which no rejected call explains`);
-            rejected++;
-            continue;
+          const args = [...row.args(DATA), { ...options, ...range }];
+          const plain = attempt(where, f, g, args, args);
+          if (plain !== null) {
+            sameResult(plain[0], plain[1], where);
+            answered++;
           }
-          assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
-          assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
-          const a = got.value as Record<string, unknown>;
-          const b = want.value as Record<string, unknown>;
-          assert.deepEqual(Object.keys(a), Object.keys(b), where);
-          assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
-          for (const key of Object.keys(b).filter((x) => x !== 'begIdx')) {
-            const x = a[key] as Arr;
-            const y = b[key] as Arr;
-            assert.equal(x.constructor, y.constructor, `${where}: ${key} type`);
-            assert.equal(x.length, y.length, `${where}: ${key} length`);
-            assert.ok(bytes(x).equals(bytes(y)), `${where}: ${key} bits differ`);
+
+          const mine = blank(row.outs, N);
+          const theirs = blank(row.outs, N);
+          const given = (bs: Arr[]): unknown[] => [...row.args(DATA), { ...options, ...range, ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])) }];
+          const buffered = attempt(`${where} into buffers`, f, g, given(mine), given(theirs));
+          if (buffered !== null) {
+            sameResult(buffered[0], buffered[1], `${where} into buffers`);
+            Object.keys(buffered[1]).filter((x) => x !== 'begIdx').forEach((key, k) => {
+              const x = buffered[0][key] as Arr;
+              const y = buffered[1][key] as Arr;
+              assert.equal(x.buffer, mine[k].buffer, `${where} into buffers: ${key} is not a view of the caller's buffer`);
+              assert.equal(x.byteOffset - mine[k].byteOffset, y.byteOffset - theirs[k].byteOffset, `${where} into buffers: ${key} offset`);
+            });
           }
-          answered++;
-          compared++;
+          sameBuffers(mine, theirs, `${where} into buffers`);
+
+          const s = range.startIdx ?? 0;
+          const e = range.endIdx ?? N - 1;
+          const pm = blank(row.outs, N);
+          const pt = blank(row.outs, N);
+          const legs = row.legs(DATA);
+          const positional = attempt(`${where} positional`, m.routed[row.pos], m.js[row.pos], [s, e, ...legs, ...params, ...pm], [s, e, ...legs, ...params, ...pt]);
+          if (positional !== null) {
+            const x = positional[0] as unknown as Range;
+            const y = positional[1] as unknown as Range;
+            assert.equal(x.constructor, y.constructor, `${where} positional: result type`);
+            assert.deepEqual([x.begIdx, x.count], [y.begIdx, y.count], `${where} positional`);
+          }
+          sameBuffers(pm, pt, `${where} positional`);
         }
       }
       assert.ok(answered > 0, `${row.name}: no parameter set was accepted, so nothing was compared`);
@@ -3135,6 +2993,44 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
     assert.equal(hooks.fallThroughCount(), rejected, 'a call ta-lib/js accepts fell through');
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     console.log(`${ROWS.length} functions, ${compared} calls compared, ${rejected} rejected by both`);
+  } finally {
+    hooks.setEngineMode('table');
+  }
+});
+
+test('ta-lib/abstract runs each routed function in WASM with the bits of ta-lib/js/abstract, which never enters the module', () => {
+  assert.equal(routedAbstract.FuncInfo, jsAbstract.FuncInfo);
+  assert.equal(routedAbstract.ParamHolder, jsAbstract.ParamHolder);
+  assert.notEqual(routedAbstract.Functions, jsAbstract.Functions);
+  const args = new Map(ROWS.map((row) => [row.name, row.args(DATA)]));
+  const call = (lib: typeof jsAbstract, name: string, outs: Arr[]): { range: Range; ran: number } => {
+    const info = lib.Functions.byName(name)!;
+    const h = info.newCall();
+    const given = args.get(name)!;
+    assert.equal(info.inputs.length, given.length, `${name}: inputs`);
+    info.inputs.forEach((input, i) => {
+      if (input.type === lib.InputType.PRICE) h.setPriceInput(i, given[i] as jsAbstract.PriceInput);
+      else h.setInput(i, given[i] as ArrayLike<number>);
+    });
+    outs.forEach((out, k) => h.setOutput(k, out));
+    const entered = hooks.moduleCalls();
+    const range = h.call(0, N - 1);
+    return { range, ran: hooks.moduleCalls() - entered };
+  };
+  hooks.setEngineMode('strict');
+  hooks.resetFallThroughs();
+  try {
+    for (const row of ROWS) {
+      const mine = blank(row.outs, N);
+      const theirs = blank(row.outs, N);
+      const a = call(routedAbstract, row.name, mine);
+      const b = call(jsAbstract, row.name, theirs);
+      assert.equal(a.ran, 1, `${row.name}: ta-lib/abstract: the module counted ${a.ran} batch calls, not one`);
+      assert.equal(b.ran, 0, `${row.name}: ta-lib/js/abstract entered the module`);
+      assert.deepEqual([a.range.begIdx, a.range.count], [b.range.begIdx, b.range.count], row.name);
+      sameBuffers(mine, theirs, `${row.name} through the abstract entries`);
+    }
+    assert.equal(hooks.fallThroughCount(), 0, `a call fell through as '${hooks.lastFallThrough()}'`);
   } finally {
     hooks.setEngineMode('table');
   }

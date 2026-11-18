@@ -39,11 +39,11 @@ pub const KEYS: &[Key] = &[
     Key { name: "count.shutdown", scope: Scope::Common },
     Key {
         name: "wasm.engine",
-        scope: Scope::TypeScript { answer: "engineStatus().engine === 'wasm' ? 1 : 0", max: 1 },
+        scope: Scope::TypeScript { answer: "status().engine === 'wasm' ? 1 : 0", max: 1 },
     },
     Key {
         name: "wasm.reason",
-        scope: Scope::TypeScript { answer: "reasonCode(engineStatus().reason)", max: WASM_REASONS.len() },
+        scope: Scope::TypeScript { answer: "reasonCode(status().reason)", max: WASM_REASONS.len() },
     },
 ];
 
@@ -187,9 +187,24 @@ pub fn ts_fn() -> String {
          function reasonCode(reason: EngineReason | null): number {{\n\
          \x20 return reason === null ? 0 : WASM_REASON[reason];\n\
          }}\n\n\
-         /** The keys {{@link getRuntimeInfo}} answers. */\n\
+         /** The keys `getRuntimeInfo` answers. */\n\
          export type RuntimeInfoKey = {union};\n\n\
-         /**\n\
+         /** @internal `getRuntimeInfo` over the status of one entry's engine. */\n\
+         export function answerRuntimeInfo(key: string, status: () => EngineStatus): number {{\n\
+         \x20 switch (key) {{\n\
+         {cases}\
+         \x20   default:\n\
+         \x20     throw new TALibError(RetCode.BAD_PARAM, `unknown runtime info key: ${{key}}`);\n\
+         \x20 }}\n\
+         }}\n"
+    )
+}
+
+/// An abstract entry's `getRuntimeInfo`, answering from `status`.
+#[must_use]
+pub fn ts_entry_fn(status: &str) -> String {
+    format!(
+        "\n/**\n\
          \x20* Run-time state of this library, by key: the TypeScript analog of C's\n\
          \x20* `TA_GetRuntimeInfo()`. The keys: {SPEC}.\n\
          \x20*\n\
@@ -197,11 +212,7 @@ pub fn ts_fn() -> String {
          \x20* @throws `TALibError` with code `TA_BAD_PARAM` for an unknown key.\n\
          \x20*/\n\
          export function getRuntimeInfo(key: RuntimeInfoKey | (string & {{}})): number {{\n\
-         \x20 switch (key) {{\n\
-         {cases}\
-         \x20   default:\n\
-         \x20     throw new TALibError(RetCode.BAD_PARAM, `unknown runtime info key: ${{key}}`);\n\
-         \x20 }}\n\
+         \x20 return answerRuntimeInfo(key, {status});\n\
          }}\n"
     )
 }

@@ -133,7 +133,7 @@ foreach (var fi in Core.Functions)
 @tab TypeScript
 
 ```ts
-import { FuncFlags, Functions, OptInputType } from 'ta-lib/abstract';
+import { FuncFlags, Functions, OptInputType } from 'ta-lib/abstract';   // or 'ta-lib/js/abstract', which never loads WebAssembly
 
 const f = Functions.byName('SMA')!;   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 

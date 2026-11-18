@@ -51,7 +51,7 @@ The **Core API** provides:
 
 To process a live feed one bar at a time instead, see the companion [TypeScript Streaming API](/api/typescript/stream/).
 
-There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, TypeScript has `Core.DEFAULT` ready immediately, and an unreferenced `Core` is simply garbage-collected.
+No call needs an initialization step, and there is nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, TypeScript has `Core.DEFAULT` ready immediately, and an unreferenced `Core` is simply garbage-collected. The optional `ready()` loads the WebAssembly engine ([2.1](#wasm)).
 
 ## 2.0 Add it to your project {#build}
 
@@ -73,23 +73,25 @@ Then depend on the built directory from your project's `package.json`:
 }
 ```
 
-The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
+The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too, on every supported Node.js line. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later, since the declarations spell typed arrays with their buffer type, and a CommonJS TypeScript project 5.8 or later with `module: nodenext`. Jest needs its ESM mode. A library that depends on `ta-lib` should declare it a peer dependency, so that an application holds one copy: a call rejects a `Core` built by another copy.
 
 ### 2.1 WebAssembly {#wasm}
 
-WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` entry runs each batch call in its WebAssembly engine or in TypeScript, choosing by function and series length, and the results are the same either way: bit for bit on finite inputs, with the exception in [1.0](#intro) unchanged.
+WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` and `ta-lib/abstract` entries run each batch call in their WebAssembly engine or in TypeScript, choosing by function and series length, with or without your own output buffers, and the results are the same either way, bit for bit on finite inputs. A call runs in TypeScript, with the same values, when it passes a `core` other than the `Core.DEFAULT` object, computes in place, or can reach a transcendental function.
 
-There is nothing to configure. In Node.js, Bun and Deno the engine loads on the first call that uses it. In a browser it loads once you call `ready()`, and calls made before that run in TypeScript:
+There is nothing to configure. In Node.js the engine loads on the first call that uses it, and awaiting `ready()` first moves its one-time compile out of that call. In a browser, and in any bundle built without the `node` export condition, calls run in TypeScript until `ready()` has loaded the engine, which each Worker calls for itself:
 
 ```ts
 import { ready } from 'ta-lib';
 
-const { engine, reason } = await ready();   // 'wasm', or 'js' and the reason
+const { engine, reason } = await ready();   // 'wasm' once loaded, or 'js' and the reason
 ```
 
-Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+`ready()` never rejects. A loaded engine still runs only the calls its routing sends it, so `'wasm'` does not mean a given call ran there.
 
-Streaming calls run in TypeScript today.
+The engine needs WebAssembly relaxed SIMD with a fused multiply-add. Where that is missing, or a Content-Security-Policy forbids compiling WebAssembly (`'wasm-unsafe-eval'` in `script-src` allows it), the package runs its TypeScript code with the same values; under such a policy, a page that calls `ready()` also gets the browser's CSP violation report. A bundler that splits code fetches the engine's bytes only when `ready()` is called; one that does not puts them in the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. A build for the `workerd`, `edge-light` or `react-native` export condition resolves `ta-lib` and `ta-lib/abstract` to entries with no engine, where every call runs in TypeScript and `ready()` resolves to `'js'` with reason `'unavailable'`. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is loaded and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+
+A stream is a TypeScript object, of one class in every entry ([Streaming API](/api/typescript/stream/)).
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
@@ -209,7 +211,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 ### 4.1 Abstract API {#abstract}
 
-The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
+The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time, routing each call as `ta-lib` does ([2.1](#wasm)); `ta-lib/js/abstract` is the same API with WebAssembly never loaded. Either one references every function. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -239,7 +241,7 @@ Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out
 
 An input is any `ArrayLike<number>`. A `Float64Array` is read in place; any other form, such as a `number[]` or a `Float32Array`, is first copied into a `Float64Array`, each element converted to a double. A `Float32Array` therefore gives the same output, bit for bit, as a `Float64Array` holding the same values.
 
-An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To compute without allocating, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
+An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To reuse memory, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
 
 ```ts
 const buf = new Float64Array(close.length);

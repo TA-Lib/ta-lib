@@ -1,7 +1,8 @@
 import { Core, CoreBuilder, FuncUnstId, MAType, TALibError, atr, ema, macd, macdOpen, MacdOut, ready, sma, smaLookback } from 'ta-lib';
 import type { EngineStatus, FailureRetCode, MacdResult, RetCodeName, SmaOptions, SmaResult } from 'ta-lib';
 import * as js from 'ta-lib/js';
-import { Functions } from 'ta-lib/abstract';
+import { Functions, ready as abstractReady } from 'ta-lib/abstract';
+import { Functions as JsFunctions, getRuntimeInfo } from 'ta-lib/js/abstract';
 
 const close = new Float64Array(10);
 const out = new Float64Array(close.length);
@@ -25,4 +26,9 @@ const jsValues: Float64Array = js.sma(close, { timePeriod: 3 }).values;
 // @ts-expect-error ta-lib/js has no engine to wait for
 js.ready();
 const names: string[] = Functions.all().map((f) => f.name);
-export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf, status, sameCore, jsValues, names };
+const jsNames: string[] = JsFunctions.all().map((f) => f.name);
+const abstractStatus: Promise<EngineStatus> = abstractReady();
+const engineInfo: number = getRuntimeInfo('wasm.engine');
+// @ts-expect-error ta-lib/js/abstract has no engine to wait for
+import('ta-lib/js/abstract').then((m) => m.ready());
+export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf, status, sameCore, jsValues, names, jsNames, abstractStatus, engineInfo };

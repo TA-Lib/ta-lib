@@ -54,7 +54,7 @@ import { test } from 'node:test';
 import { type Arr, N, series } from './corpus.ts';
 import { bytes, type Named, namedSpecs } from './contract.ts';
 import { Core, MAType } from '../src/index.ts';
-import { type FuncInfo, FunctionDescription, Functions, InputType, OptInputType, OutputType, type ParamHolder } from '../src/abstract/index.ts';
+import { type FuncInfo, FunctionDescription, Functions, InputType, OptInputType, OutputType, type ParamHolder } from '../src/js/abstract/index.ts';
 
 const ALL = Functions.all();
 const SPEC = new Map(namedSpecs().map((s) => [s.fn, s]));

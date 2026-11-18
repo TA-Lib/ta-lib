@@ -6,12 +6,14 @@ import * as hooks from './node_modules/ta-lib/dist/runtime/wasm.js';
 
 const close = Float64Array.from({ length: 500 }, (_, i) => Math.round((100 + 10 * Math.sin(i / 7)) * 100) / 100);
 hooks.setEngineMode('force');
+hooks.resetFallThroughs();
 const entered = hooks.moduleCalls();
 ema(close, { timePeriod: 10 });
 const ran = hooks.moduleCalls() - entered;
 const status = hooks.engineStatus();
-if (status.engine !== 'wasm' || ran !== 1) {
-  console.error(`engine ${JSON.stringify(status)}, the module counted ${ran} batch call(s)`);
+const fell = hooks.fallThroughCount();
+if (status.engine !== 'wasm' || ran !== 1 || fell !== 0) {
+  console.error(`engine ${JSON.stringify(status)}, the module counted ${ran} batch call(s), ${fell} fall-through(s) (${hooks.lastFallThrough()})`);
   process.exit(1);
 }
 console.log('bundle_node.mjs: bundled for Node, a routed call with no ready() ran in WASM');

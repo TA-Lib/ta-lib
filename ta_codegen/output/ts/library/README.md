@@ -19,7 +19,17 @@ npm install ta-lib
 ```
 
 ESM only, with no top-level await, so `require('ta-lib')` also works on every supported Node
-line. Node 22.12 or later; any runtime that loads standard ES modules; TypeScript 5.7 or later to read the types.
+line. Node 22.12 or later; any runtime that loads standard ES modules; TypeScript 5.7 or later
+to read the types, and for a CommonJS TypeScript project 5.8 or later with `module: nodenext`,
+or 5.9 or later with `module: node20`.
+Jest needs its ESM mode.
+
+A library that depends on `ta-lib` should declare it a peer dependency, so that an application
+holds one copy: a call rejects a `Core` built by another copy.
+
+Versions 0.9.0 to 0.11.0 of this package name were an earlier package by another author, a
+native binding with a different API. This is the official TA-Lib library, with its own API;
+its version numbers follow the C library's, which is why they are lower.
 
 ## Quick start
 
@@ -74,25 +84,32 @@ const { begIdx, values } = ema(close, { timePeriod: 30, core });
 ## WebAssembly
 
 Each batch call runs in a WebAssembly engine or in TypeScript, chosen by function and series
-length, with the same results either way: bit for bit on finite inputs, with the exception
-above unchanged.
+length, with the same results either way, bit for bit on finite inputs. That holds with or
+without your own output buffers, and through `ta-lib/abstract`.
 
-Nothing to configure. In Node, Bun and Deno the engine loads on the first call that uses it.
-In a browser, one `await ready()` turns it on; calls made before that run in TypeScript.
+Nothing to configure. In Node.js the engine loads on the first call that uses it; awaiting
+`ready()` first moves its one-time compile out of that call. In a browser, and in any bundle
+built without the `node` export condition, calls run in TypeScript until `ready()` has loaded
+the engine, which each Worker calls for itself.
 
 ```ts
 import { ready } from 'ta-lib';
 
-const { engine, reason } = await ready(); // 'wasm', or 'js' and the reason
+const { engine, reason } = await ready(); // 'wasm' once loaded, or 'js' and the reason
 ```
 
-Where WebAssembly or the CPU feature the engine needs is unavailable, or a page's
-Content-Security-Policy forbids it, the package runs its TypeScript code with no error.
-`ta-lib/js` is the same API with WebAssembly never loaded, for strict-CSP pages and size
-budgets. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` says which engine is running:
-1 for WebAssembly, 0 for TypeScript.
+The engine needs WebAssembly relaxed SIMD with a fused multiply-add. Where that is missing, or
+a Content-Security-Policy forbids compiling WebAssembly (`'wasm-unsafe-eval'` in `script-src`
+allows it), the package runs its TypeScript code with the same values; under such a policy, a
+page that calls `ready()` also gets the browser's CSP violation report. A bundler that splits
+code fetches the engine's bytes only when `ready()` is called; one that does not puts them in
+the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs with WebAssembly never
+loaded, for strict-CSP pages and size budgets. A build for the `workerd`, `edge-light` or
+`react-native` export condition gets entries with no engine, where every call runs in
+TypeScript. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is
+loaded, 0 otherwise.
 
-Streaming calls run in TypeScript today.
+Streams are TypeScript objects, one class in every entry.
 
 ## Live data
 

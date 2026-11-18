@@ -52,7 +52,7 @@ import assert from 'node:assert/strict';
 
 import { type Arr, type Param, type Spec, specs } from './corpus.ts';
 import { Core, TALibError } from '../src/index.ts';
-import { type FuncInfo, Functions } from '../src/abstract/index.ts';
+import { type FuncInfo, Functions } from '../src/js/abstract/index.ts';
 
 export type Named = Spec & { fn: string; info: FuncInfo };
 

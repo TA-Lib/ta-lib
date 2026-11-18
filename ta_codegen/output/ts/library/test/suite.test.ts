@@ -53,17 +53,18 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { FuncFlags, Functions } from '../src/abstract/index.ts';
+import { FuncFlags, Functions } from '../src/js/abstract/index.ts';
 
 const TESTS: Record<string, number> = {
   'abstract.test.ts': 12,
+  'abstractEngine.test.ts': 1,
   'abstractSweep.test.ts': 6,
   'batchArgs.test.ts': 10,
   'batchContract.test.ts': 10,
   'engineBytes.test.ts': 2,
-  'engineContract.test.ts': 20,
-  'engineLoader.test.ts': 5,
-  'engineParity.test.ts': 2,
+  'engineContract.test.ts': 25,
+  'engineLoader.test.ts': 7,
+  'engineParity.test.ts': 3,
   'engineRouting.test.ts': 2,
   'engineTraps.test.ts': 3,
   'inputForms.test.ts': 1,

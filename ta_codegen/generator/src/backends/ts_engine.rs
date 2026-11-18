@@ -1,6 +1,7 @@
 //! The npm package's default entry (`library/src/engine/`): for each function
 //! with a WASM export, a module that re-exports its `./js` module and replaces
-//! the public batch call with one that runs in the engine when it can; the
+//! the public batch call and `<n>Positional`, which `ta-lib/abstract` calls,
+//! with ones that run in the engine when they can; the
 //! barrel; the Node entry, which hands the engine its bytes; and
 //! `test/engineParity.test.ts`, every routed function against `./js`.
 
@@ -116,15 +117,171 @@ fn plus(base: &str, terms: &[(u32, &str)]) -> String {
     s
 }
 
-/// One routed module.
-#[allow(clippy::implicit_hasher, clippy::too_many_lines, clippy::cast_possible_truncation)]
+/// The lookback `./js` computes for the call's parameters, over the locals
+/// that hold them with every omitted one as its sentinel.
+fn lookback_call(func: &FuncDef) -> String {
+    let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+    format!("{}({})", ts_names(&func.name).lookback_positional, args.join(", "))
+}
+
+/// The `outputRoom` call over `inputs` (the caller's own series) and every output.
+fn room_call(func: &FuncDef, first: &str, last: &str, outs: &[String], inputs: &[String]) -> String {
+    let types: Vec<&str> = func.outputs.iter().map(|o| ts::array_ts_type(&o.param_type)).collect();
+    format!(
+        "outputRoom({first}, {last}, {}, [{}], [{}], [{}])",
+        lookback_call(func),
+        inputs.join(", "),
+        outs.join(", "),
+        types.join(", ")
+    )
+}
+
+/// Every input after the first is as long as the first; `./js` accepts other
+/// lengths, which the module does not.
+fn same_lengths(rest: &[String]) -> String {
+    if rest.is_empty() {
+        return String::new();
+    }
+    let checks: Vec<String> = rest.iter().map(|r| format!("seriesLength({r}) !== n")).collect();
+    format!("  if ({}) {{\n    return fellThrough('input');\n  }}\n", checks.join(" || "))
+}
+
+/// A check over each parameter's local, `pred` naming the test for its type.
+fn param_check(func: &FuncDef, pred: impl Fn(&OptInput) -> String) -> String {
+    if func.optional_inputs.is_empty() {
+        return String::new();
+    }
+    let checks: Vec<String> = func.optional_inputs.iter().map(|o| format!("!{}", pred(o))).collect();
+    format!("  if ({}) {{\n    return fellThrough('parameter');\n  }}\n", checks.join(" || "))
+}
+
+/// The parameter values the module declines, over the locals that hold them
+/// with an omitted one as its sentinel; empty for a function that has none.
+fn declined_check(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+    let tests: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .flat_map(|o| wasm::declined_values(o, funcs, enums).into_iter().map(move |v| format!("{} === {v}", o.name)))
+        .collect();
+    if tests.is_empty() {
+        return String::new();
+    }
+    format!("  if ({}) {{\n    return fellThrough('declined');\n  }}\n", tests.join(" || "))
+}
+
+/// The frame's bytes over `n` and the output length `out_len`.
+fn frame_size(func: &FuncDef, out_len: &str) -> String {
+    let (per_in, per_out) = frame_bytes(func);
+    plus(&format!("n * {per_in}"), &[(per_out, out_len)])
+}
+
+/// `engineFor` over the frame the call will take: the last check before the
+/// first conversion.
+fn engine_for(func: &FuncDef, out_len: &str) -> String {
+    format!("  if (!engineFor({})) {{\n    return null;\n  }}\n", frame_size(func, out_len))
+}
+
+/// Each `(local, series)` converted as `./js` converts it, then refused together.
+fn conversions(pairs: &[(String, String)]) -> String {
+    let mut s = String::new();
+    for (local, series) in pairs {
+        let _ = writeln!(s, "  const {local} = routedSeries({series});");
+    }
+    // The length test follows the last conversion because a conversion may run caller code.
+    let refused: Vec<String> = pairs.iter().map(|(local, _)| format!("{local} === null || {local}.length !== n")).collect();
+    let _ = writeln!(s, "  if ({}) {{\n    return fellThrough('input');\n  }}", refused.join(" || "));
+    s
+}
+
+/// The call into the module over converted inputs, up to a count it accepted.
+#[allow(clippy::cast_possible_truncation)]
+fn frame_call(func: &FuncDef) -> String {
+    // Nothing from `wasmFrame` on may run caller code: a `valueOf` that calls a
+    // routed function back takes the same scratch and may grow linear memory,
+    // detaching the views `wasmFrame` derived.
+    let mut c = String::from("  const outLen = last - first + 1;\n");
+    let n_in = func.inputs.len() as u32;
+    let (reals, ints): (Vec<_>, Vec<_>) = func.outputs.iter().partition(|o| is_real(&o.param_type));
+    let n_real = reals.len() as u32;
+    let _ = writeln!(c, "  const w = wasmFrame({});\n  if (w === null) {{\n    return null;\n  }}\n  const at = w.base;", frame_size(func, "outLen"));
+    for (k, i) in func.inputs.iter().enumerate() {
+        let at = plus("at", &[(8 * k as u32, "n")]);
+        let _ = writeln!(c, "  const {}At = {at};\n  w.f64.set({0}, {0}At / 8);", i.name);
+    }
+    for (j, o) in reals.iter().enumerate() {
+        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * j as u32, "outLen")]));
+    }
+    for (j, o) in ints.iter().enumerate() {
+        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * n_real + 4 * j as u32, "outLen")]));
+    }
+    let mut call: Vec<String> = vec!["first".into(), "last".into()];
+    call.extend(func.inputs.iter().map(|i| format!("{}At", i.name)));
+    call.push("n".into());
+    call.extend(func.optional_inputs.iter().map(|o| o.name.clone()));
+    call.extend(func.outputs.iter().map(|o| format!("{}At", o.name)));
+    call.push("outLen".into());
+    let export = format!("{}_batch", super::common::snake_words(&func.name));
+    let _ = writeln!(
+        c,
+        "  let count: number;\n  try {{\n    count = w.x.{export}({});\n  }} catch (e) {{\n    return trapped(w, e);\n  }}\n  \
+         if (count < 0) {{\n    return refused(count);\n  }}",
+        call.join(", ")
+    );
+    c
+}
+
+/// The table-mode test every front makes on the input's length, so the call
+/// forms cannot route one length differently; empty for an untabled function.
+fn route_check(route: Option<Route>) -> &'static str {
+    match route {
+        None => "",
+        Some(Route { to: None, .. }) => "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n",
+        Some(Route { to: Some(_), .. }) => "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n",
+    }
+}
+
+/// What one entry point's wrapper declares and returns around the WASM attempt.
+struct Front<'a> {
+    docs: &'a str,
+    public: &'a str,
+    sig: &'a str,
+    result: &'a str,
+    wasm_call: &'a str,
+    js_call: &'a str,
+}
+
+/// The public wrapper both entry points share: the WASM attempt, then `./js`
+/// with the caller's arguments.
+fn wrapper(f: &Front, name: &str, tabled: bool) -> String {
+    // Anything thrown on the WASM path is a fall-through: `./js` then answers
+    // or throws its own error.
+    let Front { docs, public, sig, result, wasm_call, js_call } = f;
+    let (open, pad, close) = if tabled { ("", "  ", "") } else { ("  if (engineRoute.mode !== 0) {\n", "    ", "  }\n") };
+    format!(
+        "\n{docs}export function {public}({sig}): {result} {{\n{open}\
+         {pad}let routed: {result} | null;\n\
+         {pad}try {{\n{pad}  routed = {wasm_call};\n{pad}}} catch {{\n{pad}  routed = fellThrough('threw');\n{pad}}}\n\
+         {pad}if (routed !== null) {{\n{pad}  return routed;\n{pad}}}\n\
+         {pad}if (engineRoute.mode === 2) {{\n{pad}  return strictFallThrough('{name}', {js_call});\n{pad}}}\n\
+         {close}  return {js_call};\n}}\n"
+    )
+}
+
+/// One routed module: the options call and `<n>Positional`, each a front that
+/// checks its own arguments. The options front answers a call without buffers
+/// in new arrays itself; `<n>Into` copies into the caller's buffers.
+#[allow(clippy::implicit_hasher, clippy::too_many_lines)]
 #[must_use]
-pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Registry, route: Option<Route>) -> String {
+pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &Registry, route: Option<Route>) -> String {
     super::ts_doc::seed_function_names(registry.names());
     let names = ts_names(&func.name);
     let stem = module_stem(func);
     let js_fn = format!("{stem}Js");
+    let js_positional = format!("{}Js", names.positional);
     let wasm_fn = format!("{stem}Wasm");
+    let buffered_fn = format!("{stem}Buffered");
+    let positional_wasm_fn = format!("{}Wasm", names.positional);
+    let into_fn = format!("{stem}Into");
     let js_module = format!("../../func/{stem}.ts");
     let api = api_inputs(func);
     let arg_names: Vec<String> = api.iter().map(|a| a.name.clone()).collect();
@@ -135,9 +292,30 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
         .zip(&leg_exprs)
         .map(|(i, e)| if e.contains('.') { format!("{}Arg", i.name) } else { e.clone() })
         .collect();
+    let inputs: Vec<String> = func.inputs.iter().map(|i| i.name.clone()).collect();
     let has_real = func.optional_inputs.iter().any(|o| is_real(&o.param_type));
-    let has_int = func.optional_inputs.iter().any(|o| !is_real(&o.param_type));
+    let multi = func.outputs.len() > 1;
+    let gate = route_check(route);
+    // State only, ahead of the options: a call with no engine reads them once.
+    let engine_down = "  if (engineDown()) {\n    return null;\n  }\n";
+    let room_fail = "  if (room < 0) {\n    return fellThrough(room === -1 ? 'parameter' : 'buffer');\n  }\n";
+    let declined = declined_check(func, funcs, enums);
+    let params: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+    let out_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    let converted = |suffix: &str, from: &[String]| -> Vec<(String, String)> {
+        inputs.iter().zip(from).map(|(i, r)| (format!("{i}{suffix}"), r.clone())).collect()
+    };
+    let args = |head: &[&str], ins: &[String], outs: &[String], tail: &[&str]| -> String {
+        let mut v: Vec<String> = head.iter().map(|s| (*s).to_string()).collect();
+        v.extend(ins.iter().cloned());
+        v.extend(params.iter().cloned());
+        v.extend(outs.iter().cloned());
+        v.extend(tail.iter().map(|s| (*s).to_string()));
+        v.join(", ")
+    };
 
+    // The options front. Conversions can run caller code and allocate, so they
+    // come after every check the front makes, in `./js`'s order.
     let mut b = String::new();
     if api.iter().any(|a| a.is_price) {
         let _ = writeln!(b, "  if (typeof {0} !== 'object' || {0} === null) {{\n    return fellThrough('input');\n  }}", ts::PRICES_PARAM);
@@ -148,102 +326,143 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
         }
     }
     let _ = writeln!(b, "  const n = seriesLength({});\n  if (n < 1) {{\n    return fellThrough('input');\n  }}", raw[0]);
-    match route {
-        Some(Route { to: None, .. }) => b.push_str("  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n"),
-        Some(Route { to: Some(_), .. }) => {
-            b.push_str("  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n");
-        }
-        None => {}
-    }
-    b.push_str("  const o = routedOptions(options);\n");
-    let mut buffers = String::new();
-    for o in &func.outputs {
-        let _ = write!(buffers, " || o.{} !== undefined", buffer_key(func, o));
-    }
-    let _ = writeln!(b, "  if (o === null{buffers}) {{\n    return fellThrough('options');\n  }}");
+    b.push_str(gate);
+    b.push_str(engine_down);
+    b.push_str(&same_lengths(&raw[1..]));
+    b.push_str("  const o = routedOptions(options);\n  if (o === null) {\n    return fellThrough('options');\n  }\n");
     b.push_str("  const startIdx = o.startIdx;\n  const endIdx = o.endIdx;\n");
     b.push_str(
         "  if (!usesDefaultCore(o.core) || !optionalInt32(startIdx) || !optionalInt32(endIdx)) {\n    return fellThrough('options');\n  }\n",
     );
-    if !func.optional_inputs.is_empty() {
-        let mut checks = Vec::new();
-        for opt in &func.optional_inputs {
-            let _ = writeln!(b, "  const {} = o.{};", opt.name, param_key(&opt.name));
-            let check = if is_real(&opt.param_type) { "optionalReal" } else { "optionalInt32" };
-            checks.push(format!("!{check}({})", opt.name));
-        }
-        let _ = writeln!(b, "  if ({}) {{\n    return fellThrough('parameter');\n  }}", checks.join(" || "));
+    for opt in &func.optional_inputs {
+        let _ = writeln!(b, "  const {}Arg = o.{};", opt.name, param_key(&opt.name));
     }
-    for (i, r) in func.inputs.iter().zip(&raw) {
-        let _ = writeln!(b, "  const {} = routedSeries({r}, n);", i.name);
+    b.push_str(&param_check(func, |o| format!("{}({}Arg)", if is_real(&o.param_type) { "optionalReal" } else { "optionalInt32" }, o.name)));
+    for opt in &func.optional_inputs {
+        let _ = writeln!(b, "  const {0} = {0}Arg === undefined ? {1} : {0}Arg;", opt.name, sentinel(opt));
     }
-    let nulls: Vec<String> = func.inputs.iter().map(|i| format!("{} === null", i.name)).collect();
-    let _ = writeln!(b, "  if ({}) {{\n    return fellThrough('input');\n  }}", nulls.join(" || "));
+    b.push_str(&declined);
+    for o in &func.outputs {
+        let _ = writeln!(b, "  const {} = o.{};", o.name, buffer_key(func, o));
+    }
     b.push_str(
         "  const first = startIdx === undefined ? 0 : startIdx;\n  const last = endIdx === undefined ? n - 1 : endIdx;\n  \
-         if (first < 0 || last < first || last >= n) {\n    return fellThrough('range');\n  }\n  const outLen = last - first + 1;\n",
+         if (first < 0 || last < first || last >= n) {\n    return fellThrough('range');\n  }\n",
     );
-    let n_in = func.inputs.len() as u32;
-    let (reals, ints): (Vec<_>, Vec<_>) = func.outputs.iter().partition(|o| is_real(&o.param_type));
-    let n_real = reals.len() as u32;
-    // Every read of a caller's argument stays above `wasmFrame`: a getter, a
-    // Proxy trap or a `valueOf` can call a routed function back, which takes
-    // the same scratch and may grow linear memory, detaching the views
-    // `wasmFrame` derived.
-    let (per_in, per_out) = frame_bytes(func);
-    let bytes = plus(&format!("n * {per_in}"), &[(per_out, "outLen")]);
-    let _ = writeln!(b, "  const w = wasmFrame({bytes});\n  if (w === null) {{\n    return null;\n  }}\n  const at = w.base;");
-    for (k, i) in func.inputs.iter().enumerate() {
-        let at = plus("at", &[(8 * k as u32, "n")]);
-        let _ = writeln!(b, "  const {}At = {at};\n  w.f64.set({0}, {0}At / 8);", i.name);
-    }
-    for (j, o) in reals.iter().enumerate() {
-        let _ = writeln!(b, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * j as u32, "outLen")]));
-    }
-    for (j, o) in ints.iter().enumerate() {
-        let _ = writeln!(b, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * n_real + 4 * j as u32, "outLen")]));
-    }
-    let mut call: Vec<String> = vec!["first".into(), "last".into()];
-    call.extend(func.inputs.iter().map(|i| format!("{}At", i.name)));
-    call.push("n".into());
-    call.extend(func.optional_inputs.iter().map(|o| format!("{0} === undefined ? {1} : {0}", o.name, sentinel(o))));
-    call.extend(func.outputs.iter().map(|o| format!("{}At", o.name)));
-    call.push("outLen".into());
-    let export = format!("{}_batch", super::common::snake_words(&func.name));
-    let _ = writeln!(
-        b,
-        "  let count: number;\n  try {{\n    count = w.x.{export}({});\n  }} catch (e) {{\n    return trapped(w, e);\n  }}\n  \
-         if (count < 0) {{\n    return refused(count);\n  }}",
-        call.join(", ")
-    );
-    let mut fields = vec!["begIdx: w.begIdx()".to_string()];
+    let given: Vec<String> = out_names.iter().map(|o| format!("{o} !== undefined")).collect();
+    let _ = writeln!(b, "  if ({}) {{\n    return {buffered_fn}({});\n  }}", given.join(" || "), args(&["first", "last", "n"], &raw, &out_names, &[]));
+    b.push_str(&engine_for(func, "(last - first + 1)"));
+    b.push_str(&conversions(&converted("", &raw)));
+    b.push_str(&frame_call(func));
+    let made: Vec<String> = func
+        .outputs
+        .iter()
+        .map(|o| format!("{}: w.{}({}At, count)", result_key(func, o), if is_real(&o.param_type) { "reals" } else { "ints" }, o.name))
+        .collect();
+    let _ = writeln!(b, "  const result: {} = {{ begIdx: w.begIdx(), {} }};\n  w.done();\n  return result;", names.result_type, made.join(", "));
+
+    // The options call with buffers: any buffer it was not given is allocated
+    // as `./js` allocates it, once the engine is known to run the call.
+    let mut bf = String::new();
+    let _ = write!(bf, "  const room = {};\n{room_fail}", room_call(func, "first", "last", &out_names, &raw));
+    bf.push_str(&engine_for(func, "(last - first + 1)"));
+    bf.push_str(&conversions(&converted("", &raw)));
+    let filled: Vec<String> = if multi {
+        for o in &func.outputs {
+            let ctor = ts::array_ts_type(&o.param_type);
+            let _ = writeln!(bf, "  const {0}Buf = {0} ?? new {ctor}(room === 0 ? 1 : room);", o.name);
+        }
+        out_names.iter().map(|o| format!("{o}Buf")).collect()
+    } else {
+        out_names.clone()
+    };
+    let _ = writeln!(bf, "  const range = {into_fn}({});", args(&["first", "last", "n"], &inputs, &filled, &["room"]));
+    let views: Vec<String> =
+        func.outputs.iter().zip(&filled).map(|(o, f)| format!("{}: {f}.subarray(0, range.count)", result_key(func, o))).collect();
+    let _ = writeln!(bf, "  return range === null ? null : {{ begIdx: range.begIdx, {} }};", views.join(", "));
+
+    // The positional front: its buffers are the caller's, all of them.
+    let mut p = String::new();
+    let _ = writeln!(p, "  const n = seriesLength({});\n  if (n < 1) {{\n    return fellThrough('input');\n  }}", inputs[0]);
+    p.push_str(gate);
+    p.push_str(engine_down);
+    p.push_str(&same_lengths(&inputs[1..]));
+    p.push_str("  if (!usesDefaultCore(core) || !isInt32(startIdx) || !isInt32(endIdx)) {\n    return fellThrough('options');\n  }\n");
+    p.push_str(&param_check(func, |o| format!("{}({})", if is_real(&o.param_type) { "isReal" } else { "isInt32" }, o.name)));
+    p.push_str(&declined);
+    let absent: Vec<String> = out_names.iter().map(|o| format!("{o} === undefined")).collect();
+    let _ = writeln!(p, "  if ({}) {{\n    return fellThrough('buffer');\n  }}", absent.join(" || "));
+    p.push_str("  if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {\n    return fellThrough('range');\n  }\n");
+    let _ = write!(p, "  const room = {};\n{room_fail}", room_call(func, "startIdx", "endIdx", &out_names, &inputs));
+    p.push_str(&engine_for(func, "(endIdx - startIdx + 1)"));
+    p.push_str(&conversions(&converted("F64", &inputs)));
+    let f64s: Vec<String> = inputs.iter().map(|i| format!("{i}F64")).collect();
+    let _ = writeln!(p, "  return {into_fn}({});", args(&["startIdx", "endIdx", "n"], &f64s, &out_names, &["room"]));
+
+    // Into the caller's buffers: every output is copied before any view of one is built.
+    let mut it = frame_call(func);
+    it.push_str("  if (count > room) {\n    return fellThrough('overrun');\n  }\n  const begIdx = w.begIdx();\n");
     for o in &func.outputs {
-        let take = if is_real(&o.param_type) { "reals" } else { "ints" };
-        fields.push(format!("{}: w.{take}({}At, count)", result_key(func, o), o.name));
+        let _ = writeln!(it, "  w.{}({1}At, count, {1});", if is_real(&o.param_type) { "realsInto" } else { "intsInto" }, o.name);
     }
-    let _ = writeln!(b, "  const result: {} = {{ {} }};\n  w.done();\n  return result;", names.result_type, fields.join(", "));
+    it.push_str("  w.done();\n  return new OutRange(begIdx, count);\n");
 
     let mut sig = api_input_sig(func);
     sig.push(format!("options?: {}", names.options_type));
     let mut wasm_sig = api_input_sig(func);
     wasm_sig.push(format!("options: {} | undefined", names.options_type));
-    let mut args = arg_names.clone();
-    args.push("options".into());
-    let args = args.join(", ");
+    let mut call_args = arg_names.clone();
+    call_args.push("options".into());
+    let call_args = call_args.join(", ");
+    let positional_sig = ts::positional_params(func);
+    let positional_args = args(&["startIdx", "endIdx"], &inputs, &out_names, &["core"]);
+    let mut positional_wasm_sig = positional_sig.clone();
+    *positional_wasm_sig.last_mut().unwrap() = "core: Core".into();
+    let head_sig = ["first: number".to_string(), "last: number".into(), "n: number".into()];
+    let param_sig: Vec<String> = params.iter().map(|o| format!("{o}: number")).collect();
+    let public_type = |o: &crate::ir::Output| ts::public_array_ts_type(&o.param_type);
+    let mut buffered_sig: Vec<String> = head_sig.to_vec();
+    buffered_sig.extend(raw.iter().map(|r| format!("{r}: ArrayLike<number>")));
+    buffered_sig.extend(positional_sig[2 + inputs.len()..2 + inputs.len() + params.len()].iter().cloned());
+    buffered_sig.extend(func.outputs.iter().map(|o| format!("{}: {}{}", o.name, public_type(o), if multi { " | undefined" } else { "" })));
+    let mut into_sig: Vec<String> = head_sig.to_vec();
+    into_sig.extend(inputs.iter().map(|i| format!("{i}: Float64Array")));
+    into_sig.extend(param_sig.iter().cloned());
+    into_sig.extend(func.outputs.iter().map(|o| format!("{}: {}", o.name, ts::array_ts_type(&o.param_type))));
+    into_sig.push("room: number".into());
 
-    let mut imports = vec!["engineRoute", "fellThrough", "optionalInt32", "refused", "routedOptions", "routedSeries", "seriesLength", "strictFallThrough", "trapped", "usesDefaultCore", "wasmFrame"];
+    let mut imports = vec![
+        "engineDown", "engineFor", "engineRoute", "fellThrough", "isInt32", "optionalInt32", "outputRoom", "refused", "routedOptions", "routedSeries",
+        "seriesLength", "strictFallThrough", "trapped", "usesDefaultCore", "wasmFrame",
+    ];
     if has_real {
-        imports.push("optionalReal");
+        imports.extend(["isReal", "optionalReal"]);
     }
     imports.sort_unstable();
+    let mut enum_types: Vec<&str> = func
+        .optional_inputs
+        .iter()
+        .filter_map(|o| match &o.param_type {
+            ParamType::Enum(e) => Some(e.as_str()),
+            _ => None,
+        })
+        .collect();
+    enum_types.sort_unstable();
+    enum_types.dedup();
 
     let mut s = ts_license();
     s.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
-    let _ = writeln!(s, "import {{ {} as {js_fn} }} from '{js_module}';", names.public);
+    let _ = writeln!(
+        s,
+        "import {{ {} as {js_fn}, {}, {} as {js_positional} }} from '{js_module}';",
+        names.public, names.lookback_positional, names.positional
+    );
     let _ = writeln!(s, "import type {{ {}, {} }} from '{js_module}';", names.options_type, names.result_type);
-    if has_real || has_int {
-        s.push_str("import { Core } from '../../runtime/core.ts';\n");
+    if !enum_types.is_empty() {
+        let _ = writeln!(s, "import type {{ {} }} from '../../enums.ts';", enum_types.join(", "));
     }
+    s.push_str("import { Core } from '../../runtime/core.ts';\n");
+    s.push_str("import { OutRange } from '../../runtime/outRange.ts';\n");
     let _ = writeln!(s, "import {{ {} }} from '{RUNTIME}';\n", imports.join(", "));
     let _ = writeln!(s, "export * from '{js_module}';");
     if let Some(r) = route {
@@ -252,24 +471,34 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
             let _ = writeln!(s, "const WASM_TO_BARS = {to};");
         }
     }
-    // A caller's getter or trap that throws while the WASM path reads the
-    // arguments is a fall-through: `./js` then throws its own error.
-    let (open, pad, close) = if route.is_some() { ("", "  ", "") } else { ("  if (engineRoute.mode !== 0) {\n", "    ", "  }\n") };
-    let _ = write!(
-        s,
-        "\n{docs}export function {public}({sig}): {result} {{\n{open}\
-         {pad}let routed: {result} | null;\n\
-         {pad}try {{\n{pad}  routed = {wasm_fn}({args});\n{pad}}} catch {{\n{pad}  routed = fellThrough('threw');\n{pad}}}\n\
-         {pad}if (routed !== null) {{\n{pad}  return routed;\n{pad}}}\n\
-         {pad}if (engineRoute.mode === 2) {{\n{pad}  return strictFallThrough('{name}', {js_fn}({args}));\n{pad}}}\n\
-         {close}  return {js_fn}({args});\n}}\n",
-        docs = super::ts_doc::batch_docs(func, enums, registry),
-        public = names.public,
-        sig = sig.join(", "),
-        result = names.result_type,
-        name = func.name,
-    );
+    s.push_str(&wrapper(
+        &Front {
+            docs: &super::ts_doc::batch_docs(func, enums, registry),
+            public: &names.public,
+            sig: &sig.join(", "),
+            result: &names.result_type,
+            wasm_call: &format!("{wasm_fn}({call_args})"),
+            js_call: &format!("{js_fn}({call_args})"),
+        },
+        &func.name,
+        route.is_some(),
+    ));
+    s.push_str(&wrapper(
+        &Front {
+            docs: "/** @internal */\n",
+            public: &names.positional,
+            sig: &format!("\n  {},\n", positional_sig.join(",\n  ")),
+            result: "OutRange",
+            wasm_call: &format!("{positional_wasm_fn}({positional_args})"),
+            js_call: &format!("{js_positional}({positional_args})"),
+        },
+        &func.name,
+        route.is_some(),
+    ));
     let _ = write!(s, "\nfunction {wasm_fn}({}): {} | null {{\n{b}}}\n", wasm_sig.join(", "), names.result_type);
+    let _ = write!(s, "\nfunction {buffered_fn}({}): {} | null {{\n{bf}}}\n", buffered_sig.join(", "), names.result_type);
+    let _ = write!(s, "\nfunction {positional_wasm_fn}({}): OutRange | null {{\n{p}}}\n", positional_wasm_sig.join(", "));
+    let _ = write!(s, "\nfunction {into_fn}({}): OutRange | null {{\n{it}}}\n", into_sig.join(", "));
     s
 }
 
@@ -293,17 +522,34 @@ pub fn render_index(funcs: &[FuncDef]) -> String {
     )
 }
 
-/// The `node`, `bun` and `deno` entry: the barrel, with the engine's bytes.
+/// What an engine-less entry exports beyond its pure twin's names.
+pub const PLAIN_ENGINE_EXPORTS: &str =
+    "export { ready } from '../runtime/plain.ts';\nexport type { EngineReason, EngineStatus } from '../runtime/wasm.ts';\n";
+
+/// The default entry for a runtime that cannot compile WebAssembly from
+/// bytes: the `./js` barrel's names and a `ready` that loads nothing.
+#[must_use]
+pub fn render_plain_entry(funcs: &[FuncDef]) -> String {
+    ts::render_barrel(funcs, "../", &|f| format!("../func/{}.ts", module_stem(f)), PLAIN_ENGINE_EXPORTS)
+}
+
+/// A `node`, `bun` and `deno` entry beside its `index.ts`, one directory
+/// under `src/`: that entry, with the engine's bytes.
+#[must_use]
+pub fn node_entry_body() -> String {
+    "import { provideWasmBytes } from '../runtime/wasm.ts';\n\
+     import { WASM_BASE64 } from '../runtime/wasmBytes.js';\n\n\
+     provideWasmBytes(WASM_BASE64);\n\n\
+     export * from './index.ts';\n"
+        .to_string()
+}
+
+/// The default entry's `node`, `bun` and `deno` entry.
 #[must_use]
 pub fn render_node_entry() -> String {
     let mut s = ts_license();
-    s.push_str(
-        "\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n\
-         import { provideWasmBytes } from '../runtime/wasm.ts';\n\
-         import { WASM_BASE64 } from '../runtime/wasmBytes.js';\n\n\
-         provideWasmBytes(WASM_BASE64);\n\n\
-         export * from './index.ts';\n",
-    );
+    s.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
+    s.push_str(&node_entry_body());
     s
 }
 
@@ -321,7 +567,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &
     let mut written = BTreeSet::new();
     for f in routed(funcs) {
         let name = format!("{}.ts", module_stem(f));
-        crate::emit::write_if_changed(func_dir.join(&name), render_routed(f, enums, registry, table.get(&f.name).copied())).unwrap();
+        crate::emit::write_if_changed(func_dir.join(&name), render_routed(f, funcs, enums, registry, table.get(&f.name).copied())).unwrap();
         written.insert(name);
     }
     for entry in std::fs::read_dir(&func_dir).unwrap().flatten() {
@@ -332,6 +578,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &
     }
     crate::emit::write_if_changed(dir.join("index.ts"), render_index(funcs)).unwrap();
     crate::emit::write_if_changed(dir.join("node.ts"), render_node_entry()).unwrap();
+    crate::emit::write_if_changed(dir.join("plain.ts"), render_plain_entry(funcs)).unwrap();
     println!("  TypeScript default entry -> {} ({} routed, {} in the table)", dir.display(), written.len(), table.len());
 }
 
@@ -374,9 +621,31 @@ fn param_row(opt: &OptInput, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>
     }
 }
 
-fn args_row(func: &FuncDef) -> String {
+/// Each input's data series, by input name: a price component its own, a
+/// period series `periods`, and plain series in turn from close, open, high, low.
+fn input_data(func: &FuncDef) -> BTreeMap<String, String> {
     const PLAIN: [&str; 4] = ["close", "open", "high", "low"];
     let mut plain = 0;
+    let mut out = BTreeMap::new();
+    for a in api_inputs(func) {
+        for (i, _) in &a.legs {
+            let series = if a.is_price {
+                i.price.expect("a price component").component.token().to_string()
+            } else if leg_kind(&i.name) == "inPeriods" {
+                "periods".to_string()
+            } else {
+                plain += 1;
+                PLAIN[(plain - 1) % PLAIN.len()].to_string()
+            };
+            out.insert(i.name.clone(), format!("d.{series}"));
+        }
+    }
+    out
+}
+
+/// The options call's inputs.
+fn args_row(func: &FuncDef) -> String {
+    let data = input_data(func);
     let parts: Vec<String> = api_inputs(func)
         .iter()
         .map(|a| {
@@ -384,21 +653,48 @@ fn args_row(func: &FuncDef) -> String {
                 let keys: Vec<String> = a
                     .legs
                     .iter()
-                    .map(|(i, _)| {
-                        let c = i.price.expect("a price component").component.token();
-                        format!("{c}: d.{c}")
-                    })
+                    .map(|(i, _)| format!("{}: {}", i.price.expect("a price component").component.token(), data[&i.name]))
                     .collect();
                 format!("{{ {} }}", keys.join(", "))
-            } else if leg_kind(&a.legs[0].0.name) == "inPeriods" {
-                "d.periods".to_string()
             } else {
-                plain += 1;
-                format!("d.{}", PLAIN[(plain - 1) % PLAIN.len()])
+                data[&a.legs[0].0.name].clone()
             }
         })
         .collect();
     format!("(d) => [{}]", parts.join(", "))
+}
+
+/// `<n>Positional`'s inputs, the same series as [`args_row`]'s.
+fn legs_row(func: &FuncDef) -> String {
+    let data = input_data(func);
+    let legs: Vec<&str> = func.inputs.iter().map(|i| data[&i.name].as_str()).collect();
+    format!("(d) => [{}]", legs.join(", "))
+}
+
+/// The output kinds, `f` for a `Float64Array` and `i` for an `Int32Array`.
+fn outs_row(func: &FuncDef) -> String {
+    let kinds: Vec<&str> = func.outputs.iter().map(|o| if is_real(&o.param_type) { "'f'" } else { "'i'" }).collect();
+    format!("[{}]", kinds.join(", "))
+}
+
+/// The options keys of the output buffers.
+fn bufs_row(func: &FuncDef) -> String {
+    let keys: Vec<String> = func.outputs.iter().map(|o| format!("'{}'", buffer_key(func, o))).collect();
+    format!("[{}]", keys.join(", "))
+}
+
+/// The fields every row carries: the function, its module and its call shapes.
+fn row_head(f: &FuncDef) -> String {
+    format!(
+        "name: '{}', fn: '{}', pos: '{}', stem: '{}', args: {}, legs: {}, outs: {}",
+        f.name,
+        ts_names(&f.name).public,
+        ts_names(&f.name).positional,
+        module_stem(f),
+        args_row(f),
+        legs_row(f),
+        outs_row(f)
+    )
 }
 
 /// `test/engineParity.test.ts`.
@@ -413,7 +709,7 @@ pub fn render_parity_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     o.push_str("\nconst ROWS: Row[] = [\n");
     for f in &sorted {
         let declined: Vec<Vec<String>> = f.optional_inputs.iter().map(|p| declined_spellings(p, funcs, enums)).collect();
-        let _ = writeln!(o, "  {{\n    name: '{}',\n    fn: '{}',\n    args: {},", f.name, ts_names(&f.name).public, args_row(f));
+        let _ = writeln!(o, "  {{\n    {},\n    bufs: {},", row_head(f), bufs_row(f));
         let params: Vec<String> = f.optional_inputs.iter().map(|p| param_row(p, funcs, enums)).collect();
         if params.is_empty() {
             o.push_str("    params: [],\n");
@@ -445,8 +741,9 @@ pub fn generate_parity_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>,
 }
 
 fn routing_row(f: &FuncDef, route: Route) -> String {
-    let to = route.to.map_or(String::new(), |to| format!(" to: {to},"));
-    format!("{{ name: '{}', fn: '{}', bars: {},{to} args: {} }}", f.name, ts_names(&f.name).public, route.from, args_row(f))
+    let sentinels: Vec<&str> = f.optional_inputs.iter().map(sentinel).collect();
+    let to = route.to.map_or(String::new(), |to| format!(", to: {to}"));
+    format!("{{ {}, bufs: {}, sentinels: [{}], bars: {}{to} }}", row_head(f), bufs_row(f), sentinels.join(", "), route.from)
 }
 
 /// `test/engineRouting.test.ts`: the table mode against the routing table,
@@ -497,16 +794,23 @@ import { test } from 'node:test';
 
 import * as routed from 'ta-lib';
 import * as js from 'ta-lib/js';
+import { Core } from 'ta-lib/js';
 import { hooks } from './engineHooks.ts';
 
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
-type Row = { name: string; fn: string; bars: number; to?: number; args: (d: Data) => unknown[] };
+type Row = {
+  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  bufs: string[]; sentinels: number[]; bars: number; to?: number;
+};
+type Range = { begIdx: number; count: number };
 ";
 
 const ROUTING_DRIVER: &str = r"
 const DATA = walk(20261112, MAX_BARS);
+const MODULES = new Map<string, Modules>();
+for (const row of [...TABLED, UNTABLED]) MODULES.set(row.stem, await modules(row.stem));
 
 function head(n: number): Data {
   const d = {} as Record<string, Float64Array>;
@@ -514,8 +818,10 @@ function head(n: number): Data {
   return d as unknown as Data;
 }
 
+type Ran = { ran: number; fell: number };
+
 /** One call through each entry at `n` bars: the module's batch calls and the fall-throughs the default entry's call made. */
-function call(row: Row, n: number): { ran: number; fell: number } {
+function call(row: Row, n: number): Ran {
   const args = row.args(head(n));
   const where = `${row.name} at ${n} bars`;
   const fell = hooks.fallThroughCount();
@@ -532,31 +838,69 @@ function call(row: Row, n: number): { ran: number; fell: number } {
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
+/** {@link call} with a caller buffer for every output. */
+function callBuffered(row: Row, n: number): Ran {
+  const d = head(n);
+  const where = `${row.name} into buffers at ${n} bars`;
+  const mine = blank(row.outs, n);
+  const theirs = blank(row.outs, n);
+  const given = (bs: Arr[]): unknown[] => [...row.args(d), Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]]))];
+  const fell = hooks.fallThroughCount();
+  const entered = hooks.moduleCalls();
+  const a = (routed as unknown as Record<string, Fn>)[row.fn](...given(mine));
+  const ran = hooks.moduleCalls() - entered;
+  const counted = hooks.fallThroughCount() - fell;
+  const b = (js as unknown as Record<string, Fn>)[row.fn](...given(theirs));
+  assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
+  mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
+  return { ran, fell: counted };
+}
+
+/** {@link call} for the positional tier, the one the Abstract API calls, with every parameter at its default. */
+function callPositional(row: Row, n: number): Ran {
+  const d = head(n);
+  const where = `${row.pos} at ${n} bars`;
+  const m = MODULES.get(row.stem)!;
+  const mine = blank(row.outs, n);
+  const theirs = blank(row.outs, n);
+  const fell = hooks.fallThroughCount();
+  const entered = hooks.moduleCalls();
+  const a = m.routed[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
+  const ran = hooks.moduleCalls() - entered;
+  const counted = hooks.fallThroughCount() - fell;
+  const b = m.js[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
+  assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count], where);
+  mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
+  return { ran, fell: counted };
+}
+
+/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions checked. */
 function sweep(mode: string): number {
   let checked = 0;
-  for (const row of TABLED) {
-    if (row.bars > 1) {
-      const under = call(row, row.bars - 1);
-      assert.equal(under.ran, 0, `${mode}: ${row.name} at ${row.bars - 1} bars entered the module; the table routes it from ${row.bars}`);
-      assert.equal(under.fell, 0, `${mode}: ${row.name} at ${row.bars - 1} bars counted a fall-through`);
+  for (const [form, run] of [['options', call], ['buffered', callBuffered], ['positional', callPositional]] as const) {
+    for (const row of TABLED) {
+      if (row.bars > 1) {
+        const under = run(row, row.bars - 1);
+        assert.equal(under.ran, 0, `${mode}, ${form}: ${row.name} at ${row.bars - 1} bars entered the module; the table routes it from ${row.bars}`);
+        assert.equal(under.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars - 1} bars counted a fall-through`);
+      }
+      const at = run(row, row.bars);
+      assert.equal(at.ran, 1, `${mode}, ${form}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
+      assert.equal(at.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
+      if (row.to !== undefined) {
+        const end = run(row, row.to);
+        assert.equal(end.ran, 1, `${mode}, ${form}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
+        assert.equal(end.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
+        const over = run(row, row.to + 1);
+        assert.equal(over.ran, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
+        assert.equal(over.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
+      }
+      if (form === 'options') checked++;
     }
-    const at = call(row, row.bars);
-    assert.equal(at.ran, 1, `${mode}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
-    assert.equal(at.fell, 0, `${mode}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
-    if (row.to !== undefined) {
-      const end = call(row, row.to);
-      assert.equal(end.ran, 1, `${mode}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
-      assert.equal(end.fell, 0, `${mode}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
-      const over = call(row, row.to + 1);
-      assert.equal(over.ran, 0, `${mode}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
-      assert.equal(over.fell, 0, `${mode}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
-    }
-    checked++;
+    const off = run(UNTABLED, UNTABLED.bars);
+    assert.equal(off.ran, 0, `${mode}, ${form}: ${UNTABLED.name}, which the table does not name, entered the module`);
+    assert.equal(off.fell, 0, `${mode}, ${form}: ${UNTABLED.name} counted a fall-through`);
   }
-  const off = call(UNTABLED, UNTABLED.bars);
-  assert.equal(off.ran, 0, `${mode}: ${UNTABLED.name}, which the table does not name, entered the module`);
-  assert.equal(off.fell, 0, `${mode}: ${UNTABLED.name} counted a fall-through`);
   return checked;
 }
 
@@ -579,13 +923,19 @@ import { test } from 'node:test';
 import * as routed from 'ta-lib';
 import * as js from 'ta-lib/js';
 import { Core, MAType, TALibError } from 'ta-lib/js';
+import * as routedAbstract from 'ta-lib/abstract';
+import * as jsAbstract from 'ta-lib/js/abstract';
 import { hooks } from './engineHooks.ts';
 
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
 type Param = { key: string; kind: 'int' | 'real' | 'enum'; dflt: number; min: number; max: number; members: number[] };
-type Row = { name: string; fn: string; args: (d: Data) => unknown[]; params: Param[]; vectors: (string | number)[][] };
+type Row = {
+  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  bufs: string[]; params: Param[]; vectors: (string | number)[][];
+};
+type Range = { begIdx: number; count: number };
 ";
 
 const WALK: &str = r"
@@ -621,12 +971,30 @@ function walk(seed: number, n: number): Data {
 function bytes(a: Arr): Buffer {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 }
+
+type Modules = { routed: Record<string, Fn>; js: Record<string, Fn> };
+
+/** A function's routed module and its ta-lib/js module, beside the entry 'ta-lib' resolves to: no subpath exports the positional tier. */
+async function modules(stem: string): Promise<Modules> {
+  const entry = import.meta.resolve('ta-lib');
+  return {
+    routed: (await import(new URL(`./func/${stem}.js`, entry).href)) as Record<string, Fn>,
+    js: (await import(new URL(`../func/${stem}.js`, entry).href)) as Record<string, Fn>,
+  };
+}
+
+/** Output buffers of `n` elements, each filled with a value no call computes, so an element written past the count shows. */
+function blank(outs: string[], n: number): Arr[] {
+  return outs.map((k) => (k === 'f' ? new Float64Array(n).fill(-777.25) : new Int32Array(n).fill(-777)));
+}
 ";
 
 const PARITY_DRIVER: &str = r"
 const N = 400;
 const CALL_SHAPED = ['options', 'parameter', 'input', 'range', 'rejected', 'declined'];
 const DATA = walk(20261112, N);
+const MODULES = new Map<string, Modules>();
+for (const row of ROWS) MODULES.set(row.stem, await modules(row.stem));
 
 function draw(p: Param, rnd: () => number): number {
   if (p.kind === 'enum') return p.members[Math.floor(rnd() * p.members.length)];
@@ -648,16 +1016,55 @@ function outcome(f: Fn, args: unknown[]): { value?: Record<string, unknown>; err
   }
 }
 
-test('every routed function answers in WASM with the bits of ta-lib/js, in strict mode', () => {
+function sameResult(a: Record<string, unknown>, b: Record<string, unknown>, where: string): void {
+  assert.deepEqual(Object.keys(a), Object.keys(b), where);
+  assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
+  for (const key of Object.keys(b).filter((x) => x !== 'begIdx')) {
+    const x = a[key] as Arr;
+    const y = b[key] as Arr;
+    assert.equal(x.constructor, y.constructor, `${where}: ${key} type`);
+    assert.equal(x.length, y.length, `${where}: ${key} length`);
+    assert.ok(bytes(x).equals(bytes(y)), `${where}: ${key} bits differ`);
+  }
+}
+
+/** Every element of each caller buffer, the ones past the count included. */
+function sameBuffers(a: Arr[], b: Arr[], where: string): void {
+  b.forEach((y, k) => assert.ok(bytes(a[k]).equals(bytes(y)), `${where}: buffer ${k} bits differ`));
+}
+
+test('every routed function answers in WASM with the bits of ta-lib/js, in strict mode, in every call form', () => {
   hooks.setEngineMode('strict');
   hooks.resetFallThroughs();
   const rnd = rng(7);
   let rejected = 0;
   let compared = 0;
+  /** Both entries' answers to one call, or `null` once ta-lib/js rejected it and ta-lib rejected it alike. */
+  const attempt = (where: string, f: Fn, g: Fn, mine: unknown[], theirs: unknown[]): [Record<string, unknown>, Record<string, unknown>] | null => {
+    const want = outcome(g, theirs);
+    const entered = hooks.moduleCalls();
+    const got = outcome(f, mine);
+    const ran = hooks.moduleCalls() - entered;
+    if (want.error !== undefined) {
+      assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
+      assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
+      assert.equal(got.error.code, want.error.code, where);
+      assert.equal(got.error.message, want.error.message, where);
+      const reason = hooks.lastFallThrough();
+      assert.ok(CALL_SHAPED.includes(reason), `${where}: fell through as '${reason}', which no rejected call explains`);
+      rejected++;
+      return null;
+    }
+    assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
+    assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
+    compared++;
+    return [got.value as Record<string, unknown>, want.value as Record<string, unknown>];
+  };
   try {
     for (const row of ROWS) {
       const f = (routed as unknown as Record<string, Fn>)[row.fn];
       const g = (js as unknown as Record<string, Fn>)[row.fn];
+      const m = MODULES.get(row.stem)!;
       const sets: (string | number)[][] = [['omitted'], ...row.vectors];
       for (let k = 0; k < 2; k++) sets.push([`drawn ${k}`, ...row.params.map((p) => draw(p, rnd))]);
       let answered = 0;
@@ -666,38 +1073,45 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
         row.params.forEach((p, i) => {
           options[p.key] = values[i];
         });
-        for (const range of [{}, { startIdx: 37, endIdx: N - 11 }]) {
-          const args = [...row.args(DATA), { ...options, ...range }];
+        const params = row.params.map((p, i) => values[i] ?? (p.kind === 'real' ? Core.REAL_DEFAULT : Core.INTEGER_DEFAULT));
+        const ranges: { startIdx?: number; endIdx?: number }[] = [{}, { startIdx: 37, endIdx: N - 11 }];
+        for (const range of ranges) {
           const where = `${row.name} ${label} ${JSON.stringify(range)}`;
-          const want = outcome(g, args);
-          const entered = hooks.moduleCalls();
-          const got = outcome(f, args);
-          const ran = hooks.moduleCalls() - entered;
-          if (want.error !== undefined) {
-            assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
-            assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
-            assert.equal(got.error.code, want.error.code, where);
-            assert.equal(got.error.message, want.error.message, where);
-            const reason = hooks.lastFallThrough();
-            assert.ok(CALL_SHAPED.includes(reason), `${where}: fell through as '${reason}', which no rejected call explains`);
-            rejected++;
-            continue;
+          const args = [...row.args(DATA), { ...options, ...range }];
+          const plain = attempt(where, f, g, args, args);
+          if (plain !== null) {
+            sameResult(plain[0], plain[1], where);
+            answered++;
           }
-          assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
-          assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
-          const a = got.value as Record<string, unknown>;
-          const b = want.value as Record<string, unknown>;
-          assert.deepEqual(Object.keys(a), Object.keys(b), where);
-          assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
-          for (const key of Object.keys(b).filter((x) => x !== 'begIdx')) {
-            const x = a[key] as Arr;
-            const y = b[key] as Arr;
-            assert.equal(x.constructor, y.constructor, `${where}: ${key} type`);
-            assert.equal(x.length, y.length, `${where}: ${key} length`);
-            assert.ok(bytes(x).equals(bytes(y)), `${where}: ${key} bits differ`);
+
+          const mine = blank(row.outs, N);
+          const theirs = blank(row.outs, N);
+          const given = (bs: Arr[]): unknown[] => [...row.args(DATA), { ...options, ...range, ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])) }];
+          const buffered = attempt(`${where} into buffers`, f, g, given(mine), given(theirs));
+          if (buffered !== null) {
+            sameResult(buffered[0], buffered[1], `${where} into buffers`);
+            Object.keys(buffered[1]).filter((x) => x !== 'begIdx').forEach((key, k) => {
+              const x = buffered[0][key] as Arr;
+              const y = buffered[1][key] as Arr;
+              assert.equal(x.buffer, mine[k].buffer, `${where} into buffers: ${key} is not a view of the caller's buffer`);
+              assert.equal(x.byteOffset - mine[k].byteOffset, y.byteOffset - theirs[k].byteOffset, `${where} into buffers: ${key} offset`);
+            });
           }
-          answered++;
-          compared++;
+          sameBuffers(mine, theirs, `${where} into buffers`);
+
+          const s = range.startIdx ?? 0;
+          const e = range.endIdx ?? N - 1;
+          const pm = blank(row.outs, N);
+          const pt = blank(row.outs, N);
+          const legs = row.legs(DATA);
+          const positional = attempt(`${where} positional`, m.routed[row.pos], m.js[row.pos], [s, e, ...legs, ...params, ...pm], [s, e, ...legs, ...params, ...pt]);
+          if (positional !== null) {
+            const x = positional[0] as unknown as Range;
+            const y = positional[1] as unknown as Range;
+            assert.equal(x.constructor, y.constructor, `${where} positional: result type`);
+            assert.deepEqual([x.begIdx, x.count], [y.begIdx, y.count], `${where} positional`);
+          }
+          sameBuffers(pm, pt, `${where} positional`);
         }
       }
       assert.ok(answered > 0, `${row.name}: no parameter set was accepted, so nothing was compared`);
@@ -705,6 +1119,44 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
     assert.equal(hooks.fallThroughCount(), rejected, 'a call ta-lib/js accepts fell through');
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     console.log(`${ROWS.length} functions, ${compared} calls compared, ${rejected} rejected by both`);
+  } finally {
+    hooks.setEngineMode('table');
+  }
+});
+
+test('ta-lib/abstract runs each routed function in WASM with the bits of ta-lib/js/abstract, which never enters the module', () => {
+  assert.equal(routedAbstract.FuncInfo, jsAbstract.FuncInfo);
+  assert.equal(routedAbstract.ParamHolder, jsAbstract.ParamHolder);
+  assert.notEqual(routedAbstract.Functions, jsAbstract.Functions);
+  const args = new Map(ROWS.map((row) => [row.name, row.args(DATA)]));
+  const call = (lib: typeof jsAbstract, name: string, outs: Arr[]): { range: Range; ran: number } => {
+    const info = lib.Functions.byName(name)!;
+    const h = info.newCall();
+    const given = args.get(name)!;
+    assert.equal(info.inputs.length, given.length, `${name}: inputs`);
+    info.inputs.forEach((input, i) => {
+      if (input.type === lib.InputType.PRICE) h.setPriceInput(i, given[i] as jsAbstract.PriceInput);
+      else h.setInput(i, given[i] as ArrayLike<number>);
+    });
+    outs.forEach((out, k) => h.setOutput(k, out));
+    const entered = hooks.moduleCalls();
+    const range = h.call(0, N - 1);
+    return { range, ran: hooks.moduleCalls() - entered };
+  };
+  hooks.setEngineMode('strict');
+  hooks.resetFallThroughs();
+  try {
+    for (const row of ROWS) {
+      const mine = blank(row.outs, N);
+      const theirs = blank(row.outs, N);
+      const a = call(routedAbstract, row.name, mine);
+      const b = call(jsAbstract, row.name, theirs);
+      assert.equal(a.ran, 1, `${row.name}: ta-lib/abstract: the module counted ${a.ran} batch calls, not one`);
+      assert.equal(b.ran, 0, `${row.name}: ta-lib/js/abstract entered the module`);
+      assert.deepEqual([a.range.begIdx, a.range.count], [b.range.begIdx, b.range.count], row.name);
+      sameBuffers(mine, theirs, `${row.name} through the abstract entries`);
+    }
+    assert.equal(hooks.fallThroughCount(), 0, `a call fell through as '${hooks.lastFallThrough()}'`);
   } finally {
     hooks.setEngineMode('table');
   }

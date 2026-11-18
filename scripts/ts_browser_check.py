@@ -4,12 +4,15 @@
   1. Pack the package as scripts/ts_package_check.py does, install the tarball
      into a throwaway project, and bundle scripts/ts_browser_check/ with the
      tooling root's esbuild for the browser platform: page.mjs (the default
-     entry, ta-lib/js and the engine's @internal hooks, code splitting on) and
-     jsonly.mjs (ta-lib/js alone).
+     entry, ta-lib/js and the engine's @internal hooks) and abstract.mjs
+     (ta-lib/abstract alone, beside the hooks), together with code splitting
+     on; jsonly.mjs (ta-lib/js alone) and jsabstract.mjs (ta-lib/js/abstract
+     alone).
   2. From the bundles, without a browser: the default entry resolved to
-     dist/engine/index.js, not the Node entry; the engine's bytes sit in one
-     chunk that only a dynamic import loads; the ta-lib/js bundle holds none of
-     them.
+     dist/engine/index.js and ta-lib/abstract to dist/abstract/index.js, not
+     their Node entries; the engine's bytes sit in one chunk that only a
+     dynamic import loads; the ta-lib/js and ta-lib/js/abstract bundles hold
+     none of them.
   3. Serve the page from a loopback server on an ephemeral port, open it in a
      headless Chrome or Chromium, and read the verdict the page posts back:
      under /plain/ ready() resolves to the WASM engine, compiled
@@ -18,7 +21,9 @@
      chunk fetched before ready(); under /csp/, served with a
      Content-Security-Policy that forbids WebAssembly, ready() resolves to the
      TypeScript engine with its reason, every call answers with the bits of
-     ta-lib/js, and nothing throws.
+     ta-lib/js, and nothing throws; under /abstract/, a ta-lib/abstract call
+     before ready() stays in TypeScript and fetches no bytes chunk, and after
+     it, in strict mode, the same call enters the module with the same bits.
 
 The browser is $TA_BROWSER, else the first Chrome or Chromium found; none is a
 failure. The browser runs in its own process group (on Windows, its own tree),
@@ -56,6 +61,10 @@ PLAIN = ["before-ready-call-stayed-in-typescript", "ready-resolves-wasm", "compi
          "strict-bits-cdlengulfing", "module-counter-advanced", "plain-nothing-threw"]
 CSP_RUN = ["csp-ready-resolves-js-with-reason", "csp-calls-answer-from-typescript",
            "csp-compiled-asynchronously", "csp-nothing-threw"]
+ABSTRACT = ["abstract-before-ready-stayed-in-typescript", "abstract-ready-resolves-wasm",
+            "abstract-compiled-asynchronously", "abstract-strict-bits-EMA", "abstract-strict-bits-BBANDS",
+            "abstract-strict-bits-CDLENGULFING", "abstract-nothing-threw"]
+RUNS = (("plain", "index.html", PLAIN), ("csp", "index.html", CSP_RUN), ("abstract", "abstract.html", ABSTRACT))
 
 
 def find_browser():
@@ -97,13 +106,16 @@ def bundle(work):
         shutil.copy(os.path.join(PAGE_DIR, entry), work)
     site = os.path.join(work, "site")
     shutil.rmtree(site, ignore_errors=True)
-    if pkg.run([ESBUILD, "page.mjs", "--bundle", "--splitting", "--format=esm", "--platform=browser",
-                "--outdir=site", "--entry-names=[name]", "--metafile=page.meta.json"], cwd=work).returncode:
-        return ["esbuild could not bundle page.mjs for the browser; see its output above"]
-    if pkg.run([ESBUILD, "jsonly.mjs", "--bundle", "--format=esm", "--platform=browser",
-                "--outdir=jsonly", "--metafile=jsonly.meta.json"], cwd=work).returncode:
-        return ["esbuild could not bundle jsonly.mjs for the browser; see its output above"]
-    shutil.copy(os.path.join(work, "index.html"), site)
+    if pkg.run([ESBUILD, "page.mjs", "abstract.mjs", "--bundle", "--splitting", "--format=esm",
+                "--platform=browser", "--outdir=site", "--entry-names=[name]", "--metafile=page.meta.json"],
+               cwd=work).returncode:
+        return ["esbuild could not bundle page.mjs and abstract.mjs for the browser; see its output above"]
+    for name in ("jsonly", "jsabstract"):
+        if pkg.run([ESBUILD, name + ".mjs", "--bundle", "--format=esm", "--platform=browser",
+                    "--outdir=" + name, "--metafile=%s.meta.json" % name], cwd=work).returncode:
+            return ["esbuild could not bundle %s.mjs for the browser; see its output above" % name]
+    for page in ("index.html", "abstract.html"):
+        shutil.copy(os.path.join(work, page), site)
     return []
 
 
@@ -123,14 +135,13 @@ def static_checks(work, report):
     probe = base64[len(base64) // 2:len(base64) // 2 + 64]
     with open(os.path.join(work, "page.meta.json")) as f:
         page_inputs = set(json.load(f)["inputs"])
-    with open(os.path.join(work, "jsonly.meta.json")) as f:
-        jsonly_inputs = set(json.load(f)["inputs"])
-    default_entry = "node_modules/ta-lib/dist/engine/index.js"
-    node_entry = "node_modules/ta-lib/dist/engine/node.js"
-    report("bundle-resolves-default-condition",
-           default_entry in page_inputs and node_entry not in page_inputs,
-           "page bundle reads %s, %s" % (default_entry, "and also the Node entry" if node_entry in page_inputs
-                                         else "not the Node entry"))
+    for entry, label in (("engine", "bundle-resolves-default-condition"),
+                         ("abstract", "abstract-bundle-resolves-default-condition")):
+        default_entry = "node_modules/ta-lib/dist/%s/index.js" % entry
+        node_entry = "node_modules/ta-lib/dist/%s/node.js" % entry
+        report(label, default_entry in page_inputs and node_entry not in page_inputs,
+               "page bundle reads %s, %s" % (default_entry, "and also the Node entry" if node_entry in page_inputs
+                                             else "not the Node entry"))
 
     site = outputs(os.path.join(work, "site"))
     holders = [name for name, text in site.items() if probe in text]
@@ -145,13 +156,17 @@ def static_checks(work, report):
            "the bytes sit in %s; imported statically by %s, dynamically by %s"
            % (holders or "no output", static or "none", dynamic or "none"))
 
-    jsonly = outputs(os.path.join(work, "jsonly"))
-    leaked = [name for name, text in jsonly.items() if probe in text]
-    js_sma = "node_modules/ta-lib/dist/func/sma.js"
-    report("js-only-bundle-has-no-bytes",
-           not leaked and js_sma in jsonly_inputs and holders,
-           "ta-lib/js bundle (%s) %s the bytes; it reads %s: %s"
-           % (", ".join(jsonly), "carries" if leaked else "does not carry", js_sma, js_sma in jsonly_inputs))
+    for name, spec, label, module in (
+            ("jsonly", "ta-lib/js", "js-only-bundle-has-no-bytes", "node_modules/ta-lib/dist/func/sma.js"),
+            ("jsabstract", "ta-lib/js/abstract", "js-abstract-bundle-has-no-bytes",
+             "node_modules/ta-lib/dist/js/abstract/index.js")):
+        with open(os.path.join(work, name + ".meta.json")) as f:
+            inputs = set(json.load(f)["inputs"])
+        bundled = outputs(os.path.join(work, name))
+        leaked = [file for file, text in bundled.items() if probe in text]
+        report(label, not leaked and module in inputs and holders,
+               "%s bundle (%s) %s the bytes; it reads %s: %s"
+               % (spec, ", ".join(bundled), "carries" if leaked else "does not carry", module, module in inputs))
     return chunk
 
 
@@ -273,11 +288,11 @@ def stop(proc, profile):
     return None
 
 
-def browse(browser, server, mode, work):
-    """Opens /<mode>/index.html; returns (verdict or None, failure or None)."""
+def browse(browser, server, mode, page, work):
+    """Opens /<mode>/<page>; returns (verdict or None, failure or None)."""
     profile = tempfile.mkdtemp(prefix="talib-browser-profile-")
     log_path = os.path.join(work, "browser-%s.log" % mode)
-    url = "http://127.0.0.1:%d/%s/index.html" % (server.server_address[1], mode)
+    url = "http://127.0.0.1:%d/%s/%s" % (server.server_address[1], mode, page)
     with open(log_path, "w") as log:
         proc = launch(browser, url, profile, log)
         try:
@@ -349,8 +364,8 @@ def main():
             serving = threading.Thread(target=server.serve_forever, daemon=True)
             serving.start()
             try:
-                for mode, expected in (("plain", PLAIN), ("csp", CSP_RUN)):
-                    verdict, failure = browse(browser, server, mode, work)
+                for mode, page, expected in RUNS:
+                    verdict, failure = browse(browser, server, mode, page, work)
                     if failure:
                         failures.append("%s: %s" % (mode, failure))
                     if verdict is None:
@@ -363,14 +378,15 @@ def main():
                     missing = [name for name in expected if name not in seen]
                     if missing:
                         failures.append("%s: the page reported no %s" % (mode, ", ".join(missing)))
-                    if mode == "plain":
+                    if mode != "csp":
                         with server.lock:
                             log = list(server.log)
-                        marker = ("POST", "/mark/plain/before-ready")
+                        marker = ("POST", "/mark/%s/before-ready" % mode)
                         fetched = [i for i, (verb, path) in enumerate(log)
-                                   if verb == "GET" and chunk and path == "/plain/" + chunk]
+                                   if verb == "GET" and chunk and path == "/%s/%s" % (mode, chunk)]
                         at = log.index(marker) if marker in log else None
-                        report("bytes-fetched-only-after-ready",
+                        report("bytes-fetched-only-after-ready" if mode == "plain"
+                               else "%s-bytes-fetched-only-after-ready" % mode,
                                at is not None and fetched and min(fetched) > at,
                                "the bytes chunk %s was fetched %d time(s), %s"
                                % (chunk, len(fetched), "first after ready() was called" if at is not None

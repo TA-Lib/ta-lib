@@ -46,7 +46,7 @@
  */
 
 
-import { float64, isOptionsObject } from './checks.ts';
+import { float64, isOptionsObject, overlaps } from './checks.ts';
 import { Core } from './core.ts';
 
 /** @internal */
@@ -88,28 +88,36 @@ const OUT_OF_FRAME = -2147483647;
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
 const NO_OPTIONS = Object.freeze({});
-/** A typed array's own element count, which an overridden `length` property cannot change. */
-const typedLength = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array.prototype), 'length')!.get as (
-  this: unknown,
-) => number;
 
 /**
- * Why the default entry runs its batch calls in TypeScript:
- * - `'not-loaded'`: the engine has not been loaded yet. In a browser it loads
- *   only when {@link ready} is called; elsewhere, on the first call that needs it.
- * - `'unavailable'`: the module holding the engine's bytes could not be imported.
+ * Why the WebAssembly engine is not loaded:
+ * - `'not-loaded'`: the engine has not been loaded yet. Under the `node`, `bun`
+ *   and `deno` export conditions it loads on the first call that needs it;
+ *   under any other, only when {@link ready} is called.
+ * - `'unavailable'`: the engine's bytes could not be loaded, or this entry has
+ *   no engine (`ta-lib/js/abstract`, and the entries a `workerd`, `edge-light`
+ *   or `react-native` build resolves to).
  * - `'compile'`: the runtime refused to compile the engine, as one without
  *   relaxed SIMD or under a Content-Security-Policy that forbids WebAssembly does.
  * - `'instantiate'`: the engine compiled but could not be instantiated.
  * - `'fma'`: this runtime does not fuse the multiply-add the engine relies on, so
  *   its values would differ from the TypeScript engine's.
  * - `'trap'`: the engine failed during calls too many times and was given up.
+ *
+ * A minor release may add a value: handle one you do not know.
  */
 export type EngineReason = 'not-loaded' | 'unavailable' | 'compile' | 'instantiate' | 'fma' | 'trap';
 
-/** Which engine the default entry's batch calls run in; what {@link ready} resolves to. */
+/**
+ * Whether the WebAssembly engine is loaded; what {@link ready} resolves to. A
+ * loaded engine runs the batch calls the routing table sends it, by function
+ * and series length; every other call runs in TypeScript.
+ */
 export interface EngineStatus {
-  /** `'wasm'` for the WebAssembly engine, `'js'` for TypeScript. Both give the same values. */
+  /**
+   * `'wasm'` when the WebAssembly engine is loaded, `'js'` when every call runs
+   * in TypeScript. Both give the same values. A minor release may add a value.
+   */
   readonly engine: 'wasm' | 'js';
   /** Why `engine` is `'js'`; `null` when it is `'wasm'`. */
   readonly reason: EngineReason | null;
@@ -120,7 +128,7 @@ let compiled: WasmModule | null = null;
 let live: WasmEngine | null = null;
 let failure: EngineReason | null = null;
 let traps = 0;
-let loading: Promise<EngineStatus> | null = null;
+let loading: Promise<EngineStatus | null> | null = null;
 let generation = 0;
 let fallThroughs = 0;
 let lastReason = '';
@@ -128,6 +136,11 @@ let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
 let budget = BUDGET;
 let retired = 0;
+
+/** @internal */
+export type BytesImport = () => Promise<{ readonly WASM_BASE64: string }>;
+
+let importBytes: BytesImport = () => import('./wasmBytes.js');
 
 /** @internal The live instance: its exports, and views over its memory that a call re-derives before use. */
 export class WasmEngine {
@@ -178,6 +191,19 @@ export class WasmEngine {
     }
     out.set(new Int32Array(this.memory.buffer, address, count));
     return out;
+  }
+
+  /** `count` values copied out of linear memory into `into`, which must hold them. */
+  realsInto(address: number, count: number, into: Float64Array): void {
+    if (count > 0) {
+      into.set(new Float64Array(this.memory.buffer, address, count));
+    }
+  }
+
+  intsInto(address: number, count: number, into: Int32Array): void {
+    if (count > 0) {
+      into.set(new Int32Array(this.memory.buffer, address, count));
+    }
   }
 
   memoryBytes(): number {
@@ -248,6 +274,13 @@ export function provideWasmBytes(base64: string): void {
   source = base64;
 }
 
+/** @internal Replaces how `ready()` imports the bytes module; returns the previous importer. */
+export function setBytesImport(next: BytesImport): BytesImport {
+  const previous = importBytes;
+  importBytes = next;
+  return previous;
+}
+
 /** @internal Forgets the bytes, the module, the instance and every failure. */
 export function resetEngine(): void {
   source = null;
@@ -290,36 +323,45 @@ export function engineStatus(): EngineStatus {
 }
 
 /**
- * Loads the WebAssembly engine, and resolves to the engine the batch calls of
- * this entry run in from then on. No call needs it: in Node, Bun and Deno the
- * engine loads on the first call that uses it, and in a browser every call
- * runs in TypeScript until `ready()` has loaded it. Never rejects, and the
- * values are the same either way. `ta-lib/js` has no engine and no `ready`.
+ * Loads the WebAssembly engine and resolves to its status at that time. No
+ * call needs it: under the `node`, `bun` and `deno` export conditions the
+ * engine loads on the first call that uses it, and awaiting `ready()` first
+ * moves that one-time compile out of that call; under any other condition, a
+ * browser bundle included, every call runs in TypeScript until `ready()` has
+ * loaded it. Never rejects, and the values are the same either way. After it
+ * resolves to `'unavailable'` on an entry that has an engine, a later `ready()`
+ * tries again. `ta-lib/js` and `ta-lib/js/abstract` have no engine and no
+ * `ready`.
  */
 export function ready(): Promise<EngineStatus> {
-  if (loading === null) {
-    loading = load().then(engineStatus, engineStatus);
+  if (failure === 'unavailable') {
+    failure = null;
+    loading = null;
   }
-  return loading;
+  loading ??= load();
+  return loading.then((settled) => settled ?? engineStatus(), engineStatus);
 }
 
-async function load(): Promise<void> {
+async function load(): Promise<EngineStatus | null> {
   if (live !== null || compiled !== null || failure !== null) {
-    return;
+    return null;
   }
   const epoch = generation;
   let base64 = source;
   if (base64 === null) {
     try {
-      base64 = (await import('./wasmBytes.js')).WASM_BASE64;
+      base64 = (await importBytes()).WASM_BASE64;
     } catch {
-      if (epoch === generation) {
-        failure ??= 'unavailable';
+      if (epoch !== generation || failure !== null) {
+        return null;
       }
-      return;
+      failure = 'unavailable';
+      // Settled here: the next ready() clears this failure, possibly before
+      // the callbacks of the calls that shared this load have run.
+      return engineStatus();
     }
     if (epoch !== generation) {
-      return;
+      return null;
     }
   }
   let module: WasmModule;
@@ -330,7 +372,7 @@ async function load(): Promise<void> {
     if (epoch === generation) {
       failure ??= 'compile';
     }
-    return;
+    return null;
   }
   try {
     instance = await WebAssembly.instantiate(module, {});
@@ -338,12 +380,13 @@ async function load(): Promise<void> {
     if (epoch === generation) {
       failure ??= 'instantiate';
     }
-    return;
+    return null;
   }
   if (epoch === generation && live === null && compiled === null && failure === null) {
     compiled = module;
     adopt(instance);
   }
+  return null;
 }
 
 function decode(base64: string): Uint8Array {
@@ -355,7 +398,7 @@ function decode(base64: string): Uint8Array {
   return bytes;
 }
 
-function current(): WasmEngine | null {
+function current(compile: boolean): WasmEngine | null {
   if (live !== null) {
     return live;
   }
@@ -363,7 +406,7 @@ function current(): WasmEngine | null {
     return null;
   }
   if (compiled === null) {
-    if (source === null) {
+    if (source === null || !compile) {
       return null;
     }
     try {
@@ -454,7 +497,66 @@ export function optionalReal(v: unknown): v is number | undefined {
   return v === undefined || typeof v === 'number';
 }
 
-/** @internal The length of an object whose `length` is an integer in 0..INDEX_MAX + 1, else -1. */
+/** @internal */
+export function isInt32(v: unknown): v is number {
+  return typeof v === 'number' && (v | 0) === v;
+}
+
+/** @internal */
+export function isReal(v: unknown): v is number {
+  return typeof v === 'number';
+}
+
+/**
+ * @internal What a call with caller output buffers may write: the count
+ * `ta-lib/js` requires each buffer to hold, given the lookback it computes for
+ * the call's parameters; -1 when that lookback rejects them, -2 when a buffer
+ * might not be accepted, or written, by `ta-lib/js` exactly as here. A buffer
+ * must be an instance of its `types` class, non-empty and at least that long,
+ * and share no byte with another buffer or a typed-array input, not even
+ * exactly, which `ta-lib/js` computes in place with bodies that may use that
+ * output as scratch. An `undefined` buffer is one the call allocates.
+ */
+export function outputRoom(
+  first: number,
+  last: number,
+  lookback: number,
+  inputs: readonly unknown[],
+  outputs: readonly (Float64Array | Int32Array | undefined)[],
+  types: readonly (typeof Float64Array | typeof Int32Array)[],
+): number {
+  if (lookback < 0) {
+    return -1;
+  }
+  const start = first > lookback ? first : lookback;
+  const want = start > last ? 0 : last - start + 1;
+  for (let k = 0; k < outputs.length; k++) {
+    const out = outputs[k];
+    if (out === undefined) {
+      continue;
+    }
+    if (!(out instanceof types[k]) || out.length === 0 || out.length < want) {
+      return -2;
+    }
+    for (const input of inputs) {
+      if (ArrayBuffer.isView(input) && overlaps(out, input)) {
+        return -2;
+      }
+    }
+    for (let j = 0; j < k; j++) {
+      const other = outputs[j];
+      if (other !== undefined && overlaps(out, other)) {
+        return -2;
+      }
+    }
+  }
+  return want;
+}
+
+/**
+ * @internal The `length` of an object when it is an integer in
+ * 0..INDEX_MAX + 1, else -1. It may be a getter: this can run caller code.
+ */
 export function seriesLength(x: unknown): number {
   if (typeof x !== 'object' || x === null) {
     return -1;
@@ -463,46 +565,57 @@ export function seriesLength(x: unknown): number {
   if (typeof n !== 'number' || (n | 0) !== n || n < 0 || n > Core.INDEX_MAX + 1) {
     return -1;
   }
-  return ArrayBuffer.isView(x) && ownLength(x) !== n ? -1 : n;
+  return n;
 }
 
-function ownLength(x: object): number {
+/** @internal `x` as `ta-lib/js` converts it; `null` when that conversion throws. */
+export function routedSeries(x: unknown): Float64Array | null {
   try {
-    return typedLength.call(x);
+    return float64(x as ArrayLike<number>);
   } catch {
-    return -1;
+    return null;
   }
 }
 
 /**
- * @internal `x` converted as the `ta-lib/js` tier converts it, when that gives
- * a real `Float64Array` of `n` elements; `null` otherwise. A `Proxy` passes
- * `instanceof Float64Array` and is passed through unconverted, so it is refused
- * here: copying it into linear memory would run its traps after the views
- * were taken.
+ * @internal True, counted as a fall-through, when no engine can run the call:
+ * a front asks before it converts or allocates anything. Compiles nothing, so
+ * a call a later check sends to `ta-lib/js` leaves the engine unloaded.
  */
-export function routedSeries(x: unknown, n: number): Float64Array | null {
-  if (seriesLength(x) !== n) {
-    return null;
+export function engineDown(): boolean {
+  if (failure === null && (live !== null || compiled !== null || source !== null)) {
+    return false;
   }
-  let a: Float64Array;
-  try {
-    a = float64(x as ArrayLike<number>);
-  } catch {
-    return null;
+  fellThrough(failure ?? 'not-loaded');
+  return true;
+}
+
+/**
+ * @internal False, counted as a fall-through, when a call of `bytes` is over
+ * the budget or the engine cannot load, which may compile it now. A front
+ * asks last before its first conversion, so a call the engine cannot run
+ * runs no conversion twice.
+ */
+export function engineFor(bytes: number): boolean {
+  if (bytes > budget) {
+    fellThrough('budget');
+    return false;
   }
-  return ArrayBuffer.isView(a) && ownLength(a) === n ? a : null;
+  if (current(true) !== null) {
+    return true;
+  }
+  fellThrough(failure ?? 'not-loaded');
+  return false;
 }
 
 /**
  * @internal Scratch for one call's `bytes`, with the views derived after it,
- * since taking it may grow memory. `null` once the call fell through.
+ * since taking it may grow memory. `null` once the call fell through. Asked
+ * after {@link engineFor}; a call made by a conversion in between may have
+ * dropped the instance, so this may instantiate one, but never compiles.
  */
 export function wasmFrame(bytes: number): WasmEngine | null {
-  if (bytes > budget) {
-    return fellThrough('budget');
-  }
-  const engine = current();
+  const engine = current(false);
   if (engine === null) {
     return fellThrough(failure ?? 'not-loaded');
   }

@@ -98,8 +98,8 @@ A common key is answered in every language, and the answer can differ with the l
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
 | `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C#, TypeScript and Go. |
 | `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C#, TypeScript and Go. |
-| `wasm.engine` | TypeScript only. Where the batch calls of the package's default entry, `ta-lib`, run now: 1 its WebAssembly engine, 0 TypeScript. Asking loads nothing. |
-| `wasm.reason` | TypeScript only. Why `wasm.engine` is 0: 0 while it is 1, 1 the engine is not loaded yet, 2 the module holding its bytes could not be imported, 3 the runtime refused to compile it, 4 it compiled but could not be instantiated, 5 the runtime does not fuse the multiply-add the engine relies on, 6 calls failed in it too many times and it was given up. |
+| `wasm.engine` | TypeScript only, answered per entry. 1 when the WebAssembly engine that `ta-lib/abstract` and `ta-lib` route calls to is loaded, else 0; `ta-lib/js/abstract` and an entry with no engine always answer 0. A loaded engine still runs only the calls its routing sends it. Asking loads nothing. |
+| `wasm.reason` | TypeScript only, answered per entry. Why `wasm.engine` is 0: 0 while it is 1, 1 the engine is not loaded yet, 2 the engine's bytes could not be loaded or this entry has no engine, 3 the runtime refused to compile it, 4 it compiled but could not be instantiated, 5 the runtime does not fuse the multiply-add the engine relies on, 6 calls failed in it too many times and it was given up. A minor release may add a code. |
 
 ## Attributes {#attributes}
 

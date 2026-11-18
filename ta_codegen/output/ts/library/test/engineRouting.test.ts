@@ -39,179 +39,184 @@ import { test } from 'node:test';
 
 import * as routed from 'ta-lib';
 import * as js from 'ta-lib/js';
+import { Core } from 'ta-lib/js';
 import { hooks } from './engineHooks.ts';
 
 type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
-type Row = { name: string; fn: string; bars: number; to?: number; args: (d: Data) => unknown[] };
+type Row = {
+  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  bufs: string[]; sentinels: number[]; bars: number; to?: number;
+};
+type Range = { begIdx: number; count: number };
 
 const TABLED: Row[] = [
-  { name: 'ACCBANDS', fn: 'accbands', bars: 500, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'AD', fn: 'ad', bars: 1000, to: 5000, args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }] },
-  { name: 'ADD', fn: 'add', bars: 2500, to: 10000, args: (d) => [d.close, d.open] },
-  { name: 'ADOSC', fn: 'adosc', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }] },
-  { name: 'ADX', fn: 'adx', bars: 10000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'ADXR', fn: 'adxr', bars: 10000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'ALLIGATOR', fn: 'alligator', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'APO', fn: 'apo', bars: 30, args: (d) => [d.close] },
-  { name: 'ATR', fn: 'atr', bars: 125, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'AVGDEV', fn: 'avgdev', bars: 500, args: (d) => [d.close] },
-  { name: 'AVGPRICE', fn: 'avgprice', bars: 1000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'BBW', fn: 'bbw', bars: 30, args: (d) => [d.close] },
-  { name: 'BOP', fn: 'bop', bars: 500, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CCI', fn: 'cci', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL2CROWS', fn: 'cdl2crows', bars: 1000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3BLACKCROWS', fn: 'cdl3blackcrows', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3INSIDE', fn: 'cdl3inside', bars: 500, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3LINESTRIKE', fn: 'cdl3linestrike', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3OUTSIDE', fn: 'cdl3outside', bars: 50000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3STARSINSOUTH', fn: 'cdl3starsinsouth', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDL3WHITESOLDIERS', fn: 'cdl3whitesoldiers', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLABANDONEDBABY', fn: 'cdlabandonedbaby', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLADVANCEBLOCK', fn: 'cdladvanceblock', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLBELTHOLD', fn: 'cdlbelthold', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLBREAKAWAY', fn: 'cdlbreakaway', bars: 1000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLCLOSINGMARUBOZU', fn: 'cdlclosingmarubozu', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLCONCEALBABYSWALL', fn: 'cdlconcealbabyswall', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLCOUNTERATTACK', fn: 'cdlcounterattack', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLDARKCLOUDCOVER', fn: 'cdldarkcloudcover', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLDOJI', fn: 'cdldoji', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLDOJISTAR', fn: 'cdldojistar', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLDRAGONFLYDOJI', fn: 'cdldragonflydoji', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLENGULFING', fn: 'cdlengulfing', bars: 50000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLEVENINGDOJISTAR', fn: 'cdleveningdojistar', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLEVENINGSTAR', fn: 'cdleveningstar', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLGAPSIDESIDEWHITE', fn: 'cdlgapsidesidewhite', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLGRAVESTONEDOJI', fn: 'cdlgravestonedoji', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHAMMER', fn: 'cdlhammer', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHANGINGMAN', fn: 'cdlhangingman', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHARAMI', fn: 'cdlharami', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHARAMICROSS', fn: 'cdlharamicross', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHIGHWAVE', fn: 'cdlhighwave', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHIKKAKEMOD', fn: 'cdlhikkakemod', bars: 2500, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLHOMINGPIGEON', fn: 'cdlhomingpigeon', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLIDENTICAL3CROWS', fn: 'cdlidentical3crows', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLINNECK', fn: 'cdlinneck', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLINVERTEDHAMMER', fn: 'cdlinvertedhammer', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLKICKING', fn: 'cdlkicking', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLKICKINGBYLENGTH', fn: 'cdlkickingbylength', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLLADDERBOTTOM', fn: 'cdlladderbottom', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLLONGLEGGEDDOJI', fn: 'cdllongleggeddoji', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLLONGLINE', fn: 'cdllongline', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLMARUBOZU', fn: 'cdlmarubozu', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLMATCHINGLOW', fn: 'cdlmatchinglow', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLMATHOLD', fn: 'cdlmathold', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLMORNINGDOJISTAR', fn: 'cdlmorningdojistar', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLMORNINGSTAR', fn: 'cdlmorningstar', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLONNECK', fn: 'cdlonneck', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLPIERCING', fn: 'cdlpiercing', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLRICKSHAWMAN', fn: 'cdlrickshawman', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLRISEFALL3METHODS', fn: 'cdlrisefall3methods', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSEPARATINGLINES', fn: 'cdlseparatinglines', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSHOOTINGSTAR', fn: 'cdlshootingstar', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSHORTLINE', fn: 'cdlshortline', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSPINNINGTOP', fn: 'cdlspinningtop', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSTALLEDPATTERN', fn: 'cdlstalledpattern', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLSTICKSANDWICH', fn: 'cdlsticksandwich', bars: 60, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLTAKURI', fn: 'cdltakuri', bars: 30, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLTASUKIGAP', fn: 'cdltasukigap', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLTHRUSTING', fn: 'cdlthrusting', bars: 125, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLTRISTAR', fn: 'cdltristar', bars: 250, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLUNIQUE3RIVER', fn: 'cdlunique3river', bars: 2500, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLUPSIDEGAP2CROWS', fn: 'cdlupsidegap2crows', bars: 1000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CDLXSIDEGAP3METHODS', fn: 'cdlxsidegap3methods', bars: 50000, args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }] },
-  { name: 'CE', fn: 'ce', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'CG', fn: 'cg', bars: 10000, args: (d) => [d.close] },
-  { name: 'CKSP', fn: 'cksp', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'CMF', fn: 'cmf', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }] },
-  { name: 'COPPOCK', fn: 'coppock', bars: 30, args: (d) => [d.close] },
-  { name: 'CRSI', fn: 'crsi', bars: 125, args: (d) => [d.close] },
-  { name: 'CVI', fn: 'cvi', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'DEMA', fn: 'dema', bars: 60, args: (d) => [d.close] },
-  { name: 'DOSC', fn: 'dosc', bars: 30, args: (d) => [d.close] },
-  { name: 'EFI', fn: 'efi', bars: 125, args: (d) => [{ close: d.close, volume: d.volume }] },
-  { name: 'EMA', fn: 'ema', bars: 250, args: (d) => [d.close] },
-  { name: 'EMV', fn: 'emv', bars: 30, args: (d) => [{ high: d.high, low: d.low, volume: d.volume }] },
-  { name: 'ER', fn: 'er', bars: 1000, args: (d) => [d.close] },
-  { name: 'ERI', fn: 'eri', bars: 125, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'FLOOR', fn: 'floor', bars: 2500, args: (d) => [d.close] },
-  { name: 'FOSC', fn: 'fosc', bars: 500, args: (d) => [d.close] },
-  { name: 'FRACTAL', fn: 'fractal', bars: 1000, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'GATOR', fn: 'gator', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'HMA', fn: 'hma', bars: 30, args: (d) => [d.close] },
-  { name: 'ICHIMOKU', fn: 'ichimoku', bars: 60, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'IMI', fn: 'imi', bars: 250, args: (d) => [{ open: d.open, close: d.close }] },
-  { name: 'KAMA', fn: 'kama', bars: 60, args: (d) => [d.close] },
-  { name: 'KC', fn: 'kc', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'KDJ', fn: 'kdj', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'KST', fn: 'kst', bars: 60, args: (d) => [d.close] },
-  { name: 'KSTEXT', fn: 'kstext', bars: 60, args: (d) => [d.close] },
-  { name: 'KURTOSIS', fn: 'kurtosis', bars: 50000, args: (d) => [d.close] },
-  { name: 'KVO', fn: 'kvo', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }] },
-  { name: 'LINEARREG', fn: 'linearreg', bars: 250, args: (d) => [d.close] },
-  { name: 'MACD', fn: 'macd', bars: 250, args: (d) => [d.close] },
-  { name: 'MACDEXT', fn: 'macdext', bars: 60, args: (d) => [d.close] },
-  { name: 'MACDFIX', fn: 'macdfix', bars: 250, args: (d) => [d.close] },
-  { name: 'MACDV', fn: 'macdv', bars: 500, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'MARKETFI', fn: 'marketfi', bars: 250, args: (d) => [{ high: d.high, low: d.low, volume: d.volume }] },
-  { name: 'MASSI', fn: 'massi', bars: 60, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'MAVP', fn: 'mavp', bars: 60, args: (d) => [d.close, d.periods] },
-  { name: 'MAX', fn: 'max', bars: 60, args: (d) => [d.close] },
-  { name: 'MEDIAN', fn: 'median', bars: 60, args: (d) => [d.close] },
-  { name: 'MEDPRICE', fn: 'medprice', bars: 1000, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'MFI', fn: 'mfi', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }] },
-  { name: 'MIDPOINT', fn: 'midpoint', bars: 30, args: (d) => [d.close] },
-  { name: 'MIDPRICE', fn: 'midprice', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'MIN', fn: 'min', bars: 60, args: (d) => [d.close] },
-  { name: 'MINMAX', fn: 'minmax', bars: 60, args: (d) => [d.close] },
-  { name: 'MINUS_DM', fn: 'minusDm', bars: 50000, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'MULT', fn: 'mult', bars: 2500, args: (d) => [d.close, d.open] },
-  { name: 'NATR', fn: 'natr', bars: 125, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'PERCENTB', fn: 'percentb', bars: 30, args: (d) => [d.close] },
-  { name: 'PERCENTILE', fn: 'percentile', bars: 125, args: (d) => [d.close] },
-  { name: 'PERCENTRANK', fn: 'percentrank', bars: 125, args: (d) => [d.close] },
-  { name: 'PPO', fn: 'ppo', bars: 30, args: (d) => [d.close] },
-  { name: 'PVO', fn: 'pvo', bars: 30, args: (d) => [{ volume: d.volume }] },
-  { name: 'PVT', fn: 'pvt', bars: 10000, args: (d) => [{ close: d.close, volume: d.volume }] },
-  { name: 'RMA', fn: 'rma', bars: 250, args: (d) => [d.close] },
-  { name: 'ROC', fn: 'roc', bars: 500, args: (d) => [d.close] },
-  { name: 'ROCP', fn: 'rocp', bars: 1000, args: (d) => [d.close] },
-  { name: 'ROCR', fn: 'rocr', bars: 1000, args: (d) => [d.close] },
-  { name: 'ROCR100', fn: 'rocr100', bars: 500, args: (d) => [d.close] },
-  { name: 'RVI', fn: 'rvi', bars: 30, args: (d) => [d.close] },
-  { name: 'RVIR', fn: 'rvir', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'SAR', fn: 'sar', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'SAREXT', fn: 'sarext', bars: 30, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'SKEW', fn: 'skew', bars: 5000, args: (d) => [d.close] },
-  { name: 'SMI', fn: 'smi', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'SQZMOM', fn: 'sqzmom', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'STC', fn: 'stc', bars: 125, args: (d) => [d.close] },
-  { name: 'STOCH', fn: 'stoch', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'STOCHF', fn: 'stochf', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'STOCHRSI', fn: 'stochrsi', bars: 30, args: (d) => [d.close] },
-  { name: 'SUB', fn: 'sub', bars: 2500, args: (d) => [d.close, d.open] },
-  { name: 'SUPERTREND', fn: 'supertrend', bars: 1000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'T3', fn: 't3', bars: 30, args: (d) => [d.close] },
-  { name: 'TEMA', fn: 'tema', bars: 125, args: (d) => [d.close] },
-  { name: 'TRANGE', fn: 'trange', bars: 1000, to: 5000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'TRIX', fn: 'trix', bars: 125, args: (d) => [d.close] },
-  { name: 'TSF', fn: 'tsf', bars: 250, args: (d) => [d.close] },
-  { name: 'TSI', fn: 'tsi', bars: 60, args: (d) => [d.close] },
-  { name: 'ULTOSC', fn: 'ultosc', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'VAR', fn: 'var_', bars: 2500, args: (d) => [d.close] },
-  { name: 'VHF', fn: 'vhf', bars: 30, args: (d) => [d.close] },
-  { name: 'VIDYA', fn: 'vidya', bars: 125, args: (d) => [d.close] },
-  { name: 'VORTEX', fn: 'vortex', bars: 1000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'VWMA', fn: 'vwma', bars: 1000, args: (d) => [d.close, { volume: d.volume }] },
-  { name: 'WAVETREND', fn: 'wavetrend', bars: 60, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'WCLPRICE', fn: 'wclprice', bars: 1000, to: 10000, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'WILLR', fn: 'willr', bars: 30, args: (d) => [{ high: d.high, low: d.low, close: d.close }] },
-  { name: 'ZIGZAG', fn: 'zigzag', bars: 2500, args: (d) => [{ high: d.high, low: d.low }] },
-  { name: 'ZLEMA', fn: 'zlema', bars: 250, args: (d) => [d.close] },
+  { name: 'ACCBANDS', fn: 'accbands', pos: 'accbandsPositional', stem: 'accbands', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'], bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'], sentinels: [Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'AD', fn: 'ad', pos: 'adPositional', stem: 'ad', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 1000, to: 5000 },
+  { name: 'ADD', fn: 'add', pos: 'addPositional', stem: 'add', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 2500, to: 10000 },
+  { name: 'ADOSC', fn: 'adosc', pos: 'adoscPositional', stem: 'adosc', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'ADX', fn: 'adx', pos: 'adxPositional', stem: 'adx', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 10000 },
+  { name: 'ADXR', fn: 'adxr', pos: 'adxrPositional', stem: 'adxr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 10000 },
+  { name: 'ALLIGATOR', fn: 'alligator', pos: 'alligatorPositional', stem: 'alligator', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f', 'f'], bufs: ['outJaw', 'outTeeth', 'outLips'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'APO', fn: 'apo', pos: 'apoPositional', stem: 'apo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'ATR', fn: 'atr', pos: 'atrPositional', stem: 'atr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'AVGDEV', fn: 'avgdev', pos: 'avgdevPositional', stem: 'avgdev', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'AVGPRICE', fn: 'avgprice', pos: 'avgpricePositional', stem: 'avgprice', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 1000 },
+  { name: 'BBW', fn: 'bbw', pos: 'bbwPositional', stem: 'bbw', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'BOP', fn: 'bop', pos: 'bopPositional', stem: 'bop', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 500 },
+  { name: 'CCI', fn: 'cci', pos: 'cciPositional', stem: 'cci', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'CDL2CROWS', fn: 'cdl2crows', pos: 'cdl2crowsPositional', stem: 'cdl2crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 1000 },
+  { name: 'CDL3BLACKCROWS', fn: 'cdl3blackcrows', pos: 'cdl3blackcrowsPositional', stem: 'cdl3blackcrows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDL3INSIDE', fn: 'cdl3inside', pos: 'cdl3insidePositional', stem: 'cdl3inside', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 500 },
+  { name: 'CDL3LINESTRIKE', fn: 'cdl3linestrike', pos: 'cdl3linestrikePositional', stem: 'cdl3linestrike', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDL3OUTSIDE', fn: 'cdl3outside', pos: 'cdl3outsidePositional', stem: 'cdl3outside', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 50000 },
+  { name: 'CDL3STARSINSOUTH', fn: 'cdl3starsinsouth', pos: 'cdl3starsinsouthPositional', stem: 'cdl3starsinsouth', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDL3WHITESOLDIERS', fn: 'cdl3whitesoldiers', pos: 'cdl3whitesoldiersPositional', stem: 'cdl3whitesoldiers', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLABANDONEDBABY', fn: 'cdlabandonedbaby', pos: 'cdlabandonedbabyPositional', stem: 'cdlabandonedbaby', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 125 },
+  { name: 'CDLADVANCEBLOCK', fn: 'cdladvanceblock', pos: 'cdladvanceblockPositional', stem: 'cdladvanceblock', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLBELTHOLD', fn: 'cdlbelthold', pos: 'cdlbeltholdPositional', stem: 'cdlbelthold', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLBREAKAWAY', fn: 'cdlbreakaway', pos: 'cdlbreakawayPositional', stem: 'cdlbreakaway', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 1000 },
+  { name: 'CDLCLOSINGMARUBOZU', fn: 'cdlclosingmarubozu', pos: 'cdlclosingmarubozuPositional', stem: 'cdlclosingmarubozu', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLCONCEALBABYSWALL', fn: 'cdlconcealbabyswall', pos: 'cdlconcealbabyswallPositional', stem: 'cdlconcealbabyswall', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLCOUNTERATTACK', fn: 'cdlcounterattack', pos: 'cdlcounterattackPositional', stem: 'cdlcounterattack', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLDARKCLOUDCOVER', fn: 'cdldarkcloudcover', pos: 'cdldarkcloudcoverPositional', stem: 'cdldarkcloudcover', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 30 },
+  { name: 'CDLDOJI', fn: 'cdldoji', pos: 'cdldojiPositional', stem: 'cdldoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLDOJISTAR', fn: 'cdldojistar', pos: 'cdldojistarPositional', stem: 'cdldojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLDRAGONFLYDOJI', fn: 'cdldragonflydoji', pos: 'cdldragonflydojiPositional', stem: 'cdldragonflydoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLENGULFING', fn: 'cdlengulfing', pos: 'cdlengulfingPositional', stem: 'cdlengulfing', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 50000 },
+  { name: 'CDLEVENINGDOJISTAR', fn: 'cdleveningdojistar', pos: 'cdleveningdojistarPositional', stem: 'cdleveningdojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 125 },
+  { name: 'CDLEVENINGSTAR', fn: 'cdleveningstar', pos: 'cdleveningstarPositional', stem: 'cdleveningstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 30 },
+  { name: 'CDLGAPSIDESIDEWHITE', fn: 'cdlgapsidesidewhite', pos: 'cdlgapsidesidewhitePositional', stem: 'cdlgapsidesidewhite', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLGRAVESTONEDOJI', fn: 'cdlgravestonedoji', pos: 'cdlgravestonedojiPositional', stem: 'cdlgravestonedoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLHAMMER', fn: 'cdlhammer', pos: 'cdlhammerPositional', stem: 'cdlhammer', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLHANGINGMAN', fn: 'cdlhangingman', pos: 'cdlhangingmanPositional', stem: 'cdlhangingman', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLHARAMI', fn: 'cdlharami', pos: 'cdlharamiPositional', stem: 'cdlharami', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLHARAMICROSS', fn: 'cdlharamicross', pos: 'cdlharamicrossPositional', stem: 'cdlharamicross', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLHIGHWAVE', fn: 'cdlhighwave', pos: 'cdlhighwavePositional', stem: 'cdlhighwave', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLHIKKAKEMOD', fn: 'cdlhikkakemod', pos: 'cdlhikkakemodPositional', stem: 'cdlhikkakemod', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 2500 },
+  { name: 'CDLHOMINGPIGEON', fn: 'cdlhomingpigeon', pos: 'cdlhomingpigeonPositional', stem: 'cdlhomingpigeon', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLIDENTICAL3CROWS', fn: 'cdlidentical3crows', pos: 'cdlidentical3crowsPositional', stem: 'cdlidentical3crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLINNECK', fn: 'cdlinneck', pos: 'cdlinneckPositional', stem: 'cdlinneck', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLINVERTEDHAMMER', fn: 'cdlinvertedhammer', pos: 'cdlinvertedhammerPositional', stem: 'cdlinvertedhammer', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLKICKING', fn: 'cdlkicking', pos: 'cdlkickingPositional', stem: 'cdlkicking', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLKICKINGBYLENGTH', fn: 'cdlkickingbylength', pos: 'cdlkickingbylengthPositional', stem: 'cdlkickingbylength', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLLADDERBOTTOM', fn: 'cdlladderbottom', pos: 'cdlladderbottomPositional', stem: 'cdlladderbottom', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLLONGLEGGEDDOJI', fn: 'cdllongleggeddoji', pos: 'cdllongleggeddojiPositional', stem: 'cdllongleggeddoji', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLLONGLINE', fn: 'cdllongline', pos: 'cdllonglinePositional', stem: 'cdllongline', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLMARUBOZU', fn: 'cdlmarubozu', pos: 'cdlmarubozuPositional', stem: 'cdlmarubozu', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLMATCHINGLOW', fn: 'cdlmatchinglow', pos: 'cdlmatchinglowPositional', stem: 'cdlmatchinglow', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLMATHOLD', fn: 'cdlmathold', pos: 'cdlmatholdPositional', stem: 'cdlmathold', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 30 },
+  { name: 'CDLMORNINGDOJISTAR', fn: 'cdlmorningdojistar', pos: 'cdlmorningdojistarPositional', stem: 'cdlmorningdojistar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 30 },
+  { name: 'CDLMORNINGSTAR', fn: 'cdlmorningstar', pos: 'cdlmorningstarPositional', stem: 'cdlmorningstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [Core.REAL_DEFAULT], bars: 250 },
+  { name: 'CDLONNECK', fn: 'cdlonneck', pos: 'cdlonneckPositional', stem: 'cdlonneck', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLPIERCING', fn: 'cdlpiercing', pos: 'cdlpiercingPositional', stem: 'cdlpiercing', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLRICKSHAWMAN', fn: 'cdlrickshawman', pos: 'cdlrickshawmanPositional', stem: 'cdlrickshawman', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLRISEFALL3METHODS', fn: 'cdlrisefall3methods', pos: 'cdlrisefall3methodsPositional', stem: 'cdlrisefall3methods', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLSEPARATINGLINES', fn: 'cdlseparatinglines', pos: 'cdlseparatinglinesPositional', stem: 'cdlseparatinglines', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLSHOOTINGSTAR', fn: 'cdlshootingstar', pos: 'cdlshootingstarPositional', stem: 'cdlshootingstar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLSHORTLINE', fn: 'cdlshortline', pos: 'cdlshortlinePositional', stem: 'cdlshortline', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLSPINNINGTOP', fn: 'cdlspinningtop', pos: 'cdlspinningtopPositional', stem: 'cdlspinningtop', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLSTALLEDPATTERN', fn: 'cdlstalledpattern', pos: 'cdlstalledpatternPositional', stem: 'cdlstalledpattern', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLSTICKSANDWICH', fn: 'cdlsticksandwich', pos: 'cdlsticksandwichPositional', stem: 'cdlsticksandwich', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 60 },
+  { name: 'CDLTAKURI', fn: 'cdltakuri', pos: 'cdltakuriPositional', stem: 'cdltakuri', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 30 },
+  { name: 'CDLTASUKIGAP', fn: 'cdltasukigap', pos: 'cdltasukigapPositional', stem: 'cdltasukigap', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLTHRUSTING', fn: 'cdlthrusting', pos: 'cdlthrustingPositional', stem: 'cdlthrusting', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 125 },
+  { name: 'CDLTRISTAR', fn: 'cdltristar', pos: 'cdltristarPositional', stem: 'cdltristar', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 250 },
+  { name: 'CDLUNIQUE3RIVER', fn: 'cdlunique3river', pos: 'cdlunique3riverPositional', stem: 'cdlunique3river', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 2500 },
+  { name: 'CDLUPSIDEGAP2CROWS', fn: 'cdlupsidegap2crows', pos: 'cdlupsidegap2crowsPositional', stem: 'cdlupsidegap2crows', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 1000 },
+  { name: 'CDLXSIDEGAP3METHODS', fn: 'cdlxsidegap3methods', pos: 'cdlxsidegap3methodsPositional', stem: 'cdlxsidegap3methods', args: (d) => [{ open: d.open, high: d.high, low: d.low, close: d.close }], legs: (d) => [d.open, d.high, d.low, d.close], outs: ['i'], bufs: ['outInteger'], sentinels: [], bars: 50000 },
+  { name: 'CE', fn: 'ce', pos: 'cePositional', stem: 'ce', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outLong', 'outShort'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'CG', fn: 'cg', pos: 'cgPositional', stem: 'cg', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 10000 },
+  { name: 'CKSP', fn: 'cksp', pos: 'ckspPositional', stem: 'cksp', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outHighStop', 'outLowStop'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'CMF', fn: 'cmf', pos: 'cmfPositional', stem: 'cmf', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'COPPOCK', fn: 'coppock', pos: 'coppockPositional', stem: 'coppock', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'CRSI', fn: 'crsi', pos: 'crsiPositional', stem: 'crsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'CVI', fn: 'cvi', pos: 'cviPositional', stem: 'cvi', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'DEMA', fn: 'dema', pos: 'demaPositional', stem: 'dema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'DOSC', fn: 'dosc', pos: 'doscPositional', stem: 'dosc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'EFI', fn: 'efi', pos: 'efiPositional', stem: 'efi', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'EMA', fn: 'ema', pos: 'emaPositional', stem: 'ema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'EMV', fn: 'emv', pos: 'emvPositional', stem: 'emv', args: (d) => [{ high: d.high, low: d.low, volume: d.volume }], legs: (d) => [d.high, d.low, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'ER', fn: 'er', pos: 'erPositional', stem: 'er', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'ERI', fn: 'eri', pos: 'eriPositional', stem: 'eri', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outBullPower', 'outBearPower'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'FLOOR', fn: 'floor', pos: 'floorPositional', stem: 'floor', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 2500 },
+  { name: 'FOSC', fn: 'fosc', pos: 'foscPositional', stem: 'fosc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'FRACTAL', fn: 'fractal', pos: 'fractalPositional', stem: 'fractal', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['i', 'i'], bufs: ['outSwingHigh', 'outSwingLow'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'GATOR', fn: 'gator', pos: 'gatorPositional', stem: 'gator', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f'], bufs: ['outUpper', 'outLower'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'HMA', fn: 'hma', pos: 'hmaPositional', stem: 'hma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'ICHIMOKU', fn: 'ichimoku', pos: 'ichimokuPositional', stem: 'ichimoku', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'f', 'f', 'f'], bufs: ['outTenkanSen', 'outKijunSen', 'outSenkouSpanA', 'outSenkouSpanB'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'IMI', fn: 'imi', pos: 'imiPositional', stem: 'imi', args: (d) => [{ open: d.open, close: d.close }], legs: (d) => [d.open, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'KAMA', fn: 'kama', pos: 'kamaPositional', stem: 'kama', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'KC', fn: 'kc', pos: 'kcPositional', stem: 'kc', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'], bufs: ['outUpperBand', 'outMiddleBand', 'outLowerBand'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'KDJ', fn: 'kdj', pos: 'kdjPositional', stem: 'kdj', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'], bufs: ['outK', 'outD', 'outJ'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'KST', fn: 'kst', pos: 'kstPositional', stem: 'kst', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'], bufs: ['outKst', 'outKstSignal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'KSTEXT', fn: 'kstext', pos: 'kstextPositional', stem: 'kstext', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'], bufs: ['outKst', 'outKstSignal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'KURTOSIS', fn: 'kurtosis', pos: 'kurtosisPositional', stem: 'kurtosis', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 50000 },
+  { name: 'KVO', fn: 'kvo', pos: 'kvoPositional', stem: 'kvo', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f', 'f'], bufs: ['outKvo', 'outKvoSignal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'LINEARREG', fn: 'linearreg', pos: 'linearregPositional', stem: 'linearreg', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'MACD', fn: 'macd', pos: 'macdPositional', stem: 'macd', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'], bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'MACDEXT', fn: 'macdext', pos: 'macdextPositional', stem: 'macdext', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'], bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MACDFIX', fn: 'macdfix', pos: 'macdfixPositional', stem: 'macdfix', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f', 'f'], bufs: ['outMacd', 'outMacdSignal', 'outMacdHist'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'MACDV', fn: 'macdv', pos: 'macdvPositional', stem: 'macdv', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f', 'f'], bufs: ['outMacdv', 'outMacdvSignal', 'outMacdvHist'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'MARKETFI', fn: 'marketfi', pos: 'marketfiPositional', stem: 'marketfi', args: (d) => [{ high: d.high, low: d.low, volume: d.volume }], legs: (d) => [d.high, d.low, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 250 },
+  { name: 'MASSI', fn: 'massi', pos: 'massiPositional', stem: 'massi', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MAVP', fn: 'mavp', pos: 'mavpPositional', stem: 'mavp', args: (d) => [d.close, d.periods], legs: (d) => [d.close, d.periods], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MAX', fn: 'max', pos: 'maxPositional', stem: 'max', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MEDIAN', fn: 'median', pos: 'medianPositional', stem: 'median', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MEDPRICE', fn: 'medprice', pos: 'medpricePositional', stem: 'medprice', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 1000 },
+  { name: 'MFI', fn: 'mfi', pos: 'mfiPositional', stem: 'mfi', args: (d) => [{ high: d.high, low: d.low, close: d.close, volume: d.volume }], legs: (d) => [d.high, d.low, d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'MIDPOINT', fn: 'midpoint', pos: 'midpointPositional', stem: 'midpoint', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'MIDPRICE', fn: 'midprice', pos: 'midpricePositional', stem: 'midprice', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'MIN', fn: 'min', pos: 'minPositional', stem: 'min', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MINMAX', fn: 'minmax', pos: 'minmaxPositional', stem: 'minmax', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'], bufs: ['outMin', 'outMax'], sentinels: [Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'MINUS_DM', fn: 'minusDm', pos: 'minusDmPositional', stem: 'minusDm', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 50000 },
+  { name: 'MULT', fn: 'mult', pos: 'multPositional', stem: 'mult', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 2500 },
+  { name: 'NATR', fn: 'natr', pos: 'natrPositional', stem: 'natr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'PERCENTB', fn: 'percentb', pos: 'percentbPositional', stem: 'percentb', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'PERCENTILE', fn: 'percentile', pos: 'percentilePositional', stem: 'percentile', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 125 },
+  { name: 'PERCENTRANK', fn: 'percentrank', pos: 'percentrankPositional', stem: 'percentrank', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'PPO', fn: 'ppo', pos: 'ppoPositional', stem: 'ppo', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'PVO', fn: 'pvo', pos: 'pvoPositional', stem: 'pvo', args: (d) => [{ volume: d.volume }], legs: (d) => [d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'PVT', fn: 'pvt', pos: 'pvtPositional', stem: 'pvt', args: (d) => [{ close: d.close, volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 10000 },
+  { name: 'RMA', fn: 'rma', pos: 'rmaPositional', stem: 'rma', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'ROC', fn: 'roc', pos: 'rocPositional', stem: 'roc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'ROCP', fn: 'rocp', pos: 'rocpPositional', stem: 'rocp', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'ROCR', fn: 'rocr', pos: 'rocrPositional', stem: 'rocr', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'ROCR100', fn: 'rocr100', pos: 'rocr100Positional', stem: 'rocr100', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 500 },
+  { name: 'RVI', fn: 'rvi', pos: 'rviPositional', stem: 'rvi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'RVIR', fn: 'rvir', pos: 'rvirPositional', stem: 'rvir', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'SAR', fn: 'sar', pos: 'sarPositional', stem: 'sar', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.REAL_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'SAREXT', fn: 'sarext', pos: 'sarextPositional', stem: 'sarext', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'SKEW', fn: 'skew', pos: 'skewPositional', stem: 'skew', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 5000 },
+  { name: 'SMI', fn: 'smi', pos: 'smiPositional', stem: 'smi', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outSmi', 'outSmiSignal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'SQZMOM', fn: 'sqzmom', pos: 'sqzmomPositional', stem: 'sqzmom', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'i'], bufs: ['outMomentum', 'outSqueeze'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT], bars: 60 },
+  { name: 'STC', fn: 'stc', pos: 'stcPositional', stem: 'stc', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'STOCH', fn: 'stoch', pos: 'stochPositional', stem: 'stoch', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outSlowK', 'outSlowD'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'STOCHF', fn: 'stochf', pos: 'stochfPositional', stem: 'stochf', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outFastK', 'outFastD'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'STOCHRSI', fn: 'stochrsi', pos: 'stochrsiPositional', stem: 'stochrsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f', 'f'], bufs: ['outFastK', 'outFastD'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'SUB', fn: 'sub', pos: 'subPositional', stem: 'sub', args: (d) => [d.close, d.open], legs: (d) => [d.close, d.open], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 2500 },
+  { name: 'SUPERTREND', fn: 'supertrend', pos: 'supertrendPositional', stem: 'supertrend', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'i'], bufs: ['outSupertrend', 'outTrend'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 1000 },
+  { name: 'T3', fn: 't3', pos: 't3Positional', stem: 't3', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 30 },
+  { name: 'TEMA', fn: 'tema', pos: 'temaPositional', stem: 'tema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'TRANGE', fn: 'trange', pos: 'trangePositional', stem: 'trange', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 1000, to: 5000 },
+  { name: 'TRIX', fn: 'trix', pos: 'trixPositional', stem: 'trix', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'TSF', fn: 'tsf', pos: 'tsfPositional', stem: 'tsf', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
+  { name: 'TSI', fn: 'tsi', pos: 'tsiPositional', stem: 'tsi', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'ULTOSC', fn: 'ultosc', pos: 'ultoscPositional', stem: 'ultosc', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'VAR', fn: 'var_', pos: 'varPositional', stem: 'var', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.REAL_DEFAULT], bars: 2500 },
+  { name: 'VHF', fn: 'vhf', pos: 'vhfPositional', stem: 'vhf', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'VIDYA', fn: 'vidya', pos: 'vidyaPositional', stem: 'vidya', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 125 },
+  { name: 'VORTEX', fn: 'vortex', pos: 'vortexPositional', stem: 'vortex', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outPlusVi', 'outMinusVi'], sentinels: [Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'VWMA', fn: 'vwma', pos: 'vwmaPositional', stem: 'vwma', args: (d) => [d.close, { volume: d.volume }], legs: (d) => [d.close, d.volume], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 1000 },
+  { name: 'WAVETREND', fn: 'wavetrend', pos: 'wavetrendPositional', stem: 'wavetrend', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f', 'f'], bufs: ['outWt1', 'outWt2'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 60 },
+  { name: 'WCLPRICE', fn: 'wclprice', pos: 'wclpricePositional', stem: 'wclprice', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [], bars: 1000, to: 10000 },
+  { name: 'WILLR', fn: 'willr', pos: 'willrPositional', stem: 'willr', args: (d) => [{ high: d.high, low: d.low, close: d.close }], legs: (d) => [d.high, d.low, d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 30 },
+  { name: 'ZIGZAG', fn: 'zigzag', pos: 'zigzagPositional', stem: 'zigzag', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f', 'i', 'i'], bufs: ['outZigZag', 'outTrend', 'outPivotIdx'], sentinels: [Core.REAL_DEFAULT, Core.INTEGER_DEFAULT], bars: 2500 },
+  { name: 'ZLEMA', fn: 'zlema', pos: 'zlemaPositional', stem: 'zlema', args: (d) => [d.close], legs: (d) => [d.close], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT], bars: 250 },
 ];
 const TABLED_FLOOR = 162;
-const UNTABLED: Row = { name: 'AC', fn: 'ac', bars: 100000, args: (d) => [{ high: d.high, low: d.low }] };
+const UNTABLED: Row = { name: 'AC', fn: 'ac', pos: 'acPositional', stem: 'ac', args: (d) => [{ high: d.high, low: d.low }], legs: (d) => [d.high, d.low], outs: ['f'], bufs: ['outReal'], sentinels: [Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT], bars: 100000 };
 const MAX_BARS = 100000;
 
 function rng(seed: number): () => number {
@@ -247,7 +252,25 @@ function bytes(a: Arr): Buffer {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 }
 
+type Modules = { routed: Record<string, Fn>; js: Record<string, Fn> };
+
+/** A function's routed module and its ta-lib/js module, beside the entry 'ta-lib' resolves to: no subpath exports the positional tier. */
+async function modules(stem: string): Promise<Modules> {
+  const entry = import.meta.resolve('ta-lib');
+  return {
+    routed: (await import(new URL(`./func/${stem}.js`, entry).href)) as Record<string, Fn>,
+    js: (await import(new URL(`../func/${stem}.js`, entry).href)) as Record<string, Fn>,
+  };
+}
+
+/** Output buffers of `n` elements, each filled with a value no call computes, so an element written past the count shows. */
+function blank(outs: string[], n: number): Arr[] {
+  return outs.map((k) => (k === 'f' ? new Float64Array(n).fill(-777.25) : new Int32Array(n).fill(-777)));
+}
+
 const DATA = walk(20261112, MAX_BARS);
+const MODULES = new Map<string, Modules>();
+for (const row of [...TABLED, UNTABLED]) MODULES.set(row.stem, await modules(row.stem));
 
 function head(n: number): Data {
   const d = {} as Record<string, Float64Array>;
@@ -255,8 +278,10 @@ function head(n: number): Data {
   return d as unknown as Data;
 }
 
+type Ran = { ran: number; fell: number };
+
 /** One call through each entry at `n` bars: the module's batch calls and the fall-throughs the default entry's call made. */
-function call(row: Row, n: number): { ran: number; fell: number } {
+function call(row: Row, n: number): Ran {
   const args = row.args(head(n));
   const where = `${row.name} at ${n} bars`;
   const fell = hooks.fallThroughCount();
@@ -273,31 +298,69 @@ function call(row: Row, n: number): { ran: number; fell: number } {
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars; returns the tabled functions checked. */
+/** {@link call} with a caller buffer for every output. */
+function callBuffered(row: Row, n: number): Ran {
+  const d = head(n);
+  const where = `${row.name} into buffers at ${n} bars`;
+  const mine = blank(row.outs, n);
+  const theirs = blank(row.outs, n);
+  const given = (bs: Arr[]): unknown[] => [...row.args(d), Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]]))];
+  const fell = hooks.fallThroughCount();
+  const entered = hooks.moduleCalls();
+  const a = (routed as unknown as Record<string, Fn>)[row.fn](...given(mine));
+  const ran = hooks.moduleCalls() - entered;
+  const counted = hooks.fallThroughCount() - fell;
+  const b = (js as unknown as Record<string, Fn>)[row.fn](...given(theirs));
+  assert.equal(a.begIdx, b.begIdx, `${where}: begIdx`);
+  mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
+  return { ran, fell: counted };
+}
+
+/** {@link call} for the positional tier, the one the Abstract API calls, with every parameter at its default. */
+function callPositional(row: Row, n: number): Ran {
+  const d = head(n);
+  const where = `${row.pos} at ${n} bars`;
+  const m = MODULES.get(row.stem)!;
+  const mine = blank(row.outs, n);
+  const theirs = blank(row.outs, n);
+  const fell = hooks.fallThroughCount();
+  const entered = hooks.moduleCalls();
+  const a = m.routed[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
+  const ran = hooks.moduleCalls() - entered;
+  const counted = hooks.fallThroughCount() - fell;
+  const b = m.js[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
+  assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count], where);
+  mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
+  return { ran, fell: counted };
+}
+
+/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions checked. */
 function sweep(mode: string): number {
   let checked = 0;
-  for (const row of TABLED) {
-    if (row.bars > 1) {
-      const under = call(row, row.bars - 1);
-      assert.equal(under.ran, 0, `${mode}: ${row.name} at ${row.bars - 1} bars entered the module; the table routes it from ${row.bars}`);
-      assert.equal(under.fell, 0, `${mode}: ${row.name} at ${row.bars - 1} bars counted a fall-through`);
+  for (const [form, run] of [['options', call], ['buffered', callBuffered], ['positional', callPositional]] as const) {
+    for (const row of TABLED) {
+      if (row.bars > 1) {
+        const under = run(row, row.bars - 1);
+        assert.equal(under.ran, 0, `${mode}, ${form}: ${row.name} at ${row.bars - 1} bars entered the module; the table routes it from ${row.bars}`);
+        assert.equal(under.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars - 1} bars counted a fall-through`);
+      }
+      const at = run(row, row.bars);
+      assert.equal(at.ran, 1, `${mode}, ${form}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
+      assert.equal(at.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
+      if (row.to !== undefined) {
+        const end = run(row, row.to);
+        assert.equal(end.ran, 1, `${mode}, ${form}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
+        assert.equal(end.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
+        const over = run(row, row.to + 1);
+        assert.equal(over.ran, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
+        assert.equal(over.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
+      }
+      if (form === 'options') checked++;
     }
-    const at = call(row, row.bars);
-    assert.equal(at.ran, 1, `${mode}: ${row.name} at ${row.bars} bars: the module counted ${at.ran} batch calls, not one`);
-    assert.equal(at.fell, 0, `${mode}: ${row.name} at ${row.bars} bars fell through as '${hooks.lastFallThrough()}'`);
-    if (row.to !== undefined) {
-      const end = call(row, row.to);
-      assert.equal(end.ran, 1, `${mode}: ${row.name} at ${row.to} bars: the module counted ${end.ran} batch calls, not one`);
-      assert.equal(end.fell, 0, `${mode}: ${row.name} at ${row.to} bars fell through as '${hooks.lastFallThrough()}'`);
-      const over = call(row, row.to + 1);
-      assert.equal(over.ran, 0, `${mode}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
-      assert.equal(over.fell, 0, `${mode}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
-    }
-    checked++;
+    const off = run(UNTABLED, UNTABLED.bars);
+    assert.equal(off.ran, 0, `${mode}, ${form}: ${UNTABLED.name}, which the table does not name, entered the module`);
+    assert.equal(off.fell, 0, `${mode}, ${form}: ${UNTABLED.name} counted a fall-through`);
   }
-  const off = call(UNTABLED, UNTABLED.bars);
-  assert.equal(off.ran, 0, `${mode}: ${UNTABLED.name}, which the table does not name, entered the module`);
-  assert.equal(off.fell, 0, `${mode}: ${UNTABLED.name} counted a fall-through`);
   return checked;
 }
 

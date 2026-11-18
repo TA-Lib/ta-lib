@@ -103,7 +103,7 @@ of `runtime/`, and so is the module's count of batch calls in
 `templates/wasm/runtime.rs`. Generated: each export's increment of that count
 (`backends/wasm.rs`), `src/engine/`, the per-function glue
 (`backends/ts_engine.rs`), and the TypeScript server's `--engine=wasm` prelude,
-which classes every fall-through in `expectedFallThrough` (`server_gen.rs`).
+which classes every fall-through (`server_gen.rs`).
 
 **Emission helpers stay per backend.** Factor a repeated prologue or validation
 emitter within its own backend file, not into `backends/common.rs`: the backends
@@ -192,8 +192,8 @@ always-alternate bug satisfies both.
 ## The abstract layer: one row model, and one independent oracle
 
 Rust's `abstract_api`, Java's server table and shipped registry, C#'s
-`TALib.Metadata`, TS's `ta-lib/abstract` and Go's `abstract` package all render
-`abstract_rows.rs`. **C's `ta_abstract_c` does not,
+`TALib.Metadata`, TS's `ta-lib/abstract` and `ta-lib/js/abstract`, and Go's
+`abstract` package all render `abstract_rows.rs`. **C's `ta_abstract_c` does not,
 and that is the point:** `test_abstract.c` proves each server's metadata against
 the C library at run time, and folding C into the shared rows would leave a
 generator compared against itself. `func_api_xml` stays out for the same reason

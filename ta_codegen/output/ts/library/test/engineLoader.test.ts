@@ -54,10 +54,10 @@ import { test } from 'node:test';
 
 import type { EngineStatus } from 'ta-lib';
 import * as js from 'ta-lib/js';
-import { getRuntimeInfo } from 'ta-lib/abstract';
-import { defaultEntry, hooks } from './engineHooks.ts';
+import { defaultAbstract, defaultEntry, hooks } from './engineHooks.ts';
 
 const lib = (await import(defaultEntry)) as typeof import('ta-lib');
+const { getRuntimeInfo } = (await import(defaultAbstract)) as typeof import('ta-lib/abstract');
 const close = Float64Array.from({ length: 200 }, (_, i) => Math.round((50 + 5 * Math.sin(i / 6) + i / 30) * 100) / 100);
 
 /** `wasm.engine` and `wasm.reason`, which must agree with the engine's own status. */
@@ -126,11 +126,56 @@ test('a module without the exports the engine needs is reported as a failed inst
   }
 });
 
+test('a failed import of the bytes stays unavailable until the next ready(), which imports them again', async () => {
+  const unavailable = { engine: 'js', reason: 'unavailable' };
+  let imports = 0;
+  hooks.resetEngine();
+  const real = hooks.setBytesImport(() => {
+    imports++;
+    return imports === 1 ? Promise.reject(new TypeError('Failed to fetch dynamically imported module')) : real();
+  });
+  try {
+    const failed = [lib.ready(), lib.ready()];
+    assert.deepEqual(await Promise.all(failed), [unavailable, unavailable]);
+    assert.equal(imports, 1, 'two concurrent ready() calls did not share one import');
+    assert.deepEqual(hooks.engineStatus(), unavailable);
+    assert.deepEqual(info(), [0, 2]);
+    assert.equal(forced(), 1);
+    assert.equal(hooks.lastFallThrough(), 'unavailable');
+    assert.deepEqual(hooks.engineStatus(), unavailable);
+    const retried = [lib.ready(), lib.ready()];
+    assert.deepEqual(await failed[0], unavailable, 'the failed ready() changed its answer');
+    assert.deepEqual(await Promise.all(retried), [{ engine: 'wasm', reason: null }, { engine: 'wasm', reason: null }]);
+    assert.equal(imports, 2, 'the retry did not import the bytes exactly once');
+  } finally {
+    hooks.setBytesImport(real);
+  }
+  assert.deepEqual(info(), [1, 0]);
+  assert.equal(forced(), 0);
+});
+
+test('a failed compile is not retried', async () => {
+  let imports = 0;
+  hooks.resetEngine();
+  const real = hooks.setBytesImport(async () => {
+    imports++;
+    return { WASM_BASE64: 'AAAA' };
+  });
+  try {
+    assert.deepEqual(await lib.ready(), { engine: 'js', reason: 'compile' });
+    assert.deepEqual(await lib.ready(), { engine: 'js', reason: 'compile' });
+    assert.equal(imports, 1);
+  } finally {
+    hooks.setBytesImport(real);
+    hooks.resetEngine();
+  }
+});
+
 test('ready() imports the bytes and resolves to the WASM engine', async () => {
   hooks.resetEngine();
   const status: EngineStatus = await lib.ready();
   assert.deepEqual(status, { engine: 'wasm', reason: null });
-  assert.equal(await lib.ready(), status);
+  assert.deepEqual(await lib.ready(), status);
   assert.deepEqual(info(), [1, 0]);
   hooks.setEngineMode('strict');
   try {

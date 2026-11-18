@@ -1360,12 +1360,8 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
     out
 }
 
-/// The public batch tier: argument checks in Java's order with the type tests
-/// first (D13), each non-`Float64Array` input copied once (D5), the body, and
-/// a throw for a rejection.
-fn gen_public(func: &FuncDef) -> String {
-    let names = ts_names(&func.name);
-    let canonical = &func.name;
+/// `<n>Positional`'s parameters, each with its type.
+pub(crate) fn positional_params(func: &FuncDef) -> Vec<String> {
     let mut params = vec!["startIdx: number".to_string(), "endIdx: number".to_string()];
     for i in &func.inputs {
         params.push(format!("{}: ArrayLike<number>", i.name));
@@ -1375,6 +1371,16 @@ fn gen_public(func: &FuncDef) -> String {
         params.push(format!("{}: {}", o.name, array_ts_type(&o.param_type)));
     }
     params.push("core: Core = Core.DEFAULT".to_string());
+    params
+}
+
+/// The public batch tier: argument checks in Java's order with the type tests
+/// first (D13), each non-`Float64Array` input copied once (D5), the body, and
+/// a throw for a rejection.
+fn gen_public(func: &FuncDef) -> String {
+    let names = ts_names(&func.name);
+    let canonical = &func.name;
+    let params = positional_params(func);
 
     let mut b = String::new();
     for n in ["startIdx", "endIdx"] {
@@ -2642,8 +2648,33 @@ pub fn generate_package_files(funcs: &[FuncDef], root: &Path, lib: &Path) {
 /// The npm package name (D2). The one place it is spelled.
 pub const PACKAGE_NAME: &str = "ta-lib";
 
+/// A code subpath over `dist/<dir>/`: `plain` where the runtime cannot compile
+/// WebAssembly from bytes, `node` where it is handed them, `index` otherwise.
+/// Each condition must precede `node`, since a bundler for one of those
+/// runtimes may also set `node`, and the first matching key wins.
+fn runtime_subpath(dir: &str) -> String {
+    let mut s = format!("{{\n      \"types\": \"./dist/{dir}/index.d.ts\",\n");
+    for (condition, stem) in [
+        ("workerd", "plain"),
+        ("edge-light", "plain"),
+        ("react-native", "plain"),
+        ("node", "node"),
+        ("bun", "node"),
+        ("deno", "node"),
+    ] {
+        let _ = write!(
+            s,
+            "      \"{condition}\": {{\n        \"types\": \"./dist/{dir}/{stem}.d.ts\",\n        \"default\": \"./dist/{dir}/{stem}.js\"\n      }},\n"
+        );
+    }
+    let _ = write!(s, "      \"default\": \"./dist/{dir}/index.js\"\n    }}");
+    s
+}
+
 #[must_use]
 pub fn render_package_json(version: &str) -> String {
+    let engine = runtime_subpath("engine");
+    let abstract_ = runtime_subpath("abstract");
     format!(
         r#"{{
   "name": "{PACKAGE_NAME}",
@@ -2663,35 +2694,24 @@ pub fn render_package_json(version: &str) -> String {
   "homepage": "https://ta-lib.org",
   "type": "module",
   "sideEffects": [
-    "./dist/engine/node.js"
+    "./dist/engine/node.js",
+    "./dist/abstract/node.js"
   ],
   "exports": {{
-    ".": {{
-      "types": "./dist/engine/index.d.ts",
-      "node": {{
-        "types": "./dist/engine/node.d.ts",
-        "default": "./dist/engine/node.js"
-      }},
-      "bun": {{
-        "types": "./dist/engine/node.d.ts",
-        "default": "./dist/engine/node.js"
-      }},
-      "deno": {{
-        "types": "./dist/engine/node.d.ts",
-        "default": "./dist/engine/node.js"
-      }},
-      "default": "./dist/engine/index.js"
-    }},
+    ".": {engine},
     "./js": {{
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }},
-    "./abstract": {{
-      "types": "./dist/abstract/index.d.ts",
-      "default": "./dist/abstract/index.js"
+    "./abstract": {abstract_},
+    "./js/abstract": {{
+      "types": "./dist/js/abstract/index.d.ts",
+      "default": "./dist/js/abstract/index.js"
     }},
     "./package.json": "./package.json"
   }},
+  "main": "./dist/engine/index.js",
+  "react-native": "./dist/engine/plain.js",
   "types": "./dist/engine/index.d.ts",
   "typesVersions": {{
     "*": {{
@@ -2700,6 +2720,9 @@ pub fn render_package_json(version: &str) -> String {
       ],
       "abstract": [
         "./dist/abstract/index.d.ts"
+      ],
+      "js/abstract": [
+        "./dist/js/abstract/index.d.ts"
       ]
     }}
   }},

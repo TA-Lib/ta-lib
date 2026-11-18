@@ -56,8 +56,8 @@ import { sma, smaLookback } from '../src/func/sma.ts';
 import { Core } from '../src/runtime/core.ts';
 import { OutRange } from '../src/index.ts';
 import { TALibError } from '../src/runtime/errors.ts';
-import { FuncFlags, FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType } from '../src/abstract/index.ts';
-import type { FuncInfo } from '../src/abstract/index.ts';
+import { FuncFlags, FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType } from '../src/js/abstract/index.ts';
+import type { FuncInfo } from '../src/js/abstract/index.ts';
 
 const N = 300;
 
@@ -232,9 +232,9 @@ test('call refuses an unbound input or output', () => {
 
 test('getRuntimeInfo and FunctionDescription', () => {
   assert.equal(getRuntimeInfo('vmath.transcendental'), 0);
-  // No entry with an engine is imported here: it is not loaded.
+  // ta-lib/js/abstract has no engine.
   assert.equal(getRuntimeInfo('wasm.engine'), 0);
-  assert.equal(getRuntimeInfo('wasm.reason'), 1);
+  assert.equal(getRuntimeInfo('wasm.reason'), 2);
   rejects('TA_BAD_PARAM', () => getRuntimeInfo('no.such.key'));
   const xml = FunctionDescription.xml();
   assert.ok(xml.startsWith('<?xml'));

@@ -57,3 +57,6 @@ export const hooks = (await import(new URL('../runtime/wasm.js', entry).href)) a
 
 /** The `default` condition's entry: no bytes until `ready()`. Importing it does not import the Node entry. */
 export const defaultEntry = new URL('./index.js', entry).href;
+
+/** The `default` condition's `ta-lib/abstract`, which shares that engine and does not import the Node entry either. */
+export const defaultAbstract = new URL('../abstract/index.js', entry).href;

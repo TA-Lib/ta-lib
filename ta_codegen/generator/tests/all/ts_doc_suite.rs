@@ -183,7 +183,8 @@ fn sweep_module(module: &str, src: &str, public: &BTreeSet<String>, sweep: &mut 
             Ctx::Class { name, public: true } | Ctx::Object { name, public: true } => Some(name.clone()),
             _ => None,
         };
-        let private = ["private ", "protected ", "#"].iter().any(|m| trimmed.starts_with(m));
+        let unmodified = ["static ", "readonly "].iter().fold(trimmed, |t, m| t.strip_prefix(m).unwrap_or(t));
+        let private = ["private ", "protected ", "#"].iter().any(|m| unmodified.starts_with(m));
         let member = member_level && !private && trimmed.starts_with(|c: char| c.is_ascii_alphabetic());
         if let (true, Some(owner)) = (member, public_owner) {
             let bare = ["static ", "readonly ", "get "]
@@ -243,6 +244,16 @@ fn sweep_all() -> Sweep {
     expected.insert("enums".to_string(), 2 * public.len());
     sweep_module("enums", &enums_src, &public, &mut sweep);
     sweep_abstract(&funcs, &enums, &mut sweep);
+    let routed = entry_exports(&backends::ts_engine::render_index(&funcs));
+    let plain = entry_exports(&backends::ts_engine::render_plain_entry(&funcs));
+    if routed.len() < 8 * 200 || !routed.contains("ready") || plain != routed {
+        sweep.failures.push(format!(
+            "default entries: {} name(s), only the routed one exports {:?}, only the engine-less one {:?}",
+            routed.len(),
+            routed.difference(&plain).collect::<Vec<_>>(),
+            plain.difference(&routed).collect::<Vec<_>>()
+        ));
+    }
     let missing: Vec<String> = expected
         .iter()
         .filter(|(m, n)| sweep.public_exports.get(*m) != Some(n))
@@ -252,25 +263,53 @@ fn sweep_all() -> Sweep {
     sweep
 }
 
-/// The `./abstract` modules, public by the subpath's barrel.
-fn sweep_abstract(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, sweep: &mut Sweep) {
-    let files = backends::ts_abstract::render_all(funcs, enums);
-    let index = &files.iter().find(|(n, _)| *n == "index.ts").expect("abstract/index.ts").1;
+/// What an entry exports: its re-exported names and its own declarations.
+fn entry_exports(index: &str) -> BTreeSet<String> {
     let mut public = BTreeSet::new();
     for list in index.split("export ").skip(1) {
         let list = list.trim_start_matches("type ");
-        let Some(body) = list.strip_prefix('{').and_then(|l| l.split_once('}')) else { continue };
-        public.extend(body.0.split(',').map(str::trim).filter(|n| !n.is_empty()).map(String::from));
+        if let Some(body) = list.strip_prefix('{').and_then(|l| l.split_once('}')) {
+            public.extend(body.0.split(',').map(str::trim).filter(|n| !n.is_empty()).map(String::from));
+        } else if let Some(rest) = list.strip_prefix("const ").or_else(|| list.strip_prefix("function ")) {
+            public.insert(rest.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect());
+        }
     }
-    assert!(public.len() > 10, "abstract/index.ts: only {public:?}");
+    public
+}
+
+/// The `./abstract` modules, public by the subpath's barrel, and the
+/// `./js/abstract` entry, which must export the same names but the engine's.
+fn sweep_abstract(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, sweep: &mut Sweep) {
+    let files = backends::ts_abstract::render_all(funcs, enums);
+    let index = &files.iter().find(|(n, _)| *n == "index.ts").expect("abstract/index.ts").1;
+    let public = entry_exports(index);
+    assert!(public.len() > 10 && public.contains("Functions") && public.contains("getRuntimeInfo"), "abstract/index.ts: only {public:?}");
+    let js_entry = backends::ts_abstract::render_js_entry();
+    let engine: BTreeSet<String> = ["ready", "EngineReason", "EngineStatus"].iter().map(|s| (*s).to_string()).collect();
+    let js_public = entry_exports(&js_entry);
+    let routed_only: BTreeSet<String> = public.difference(&js_public).cloned().collect();
+    let js_only: Vec<&String> = js_public.difference(&public).collect();
+    if routed_only != engine || !js_only.is_empty() {
+        sweep.failures.push(format!("abstract entries: only ./abstract exports {routed_only:?}, only ./js/abstract {js_only:?}"));
+    }
+    let plain = &files.iter().find(|(n, _)| *n == "plain.ts").expect("abstract/plain.ts").1;
+    let plain_public = entry_exports(plain);
+    if plain_public != public {
+        sweep.failures.push(format!(
+            "abstract entries: only ./abstract exports {:?}, only its engine-less entry {:?}",
+            public.difference(&plain_public).collect::<Vec<_>>(),
+            plain_public.difference(&public).collect::<Vec<_>>()
+        ));
+    }
     let before: usize = sweep.public_exports.values().sum();
-    for (name, text) in files.iter().filter(|(n, _)| *n != "index.ts") {
+    for (name, text) in &files {
         sweep_module(&format!("abstract/{name}"), text, &public, sweep);
     }
     let documented: usize = sweep.public_exports.values().sum::<usize>() - before;
-    if documented < public.len() {
+    if documented < public.len() - engine.len() {
         sweep.failures.push(format!("abstract: {} barrel name(s), {documented} documented declaration(s)", public.len()));
     }
+    sweep_module("js/abstract/index.ts", &js_entry, &public, sweep);
 }
 
 #[test]
