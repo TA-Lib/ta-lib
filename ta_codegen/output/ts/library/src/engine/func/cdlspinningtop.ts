@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlspinningtop.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 125;
 
 /**
  * Single-candle pattern: a small real body with both an upper and a lower shadow

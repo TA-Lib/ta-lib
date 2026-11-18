@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/floor.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 2500;
 
 /**
  * Element-wise floor (round down to the nearest integer) of the input series.

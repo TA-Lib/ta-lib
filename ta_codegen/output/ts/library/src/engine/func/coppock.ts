@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/coppock.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
  * (*Barron's*, originally published as the "Trendex Model"), computed as a
@@ -94,19 +96,17 @@ export * from '../../func/coppock.ts';
  * ```
  */
 export function coppock(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CoppockResult | null;
-    try {
-      routed = coppockWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('COPPOCK', coppockJs(real, options));
-    }
+  let routed: CoppockResult | null;
+  try {
+    routed = coppockWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('COPPOCK', coppockJs(real, options));
   }
   return coppockJs(real, options);
 }
@@ -115,6 +115,9 @@ function coppockWasm(real: ArrayLike<number>, options: CoppockOptions | undefine
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

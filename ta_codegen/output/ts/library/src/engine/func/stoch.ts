@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/stoch.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Slow Stochastic oscillator: locates the close within the high-low range over a
  * lookback period, then double-smooths it. Returns the Slow-%K and Slow-%D lines.
@@ -98,19 +100,17 @@ export * from '../../func/stoch.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function stoch(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochOptions): StochResult {
-  if (engineRoute.mode !== 0) {
-    let routed: StochResult | null;
-    try {
-      routed = stochWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('STOCH', stochJs(prices, options));
-    }
+  let routed: StochResult | null;
+  try {
+    routed = stochWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('STOCH', stochJs(prices, options));
   }
   return stochJs(prices, options);
 }
@@ -125,6 +125,9 @@ function stochWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outSlowK !== undefined || o.outSlowD !== undefined) {

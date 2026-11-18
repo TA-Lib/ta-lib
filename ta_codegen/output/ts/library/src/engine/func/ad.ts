@@ -40,6 +40,9 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/ad.ts';
 
+const WASM_FROM_BARS = 1000;
+const WASM_TO_BARS = 5000;
+
 /**
  * Chaikin Accumulation/Distribution Line, a cumulative volume-flow indicator. Sums
  * a volume-weighted money-flow multiplier per bar to gauge buying vs. selling
@@ -84,19 +87,17 @@ export * from '../../func/ad.ts';
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
 export function ad(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdOptions): AdResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AdResult | null;
-    try {
-      routed = adWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('AD', adJs(prices, options));
-    }
+  let routed: AdResult | null;
+  try {
+    routed = adWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('AD', adJs(prices, options));
   }
   return adJs(prices, options);
 }
@@ -112,6 +113,9 @@ function adWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -40,7 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/wclprice.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 1000;
+const WASM_TO_BARS = 10000;
 
 /**
  * Weighted Close Price: a per-bar price average giving the close double weight
@@ -110,7 +111,7 @@ function wclpriceWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {
     return null;
   }
   const o = routedOptions(options);

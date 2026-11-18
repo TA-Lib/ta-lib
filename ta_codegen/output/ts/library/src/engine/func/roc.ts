@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/roc.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 500;
 
 /**
  * Rate-of-change momentum oscillator: the percent change of price versus the price

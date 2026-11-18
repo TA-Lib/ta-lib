@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/mfi.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
  * positive vs negative money flow over a period. A volume-based analog of RSI. >80
@@ -98,19 +100,17 @@ export * from '../../func/mfi.ts';
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  */
 export function mfi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: MfiOptions): MfiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MfiResult | null;
-    try {
-      routed = mfiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MFI', mfiJs(prices, options));
-    }
+  let routed: MfiResult | null;
+  try {
+    routed = mfiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MFI', mfiJs(prices, options));
   }
   return mfiJs(prices, options);
 }
@@ -126,6 +126,9 @@ function mfiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

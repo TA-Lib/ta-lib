@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/midpoint.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 30;
 
 /**
  * Midpoint over a period: the average of the highest and lowest input values

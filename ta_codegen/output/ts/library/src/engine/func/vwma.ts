@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/vwma.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 1000;
 
 /**
  * Volume Weighted Moving Average: the mean price over a trailing window of

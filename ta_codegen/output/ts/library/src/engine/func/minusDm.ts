@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/minusDm.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Minus Directional Movement, the downward component of Wilder's directional
  * movement system. Measures Wilder-smoothed downward price motion over the period.
@@ -87,19 +89,17 @@ export * from '../../func/minusDm.ts';
  * @see [`adxr`](https://ta-lib.org/functions/adxr)
  */
 export function minusDm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MinusDmOptions): MinusDmResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MinusDmResult | null;
-    try {
-      routed = minusDmWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MINUS_DM', minusDmJs(prices, options));
-    }
+  let routed: MinusDmResult | null;
+  try {
+    routed = minusDmWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MINUS_DM', minusDmJs(prices, options));
   }
   return minusDmJs(prices, options);
 }
@@ -113,6 +113,9 @@ function minusDmWasm(prices: { open?: ArrayLike<number> | undefined; high: Array
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

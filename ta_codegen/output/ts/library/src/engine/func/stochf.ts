@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/stochf.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Fast Stochastic Oscillator: the raw %K line and its moving-average-smoothed %D
  * line. Unlike STOCH (which slows both lines), STOCHF returns the unsmoothed FastK
@@ -95,19 +97,17 @@ export * from '../../func/stochf.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function stochf(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochfOptions): StochfResult {
-  if (engineRoute.mode !== 0) {
-    let routed: StochfResult | null;
-    try {
-      routed = stochfWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('STOCHF', stochfJs(prices, options));
-    }
+  let routed: StochfResult | null;
+  try {
+    routed = stochfWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('STOCHF', stochfJs(prices, options));
   }
   return stochfJs(prices, options);
 }
@@ -122,6 +122,9 @@ function stochfWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outFastK !== undefined || o.outFastD !== undefined) {

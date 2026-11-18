@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/vhf.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Vertical Horizontal Filter: Adam White's trend-versus-range filter, the range a
  * window covered divided by the path it actually travelled. Bounded in \[0,1].
@@ -94,19 +96,17 @@ export * from '../../func/vhf.ts';
  * @see [`cmou`](https://ta-lib.org/functions/cmou)
  */
 export function vhf(real: ArrayLike<number>, options?: VhfOptions): VhfResult {
-  if (engineRoute.mode !== 0) {
-    let routed: VhfResult | null;
-    try {
-      routed = vhfWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('VHF', vhfJs(real, options));
-    }
+  let routed: VhfResult | null;
+  try {
+    routed = vhfWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('VHF', vhfJs(real, options));
   }
   return vhfJs(real, options);
 }
@@ -115,6 +115,9 @@ function vhfWasm(real: ArrayLike<number>, options: VhfOptions | undefined): VhfR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

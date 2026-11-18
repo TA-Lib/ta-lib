@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdllongleggeddoji.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 30;
 
 /**
  * Single-candle doji (open ~ close) with at least one long shadow. Signals market

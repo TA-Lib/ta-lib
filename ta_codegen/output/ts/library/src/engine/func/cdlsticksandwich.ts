@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlsticksandwich.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 60;
 
 /**
  * A three-candle bullish reversal pattern: two black candles (1st and 3rd)

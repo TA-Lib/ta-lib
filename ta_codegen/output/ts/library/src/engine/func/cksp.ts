@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cksp.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Chande and Kroll's two-line volatility stop. The highest high is offset down,
  * and the lowest low up, by a multiple of the Average True Range, and each line
@@ -116,19 +118,17 @@ export * from '../../func/cksp.ts';
  * @see [`donchian`](https://ta-lib.org/functions/donchian)
  */
 export function cksp(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CkspResult | null;
-    try {
-      routed = ckspWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CKSP', ckspJs(prices, options));
-    }
+  let routed: CkspResult | null;
+  try {
+    routed = ckspWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CKSP', ckspJs(prices, options));
   }
   return ckspJs(prices, options);
 }
@@ -143,6 +143,9 @@ function ckspWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outHighStop !== undefined || o.outLowStop !== undefined) {

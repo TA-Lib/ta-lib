@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/mavp.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Moving average whose period varies per bar, driven by a companion period series.
  * For each bar it computes an MA of the selected type over the (clamped) period
@@ -95,19 +97,17 @@ export * from '../../func/mavp.ts';
  * @see [`t3`](https://ta-lib.org/functions/t3)
  */
 export function mavp(real: ArrayLike<number>, periods: ArrayLike<number>, options?: MavpOptions): MavpResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MavpResult | null;
-    try {
-      routed = mavpWasm(real, periods, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MAVP', mavpJs(real, periods, options));
-    }
+  let routed: MavpResult | null;
+  try {
+    routed = mavpWasm(real, periods, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MAVP', mavpJs(real, periods, options));
   }
   return mavpJs(real, periods, options);
 }
@@ -116,6 +116,9 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

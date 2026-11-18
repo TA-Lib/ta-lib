@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/bbw.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Bollinger BandWidth: the distance between the upper and lower Bollinger Bands as
  * a percentage of the middle band. Low values mark contracting volatility, the
@@ -102,19 +104,17 @@ export * from '../../func/bbw.ts';
  * @see [`natr`](https://ta-lib.org/functions/natr)
  */
 export function bbw(real: ArrayLike<number>, options?: BbwOptions): BbwResult {
-  if (engineRoute.mode !== 0) {
-    let routed: BbwResult | null;
-    try {
-      routed = bbwWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('BBW', bbwJs(real, options));
-    }
+  let routed: BbwResult | null;
+  try {
+    routed = bbwWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('BBW', bbwJs(real, options));
   }
   return bbwJs(real, options);
 }
@@ -123,6 +123,9 @@ function bbwWasm(real: ArrayLike<number>, options: BbwOptions | undefined): BbwR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -40,6 +40,9 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/add.ts';
 
+const WASM_FROM_BARS = 2500;
+const WASM_TO_BARS = 10000;
+
 /**
  * Element-wise addition of two input series.
  *
@@ -79,19 +82,17 @@ export * from '../../func/add.ts';
  * @see [`div`](https://ta-lib.org/functions/div)
  */
 export function add(real0: ArrayLike<number>, real1: ArrayLike<number>, options?: AddOptions): AddResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AddResult | null;
-    try {
-      routed = addWasm(real0, real1, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ADD', addJs(real0, real1, options));
-    }
+  let routed: AddResult | null;
+  try {
+    routed = addWasm(real0, real1, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ADD', addJs(real0, real1, options));
   }
   return addJs(real0, real1, options);
 }
@@ -100,6 +101,9 @@ function addWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: Ad
   const n = seriesLength(real0);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

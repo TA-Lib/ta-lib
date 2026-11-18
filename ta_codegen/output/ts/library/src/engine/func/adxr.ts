@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/adxr.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Smoothed variant of ADX: the average of the current ADX value and the ADX value
  * from (period-1) bars earlier. Further damps ADX to gauge trend strength. Higher
@@ -90,19 +92,17 @@ export * from '../../func/adxr.ts';
  * @see [`minusDi`](https://ta-lib.org/functions/minus_di)
  */
 export function adxr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AdxrOptions): AdxrResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AdxrResult | null;
-    try {
-      routed = adxrWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ADXR', adxrJs(prices, options));
-    }
+  let routed: AdxrResult | null;
+  try {
+    routed = adxrWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ADXR', adxrJs(prices, options));
   }
   return adxrJs(prices, options);
 }
@@ -117,6 +117,9 @@ function adxrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

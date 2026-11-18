@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/bop.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Balance Of Power compares where the close sits relative to the open, normalized
  * by the bar's high-low range. A per-bar oscillator with no smoothing. Positive:
@@ -82,19 +84,17 @@ export * from '../../func/bop.ts';
  * ```
  */
 export function bop(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: BopOptions): BopResult {
-  if (engineRoute.mode !== 0) {
-    let routed: BopResult | null;
-    try {
-      routed = bopWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('BOP', bopJs(prices, options));
-    }
+  let routed: BopResult | null;
+  try {
+    routed = bopWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('BOP', bopJs(prices, options));
   }
   return bopJs(prices, options);
 }
@@ -110,6 +110,9 @@ function bopWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

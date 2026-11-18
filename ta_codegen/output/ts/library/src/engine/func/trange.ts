@@ -40,6 +40,9 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/trange.ts';
 
+const WASM_FROM_BARS = 1000;
+const WASM_TO_BARS = 5000;
+
 /**
  * True Range: the greatest of today's high-low span and the two gaps between
  * yesterday's close and today's high/low. Base volatility measure used to build
@@ -86,19 +89,17 @@ export * from '../../func/trange.ts';
  * @see [`natr`](https://ta-lib.org/functions/natr)
  */
 export function trange(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: TrangeOptions): TrangeResult {
-  if (engineRoute.mode !== 0) {
-    let routed: TrangeResult | null;
-    try {
-      routed = trangeWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('TRANGE', trangeJs(prices, options));
-    }
+  let routed: TrangeResult | null;
+  try {
+    routed = trangeWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('TRANGE', trangeJs(prices, options));
   }
   return trangeJs(prices, options);
 }
@@ -113,6 +114,9 @@ function trangeWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

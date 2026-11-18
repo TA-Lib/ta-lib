@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rocr100.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 500;
 
 /**
  * Rate-of-change ratio scaled by 100: current price as a percentage of the price

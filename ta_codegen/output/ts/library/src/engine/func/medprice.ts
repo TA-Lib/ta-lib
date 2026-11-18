@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/medprice.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Median Price: the midpoint of each bar's high and low. A price-transform
  * overlay.
@@ -82,19 +84,17 @@ export * from '../../func/medprice.ts';
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
 export function medprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MedpriceOptions): MedpriceResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MedpriceResult | null;
-    try {
-      routed = medpriceWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MEDPRICE', medpriceJs(prices, options));
-    }
+  let routed: MedpriceResult | null;
+  try {
+    routed = medpriceWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MEDPRICE', medpriceJs(prices, options));
   }
   return medpriceJs(prices, options);
 }
@@ -108,6 +108,9 @@ function medpriceWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

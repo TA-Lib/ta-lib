@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cmf.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Chaikin Money Flow: over a trailing window of `timePeriod` bars, the sum of each
  * bar's money flow volume divided by the sum of its volume. The result is a ratio
@@ -121,19 +123,17 @@ export * from '../../func/cmf.ts';
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
 export function cmf(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: CmfOptions): CmfResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CmfResult | null;
-    try {
-      routed = cmfWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CMF', cmfJs(prices, options));
-    }
+  let routed: CmfResult | null;
+  try {
+    routed = cmfWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CMF', cmfJs(prices, options));
   }
   return cmfJs(prices, options);
 }
@@ -149,6 +149,9 @@ function cmfWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

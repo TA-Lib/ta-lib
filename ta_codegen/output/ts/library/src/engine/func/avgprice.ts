@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/avgprice.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Average Price: the arithmetic mean of each bar's open, high, low, and close. A
  * price-transform overlap condensing OHLC into a single representative price.
@@ -84,19 +86,17 @@ export * from '../../func/avgprice.ts';
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
 export function avgprice(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AvgpriceOptions): AvgpriceResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AvgpriceResult | null;
-    try {
-      routed = avgpriceWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('AVGPRICE', avgpriceJs(prices, options));
-    }
+  let routed: AvgpriceResult | null;
+  try {
+    routed = avgpriceWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('AVGPRICE', avgpriceJs(prices, options));
   }
   return avgpriceJs(prices, options);
 }
@@ -112,6 +112,9 @@ function avgpriceWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number>
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

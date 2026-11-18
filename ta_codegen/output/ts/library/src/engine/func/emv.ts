@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/emv.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Ease of Movement: the bar-to-bar move of the high-low midpoint divided by a box
  * ratio of volume to range, averaged over a trailing window. It is the numeric
@@ -107,19 +109,17 @@ export * from '../../func/emv.ts';
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
 export function emv(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EmvOptions): EmvResult {
-  if (engineRoute.mode !== 0) {
-    let routed: EmvResult | null;
-    try {
-      routed = emvWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('EMV', emvJs(prices, options));
-    }
+  let routed: EmvResult | null;
+  try {
+    routed = emvWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('EMV', emvJs(prices, options));
   }
   return emvJs(prices, options);
 }
@@ -134,6 +134,9 @@ function emvWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

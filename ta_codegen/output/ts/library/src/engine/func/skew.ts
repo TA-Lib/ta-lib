@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/skew.ts';
 
+const WASM_FROM_BARS = 5000;
+
 /**
  * An estimate, from the trailing window, of the skewness of the distribution its
  * values come from: the third standardised moment. An asymmetry measure: above 0
@@ -96,19 +98,17 @@ export * from '../../func/skew.ts';
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
 export function skew(real: ArrayLike<number>, options?: SkewOptions): SkewResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SkewResult | null;
-    try {
-      routed = skewWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SKEW', skewJs(real, options));
-    }
+  let routed: SkewResult | null;
+  try {
+    routed = skewWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SKEW', skewJs(real, options));
   }
   return skewJs(real, options);
 }
@@ -117,6 +117,9 @@ function skewWasm(real: ArrayLike<number>, options: SkewOptions | undefined): Sk
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

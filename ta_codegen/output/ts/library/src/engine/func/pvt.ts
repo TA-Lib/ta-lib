@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/pvt.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Price Volume Trend: a running cumulative total of each bar's volume weighted by
  * that bar's fractional price change. It is the On Balance Volume idea with
@@ -104,19 +106,17 @@ export * from '../../func/pvt.ts';
  * @see [`ad`](https://ta-lib.org/functions/ad)
  */
 export function pvt(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PvtOptions): PvtResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PvtResult | null;
-    try {
-      routed = pvtWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PVT', pvtJs(prices, options));
-    }
+  let routed: PvtResult | null;
+  try {
+    routed = pvtWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PVT', pvtJs(prices, options));
   }
   return pvtJs(prices, options);
 }
@@ -130,6 +130,9 @@ function pvtWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   const n = seriesLength(inCloseArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

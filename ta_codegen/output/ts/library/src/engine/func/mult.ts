@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/mult.ts';
 
+const WASM_FROM_BARS = 2500;
+
 /**
  * Element-wise multiplication of two input series.
  *
@@ -79,19 +81,17 @@ export * from '../../func/mult.ts';
  * @see [`div`](https://ta-lib.org/functions/div)
  */
 export function mult(real0: ArrayLike<number>, real1: ArrayLike<number>, options?: MultOptions): MultResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MultResult | null;
-    try {
-      routed = multWasm(real0, real1, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MULT', multJs(real0, real1, options));
-    }
+  let routed: MultResult | null;
+  try {
+    routed = multWasm(real0, real1, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MULT', multJs(real0, real1, options));
   }
   return multJs(real0, real1, options);
 }
@@ -100,6 +100,9 @@ function multWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: M
   const n = seriesLength(real0);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

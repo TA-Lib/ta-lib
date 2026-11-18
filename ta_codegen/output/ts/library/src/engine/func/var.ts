@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/var.ts';
 
+const WASM_FROM_BARS = 2500;
+
 /**
  * Rolling population variance of a real series over a given period. Measures
  * dispersion of values around their mean. Higher values indicate greater
@@ -84,19 +86,17 @@ export * from '../../func/var.ts';
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
 export function var_(real: ArrayLike<number>, options?: VarOptions): VarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: VarResult | null;
-    try {
-      routed = varWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('VAR', varJs(real, options));
-    }
+  let routed: VarResult | null;
+  try {
+    routed = varWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('VAR', varJs(real, options));
   }
   return varJs(real, options);
 }
@@ -105,6 +105,9 @@ function varWasm(real: ArrayLike<number>, options: VarOptions | undefined): VarR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

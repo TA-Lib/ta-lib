@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlladderbottom.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 30;
 
 /**
  * Five-candle bullish reversal pattern: three consecutively lower black candles, a

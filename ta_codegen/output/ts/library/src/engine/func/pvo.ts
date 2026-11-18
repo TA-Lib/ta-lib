@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/pvo.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 30;
 
 /**
  * Percentage Volume Oscillator: a variation of the [Percentage Price

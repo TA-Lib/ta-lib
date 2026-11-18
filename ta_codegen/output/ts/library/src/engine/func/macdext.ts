@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/macdext.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * MACD variant where the fast, slow, and signal moving averages each use a
  * user-selectable MA type. Outputs the MACD line, its signal line, and their
@@ -112,19 +114,17 @@ export * from '../../func/macdext.ts';
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  */
 export function macdext(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MacdextResult | null;
-    try {
-      routed = macdextWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MACDEXT', macdextJs(real, options));
-    }
+  let routed: MacdextResult | null;
+  try {
+    routed = macdextWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MACDEXT', macdextJs(real, options));
   }
   return macdextJs(real, options);
 }
@@ -133,6 +133,9 @@ function macdextWasm(real: ArrayLike<number>, options: MacdextOptions | undefine
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMacd !== undefined || o.outMacdSignal !== undefined || o.outMacdHist !== undefined) {

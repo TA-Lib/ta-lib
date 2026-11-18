@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/hma.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Hull Moving Average, published by Alan Hull in 2005: a moving average built to
  * track price with far less lag than an [`SMA`](https://ta-lib.org/functions/sma),
@@ -105,19 +107,17 @@ export * from '../../func/hma.ts';
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
 export function hma(real: ArrayLike<number>, options?: HmaOptions): HmaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: HmaResult | null;
-    try {
-      routed = hmaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('HMA', hmaJs(real, options));
-    }
+  let routed: HmaResult | null;
+  try {
+    routed = hmaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('HMA', hmaJs(real, options));
   }
   return hmaJs(real, options);
 }
@@ -126,6 +126,9 @@ function hmaWasm(real: ArrayLike<number>, options: HmaOptions | undefined): HmaR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

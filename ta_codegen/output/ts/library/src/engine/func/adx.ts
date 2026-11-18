@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/adx.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Wilder's Average Directional Movement Index, a smoothed measure of trend
  * strength derived from the directional indicators (+DI/-DI). Quantifies how
@@ -94,19 +96,17 @@ export * from '../../func/adx.ts';
  * @see [`trange`](https://ta-lib.org/functions/trange)
  */
 export function adx(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AdxOptions): AdxResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AdxResult | null;
-    try {
-      routed = adxWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ADX', adxJs(prices, options));
-    }
+  let routed: AdxResult | null;
+  try {
+    routed = adxWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ADX', adxJs(prices, options));
   }
   return adxJs(prices, options);
 }
@@ -121,6 +121,9 @@ function adxWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

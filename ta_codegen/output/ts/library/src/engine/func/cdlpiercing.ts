@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlpiercing.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 30;
 
 /**
  * Two-candle pattern: a long black candle followed by a long white candle that

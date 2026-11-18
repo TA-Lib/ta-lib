@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/max.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 60;
 
 /**
  * Highest input value over a rolling window of the last timePeriod bars. A
