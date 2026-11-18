@@ -358,7 +358,7 @@ Every TA function gets these calls:
 | `TA_<NAME>_Peek`   | any time on the **forming** bar     | evaluate a provisional bar **without** committing state |
 | `TA_<NAME>_Close`  | once                                | free the stream |
 
-One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
@@ -404,15 +404,15 @@ TA_SMA_Update( sma.get(), newClose, &value );
 
 ## Rules
 
-* **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
-* **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
+* **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1`: with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed: the stream keeps everything it needs.
+* **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing: call it as often as the forming bar ticks.
 * **The unstable period is resolved once, at `Open`.** The lookback above is the one in effect at that call. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `Open` needs that many bars plus one.
 * **Parameters are fixed at `Open`.** Changing a parameter means a new stream. The [unstable period](/api/#numerical_stability) and the [candle settings](/api/#candle_settings) are process-wide: change them only while no TA function is running and no stream is open ([specification](/spec/settings-threads/#idle-settings)).
 * **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch function — OHLCV in, one out-pointer per output:
+Inputs and outputs mirror the batch function (OHLCV in, one out-pointer per output):
 
 ```c
 /* Candlestick: OHLC in, one int out */
@@ -424,7 +424,7 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 
 ## Array-Fill Open
 
-`Open` and `Update` each write a single value per output. One more call writes a full array instead — the same shape the [batch function](/api/) would produce — while still opening the stream:
+`Open` and `Update` each write a single value per output. One more call writes a full array instead, the same shape the [batch function](/api/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -447,7 +447,7 @@ TA_SMA_Update( s, newClose, &sma );
 |------|------|------|
 | `TA_<NAME>_Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `TA_<NAME>_Clone` | any time | an independent fork of the stream, at the same bar |
-| `TA_<NAME>_OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `TA_<NAME>_OutRange` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `TA_<NAME>_Advance` | after a bar you will not feed | advances the OutRange without affecting any other internal state of the stream |
 
 ```c
@@ -467,7 +467,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Returns |
 |------|---------|
-| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1`, 0 included — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
+| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1`, 0 included (the one failure worth retrying, since another bar might fix it)</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM`: a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` from `Update` (never `Peek`) once the range has reached bar `TA_INDEX_MAX`, the last index the batch API addresses</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>Apart from `TA_ALLOC_ERR`, after which nothing is defined, a rejection changes nothing at all: no state, no output and no range. The next call sees exactly what the last accepted bar left. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_<NAME>_Value` | `TA_BAD_PARAM` on a NULL stream or a NULL out-pointer for any output. |
@@ -607,7 +607,7 @@ Here is another example. This time we calculate a 14-bar exponential moving aver
 
 In this example, `range.beg_idx` will be 299, `range.count` will be 1, and only one value is written into `out`.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `range.count` is 0 — `range.is_empty()` says so directly.
+If you do not provide enough data to calculate even one value, the call still succeeds and `range.count` is 0; `range.is_empty()` says so directly.
 
 The input and the output are separate borrows, so a function cannot read and write the same buffer: pass a distinct output slice, and copy it back afterwards if you want the result in place.
 
@@ -615,13 +615,13 @@ The input and the output are separate borrows, so a function cannot read and wri
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-It is important that the output slice is large enough — an undersized slice is `Err(RetCode::BadParam)`, never a write past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
+It is important that the output slice is large enough: an undersized slice is `Err(RetCode::BadParam)`, never a write past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
 
 | Method | Description |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Input Matching   | `allocation_size = endIdx + 1;` <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when requesting a small range. |
 | Range Matching   | `allocation_size = endIdx - startIdx + 1;` <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
-| Exact Allocation | Derived from the function's lookback — see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
+| Exact Allocation | Derived from the function's lookback: see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
 
 Each TA function has a matching `<name>_lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `sma_lookback`.
 
@@ -631,7 +631,7 @@ The lookback is the number of input elements consumed before the first output ca
 let lookback = core.sma_lookback(30)?;   // 29 for a 30-period SMA
 ```
 
-A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range — the same code the function itself would answer for it.
+A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range, the same code the function itself would answer for it.
 
 Putting it together, the exact allocation for any TA function:
 
@@ -714,7 +714,7 @@ argument once, as `RetCode::BadParam`.
 
 ### 4.5 Threading {#multithreading}
 
-A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently — no locking, and no setup ordering to respect.
+A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently: no locking, and no setup ordering to respect.
 
 To change a setting, build another `Core`, or derive one from an existing `Core` with `to_builder()`.
 
@@ -745,11 +745,11 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-One more call, `open_and_fill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `open_and_fill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is no `close` — dropping the stream closes it (RAII).
+There is no `close`: dropping the stream closes it (RAII).
 
 ## Example (SMA)
 
@@ -771,15 +771,15 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
+`open` returns a `Result`: `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range.
 
 ## Rules
 
-* **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
-* **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
+* **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1`: with fewer bars there is no defined value yet. After `open`, the history can be dropped: the stream keeps everything it needs.
+* **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks.
 * **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
 * **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
-* **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+* **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee: one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 
 ## Multi-input / multi-output
 
@@ -797,7 +797,7 @@ let pattern: i32 = s.update(o, h, l, c)?;
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still opening the stream:
+`open` and `update` each write a single value. One more call writes a full slice instead, the same shape the [batch method](/api/rust/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -820,7 +820,7 @@ let v = s.update(new_close)?;
 |------|------|------|
 | `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.out_range()` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.out_range()` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```rust
@@ -831,7 +831,7 @@ s.advance()?;               // a bar you skipped, counted
 ```
 
 The first three return no `Result`: they read what the stream already holds, so
-there is nothing to reject. `advance()` returns one — it moves the range, and the
+there is nothing to reject. `advance()` returns one: it moves the range, and the
 range cannot pass `Core::INDEX_MAX`.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
@@ -881,7 +881,7 @@ description: >-
 
 ## 1.0 Introduction {#intro}
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The Java library is a native port of TA-Lib in the `io.github.talib` package: no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -994,8 +994,8 @@ Misuse throws rather than returning a return code:
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
 | A null array | `TALibArgumentException` |
 
-Each extends the platform type you would reach for — `TALibIndexException` an
-`IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching
+Each extends the platform type you would reach for (`TALibIndexException` an
+`IndexOutOfBoundsException`, the rest an `IllegalArgumentException`), so catching
 either shape works, and every one carries its `RetCode`.
 
 A rejected call leaves every array untouched.
@@ -1065,7 +1065,7 @@ The **streaming API** is built for live feeds: open a stream once, then feed it 
 
 Every value is **bit-identical** to what the [batch method](/api/java/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
-Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
+Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream`, unrelated to `java.util.stream`):
 
 | Call | When | Does |
 |------|------|------|
@@ -1074,14 +1074,14 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
 A single-output function answers with a `double` (or an `int` for a candlestick
-pattern) return. A multi-output one writes into a sink you pass and own — see
+pattern) return. A multi-output one writes into a sink you pass and own: see
 [Multi-input / multi-output](#multi-input-multi-output).
 
-One more call, `openAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
+One more call, `openAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
-There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
+There is no `close`: a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
 ## Example (SMA)
 
@@ -1101,21 +1101,21 @@ double v = s.update(newClose);                  // throws on a non-finite bar, o
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all: no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
-* **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
-* **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
+* **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
+* **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 * **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
-* **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+* **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream. To stream with different settings, build a new `Core` and open from that.
 * **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
 
 Inputs and outputs mirror the batch method. A multi-output function writes its
-outputs into a `Core.<Name>Out` — a plain mutable object with one public field
-per output, in batch output order — that **you** allocate and pass in.
+outputs into a `Core.<Name>Out` (a plain mutable object with one public field
+per output, in batch output order) that **you** allocate and pass in.
 Candlestick patterns return `int`:
 
 ```java
@@ -1133,7 +1133,7 @@ int pattern = c.update(o, h, l, cl);
 Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields
 rather than allocating a new one. The price is that
 **its contents are only valid until the next call that writes it**. It is a
-buffer, not a reading — a reference kept past that call, or one put in a
+buffer, not a reading: a reference kept past that call, or one put in a
 collection, sees the value change underneath it. Copy the fields out if the
 reading has to outlive the call, or allocate one sink per slot. For the same
 reason `<Name>Out` deliberately has no `equals`/`hashCode`: value equality on a
@@ -1143,7 +1143,7 @@ committed.
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full array instead — the same shape the [batch method](/api/java/) would produce — while still opening the stream:
+`open` and `update` each write a single value. One more call writes a full array instead, the same shape the [batch method](/api/java/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
@@ -1161,7 +1161,7 @@ OutRange r = s.outRange();                      // the bars it has an output for
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned stream as `outRange()` rather than through out-parameters — see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned stream as `outRange()` rather than through out-parameters: see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
 
 ## Utility Calls
 
@@ -1169,7 +1169,7 @@ The optional parameters and output arrays are exactly the [batch method](/api/ja
 |------|------|------|
 | `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.outRange()` | any time | the bars the stream has an output for — the batch range over the same bars |
+| `stream.outRange()` | any time | the bars the stream has an output for: the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```java
@@ -1181,7 +1181,7 @@ OutRange r = s.outRange();          // the bars s has an output for
 s.advance();                        // a bar you skipped, counted
 ```
 
-`clone()` overrides `Object.clone()` but does not use the `Cloneable` protocol —
+`clone()` overrides `Object.clone()` but does not use the `Cloneable` protocol:
 the body is a copy constructor, so it needs no marker interface and throws no
 `CloneNotSupportedException`.
 
@@ -1191,8 +1191,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw `TALibArgumentException`. |
-| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
+| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException`; catch it to accumulate more bars and retry). Out-of-range parameters throw `TALibArgumentException`. |
+| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 
@@ -1240,7 +1240,7 @@ description: >-
 
 ## 1.0 Introduction {#intro}
 
-The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The .NET library is a native port of TA-Lib in the `TALib` namespace: no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -3118,18 +3118,18 @@ description: >-
 ---
 # Candlestick Settings
 
-The candlestick pattern functions (the `CDL*` family) judge each candle — is its body "long", its shadow "short", two candles "near" — relative to a set of tunable thresholds. These settings control those judgements.
+The candlestick pattern functions (the `CDL*` family) judge each candle (is its body "long", its shadow "short", two candles "near") relative to a set of tunable thresholds. These settings control those judgements.
 
 ## API
 
 A candle characteristic is measured against an average of a chosen range over the
 previous `avgPeriod` bars, scaled by `factor`. For each setting type:
 
-* **range type** — what to measure: the real body (open-to-close), the high-to-low
+* **range type** (what to measure): the real body (open-to-close), the high-to-low
   range, or the mean of the upper and lower shadows.
-* **`avgPeriod`** — how many prior bars to average (`0` means "use only the current
+* **`avgPeriod`**: how many prior bars to average (`0` means "use only the current
   candle", no averaging).
-* **`factor`** — the multiplier applied to that average to form the threshold: finite and not negative.
+* **`factor`**: the multiplier applied to that average to form the threshold: finite and not negative.
 
 ::: code-tabs#lang
 
@@ -4683,8 +4683,8 @@ Join us on [Discord](https://discord.com/invite/Erb6SwsVbH)!
 
 | Administrator | Role |
 | --- | --- |
-| **Mario Fortier** — [@mario4tier](https://github.com/mario4tier) | Founder and lead maintainer. Original author of the C/C++ core. |
-| **John Benediktsson** — [@mrjbq7](https://github.com/mrjbq7) | Author and lead maintainer. Created the Python ([ta-lib-python](https://github.com/TA-Lib/ta-lib-python)) and Zig ([ta-lib-zig](https://github.com/TA-Lib/ta-lib-zig)) wrappers; `ta-lib-python` is by far the most widely used TA-Lib binding. |
+| **Mario Fortier**, [@mario4tier](https://github.com/mario4tier) | Founder and lead maintainer. Original author of the C/C++ core. |
+| **John Benediktsson**, [@mrjbq7](https://github.com/mrjbq7) | Author and lead maintainer. Created the Python ([ta-lib-python](https://github.com/TA-Lib/ta-lib-python)) and Zig ([ta-lib-zig](https://github.com/TA-Lib/ta-lib-zig)) wrappers; `ta-lib-python` is by far the most widely used TA-Lib binding. |
 
 ## Feature Contributors
 
@@ -4692,13 +4692,13 @@ The people behind some of TA-Lib's major features.
 
 | Contributor | Contribution |
 | --- | --- |
-| **Angelo Ciceri** | Candlestick pattern recognition — the complete family of `CDL*` functions. |
-| **Chad Furman** — [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which automates maintenance of every backend (C, Rust, Java, .NET, TypeScript, docs, streaming API) from a single source of truth. |
+| **Angelo Ciceri** | Candlestick pattern recognition: the complete family of `CDL*` functions. |
+| **Chad Furman**, [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which automates maintenance of every backend (C, Rust, Java, .NET, TypeScript, docs, streaming API) from a single source of truth. |
 | **Barry Tsung** | Early Java `Core`: candle-settings initialization and unstable-period APIs. |
-| **Richard Gomes** | Java abstract/reflection layer — the `meta` package: annotation-based RTTI and late-bound (dynamic) TA-function invocation. |
-| **Christopher Supnig** — [supnig.com](https://www.supnig.com) | Author of an early JavaScript/TypeScript variant of TA-Lib. |
+| **Richard Gomes** | Java abstract/reflection layer, the `meta` package: annotation-based RTTI and late-bound (dynamic) TA-function invocation. |
+| **Christopher Supnig**, [supnig.com](https://www.supnig.com) | Author of an early JavaScript/TypeScript variant of TA-Lib. |
 | **Paweł Konieczny** | Early contributor to `ta_regtest`, the build system and the now-defunct `ta_data` feature. |
-| **Alexander Trufanov** — [@trufanov-nok](https://github.com/trufanov-nok) | Numerical-robustness improvements and streaming-API inspiration. |
+| **Alexander Trufanov**, [@trufanov-nok](https://github.com/trufanov-nok) | Numerical-robustness improvements and streaming-API inspiration. |
 | **[@kevinlincg](https://github.com/kevinlincg)** | Multiple new TA functions, plus optimizations, fixes and test coverage across the generator and every backend. |
 
 ### Language wrappers {#wrappers}
@@ -4707,13 +4707,13 @@ TA-Lib reaches many languages thanks to the maintainers of these wrappers:
 
 | Maintainer | Wrapper |
 | --- | --- |
-| **John Benediktsson** — [@mrjbq7](https://github.com/mrjbq7) | Python — [ta-lib-python](https://github.com/TA-Lib/ta-lib-python) · Zig — [ta-lib-zig](https://github.com/TA-Lib/ta-lib-zig) |
-| **Brad Peabody** — [@bradleypeabody](https://github.com/bradleypeabody) | Go — [ta-lib-cgo](https://github.com/TA-Lib/ta-lib-cgo) |
-| **Rafael Ernesto Espinosa Santiesteban** — [@rernesto](https://github.com/rernesto) | PHP — [ext-ta-lib](https://github.com/TA-Lib/ext-ta-lib) |
-| **Marcelo Teixeira Monteiro** — [@tuxmonteiro](https://github.com/tuxmonteiro) | PostgreSQL — [ta_pg](https://github.com/TA-Lib/ta_pg) |
-| **Victor Yang** — [@Youngv](https://github.com/Youngv) | Ruby — [ta-lib-ruby](https://github.com/TA-Lib/ta-lib-ruby) |
-| **Serkan Korkmaz** — [@serkor1](https://github.com/serkor1) | R — [ta-lib-R](https://github.com/serkor1/ta-lib-R) |
-| **Kevin Johnson** — [@twopirllc](https://github.com/twopirllc) (original author) · **[@xgboosted](https://github.com/xgboosted)** (current maintainer) | pandas — [pandas-ta-classic](https://github.com/xgboosted/pandas-ta-classic) |
+| **John Benediktsson**, [@mrjbq7](https://github.com/mrjbq7) | Python: [ta-lib-python](https://github.com/TA-Lib/ta-lib-python) · Zig: [ta-lib-zig](https://github.com/TA-Lib/ta-lib-zig) |
+| **Brad Peabody**, [@bradleypeabody](https://github.com/bradleypeabody) | Go: [ta-lib-cgo](https://github.com/TA-Lib/ta-lib-cgo) |
+| **Rafael Ernesto Espinosa Santiesteban**, [@rernesto](https://github.com/rernesto) | PHP: [ext-ta-lib](https://github.com/TA-Lib/ext-ta-lib) |
+| **Marcelo Teixeira Monteiro**, [@tuxmonteiro](https://github.com/tuxmonteiro) | PostgreSQL: [ta_pg](https://github.com/TA-Lib/ta_pg) |
+| **Victor Yang**, [@Youngv](https://github.com/Youngv) | Ruby: [ta-lib-ruby](https://github.com/TA-Lib/ta-lib-ruby) |
+| **Serkan Korkmaz**, [@serkor1](https://github.com/serkor1) | R: [ta-lib-R](https://github.com/serkor1/ta-lib-R) |
+| **Kevin Johnson**, [@twopirllc](https://github.com/twopirllc) (original author) · **[@xgboosted](https://github.com/xgboosted)** (current maintainer) | pandas: [pandas-ta-classic](https://github.com/xgboosted/pandas-ta-classic) |
 
 ## Other Code Contributors
 
@@ -4722,54 +4722,54 @@ source tree.
 
 | Contributor | Contribution |
 | --- | --- |
-| **Adrian Michel** — [amichel.com](http://amichel.com) | Fixed the missing `atan()` in `LINEARREG_ANGLE`. |
+| **Adrian Michel**, [amichel.com](http://amichel.com) | Fixed the missing `atan()` in `LINEARREG_ANGLE`. |
 | **Anatoliy Belsky** | Initial implementations of `IMI` and `AVGDEV`. |
-| **Anatoliy Siryi** — [@hmG3](https://github.com/hmG3) | Visual Studio 2022 build support ([#34](https://github.com/TA-Lib/ta-lib/pull/34)). |
+| **Anatoliy Siryi**, [@hmG3](https://github.com/hmG3) | Visual Studio 2022 build support ([#34](https://github.com/TA-Lib/ta-lib/pull/34)). |
 | **Andrew Atkinson** | Lookback, out-of-bounds and null-pointer fixes in `APO`, `PPO`, `STOCHRSI` and `TRIX`. |
 | **[@CaptainTrunky](https://github.com/CaptainTrunky)** | Conan package-manager support ([#86](https://github.com/TA-Lib/ta-lib/issues/86)). |
-| **Chris** — crokusek@hotmail.com | Reported the `TRIMA` range-handling bug. |
+| **Chris**, crokusek@hotmail.com | Reported the `TRIMA` range-handling bug. |
 | **Christo Fogelberg** | `period = 1` correctness fixes across `SAR`, `PLUS_DI`/`PLUS_DM` and `MINUS_DI`. |
 | **Christopher Barnhouse** | Fixed an out-of-bounds write in `CDLTRISTAR`. |
-| **Drew McCormack** — [trade-strategist.com](http://www.trade-strategist.com) | Initial implementation of `ULTOSC`. |
-| **echo999** — echo999@ifrance.com | Found and fixed a `STOCHF` `outFastD` bug. |
-| **Fernando José** — [@iglesias](https://github.com/iglesias) | Fixed a floating-point multiplication overflow ([#33](https://github.com/TA-Lib/ta-lib/pull/33)). |
+| **Drew McCormack**, [trade-strategist.com](http://www.trade-strategist.com) | Initial implementation of `ULTOSC`. |
+| **echo999**, echo999@ifrance.com | Found and fixed a `STOCHF` `outFastD` bug. |
+| **Fernando José**, [@iglesias](https://github.com/iglesias) | Fixed a floating-point multiplication overflow ([#33](https://github.com/TA-Lib/ta-lib/pull/33)). |
 | **[@greenTableWork](https://github.com/greenTableWork)** | Helper script for the vcpkg post-release PR workflow ([#82](https://github.com/TA-Lib/ta-lib/pull/82)). |
 | **guycom** | Reported the `ADX` divide-by-zero bug. |
 | **[@halohsu](https://github.com/halohsu)** | macOS libtool build support ([#39](https://github.com/TA-Lib/ta-lib/pull/39)). |
 | **jdoyle** | Fixed start/end range handling in `AD`. |
 | **Jesus Viver** | Speed optimizations for `STDDEV`, `VAR`, `MIN` and `MAX`. |
-| **John Price** — jp_talib@gcfl.net | Initial implementation of the `LINEARREG` family. |
+| **John Price**, jp_talib@gcfl.net | Initial implementation of the `LINEARREG` family. |
 | **JP Pienaar** | Fixed the `MACD` period-swap logic. |
-| **Kenneth Jorgensen** — [@kennethjor](https://github.com/kennethjor) | Documentation index (`index.md`) updates ([#70](https://github.com/TA-Lib/ta-lib/pull/70)). |
+| **Kenneth Jorgensen**, [@kennethjor](https://github.com/kennethjor) | Documentation index (`index.md`) updates ([#70](https://github.com/TA-Lib/ta-lib/pull/70)). |
 | **[@Lqingyu](https://github.com/Lqingyu)** | Out-of-bounds fix in the regression-test tooling ([#62](https://github.com/TA-Lib/ta-lib/pull/62)). |
-| **Major Hayden** — [@major](https://github.com/major) | Added the BSD 3-Clause LICENSE file ([#38](https://github.com/TA-Lib/ta-lib/pull/38)). |
+| **Major Hayden**, [@major](https://github.com/major) | Added the BSD 3-Clause LICENSE file ([#38](https://github.com/TA-Lib/ta-lib/pull/38)). |
 | **Matthew Lindblom** | Implementation of `T3`. |
 | **Michael Williamson** | Initial implementation of `BETA`. |
-| **Mikhail Smirnov** — [@cpp4ever](https://github.com/cpp4ever) | CMake build-script fix ([#9](https://github.com/TA-Lib/ta-lib/pull/9)). |
-| **Mirek Fontan** — [fontan.cz](http://fontan.cz) | Reported a divide-by-zero bug. |
+| **Mikhail Smirnov**, [@cpp4ever](https://github.com/cpp4ever) | CMake build-script fix ([#9](https://github.com/TA-Lib/ta-lib/pull/9)). |
+| **Mirek Fontan**, [fontan.cz](http://fontan.cz) | Reported a divide-by-zero bug. |
 | **[@mw66](https://github.com/mw66)** | Removed the spurious unstable period from `MFI`. |
 | **[@nehemiah888](https://github.com/nehemiah888)** | Added function documentation, including Chinese translations ([#75](https://github.com/TA-Lib/ta-lib/pull/75)). |
 | **Peter Pudaite** | Initial `STOCHRSI`; reworked the `SAREXT` parameters. |
 | **Robert Meier** | Initial implementation of `ACCBANDS`. |
-| **Rowe Wilson Frederisk Holme** — [@Frederisk](https://github.com/Frederisk) | Fixed the `CdlStickSandwich` name typos ([#28](https://github.com/TA-Lib/ta-lib/pull/28)). |
-| **Thorsten Alteholz** — [@alteholz](https://github.com/alteholz) | Spelling fixes across the library, including the `TA_LIB_NOT_INITIALIZE` return-code message ([#68](https://github.com/TA-Lib/ta-lib/pull/68)). |
-| **Vikas N Kumar** — [@vikasnkumar](https://github.com/vikasnkumar) | Debian 11 / Ubuntu 22.04 support with a lower minimum CMake version ([#51](https://github.com/TA-Lib/ta-lib/pull/51)). |
-| **Vincent Bernardoff** — [@vbmithr](https://github.com/vbmithr) | Linux / autotools build fixes ([#1](https://github.com/TA-Lib/ta-lib/pull/1)). |
-| **wony** — [@wony-zheng](https://github.com/wony-zheng) | Removed the spurious unstable period from `IMI`. |
+| **Rowe Wilson Frederisk Holme**, [@Frederisk](https://github.com/Frederisk) | Fixed the `CdlStickSandwich` name typos ([#28](https://github.com/TA-Lib/ta-lib/pull/28)). |
+| **Thorsten Alteholz**, [@alteholz](https://github.com/alteholz) | Spelling fixes across the library, including the `TA_LIB_NOT_INITIALIZE` return-code message ([#68](https://github.com/TA-Lib/ta-lib/pull/68)). |
+| **Vikas N Kumar**, [@vikasnkumar](https://github.com/vikasnkumar) | Debian 11 / Ubuntu 22.04 support with a lower minimum CMake version ([#51](https://github.com/TA-Lib/ta-lib/pull/51)). |
+| **Vincent Bernardoff**, [@vbmithr](https://github.com/vbmithr) | Linux / autotools build fixes ([#1](https://github.com/TA-Lib/ta-lib/pull/1)). |
+| **wony**, [@wony-zheng](https://github.com/wony-zheng) | Removed the spurious unstable period from `IMI`. |
 
 ## Issue Reporters
 
-Community members whose bug reports and requests led to a committed change — with our thanks.
+Community members whose bug reports and requests led to a committed change, with our thanks.
 
 | Reporter | Issue |
 | --- | --- |
 | **[@731315163](https://github.com/731315163)** | `HT_TRENDLINE` internal-buffer investigation ([#88](https://github.com/TA-Lib/ta-lib/issues/88)). |
-| **Anton Danylchenko** — [@1st](https://github.com/1st) | Proposed the GitHub Action, now [setup-ta-lib](https://github.com/TA-Lib/setup-ta-lib) ([#79](https://github.com/TA-Lib/ta-lib/issues/79)). |
-| **Benjamin Leff** — [@BwL1289](https://github.com/BwL1289) | CMake `libm` linkage and shared/static build options ([#77](https://github.com/TA-Lib/ta-lib/issues/77), [#78](https://github.com/TA-Lib/ta-lib/issues/78)). |
-| **Cole Richardson** — [@SeeRich](https://github.com/SeeRich) | Requested the repository LICENSE file ([#35](https://github.com/TA-Lib/ta-lib/issues/35)). |
+| **Anton Danylchenko**, [@1st](https://github.com/1st) | Proposed the GitHub Action, now [setup-ta-lib](https://github.com/TA-Lib/setup-ta-lib) ([#79](https://github.com/TA-Lib/ta-lib/issues/79)). |
+| **Benjamin Leff**, [@BwL1289](https://github.com/BwL1289) | CMake `libm` linkage and shared/static build options ([#77](https://github.com/TA-Lib/ta-lib/issues/77), [#78](https://github.com/TA-Lib/ta-lib/issues/78)). |
+| **Cole Richardson**, [@SeeRich](https://github.com/SeeRich) | Requested the repository LICENSE file ([#35](https://github.com/TA-Lib/ta-lib/issues/35)). |
 | **[@hotston](https://github.com/hotston)** | Reported MACD signal-line repainting, leading to the `period = 1` fix ([#59](https://github.com/TA-Lib/ta-lib/issues/59)). |
-| **Ilia Pozdnyakov** — [@iliazeus](https://github.com/iliazeus) | Prompted a release including the small-values fix ([#31](https://github.com/TA-Lib/ta-lib/issues/31)). |
-| **Jake Arkinstall** — SourceForge | `HT_TRENDLINE` internal-buffer investigation ([#88](https://github.com/TA-Lib/ta-lib/issues/88)). |
+| **Ilia Pozdnyakov**, [@iliazeus](https://github.com/iliazeus) | Prompted a release including the small-values fix ([#31](https://github.com/TA-Lib/ta-lib/issues/31)). |
+| **Jake Arkinstall**, SourceForge | `HT_TRENDLINE` internal-buffer investigation ([#88](https://github.com/TA-Lib/ta-lib/issues/88)). |
 
 </div>
 
@@ -4839,7 +4839,7 @@ scripts/build.py servers    # build the generator + the per-language test server
 ## Steps
 
 1. **Agree on the spec first.** Claim a card on the [board](https://github.com/orgs/TA-Lib/projects/1), or open an issue if there is none. Settle the name, group, inputs, parameters with defaults, flags (does it stream?), and the formula with a citable reference before writing code. This is the human-approved part.
-2. **Write the three input files** in `ta_codegen/input/<name>/`. Start by copying a similar shipped function; `ta_codegen/input/cmf/` is a small, recent example. Input files carry no license header — the generator injects the BSD-3-Clause notice into every generated file — but the `.c` opens with a contributor and change-history block: add your initials there, and a one-line MMDDYY entry describing your change. The file-format references are in the repository: [`docs/ta_codegen_input_yaml.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_yaml.md), [`ta_codegen_input_code.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_code.md) and [`ta_codegen_input_doc.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_doc.md). When in doubt, read your checkout's copy; it tracks the generator you are running.
+2. **Write the three input files** in `ta_codegen/input/<name>/`. Start by copying a similar shipped function; `ta_codegen/input/cmf/` is a small, recent example. Input files carry no license header (the generator injects the BSD-3-Clause notice into every generated file), but the `.c` opens with a contributor and change-history block: add your initials there, and a one-line MMDDYY entry describing your change. The file-format references are in the repository: [`docs/ta_codegen_input_yaml.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_yaml.md), [`ta_codegen_input_code.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_code.md) and [`ta_codegen_input_doc.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_doc.md). When in doubt, read your checkout's copy; it tracks the generator you are running.
 3. **Generate** all backends: `scripts/build.py generate`, then `scripts/build.py refdata` (writes the function page's reference CSV and, from it, the chart), then `scripts/build.py servers` to rebuild the language servers from the regenerated sources.
 4. **Verify**: run `scripts/regtest.py`, the full pipeline. Its `ta_regtest --codegen` step diffs every language server against the C library, a brand-new function like any other: that proves the languages agree, and the next step proves the values. `--no-perftest` skips the benchmarks a correctness change does not need.
 5. **Prove the values.** A new function needs a regression test with golden values from an independent source: a published reference implementation or worked examples from the literature. Document the source, its version and the tolerance at the test call site; against a double-precision oracle ~1e-12 relative is typical, and anything looser needs a written justification. See `src/tools/ta_regtest/ta_test_func/test_composite1.c` for a composite and `test_marketfi.c` for a standalone file, and register the test in four places: a prototype in `ta_test_func.h`, a `DO_TEST` entry in `ta_regtest.c` whose tag names every function the group covers, and the file added to both `CMakeLists.txt` and `src/tools/ta_regtest/Makefile.am` (`scripts/build.py check-source-lists` verifies the two agree and that the group has its `DO_TEST` entry). While iterating, `cd bin && ./ta_regtest --codegen --function=<NAME>` re-runs just your group; each call it routes through `server_verify` is also cross-checked bitwise against every language server.
@@ -4866,7 +4866,7 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 * Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and the per-function sources under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate. Not all of `output/` is generated: the hand-written scaffolding, the build files (`pom.xml`, `TALib.csproj`, the TypeScript tooling `package.json`), the TypeScript runtime (`library/src/runtime/`), the Go package's `core.go`, `doc.go`, `retcode.go`, `runtime.go` and `README.md`, and the Java, C#, TypeScript and Go test suites (TypeScript's outside `library/test/gen/`; Go's `talib_test.go`) live there too, and `generate` preserves them; treat those as harness, per the rule above. **A banner is proof that a file is generated; its absence is not proof of the opposite.** Around thirty committed files are emitted without one, `src/ta_abstract/ta_abstract.c` among them, written by `backends/ta_abstract_c.rs`. Before editing anything under `src/` or `output/`, grep the generator for the file name; `generate` reverts an edit it owns without a word.
 * `<name>.md` documents the original algebra of the indicator, never implementation artifacts: no zero-guards, epsilon comparisons or `period == 1` special cases in the formula. State the value returned where the algebra is undefined only when a reader would otherwise wonder, as RVI's `or 50 when Up + Down = 0` does; a guard that merely avoids a divide by zero is noise.
 * In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
-* Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
+* Your function may be called with an output array aliasing one of its inputs: `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
 * Emit each value at the bar whose data computes it. A chart that plots the line shifted forward or backward does not shift the output array, and no output may read a bar after its own.
 * A decaying recursion the function defines itself (a Wilder or EMA-style update, an adaptive alpha, IIR filter poles) gets its own `TA_FUNC_UNST_<NAME>` id. One the primary source defines as a call to a function that already has an unstable period (EMA, RSI, ATR) is inherited through that callee's lookback and gets no id; one function can have both. Finite windows and non-decaying state (running sums, resets, pivots, counts) get none.
 * An id needs a rule: the bars an [Auto level](/spec/auto-stabilization/#rz1) discards, as a function of the call's parameters. [`docs/auto-stabilization-rule.md`](https://github.com/TA-Lib/ta-lib/blob/main/docs/auto-stabilization-rule.md) is how to find it, size it against a measured need and record it.
@@ -4876,14 +4876,14 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 **Definition of done:**
 
 * `scripts/regtest.py` passes end to end (C tests + all-language verification).
-* The new function has a non-vacuous test: golden values from an independent source, with source, version and tolerance documented at the call site. A test that cannot fail on a wrong formula does not count. To show it cannot, break what it guards and watch it go red — and in a generated tree, confirm the break actually landed: mutate `ta_codegen/input/`, regenerate, then check the mutation is present in the generated source. A green gate over a mutation that never reached the code means *sabotage never applied*, not *guard verified*.
+* The new function has a non-vacuous test: golden values from an independent source, with source, version and tolerance documented at the call site. A test that cannot fail on a wrong formula does not count. To show it cannot, break what it guards and watch it go red, and in a generated tree, confirm the break actually landed: mutate `ta_codegen/input/`, regenerate, then check the mutation is present in the generated source. A green gate over a mutation that never reached the code means *sabotage never applied*, not *guard verified*.
 * Regeneration is idempotent: running `generate` again leaves `git status` clean.
 * The generator's own suite passes: `cd ta_codegen/generator && cargo test`. Some of its tests are inventories keyed on a function's properties; a new function may belong in one. A failure naming your function in a test you never touched is the inventory asking to be updated, not a regression.
 * The generated `website/src/functions/<name>.md` is correct; its sections are gated against the YAML by the generator. Optional live preview: `cd website && pnpm install && pnpm docs:dev` (needs Node and pnpm).
 
 **DO NOT:**
 
-* **DO NOT** compute golden values yourself and attribute them to a reference implementation. What makes an oracle independent is not the citation but the execution: the values must be *produced by running* the cited source at the cited version, or transcribed unchanged from a table published in it. Re-deriving the formula and labelling the result with a vendor's name is the same computation twice with a false provenance attached — worse than no oracle, because it agrees with your implementation for exactly the reason it must not. If you cannot run the source, say so on the spec issue rather than substituting your own arithmetic; a maintainer may be able to run it for you.
+* **DO NOT** compute golden values yourself and attribute them to a reference implementation. What makes an oracle independent is not the citation but the execution: the values must be *produced by running* the cited source at the cited version, or transcribed unchanged from a table published in it. Re-deriving the formula and labelling the result with a vendor's name is the same computation twice with a false provenance attached: worse than no oracle, because it agrees with your implementation for exactly the reason it must not. If you cannot run the source, say so on the spec issue rather than substituting your own arithmetic; a maintainer may be able to run it for you.
 * **DO NOT** invent parameter defaults or ranges. The `<name>.yaml` spec is the human-approved source of truth for acceptable ranges and defaults; ask the contributor.
 * **DO NOT** modify the test harness or loosen a tolerance to make a gate pass. Harness changes require explicit human approval.
 * **DO NOT** include unrelated generated-file churn in the pull request.
