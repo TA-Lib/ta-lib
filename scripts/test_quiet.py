@@ -458,6 +458,28 @@ class Quiet(unittest.TestCase):
         self.assertEqual(r.returncode, 124)
         self.assertLess(time.time() - t, 10)
 
+    def test_stop_group_tolerates_permission_error_from_killpg(self):
+        """macOS answers EPERM, not ESRCH, for a group whose members exited
+        unreaped, so the final killpg in stop_group must not raise (#600)."""
+        sys.path.insert(0, HERE)
+        import quiet
+
+        class Proc:
+            pid = 999999
+
+            def wait(self, timeout=None):
+                return 0
+
+        def killpg(pgid, sig):
+            raise PermissionError(1, "Operation not permitted")
+
+        real_killpg = os.killpg
+        os.killpg = killpg
+        try:
+            quiet.stop_group(Proc(), signal.SIGINT, (0.5, 0.5))
+        finally:
+            os.killpg = real_killpg
+
     def capped(self, *args):
         return subprocess.run([sys.executable, "-c", CAPPED, *args], env=self.env,
                               capture_output=True, text=True, timeout=60)
