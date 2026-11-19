@@ -23,7 +23,7 @@ Any dev with permission to merge to main branch can do a release.
 
 (CP6) Manually trig the "main nightly tests" and "main macOS nightly tests" Github actions. They perform a last round of checks prior to allowing the release, and Release (step 1) refuses unless both passed on main's HEAD. If you do not trig them, they run anyway once per day.
 
-(CP7) Manually trig the "Release (step-1)" Github action on main branch. This will tag, generate a draft release and attach all assets from the dist/ directory.
+(CP7) Manually trig the "Release (step-1)" Github action on main branch. This will tag, generate a draft release and attach all assets from the dist/ directory, each package with the provenance the dev nightly made when it built it (`<package>.intoto.jsonl`). It refuses, before tagging, when a package has none or it does not verify.
 
 (CP8) Optionally edit the draft "Release notes" on the Github website. A good time to add thank you to contributors. You can still edit after the official release.
 

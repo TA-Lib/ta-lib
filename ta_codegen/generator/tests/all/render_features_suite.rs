@@ -1210,6 +1210,31 @@ TA_RetCode max( int    startIdx,
     }
 }
 
+/// OBV adds or subtracts the volume on whether the close rose, a coin flip: C
+/// and Rust select the step in batch (C's two precisions), open, step and peek.
+/// No other function's accumulation qualifies.
+#[test]
+fn c_and_rust_pick_an_ordered_step_without_a_branch() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    let mut fired = Vec::new();
+    for name in common::all_indicators() {
+        let (func, _) = load_indicator(&name);
+        let targets = backends::select_rule::ordered_step_targets(&func.body);
+        if !targets.is_empty() {
+            fired.push(format!("{name}: {targets:?}"));
+        }
+    }
+    assert_eq!(fired, ["obv: {\"prevOBV\"}"]);
+    let (mut func, enums) = load_indicator("obv");
+    func.streaming = true;
+    let c = backends::c::generate(&func, &enums, registry, helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
+    for (lang, src, pick, tiers) in [("C", &c, "TA_ORDER_STEP(", 5), ("Rust", &rust, "std::hint::select_unpredictable(", 8)] {
+        assert_eq!(src.matches(pick).count(), tiers, "{lang}:\n{src}");
+        assert!(!src.contains("tempReal > "), "{lang} keeps a branch:\n{src}");
+    }
+}
+
 /// A stream handle's step keeps a pick into its own state a ternary, and lowers
 /// one into a local.
 #[test]
@@ -2631,4 +2656,36 @@ TA_RetCode sma( int startIdx, int endIdx,
         backends::csharp::generate(&func, &enums, make_registry(), &HelperRegistry::empty());
     assert!(rust.contains("c_max("), "Rust must keep the unhinted max:\n{rust}");
     assert!(csharp.contains("MaxGt("), "C# must keep the unhinted max:\n{csharp}");
+}
+
+/// `count` sites in one C body: `(adds, ifs)`, where an add is
+/// `count += (..) ? 1 : 0;` and an if is `if( .. )` / `{` / `count += 1;`.
+fn count_sites(body: &str) -> (usize, usize) {
+    let lines: Vec<&str> = body.lines().map(str::trim).collect();
+    let adds = lines.iter().filter(|l| l.starts_with("count += (") && l.ends_with(") ? 1 : 0;")).count();
+    let ifs = lines
+        .windows(3)
+        .filter(|w| w[0].starts_with("if(") && w[1] == "{" && w[2] == "count += 1;")
+        .count();
+    (adds, ifs)
+}
+
+/// Every PERCENTRANK output keeps its bits whichever form a frame takes, so only
+/// this sees a frame flip: the C step and peek count by adding (a branch there
+/// mispredicts on an unordered series), and batch and the Open replay keep the
+/// `if`, which gcc vectorises into the shorter loop: the add form is the slower
+/// vector loop there.
+#[test]
+fn c_percentrank_counts_by_adding_in_step_and_peek_only() {
+    let (func, enums) = load_indicator("percentrank");
+    let c = backends::c::generate(&func, &enums, make_registry(), make_helpers());
+    let body = |needle: &str| {
+        crate::peek_suite::body_of(&c, needle).unwrap_or_else(|| panic!("no `{needle}` in PERCENTRANK's C"))
+    };
+    for needle in ["TA_PERCENTRANK_StepImpl(", "TA_PERCENTRANK_Peek("] {
+        assert_eq!(count_sites(&body(needle)), (1, 0), "{needle} must count by adding:\n{}", body(needle));
+    }
+    for needle in ["TA_RetCode TA_PERCENTRANK(", "TA_RetCode TA_S_PERCENTRANK(", "TA_PERCENTRANK_OpenBody("] {
+        assert_eq!(count_sites(&body(needle)), (0, 1), "{needle} must keep the `if`:\n{}", body(needle));
+    }
 }

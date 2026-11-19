@@ -360,6 +360,12 @@ impl Drop for StreamFmaGuard {
     }
 }
 
+/// The stream FMA sets [`StreamFmaGuard`] installed, for a stream-side IR pass
+/// that needs the same integer-vs-real typing the renderer uses.
+pub(crate) fn with_stream_fma<R>(f: impl FnOnce(Option<&FmaVarSets>) -> R) -> R {
+    STREAM_FMA.with(|s| f(s.borrow().as_ref()))
+}
+
 /// Per-render state for the C backend, mirroring `RustRenderCtx` in `rust_lang.rs`.
 /// Bundles the loose state (precision flag + inline-helper counter) threaded through
 /// the recursive renderer. Services (enums/registry/helpers) stay as separate params.
@@ -1833,6 +1839,14 @@ impl StatementEmitter for CStmt<'_> {
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn if_stmt(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], cond_comments: &[Option<Vec<String>>], indent: usize) -> String {
         let pad = " ".repeat(indent);
+        if cond_comments.is_empty() {
+            if let Some((target, args)) = order_step(condition, then_body, else_body, self.ctx) {
+                let target = render_assign_target(&target, self.ctx, self.registry, self.helpers);
+                let args: Vec<String> =
+                    args.iter().map(|e| render_expr(e, self.ctx, self.registry, self.helpers)).collect();
+                return format!("{pad}{target}= TA_ORDER_STEP({});\n", args.join(", "));
+            }
+        }
         // Split `if(A && B)` into nested `if(A) { if(B)` when either side
         // contains a candle macro call (ta_candlerange/ta_candleaverage).
         // This prevents the compiler from speculatively computing both sides
@@ -2474,6 +2488,32 @@ fn zero_pick<'e>(target: &Expr, value: &'e Expr, ctx: &CRenderCtx) -> Option<(&'
         return Some((if gt { "TA_ZERO_IF_GT" } else { "TA_ZERO_IF_LT" }, [l, r, else_e]));
     }
     None
+}
+
+/// An [`super::select_rule::ordered_step`] that adds under one order and
+/// subtracts under the other, on a real accumulator, as
+/// `acc = TA_ORDER_STEP(a, b, acc, x, y)`: `a < b` adds `x`, `b < a` subtracts
+/// `y`. The operands are evaluated more than once, so they must be pure.
+fn order_step(cond: &Expr, then_body: &[Statement], else_body: &[Statement], ctx: &CRenderCtx) -> Option<(Expr, [Expr; 5])> {
+    let sets = ctx.fma?;
+    let step = super::select_rule::ordered_step(cond, then_body, else_body)?;
+    if !sets.ordered_step_targets.contains(fma::stream_base(step.acc)) {
+        return None;
+    }
+    let (a, b, up, dn) = match (&step.below, &step.above) {
+        ((BinOp::Add, x), (BinOp::Sub, y)) => (step.a, step.b, *x, *y),
+        ((BinOp::Sub, y), (BinOp::Add, x)) => (step.b, step.a, *x, *y),
+        _ => return None,
+    };
+    let fs = sets.view();
+    let acc = Expr::Var(step.acc.to_string());
+    let int = |e: &Expr| matches!(e, Expr::IntLiteral(_)) || fma::is_definitely_integer(e, &fs);
+    let real = |e: &Expr| fma::expr_is_float_typed(e, Some(&fs));
+    let pure = |e: &Expr| !crate::streaming::expr_effect(e, &|f| MathFn::from_name(f).is_some());
+    if !real(&acc) || int(a) || int(b) || !(real(a) || real(b)) || ![a, b, up, dn].into_iter().all(pure) {
+        return None;
+    }
+    Some((acc.clone(), [a.clone(), b.clone(), acc, up.clone(), dn.clone()]))
 }
 
 fn render_expr(

@@ -33,10 +33,16 @@ DESIGN RULES (each one is load-bearing; see notes at each implementation site)
    GITHUB_TOKEN to a third party.
 5. Uploads are idempotent. Content addressing means a name collision IS the same bytes, so a
    422 already_exists from a racing matrix leg is success, not failure.
+6. A package's provenance attestation is stored as <sha256>__<original_name>.intoto.jsonl,
+   under the PACKAGE's hash, and uploaded before the package, so an upload that stops
+   half way leaves an attestation without a package, never the reverse. Garbage
+   collection decides per hash, the same for both. The first attestation stored for a
+   package is the one kept. Packages pooled before attestations existed have none.
 """
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -171,6 +177,43 @@ def pool_asset_name(sha256: str, asset_file_name: str) -> str:
     '-' and '_' but never '__', so the split back is unambiguous.
     """
     return f"{sha256}__{asset_file_name}"
+
+
+ATTESTATION_SUFFIX = ".intoto.jsonl"
+
+
+def attested_sha256s(bundle_path: str) -> set[str]:
+    """The sha256 of every subject an attestation file names.
+
+    Reads the statement without checking its signature: it tells which packages a
+    file is ABOUT, never that the file is genuine.
+    """
+    out: set[str] = set()
+    try:
+        with open(bundle_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                payload = json.loads(line)["dsseEnvelope"]["payload"]
+                for subject in json.loads(base64.b64decode(payload))["subject"]:
+                    out.add(subject["digest"]["sha256"])
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise PoolError(f"{bundle_path} is not an attestation bundle: {e!r}") from e
+    if not out:
+        raise PoolError(f"{bundle_path} names no subject")
+    return out
+
+
+def is_pooled(assets: dict[str, dict], sha256: str, asset_file_name: str) -> bool:
+    a = assets.get(pool_asset_name(sha256, asset_file_name))
+    return a is not None and a.get("state") == "uploaded"
+
+
+def holds_content(assets: dict[str, dict], sha256: str) -> bool:
+    """Whether the pool holds a package with these bytes, under any file name."""
+    prefix = pool_asset_name(sha256, "")
+    return any(name.startswith(prefix) and not name.endswith(ATTESTATION_SUFFIX)
+               and a.get("state") == "uploaded" for name, a in assets.items())
 
 
 def get_or_create_pool_release() -> dict:
@@ -364,20 +407,16 @@ def _fetch_to(req: Request, path: str) -> str:
     return h.hexdigest()
 
 
-def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
-                        assets: dict[str, dict] | None = None,
-                        retries: int = 3) -> str:
-    """Download a pool asset and verify its content hash before it is usable.
+def _download(a: dict, dest_path: str, check, label: str, retries: int) -> str:
+    """Fetch one pool asset to dest_path, which never exists holding bytes `check` refused.
 
     RULE 4: fetched anonymously from browser_download_url with NO Authorization header.
     That URL 302s to a CDN host; sending a token would hand GITHUB_TOKEN to a third party.
     This works because the pool is a *published* release -- a draft would have forced the
     authenticated asset endpoint and exactly that leak.
 
-    The hash is verified before the file is moved into place, so dest_path never exists
-    holding unverified bytes.
+    `check(tmp_path, sha256_of_the_bytes)` raises PoolError to refuse them.
     """
-    a = resolve(sha256, asset_file_name, assets)
     url = a["browser_download_url"]
     tmp = f"{dest_path}.partial"
     os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
@@ -395,13 +434,8 @@ def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
                 got = _fetch_to(Request(a["url"], headers={
                     "User-Agent": "ta-lib-dist-pool",
                     "Accept": "application/octet-stream"}), tmp)
-            if got != sha256:
-                raise PoolError(
-                    f"Hash mismatch for {asset_file_name}: pool content is {got}, "
-                    f"digest says {sha256}"
-                )
+            check(tmp, got)
             os.replace(tmp, dest_path)
-            print(f"Info: fetched {asset_file_name} from pool (sha256 verified)")
             return dest_path
         except Exception as e:  # noqa: BLE001 - retried, then re-raised below
             last = e
@@ -410,5 +444,46 @@ def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
             if attempt < retries:
                 time.sleep(2 * attempt)
 
-    raise PoolError(f"Could not fetch {asset_file_name} from pool after "
+    raise PoolError(f"Could not fetch {label} from pool after "
                     f"{retries} attempts: {last}")
+
+
+def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
+                        assets: dict[str, dict] | None = None,
+                        retries: int = 3) -> str:
+    """Download a pool asset and verify its content hash before it is usable."""
+    def check(_tmp: str, got: str) -> None:
+        if got != sha256:
+            raise PoolError(
+                f"Hash mismatch for {asset_file_name}: pool content is {got}, "
+                f"digest says {sha256}"
+            )
+
+    _download(resolve(sha256, asset_file_name, assets), dest_path, check,
+              asset_file_name, retries)
+    print(f"Info: fetched {asset_file_name} from pool (sha256 verified)")
+    return dest_path
+
+
+def download_attestation(sha256: str, asset_file_name: str, dest_path: str,
+                         assets: dict[str, dict] | None = None,
+                         retries: int = 3) -> str:
+    """Download the attestation stored for a package.
+
+    Refused unless it names the package's hash. Its signature is NOT checked here:
+    whoever ships the file verifies it first.
+    """
+    name = asset_file_name + ATTESTATION_SUFFIX
+
+    def check(tmp: str, _got: str) -> None:
+        if sha256 not in attested_sha256s(tmp):
+            raise PoolError(f"The attestation stored for {asset_file_name} does not "
+                            f"name {sha256}")
+
+    pool = assets if assets is not None else list_pool_assets()
+    if pool_asset_name(sha256, name) not in pool:
+        raise PoolError(f"The pool holds no attestation for {asset_file_name} "
+                        f"({pool_asset_name(sha256, name)})")
+    _download(resolve(sha256, name, pool), dest_path, check, name, retries)
+    print(f"Info: fetched {name} from pool")
+    return dest_path

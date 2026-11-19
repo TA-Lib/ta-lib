@@ -1,0 +1,125 @@
+# Adds a Sigstore signature, <file>.sigstore.json, beside each file of ONE
+# release that is already published. Nothing else on the release changes: no
+# file is replaced or removed, and a file that already has its signature is
+# left alone, so a run can be repeated.
+#
+# A signature made here says "this workflow, on main, signed these bytes on
+# that day". It does not say who built them: that is <file>.intoto.jsonl, which
+# a release carries when the dev nightly attested its packages.
+#
+# Every signature is a permanent entry in Sigstore's public log, which is why
+# the default is a dry run that lists the files and signs nothing.
+#
+# To check a file:
+#   cosign verify-blob <file> --bundle <file>.sigstore.json \
+#     --certificate-identity https://github.com/TA-Lib/ta-lib/.github/workflows/sign-release.yml@refs/heads/main \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+name: Sign a published release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of the published release to sign, e.g. v0.8.3"
+        required: true
+        type: string
+      dry_run:
+        description: "List the files that would be signed; sign and upload nothing"
+        type: boolean
+        default: true
+
+# Per tag: a group keeps one waiting run and drops the older one, so a shared
+# group would lose all but the first and last of several tags started together.
+concurrency:
+  group: sign-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # uploads the signatures to the release
+      id-token: write # the identity the signatures are made under
+
+    env:
+      TAG: ${{ inputs.tag }}
+
+    steps:
+      # The certificate names this file at the ref the run was started from, so
+      # a run from any other branch would sign under an identity nobody checks.
+      - name: Refuse unless started from main, for a published release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo "::error::started from $GITHUB_REF; start it from main."
+            exit 1
+          fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a release tag (v<major>.<minor>.<patch>)."
+            exit 1
+          fi
+          # The by-tag endpoint never returns a draft.
+          immutable=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.immutable // false')
+          if [ "$immutable" != false ]; then
+            echo "::error::release $TAG is immutable: no file can be added to it."
+            exit 1
+          fi
+
+      - name: Download the release's files and list the unsigned ones
+        id: list
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          FILES=$RUNNER_TEMP/files SIGNATURES=$RUNNER_TEMP/signatures
+          mkdir -p "$FILES" "$SIGNATURES"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir "$FILES"
+          count=0
+          for f in "$FILES"/*; do
+            name=${f##*/}
+            case "$name" in
+              *.sigstore.json|*.intoto.jsonl|*.asc|*.sig) continue ;;
+            esac
+            if [ -e "$f.sigstore.json" ]; then
+              echo "already signed: $name"
+              continue
+            fi
+            echo "to sign: $name  sha256:$(sha256sum "$f" | cut -d' ' -f1)"
+            printf '%s\n' "$name" >> "$SIGNATURES/.todo"
+            count=$((count + 1))
+          done
+          echo "$count file(s) to sign in $TAG."
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Install cosign
+        if: ${{ !inputs.dry_run && steps.list.outputs.count != '0' }}
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      # Every file is signed and its signature checked before the first upload.
+      # No --clobber: an upload that would replace a file fails instead.
+      - name: Sign each file, check the signatures, upload them
+        if: ${{ !inputs.dry_run && steps.list.outputs.count != '0' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          FILES=$RUNNER_TEMP/files SIGNATURES=$RUNNER_TEMP/signatures
+          identity="https://github.com/$GITHUB_WORKFLOW_REF"
+          while IFS= read -r name; do
+            cosign sign-blob --yes --bundle "$SIGNATURES/$name.sigstore.json" "$FILES/$name" < /dev/null > /dev/null
+            cosign verify-blob "$FILES/$name" --bundle "$SIGNATURES/$name.sigstore.json" \
+              --certificate-identity "$identity" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com < /dev/null
+          done < "$SIGNATURES/.todo"
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "$SIGNATURES"/*.sigstore.json
+          echo "Signed as $identity"

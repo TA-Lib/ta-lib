@@ -129,3 +129,4 @@ dist/*.deb
 dist/*.msi
 dist/*.zip
 dist/*.tar.gz
+dist/*.intoto.jsonl

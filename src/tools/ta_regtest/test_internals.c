@@ -2291,6 +2291,22 @@ static uint64_t pickBits( double d )
    return u;
 }
 
+/* The asm's `acc + up`: of two NaNs, the accumulator's, quieted. Elsewhere the
+ * compiler orders the add and the target picks the NaN (RISC-V returns its
+ * default one), so the grid holds the fallback to the same expression. */
+static double orderStepAdd( double acc, double up )
+{
+#if defined(TA_ZERO_PICK_ASM)
+   if( acc != acc )
+   {
+      const uint64_t u = pickBits( acc ) | 0x0008000000000000ULL;
+      memcpy( &acc, &u, sizeof acc );
+      return acc;
+   }
+#endif
+   return acc + up;
+}
+
 #if defined(TA_ZERO_PICK_ASM)
 static __inline__ __attribute__((always_inline)) ErrorNumber zeroPickGrid( const char *form )
 #else
@@ -2305,6 +2321,9 @@ static ErrorNumber zeroPickGrid( const char *form )
       0x7FEFFFFFFFFFFFFFULL, 0xFFEFFFFFFFFFFFFFULL, /* +-DBL_MAX */
       0x7FF0000000000000ULL, 0xFFF0000000000000ULL, /* +-inf */
       0x7FF8000000000000ULL, 0xFFF8000000000123ULL, /* quiet NaNs, one with a payload */
+#if defined(TA_ZERO_PICK_ASM)
+      0x7FF4000000000001ULL,                        /* signalling: an x87 copy quiets it */
+#endif
       0x4004000000000000ULL, 0xC004000000000000ULL  /* +-2.5 */
    };
    enum { N = sizeof(specials) / sizeof(specials[0]) };
@@ -2322,14 +2341,20 @@ static ErrorNumber zeroPickGrid( const char *form )
       for( ib = 0; ib < N; ib++ )
          for( ix = 0; ix < N; ix++ )
          {
-            const double a = v[ia], b = v[ib], x = v[ix];
-            const double got[4] = { TA_KEEP_IF_GT( a, b, x ), TA_KEEP_IF_LT( a, b, x ),
-                                    TA_ZERO_IF_GT( a, b, x ), TA_ZERO_IF_LT( a, b, x ) };
-            const double want[4] = { a > b ? x : 0.0, a < b ? x : 0.0,
-                                     a > b ? 0.0 : x, a < b ? 0.0 : x };
+            const double a = v[ia], b = v[ib], x = v[ix], y = v[(ix + 1) % N], z = v[(ix + 2) % N];
+            const double got[5] = { TA_KEEP_IF_GT( a, b, x ), TA_KEEP_IF_LT( a, b, x ),
+                                    TA_ZERO_IF_GT( a, b, x ), TA_ZERO_IF_LT( a, b, x ),
+                                    TA_ORDER_STEP( a, b, x, y, z ) };
+            const double want[5] = { a > b ? x : 0.0, a < b ? x : 0.0,
+                                     a > b ? 0.0 : x, a < b ? 0.0 : x,
+                                     a < b ? orderStepAdd( x, y ) : (b < a ? x - z : x) };
             int k;
-            for( k = 0; k < 4; k++ )
+            for( k = 0; k < 5; k++ )
             {
+#if !defined(TA_ZERO_PICK_ASM)
+               if( k == 4 && x != x && y != y )
+                  continue;
+#endif
                if( pickBits( got[k] ) != pickBits( want[k] ) )
                {
                   printf( "\nFailed: %s zero pick %d of (%016llx, %016llx, %016llx) gave %016llx, the ternary %016llx\n",

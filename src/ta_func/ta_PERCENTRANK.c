@@ -240,10 +240,7 @@ static void TA_PERCENTRANK_StepImpl( struct TA_PERCENTRANK_Stream *sp, double in
    count = 0;
    for( i = sp->optInTimePeriod; i >= 1; i -= 1 )
    {
-      if( sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] < current )
-      {
-         count += 1;
-      }
+      count += (sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] < current) ? 1 : 0;
    }
    /* Divide, then scale. (count/N)*100 and 100*count/N are different
     * doubles and the reference implementations round the first way.
@@ -432,10 +429,7 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK_Peek( const TA_PERCENTRANK_Stream *stream, 
    count = 0;
    for( i = sp->optInTimePeriod; i >= 1; i -= 1 )
    {
-      if( ((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) < current )
-      {
-         count += 1;
-      }
+      count += (((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) < current) ? 1 : 0;
    }
    /* Divide, then scale. (count/N)*100 and 100*count/N are different
     * doubles and the reference implementations round the first way.

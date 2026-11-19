@@ -4552,7 +4552,7 @@ fn emit_step_inner(
             (pt.body, pt.shadows, pt.slot_temps, locals)
         }
     };
-    let transition = apply_step_scalars(&transition, &elected);
+    let transition = counts_as_adds(&apply_step_scalars(&transition, &elected));
     let temps = match frame {
         StepFrame::Commit => streaming::step_temps(model, tape),
         StepFrame::Peek => streaming::temps_used(&model.temps, &transition),
@@ -4597,6 +4597,72 @@ fn emit_step_inner(
         decls.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, indent));
     }
     body.push_str(&body_c);
+}
+
+/// `if( a < b ) n += 1;` over reals, directly in a loop body, as
+/// `n += (a < b) ? 1 : 0;`, in a plan's step, peek and tape-step frames (not a
+/// composed producer's): in a loop gcc does not vectorise, the `if` stays a
+/// branch, which mispredicts on an unordered series. Keep it out of batch and an
+/// Open body, where gcc vectorises the `if` into the shorter loop. An integer
+/// counter only: a real one would add +0.0 and turn a -0.0 into +0.0.
+fn counts_as_adds(stmts: &[Statement]) -> Vec<Statement> {
+    use crate::ir::BinOp;
+    super::c::with_stream_fma(|sets| {
+        let Some(sets) = sets else { return stmts.to_vec() };
+        let fs = sets.view();
+        let counted = |s: &Statement| -> Option<Statement> {
+            let Statement::If { condition, then_body, else_body, cond_comments } = s else { return None };
+            if !else_body.is_empty() || !cond_comments.is_empty() {
+                return None;
+            }
+            let [Statement::Assign { target: target @ Expr::Var(name), value, compound: true }] =
+                then_body.as_slice()
+            else {
+                return None;
+            };
+            let Expr::BinOp(head, step @ (BinOp::Add | BinOp::Sub), one) = value else { return None };
+            if !matches!(head.as_ref(), Expr::Var(h) if h == name) || !matches!(one.as_ref(), Expr::IntLiteral(1)) {
+                return None;
+            }
+            // An equality test counts a rare event, which a branch predicts.
+            let Expr::BinOp(l, BinOp::Less | BinOp::Greater | BinOp::LessEq | BinOp::GreaterEq, r) = condition
+            else {
+                return None;
+            };
+            let base = fma::stream_base(name);
+            if !fs.index_vars.contains(base)
+                || fs.real_vars.contains(base)
+                || !(fma::expr_is_float_typed(l, Some(&fs)) || fma::expr_is_float_typed(r, Some(&fs)))
+                || streaming::expr_effect(condition, &|f| super::builtins::MathFn::from_name(f).is_some())
+            {
+                return None;
+            }
+            let pick = Expr::Ternary(
+                Box::new(condition.clone()),
+                Box::new(Expr::IntLiteral(1)),
+                Box::new(Expr::IntLiteral(0)),
+            );
+            Some(Statement::Assign {
+                target: target.clone(),
+                value: Expr::BinOp(head.clone(), step.clone(), Box::new(pick)),
+                compound: true,
+            })
+        };
+        let in_body = |body: Vec<Statement>| -> Vec<Statement> {
+            body.into_iter().map(|s| counted(&s).unwrap_or(s)).collect()
+        };
+        streaming::rewrite_stmts(stmts, &|e| e, &|s| {
+            Some(match s {
+                Statement::For { var, count, body } => Statement::For { var, count, body: in_body(body) },
+                Statement::ForC { init, condition, update, body } => {
+                    Statement::ForC { init, condition, update, body: in_body(body) }
+                }
+                Statement::While { condition, body } => Statement::While { condition, body: in_body(body) },
+                Statement::DoWhile { condition, body } => Statement::DoWhile { condition, body: in_body(body) },
+                other => other,
+            })
+        })
+    })
 }
 
 /// The identity short-circuit at the top of a dual-mode step, above the mode
@@ -6214,5 +6280,96 @@ mod tests {
         }];
         let out = apply_step_scalars(&transition, &[]);
         assert_eq!(format!("{out:?}"), format!("{transition:?}"));
+    }
+
+    type Wrap = fn(Vec<Statement>) -> Statement;
+
+    /// `counts_as_adds` over `<loop> if( cond ) counter += 1; [else ..]`, with
+    /// `count` and `i` integers, `x`, `y`, `total` reals, and `both` declared
+    /// int in one scope and double in another.
+    fn counted_in(
+        wrap: Wrap,
+        counter: &str,
+        cond: Expr,
+        else_body: Vec<Statement>,
+    ) -> (Vec<Statement>, Vec<Statement>) {
+        let set = |names: &[&str]| names.iter().map(|n| (*n).to_string()).collect();
+        let _fma = super::super::c::StreamFmaGuard::new(fma::FmaVarSets {
+            real_vars: set(&["x", "y", "total", "both"]),
+            index_vars: set(&["count", "i", "both"]),
+            real_array_vars: set(&[]),
+            int_output_names: set(&[]),
+            sentinel_vars: set(&[]),
+            recurrent_select_targets: set(&[]),
+            running_extreme_targets: set(&[]),
+            ordered_step_targets: set(&[]),
+        });
+        let bump = Statement::Assign {
+            target: var(counter),
+            value: Expr::BinOp(Box::new(var(counter)), crate::ir::BinOp::Add, Box::new(Expr::IntLiteral(1))),
+            compound: true,
+        };
+        let stmts =
+            vec![wrap(vec![Statement::If { condition: cond, then_body: vec![bump], else_body, cond_comments: vec![] }])];
+        (counts_as_adds(&stmts), stmts)
+    }
+
+    fn for_loop(body: Vec<Statement>) -> Statement {
+        Statement::For { var: "i".into(), count: var("n"), body }
+    }
+
+    fn counted(counter: &str, cond: Expr, else_body: Vec<Statement>) -> (Vec<Statement>, Vec<Statement>) {
+        counted_in(for_loop, counter, cond, else_body)
+    }
+
+    fn cmp(l: Expr, op: crate::ir::BinOp, r: Expr) -> Expr {
+        Expr::BinOp(Box::new(l), op, Box::new(r))
+    }
+
+    #[test]
+    fn an_integer_count_under_an_ordered_compare_is_added() {
+        let loops: [(&str, Wrap); 4] = [
+            ("for", for_loop),
+            ("while", |body| Statement::While { condition: var("c"), body }),
+            ("do-while", |body| Statement::DoWhile { condition: var("c"), body }),
+            ("for-c", |body| Statement::ForC {
+                init: Box::new(Statement::Continue),
+                condition: var("c"),
+                update: Box::new(Statement::Continue),
+                body,
+            }),
+        ];
+        for (kind, wrap) in loops {
+            let (out, _) = counted_in(wrap, "count", cmp(var("x"), crate::ir::BinOp::Less, var("y")), vec![]);
+            let (Statement::For { body, .. }
+            | Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::ForC { body, .. }) = &out[0]
+            else {
+                panic!("{kind}: the loop is kept")
+            };
+            assert!(
+                matches!(&body[0], Statement::Assign { compound: true, value: Expr::BinOp(_, _, pick), .. }
+                         if matches!(pick.as_ref(), Expr::Ternary(..))),
+                "{kind}: count += (x < y) ? 1 : 0, got {:?}", body[0]
+            );
+        }
+    }
+
+    #[test]
+    fn a_count_that_could_change_a_value_or_is_rare_keeps_its_if() {
+        use crate::ir::BinOp::{Eq, Less};
+        let kept = [
+            // A real counter would add +0.0, turning a -0.0 into +0.0.
+            ("real counter", counted("total", cmp(var("x"), Less, var("y")), vec![])),
+            ("int and real counter", counted("both", cmp(var("x"), Less, var("y")), vec![])),
+            // A call in the condition could write the counter.
+            ("effect", counted("count", cmp(Expr::FuncCall("f".into(), vec![]), Less, var("y")), vec![])),
+            ("equality", counted("count", cmp(var("x"), Eq, var("y")), vec![])),
+            ("else", counted("count", cmp(var("x"), Less, var("y")), vec![Statement::Break])),
+        ];
+        for (case, (out, input)) in kept {
+            assert_eq!(format!("{out:?}"), format!("{input:?}"), "{case}: rewritten");
+        }
     }
 }

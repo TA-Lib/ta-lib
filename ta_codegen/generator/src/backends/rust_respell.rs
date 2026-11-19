@@ -27,15 +27,17 @@ pub(crate) const CANDLE_RANGE_DIFF: &str = "ta_candlerange_diff";
 /// Rewrite every statement list in `body`, nested ones included.
 ///
 /// `recurrent` is [`super::select_chain::recurrent_select_targets`] of the body
-/// being rendered; an extreme on such a target stays a branch.
+/// being rendered; an extreme on such a target stays a branch. `steps` is its
+/// [`super::select_rule::ordered_step_targets`].
 #[must_use]
 pub(crate) fn rewrite(
     body: &[Statement],
     fma: &FmaCtx,
     helpers: &HelperRegistry,
     recurrent: &HashSet<String>,
+    steps: &HashSet<String>,
 ) -> Vec<Statement> {
-    let lists = rewrite_lists(body, fma, helpers, recurrent);
+    let lists = rewrite_lists(body, fma, helpers, recurrent, steps);
     crate::streaming::rewrite_stmts(&lists, &fuse_candle_range_diff, &|s| Some(s))
 }
 
@@ -44,8 +46,9 @@ fn rewrite_lists(
     fma: &FmaCtx,
     helpers: &HelperRegistry,
     recurrent: &HashSet<String>,
+    steps: &HashSet<String>,
 ) -> Vec<Statement> {
-    let pass = |b: &[Statement]| rewrite_lists(b, fma, helpers, recurrent);
+    let pass = |b: &[Statement]| rewrite_lists(b, fma, helpers, recurrent, steps);
     // The inlined helpers only compute from their arguments.
     let pure = |e: &Expr| !expr_effect(e, &|n| MathFn::from_name(n).is_some() || helpers.get(n).is_some());
     let mut out: Vec<Statement> = body
@@ -55,7 +58,7 @@ fn rewrite_lists(
             if hinted(&s) {
                 return s;
             }
-            extreme(&s, fma, recurrent).or_else(|| merged_store(&s, &pure)).unwrap_or(s)
+            extreme(&s, fma, recurrent).or_else(|| ordered_step(&s, fma, steps)).or_else(|| merged_store(&s, &pure)).unwrap_or(s)
         })
         .collect();
     for i in 1..out.len() {
@@ -125,6 +128,26 @@ fn extreme(s: &Statement, fma: &FmaCtx, recurrent: &HashSet<String>) -> Option<S
         value: Expr::FuncCall(name.into(), vec![value.clone(), target.clone()]),
         compound: false,
     })
+}
+
+/// An [`super::select_rule::ordered_step`] on a real accumulator as one
+/// `select_unpredictable` of the three values its arms can leave, each spelled
+/// as the arm computes it. As an `if`, LLVM branches on a coin flip.
+fn ordered_step(s: &Statement, fma: &FmaCtx, steps: &HashSet<String>) -> Option<Statement> {
+    let Statement::If { condition, then_body, else_body, cond_comments } = s else { return None };
+    if !cond_comments.is_empty() {
+        return None;
+    }
+    let step = super::select_rule::ordered_step(condition, then_body, else_body)?;
+    let acc = Expr::Var(step.acc.to_string());
+    if !steps.contains(fma::stream_base(step.acc)) || !fma::expr_is_float_typed(&acc, Some(fma)) || !compares_reals(step.a, step.b, fma) {
+        return None;
+    }
+    let arm = |(op, v): &(BinOp, &Expr)| Expr::BinOp(Box::new(acc.clone()), op.clone(), Box::new((*v).clone()));
+    let less = |l: &Expr, r: &Expr| Expr::BinOp(Box::new(l.clone()), BinOp::Less, Box::new(r.clone()));
+    let select = |c: Expr, t: Expr, e: Expr| Expr::FuncCall(super::eager_select::SELECT.into(), vec![c, t, e]);
+    let tie = select(less(step.b, step.a), arm(&step.above), acc.clone());
+    Some(Statement::Assign { target: acc.clone(), value: select(less(step.a, step.b), arm(&step.below), tie), compound: false })
 }
 
 /// `if( c ) a[k] = x; else a[k] = y;` as `a[k] = c ? x : y;`. Each arm's store
@@ -281,7 +304,7 @@ mod tests {
             int_output_names: &none,
             sentinel_vars: &none,
         };
-        let out = rewrite(body, &fma, &HelperRegistry::empty(), &set(recurrent));
+        let out = rewrite(body, &fma, &HelperRegistry::empty(), &set(recurrent), &HashSet::new());
         assert_eq!(out.len(), body.len(), "the pass must preserve length");
         out
     }

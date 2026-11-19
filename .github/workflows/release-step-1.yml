@@ -85,12 +85,30 @@ jobs:
       # STRICT on purpose (no --allow-missing): on the release path a package the
       # pool cannot produce means the release would ship without it. That has to
       # stop the run, not warn.
+      #
+      # The attach step uploads every file in dist/, so what --attestations
+      # fetches ships with the release.
       - name: Fetch release packages from the asset pool
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull
+          $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --attestations
+
+      # The pool stores an attestation without checking it. Each must be signed
+      # by this repository's nightly-publish.yml at refs/heads/dev, for exactly
+      # the package it sits beside, or the release stops here, before the tag
+      # moves.
+      - name: Verify the provenance of each package
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attestation in dist/*.intoto.jsonl; do
+            gh attestation verify "${attestation%.intoto.jsonl}" \
+              --bundle "$attestation" \
+              --repo "$GITHUB_REPOSITORY" \
+              --cert-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/nightly-publish.yml@refs/heads/dev"
+          done
 
       - name: Pre-release checks
         shell: bash
@@ -247,6 +265,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   release_id: release_id,
+                  per_page: 100,
                 });
 
                 const existingAsset = assets.find(asset => asset.name === file);

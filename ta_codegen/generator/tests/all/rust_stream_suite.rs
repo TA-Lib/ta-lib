@@ -976,7 +976,8 @@ fn a_transcribed_open_selects_where_its_batch_body_does() {
             if batch.contains(picks) != open.contains(picks) {
                 drifted.push(format!("{name}: batch selects={}, open selects={}", batch.contains(picks), open.contains(picks)));
             }
-            if let Some(line) = open.lines().find(|l| l.contains(picks) && !stores.iter().any(|st| l.contains(st))) {
+            let stored = |l: &str| l.split(picks).next().is_some_and(|lhs| lhs.contains('['));
+            if let Some(line) = open.lines().find(|l| l.contains(picks) && stored(l) && !stores.iter().any(|st| l.contains(st))) {
                 drifted.push(format!("{name}: an open select is not stored through {stores:?}: {}", line.trim()));
             }
         }

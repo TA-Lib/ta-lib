@@ -615,7 +615,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         *body = ir_cleanup::drop_inert_guards(body);
         *body = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
         let sets = super::fma::build_fma_var_sets(body, &func.outputs, &super::fma::INDEX_PARAM_SEEDS);
-        *body = super::rust_respell::rewrite(body, &sets.view(), helpers, &sets.recurrent_select_targets);
+        *body = super::rust_respell::rewrite(body, &sets.view(), helpers, &sets.recurrent_select_targets, &sets.ordered_step_targets);
     }
     let func = &elected;
 
