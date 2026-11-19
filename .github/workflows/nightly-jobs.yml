@@ -988,7 +988,7 @@ jobs:
 
       - name: Install PyYAML
         shell: bash
-        run: pip install pyyaml
+        run: pip install --require-hashes -r .github/requirements/pyyaml.txt
 
       - name: Build debug Rust server and run codegen overflow gate
         shell: bash
@@ -1728,7 +1728,7 @@ jobs:
 
       - name: Install PyYAML
         shell: bash
-        run: pip install pyyaml
+        run: pip install --require-hashes -r .github/requirements/pyyaml.txt
 
       - name: Build sanitized stream server + drive stream_verify (ASan/UBSan/LSan)
         shell: bash
@@ -1762,7 +1762,7 @@ jobs:
       - name: Build conan package
         shell: bash
         run: |
-          pip install conan
+          pip install --require-hashes -r .github/requirements/conan.txt
           conan profile detect --force
           conan create . --build=missing
 
@@ -1823,7 +1823,7 @@ jobs:
               https://github.com/TA-Lib/ta-lib-python.git _wrapper/src'
           echo "wrapper dev at $(git -C _wrapper/src rev-parse HEAD)"
           cd _wrapper/src
-          pip install --upgrade pip wheel setuptools
+          pip install --require-hashes -r "$GITHUB_WORKSPACE/.github/requirements/build-tools.txt"
           pip install -r requirements_test.txt
           python setup.py build_ext --inplace
           PYTHONPATH=. pytest -q

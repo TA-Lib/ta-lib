@@ -34,6 +34,14 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
 
+  - package-ecosystem: "pip"
+    directory: "/.github/requirements"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: "github-actions"
     directories:
       - "/"
