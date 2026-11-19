@@ -2632,3 +2632,35 @@ TA_RetCode sma( int startIdx, int endIdx,
     assert!(rust.contains("c_max("), "Rust must keep the unhinted max:\n{rust}");
     assert!(csharp.contains("MaxGt("), "C# must keep the unhinted max:\n{csharp}");
 }
+
+/// `count` sites in one C body: `(adds, ifs)`, where an add is
+/// `count += (..) ? 1 : 0;` and an if is `if( .. )` / `{` / `count += 1;`.
+fn count_sites(body: &str) -> (usize, usize) {
+    let lines: Vec<&str> = body.lines().map(str::trim).collect();
+    let adds = lines.iter().filter(|l| l.starts_with("count += (") && l.ends_with(") ? 1 : 0;")).count();
+    let ifs = lines
+        .windows(3)
+        .filter(|w| w[0].starts_with("if(") && w[1] == "{" && w[2] == "count += 1;")
+        .count();
+    (adds, ifs)
+}
+
+/// Every PERCENTRANK output keeps its bits whichever form a frame takes, so only
+/// this sees a frame flip: the C step and peek count by adding (a branch there
+/// mispredicts on an unordered series), and batch and the Open replay keep the
+/// `if`, which gcc vectorises into the shorter loop: the add form is the slower
+/// vector loop there.
+#[test]
+fn c_percentrank_counts_by_adding_in_step_and_peek_only() {
+    let (func, enums) = load_indicator("percentrank");
+    let c = backends::c::generate(&func, &enums, make_registry(), make_helpers());
+    let body = |needle: &str| {
+        crate::peek_suite::body_of(&c, needle).unwrap_or_else(|| panic!("no `{needle}` in PERCENTRANK's C"))
+    };
+    for needle in ["TA_PERCENTRANK_StepImpl(", "TA_PERCENTRANK_Peek("] {
+        assert_eq!(count_sites(&body(needle)), (1, 0), "{needle} must count by adding:\n{}", body(needle));
+    }
+    for needle in ["TA_RetCode TA_PERCENTRANK(", "TA_RetCode TA_S_PERCENTRANK(", "TA_PERCENTRANK_OpenBody("] {
+        assert_eq!(count_sites(&body(needle)), (0, 1), "{needle} must keep the `if`:\n{}", body(needle));
+    }
+}

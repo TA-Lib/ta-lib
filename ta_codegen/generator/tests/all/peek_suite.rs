@@ -52,7 +52,7 @@ fn stream_c(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> String 
 
 /// The brace-balanced body of the definition whose signature line contains
 /// `needle`, or `None` when the tier emits no such function.
-fn body_of(src: &str, needle: &str) -> Option<String> {
+pub(crate) fn body_of(src: &str, needle: &str) -> Option<String> {
     let i = src.find(needle)?;
     let j = src[i..].find('{')? + i;
     let bytes = src.as_bytes();

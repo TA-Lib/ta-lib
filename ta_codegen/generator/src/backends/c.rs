@@ -360,6 +360,12 @@ impl Drop for StreamFmaGuard {
     }
 }
 
+/// The stream FMA sets [`StreamFmaGuard`] installed, for a stream-side IR pass
+/// that needs the same integer-vs-real typing the renderer uses.
+pub(crate) fn with_stream_fma<R>(f: impl FnOnce(Option<&FmaVarSets>) -> R) -> R {
+    STREAM_FMA.with(|s| f(s.borrow().as_ref()))
+}
+
 /// Per-render state for the C backend, mirroring `RustRenderCtx` in `rust_lang.rs`.
 /// Bundles the loose state (precision flag + inline-helper counter) threaded through
 /// the recursive renderer. Services (enums/registry/helpers) stay as separate params.
