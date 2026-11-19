@@ -43,7 +43,7 @@ runs:
 
     - id: restore
       if: inputs.cache == 'true'
-      uses: actions/cache/restore@v6
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ runner.temp }}/apt-archives
         key: ${{ steps.key.outputs.prefix }}${{ steps.key.outputs.image }}
@@ -125,7 +125,7 @@ runs:
         echo "key=$IMAGE_PREFIX-$(ls "$APT_ARCHIVES" | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
 
     - if: inputs.cache == 'true' && steps.install.outputs.key != steps.restore.outputs.cache-matched-key
-      uses: actions/cache/save@v6
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ runner.temp }}/apt-archives
         key: ${{ steps.install.outputs.key }}

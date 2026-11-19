@@ -32,13 +32,13 @@ jobs:
 
     steps:
       - name: Checkout main branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0 # Fetch all history for all tags
 
       - name: Install Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.x"
 
@@ -123,7 +123,7 @@ jobs:
 
       - name: Ensure a draft release exists
         id: release_vars
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TAG: ${{ env.TAG }}
         with:
@@ -209,7 +209,7 @@ jobs:
             core.setOutput("release_id", release_id);
 
       - name: Attach/Update assets with latest in dist/
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           UPLOAD_URL: ${{ steps.release_vars.outputs.upload_url }}
           RELEASE_ID: ${{ steps.release_vars.outputs.release_id }}
