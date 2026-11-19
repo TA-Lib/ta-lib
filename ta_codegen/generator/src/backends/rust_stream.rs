@@ -1953,7 +1953,8 @@ fn emit_step_end(o: &mut String, fallible: bool) {
 /// [`super::rust_respell::rewrite`] over a list this tier is about to render.
 fn respell(func: &FuncDef, body: &[Statement], ctx: &RustRenderCtx, helpers: &HelperRegistry) -> Vec<Statement> {
     let recurrent = super::select_chain::recurrent_select_targets(func.stream_source());
-    super::rust_respell::rewrite(body, &ctx.fma_view(), helpers, &recurrent)
+    let steps = super::select_rule::ordered_step_targets(func.stream_source());
+    super::rust_respell::rewrite(body, &ctx.fma_view(), helpers, &recurrent, &steps)
 }
 
 /// One model's per-bar step body at a given indent: temp decls, candle

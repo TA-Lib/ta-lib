@@ -56,6 +56,7 @@ pub(crate) mod open_frames;
 pub mod price_bundle;
 pub mod retcode;
 pub mod select_chain;
+pub mod select_rule;
 pub mod runtime_info;
 pub mod rust_abstract;
 pub mod rust_doc;

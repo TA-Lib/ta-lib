@@ -118,6 +118,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
+        let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevReal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -127,16 +128,19 @@ impl Core {
         prevOBV = inVolume[startIdx];
         prevReal = inReal[startIdx];
         outIdx = 0;
-        for i in startIdx..endIdx + 1 {
-            tempReal = inReal[i];
-            if tempReal > prevReal {
-                prevOBV += inVolume[i];
-            } else if tempReal < prevReal {
-                prevOBV -= inVolume[i];
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inReal[i..][.._wn];
+            let _w1 = &inVolume[i..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                tempReal = _w0[_wk];
+                prevOBV = std::hint::select_unpredictable(prevReal < tempReal, prevOBV + _w1[_wk], std::hint::select_unpredictable(tempReal < prevReal, prevOBV - _w1[_wk], prevOBV));
+                _w2[_wk] = prevOBV;
+                outIdx += 1;
+                prevReal = tempReal;
             }
-            outReal[outIdx] = prevOBV;
-            outIdx += 1;
-            prevReal = tempReal;
         }
         *outBegIdx = startIdx;
         *outNBElement = outIdx;
@@ -279,11 +283,7 @@ impl Core {
     fn obv_step_impl(sp: &mut ObvStreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
-        if tempReal > sp.prevReal {
-            sp.prevOBV += inVolume;
-        } else if tempReal < sp.prevReal {
-            sp.prevOBV -= inVolume;
-        }
+        sp.prevOBV = std::hint::select_unpredictable(sp.prevReal < tempReal, sp.prevOBV + inVolume, std::hint::select_unpredictable(tempReal < sp.prevReal, sp.prevOBV - inVolume, sp.prevOBV));
         *outReal = sp.prevOBV;
         sp.prevReal = tempReal;
         sp.cur_outReal = *outReal;
@@ -316,11 +316,7 @@ impl Core {
         outIdx = 0;
         for i in startIdx..endIdx + 1 {
             tempReal = inReal[i];
-            if tempReal > prevReal {
-                prevOBV += inVolume[i];
-            } else if tempReal < prevReal {
-                prevOBV -= inVolume[i];
-            }
+            prevOBV = std::hint::select_unpredictable(prevReal < tempReal, prevOBV + inVolume[i], std::hint::select_unpredictable(tempReal < prevReal, prevOBV - inVolume[i], prevOBV));
             outReal[{ let _v = outIdx; outIdx += 1; _v } * outStride] = prevOBV;
             prevReal = tempReal;
         }
@@ -509,11 +505,7 @@ impl ObvStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut prevOBV = sp.prevOBV;
             tempReal = inReal;
-            if tempReal > sp.prevReal {
-                prevOBV += inVolume;
-            } else if tempReal < sp.prevReal {
-                prevOBV -= inVolume;
-            }
+            prevOBV = std::hint::select_unpredictable(sp.prevReal < tempReal, prevOBV + inVolume, std::hint::select_unpredictable(tempReal < sp.prevReal, prevOBV - inVolume, prevOBV));
             *outReal = prevOBV;
         }
         Ok(outReal)

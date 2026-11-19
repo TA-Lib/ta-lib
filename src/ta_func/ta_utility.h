@@ -347,7 +347,9 @@
  * function compiled for AVX, a target_clones or target("fma") one included, as
  * long as the mask is inlined into it: an SSE instruction after 256-bit code
  * stalls until the upper halves are saved. clang rejects both, and keeps the
- * ternary.
+ * ternary. TA_ORDER_STEP is `a < b ? acc + up : (b < a ? acc - dn : acc)` from
+ * the same masks. Keep `acc` the first operand of the add: of two NaNs, x86
+ * returns the first.
  */
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && \
     !defined(__NVCOMPILER) && defined(__SSE2_MATH__) && (defined(__x86_64__) || defined(__i386__))
@@ -366,11 +368,28 @@
    #define TA_KEEP_IF_LT(a, b, x) ta_zero_pick( (a), (b), (x), 1 )
    #define TA_ZERO_IF_GT(a, b, x) ta_zero_pick( (b), (a), (x), 0 )
    #define TA_ZERO_IF_LT(a, b, x) ta_zero_pick( (a), (b), (x), 0 )
+   static __inline__ __attribute__((always_inline)) double ta_order_step( double a, double b, double acc, double up, double dn )
+   {
+      double lt = a, gt = b, below = acc, above = acc;
+      __asm__( "%vaddsd {%1, %d0|%d0, %1}" : "+x"(below) : "x"(up) );
+      __asm__( "%vsubsd {%1, %d0|%d0, %1}" : "+x"(above) : "x"(dn) );
+      __asm__( "%vcmpltsd {%1, %d0|%d0, %1}" : "+x"(lt) : "x"(b) );
+      __asm__( "%vcmpltsd {%1, %d0|%d0, %1}" : "+x"(gt) : "x"(a) );
+      __asm__( "%vandpd {%1, %d0|%d0, %1}" : "+x"(below) : "x"(lt) );
+      __asm__( "%vandpd {%1, %d0|%d0, %1}" : "+x"(above) : "x"(gt) );
+      __asm__( "%vorpd {%1, %d0|%d0, %1}" : "+x"(lt) : "x"(gt) );
+      __asm__( "%vandnpd {%1, %d0|%d0, %1}" : "+x"(lt) : "x"(acc) );
+      __asm__( "%vorpd {%1, %d0|%d0, %1}" : "+x"(below) : "x"(above) );
+      __asm__( "%vorpd {%1, %d0|%d0, %1}" : "+x"(below) : "x"(lt) );
+      return below;
+   }
+   #define TA_ORDER_STEP(a, b, acc, up, dn) ta_order_step( (a), (b), (acc), (up), (dn) )
 #else
    #define TA_KEEP_IF_GT(a, b, x) (((a) > (b)) ? (x) : 0.0)
    #define TA_KEEP_IF_LT(a, b, x) (((a) < (b)) ? (x) : 0.0)
    #define TA_ZERO_IF_GT(a, b, x) (((a) > (b)) ? 0.0 : (x))
    #define TA_ZERO_IF_LT(a, b, x) (((a) < (b)) ? 0.0 : (x))
+   #define TA_ORDER_STEP(a, b, acc, up, dn) (((a) < (b)) ? (acc) + (up) : (((b) < (a)) ? (acc) - (dn) : (acc)))
 #endif
 
 /* `c >= o ? c : o` and `c >= o ? o : c` as maxsd/minsd, which a candle's colour

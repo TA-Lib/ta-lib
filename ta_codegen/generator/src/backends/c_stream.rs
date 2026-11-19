@@ -6302,6 +6302,7 @@ mod tests {
             sentinel_vars: set(&[]),
             recurrent_select_targets: set(&[]),
             running_extreme_targets: set(&[]),
+            ordered_step_targets: set(&[]),
         });
         let bump = Statement::Assign {
             target: var(counter),

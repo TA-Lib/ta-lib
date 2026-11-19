@@ -1210,6 +1210,31 @@ TA_RetCode max( int    startIdx,
     }
 }
 
+/// OBV adds or subtracts the volume on whether the close rose, a coin flip: C
+/// and Rust select the step in batch (C's two precisions), open, step and peek.
+/// No other function's accumulation qualifies.
+#[test]
+fn c_and_rust_pick_an_ordered_step_without_a_branch() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    let mut fired = Vec::new();
+    for name in common::all_indicators() {
+        let (func, _) = load_indicator(&name);
+        let targets = backends::select_rule::ordered_step_targets(&func.body);
+        if !targets.is_empty() {
+            fired.push(format!("{name}: {targets:?}"));
+        }
+    }
+    assert_eq!(fired, ["obv: {\"prevOBV\"}"]);
+    let (mut func, enums) = load_indicator("obv");
+    func.streaming = true;
+    let c = backends::c::generate(&func, &enums, registry, helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
+    for (lang, src, pick, tiers) in [("C", &c, "TA_ORDER_STEP(", 5), ("Rust", &rust, "std::hint::select_unpredictable(", 8)] {
+        assert_eq!(src.matches(pick).count(), tiers, "{lang}:\n{src}");
+        assert!(!src.contains("tempReal > "), "{lang} keeps a branch:\n{src}");
+    }
+}
+
 /// A stream handle's step keeps a pick into its own state a ternary, and lowers
 /// one into a local.
 #[test]
