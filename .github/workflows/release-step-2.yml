@@ -12,13 +12,14 @@ concurrency:
   group: release
   cancel-in-progress: false
 
-# Flips the draft release to public via the Releases API.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   upgrade_draft_to_official:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # flips the draft release to public via the Releases API
 
     steps:
       - name: Checkout main branch

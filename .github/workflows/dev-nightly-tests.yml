@@ -34,6 +34,9 @@ on:
         description: "Fractional growth that flags one entry point (default 0.10)."
         default: "0.10"
 
+permissions:
+  contents: read
+
 jobs:
   nightly:
     # A ceiling, not a grant: `test` and `icount` commit back to dev and inherit

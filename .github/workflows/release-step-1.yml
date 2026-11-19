@@ -20,14 +20,15 @@ concurrency:
   group: release
   cancel-in-progress: false
 
-# Pushes the release tag and creates/updates the draft release + its assets.
 permissions:
-  contents: write
-  actions: read # the nightly check below reads main's nightly runs
+  contents: read
 
 jobs:
   process_draft_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes the release tag, creates/updates the draft release and its assets
+      actions: read # the nightly check below reads main's nightly runs
 
     steps:
       - name: Checkout main branch

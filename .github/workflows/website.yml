@@ -16,12 +16,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.event.repository.fork == false
+    permissions:
+      contents: write # pushes the built site to gh-pages
 
     steps:
       - name: Checkout

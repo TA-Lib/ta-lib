@@ -11,6 +11,9 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   nightly:
     # Read-only is structural here rather than a promise the jobs keep:
