@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0449"
+reason = "An unmaintained notice, not a defect. unsafe-libyaml comes in through serde_yaml, which ta_codegen uses at build time to read this repository's own YAML; it is not part of any shipped library."
