@@ -1,0 +1,327 @@
+# The dev nightly's only writer: pushes what `test` and `icount` of
+# nightly-jobs.yml built and committed locally. Called by dev-nightly-tests.yml
+# alone, pinned at @dev like nightly-jobs.yml. A job here refuses a main pin.
+#
+# What arrives is untrusted: the jobs that made it hold no write token, and
+# this is where their output gets one. So an artifact is taken by the id its
+# job reported, never by name; a commit may change only the paths its job owns;
+# and every script that runs here comes from this job's own checkout.
+
+name: nightly publish
+
+on:
+  workflow_call:
+    inputs:
+      dist_linux:
+        type: string
+        default: ""
+      dist_windows:
+        type: string
+        default: ""
+      icount:
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  dist:
+    name: Publish dist packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # uploads pool assets, pushes to dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Which branch is this run for
+        shell: bash
+        env:
+          WF_REF: ${{ job.workflow_ref }}
+        run: |
+          case "$WF_REF" in
+            */nightly-publish.yml@refs/heads/main)
+               echo "::error::nightly-publish.yml never writes to main."
+               exit 1 ;;
+            */nightly-publish.yml@refs/heads/*) ;;
+            *) echo "::error::defined by '$WF_REF', which is not a branch pin of"\
+                    " nightly-publish.yml. A caller's 'uses:' must name it as @<branch>."
+               exit 1 ;;
+          esac
+          echo "NIGHTLY_BRANCH=${WF_REF##*@refs/heads/}" >> "$GITHUB_ENV"
+          echo "definition: $WF_REF"
+
+      # continue-on-error: a leg whose download failed is refused by the step
+      # that publishes, where it does not take the other leg down with it.
+      - name: Download the Linux leg
+        if: inputs.dist_linux != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ inputs.dist_linux }}
+          path: ${{ runner.temp }}/in/linux
+
+      - name: Download the Windows leg
+        if: inputs.dist_windows != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ inputs.dist_windows }}
+          path: ${{ runner.temp }}/in/windows
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      # ORDER IS LOAD-BEARING: every package reaches the pool BEFORE the digest
+      # that names it is pushed. The reverse order can commit a digest naming a
+      # package that was never uploaded, and that state is not recoverable by
+      # retry -- the only way out is a full rebuild + re-test. So this step may
+      # never be continue-on-error.
+      #
+      # Each leg is uploaded against its own digests and its own packages:
+      # `dist-pool.py push` refuses a package whose hash is not the one its
+      # digest records. A leg that fails at any point keeps its commit off dev
+      # and turns the job red, and the other leg still goes through.
+      - name: Upload the packages to the asset pool, then push the digests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IN: ${{ runner.temp }}/in
+          WF_SHA: ${{ job.workflow_sha }}
+          DIST_LINUX: ${{ inputs.dist_linux }}
+          DIST_WINDOWS: ${{ inputs.dist_windows }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # include/ta_common.h with the one line a dist commit may change blanked.
+          header() {
+            git show "$1:include/ta_common.h" \
+              | sed -E 's/^(#define TA_LIB_SOURCES_DIGEST) [0-9a-f]+$/\1/'
+          }
+
+          # Runs inside `if !`, where set -e is off: a command whose failure
+          # must refuse the leg needs its own `|| return 1`.
+          publish_leg() {
+            local leg=$1 tree=$WF_SHA raw bad
+            if [ "$(cat "$leg/base" 2>/dev/null)" != "$WF_SHA" ]; then
+              echo "::error::$leg: missing, or not built from $WF_SHA."
+              return 1
+            fi
+            if [ -f "$leg/commit.bundle" ]; then
+              git fetch --quiet "$leg/commit.bundle" HEAD || return 1
+              tree=$(git rev-parse FETCH_HEAD) || return 1
+              if [ "$(git rev-list --parents -n 1 "$tree")" != "$tree $WF_SHA" ]; then
+                echo "::error::$leg: the bundle is not one commit with $WF_SHA as its only parent."
+                return 1
+              fi
+              # --no-renames: a rename INTO an allowed path lists only the new
+              # name, and the push would delete the old one from dev.
+              raw=$(git diff --no-renames --raw "$WF_SHA" "$tree") || return 1
+              if [ -z "$raw" ]; then
+                echo "::error::$leg: the commit changes nothing."
+                return 1
+              fi
+              bad=$(printf '%s\n' "$raw" | awk -F'\t' '
+                      { split($1, m, " ") }
+                      (m[2] != "100644" && m[2] != "000000") ||
+                      ($2 !~ /^dist\/digests\/[^\/]+\.digest$/ && $2 != "include/ta_common.h") { print $2 }')
+              if [ -n "$bad" ]; then
+                echo "::error::$leg: the commit changes a path, or sets a file mode, that a dist commit may not: $bad"
+                return 1
+              fi
+              if ! cmp -s <(header "$WF_SHA") <(header "$tree"); then
+                echo "::error::$leg: the commit changes include/ta_common.h beyond TA_LIB_SOURCES_DIGEST."
+                return 1
+              fi
+              git restore --source="$tree" --staged --worktree -- dist/digests || return 1
+            fi
+            rm -f dist/*.deb dist/*.msi dist/*.zip dist/*.tar.gz
+            cp "$leg"/packages/* dist/ || return 1
+            echo "== $leg: pool upload against the digests of $tree"
+            python3 scripts/dist-pool.py push || return 1
+            [ "$tree" = "$WF_SHA" ] && return 0
+            git restore --source="$WF_SHA" --staged --worktree -- dist/digests || return 1
+
+            # `ours` is the branch being built on: where the other leg, or
+            # dev, changed the same line, what is already there stays.
+            for _ in 1 2 3 4 5; do
+              git cherry-pick --abort 2>/dev/null
+              if git fetch --quiet origin "$NIGHTLY_BRANCH" \
+                 && git checkout --quiet --detach FETCH_HEAD \
+                 && git cherry-pick --strategy-option=ours --empty=drop "$tree" \
+                 && git push origin "HEAD:$NIGHTLY_BRANCH"; then
+                return 0
+              fi
+              sleep 10
+            done
+            git cherry-pick --abort 2>/dev/null
+            echo "::error::$leg: could not push the refreshed dist package after 5 attempts;"\
+                 " dist/ and include/ta_common.h still describe the previous sources,"\
+                 " and merge.py will refuse the next dev->main merge."
+            return 1
+          }
+
+          failed=""
+          for name in linux windows; do
+            case "$name" in
+              linux)   id=$DIST_LINUX ;;
+              windows) id=$DIST_WINDOWS ;;
+            esac
+            if [ -z "$id" ]; then
+              echo "::warning::the $name leg of 'test' reported no artifact; none of it is published."
+              continue
+            fi
+            if ! publish_leg "$IN/$name"; then
+              echo "::error::the $name leg was not published."
+              failed=yes
+            fi
+            # Back to this job's own checkout: the next leg's digests and
+            # dist-pool.py start from it.
+            git checkout --quiet --detach "$WF_SHA"
+            git restore --source="$WF_SHA" --staged --worktree -- dist/digests
+          done
+          [ -z "$failed" ]
+
+  # Advisory like the `icount` job it serves: nothing here turns the nightly red.
+  baseline:
+    name: Publish the instruction-count baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: write # pushes to dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Which branch is this run for
+        shell: bash
+        env:
+          WF_REF: ${{ job.workflow_ref }}
+        run: |
+          case "$WF_REF" in
+            */nightly-publish.yml@refs/heads/main)
+               echo "::error::nightly-publish.yml never writes to main."
+               exit 1 ;;
+            */nightly-publish.yml@refs/heads/*) ;;
+            *) echo "::error::defined by '$WF_REF', which is not a branch pin of"\
+                    " nightly-publish.yml. A caller's 'uses:' must name it as @<branch>."
+               exit 1 ;;
+          esac
+          echo "NIGHTLY_BRANCH=${WF_REF##*@refs/heads/}" >> "$GITHUB_ENV"
+          echo "definition: $WF_REF"
+
+      - name: Download what icount handed over
+        if: inputs.icount != ''
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ inputs.icount }}
+          path: ${{ runner.temp }}/in
+
+      - name: Push the lowered baseline
+        id: push
+        env:
+          IN: ${{ runner.temp }}/in
+          WF_SHA: ${{ job.workflow_sha }}
+          ICOUNT: ${{ inputs.icount }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          leg="$IN"
+          if [ -z "$ICOUNT" ]; then
+            echo "icount reported no artifact: it skipped, failed, or ran on a tree already measured."
+            exit 0
+          fi
+          if [ "$(cat "$leg/base" 2>/dev/null)" != "$WF_SHA" ]; then
+            echo "::error::the hand-over is missing, or was not built from $WF_SHA."
+            exit 1
+          fi
+
+          if [ -f "$leg/commit.bundle" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git fetch --quiet "$leg/commit.bundle" HEAD
+            commit=$(git rev-parse FETCH_HEAD)
+            if [ "$(git rev-list --parents -n 1 "$commit")" != "$commit $WF_SHA" ]; then
+              echo "::error::the bundle is not one commit with $WF_SHA as its only parent."
+              exit 1
+            fi
+            # --no-renames: a rename INTO .github/perf/ lists only the new name,
+            # and the push would delete the old one from dev.
+            raw=$(git diff --no-renames --raw "$WF_SHA" "$commit")
+            if [ -z "$raw" ]; then
+              echo "::error::the commit changes nothing."
+              exit 1
+            fi
+            bad=$(printf '%s\n' "$raw" | awk -F'\t' '
+                    { split($1, m, " ") }
+                    (m[2] != "100644" && m[2] != "000000") || $2 !~ /^\.github\/perf\// { print $2 }')
+            if [ -n "$bad" ]; then
+              echo "::error::the commit changes a path, or sets a file mode, that a baseline commit may not: $bad"
+              exit 1
+            fi
+            # The `dist` job pushes dist/ and include/ta_common.h while this
+            # runs, so dev moves underneath. Disjoint paths, so there is
+            # nothing to resolve.
+            #
+            # NO --strategy-option=ours, which the `dist` job's push carries: a
+            # conflict would then discard the baseline this run just measured.
+            pushed=""
+            for _ in 1 2 3 4 5; do
+              git cherry-pick --abort 2>/dev/null || true
+              if git fetch --quiet origin "$NIGHTLY_BRANCH" \
+                 && git checkout --quiet --detach FETCH_HEAD \
+                 && git cherry-pick --empty=drop "$commit" \
+                 && git push origin "HEAD:$NIGHTLY_BRANCH"; then
+                pushed=yes
+                break
+              fi
+              sleep 10
+            done
+            if [ -z "$pushed" ]; then
+              echo "::error::could not push the measured baseline after 5 attempts;"\
+                   " it is NOT recorded and the next run will re-measure from a stale one."
+              exit 1
+            fi
+          else
+            echo "Baseline unchanged."
+          fi
+
+          # Set last: the step below must not arm the skip for a baseline that
+          # was not pushed.
+          mkdir -p "$RUNNER_TEMP/perf"
+          cp "$leg/fingerprint" "$RUNNER_TEMP/perf/fingerprint"
+          echo "fp=$(cat "$leg/fingerprint")" >> "$GITHUB_OUTPUT"
+          echo "mode=$(cat "$leg/mode")" >> "$GITHUB_OUTPUT"
+
+      # Not in measure mode. That run writes no baseline, so arming the skip
+      # would let the next scheduled run pass over a tree whose improvement the
+      # ratchet never recorded, leaving a later regression measured against the
+      # stale higher count.
+      #
+      # Caches are scoped per ref, and a scheduled run's ref is the DEFAULT
+      # branch however the job checks out dev. So this arms the skip for the
+      # next run on the same ref: schedule to schedule, or a dispatch to a
+      # dispatch on that same ref. It does not carry a `--ref dev` dispatch over
+      # to the 5AM schedule.
+      #
+      # `path` must stay the string icount's lookup uses: it is part of the
+      # cache's identity.
+      - name: Remember this tree as measured
+        if: steps.push.outputs.fp != '' && steps.push.outputs.mode != 'measure'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.push.outputs.fp }}

@@ -3,12 +3,10 @@
 # and every checkout below takes `job.workflow_sha`, so the definition and the
 # tree it tests are always the same commit.
 #
-# No workflow-level `permissions:`. `test` and `icount` must INHERIT the
-# caller's grant (dev writes, main reads): declaring contents: write on a job
-# here is a hard validation failure under main's read-only caller, and
-# declaring contents: read here would cap them and kill the push. Every other
-# job asks for contents: read itself, so a job added without that block
-# inherits write on dev.
+# Nothing here writes to the repository: main's caller grants contents: read,
+# and a job asking for more fails validation before the run starts. On dev,
+# `test` and `icount` hand what they would commit to nightly-publish.yml as
+# artifacts.
 #
 # secrets.GITHUB_TOKEN arrives on its own. Any other secret needs
 # `secrets: inherit` on BOTH callers.
@@ -16,8 +14,6 @@
 name: nightly jobs
 
 on:
-  # Adding a trigger here hands `test` and `icount` the repo default token:
-  # they are the two jobs with no `permissions:` of their own.
   workflow_call:
     inputs:
       force_build:
@@ -32,6 +28,17 @@ on:
         default: true
       perf_threshold:
         type: string
+    # Artifact ids for nightly-publish.yml; empty when the job handed nothing over.
+    outputs:
+      dist_linux:
+        value: ${{ jobs.test.outputs.linux }}
+      dist_windows:
+        value: ${{ jobs.test.outputs.windows }}
+      icount:
+        value: ${{ jobs.icount.outputs.handover }}
+
+permissions:
+  contents: read
 
 jobs:
   # No job here `needs: test`. Each checks out job.workflow_sha and builds what
@@ -41,6 +48,12 @@ jobs:
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
+    permissions:
+      contents: read
+    # One name per leg: a name two legs set keeps only one leg's value.
+    outputs:
+      linux: ${{ steps.handover.outputs.linux }}
+      windows: ${{ steps.handover.outputs.windows }}
     env:
       # Scheduled runs leave this '0'; a manual dispatch can force package.py
       # to rebuild and re-test everything despite matching dist digests.
@@ -59,7 +72,7 @@ jobs:
       # nightlies are SCHEDULED, so github.ref is refs/heads/main for BOTH and
       # cannot tell them apart; job.workflow_ref names this file at the ref its
       # caller pinned. An unrecognised shape is refused rather than defaulted,
-      # because a silent miss would skip the write steps below and read green.
+      # because a silent miss would skip the dev-only steps below and read green.
       - name: Which branch is this run for
         shell: bash
         env:
@@ -107,8 +120,9 @@ jobs:
       #   2. the compare_*_files helpers diff against the previous package to decide
       #      whether anything actually changed. With no baseline every asset looks new
       #      and churns on every run.
-      # --allow-missing: a pool miss here is self-healing (package.py rebuilds and the
-      # push step re-uploads), so it must not turn a recoverable state into a red build.
+      # --allow-missing: a pool miss here is self-healing (package.py rebuilds and
+      # nightly-publish.yml re-uploads), so it must not turn a recoverable state
+      # into a red build.
       - name: Fetch dist packages from the asset pool (Linux)
         if: runner.os == 'Linux'
         env:
@@ -196,41 +210,25 @@ jobs:
         shell: cmd
         run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py'
 
-      # Upload the freshly built packages into the content-addressed asset pool.
-      #
-      # ORDER IS LOAD-BEARING: this runs BEFORE the digests that reference the
-      # packages are committed. The reverse order can commit a digest naming a
-      # package that was never uploaded, and that state is not recoverable by
-      # retry -- the only way out is a full rebuild + re-test. For the same
-      # reason this step must never be continue-on-error: a failed upload has to
-      # stop the run before anything is committed.
-      #
-      # Idempotent: assets are named by content hash, so re-running uploads
-      # nothing new, and a race with the other matrix leg resolves to success.
-      #
-      # Write steps test IS_MAIN, which the step after the checkout sets from
-      # this file's own ref. main's caller grants contents: read, so even a
-      # wrong answer here cannot write: the token has nothing to give.
-      - name: Push dist packages to the asset pool (Linux)
-        if: runner.os == 'Linux' && env.IS_MAIN != '1'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py push
-
-      - name: Push dist packages to the asset pool (Windows x64)
-        if: runner.os == 'Windows' && env.IS_MAIN != '1'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: cmd
-        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py push'
-
-      - name: Check for changes and commit if any
+      # dev only. The commit is made here, on the OS that built the tree, so its
+      # blobs carry this checkout's line-ending conversion. It may touch
+      # dist/digests/ and include/ta_common.h only: nightly-publish.yml refuses
+      # a bundle that changes anything else.
+      - name: Commit the dist change for the publish job
         if: env.IS_MAIN != '1'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WF_SHA: ${{ job.workflow_sha }}
+          LEG: ${{ matrix.os }}
         shell: bash
         run: |
+          out=temp/publish
+          mkdir -p "$out/packages"
+          echo "$WF_SHA" > "$out/base"
+          shopt -s nullglob
+          for f in dist/*.deb dist/*.msi dist/*.zip dist/*.tar.gz; do
+            cp "$f" "$out/packages/"
+          done
+
           dist_changes=$(git status --porcelain dist/)
           ta_common_changes=$(git status --porcelain include/ta_common.h)
           if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
@@ -246,7 +244,7 @@ jobs:
               git add include/ta_common.h
             fi
 
-            git commit -m "Update dist package (from ${{ matrix.os }})"
+            git commit -m "Update dist package (from $LEG)"
 
             # Check for unstaged changes and log them.
             # (this help debugging because it should not happen)
@@ -255,29 +253,35 @@ jobs:
               git status --porcelain
             fi
 
-            # `|| sleep 10` makes the loop body succeed, so a for-loop ending on
-            # it exits 0 and this step reads GREEN with nothing pushed. The
-            # checkout is detached at the definition's commit, so the refspec
-            # has to name the destination.
-            pushed=""
-            for i in $(seq 1 5); do
-              if git pull --rebase --strategy-option=ours origin "$NIGHTLY_BRANCH" \
-                 && git push origin "HEAD:$NIGHTLY_BRANCH"; then
-                pushed=yes
-                break
-              fi
-              git rebase --abort 2>/dev/null || true
-              sleep 10
-            done
-            if [ -z "$pushed" ]; then
-              echo "::error::could not push the refreshed dist package after 5 attempts;"\
-                   " dist/ and include/ta_common.h still describe the previous sources,"\
-                   " and merge.py will refuse the next dev->main merge."
-              exit 1
-            fi
+            git bundle create "$out/commit.bundle" "$WF_SHA..HEAD"
           else
             echo "No changes detected in dist directory"
           fi
+
+      - name: Hand the packages and the commit to the publish job
+        id: upload
+        if: env.IS_MAIN != '1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-publish-${{ matrix.os }}
+          path: temp/publish/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Report the artifact to the publish job
+        id: handover
+        if: env.IS_MAIN != '1'
+        env:
+          ID: ${{ steps.upload.outputs.artifact-id }}
+          LEG: ${{ matrix.os }}
+        shell: bash
+        run: |
+          case "$LEG" in
+            ubuntu-latest) echo "linux=$ID" >> "$GITHUB_OUTPUT" ;;
+            windows-2022)  echo "windows=$ID" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::no output is declared for the $LEG leg: its dist packages would never be published."
+               exit 1 ;;
+          esac
 
       # The read half of the fork above: on dev a dist/ or ta_common.h change is
       # the expected outcome and was just committed, so this can only be an
@@ -304,8 +308,9 @@ jobs:
       # packages those digests NAME are actually retrievable -- the half that stopped
       # being self-evident once the binaries left git. Strict (no --allow-missing):
       # on main, a digest pointing at content the pool cannot produce means the next
-      # release would have nothing to attach, and that must be loud. On dev the push
-      # above already fails on a missing or mismatched digest, so this would restate it.
+      # release would have nothing to attach, and that must be loud. On dev,
+      # nightly-publish.yml's pool upload already fails on a missing or mismatched
+      # digest, so this would restate it.
       - name: Verify every referenced package exists in the asset pool
         if: runner.os == 'Linux' && env.IS_MAIN == '1'
         env:
@@ -1932,12 +1937,12 @@ jobs:
 
   # Instruction-count regression detection for every C entry point (issue #412).
   #
-  # A job here rather than its own workflow because it COMMITS to dev: keeping it
-  # inside the nightly's single writer window is what keeps "green dev-nightly
-  # means mergeable dev" true. Do not give it `needs:` and do not feed it another
-  # job's build artifact (which would require one): in parallel it costs no
-  # wall clock, while serialising it charges the nightly for every minute it
-  # takes.
+  # A job here rather than its own workflow because its baseline reaches dev
+  # through nightly-publish.yml in the same run, which is what keeps "green
+  # dev-nightly means mergeable dev" true. Do not give it `needs:` and do not
+  # feed it another job's build artifact (which would require one): in parallel
+  # it costs no wall clock, while serialising it charges the nightly for every
+  # minute it takes.
   #
   # It counts retired instructions under callgrind rather than timing anything:
   # exact, byte-identical across runs on a loaded box, which is what lets a 10%
@@ -1953,6 +1958,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     continue-on-error: true
+    permissions:
+      contents: read
+    outputs:
+      handover: ${{ steps.upload.outputs.artifact-id }}
     env:
       MODE: ${{ inputs.perf_mode || 'gate' }}
       THRESHOLD: ${{ inputs.perf_threshold || '0.10' }}
@@ -1969,7 +1978,7 @@ jobs:
       # nightlies are SCHEDULED, so github.ref is refs/heads/main for BOTH and
       # cannot tell them apart; job.workflow_ref names this file at the ref its
       # caller pinned. An unrecognised shape is refused rather than defaulted,
-      # because a silent miss would skip the write steps below and read green.
+      # because a silent miss would skip the dev-only steps below and read green.
       - name: Which branch is this run for
         shell: bash
         env:
@@ -2107,9 +2116,16 @@ jobs:
       # bench_icount.py only ever LOWERS a row: one over the threshold is
       # held, not absorbed. Raising a row needs mode=accept naming that row,
       # which is a person deciding to.
-      - name: Commit the lowered baseline
+      - name: Commit the lowered baseline for the publish job
         if: success() && steps.decide.outputs.measure == 'true' && env.IS_MAIN != '1'
+        env:
+          WF_SHA: ${{ job.workflow_sha }}
         run: |
+          out=temp/publish
+          mkdir -p "$out"
+          echo "$WF_SHA" > "$out/base"
+          echo "$MODE" > "$out/mode"
+          cp "$RUNNER_TEMP/perf/fingerprint" "$out/fingerprint"
           changes=$(git status --porcelain .github/perf/)
           if [ -z "$changes" ]; then
             echo "Baseline unchanged."
@@ -2120,54 +2136,19 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/perf/
           git commit -m "perf: lower the instruction-count baseline"
-          # The `test` job commits dist/ and include/ta_common.h while this runs,
-          # so dev moves underneath. Disjoint paths, so the rebase has nothing to
-          # resolve.
-          #
-          # NO --strategy-option=ours, which the `test` job's push carries:
-          # during a rebase "ours" is the UPSTREAM side, so a conflict would
-          # discard the baseline this run just measured.
-          #
-          # `|| sleep 10` makes the loop body succeed, so a for-loop that ends
-          # on it exits 0 and the step reads GREEN with nothing pushed. Keep the
-          # explicit failure after the loop, and abort the half-finished rebase
-          # each round or attempts 2-5 die on "a rebase-merge directory already
-          # exists" rather than retrying anything.
-          pushed=""
-          for i in $(seq 1 5); do
-            if git pull --rebase origin "$NIGHTLY_BRANCH" \
-               && git push origin "HEAD:$NIGHTLY_BRANCH"; then
-              pushed=yes
-              break
-            fi
-            git rebase --abort 2>/dev/null || true
-            sleep 10
-          done
-          if [ -z "$pushed" ]; then
-            echo "::error::could not push the measured baseline after 5 attempts;"\
-                 " it is NOT recorded and the next run will re-measure from a stale one."
-            exit 1
-          fi
+          git bundle create "$out/commit.bundle" "$WF_SHA..HEAD"
 
-      # Not in measure mode. That run writes no baseline, so arming the skip
-      # would let the next scheduled run pass over a tree whose improvement the
-      # ratchet never recorded, leaving a later regression measured against the
-      # stale higher count.
-      #
-      # Same reason excludes main, which can never commit one: it would arm the
-      # skip for a fingerprint dev later presents.
-      #
-      # Caches are scoped per ref, and a scheduled run's ref is the DEFAULT
-      # branch however the job checks out dev. So this arms the skip for the
-      # next run on the same ref: schedule to schedule, or a dispatch to a
-      # dispatch on that same ref. It does not carry a `--ref dev` dispatch over
-      # to the 5AM schedule.
-      - name: Remember this tree as measured
-        if: steps.decide.outputs.measure == 'true' && env.MODE != 'measure' && env.IS_MAIN != '1'
-        uses: actions/cache/save@v6
+      # Implicit success(): the publish job arms the measured-tree skip from
+      # this artifact, and a run that failed above must not arm it.
+      - name: Hand the baseline to the publish job
+        id: upload
+        if: steps.decide.outputs.measure == 'true' && env.IS_MAIN != '1'
+        uses: actions/upload-artifact@v7
         with:
-          path: ${{ runner.temp }}/perf
-          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+          name: icount-publish
+          path: temp/publish/
+          if-no-files-found: error
+          retention-days: 1
 
       # always(), not the implicit success(): the per-function dump is worth most
       # on the run that failed the gate, which is exactly when a bare condition

@@ -16,10 +16,9 @@ permissions:
 
 jobs:
   nightly:
-    # Read-only is structural here rather than a promise the jobs keep:
-    # nightly-jobs.yml's write steps cannot be granted what this caller never
-    # had, and a job that asked for write would fail validation before the run
-    # starts.
+    # Read-only is structural here rather than a promise the jobs keep: a job
+    # that asked for write would fail validation before the run starts.
+    # nightly-publish.yml, dev's writer, must never be called from this file.
     permissions:
       contents: read
     uses: TA-Lib/ta-lib/.github/workflows/nightly-jobs.yml@main

@@ -1,10 +1,10 @@
 # Periodic tests of the latest dev branch, for early detection of breaking
 # changes.
 #
-# No jobs here: every job lives in nightly-jobs.yml. A scheduled run takes its
-# DEFINITION from the default branch, so anything written here is as old as
-# main; the @dev pin below is what keeps the jobs and the tree they test on the
-# same branch.
+# No jobs here: every job lives in nightly-jobs.yml or nightly-publish.yml. A
+# scheduled run takes its DEFINITION from the default branch, so anything
+# written here is as old as main; the @dev pins below are what keep the jobs and
+# the tree they test on the same branch.
 
 name: dev nightly tests
 
@@ -39,10 +39,8 @@ permissions:
 
 jobs:
   nightly:
-    # A ceiling, not a grant: `test` and `icount` commit back to dev and inherit
-    # it, every other job asks for contents: read itself.
     permissions:
-      contents: write
+      contents: read
     uses: TA-Lib/ta-lib/.github/workflows/nightly-jobs.yml@dev
     with:
       force_build: ${{ inputs.force_build || false }}
@@ -50,3 +48,16 @@ jobs:
       perf_accept: ${{ inputs.perf_accept }}
       perf_force_measure: ${{ inputs.perf_force_measure || false }}
       perf_threshold: ${{ inputs.perf_threshold }}
+
+  # The run's only writer. !cancelled(): a red job in `nightly` must not by
+  # itself skip this one.
+  publish:
+    needs: nightly
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: write
+    uses: TA-Lib/ta-lib/.github/workflows/nightly-publish.yml@dev
+    with:
+      dist_linux: ${{ needs.nightly.outputs.dist_linux }}
+      dist_windows: ${{ needs.nightly.outputs.dist_windows }}
+      icount: ${{ needs.nightly.outputs.icount }}
