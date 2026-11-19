@@ -1150,6 +1150,40 @@ if(_TA_BUILD_TOOLS)
 
 endif()
 
+###########
+# ta_fuzz #
+###########
+# Opt-in and developer-only like the benchmarks: the release tarball does not
+# carry src/tools/ta_fuzz. The harness links its own copy of the library,
+# built with the same instrumentation: AddressSanitizer sees only accesses made
+# by instrumented code, and libFuzzer steers only on edges it can count.
+if(_TA_TOP_LEVEL)
+	option(BUILD_FUZZ "Build the ta_fuzz libFuzzer harness (clang only, TA-Lib developers only)" OFF)
+endif()
+if(_TA_TOP_LEVEL AND BUILD_FUZZ)
+	if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" OR MSVC)
+		message(FATAL_ERROR "BUILD_FUZZ needs LLVM clang, which ships libFuzzer; the C compiler is "
+			"${CMAKE_C_COMPILER_ID}. Configure a new build directory with -DCMAKE_C_COMPILER=clang.")
+	endif()
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_fuzz/ta_fuzz.c")
+		message(FATAL_ERROR "BUILD_FUZZ: src/tools/ta_fuzz/ta_fuzz.c is not in this source tree.")
+	endif()
+	message(STATUS "BUILD_FUZZ: ON")
+	set(TA_FUZZ_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=undefined
+		-fno-omit-frame-pointer -g)
+	add_library(ta-lib-fuzz STATIC ${LIB_SOURCES})
+	target_compile_options(ta-lib-fuzz PRIVATE -fsanitize=fuzzer-no-link ${TA_FUZZ_FLAGS})
+	target_include_directories(ta-lib-fuzz PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+	target_link_libraries(ta-lib-fuzz PUBLIC m)
+	add_executable(ta_fuzz "${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_fuzz/ta_fuzz.c")
+	target_compile_options(ta_fuzz PRIVATE -fsanitize=fuzzer ${TA_FUZZ_FLAGS})
+	target_link_options(ta_fuzz PRIVATE -fsanitize=fuzzer ${TA_FUZZ_FLAGS})
+	target_link_libraries(ta_fuzz PRIVATE ta-lib-fuzz)
+	set_target_properties(ta_fuzz PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
+endif()
+
 # Keep enable_testing() in this top-level file: called from a subdirectory, a
 # ctest run at the build root finds no test and exits 0.
 if(_TA_TOP_LEVEL AND BUILD_TESTING)

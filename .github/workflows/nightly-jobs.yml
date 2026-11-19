@@ -1738,6 +1738,62 @@ jobs:
         shell: bash
         run: python3 scripts/thread_sanitize.py
 
+  # libFuzzer over every function through the abstract API, ASan + UBSan on the
+  # harness and the library (src/tools/ta_fuzz/ta_fuzz.c). Starts from an empty
+  # corpus each night. Clang only: the image's clang carries libFuzzer.
+  fuzz:
+    name: libFuzzer (abstract API, ASan/UBSan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Build ta_fuzz
+        shell: bash
+        run: |
+          cmake -S . -B temp/build-fuzz -DCMAKE_C_COMPILER=clang -DBUILD_FUZZ=ON \
+                -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF
+          cmake --build temp/build-fuzz --target ta_fuzz -j"$(nproc)"
+
+      # The stats lines are the non-vacuity checks: a run that executed nothing,
+      # or a harness that stopped reaching every listed function, fails here.
+      - name: Fuzz for 60 seconds
+        shell: bash
+        run: |
+          mkdir -p temp/fuzz/corpus temp/fuzz/crash
+          rc=0
+          TA_FUZZ_STATS=1 temp/build-fuzz/bin/ta_fuzz -max_total_time=60 -timeout=10 \
+            -print_final_stats=1 -artifact_prefix=temp/fuzz/crash/ temp/fuzz/corpus \
+            > temp/fuzz/run.log 2>&1 || rc=$?
+          tail -n 100 temp/fuzz/run.log
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::ta_fuzz exited $rc; the input is in the fuzz-crash artifact"
+            exit "$rc"
+          fi
+          units=$(sed -n 's/^stat::number_of_executed_units: *//p' temp/fuzz/run.log)
+          if [ "${units:-0}" -le 0 ]; then
+            echo "::error::ta_fuzz executed no input"
+            exit 1
+          fi
+          if ! grep -Eq '^ta_fuzz: ([0-9]+) functions listed, \1 called, \1 returned values$' temp/fuzz/run.log; then
+            echo "::error::ta_fuzz did not get a value from every listed function"
+            exit 1
+          fi
+
+      - name: Upload the failing input
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-crash
+          path: temp/fuzz/crash/
+          if-no-files-found: ignore
+
   # Conan packaging (#86) was never exercised by CI: build the package
   # recipe end to end (library-only; BUILD_TESTING stays off in the
   # recipe).
