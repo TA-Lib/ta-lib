@@ -3,11 +3,11 @@
 # policy=monotone: a run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/15.2.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	092ca5df7d7bfd6a5ae6801241b58b77e64b6b19
-#generated	2026-11-16T00:32:19Z
+#commit	7709bad55a898c201302dfa40e709ee0cddef971
+#generated	2026-11-19T21:10:29Z
 AC	batch	0	647497
 AC	open	0	564093
 AC	openfill	0	604575
@@ -511,7 +511,7 @@ COSH	update	0	114705
 CRSI	batch	0	5667309
 CRSI	open	0	5668218
 CRSI	openfill	0	5668002
-CRSI	peek	0	1490168
+CRSI	peek	0	1681148
 CRSI	update	0	1466383
 CTI	batch	0	1067745
 CTI	open	0	1048082
@@ -873,11 +873,11 @@ NVI	open	0	329139
 NVI	openfill	0	349135
 NVI	peek	0	37149
 NVI	update	0	56292
-OBV	batch	0	200129
-OBV	open	0	180196
-OBV	openfill	0	200197
-OBV	peek	0	39676
-OBV	update	0	51696
+OBV	batch	0	440072
+OBV	open	0	420143
+OBV	openfill	0	440140
+OBV	peek	0	48143
+OBV	update	0	62478
 PERCENTB	batch	0	736392
 PERCENTB	open	0	942823
 PERCENTB	openfill	0	942394
@@ -891,7 +891,7 @@ PERCENTILE	update	0	383248
 PERCENTRANK	batch	0	4377916
 PERCENTRANK	open	0	4338375
 PERCENTRANK	openfill	0	4417963
-PERCENTRANK	peek	0	1337313
+PERCENTRANK	peek	0	1515536
 PERCENTRANK	update	0	1266473
 PLUS_DI	batch	0	660031
 PLUS_DI	open	0	660114
