@@ -32,6 +32,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write # uploads pool assets, pushes to dev
+      id-token: write # signs the attestation
+      attestations: write # records it
 
     steps:
       - name: Checkout
@@ -79,28 +81,27 @@ jobs:
         with:
           python-version: "3.x"
 
-      # ORDER IS LOAD-BEARING: every package reaches the pool BEFORE the digest
-      # that names it is pushed. The reverse order can commit a digest naming a
-      # package that was never uploaded, and that state is not recoverable by
-      # retry -- the only way out is a full rebuild + re-test. So this step may
-      # never be continue-on-error.
+      # Only bytes the pool does not hold, under any file name, are attested:
+      # those it holds were built by an earlier run. Keep that test on the pool,
+      # never on anything a leg reports.
       #
-      # Each leg is uploaded against its own digests and its own packages:
-      # `dist-pool.py push` refuses a package whose hash is not the one its
-      # digest records. A leg that fails at any point keeps its commit off dev
-      # and turns the job red, and the other leg still goes through.
-      - name: Upload the packages to the asset pool, then push the digests
+      # A bad leg is recorded, not fatal here: the other leg still goes through,
+      # and the last step turns the job red.
+      - name: Check each leg and collect the packages the pool lacks
+        id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IN: ${{ runner.temp }}/in
+          LEGS: ${{ runner.temp }}/legs
+          ATTEST: ${{ runner.temp }}/attest
           WF_SHA: ${{ job.workflow_sha }}
           DIST_LINUX: ${{ inputs.dist_linux }}
           DIST_WINDOWS: ${{ inputs.dist_windows }}
         shell: bash
         run: |
           set -euo pipefail
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          rm -rf "$LEGS" "$ATTEST"
+          mkdir -p "$LEGS" "$ATTEST"
 
           # include/ta_common.h with the one line a dist commit may change blanked.
           header() {
@@ -110,24 +111,24 @@ jobs:
 
           # Runs inside `if !`, where set -e is off: a command whose failure
           # must refuse the leg needs its own `|| return 1`.
-          publish_leg() {
-            local leg=$1 tree=$WF_SHA raw bad
+          check_leg() {
+            local name=$1 leg=$IN/$1 tree=$WF_SHA raw bad
             if [ "$(cat "$leg/base" 2>/dev/null)" != "$WF_SHA" ]; then
-              echo "::error::$leg: missing, or not built from $WF_SHA."
+              echo "::error::$name: missing, or not built from $WF_SHA."
               return 1
             fi
             if [ -f "$leg/commit.bundle" ]; then
               git fetch --quiet "$leg/commit.bundle" HEAD || return 1
               tree=$(git rev-parse FETCH_HEAD) || return 1
               if [ "$(git rev-list --parents -n 1 "$tree")" != "$tree $WF_SHA" ]; then
-                echo "::error::$leg: the bundle is not one commit with $WF_SHA as its only parent."
+                echo "::error::$name: the bundle is not one commit with $WF_SHA as its only parent."
                 return 1
               fi
               # --no-renames: a rename INTO an allowed path lists only the new
               # name, and the push would delete the old one from dev.
               raw=$(git diff --no-renames --raw "$WF_SHA" "$tree") || return 1
               if [ -z "$raw" ]; then
-                echo "::error::$leg: the commit changes nothing."
+                echo "::error::$name: the commit changes nothing."
                 return 1
               fi
               bad=$(printf '%s\n' "$raw" | awk -F'\t' '
@@ -135,19 +136,95 @@ jobs:
                       (m[2] != "100644" && m[2] != "000000") ||
                       ($2 !~ /^dist\/digests\/[^\/]+\.digest$/ && $2 != "include/ta_common.h") { print $2 }')
               if [ -n "$bad" ]; then
-                echo "::error::$leg: the commit changes a path, or sets a file mode, that a dist commit may not: $bad"
+                echo "::error::$name: the commit changes a path, or sets a file mode, that a dist commit may not: $bad"
                 return 1
               fi
               if ! cmp -s <(header "$WF_SHA") <(header "$tree"); then
-                echo "::error::$leg: the commit changes include/ta_common.h beyond TA_LIB_SOURCES_DIGEST."
+                echo "::error::$name: the commit changes include/ta_common.h beyond TA_LIB_SOURCES_DIGEST."
                 return 1
               fi
               git restore --source="$tree" --staged --worktree -- dist/digests || return 1
             fi
-            rm -f dist/*.deb dist/*.msi dist/*.zip dist/*.tar.gz
+            find dist -maxdepth 1 -type f -delete
             cp "$leg"/packages/* dist/ || return 1
-            echo "== $leg: pool upload against the digests of $tree"
-            python3 scripts/dist-pool.py push || return 1
+            echo "== $name: against the digests of $tree"
+            python3 scripts/dist-pool.py pending --copy-to "$ATTEST/$name" || return 1
+            echo "$tree" > "$LEGS/$name"
+          }
+
+          for name in linux windows; do
+            case "$name" in
+              linux)   id=$DIST_LINUX ;;
+              windows) id=$DIST_WINDOWS ;;
+            esac
+            if [ -z "$id" ]; then
+              echo "::warning::the $name leg of 'test' reported no artifact; none of it is published."
+              continue
+            fi
+            if ! check_leg "$name"; then
+              echo "::error::the $name leg was not published."
+              rm -rf "${ATTEST:?}/$name"
+              touch "$LEGS/failed"
+            fi
+            # Back to this job's own digests: the next leg's start from them.
+            git restore --source="$WF_SHA" --staged --worktree -- dist/digests
+          done
+
+          if [ -n "$(find "$ATTEST" -type f -print -quit)" ]; then
+            # The release verifies an attestation as signed by this file at
+            # dev. One signed at another branch would be kept for these bytes,
+            # and dev would never replace it.
+            if [ "$NIGHTLY_BRANCH" != dev ]; then
+              echo "::error::only the dev pin adds packages to the pool; this run is for '$NIGHTLY_BRANCH'."
+              exit 1
+            fi
+            echo "subjects=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A failure here ends the job for both legs before anything is uploaded:
+      # no package reaches the pool without its attestation, no digest is
+      # pushed, and the next run rebuilds and tries again.
+      - name: Attest the packages the pool lacks
+        id: attest
+        if: steps.check.outputs.subjects == 'yes'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/attest/*/*
+
+      # ORDER IS LOAD-BEARING: every package reaches the pool BEFORE the digest
+      # that names it is pushed. The reverse order can commit a digest naming a
+      # package that was never uploaded, and that state is not recoverable by
+      # retry -- the only way out is a full rebuild + re-test. So this step may
+      # never be continue-on-error.
+      #
+      # Each leg is uploaded against its own digests and its own packages:
+      # `dist-pool.py push` refuses a package whose hash is not the one its
+      # digest records, and one the pool lacks that the step above did not
+      # attest. A leg that fails in this step keeps its commit off dev and turns
+      # the job red, and the other leg still goes through.
+      - name: Upload the packages to the asset pool, then push the digests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IN: ${{ runner.temp }}/in
+          LEGS: ${{ runner.temp }}/legs
+          ATTESTATION: ${{ steps.attest.outputs.bundle-path }}
+          WF_SHA: ${{ job.workflow_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Runs inside `if !`, where set -e is off: a command whose failure
+          # must refuse the leg needs its own `|| return 1`.
+          publish_leg() {
+            local name=$1 leg=$IN/$1 tree
+            tree=$(cat "$LEGS/$name") || return 1
+            git restore --source="$tree" --staged --worktree -- dist/digests || return 1
+            find dist -maxdepth 1 -type f -delete
+            cp "$leg"/packages/* dist/ || return 1
+            echo "== $name: pool upload against the digests of $tree"
+            python3 scripts/dist-pool.py push --attestation "$ATTESTATION" || return 1
             [ "$tree" = "$WF_SHA" ] && return 0
             git restore --source="$WF_SHA" --staged --worktree -- dist/digests || return 1
 
@@ -164,23 +241,17 @@ jobs:
               sleep 10
             done
             git cherry-pick --abort 2>/dev/null
-            echo "::error::$leg: could not push the refreshed dist package after 5 attempts;"\
+            echo "::error::$name: could not push the refreshed dist package after 5 attempts;"\
                  " dist/ and include/ta_common.h still describe the previous sources,"\
                  " and merge.py will refuse the next dev->main merge."
             return 1
           }
 
           failed=""
+          [ ! -e "$LEGS/failed" ] || failed=yes
           for name in linux windows; do
-            case "$name" in
-              linux)   id=$DIST_LINUX ;;
-              windows) id=$DIST_WINDOWS ;;
-            esac
-            if [ -z "$id" ]; then
-              echo "::warning::the $name leg of 'test' reported no artifact; none of it is published."
-              continue
-            fi
-            if ! publish_leg "$IN/$name"; then
+            [ -f "$LEGS/$name" ] || continue
+            if ! publish_leg "$name"; then
               echo "::error::the $name leg was not published."
               failed=yes
             fi
