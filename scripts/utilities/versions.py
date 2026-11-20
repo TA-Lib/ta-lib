@@ -832,9 +832,10 @@ def read_sources_digest(root_dir: str) -> str:
 
     return None
 
-def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
-    # A digest of the build inputs of the release packages. CI repackages when it
-    # changes.
+def sources_digest_files(root_dir: str) -> list:
+    # The build inputs of the release packages, relative to root_dir. CI repackages
+    # when their digest changes, so a file the source tarball carries must be here:
+    # package.py refuses a tarball with a tracked file this list misses.
     file_patterns = [
         "CMakeLists.txt",
         "configure.ac",
@@ -891,7 +892,10 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
     normalized_file_list = [os.path.relpath(file_path, root_dir) for file_path in file_list]
 
     # Sort lower case to ensure consistent across platforms
-    sorted_files = sorted(normalized_file_list, key=lambda x: x.lower())
+    return sorted(normalized_file_list, key=lambda x: x.lower())
+
+def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
+    sorted_files = sources_digest_files(root_dir)
 
     running_hash = hashlib.md5()
     n_lines = 0
