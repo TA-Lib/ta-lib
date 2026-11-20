@@ -93,8 +93,7 @@ def install(work, allow_dirty):
         tarball = os.path.join(out_dir, [n for n in os.listdir(out_dir) if n.endswith(".tgz")][0])
         with open(os.path.join(work, "package.json"), "w") as f:
             f.write('{"name":"ta-lib-browser-check","private":true,"type":"module"}\n')
-        if pkg.run([pkg.NPM, "install", "--no-audit", "--no-fund", "--ignore-scripts", tarball],
-                   cwd=work).returncode:
+        if pkg.install(tarball, work):
             return ["the browser project could not install %s" % os.path.basename(tarball)]
         return []
     finally:

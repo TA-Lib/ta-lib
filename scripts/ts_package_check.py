@@ -388,6 +388,12 @@ def dist_comment_failures(entries):
     return failures
 
 
+def install(tarball, project):
+    """npm's exit code for installing `tarball` into the project directory `project`."""
+    return run([NPM, "install", "--no-audit", "--no-fund", "--ignore-scripts",
+                os.path.abspath(tarball)], cwd=project).returncode
+
+
 def consume(out_dir, manifest, tops):
     tarball = os.path.join(out_dir, [n for n in os.listdir(out_dir) if n.endswith(".tgz")][0])
     name = manifest["name"]
@@ -400,8 +406,7 @@ def consume(out_dir, manifest, tops):
     try:
         for entry in os.listdir(CONSUMER_DIR):
             shutil.copy(os.path.join(CONSUMER_DIR, entry), work)
-        if run([NPM, "install", "--no-audit", "--no-fund", "--ignore-scripts", tarball],
-               cwd=work).returncode:
+        if install(tarball, work):
             return ["the consumer could not install %s" % os.path.basename(tarball)]
         if run([TSC, "-p", work]).returncode:
             return ["a TypeScript consumer does not type-check against the packed declarations"]
@@ -522,7 +527,11 @@ def main():
     parser.add_argument("--output", help="pack into this new or empty directory and keep it")
     parser.add_argument("--write-api-snapshot", action="store_true",
                         help="record the packed declarations in %s" % os.path.relpath(SNAPSHOT, ROOT))
+    parser.add_argument("--install", nargs=2, metavar=("TARBALL", "PROJECT"),
+                        help="only install TARBALL into the project directory PROJECT, as the consumer step does")
     args = parser.parse_args()
+    if args.install:
+        return install(*args.install)
 
     for tool in ("node", "npm"):
         if not shutil.which(tool):
