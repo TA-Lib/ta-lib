@@ -1,0 +1,39 @@
+# OpenSSF Scorecard over this repository (ossf/scorecard-action). Started by
+# hand; the result is kept as a run artifact and published nowhere.
+#
+# The job runs with the read-only workflow token and no other grant, so a
+# check that needs admin access to the repository settings comes back unscored.
+
+name: Scorecard
+
+on:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run the analysis
+        uses: ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5 # v2.6.0
+        with:
+          results_file: scorecard.json
+          results_format: json
+          publish_results: false
+
+      - name: Keep the result
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard
+          path: scorecard.json
+          if-no-files-found: error
+          retention-days: 14
