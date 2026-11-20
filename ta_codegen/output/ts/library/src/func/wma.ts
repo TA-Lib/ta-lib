@@ -141,8 +141,16 @@ export function wmaImpl(
      * over-read it (#137). Forward order keeps the in-place case correct (#94).
      */
     inIdx = startIdx;
-    for (i = 0; i < outNBElement.value; i += 1) {
-      outReal[i] = inReal[inIdx++];
+    i = 0;
+    if (i < outNBElement.value) {
+      const _wn = outNBElement.value - i;
+      const _w1_0 = i;
+      const _w0_0 = inIdx;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      i += _wn;
+      inIdx += _wn;
     }
     return RetCode.SUCCESS;
   }

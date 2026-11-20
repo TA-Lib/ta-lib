@@ -165,8 +165,16 @@ export function almaImpl(
     outBegIdx.value = startIdx;
     outNBElement.value = endIdx - startIdx + 1;
     i = startIdx;
-    for (outIdx = 0; outIdx < outNBElement.value; outIdx += 1) {
-      outReal[outIdx] = inReal[i++];
+    outIdx = 0;
+    if (outIdx < outNBElement.value) {
+      const _wn = outNBElement.value - outIdx;
+      const _w1_0 = outIdx;
+      const _w0_0 = i;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      i += _wn;
+      outIdx += _wn;
     }
     return RetCode.SUCCESS;
   }

@@ -83,8 +83,17 @@ export function atanImpl(
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
   /* Default return values */
-  for (i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1) {
-    outReal[outIdx] = Math.atan(inReal[i]);
+  i = startIdx;
+  outIdx = 0;
+  if (i <= endIdx) {
+    const _wn = endIdx - i + 1;
+    const _w1_0 = outIdx;
+    const _w0_0 = i;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w1_0 + _wk] = Math.atan(inReal[_w0_0 + _wk]);
+    }
+    i += _wn;
+    outIdx += _wn;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;

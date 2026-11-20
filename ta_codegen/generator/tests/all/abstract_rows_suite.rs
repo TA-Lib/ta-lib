@@ -489,7 +489,7 @@ TA_RetCode max( int    startIdx,
             out.c
         );
         let ts = ts_of(&func, &enums);
-        assert!(ts.contains("outReal[outIdx++] = inReal[i];"), "TypeScript body lost after comment {comment:?}:\n{ts}");
+        assert!(ts.contains("] = inReal["), "TypeScript body lost after comment {comment:?}:\n{ts}");
     }
 }
 

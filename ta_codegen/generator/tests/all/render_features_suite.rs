@@ -2856,3 +2856,22 @@ fn c_percentrank_counts_by_adding_in_step_and_peek_only() {
         assert_eq!(count_sites(&body(needle)), (0, 1), "{needle} must keep the `if`:\n{}", body(needle));
     }
 }
+
+/// TypeScript runs a lockstep batch loop of plain assignments on one counter,
+/// each cursor's start held in a constant (ADD, MOM); a loop with a branch
+/// (TRANGE) or a single cursor (STDDEV's root pass) keeps its form.
+#[test]
+fn typescript_lockstep_loops_run_one_counter() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    for (name, loops) in [("add", 1), ("mom", 1), ("trange", 0), ("stddev", 0)] {
+        let (func, enums) = load_indicator(name);
+        let ts = backends::ts::generate(&func, &enums, registry, helpers);
+        let lines: Vec<&str> = ts.lines().collect();
+        let heads: Vec<usize> = (0..lines.len()).filter(|&i| lines[i].trim_start() == "for (let _wk = 0; _wk < _wn; _wk++) {").collect();
+        assert_eq!(heads.len(), loops, "{name}:\n{ts}");
+        for h in heads {
+            let pass = lines[h + 1].trim_start();
+            assert!(pass.contains("_wk]") && !pass.contains("++") && lines[h + 2].trim_start() == "}", "{name}: one pass, every access at the counter:\n{ts}");
+        }
+    }
+}

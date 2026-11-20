@@ -592,3 +592,55 @@ fn eager(e: &Expr, pre: &mut Vec<Statement>, post: &mut Vec<Statement>) -> Expr 
         _ => e.clone(),
     }
 }
+
+/// Whether a pass reads a scalar before it stores it, so that one pass feeds
+/// the next: a running sum or a recurrence. Such a loop is paced by that
+/// chain rather than by its checks, and the C# and TS renderers keep it as written. `stored` holds
+/// every name the pass stores other than by a step; the steps in `steps` may
+/// carry. Anything but an assignment or a branch counts as carrying.
+pub(crate) fn carries_scalar(pass: &[Statement], stored: &std::collections::BTreeSet<String>, steps: &BTreeMap<String, i64>) -> bool {
+    use std::collections::BTreeSet;
+    fn reads_undefined(e: &Expr, stored: &BTreeSet<String>, defined: &BTreeSet<String>) -> bool {
+        let mut hit = false;
+        crate::streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(n) = x {
+                hit |= stored.contains(n) && !defined.contains(n);
+            }
+        });
+        hit
+    }
+    fn walk(pass: &[Statement], stored: &BTreeSet<String>, steps: &BTreeMap<String, i64>, defined: &mut BTreeSet<String>) -> bool {
+        for s in pass {
+            match s {
+                Statement::Comment(_) => {}
+                Statement::Assign { .. } if super::lockstep::as_step(s).is_some_and(|(v, _)| steps.contains_key(v)) => {}
+                Statement::Assign { target, value, .. } => {
+                    let index = match target {
+                        Expr::ArrayAccess(_, i) => reads_undefined(i, stored, defined),
+                        _ => false,
+                    };
+                    if index || reads_undefined(value, stored, defined) {
+                        return true;
+                    }
+                    if let Expr::Var(t) = target {
+                        defined.insert(t.clone());
+                    }
+                }
+                Statement::If { condition, then_body, else_body, .. } => {
+                    if reads_undefined(condition, stored, defined) {
+                        return true;
+                    }
+                    let (mut then_defined, mut else_defined) = (defined.clone(), defined.clone());
+                    if walk(then_body, stored, steps, &mut then_defined) || walk(else_body, stored, steps, &mut else_defined) {
+                        return true;
+                    }
+                    *defined = then_defined.intersection(&else_defined).cloned().collect();
+                }
+                _ => return true,
+            }
+        }
+        false
+    }
+    let stored: BTreeSet<String> = stored.iter().filter(|n| !steps.contains_key(*n)).cloned().collect();
+    walk(pass, &stored, steps, &mut BTreeSet::new())
+}

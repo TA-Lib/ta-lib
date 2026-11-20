@@ -154,8 +154,15 @@ export function vidyaImpl(
     outBegIdx.value = startIdx;
     outIdx = 0;
     today = startIdx;
-    while (today <= endIdx) {
-      outReal[outIdx++] = inReal[today++];
+    if (today <= endIdx) {
+      const _wn = endIdx - today + 1;
+      const _w1_0 = outIdx;
+      const _w0_0 = today;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      outIdx += _wn;
+      today += _wn;
     }
     outNBElement.value = outIdx;
     return RetCode.SUCCESS;

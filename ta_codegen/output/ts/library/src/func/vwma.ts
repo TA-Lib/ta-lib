@@ -140,8 +140,15 @@ export function vwmaImpl(
     outBegIdx.value = startIdx;
     outIdx = 0;
     i = startIdx;
-    while (i <= endIdx) {
-      outReal[outIdx++] = inReal[i++];
+    if (i <= endIdx) {
+      const _wn = endIdx - i + 1;
+      const _w1_0 = outIdx;
+      const _w0_0 = i;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      i += _wn;
+      outIdx += _wn;
     }
     outNBElement.value = outIdx;
     return RetCode.SUCCESS;

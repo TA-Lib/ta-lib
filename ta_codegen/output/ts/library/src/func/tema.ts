@@ -166,8 +166,15 @@ export function temaImpl(
   if (optInTimePeriod === 1) {
     outBegIdx.value = startIdx;
     outIdx = 0;
-    while (startIdx <= endIdx) {
-      outReal[outIdx++] = inReal[startIdx++];
+    if (startIdx <= endIdx) {
+      const _wn = endIdx - startIdx + 1;
+      const _w1_0 = outIdx;
+      const _w0_0 = startIdx;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      outIdx += _wn;
+      startIdx += _wn;
     }
     outNBElement.value = outIdx;
     return RetCode.SUCCESS;

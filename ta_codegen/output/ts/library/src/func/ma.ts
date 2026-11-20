@@ -246,8 +246,17 @@ export function maImpl(
   if (optInTimePeriod === 1 || optInMAType === MAType.DISABLED) {
     nbElement = endIdx - startIdx + 1;
     outNBElement.value = nbElement;
-    for (todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1) {
-      outReal[outIdx] = inReal[todayIdx];
+    todayIdx = startIdx;
+    outIdx = 0;
+    if (outIdx < nbElement) {
+      const _wn = nbElement - outIdx;
+      const _w1_0 = outIdx;
+      const _w0_0 = todayIdx;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      }
+      outIdx += _wn;
+      todayIdx += _wn;
     }
     outBegIdx.value = startIdx;
     return RetCode.SUCCESS;

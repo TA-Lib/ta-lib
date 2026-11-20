@@ -85,10 +85,16 @@ export function multImpl(
   }
   outIdx = 0;
   i = startIdx;
-  while (i <= endIdx) {
-    outReal[outIdx] = inReal0[i] * inReal1[i];
-    outIdx += 1;
-    i += 1;
+  if (i <= endIdx) {
+    const _wn = endIdx - i + 1;
+    const _w2_0 = outIdx;
+    const _w0_0 = i;
+    const _w1_0 = i;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w2_0 + _wk] = inReal0[_w0_0 + _wk] * inReal1[_w1_0 + _wk];
+    }
+    i += _wn;
+    outIdx += _wn;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;

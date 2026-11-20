@@ -152,8 +152,17 @@ export function momImpl(
   outIdx = 0;
   inIdx = startIdx;
   trailingIdx = startIdx - optInTimePeriod;
-  while (inIdx <= endIdx) {
-    outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+  if (inIdx <= endIdx) {
+    const _wn = endIdx - inIdx + 1;
+    const _w2_0 = outIdx;
+    const _w0_0 = inIdx;
+    const _w1_0 = trailingIdx;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w2_0 + _wk] = inReal[_w0_0 + _wk] - inReal[_w1_0 + _wk];
+    }
+    inIdx += _wn;
+    outIdx += _wn;
+    trailingIdx += _wn;
   }
   /* Set output limits. */
   outNBElement.value = outIdx;

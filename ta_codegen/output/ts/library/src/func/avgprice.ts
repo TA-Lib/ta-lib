@@ -91,8 +91,19 @@ export function avgpriceImpl(
   }
   /* Average price = (High + Low + Open + Close) / 4 */
   outIdx = 0;
-  for (i = startIdx; i <= endIdx; i += 1) {
-    outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4;
+  i = startIdx;
+  if (i <= endIdx) {
+    const _wn = endIdx - i + 1;
+    const _w4_0 = outIdx;
+    const _w1_0 = i;
+    const _w2_0 = i;
+    const _w0_0 = i;
+    const _w3_0 = i;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w4_0 + _wk] = (inHigh[_w1_0 + _wk] + inLow[_w2_0 + _wk] + inClose[_w0_0 + _wk] + inOpen[_w3_0 + _wk]) / 4;
+    }
+    i += _wn;
+    outIdx += _wn;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;

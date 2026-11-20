@@ -153,14 +153,22 @@ export function eriImpl(
   if (optInTimePeriod === 1) {
     outIdx = 0;
     today = startIdx;
-    while (today <= endIdx) {
-      tempHT = inHigh[today];
-      tempLT = inLow[today];
-      tempReal = inClose[today];
-      outBullPower[outIdx] = tempHT - tempReal;
-      outBearPower[outIdx] = tempLT - tempReal;
-      outIdx += 1;
-      today += 1;
+    if (today <= endIdx) {
+      const _wn = endIdx - today + 1;
+      const _w1_0 = today;
+      const _w2_0 = today;
+      const _w0_0 = today;
+      const _w4_0 = outIdx;
+      const _w3_0 = outIdx;
+      for (let _wk = 0; _wk < _wn; _wk++) {
+        tempHT = inHigh[_w1_0 + _wk];
+        tempLT = inLow[_w2_0 + _wk];
+        tempReal = inClose[_w0_0 + _wk];
+        outBullPower[_w4_0 + _wk] = tempHT - tempReal;
+        outBearPower[_w3_0 + _wk] = tempLT - tempReal;
+      }
+      outIdx += _wn;
+      today += _wn;
     }
     outBegIdx.value = startIdx;
     outNBElement.value = outIdx;
