@@ -177,8 +177,24 @@ public partial class Core
       outIdx = 0;
       inIdx = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+      if( inIdx <= endIdx ) {
+         int _wn = endIdx - inIdx + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(inIdx, _w2.Length);
+         var _w1 = inReal.Slice(trailingIdx, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = _w0[_wk] - _w1[_wk];
+            _w2[_wk + 1] = _w0[_wk + 1] - _w1[_wk + 1];
+            _w2[_wk + 2] = _w0[_wk + 2] - _w1[_wk + 2];
+            _w2[_wk + 3] = _w0[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = _w0[_wk] - _w1[_wk];
+         }
+         inIdx += _wn;
+         outIdx += _wn;
+         trailingIdx += _wn;
       }
       /* Set output limits. */
       outNBElement = outIdx;
@@ -223,8 +239,24 @@ public partial class Core
       outIdx = 0;
       inIdx = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         outReal[outIdx++] = (double)inReal[inIdx++] - (double)inReal[trailingIdx++];
+      if( inIdx <= endIdx ) {
+         int _wn = endIdx - inIdx + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(inIdx, _w2.Length);
+         var _w1 = inReal.Slice(trailingIdx, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = (double)_w0[_wk] - (double)_w1[_wk];
+            _w2[_wk + 1] = (double)_w0[_wk + 1] - (double)_w1[_wk + 1];
+            _w2[_wk + 2] = (double)_w0[_wk + 2] - (double)_w1[_wk + 2];
+            _w2[_wk + 3] = (double)_w0[_wk + 3] - (double)_w1[_wk + 3];
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = (double)_w0[_wk] - (double)_w1[_wk];
+         }
+         inIdx += _wn;
+         outIdx += _wn;
+         trailingIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

@@ -208,8 +208,22 @@ public partial class Core
          outBegIdx = startIdx;
          outIdx = 0;
          today = startIdx;
-         while( today <= endIdx ) {
-            outReal[outIdx++] = inReal[today++];
+         if( today <= endIdx ) {
+            int _wn = endIdx - today + 1;
+            var _w1 = outReal.Slice(outIdx, _wn);
+            var _w0 = inReal.Slice(today, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               _w1[_wk] = _w0[_wk];
+               _w1[_wk + 1] = _w0[_wk + 1];
+               _w1[_wk + 2] = _w0[_wk + 2];
+               _w1[_wk + 3] = _w0[_wk + 3];
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               _w1[_wk] = _w0[_wk];
+            }
+            outIdx += _wn;
+            today += _wn;
          }
          outNBElement = outIdx;
          return RetCode.Success ;
@@ -548,8 +562,22 @@ public partial class Core
          outBegIdx = startIdx;
          outIdx = 0;
          today = startIdx;
-         while( today <= endIdx ) {
-            outReal[outIdx++] = (double)inReal[today++];
+         if( today <= endIdx ) {
+            int _wn = endIdx - today + 1;
+            var _w1 = outReal.Slice(outIdx, _wn);
+            var _w0 = inReal.Slice(today, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               _w1[_wk] = (double)_w0[_wk];
+               _w1[_wk + 1] = (double)_w0[_wk + 1];
+               _w1[_wk + 2] = (double)_w0[_wk + 2];
+               _w1[_wk + 3] = (double)_w0[_wk + 3];
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               _w1[_wk] = (double)_w0[_wk];
+            }
+            outIdx += _wn;
+            today += _wn;
          }
          outNBElement = outIdx;
          return RetCode.Success ;

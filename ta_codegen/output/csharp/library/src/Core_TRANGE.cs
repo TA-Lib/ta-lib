@@ -143,19 +143,68 @@ public partial class Core
       }
       outIdx = 0;
       today = startIdx;
-      while( today <= endIdx ) {
-         /* Find the greatest of the 3 values. */
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.Abs(tempCY - tempHT);
-         greatest = MaxGt(val2, greatest);
-         val3 = Math.Abs(tempCY - tempLT);
-         greatest = MaxGt(val3, greatest);
-         outReal[outIdx++] = greatest;
-         today += 1;
+      if( today <= endIdx ) {
+         int _wn = endIdx - today + 1;
+         var _w2 = inLow.Slice(today, _wn);
+         var _w1 = inHigh.Slice(today, _w2.Length);
+         var _w0 = inClose.Slice(today - 1, _w2.Length);
+         var _w3 = outReal.Slice(outIdx, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            /* Find the greatest of the 3 values. */
+            tempLT = _w2[_wk];
+            tempHT = _w1[_wk];
+            tempCY = _w0[_wk];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk] = greatest;
+            tempLT = _w2[_wk + 1];
+            tempHT = _w1[_wk + 1];
+            tempCY = _w0[_wk + 1];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 1] = greatest;
+            tempLT = _w2[_wk + 2];
+            tempHT = _w1[_wk + 2];
+            tempCY = _w0[_wk + 2];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 2] = greatest;
+            tempLT = _w2[_wk + 3];
+            tempHT = _w1[_wk + 3];
+            tempCY = _w0[_wk + 3];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 3] = greatest;
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            /* Find the greatest of the 3 values. */
+            tempLT = _w2[_wk];
+            tempHT = _w1[_wk];
+            tempCY = _w0[_wk];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk] = greatest;
+         }
+         outIdx += _wn;
+         today += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -199,17 +248,64 @@ public partial class Core
       }
       outIdx = 0;
       today = startIdx;
-      while( today <= endIdx ) {
-         tempLT = (double)inLow[today];
-         tempHT = (double)inHigh[today];
-         tempCY = (double)inClose[today - 1];
-         greatest = tempHT - tempLT;
-         val2 = Math.Abs(tempCY - tempHT);
-         greatest = MaxGt(val2, greatest);
-         val3 = Math.Abs(tempCY - tempLT);
-         greatest = MaxGt(val3, greatest);
-         outReal[outIdx++] = greatest;
-         today += 1;
+      if( today <= endIdx ) {
+         int _wn = endIdx - today + 1;
+         var _w2 = inLow.Slice(today, _wn);
+         var _w1 = inHigh.Slice(today, _w2.Length);
+         var _w0 = inClose.Slice(today - 1, _w2.Length);
+         var _w3 = outReal.Slice(outIdx, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            tempLT = (double)_w2[_wk];
+            tempHT = (double)_w1[_wk];
+            tempCY = (double)_w0[_wk];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk] = greatest;
+            tempLT = (double)_w2[_wk + 1];
+            tempHT = (double)_w1[_wk + 1];
+            tempCY = (double)_w0[_wk + 1];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 1] = greatest;
+            tempLT = (double)_w2[_wk + 2];
+            tempHT = (double)_w1[_wk + 2];
+            tempCY = (double)_w0[_wk + 2];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 2] = greatest;
+            tempLT = (double)_w2[_wk + 3];
+            tempHT = (double)_w1[_wk + 3];
+            tempCY = (double)_w0[_wk + 3];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk + 3] = greatest;
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            tempLT = (double)_w2[_wk];
+            tempHT = (double)_w1[_wk];
+            tempCY = (double)_w0[_wk];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            _w3[_wk] = greatest;
+         }
+         outIdx += _wn;
+         today += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

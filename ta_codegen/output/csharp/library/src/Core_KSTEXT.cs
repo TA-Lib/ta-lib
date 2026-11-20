@@ -388,8 +388,22 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(2.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
@@ -399,8 +413,22 @@ public partial class Core
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(3.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
@@ -410,8 +438,22 @@ public partial class Core
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(4.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       /* Every read of inReal is done: an output may alias it. */
       kstBuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outKST.Slice(0));
@@ -592,8 +634,22 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(2.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
@@ -603,8 +659,22 @@ public partial class Core
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(3.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
@@ -614,8 +684,22 @@ public partial class Core
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(4.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       kstBuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outKST.Slice(0));
       OutRange _xr8 = Ma(0, kstNb - 1, kstBuffer, optInSignalPeriod, optInSignalMAType, outKSTSignal);

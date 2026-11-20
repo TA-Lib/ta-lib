@@ -360,25 +360,57 @@ public partial class Core
           * by period, one contiguous ascending slice per distinct period, with
           * bucketOfs[p] the end of period p's slice.
           */
-         for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
-            bucketOfs[curPeriod - minUsed] = 0;
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed + 1 ) {
+            int _wn = maxUsed + 1 - curPeriod + 1;
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _wn);
+            int _wk = 0;
+            for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+               _w0[_wk] = 0;
+               _w0[_wk + 1] = 0;
+               _w0[_wk + 2] = 0;
+               _w0[_wk + 3] = 0;
+            }
+            for( ; _wk < _w0.Length; _wk++ ) {
+               _w0[_wk] = 0;
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            /* Staged through tempInt, not indexed inline: the Rust backend only
-             * coerces an int-array read to the index type when it is a DIRECT
-             * operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
-             * i32 with usize and fail to compile.
-             */
-            tempInt = localPeriodArray[i];
-            bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               /* Staged through tempInt, not indexed inline: the Rust backend only
+                * coerces an int-array read to the index type when it is a DIRECT
+                * operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
+                * i32 with usize and fail to compile.
+                */
+               tempInt = _w0[_wk];
+               bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+            }
+            i += _wn;
          }
-         for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {
-            bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed ) {
+            int _wn = maxUsed - curPeriod + 1;
+            var _w0_1 = bucketOfs.Slice(curPeriod - minUsed + 1, _wn);
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _w0_1.Length);
+            for( int _wk = 0; _wk < _w0_1.Length; _wk++ ) {
+               _w0_1[_wk] = _w0_1[_wk] + _w0[_wk];
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-            bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               sortedIdx[bucketOfs[tempInt - minUsed]] = i;
+               bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+               i += 1;
+            }
          }
          /* One MA pass per period actually requested, ending at the last output
           * that uses it: outputs before that point cannot depend on later input
@@ -574,20 +606,52 @@ public partial class Core
          sortedIdx = _rent_sortedIdx.AsSpan(0, (int)(outputSize * 1));
          _rent_bucketOfs = System.Buffers.ArrayPool<int>.Shared.Rent((int)((maxUsed - minUsed + 2) * 1));
          bucketOfs = _rent_bucketOfs.AsSpan(0, (int)((maxUsed - minUsed + 2) * 1));
-         for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
-            bucketOfs[curPeriod - minUsed] = 0;
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed + 1 ) {
+            int _wn = maxUsed + 1 - curPeriod + 1;
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _wn);
+            int _wk = 0;
+            for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+               _w0[_wk] = 0;
+               _w0[_wk + 1] = 0;
+               _w0[_wk + 2] = 0;
+               _w0[_wk + 3] = 0;
+            }
+            for( ; _wk < _w0.Length; _wk++ ) {
+               _w0[_wk] = 0;
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+            }
+            i += _wn;
          }
-         for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {
-            bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed ) {
+            int _wn = maxUsed - curPeriod + 1;
+            var _w0_1 = bucketOfs.Slice(curPeriod - minUsed + 1, _wn);
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _w0_1.Length);
+            for( int _wk = 0; _wk < _w0_1.Length; _wk++ ) {
+               _w0_1[_wk] = _w0_1[_wk] + _w0[_wk];
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-            bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               sortedIdx[bucketOfs[tempInt - minUsed]] = i;
+               bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+               i += 1;
+            }
          }
          bucketStart = 0;
          for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {

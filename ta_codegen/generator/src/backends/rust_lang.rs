@@ -93,7 +93,7 @@ pub struct RustRenderCtx {
     /// Off, the loop takes the same generic fallback the step takes.
     pub for_range_lowering: bool,
     /// Whether innermost loops may become counted loops over windows
-    /// ([`super::rust_window`]). Set for batch bodies only.
+    /// ([`super::window`]). Set for batch bodies only.
     pub window_loops: bool,
     /// Inputs resliced to `..=endIdx`, so all of one length.
     pub same_len_inputs: std::collections::HashSet<String>,
@@ -3178,7 +3178,7 @@ impl RustStmt<'_, '_> {
         Some(format!("{pad}if {cond} {{\n{pad}    {copy}\n{pad}    {v} = {end};\n{pad}}}\n"))
     }
 
-    /// The loop as [`super::rust_window`] lowers it, or `None` to render it as
+    /// The loop as [`super::window`] lowers it, or `None` to render it as
     /// written. `as_written` is the loop after any `for` init, for a failed
     /// guard the loop may still pass. A `do_while` runs the pass the guard
     /// counts, and one more when the guard fails.
@@ -3192,7 +3192,7 @@ impl RustStmt<'_, '_> {
         do_while: bool,
         indent: usize,
     ) -> Option<String> {
-        use super::rust_window::{window_name, Names, PASS, TRIP};
+        use super::window::{window_name, Names, PASS, TRIP};
         if !self.ctx.window_loops {
             return None;
         }
@@ -3215,7 +3215,7 @@ impl RustStmt<'_, '_> {
             same_len: &same_len,
             ring_storage: &ring_storage,
         };
-        let plan = super::rust_window::plan(condition, body, update, &names)?;
+        let plan = super::window::plan(condition, body, update, &names, &super::window::RUST)?;
         // A tested counter steps before the do-while's first test, not its
         // first pass.
         if do_while && plan.cond_step.is_some() {
@@ -4213,7 +4213,7 @@ fn render_assign_target(
         }
         Expr::Var(name) => name.clone(),
         Expr::ArrayAccess(name, idx) => {
-            if let Some(w) = super::rust_window::render_marker(idx) {
+            if let Some(w) = super::window::render_marker(idx) {
                 return w;
             }
             let idx_rendered = render_index_expr(idx, ctx, opt_real_params, registry, helpers);
@@ -4479,7 +4479,7 @@ impl ExprEmitter for RustExpr<'_> {
     }
 
     fn array_access(&self, name: &str, idx: &Expr) -> String {
-        if let Some(w) = super::rust_window::render_marker(idx) {
+        if let Some(w) = super::window::render_marker(idx) {
             return w;
         }
         let idx_rendered =

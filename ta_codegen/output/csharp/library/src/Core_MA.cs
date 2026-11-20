@@ -250,8 +250,24 @@ public partial class Core
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = inReal[todayIdx];
+         todayIdx = startIdx;
+         outIdx = 0;
+         if( outIdx < nbElement ) {
+            int _wn = nbElement - outIdx;
+            var _w1 = outReal.Slice(outIdx, _wn);
+            var _w0 = inReal.Slice(todayIdx, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               _w1[_wk] = _w0[_wk];
+               _w1[_wk + 1] = _w0[_wk + 1];
+               _w1[_wk + 2] = _w0[_wk + 2];
+               _w1[_wk + 3] = _w0[_wk + 3];
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               _w1[_wk] = _w0[_wk];
+            }
+            outIdx += _wn;
+            todayIdx += _wn;
          }
          outBegIdx = startIdx;
          return RetCode.Success ;
@@ -400,8 +416,24 @@ public partial class Core
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[todayIdx];
+         todayIdx = startIdx;
+         outIdx = 0;
+         if( outIdx < nbElement ) {
+            int _wn = nbElement - outIdx;
+            var _w1 = outReal.Slice(outIdx, _wn);
+            var _w0 = inReal.Slice(todayIdx, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               _w1[_wk] = (double)_w0[_wk];
+               _w1[_wk + 1] = (double)_w0[_wk + 1];
+               _w1[_wk + 2] = (double)_w0[_wk + 2];
+               _w1[_wk + 3] = (double)_w0[_wk + 3];
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               _w1[_wk] = (double)_w0[_wk];
+            }
+            outIdx += _wn;
+            todayIdx += _wn;
          }
          outBegIdx = startIdx;
          return RetCode.Success ;

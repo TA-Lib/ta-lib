@@ -119,6 +119,49 @@ pub(crate) struct CsRenderCtx<'a> {
     /// of one render as the rent and the return, so the C's placement of the
     /// two IS the pool contract: one return per rent, nothing read after it.
     pub(crate) pooled: Option<&'a BTreeMap<String, &'static str>>,
+    /// Set for a batch body: its loops may run over windows ([`CsWindows`]).
+    pub(crate) windows: Option<&'a CsWindows>,
+}
+
+/// What a batch body's windowed loops ([`super::window`]) need to know of its
+/// names.
+pub(crate) struct CsWindows {
+    /// The `int` locals and parameters.
+    ints: HashSet<String>,
+    /// The spans a window may be cut from: inputs, outputs, pointer locals.
+    spans: HashSet<String>,
+    /// Loops around the statement being rendered. Only a loop at depth 0 is
+    /// windowed: its slices are cut once per call, and none stays live across
+    /// the passes of an enclosing loop.
+    depth: Cell<usize>,
+    /// Which copy of an unrolled pass is being rendered: its accesses sit that
+    /// many elements past the counter.
+    copy: Cell<usize>,
+}
+
+/// RyuJIT keeps a check on an input read at the counter, and the C# renderer
+/// turns a scalar branch into a select itself.
+const CS_WINDOWS: super::window::Policy =
+    super::window::Policy { counter_reads_bounded: false, checked: false, scalar_branches: true };
+
+/// An access to window `j` at offset `d`, in the copy of the pass being
+/// rendered.
+fn lane_access(j: usize, d: i64, ctx: &CsRenderCtx) -> String {
+    use super::window::PASS;
+    match ctx.windows.map_or(0, |w| w.copy.get()) {
+        0 => format!("{}[{PASS}]", lane_name(j, d)),
+        e => format!("{}[{PASS} + {e}]", lane_name(j, d)),
+    }
+}
+
+/// A window's slice at offset `d`: the name its accesses render with.
+fn lane_name(j: usize, d: i64) -> String {
+    let w = super::window::window_name(j);
+    if d == 0 {
+        w
+    } else {
+        format!("{w}_{d}")
+    }
 }
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
@@ -1074,6 +1117,7 @@ fn gen_func_inner(
     // FMA fusion sites for this body — same detector C/Rust/Java use, so the
     // four backends fuse identical sites.
     let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
+    let windows = batch_windows(func, body, &matype_vars);
     let ctx = CsRenderCtx {
         single_precision,
         double_address_of_vars: &double_address_of_vars,
@@ -1085,6 +1129,7 @@ fn gen_func_inner(
         in_reduction_loop: Cell::new(false),
         batch: true,
         pooled: Some(&pooled),
+        windows: Some(&windows),
     };
 
     for (name, element) in &pooled {
@@ -1386,8 +1431,153 @@ impl CsStmt<'_> {
 
     fn in_loop(&self, body: &[Statement], render: impl FnOnce() -> String) -> String {
         let outer = self.ctx.in_reduction_loop.replace(is_reduction_body(body));
+        if let Some(w) = self.ctx.windows {
+            w.depth.set(w.depth.get() + 1);
+        }
         let out = render();
+        if let Some(w) = self.ctx.windows {
+            w.depth.set(w.depth.get() - 1);
+        }
         self.ctx.in_reduction_loop.set(outer);
+        out
+    }
+
+    /// The loop over windows ([`super::window`]): one slice per window and
+    /// offset, all as long as the first, so RyuJIT proves every access in
+    /// range from the one loop test. An index read only through windows leaves
+    /// the loop and takes its last value after it. `None` renders the loop as
+    /// written.
+    fn windowed(
+        &self,
+        init: Option<&Statement>,
+        condition: &Expr,
+        body: &[Statement],
+        update: Option<&Statement>,
+        indent: usize,
+    ) -> Option<String> {
+        use super::lockstep::{as_step, inline, Facts, Names};
+        use super::window::{marker_of, TRIP};
+        let w = self.ctx.windows.filter(|w| w.depth.get() == 0)?;
+        let mut pass = Vec::new();
+        let tail: Vec<&Statement> = match update {
+            Some(Statement::Block { body }) => body.iter().collect(),
+            Some(u) => vec![u],
+            None => vec![],
+        };
+        for s in body.iter().chain(tail) {
+            inline(s, &mut pass);
+        }
+        let index = |n: &str| w.ints.contains(n);
+        let usize_expr = |e: &Expr| cs_int_expr(e, &w.ints);
+        let never = |_: &Expr| false;
+        let sliceable = |a: &str| w.spans.contains(a);
+        let same_len = |_: &str| false;
+        let ring_storage = |_: &str| None;
+        let names = Names {
+            index: &index,
+            usize_expr: &usize_expr,
+            castable: &never,
+            sliceable: &sliceable,
+            same_len: &same_len,
+            ring_storage: &ring_storage,
+        };
+        let plan = super::window::plan(condition, &pass, None, &names, &CS_WINDOWS)?;
+        if plan.reverse || plan.cond_step.is_some() {
+            return None;
+        }
+
+        let mut lanes: Vec<(usize, i64)> = Vec::new();
+        for s in &plan.body {
+            streaming::walk_stmt_exprs(s, &mut |top| {
+                streaming::walk_expr(top, &mut |e| {
+                    if let Expr::ArrayAccess(_, i) = e {
+                        if let Some(m) = marker_of(i) {
+                            if !lanes.contains(&m) {
+                                lanes.push(m);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        let first = lanes.first().map(|(j, d)| lane_name(*j, *d))?;
+        let facts = Facts::of(&plan.body);
+        let steps = facts.induction();
+        if carries_scalar(&plan.body, &facts.other, &steps) {
+            return None;
+        }
+        let own_step = |s: &Statement, v: &str| as_step(s).is_some_and(|(x, _)| x == v);
+        let moved: Vec<(&String, i64)> = steps
+            .iter()
+            .filter(|(v, _)| index(v))
+            .filter(|(v, _)| {
+                let mut read = false;
+                for s in plan.body.iter().filter(|s| !own_step(s, v)) {
+                    streaming::walk_stmt_exprs(s, &mut |top| {
+                        streaming::walk_expr(top, &mut |e| read |= matches!(e, Expr::Var(n) if n == *v));
+                    });
+                }
+                !read
+            })
+            .map(|(v, d)| (v, *d))
+            .collect();
+        let pass: Vec<&Statement> = plan.body.iter().filter(|s| !moved.iter().any(|(v, _)| own_step(s, v))).collect();
+
+        let render = |e: &Expr| render_expr(e, self.ctx, self.registry, self.helpers);
+        let pad = " ".repeat(indent);
+        let mut out: String = match init {
+            Some(Statement::Block { body }) => body.iter().map(|s| self.walk_stmt(s, indent)).collect(),
+            Some(one) => self.walk_stmt(one, indent),
+            None => String::new(),
+        };
+        let _ = writeln!(out, "{pad}if( {} ) {{", render(&plan.guard));
+        let _ = writeln!(out, "{pad}   int {TRIP} = {};", render(&plan.trip));
+        for (k, (j, d)) in lanes.iter().enumerate() {
+            let window = &plan.windows[*j];
+            let start = match d {
+                0 => window.start.clone(),
+                d => Expr::BinOp(Box::new(window.start.clone()), BinOp::Add, Box::new(Expr::IntLiteral(*d))),
+            };
+            let len = if k == 0 { TRIP.to_string() } else { format!("{first}.Length") };
+            let _ = writeln!(out, "{pad}   var {} = {}.Slice({}, {len});", lane_name(*j, *d), window.array, render(&start));
+        }
+        let width = unroll_width(&pass, &steps);
+        out.push_str(&self.window_passes(body, &pass, w, width, &first, indent + 3));
+        for (v, d) in &moved {
+            let op = if *d > 0 { "+=" } else { "-=" };
+            let _ = writeln!(out, "{pad}   {v} {op} {TRIP};");
+        }
+        let _ = writeln!(out, "{pad}}}");
+        Some(out)
+    }
+
+    /// The loop of [`Self::windowed`] over its slices, `first` the one its
+    /// test reads; with `width`, a loop of that many passes per trip, each
+    /// copy whole before the next, then the remaining passes one at a time.
+    fn window_passes(&self, body: &[Statement], pass: &[&Statement], w: &CsWindows, width: Option<usize>, first: &str, indent: usize) -> String {
+        use super::window::PASS;
+        let pad = " ".repeat(indent);
+        let copy = |e: usize| {
+            w.copy.set(e);
+            let text: String = pass.iter().filter(|s| e == 0 || !matches!(s, Statement::Comment(_))).map(|s| self.walk_stmt(s, indent + 3)).collect();
+            w.copy.set(0);
+            text
+        };
+        let mut out = String::new();
+        match width {
+            Some(width) => {
+                let _ = writeln!(out, "{pad}int {PASS} = 0;");
+                let _ = writeln!(out, "{pad}for( ; {PASS} <= {first}.Length - {width}; {PASS} += {width} ) {{");
+                out.push_str(&self.in_loop(body, || (0..width).map(copy).collect()));
+                let _ = writeln!(out, "{pad}}}");
+                let _ = writeln!(out, "{pad}for( ; {PASS} < {first}.Length; {PASS}++ ) {{");
+            }
+            None => {
+                let _ = writeln!(out, "{pad}for( int {PASS} = 0; {PASS} < {first}.Length; {PASS}++ ) {{");
+            }
+        }
+        out.push_str(&self.in_loop(body, || copy(0)));
+        let _ = writeln!(out, "{pad}}}");
         out
     }
 
@@ -1746,6 +1936,9 @@ impl StatementEmitter for CsStmt<'_> {
 
     fn while_loop(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
         let Some((helper, j, bound)) = shift_run(condition, body).filter(|_| self.ctx.batch) else {
+            if let Some(out) = self.windowed(None, condition, body, None, indent) {
+                return out;
+            }
             return self.plain_while(condition, body, indent);
         };
         let Some(Statement::Assign { target, .. }) = body.iter().find(|s| !matches!(s, Statement::Comment(_))) else {
@@ -1976,6 +2169,9 @@ impl StatementEmitter for CsStmt<'_> {
         if let Some(out) = self.for_as_sqrt_run(init, condition, update, body, indent) {
             return out;
         }
+        if let Some(out) = self.windowed(Some(init), condition, body, Some(update), indent) {
+            return out;
+        }
         let pad = " ".repeat(indent);
         let init_str = render_forc_part(init, self.ctx, self.enums, self.registry, self.helpers);
         let update_str = render_forc_part(update, self.ctx, self.enums, self.registry, self.helpers);
@@ -2152,11 +2348,137 @@ fn render_assign_target(
                 name.clone()
             }
         }
-        Expr::ArrayAccess(name, idx) => {
-            format!("{}[{}]", name, render_expr(idx, ctx, registry, helpers))
-        }
+        Expr::ArrayAccess(name, idx) => match super::window::marker_of(idx) {
+            Some((j, d)) => lane_access(j, d, ctx),
+            None => format!("{}[{}]", name, render_expr(idx, ctx, registry, helpers)),
+        },
         _ => render_expr(expr, ctx, registry, helpers),
     }
+}
+
+/// Whether a pass reads a scalar before it stores it, so that one pass feeds
+/// the next: a running sum or a recurrence. Such a loop is paced by that
+/// chain rather than by its checks, and C# keeps it as written. `stored` holds
+/// every name the pass stores other than by a step; the steps in `steps` may
+/// carry. Anything but an assignment or a branch counts as carrying.
+fn carries_scalar(pass: &[Statement], stored: &std::collections::BTreeSet<String>, steps: &BTreeMap<String, i64>) -> bool {
+    use std::collections::BTreeSet;
+    fn reads_undefined(e: &Expr, stored: &BTreeSet<String>, defined: &BTreeSet<String>) -> bool {
+        let mut hit = false;
+        streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(n) = x {
+                hit |= stored.contains(n) && !defined.contains(n);
+            }
+        });
+        hit
+    }
+    fn walk(pass: &[Statement], stored: &BTreeSet<String>, steps: &BTreeMap<String, i64>, defined: &mut BTreeSet<String>) -> bool {
+        for s in pass {
+            match s {
+                Statement::Comment(_) => {}
+                Statement::Assign { .. } if super::lockstep::as_step(s).is_some_and(|(v, _)| steps.contains_key(v)) => {}
+                Statement::Assign { target, value, .. } => {
+                    let index = match target {
+                        Expr::ArrayAccess(_, i) => reads_undefined(i, stored, defined),
+                        _ => false,
+                    };
+                    if index || reads_undefined(value, stored, defined) {
+                        return true;
+                    }
+                    if let Expr::Var(t) = target {
+                        defined.insert(t.clone());
+                    }
+                }
+                Statement::If { condition, then_body, else_body, .. } => {
+                    if reads_undefined(condition, stored, defined) {
+                        return true;
+                    }
+                    let (mut then_defined, mut else_defined) = (defined.clone(), defined.clone());
+                    if walk(then_body, stored, steps, &mut then_defined) || walk(else_body, stored, steps, &mut else_defined) {
+                        return true;
+                    }
+                    *defined = then_defined.intersection(&else_defined).cloned().collect();
+                }
+                _ => return true,
+            }
+        }
+        false
+    }
+    let stored: BTreeSet<String> = stored.iter().filter(|n| !steps.contains_key(*n)).cloned().collect();
+    walk(pass, &stored, steps, &mut BTreeSet::new())
+}
+
+/// Passes per trip of a loop over windows that carries no scalar, or `None`
+/// for one. Values rest on the copies keeping pass order
+/// ([`super::lockstep::unrollable`]); the rest is when four pay: every element
+/// a lane at the counter, no index read as a value, every call one RyuJIT
+/// compiles in the loop, and each array the pass stores to reached through
+/// one lane, since a store a later pass loads paces the loop as a carried
+/// scalar would.
+fn unroll_width(pass: &[&Statement], steps: &BTreeMap<String, i64>) -> Option<usize> {
+    use std::collections::BTreeSet;
+    fn stores(list: &[Statement], out: &mut BTreeSet<String>) {
+        for s in list {
+            match s {
+                Statement::Assign { target: Expr::ArrayAccess(a, _), .. } => {
+                    out.insert(a.clone());
+                }
+                Statement::If { then_body, else_body, .. } => {
+                    stores(then_body, out);
+                    stores(else_body, out);
+                }
+                _ => {}
+            }
+        }
+    }
+    let mut ok = true;
+    let mut offsets: BTreeMap<String, BTreeSet<(usize, i64)>> = BTreeMap::new();
+    let mut written = BTreeSet::new();
+    for s in pass {
+        ok &= !super::lockstep::as_step(s).is_some_and(|(v, _)| steps.contains_key(v));
+        super::lockstep::each_access(s, &mut |array, idx, _| match super::window::marker_of(idx) {
+            Some(m) => {
+                offsets.entry(array.to_string()).or_default().insert(m);
+            }
+            None => ok = false,
+        });
+        streaming::walk_stmt_exprs(s, &mut |top| streaming::walk_expr(top, &mut |e| ok &= !matches!(e, Expr::Var(n) if steps.contains_key(n))));
+        stores(std::slice::from_ref(*s), &mut written);
+    }
+    ok &= written.iter().all(|a| offsets.get(a).is_none_or(|l| l.len() == 1));
+    let inline = |m: MathFn| matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min | MathFn::Floor | MathFn::Ceil);
+    super::lockstep::unrollable(pass, &inline).filter(|_| ok).map(|_| 4)
+}
+
+/// An `int` expression a window's pass count may be taken from.
+fn cs_int_expr(e: &Expr, ints: &HashSet<String>) -> bool {
+    match e {
+        Expr::IntLiteral(_) => true,
+        Expr::Var(n) => ints.contains(n),
+        Expr::BinOp(l, BinOp::Add | BinOp::Sub, r) => cs_int_expr(l, ints) && cs_int_expr(r, ints),
+        _ => false,
+    }
+}
+
+/// The names a batch body's windows may use ([`CsWindows`]).
+fn batch_windows(func: &FuncDef, body: &[Statement], matype_vars: &HashSet<String>) -> CsWindows {
+    let mut ints: HashSet<String> = ["startIdx", "endIdx"].iter().map(|n| (*n).to_string()).collect();
+    ints.extend(func.optional_inputs.iter().filter(|o| o.param_type == ParamType::Integer).map(|o| o.name.clone()));
+    let mut spans: HashSet<String> = func.inputs.iter().map(|p| p.name.clone()).chain(func.outputs.iter().map(|p| p.name.clone())).collect();
+    for s in body {
+        if let Statement::VarDecl { var_type, name, .. } = s {
+            match var_type {
+                VarType::Integer | VarType::Index if !matype_vars.contains(name) => {
+                    ints.insert(name.clone());
+                }
+                VarType::RealPointer | VarType::IntPointer => {
+                    spans.insert(name.clone());
+                }
+                _ => {}
+            }
+        }
+    }
+    CsWindows { ints, spans, depth: Cell::new(0), copy: Cell::new(0) }
 }
 
 /// Render a return expression, mapping known enum values to C# constants.
@@ -2203,7 +2525,10 @@ impl ExprEmitter for CsExpr<'_> {
     }
 
     fn array_access(&self, name: &str, idx: &Expr) -> String {
-        let access = format!("{}[{}]", name, self.walk(idx));
+        let access = match super::window::marker_of(idx) {
+            Some((j, d)) => lane_access(j, d, self.ctx),
+            None => format!("{}[{}]", name, self.walk(idx)),
+        };
         // Single-precision variants take float[] inputs but compute and store
         // in double. Widen each float input element as it is read (PR #33) —
         // C# evaluates float*float in float exactly as Java does.
@@ -2358,6 +2683,7 @@ impl ExprEmitter for CsExpr<'_> {
                     in_reduction_loop: Cell::new(false),
                     batch: self.ctx.batch,
                     pooled: self.ctx.pooled,
+                    windows: self.ctx.windows,
                 };
                 render_expr(inner, &inner_ctx, self.registry, self.helpers)
             }
@@ -3092,6 +3418,7 @@ fn render_lookback_code(
         in_reduction_loop: Cell::new(false),
         batch: false,
         pooled: None,
+        windows: None,
     };
 
     // Declare local variables (initialized: locals assigned only inside a
@@ -3167,6 +3494,31 @@ mod tests {
 
     fn load_enums() -> HashMap<String, EnumDef> {
         parser::enums::load_enums(&input_base().join("enums.yaml"))
+    }
+
+    /// `out[k] = a[k] * b[k]` over windows runs four passes per trip; an
+    /// element one pass leaves for the next, a call RyuJIT keeps a call, an
+    /// access off the counter or an index read as a value keeps one.
+    #[test]
+    fn unroll_width_refuses_what_crosses_passes() {
+        use crate::backends::window::marker;
+        let at = |a: &str, j: usize, d: i64| Expr::ArrayAccess(a.to_string(), Box::new(marker(j, d)));
+        let var = |n: &str| Expr::Var(n.to_string());
+        let set = |t: Expr, v: Expr| Statement::Assign { target: t, value: v, compound: false };
+        let bin = |l: Expr, op: BinOp, r: Expr| Expr::BinOp(Box::new(l), op, Box::new(r));
+        let call = |f: &str, a: Expr| Expr::FuncCall(f.to_string(), vec![a]);
+        let width = |body: &[Statement]| {
+            let facts = super::super::lockstep::Facts::of(body);
+            let pass: Vec<&Statement> = body.iter().collect();
+            unroll_width(&pass, &facts.induction())
+        };
+        assert_eq!(width(&[set(at("out", 2, 0), bin(at("a", 0, 0), BinOp::Mul, at("b", 1, 0)))]), Some(4));
+        assert_eq!(width(&[set(var("t"), at("a", 0, 0)), set(at("out", 1, 0), call("floor", var("t")))]), Some(4), "a scalar set before it is read");
+        assert_eq!(width(&[set(at("out", 1, 0), call("exp", at("a", 0, 0)))]), None, "a library call");
+        assert_eq!(width(&[set(at("b", 0, 1), bin(at("b", 0, 1), BinOp::Add, at("b", 0, 0)))]), None, "a running sum through memory");
+        assert_eq!(width(&[set(at("out", 1, 0), Expr::ArrayAccess("a".to_string(), Box::new(var("j"))))]), None, "an access off the counter");
+        let index = [set(at("out", 1, 0), var("i")), super::super::lockstep::step("i", 1)];
+        assert_eq!(width(&index), None, "an index read as a value");
     }
 
     /// The emitter's method names and the registry's cross-call resolution are

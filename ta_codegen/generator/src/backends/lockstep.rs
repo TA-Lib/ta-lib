@@ -1,7 +1,7 @@
 //! The lockstep counted loop, as the batch emitters read it: a header whose
 //! trip count is fixed at entry, the variables that move by one once per
-//! pass, and how often each element access is made. Shared by the Rust
-//! windows ([`super::rust_window`]) and the Go re-slices
+//! pass, and how often each element access is made. Shared by the windows
+//! Rust and C# render ([`super::window`]) and the Go re-slices
 //! ([`super::go_lockstep`]); each backend keeps its own policy on what to cut.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -11,7 +11,8 @@ use super::rust_respell::SELECT_OTHER;
 use crate::ir::{BinOp, CircBuf, Expr, Statement, VarType};
 
 /// What the renderer knows about names that the IR does not say. Only
-/// `index`, `usize_expr` and `castable` reach [`form`]; the rest is Rust's.
+/// `index`, `usize_expr` and `castable` reach [`form`]; the rest is
+/// [`super::window`]'s.
 pub(crate) struct Names<'a> {
     /// A local or parameter a counter may be: Rust's `usize`s.
     pub index: &'a dyn Fn(&str) -> bool,
@@ -125,6 +126,37 @@ pub(crate) fn eager_call(name: &str) -> bool {
                     | SpecialBuiltin::Unlikely
             )
         )
+}
+
+/// Whether the passes `code` holds may run several to a trip: every statement
+/// an assignment or a branch, and every call evaluated eagerly and, for a math
+/// function, one `inline` says the backend's compiler keeps in the loop.
+/// `Some(true)` when the pass is one store of an expression to an element.
+/// Values stay exact under any aliasing only while the copies run in
+/// increasing index, each statement whole before the next: interleaving the
+/// copies, or hoisting a load above an earlier copy's store, changes them
+/// with no error.
+pub(crate) fn unrollable(code: &[&Statement], inline: &dyn Fn(MathFn) -> bool) -> Option<bool> {
+    fn plain(list: &[Statement]) -> bool {
+        list.iter().all(|s| match s {
+            Statement::Assign { target, .. } => !matches!(target, Expr::PointerDeref(_)),
+            Statement::If { then_body, else_body, .. } => plain(then_body) && plain(else_body),
+            Statement::Comment(_) | Statement::UnrollHint { .. } => true,
+            _ => false,
+        })
+    }
+    let mut ok = code.iter().all(|s| plain(std::slice::from_ref(*s)));
+    for s in code {
+        crate::streaming::walk_stmt_exprs(s, &mut |top| {
+            crate::streaming::walk_expr(top, &mut |e| {
+                if let Expr::FuncCall(n, _) = e {
+                    ok &= eager_call(n) && MathFn::from_name(n).is_none_or(inline);
+                }
+            });
+        });
+    }
+    let code: Vec<&&Statement> = code.iter().filter(|s| !matches!(s, Statement::Comment(_) | Statement::UnrollHint { .. })).collect();
+    ok.then_some(matches!(code.as_slice(), [Statement::Assign { target: Expr::ArrayAccess(..), compound: false, .. }]))
 }
 
 /// `v += 1`, `v = v - 1`, ...: the variable and its step.
@@ -450,4 +482,113 @@ pub(crate) fn substitute(e: &Expr, v: &str, with: &Expr) -> Expr {
         Expr::Var(n) if n == v => with.clone(),
         _ => x,
     })
+}
+
+/// `s` with blocks inlined and each step it takes at a place every
+/// evaluation reaches moved into a statement of its own: a pre-step before
+/// it, a post-step after. Exact when the statement names the variable nowhere
+/// else, which is also what the renderer requires of a step. A step both arms
+/// of an `if` take last moves after it.
+pub(crate) fn inline(s: &Statement, out: &mut Vec<Statement>) {
+    match s {
+        Statement::If { condition, then_body, else_body, cond_comments } if !else_body.is_empty() => {
+            let flat = |b: &[Statement]| {
+                let mut v = Vec::new();
+                for x in b {
+                    inline(x, &mut v);
+                }
+                v
+            };
+            let last = |v: &[Statement]| v.iter().rposition(|x| !matches!(x, Statement::Comment(_))).filter(|&at| as_step(&v[at]).is_some());
+            let (mut then2, mut else2) = (flat(then_body), flat(else_body));
+            match (last(&then2), last(&else2)) {
+                (Some(a), Some(b)) if as_step(&then2[a]) == as_step(&else2[b]) => {
+                    let moved = then2.remove(a);
+                    else2.remove(b);
+                    out.push(Statement::If { condition: condition.clone(), then_body: then2, else_body: else2, cond_comments: cond_comments.clone() });
+                    out.push(moved);
+                }
+                _ => out.push(s.clone()),
+            }
+        }
+        Statement::Block { body } => {
+            for x in body {
+                inline(x, out);
+            }
+        }
+        Statement::Expr(Expr::PostIncrement(v) | Expr::PreIncrement(v)) if matches!(v.as_ref(), Expr::Var(_)) => {
+            let Expr::Var(n) = v.as_ref() else { unreachable!() };
+            out.push(step(n, 1));
+        }
+        Statement::Expr(Expr::PostDecrement(v) | Expr::PreDecrement(v)) if matches!(v.as_ref(), Expr::Var(_)) => {
+            let Expr::Var(n) = v.as_ref() else { unreachable!() };
+            out.push(step(n, -1));
+        }
+        Statement::Assign { target, value, compound } if as_step(s).is_none() => {
+            let (mut pre, mut post) = (Vec::new(), Vec::new());
+            let value2 = eager(value, &mut pre, &mut post);
+            let target2 = eager(target, &mut pre, &mut post);
+            if pre.is_empty() && post.is_empty() || !named_once(&[target, value], &pre, &post) {
+                out.push(s.clone());
+                return;
+            }
+            out.extend(pre);
+            out.push(Statement::Assign { target: target2, value: value2, compound: *compound });
+            out.extend(post);
+        }
+        Statement::Expr(e) => {
+            let (mut pre, mut post) = (Vec::new(), Vec::new());
+            let e2 = eager(e, &mut pre, &mut post);
+            if pre.is_empty() && post.is_empty() || !named_once(&[e], &pre, &post) {
+                out.push(s.clone());
+                return;
+            }
+            out.extend(pre);
+            out.push(Statement::Expr(e2));
+            out.extend(post);
+        }
+        other => out.push(other.clone()),
+    }
+}
+
+/// Each variable stepped is stepped once and named nowhere else in `exprs`.
+fn named_once(exprs: &[&Expr], pre: &[Statement], post: &[Statement]) -> bool {
+    let stepped: Vec<&str> = pre.iter().chain(post).filter_map(|s| as_step(s).map(|(v, _)| v)).collect();
+    stepped.iter().all(|v| {
+        let mut n = 0;
+        for e in exprs {
+            crate::streaming::walk_expr(e, &mut |x| n += usize::from(matches!(x, Expr::Var(m) if m == v)));
+        }
+        n == 1
+    })
+}
+
+/// `e` with each step every evaluation of it takes lifted into `pre` / `post`.
+fn eager(e: &Expr, pre: &mut Vec<Statement>, post: &mut Vec<Statement>) -> Expr {
+    let bx = Box::new;
+    match e {
+        Expr::PostIncrement(i) | Expr::PostDecrement(i) | Expr::PreIncrement(i) | Expr::PreDecrement(i) => {
+            let Expr::Var(v) = i.as_ref() else { return e.clone() };
+            let d = if matches!(e, Expr::PostIncrement(_) | Expr::PreIncrement(_)) { 1 } else { -1 };
+            if matches!(e, Expr::PostIncrement(_) | Expr::PostDecrement(_)) {
+                post.push(step(v, d));
+            } else {
+                pre.push(step(v, d));
+            }
+            Expr::Var(v.clone())
+        }
+        Expr::ArrayAccess(a, i) => Expr::ArrayAccess(a.clone(), bx(eager(i, pre, post))),
+        Expr::BinOp(l, op @ (BinOp::And | BinOp::Or), r) => Expr::BinOp(bx(eager(l, pre, post)), op.clone(), r.clone()),
+        Expr::BinOp(l, op, r) => {
+            let l = eager(l, pre, post);
+            Expr::BinOp(bx(l), op.clone(), bx(eager(r, pre, post)))
+        }
+        Expr::Ternary(c, t, f) => Expr::Ternary(bx(eager(c, pre, post)), t.clone(), f.clone()),
+        Expr::FuncCall(n, args) if eager_call(n) => Expr::FuncCall(n.clone(), args.iter().map(|a| eager(a, pre, post)).collect()),
+        Expr::Cast(t, i) => Expr::Cast(t.clone(), bx(eager(i, pre, post))),
+        Expr::Not(i) => Expr::Not(bx(eager(i, pre, post))),
+        Expr::Neg(i) => Expr::Neg(bx(eager(i, pre, post))),
+        Expr::BitwiseNot(i) => Expr::BitwiseNot(bx(eager(i, pre, post))),
+        _ => e.clone(),
+    }
 }

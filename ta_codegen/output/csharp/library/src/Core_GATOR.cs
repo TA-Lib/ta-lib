@@ -357,8 +357,23 @@ public partial class Core
       tempBegIdx = _xr2.BegIdx;
       tempNbElement = _xr2.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < nbElement; i += 1 ) {
-         outUpper[i] = Math.Abs(tempA[i] - tempB[i]);
+      i = 0;
+      if( i < nbElement ) {
+         int _wn = nbElement - i;
+         var _w0 = outUpper.Slice(i, _wn);
+         var _w1 = tempA.Slice(i, _w0.Length);
+         var _w2 = tempB.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.Abs(_w1[_wk] - _w2[_wk]);
+            _w0[_wk + 1] = Math.Abs(_w1[_wk + 1] - _w2[_wk + 1]);
+            _w0[_wk + 2] = Math.Abs(_w1[_wk + 2] - _w2[_wk + 2]);
+            _w0[_wk + 3] = Math.Abs(_w1[_wk + 3] - _w2[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.Abs(_w1[_wk] - _w2[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr3 = Rma(localStart - backTeethLower, localEnd, tempMP, optInTeethPeriod, tempA);
       tempBegIdx = _xr3.BegIdx;
@@ -371,8 +386,23 @@ public partial class Core
       /* A zero spread must come out +0.0. Keep the select: gcc folds the literal
        * 0.0 - fabs(x) into -fabs(x), which is -0.0 there.
        */
-      for( i = 0; i < nbElement; i += 1 ) {
-         outLower[i] = (tempA[i] < tempB[i]) ? tempA[i] - tempB[i] : tempB[i] - tempA[i];
+      i = 0;
+      if( i < nbElement ) {
+         int _wn = nbElement - i;
+         var _w0 = outLower.Slice(i, _wn);
+         var _w1 = tempA.Slice(i, _w0.Length);
+         var _w2 = tempB.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = (_w1[_wk] < _w2[_wk]) ? _w1[_wk] - _w2[_wk] : _w2[_wk] - _w1[_wk];
+            _w0[_wk + 1] = (_w1[_wk + 1] < _w2[_wk + 1]) ? _w1[_wk + 1] - _w2[_wk + 1] : _w2[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = (_w1[_wk + 2] < _w2[_wk + 2]) ? _w1[_wk + 2] - _w2[_wk + 2] : _w2[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = (_w1[_wk + 3] < _w2[_wk + 3]) ? _w1[_wk + 3] - _w2[_wk + 3] : _w2[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = (_w1[_wk] < _w2[_wk]) ? _w1[_wk] - _w2[_wk] : _w2[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       ReturnScratch(ref _rent_tempMP);
       ReturnScratch(ref _rent_tempA);
@@ -509,8 +539,23 @@ public partial class Core
       tempBegIdx = _xr2.BegIdx;
       tempNbElement = _xr2.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < nbElement; i += 1 ) {
-         outUpper[i] = Math.Abs(tempA[i] - tempB[i]);
+      i = 0;
+      if( i < nbElement ) {
+         int _wn = nbElement - i;
+         var _w0 = outUpper.Slice(i, _wn);
+         var _w1 = tempA.Slice(i, _w0.Length);
+         var _w2 = tempB.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.Abs(_w1[_wk] - _w2[_wk]);
+            _w0[_wk + 1] = Math.Abs(_w1[_wk + 1] - _w2[_wk + 1]);
+            _w0[_wk + 2] = Math.Abs(_w1[_wk + 2] - _w2[_wk + 2]);
+            _w0[_wk + 3] = Math.Abs(_w1[_wk + 3] - _w2[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.Abs(_w1[_wk] - _w2[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr3 = Rma(localStart - backTeethLower, localEnd, tempMP, optInTeethPeriod, tempA);
       tempBegIdx = _xr3.BegIdx;
@@ -520,8 +565,23 @@ public partial class Core
       tempBegIdx = _xr4.BegIdx;
       tempNbElement = _xr4.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < nbElement; i += 1 ) {
-         outLower[i] = (tempA[i] < tempB[i]) ? tempA[i] - tempB[i] : tempB[i] - tempA[i];
+      i = 0;
+      if( i < nbElement ) {
+         int _wn = nbElement - i;
+         var _w0 = outLower.Slice(i, _wn);
+         var _w1 = tempA.Slice(i, _w0.Length);
+         var _w2 = tempB.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = (_w1[_wk] < _w2[_wk]) ? _w1[_wk] - _w2[_wk] : _w2[_wk] - _w1[_wk];
+            _w0[_wk + 1] = (_w1[_wk + 1] < _w2[_wk + 1]) ? _w1[_wk + 1] - _w2[_wk + 1] : _w2[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = (_w1[_wk + 2] < _w2[_wk + 2]) ? _w1[_wk + 2] - _w2[_wk + 2] : _w2[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = (_w1[_wk + 3] < _w2[_wk + 3]) ? _w1[_wk + 3] - _w2[_wk + 3] : _w2[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = (_w1[_wk] < _w2[_wk]) ? _w1[_wk] - _w2[_wk] : _w2[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       ReturnScratch(ref _rent_tempMP);
       ReturnScratch(ref _rent_tempA);

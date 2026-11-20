@@ -4041,7 +4041,25 @@ fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
         ("go", backends::go::generate(&f, &enums, reg, helpers), "func (c *Core) apoImpl(", "func (sp *APOStream) Update(", "math.FMA("),
     ];
     for (lang, text, batch, step, marker) in &rows {
-        let fused = fn_body(text, batch).matches(marker).count();
+        // C#'s unrolled group repeats the pass its tail runs once.
+        let mut group: Option<String> = None;
+        let rolled: Vec<&str> = fn_body(text, batch)
+            .lines()
+            .filter(|l| match &group {
+                Some(close) => {
+                    if l == close {
+                        group = None;
+                    }
+                    false
+                }
+                None if l.trim_start().starts_with("for( ; _wk <= ") => {
+                    group = Some(format!("{}}}", &l[..l.len() - l.trim_start().len()]));
+                    false
+                }
+                None => true,
+            })
+            .collect();
+        let fused = rolled.iter().map(|l| l.matches(marker).count()).sum::<usize>();
         let stepped = fn_body(text, step).matches(marker).count();
         assert!(fused > 0, "{lang}: the batch map fuses nothing");
         assert_eq!(stepped, fused, "{lang}: the step fuses {stepped} sites, batch {fused}");

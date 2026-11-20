@@ -325,8 +325,22 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */
-      for( i = 0; i < outNbElement1; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
+      i = 0;
+      if( i < outNbElement1 ) {
+         int _wn = outNbElement1 - i;
+         var _w0 = fastMABuffer.Slice(i, _wn);
+         var _w1 = slowMABuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+            _w0[_wk + 1] = _w0[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = _w0[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = _w0[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       /* Copy the result into the output for the caller. */
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
@@ -341,8 +355,23 @@ public partial class Core
       ReturnScratch(ref _rent_fastMABuffer);
       ReturnScratch(ref _rent_slowMABuffer);
       /* Calculate the histogram. */
-      for( i = 0; i < outNbElement2; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      i = 0;
+      if( i < outNbElement2 ) {
+         int _wn = outNbElement2 - i;
+         var _w1 = outMACDHist.Slice(i, _wn);
+         var _w0 = outMACD.Slice(i, _w1.Length);
+         var _w2 = outMACDSignal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+            _w1[_wk + 1] = _w0[_wk + 1] - _w2[_wk + 1];
+            _w1[_wk + 2] = _w0[_wk + 2] - _w2[_wk + 2];
+            _w1[_wk + 3] = _w0[_wk + 3] - _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+         }
+         i += _wn;
       }
       /* All done! Indicate the output limits and return success. */
       outBegIdx = startIdx;
@@ -471,8 +500,22 @@ public partial class Core
          ReturnScratch(ref _rent_slowMABuffer);
          return RetCode.BadParam ;
       }
-      for( i = 0; i < outNbElement1; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
+      i = 0;
+      if( i < outNbElement1 ) {
+         int _wn = outNbElement1 - i;
+         var _w0 = fastMABuffer.Slice(i, _wn);
+         var _w1 = slowMABuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+            _w0[_wk + 1] = _w0[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = _w0[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = _w0[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outMACD.Slice(0));
       OutRange _xr3 = Ma(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
@@ -481,8 +524,23 @@ public partial class Core
       retCode = RetCode.Success;
       ReturnScratch(ref _rent_fastMABuffer);
       ReturnScratch(ref _rent_slowMABuffer);
-      for( i = 0; i < outNbElement2; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      i = 0;
+      if( i < outNbElement2 ) {
+         int _wn = outNbElement2 - i;
+         var _w1 = outMACDHist.Slice(i, _wn);
+         var _w0 = outMACD.Slice(i, _w1.Length);
+         var _w2 = outMACDSignal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+            _w1[_wk + 1] = _w0[_wk + 1] - _w2[_wk + 1];
+            _w1[_wk + 2] = _w0[_wk + 2] - _w2[_wk + 2];
+            _w1[_wk + 3] = _w0[_wk + 3] - _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+         }
+         i += _wn;
       }
       outBegIdx = startIdx;
       outNBElement = outNbElement2;

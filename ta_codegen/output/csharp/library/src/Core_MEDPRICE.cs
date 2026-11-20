@@ -118,8 +118,24 @@ public partial class Core
        * low over multiple price bar.
        */
       outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
+      i = startIdx;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inHigh.Slice(i, _w2.Length);
+         var _w1 = inLow.Slice(i, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = (_w0[_wk] + _w1[_wk]) / 2.0;
+            _w2[_wk + 1] = (_w0[_wk + 1] + _w1[_wk + 1]) / 2.0;
+            _w2[_wk + 2] = (_w0[_wk + 2] + _w1[_wk + 2]) / 2.0;
+            _w2[_wk + 3] = (_w0[_wk + 3] + _w1[_wk + 3]) / 2.0;
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = (_w0[_wk] + _w1[_wk]) / 2.0;
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -147,8 +163,24 @@ public partial class Core
          return RetCode.BadParam ;
       }
       outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+      i = startIdx;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inHigh.Slice(i, _w2.Length);
+         var _w1 = inLow.Slice(i, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = ((double)_w0[_wk] + (double)_w1[_wk]) / 2.0;
+            _w2[_wk + 1] = ((double)_w0[_wk + 1] + (double)_w1[_wk + 1]) / 2.0;
+            _w2[_wk + 2] = ((double)_w0[_wk + 2] + (double)_w1[_wk + 2]) / 2.0;
+            _w2[_wk + 3] = ((double)_w0[_wk + 3] + (double)_w1[_wk + 3]) / 2.0;
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = ((double)_w0[_wk] + (double)_w1[_wk]) / 2.0;
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

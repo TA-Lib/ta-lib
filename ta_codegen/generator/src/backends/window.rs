@@ -1,17 +1,16 @@
 //! Innermost batch loops as a counted `for` over slices cut once at entry
-//! (#442).
+//! (#442), rendered by Rust and C#.
 //!
 //! C's loops advance several indices in lockstep (`today`, `trailingIdx`,
-//! `outIdx`) and test only one of them, so LLVM keeps a bounds check on every
-//! access. Here each access `a[inv + v + c]`, where `v` moves by one per pass
-//! and `inv` not at all, becomes `_wJ[_wk + d]` over
-//! `let _wJ = &a[start..][..len]` inside `for _wk in 0.._wn`, and the checks
-//! go.
+//! `outIdx`) and test only one of them, so the compiler keeps a bounds check
+//! on every access. Here each access `a[inv + v + c]`, where `v` moves by one
+//! per pass and `inv` not at all, becomes window `J` at offset `d` (`_wJ[_wk +
+//! d]` in Rust) over a slice of `a` cut at loop entry, inside a loop of `_wn`
+//! passes, and the checks go.
 //!
-//! Rust-only and render-time: [`plan`] reads the loop as written and returns
-//! its body with those accesses re-indexed. Every statement stays, the index
-//! updates included, so each variable holds C's value inside and after the
-//! loop.
+//! Render-time: [`plan`] reads the loop as written and returns its body with
+//! those accesses re-indexed. Every statement stays, the index updates
+//! included, so each variable holds C's value inside and after the loop.
 //!
 //! A window spans only elements that some access reaches on every pass, so
 //! cutting it panics only where the loop as written would. When a window must
@@ -34,19 +33,39 @@ pub(crate) fn window_name(j: usize) -> String {
 
 const MARK: &str = "\u{1}w";
 
-fn marker(j: usize, d: i64) -> Expr {
+pub(crate) fn marker(j: usize, d: i64) -> Expr {
     Expr::Var(format!("{MARK}{j}:{d}"))
+}
+
+/// A re-indexed access's window and offset in it; `None` for any other index.
+pub(crate) fn marker_of(idx: &Expr) -> Option<(usize, i64)> {
+    let Expr::Var(n) = idx else { return None };
+    let (j, d) = n.strip_prefix(MARK)?.split_once(':')?;
+    Some((j.parse().ok()?, d.parse().ok()?))
 }
 
 /// A re-indexed access's rendering, window name included; `None` for any
 /// other index.
 pub(crate) fn render_marker(idx: &Expr) -> Option<String> {
-    let Expr::Var(n) = idx else { return None };
-    let (j, d) = n.strip_prefix(MARK)?.split_once(':')?;
-    let (j, d): (usize, i64) = (j.parse().ok()?, d.parse().ok()?);
+    let (j, d) = marker_of(idx)?;
     let at = if d == 0 { PASS.to_string() } else { format!("{PASS} + {d}") };
     Some(format!("{}[{at}]", window_name(j)))
 }
+
+/// What one backend's compiler gains from a window, where the two differ.
+pub(crate) struct Policy {
+    /// The compiler already bounds an input read at the counter's own value,
+    /// so a loop of nothing else is left alone (LLVM, against an input cut to
+    /// `endIdx + 1`).
+    pub counter_reads_bounded: bool,
+    /// A window may hold an element that no access reaches on every pass, cut
+    /// only when it fits with the loop as written as the fallback.
+    pub checked: bool,
+    /// A branch that makes no access does not count as one that varies.
+    pub scalar_branches: bool,
+}
+
+pub(crate) const RUST: Policy = Policy { counter_reads_bounded: true, checked: true, scalar_branches: false };
 
 pub(crate) struct Window {
     pub array: String,
@@ -80,7 +99,7 @@ pub(crate) struct Plan {
 
 /// `while( cond ) body`, or with `update`, the rest of
 /// `for( init; cond; update ) body` once `init` has run.
-pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, names: &Names) -> Option<Plan> {
+pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, names: &Names, policy: &Policy) -> Option<Plan> {
     fn advanced(pass: &[Statement], out: &mut Vec<String>) {
         for s in pass {
             match s {
@@ -118,8 +137,8 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         return None;
     }
 
-    let branches = variant_branches(&pass, &facts);
-    let an = Analysis { steps: &steps, facts: &facts, names, branches };
+    let branches = variant_branches(&pass, &facts, policy.scalar_branches);
+    let an = Analysis { steps: &steps, facts: &facts, names, policy, branches };
     let occs = an.occurrences(&pass);
     let (windows, reverse, assign, checked) = an.windows(&occs, &form.counter)?;
     let body = rewrite(&pass, &assign, &mut 0);
@@ -135,15 +154,15 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
     })
 }
 
-fn variant_branches(pass: &[Statement], facts: &Facts) -> bool {
+fn variant_branches(pass: &[Statement], facts: &Facts, scalar_ok: bool) -> bool {
     pass.iter().any(|statement| match statement {
         Statement::If { condition, then_body, else_body, .. } => {
             let mut accesses_array = false;
             each_access(statement, &mut |_, _, _| accesses_array = true);
-            !invariant(condition, facts)
+            (!scalar_ok && !invariant(condition, facts))
                 || accesses_array
-                || variant_branches(then_body, facts)
-                || variant_branches(else_body, facts)
+                || variant_branches(then_body, facts, scalar_ok)
+                || variant_branches(else_body, facts, scalar_ok)
         }
         _ => false,
     })
@@ -291,6 +310,7 @@ struct Analysis<'a> {
     steps: &'a BTreeMap<String, i64>,
     facts: &'a Facts,
     names: &'a Names<'a>,
+    policy: &'a Policy,
     branches: bool,
 }
 
@@ -378,12 +398,18 @@ impl Analysis<'_> {
         let (mut span, mut own) = (sure, narrow);
         let checked = wide != own;
         if checked {
+            if !self.policy.checked {
+                return None;
+            }
             (span, own) = (all, wide);
         }
         // An input read at the counter's own value is usually bounded already,
         // and windowing a loop of nothing else measured slower. In a body that
         // branches, so does one read at a fixed step behind the counter.
         let free = |g: &Group| {
+            if !self.policy.counter_reads_bounded {
+                return false;
+            }
             let (lo, hi) = own[g];
             let reach = if self.branches { lo <= 0 && hi <= 0 } else { (lo, hi) == (0, 0) };
             (self.names.same_len)(&g.array) && g.var == counter && g.inv.is_empty() && reach
@@ -576,6 +602,9 @@ mod tests {
     /// `i`, `j`, `k`, `n`, `e`, `b` are `usize`; `in`, `in2` inputs of one
     /// length; `out` an output; `ring` the storage of ring `r`.
     fn run_full(cond: &Expr, body: &[Statement], update: Option<&Statement>, same_len: bool) -> Option<Plan> {
+        run_under(cond, body, update, same_len, &RUST)
+    }
+    fn run_under(cond: &Expr, body: &[Statement], update: Option<&Statement>, same_len: bool, policy: &Policy) -> Option<Plan> {
         let index = |n: &str| ["i", "j", "k", "n", "e", "b"].contains(&n);
         let usize_expr = |x: &Expr| {
             matches!(x, Expr::IntLiteral(_) | Expr::PointerDeref(_) | Expr::FuncCall(..))
@@ -593,7 +622,7 @@ mod tests {
             same_len: &pool,
             ring_storage: &ring,
         };
-        plan(cond, body, update, &names)
+        plan(cond, body, update, &names, policy)
     }
     fn run_with(cond: &Expr, body: &[Statement], same_len: bool) -> Option<Plan> {
         run_full(cond, body, None, same_len)
@@ -955,6 +984,39 @@ mod tests {
             inc("j"),
         ];
         assert!(run_with(&bin(v("i"), BinOp::Less, v("e")), &arm_only, true).is_none());
+    }
+
+    #[test]
+    fn each_policy_switch_decides_alone() {
+        let cond = bin(v("i"), BinOp::Less, v("e"));
+        let bounded = Policy { counter_reads_bounded: false, ..RUST };
+        let unchecked = Policy { checked: false, ..RUST };
+        let scalar = Policy { scalar_branches: true, ..RUST };
+        // while( i < e ) { s += in[i]; i++; }, `in` resliced to the range.
+        let sum = [Statement::Assign { target: v("s"), value: plus(v("s"), at("in", v("i"))), compound: true }, inc("i")];
+        assert!(run_under(&cond, &sum, None, true, &RUST).is_none());
+        assert!(run_under(&cond, &sum, None, true, &bounded).is_some());
+        // while( i < e ) { y = c ? in[i + 1] : 0; out[i] = in[i] + y; i++; }
+        let reach = [
+            set(v("y"), Expr::Ternary(Box::new(v("c")), Box::new(at("in", plus(v("i"), int(1)))), Box::new(int(0)))),
+            set(at("out", v("i")), plus(at("in", v("i")), v("y"))),
+            inc("i"),
+        ];
+        assert!(run_under(&cond, &reach, None, false, &RUST).is_some_and(|p| p.checked));
+        assert!(run_under(&cond, &reach, None, false, &unchecked).is_none());
+        // while( i < e ) { x = in[i]; if( x > m ) m = x; out[i] = m; i++; }
+        let pick = [
+            set(v("x"), at("in", v("i"))),
+            branch(bin(v("x"), BinOp::Greater, v("m")), vec![set(v("m"), v("x"))], vec![]),
+            set(at("out", v("i")), v("m")),
+            inc("i"),
+        ];
+        assert!(run_under(&cond, &pick, None, false, &RUST).is_none());
+        assert!(run_under(&cond, &pick, None, false, &scalar).is_some_and(|p| !p.checked));
+        // A branch that makes an access still varies.
+        let mut stored = pick.clone();
+        stored[1] = branch(bin(v("x"), BinOp::Greater, v("m")), vec![set(at("out", v("i")), v("x"))], vec![]);
+        assert!(run_under(&cond, &stored, None, false, &scalar).is_none());
     }
 
     #[test]

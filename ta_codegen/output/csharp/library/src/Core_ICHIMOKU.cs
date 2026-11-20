@@ -240,9 +240,29 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       tempNbElement = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < n; i += 1 ) {
-         outTenkanSen[i] = tempT[i];
-         outKijunSen[i] = tempK[i];
+      i = 0;
+      if( i < n ) {
+         int _wn = n - i;
+         var _w1 = outTenkanSen.Slice(i, _wn);
+         var _w3 = tempT.Slice(i, _w1.Length);
+         var _w0 = outKijunSen.Slice(i, _w1.Length);
+         var _w2 = tempK.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w3[_wk];
+            _w0[_wk] = _w2[_wk];
+            _w1[_wk + 1] = _w3[_wk + 1];
+            _w0[_wk + 1] = _w2[_wk + 1];
+            _w1[_wk + 2] = _w3[_wk + 2];
+            _w0[_wk + 2] = _w2[_wk + 2];
+            _w1[_wk + 3] = _w3[_wk + 3];
+            _w0[_wk + 3] = _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w3[_wk];
+            _w0[_wk] = _w2[_wk];
+         }
+         i += _wn;
       }
       ReturnScratch(ref _rent_tempT);
       ReturnScratch(ref _rent_tempK);
@@ -333,9 +353,29 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       tempNbElement = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < n; i += 1 ) {
-         outTenkanSen[i] = tempT[i];
-         outKijunSen[i] = tempK[i];
+      i = 0;
+      if( i < n ) {
+         int _wn = n - i;
+         var _w1 = outTenkanSen.Slice(i, _wn);
+         var _w3 = tempT.Slice(i, _w1.Length);
+         var _w0 = outKijunSen.Slice(i, _w1.Length);
+         var _w2 = tempK.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w3[_wk];
+            _w0[_wk] = _w2[_wk];
+            _w1[_wk + 1] = _w3[_wk + 1];
+            _w0[_wk + 1] = _w2[_wk + 1];
+            _w1[_wk + 2] = _w3[_wk + 2];
+            _w0[_wk + 2] = _w2[_wk + 2];
+            _w1[_wk + 3] = _w3[_wk + 3];
+            _w0[_wk + 3] = _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w3[_wk];
+            _w0[_wk] = _w2[_wk];
+         }
+         i += _wn;
       }
       ReturnScratch(ref _rent_tempT);
       ReturnScratch(ref _rent_tempK);

@@ -106,9 +106,29 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         double _ld0 = inReal[i];
-         outReal[outIdx] = Math.Floor(_ld0);
+      i = startIdx;
+      outIdx = 0;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w1 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            double _ld0 = _w0[_wk];
+            _w1[_wk] = Math.Floor(_ld0);
+            double _ld1 = _w0[_wk + 1];
+            _w1[_wk + 1] = Math.Floor(_ld1);
+            double _ld2 = _w0[_wk + 2];
+            _w1[_wk + 2] = Math.Floor(_ld2);
+            double _ld3 = _w0[_wk + 3];
+            _w1[_wk + 3] = Math.Floor(_ld3);
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            double _ld4 = _w0[_wk];
+            _w1[_wk] = Math.Floor(_ld4);
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -134,9 +154,29 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         double _ld0 = (double)inReal[i];
-         outReal[outIdx] = Math.Floor(_ld0);
+      i = startIdx;
+      outIdx = 0;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w1 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            double _ld0 = (double)_w0[_wk];
+            _w1[_wk] = Math.Floor(_ld0);
+            double _ld1 = (double)_w0[_wk + 1];
+            _w1[_wk + 1] = Math.Floor(_ld1);
+            double _ld2 = (double)_w0[_wk + 2];
+            _w1[_wk + 2] = Math.Floor(_ld2);
+            double _ld3 = (double)_w0[_wk + 3];
+            _w1[_wk + 3] = Math.Floor(_ld3);
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            double _ld4 = (double)_w0[_wk];
+            _w1[_wk] = Math.Floor(_ld4);
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
