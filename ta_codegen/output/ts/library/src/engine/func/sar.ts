@@ -53,6 +53,17 @@ const WASM_FROM_BARS = 30;
  * Formula and more info at
  * [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar).
  *
+ * **Notes**
+ * - Wilder left a few details open, so SAR values can differ between charting
+ *   tools, mostly near the start of a series and on reversal bars. TA-Lib's
+ *   choices:
+ * - The first direction comes from Wilder's own Directional Movement on the first
+ *   two bars (as in MINUS_DM): short if the low fell by more than the high rose,
+ *   long otherwise.
+ * - A bar that touches the SAR exactly counts as a reversal.
+ * - Wilder's clamping rule is applied before checking for a reversal, so price
+ *   must reach the clamped stop to trigger one.
+ *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link sarLookback} is a success with empty outputs.

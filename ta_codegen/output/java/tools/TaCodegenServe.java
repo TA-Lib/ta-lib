@@ -201986,6 +201986,13 @@ class Core {
         * above price = downtrend (short). Price crossing SAR flips direction.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Wilder left a few details open, so SAR values can differ between charting tools, mostly near the start of a series and on reversal bars. TA-Lib's choices:</li>
+        * <li>The first direction comes from Wilder's own Directional Movement on the first two bars (as in MINUS_DM): short if the low fell by more than the high rose, long otherwise.</li>
+        * <li>A bar that touches the SAR exactly counts as a reversal.</li>
+        * <li>Wilder's clamping rule is applied before checking for a reversal, so price must reach the clamped stop to trigger one.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -202051,6 +202058,13 @@ class Core {
         * above price = downtrend (short). Price crossing SAR flips direction.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Wilder left a few details open, so SAR values can differ between charting tools, mostly near the start of a series and on reversal bars. TA-Lib's choices:</li>
+        * <li>The first direction comes from Wilder's own Directional Movement on the first two bars (as in MINUS_DM): short if the low fell by more than the high rose, long otherwise.</li>
+        * <li>A bar that touches the SAR exactly counts as a reversal.</li>
+        * <li>Wilder's clamping rule is applied before checking for a reversal, so price must reach the clamped stop to trigger one.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -250238,7 +250252,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "cb3841ca74ed9b2d";
+    static final String SPLICED_GENCODE_DIGEST = "c6affa05cbbf9f6f";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
