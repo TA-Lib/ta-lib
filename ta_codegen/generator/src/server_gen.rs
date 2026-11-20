@@ -2156,6 +2156,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 "        double[] _warm_{name} = bench_mode == 0 ? null : java.util.Arrays.copyOfRange({name}, 0, endIdx + 1);\n"
             ));
         }
+        s.push_str("        boolean _timed = bench_mode == 0 && jsonInt(json, \"timed\") != 0;\n");
         s.push_str("        long startNs = 0;\n");
         s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
         s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
@@ -2201,7 +2202,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 core_args.push_str(&format!(", outArr{k}"));
             }
             s.push_str("        if (bench_mode == 0) {\n");
-            s.push_str("        if (jsonInt(json, \"timed\") != 0) {\n");
+            s.push_str("        if (_timed) {\n");
             s.push_str("            if (_optRejected) {\n");
             s.push_str("                rc = RetCode.BAD_PARAM;\n");
             s.push_str("                outBegIdx.value = 0;\n");
@@ -2673,6 +2674,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("using System;\n");
     s.push_str("using System.Text.Json;\n");
     s.push_str("using System.Diagnostics;\n");
+    s.push_str("using System.Runtime.CompilerServices;\n");
     s.push_str("using TALib;\n");
     s.push_str("using TALib.Metadata;\n\n");
 
@@ -2703,6 +2705,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("        long freq = Stopwatch.Frequency;\n");
     s.push_str("        return (ts / freq) * 1000000000L + (ts % freq) * 1000000000L / freq;\n");
     s.push_str("    }\n\n");
+    s.push_str(CSHARP_TIMED_SUPPORT);
 
     // Tolerant JSON accessors (state methods lack most fields).
     s.push_str("    static int GetInt(JsonElement p, string name, int def) =>\n");
@@ -3095,6 +3098,91 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         let stream_class = crate::backends::csharp_stream::stream_class_name(func);
         let input_names = expand_input_names(&func.inputs);
         let outputs = &func.outputs;
+        let opt_names: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        let out_arrs: Vec<String> = (0..outputs.len()).map(|k| format!("outArr{k}")).collect();
+        let call_args = ["startIdx", "endIdx"]
+            .into_iter()
+            .map(str::to_string)
+            .chain(input_names.iter().cloned())
+            .chain(opt_names.iter().map(|n| (*n).to_string()))
+            .chain(["out outBegIdx".to_string(), "out outNBElement".to_string()])
+            .chain(out_arrs.iter().cloned())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let pub_args = ["startIdx", "endIdx"]
+            .into_iter()
+            .map(str::to_string)
+            .chain(input_names.iter().cloned())
+            .chain(opt_names.iter().map(|n| (*n).to_string()))
+            .chain(out_arrs.iter().cloned())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let open_args: Vec<String> = input_names
+            .iter()
+            .map(|n| format!("_warm_{n}"))
+            .chain(opt_names.iter().map(|n| (*n).to_string()))
+            .collect();
+        let ins = open_args.join(", ");
+        let fill = open_args.iter().chain(out_arrs.iter()).cloned().collect::<Vec<_>>().join(", ");
+        let timed_args = ["core", "startIdx", "endIdx"]
+            .into_iter()
+            .map(str::to_string)
+            .chain(input_names.iter().cloned())
+            .chain(opt_names.iter().map(|n| (*n).to_string()))
+            .chain(out_arrs.iter().cloned())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        {
+            let mut params: Vec<String> = ["int iters", "int mode", "Core core", "int startIdx", "int endIdx"]
+                .into_iter()
+                .map(str::to_string)
+                .collect();
+            params.extend(input_names.iter().map(|n| format!("double[] {n}")));
+            for opt in &func.optional_inputs {
+                let ty = match &opt.param_type {
+                    ParamType::Real => "double".to_string(),
+                    ParamType::Enum(enum_name) => enum_name.clone(),
+                    _ => "int".to_string(),
+                };
+                params.push(format!("{ty} {}", opt.name));
+            }
+            for (k, out) in outputs.iter().enumerate() {
+                let ty = if out.param_type == ParamType::Integer { "int" } else { "double" };
+                params.push(format!("{ty}[] outArr{k}"));
+            }
+            s.push_str("    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]\n");
+            s.push_str(&format!("    static TimedResult Timed_{}({}) {{\n", func.name, params.join(", ")));
+            s.push_str("        RetCode rc = RetCode.Success;\n");
+            s.push_str("        int outBegIdx = 0, outNBElement = 0;\n");
+            for name in &input_names {
+                s.push_str(&format!(
+                    "        ReadOnlySpan<double> _warm_{name} = mode == 0 ? default : {name}.AsSpan(0, endIdx + 1);\n"
+                ));
+            }
+            s.push_str("        long _j0 = System.Runtime.JitInfo.GetCompiledMethodCount(false);\n");
+            s.push_str("        long _t0 = GetNanoTime();\n");
+            s.push_str("        if (mode == 0) {\n");
+            s.push_str("            for (int _i = 0; _i < iters; _i++)\n");
+            s.push_str(&format!("                rc = core.{base}Impl({call_args});\n"));
+            s.push_str("        } else if (mode == 1) {\n");
+            s.push_str("            for (int _i = 0; _i < iters; _i++)\n");
+            s.push_str(&format!("                core.{base_pascal}Open({ins});\n"));
+            s.push_str("        } else {\n");
+            s.push_str("            for (int _i = 0; _i < iters; _i++) {\n");
+            s.push_str(&format!(
+                "                Core.{stream_class} _wh = core.{base_pascal}OpenAndFill({fill});\n"
+            ));
+            s.push_str("                outBegIdx = _wh.OutRange.BegIdx;\n");
+            s.push_str("                outNBElement = _wh.OutRange.Count;\n");
+            s.push_str("            }\n");
+            s.push_str("        }\n");
+            s.push_str("        long _ns = GetNanoTime() - _t0;\n");
+            s.push_str(
+                "        return new TimedResult(rc, outBegIdx, outNBElement, _ns, System.Runtime.JitInfo.GetCompiledMethodCount(false) - _j0);\n",
+            );
+            s.push_str("    }\n\n");
+        }
 
         s.push_str(&format!(
             "    static string Handle_{}(JsonElement p, int startIdx, int endIdx) {{\n",
@@ -3208,101 +3296,87 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        int outBegIdx = 0, outNBElement = 0;\n");
         s.push_str("        RetCode rc = RetCode.Success;\n");
 
-        // Guarded timing loop.
-        let mut call_args = String::from("startIdx, endIdx");
-        for name in &input_names {
-            call_args.push_str(&format!(", {name}"));
-        }
-        for opt in &func.optional_inputs {
-            call_args.push_str(&format!(", {}", opt.name));
-        }
-        call_args.push_str(", out outBegIdx, out outNBElement");
-        for k in 0..outputs.len() {
-            call_args.push_str(&format!(", outArr{k}"));
-        }
-        // Iteration 0 is always a discarded warm-up — see the C emitter. It
-        // matters most here (the cold call is 1.5-10x steady state) and it makes
-        // every correctness gate an idempotency check.
-        s.push_str("        long _t0 = 0;\n");
-        s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
-        s.push_str("            if (_bi == 1) _t0 = GetNanoTime();\n");
-        // Correctness through the PUBLIC overload, the benchmark through the
-        // C-shaped one. See the Java emitter for why, and for why only the
+        s.push_str("        long _ns = 0;\n");
+        s.push_str("        string _timedFields = \"\";\n");
+        s.push_str("        if (GetInt(p, \"timed\", 0) != 0) {\n");
+        s.push_str("            try {\n");
+        let key = std::iter::once("{bench_mode}".to_string())
+            .chain(opt_names.iter().map(|n| format!("{{{n}}}")))
+            .collect::<Vec<_>>()
+            .join("/");
+        s.push_str(&format!("                var _w = new WarmUp($\"{}/{key}\");\n", func.name));
+        s.push_str("                TimedResult _r = default;\n");
+        s.push_str(&format!(
+            "                while (_w.Next(_r.Ns)) _r = Timed_{}(_w.Iters, bench_mode, {timed_args});\n",
+            func.name
+        ));
+        s.push_str("                int _retimed = 0;\n");
+        s.push_str(&format!(
+            "                do _r = Timed_{}(bench_iters, bench_mode, {timed_args}); while (_r.Jit > 0 && _retimed++ < WarmUp.Retimes);\n",
+            func.name
+        ));
+        s.push_str("                rc = _r.Rc;\n");
+        s.push_str("                outBegIdx = _r.BegIdx;\n");
+        s.push_str("                outNBElement = _r.NbElement;\n");
+        s.push_str("                _ns = _r.Ns;\n");
+        s.push_str("                _timedFields = _w.Fields(_r);\n");
+        s.push_str("            } catch (Exception _e) when (_e is ITALibFailure) {\n");
+        s.push_str("                rc = ((ITALibFailure)_e).RetCode;\n");
+        s.push_str("                outBegIdx = 0;\n");
+        s.push_str("                outNBElement = 0;\n");
+        s.push_str("            }\n");
+        s.push_str("        } else {\n");
+        // Iteration 0 is always a discarded warm-up — see the C emitter — and it
+        // makes every correctness gate an idempotency check.
+        s.push_str("            long _t0 = 0;\n");
+        s.push_str("            for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
+        s.push_str("                if (_bi == 1) _t0 = GetNanoTime();\n");
+        // Correctness through the PUBLIC overload, the benchmark (above) through
+        // the C-shaped one. See the Java emitter for why, and for why only the
         // library's own failure is converted to a code here.
-        {
-            let mut pub_args = String::from("startIdx, endIdx");
-            for name in &input_names {
-                pub_args.push_str(&format!(", {name}"));
-            }
-            for opt in &func.optional_inputs {
-                pub_args.push_str(&format!(", {}", opt.name));
-            }
-            for k in 0..outputs.len() {
-                pub_args.push_str(&format!(", outArr{k}"));
-            }
-            s.push_str("            if (bench_mode == 0) {\n");
-            s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
-            s.push_str("                try {\n");
-            s.push_str(&format!("                    rc = core.{base}Impl({call_args});\n"));
-            s.push_str("                } catch (Exception _e2) when (_e2 is ITALibFailure) {\n");
-            s.push_str("                    rc = ((ITALibFailure)_e2).RetCode;\n");
-            s.push_str("                    outBegIdx = 0;\n");
-            s.push_str("                    outNBElement = 0;\n");
-            s.push_str("                }\n");
-            s.push_str("            } else {\n");
-            s.push_str("                try {\n");
-            s.push_str(&format!("                    OutRange _pr = core.{base}({pub_args});\n"));
-            s.push_str("                    outBegIdx = _pr.BegIdx;\n");
-            s.push_str("                    outNBElement = _pr.Count;\n");
-            s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e) when (_e is ITALibFailure) {\n");
-            s.push_str("                    rc = ((ITALibFailure)_e).RetCode;\n");
-            s.push_str("                    outBegIdx = 0;\n");
-            s.push_str("                    outNBElement = 0;\n");
-            s.push_str("                }\n");
-            s.push_str("            }\n");
-            // --- warm-up arms (ta_bench --mode=open / openfill), issue #256.
-            // Handles are GC-managed (no Close) and the public Open/OpenAndFill
-            // throw instead of returning a code, so these arms convert the
-            // throw into a RetCode the same way the batch call above does.
-            let mut open_args: Vec<String> =
-                input_names.iter().map(|n| format!("_warm_{n}")).collect();
-            for opt in &func.optional_inputs {
-                open_args.push(opt.name.clone());
-            }
-            let ins = open_args.join(", ");
-            let mut fill_args = open_args.clone();
-            for k in 0..outputs.len() {
-                fill_args.push(format!("outArr{k}"));
-            }
-            let fill = fill_args.join(", ");
-            s.push_str("            } else if (bench_mode == 1) {\n");
-            s.push_str("                try {\n");
-            s.push_str(&format!("                    core.{base_pascal}Open({ins});\n"));
-            s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
-            s.push_str("                    rc = ((ITALibFailure)_e3).RetCode;\n");
-            s.push_str("                }\n");
-            s.push_str("            } else {\n");
-            s.push_str("                try {\n");
-            // The fill reports its range via the returned handle's OutRange
-            // property -- unpack it into the same two locals the batch arm
-            // sets, which the response builder below reads.
-            s.push_str(&format!(
-                "                    Core.{stream_class} _wh = core.{base_pascal}OpenAndFill({fill});\n"
-            ));
-            s.push_str("                    outBegIdx = _wh.OutRange.BegIdx;\n");
-            s.push_str("                    outNBElement = _wh.OutRange.Count;\n");
-            s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
-            s.push_str("                    rc = ((ITALibFailure)_e3).RetCode;\n");
-            s.push_str("                    outBegIdx = 0;\n");
-            s.push_str("                    outNBElement = 0;\n");
-            s.push_str("                }\n");
-            s.push_str("            }\n");
-        }
+        s.push_str("                if (bench_mode == 0) {\n");
+        s.push_str("                    try {\n");
+        s.push_str(&format!("                        OutRange _pr = core.{base}({pub_args});\n"));
+        s.push_str("                        outBegIdx = _pr.BegIdx;\n");
+        s.push_str("                        outNBElement = _pr.Count;\n");
+        s.push_str("                        rc = RetCode.Success;\n");
+        s.push_str("                    } catch (Exception _e) when (_e is ITALibFailure) {\n");
+        s.push_str("                        rc = ((ITALibFailure)_e).RetCode;\n");
+        s.push_str("                        outBegIdx = 0;\n");
+        s.push_str("                        outNBElement = 0;\n");
+        s.push_str("                    }\n");
+        // --- warm-up arms (ta_bench --mode=open / openfill), issue #256.
+        // Handles are GC-managed (no Close) and the public Open/OpenAndFill
+        // throw instead of returning a code, so these arms convert the
+        // throw into a RetCode the same way the batch call above does.
+        s.push_str("                } else if (bench_mode == 1) {\n");
+        s.push_str("                    try {\n");
+        s.push_str(&format!("                        core.{base_pascal}Open({ins});\n"));
+        s.push_str("                        rc = RetCode.Success;\n");
+        s.push_str("                    } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
+        s.push_str("                        rc = ((ITALibFailure)_e3).RetCode;\n");
+        s.push_str("                    }\n");
+        s.push_str("                } else {\n");
+        s.push_str("                    try {\n");
+        // The fill reports its range via the returned handle's OutRange
+        // property -- unpack it into the same two locals the batch arm
+        // sets, which the response builder below reads.
+        s.push_str(&format!(
+            "                        Core.{stream_class} _wh = core.{base_pascal}OpenAndFill({fill});\n"
+        ));
+        s.push_str("                        outBegIdx = _wh.OutRange.BegIdx;\n");
+        s.push_str("                        outNBElement = _wh.OutRange.Count;\n");
+        s.push_str("                        rc = RetCode.Success;\n");
+        s.push_str("                    } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
+        s.push_str("                        rc = ((ITALibFailure)_e3).RetCode;\n");
+        s.push_str("                        outBegIdx = 0;\n");
+        s.push_str("                        outNBElement = 0;\n");
+        s.push_str("                    }\n");
+        s.push_str("                }\n");
+        s.push_str("            }\n");
+        s.push_str("            _ns = GetNanoTime() - _t0;\n");
         s.push_str("        }\n");
-        s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
+        s.push_str("        long elapsedNs = _ns / bench_iters;\n");
 
         // Float-variant leg ("use_float":1): re-run through the float[] overload
         // of the same core, over the same output buffers, so the response carries
@@ -3423,6 +3497,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        }\n");
         s.push_str("        sb.Append($\",\\\"used_float\\\":{usedFloat}\");\n");
         s.push_str("        sb.Append($\",\\\"timing_ns\\\":{elapsedNs}\");\n");
+        s.push_str("        sb.Append(_timedFields);\n");
         if func.streaming {
             let mut ride_args = String::new();
             for name in &input_names {
@@ -4894,6 +4969,93 @@ const JAVA_IHE: &str = include_str!("../templates/java/InsufficientHistoryExcept
 /// exception classes that carry a `RetCode` (#236 step 1). Same rule, same
 /// reason: the spliced wrappers throw these by name.
 const JAVA_FAILURES: &str = include_str!("../templates/java/Failures.java");
+/// What a timed C# request measures: the body at the tier a long-running
+/// process settles at, called from a frame that does not change it.
+const CSHARP_TIMED_SUPPORT: &str = r#"    // Timed_<N> must call the body, not inline it: an inlined copy is compiled once,
+    // without the profile the body's own tiers get. AggressiveOptimization gives no
+    // inlining guarantee, and a body under the JIT's no-profile size limit can be
+    // inlined; when the runtime changes, check that the smallest bodies' Timed_<N>
+    // listings (DOTNET_JitDisasm) still call <N>Impl.
+    readonly record struct TimedResult(RetCode Rc, int BegIdx, int NbElement, long Ns, long Jit);
+
+    // The runtime counts the 30 calls that promote a method only once no method has
+    // been called for the first time in 100 to 200 ms, and compiles the promotion on a
+    // background thread, queued behind whatever else was promoted; one compile there
+    // can outlast any fixed quiet window, so a window also needs that thread idle.
+    // Stopping early times tier-0 or OSR code, and which one depends on what the
+    // process ran before.
+    sealed class WarmUp {
+        // A compile inside a timed call is in practice off the timed path, on another
+        // thread: the server's request code, queued just before and held back up to 200 ms
+        // past the last first call, which no counter shows, so no wait can rule it out; or
+        // a runtime callback after a collection. The call absorbs it and a re-run times the
+        // same code; a compile in every run is something that keeps compiling.
+        public const int Retimes = 2;
+        const long DelayNs = 220_000_000, CompileNs = 150_000_000, MaxNs = 10_000_000_000, StepNs = 1_000_000;
+        const int Calls = 32, MaxIters = 1 << 20;
+        static readonly System.Collections.Generic.HashSet<string> Settled = new();
+        readonly string key;
+        readonly long start;
+        long own = -1, all = -1, countFrom, stepStart, counted, countedAt, cpuAt;
+        bool done, capped;
+        public int Iters = 1;
+
+        // key: everything that picks the body's code path (function, mode, optional
+        // parameters), so another path is warmed before it is timed.
+        public WarmUp(string key) {
+            this.key = key;
+            done = Settled.Contains(key);
+            start = stepStart = GetNanoTime();
+        }
+
+        // stepNs: what the step just run took. False once settled, here or by an
+        // earlier request with the same key, or at the cap.
+        public bool Next(long stepNs) {
+            if (done) return false;
+            long now = GetNanoTime();
+            long o = System.Runtime.JitInfo.GetCompiledMethodCount(true);
+            long a = System.Runtime.JitInfo.GetCompiledMethodCount(false);
+            if (o != own || a != all) {
+                // A compile on this thread may be a first call, which restarts the delay.
+                countFrom = Math.Max(countFrom, o != own ? now + DelayNs : now);
+                own = o;
+                all = a;
+                counted = 0;
+                countedAt = 0;
+            } else if (stepStart >= countFrom) {
+                counted += Iters;
+                if (countedAt == 0 && counted >= Calls) (countedAt, cpuAt) = (now, CpuNs());
+            }
+            if (countedAt != 0 && now - countedAt >= CompileNs) {
+                // This thread alone accounts for the wall time; more is another thread working.
+                long cpu = CpuNs();
+                if (cpu - cpuAt - (now - countedAt) < CompileNs / 8) {
+                    Settled.Add(key);
+                    done = true;
+                    return false;
+                }
+                (countedAt, cpuAt) = (now, cpu);
+            }
+            if (now - start >= MaxNs) {
+                // Not settled: the next request with this key warms again.
+                done = capped = true;
+                return false;
+            }
+            if (stepNs < StepNs && Iters < MaxIters) Iters *= 2;
+            stepStart = now;
+            return true;
+        }
+
+        // Compiles anywhere in the process during the reported run are counted: ta_bench
+        // judges only the pass it keeps.
+        public string Fields(in TimedResult r) =>
+            $",\"jit_in_timing\":{r.Jit}" + (capped ? ",\"warm_capped\":1" : "");
+
+        static long CpuNs() => Environment.CpuUsage.TotalTime.Ticks * 100;
+    }
+
+"#;
+
 /// The C# server's `ta_abstract` handlers. Fixed source — every answer is read
 /// from the shipped `TALib.Metadata` catalogue, which the server csproj compiles
 /// directly, so there is no second metadata table to drift.

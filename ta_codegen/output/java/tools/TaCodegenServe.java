@@ -252208,11 +252208,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -252370,11 +252371,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -252523,11 +252525,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -252683,11 +252686,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -252839,11 +252843,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253003,11 +253008,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253160,11 +253166,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253319,11 +253326,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253479,11 +253487,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253643,11 +253652,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253797,11 +253807,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -253949,11 +253960,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254101,11 +254113,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254254,11 +254267,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254409,11 +254423,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254572,11 +254587,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254723,11 +254739,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -254868,11 +254885,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255025,11 +255043,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255175,11 +255194,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255335,11 +255355,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255496,11 +255517,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255651,11 +255673,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255802,11 +255825,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -255964,11 +255988,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256126,11 +256151,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256290,11 +256316,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256456,11 +256483,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256622,11 +256650,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256788,11 +256817,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -256954,11 +256984,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257120,11 +257151,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257286,11 +257318,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257453,11 +257486,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257619,11 +257653,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257785,11 +257820,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -257951,11 +257987,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258117,11 +258154,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258283,11 +258321,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258449,11 +258488,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258616,11 +258656,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258782,11 +258823,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -258948,11 +258990,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259114,11 +259157,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259280,11 +259324,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259447,11 +259492,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259614,11 +259660,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259780,11 +259827,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -259946,11 +259994,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260112,11 +260161,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260278,11 +260328,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260444,11 +260495,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260610,11 +260662,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260776,11 +260829,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -260942,11 +260996,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261108,11 +261163,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261274,11 +261330,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261440,11 +261497,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261606,11 +261664,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261772,11 +261831,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -261938,11 +261998,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262104,11 +262165,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262270,11 +262332,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262436,11 +262499,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262602,11 +262666,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262768,11 +262833,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -262934,11 +263000,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263101,11 +263168,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263268,11 +263336,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263435,11 +263504,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263601,11 +263671,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263767,11 +263838,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -263933,11 +264005,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264099,11 +264172,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264265,11 +264339,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264431,11 +264506,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264597,11 +264673,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264763,11 +264840,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -264929,11 +265007,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265095,11 +265174,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265261,11 +265341,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265427,11 +265508,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265593,11 +265675,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265759,11 +265842,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -265925,11 +266009,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266091,11 +266176,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266257,11 +266343,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266422,11 +266509,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266573,11 +266661,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266719,11 +266808,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -266875,11 +266965,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267035,11 +267126,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267199,11 +267291,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267366,11 +267459,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267519,11 +267613,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267665,11 +267760,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267813,11 +267909,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -267964,11 +268061,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268111,11 +268209,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268256,11 +268355,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268404,11 +268504,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268550,11 +268651,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268695,11 +268797,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268847,11 +268950,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -268995,11 +269099,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269145,11 +269250,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269302,11 +269408,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269457,11 +269564,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269603,11 +269711,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269760,11 +269869,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -269915,11 +270025,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270064,11 +270175,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270221,11 +270333,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270371,11 +270484,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270529,11 +270643,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270680,11 +270795,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270834,11 +270950,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -270983,11 +271100,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271129,11 +271247,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271283,11 +271402,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271439,11 +271559,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271599,11 +271720,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271770,11 +271892,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -271928,11 +272051,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272074,11 +272198,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272220,11 +272345,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272368,11 +272494,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272518,11 +272645,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272666,11 +272794,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272812,11 +272941,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -272967,11 +273097,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273130,11 +273261,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273289,11 +273421,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273438,11 +273571,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273600,11 +273734,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273776,11 +273911,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -273940,11 +274076,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274104,11 +274241,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274252,11 +274390,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274417,11 +274556,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274571,11 +274711,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274717,11 +274858,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -274863,11 +275005,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275009,11 +275152,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275154,11 +275298,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275299,11 +275444,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275448,11 +275594,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275600,11 +275747,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275765,11 +275913,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -275919,11 +276068,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276085,11 +276235,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276243,11 +276394,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276400,11 +276552,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276556,11 +276709,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276713,11 +276867,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -276861,11 +277016,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277007,11 +277163,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277154,11 +277311,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277300,11 +277458,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277450,11 +277609,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277613,11 +277773,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277765,11 +277926,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -277916,11 +278078,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278064,11 +278227,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278210,11 +278374,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278358,11 +278523,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278508,11 +278674,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278667,11 +278834,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278823,11 +278991,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -278971,11 +279140,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279121,11 +279291,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279280,11 +279451,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279434,11 +279606,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279586,11 +279759,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279739,11 +279913,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -279886,11 +280061,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280032,11 +280208,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280189,11 +280366,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280345,11 +280523,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280497,11 +280676,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280654,11 +280834,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280808,11 +280989,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -280960,11 +281142,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281110,11 +281293,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281263,11 +281447,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281412,11 +281597,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281558,11 +281744,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281704,11 +281891,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281850,11 +282038,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -281996,11 +282185,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282158,11 +282348,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282311,11 +282502,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282459,11 +282651,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282611,11 +282804,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282759,11 +282953,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -282911,11 +283106,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283071,11 +283267,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283221,11 +283418,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283382,11 +283580,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283533,11 +283732,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283678,11 +283878,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283824,11 +284025,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -283970,11 +284172,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284131,11 +284334,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284285,11 +284489,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284430,11 +284635,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284593,11 +284799,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284748,11 +284955,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -284895,11 +285103,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285061,11 +285270,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285229,11 +285439,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285388,11 +285599,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285540,11 +285752,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
         double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285688,11 +285901,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -285847,11 +286061,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286000,11 +286215,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286148,11 +286364,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286295,11 +286512,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286442,11 +286660,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286589,11 +286808,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286737,11 +286957,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -286882,11 +287103,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287027,11 +287249,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287173,11 +287396,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287328,11 +287552,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287478,11 +287703,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287624,11 +287850,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287770,11 +287997,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -287917,11 +288145,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288072,11 +288301,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288234,11 +288464,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288385,11 +288616,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288531,11 +288763,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288679,11 +288912,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -288837,11 +289071,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289003,11 +289238,12 @@ public class TaCodegenServe {
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289160,11 +289396,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289317,11 +289554,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289481,11 +289719,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289642,11 +289881,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289802,11 +290042,12 @@ public class TaCodegenServe {
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -289952,11 +290193,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -290108,11 +290350,12 @@ public class TaCodegenServe {
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
         double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
@@ -290260,11 +290503,12 @@ public class TaCodegenServe {
         RetCode rc = RetCode.SUCCESS;
         int bench_mode = jsonInt(json, "bench_mode");
         double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
+        if (_timed) {
             if (_optRejected) {
                 rc = RetCode.BAD_PARAM;
                 outBegIdx.value = 0;
