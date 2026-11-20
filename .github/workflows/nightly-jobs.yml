@@ -1864,7 +1864,25 @@ jobs:
           echo "wrapper dev at $(git -C _wrapper/src rev-parse HEAD)"
           cd _wrapper/src
           pip install --require-hashes -r "$GITHUB_WORKSPACE/.github/requirements/build-tools.txt"
-          pip install -r requirements_test.txt
+          # The pinned copy has to cover exactly what the wrapper's own file
+          # names, or a test dependency the wrapper adds would go unnoticed.
+          python3 - "$GITHUB_WORKSPACE/.github/requirements/wrapper-test.in" requirements_test.txt <<'PY'
+          import os, re, sys
+          def names(path):
+              out = set()
+              for line in open(path):
+                  line = line.split("#")[0].strip()
+                  if line.startswith("-r"):
+                      out |= names(os.path.join(os.path.dirname(path), line[2:].strip()))
+                  elif line:
+                      out.add(re.split(r"[<>=!~\[; ]", line)[0].lower().replace("_", "-"))
+              return out
+          ours, theirs = names(sys.argv[1]), names(sys.argv[2])
+          if ours != theirs:
+              sys.exit("::error::ta-lib-python's test requirements name %s, .github/requirements/wrapper-test.in names %s: "
+                       "update it and regenerate wrapper-test.txt." % (sorted(theirs), sorted(ours)))
+          PY
+          pip install --require-hashes -r "$GITHUB_WORKSPACE/.github/requirements/wrapper-test.txt"
           python setup.py build_ext --inplace
           PYTHONPATH=. pytest -q
 
