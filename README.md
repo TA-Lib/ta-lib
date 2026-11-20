@@ -4,11 +4,12 @@ TA-Lib implements the standard technical analysis algorithms used across the
 industry since 2001, and is often the reference other libraries test their
 results against.
 
-[![release](https://img.shields.io/github/v/release/TA-Lib/ta-lib)](https://github.com/TA-Lib/ta-lib/releases)
-[![license](https://img.shields.io/github/license/TA-Lib/ta-lib)](LICENSE)
+[![release](https://img.shields.io/github/v/release/TA-Lib/ta-lib?color=brightgreen)](https://github.com/TA-Lib/ta-lib/releases)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TA-Lib/ta-lib/badge)](https://scorecard.dev/viewer/?uri=github.com/TA-Lib/ta-lib)
+[![Discord chat](https://img.shields.io/discord/1038616996062953554.svg?logo=discord&style=flat-square)](https://discord.gg/Erb6SwsVbH)
+
 [![main nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml)
 [![dev nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml)
-[![Discord chat](https://img.shields.io/discord/1038616996062953554.svg?logo=discord&style=flat-square)](https://discord.gg/Erb6SwsVbH)
 
 ## Features
 
