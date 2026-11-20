@@ -872,6 +872,8 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "scripts/utilities/files.py",
         "LICENSE",
         "VERSION",
+        # automake puts it in the source tarball without an EXTRA_DIST entry.
+        "README.md",
     ]
 
     file_list = []
