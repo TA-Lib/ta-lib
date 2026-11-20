@@ -1,7 +1,7 @@
 // Port of src/tools/ta_bench/bench_corpus.h, so --bench-stream times the series
 // ta_bench_stream times for the same shape, seed and points. Every product is
 // written float64(a*b), as in fuzz.go. The walk, ramp, flat and peg shapes match
-// C bit for bit; gbm and trend-chop also go through Go's Log, Exp, Sin and Cos,
+// C bit for bit; gbm, trend-chop and gap also go through Go's Log, Exp, Sin and Cos,
 // which may round a last bit differently from the C library's.
 
 const (
@@ -11,6 +11,7 @@ const (
 	benchGenRamp
 	benchGenFlat
 	benchGenPeg
+	benchGenGap
 )
 
 const (
@@ -38,6 +39,8 @@ var benchShapes = [...]benchShape{
 	{"mono-down", benchGenRamp, -1.00},
 	{"constant", benchGenFlat, 0.00},
 	{"peg", benchGenPeg, 0.00},
+	{"gap-daily", benchGenGap, 0.15},
+	{"gap-intraday", benchGenGap, 0.02},
 }
 
 type benchCorpusCfg struct {
@@ -183,6 +186,31 @@ func benchCorpusGen(cfg benchCorpusCfg, n int, o, h, l, c, v, oi, periods []floa
 				l[i] = 1.0
 			}
 			v[i], oi[i], periods[i] = 1000000.0, 0.0, 14.0
+		}
+		return
+	case benchGenGap:
+		const sigma = 0.01
+		sj := float64(math.Sqrt(param) * sigma)
+		s2 := float64(float64((1.0-param)*sigma) * sigma)
+		sd := math.Sqrt(s2)
+		logc := math.Log(100.0)
+		for i := 0; i < n; i++ {
+			logo := logc + float64(sj*rng.normal())
+			d := float64(sd * rng.normal())
+			u1 := 1.0 - rng.m.unit()
+			u2 := 1.0 - rng.m.unit()
+			up := float64(0.5 * (d + math.Sqrt(float64(d*d)-float64(float64(2.0*s2)*math.Log(u1)))))
+			dn := float64(0.5 * (d - math.Sqrt(float64(d*d)-float64(float64(2.0*s2)*math.Log(u2)))))
+			logc = logo + d
+			o[i] = math.Exp(logo)
+			c[i] = math.Exp(logc)
+			h[i] = benchFmax(math.Exp(logo+up), benchFmax(o[i], c[i]))
+			l[i] = benchFmin(math.Exp(logo+dn), benchFmin(o[i], c[i]))
+			v[i] = 1000000.0 + float64(500000.0*(rng.m.unit()-0.5))
+			oi[i] = 0.0
+			period += int(rng.m.next()%7) - 3
+			period = min(max(period, 2), 30)
+			periods[i] = float64(period)
 		}
 		return
 	}

@@ -346,6 +346,12 @@ rate; `mono-*` and `constant` are the analytic tail. `peg` returns to 3.30 and
 holds for 360 bars at a time, a level whose window mean does not round back at
 the icount periods.
 
+`gap-daily` and `gap-intraday` are for code that compares a bar with the
+previous close, as true range does: on every other shape that gap beats the
+bar's range never or on most bars, so a branch on it reads as free or as a
+coin flip. Short series replayed many times teach the predictor either way:
+read such a branch at 100000 bars.
+
 One documented exemption in `--verify-corpus`: the walk family floors `low` at
 1.0 but leaves `close` unclamped, so `low <= min(open,close)` fails on 32 bars of
 `randwalk` at n=100000 (11 with a negative close). That is inherited from the
