@@ -1212,7 +1212,8 @@ TA_RetCode max( int    startIdx,
 
 /// OBV adds or subtracts the volume on whether the close rose, a coin flip: C
 /// and Rust select the step in batch (C's two precisions), open, step and peek;
-/// Java and C# in both precisions, open and step, their peek keeping the branch.
+/// Java and C# in both precisions, open and step, TypeScript in batch, open and
+/// step, their peek keeping the branch.
 /// No other function's accumulation qualifies.
 #[test]
 fn an_ordered_step_is_picked_without_a_branch() {
@@ -1236,10 +1237,11 @@ fn an_ordered_step_is_picked_without_a_branch() {
     }
     let java = backends::java::generate(&func, &enums, registry, helpers);
     let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
-    for (lang, src, pick) in [("Java", &java, "? -1L : 0L)"), ("C#", &csharp, "Pick(MaskLt(")] {
+    let ts = backends::ts::generate(&func, &enums, registry, helpers);
+    for (lang, src, pick, tiers) in [("Java", &java, "? -1L : 0L)", 4), ("C#", &csharp, "Pick(MaskLt(", 4), ("TS", &ts, "= orderStepPick[+(", 3)] {
         let picked = src.lines().filter(|l| l.contains(pick) && l.contains("prevOBV")).count();
         let branched = src.lines().filter(|l| l.trim_start().starts_with("if") && l.contains("tempReal > ")).count();
-        assert_eq!((picked, branched), (4, 1), "{lang}: four tiers pick, the peek alone branches:\n{src}");
+        assert_eq!((picked, branched), (tiers, 1), "{lang}: {tiers} tiers pick, the peek alone branches:\n{src}");
     }
 }
 

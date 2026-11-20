@@ -34,6 +34,13 @@
 // Every access names its byte order, so a big-endian host reads the same bits.
 const view = new DataView(new ArrayBuffer(8));
 
+/**
+ * @internal An ordered step's three candidate sums, picked by index: V8 keeps
+ * a branch on any ternary over doubles. Each step writes all three before it
+ * reads one, so no read sees another step's value.
+ */
+export const orderStepPick = new Float64Array(3);
+
 /** @internal */
 export function float64Bits(x: number): bigint {
   view.setFloat64(0, x, true);

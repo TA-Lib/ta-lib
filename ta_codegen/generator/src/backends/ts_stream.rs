@@ -924,7 +924,7 @@ fn peek_frame_with(
         let _ = writeln!(out, "{pad}let {t} = 0;");
     }
     out.push_str(&settings_snapshot(step_settings, &pad));
-    let mut ctx = em.frame_ctx(&body_ir, fields, Some(model), step_settings, names.tape().is_some());
+    let mut ctx = em.frame_ctx(&body_ir, fields, Some(model), step_settings, names.tape().is_some()).for_peek();
     for sh in &pt.shadows {
         ctx.env.declare(&sh.slot_var, CType::Int32);
         ctx.env.declare(&sh.val_var, if sh.int_elem { CType::Int32 } else { CType::Real });

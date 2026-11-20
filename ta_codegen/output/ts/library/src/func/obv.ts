@@ -49,6 +49,7 @@
  *  110206 AC   Change volume and open interest to double
  */
 
+import { orderStepPick } from '../runtime/bits.ts';
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -96,11 +97,10 @@ export function obvImpl(
   outIdx = 0;
   for (i = startIdx; i <= endIdx; i += 1) {
     tempReal = inReal[i];
-    if (tempReal > prevReal) {
-      prevOBV += inVolume[i];
-    } else if (tempReal < prevReal) {
-      prevOBV -= inVolume[i];
-    }
+    orderStepPick[0] = prevOBV;
+    orderStepPick[1] = prevOBV + inVolume[i];
+    orderStepPick[2] = prevOBV - inVolume[i];
+    prevOBV = orderStepPick[+(prevReal < tempReal) | (+(tempReal < prevReal) << 1)];
     outReal[outIdx++] = prevOBV;
     prevReal = tempReal;
   }
@@ -408,11 +408,10 @@ export class ObvStream {
 function obvStepImpl(sp: ObvStream, inReal: number, inVolume: number): void {
   let tempReal = 0;
   tempReal = inReal;
-  if (tempReal > sp.prevReal) {
-    sp.prevOBV += inVolume;
-  } else if (tempReal < sp.prevReal) {
-    sp.prevOBV -= inVolume;
-  }
+  orderStepPick[0] = sp.prevOBV;
+  orderStepPick[1] = sp.prevOBV + inVolume;
+  orderStepPick[2] = sp.prevOBV - inVolume;
+  sp.prevOBV = orderStepPick[+(sp.prevReal < tempReal) | (+(tempReal < sp.prevReal) << 1)];
   sp.cur_outReal = sp.prevOBV;
   sp.prevReal = tempReal;
 }
@@ -450,11 +449,10 @@ function obvOpenImpl(
   outIdx = 0;
   for (i = startIdx; i <= endIdx; i += 1) {
     tempReal = inReal[i];
-    if (tempReal > prevReal) {
-      prevOBV += inVolume[i];
-    } else if (tempReal < prevReal) {
-      prevOBV -= inVolume[i];
-    }
+    orderStepPick[0] = prevOBV;
+    orderStepPick[1] = prevOBV + inVolume[i];
+    orderStepPick[2] = prevOBV - inVolume[i];
+    prevOBV = orderStepPick[+(prevReal < tempReal) | (+(tempReal < prevReal) << 1)];
     outReal[((outIdx++ * outStride) | 0)] = prevOBV;
     prevReal = tempReal;
   }

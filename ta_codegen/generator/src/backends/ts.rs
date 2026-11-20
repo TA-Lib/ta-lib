@@ -400,6 +400,7 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("MInteger", "../runtime/mInteger.ts"),
     ("OutRange", "../runtime/outRange.ts"),
     ("fma", "../runtime/fma.ts"),
+    ("orderStepPick", "../runtime/bits.ts"),
     ("fmaSlow", "../runtime/fma.ts"),
     ("clampedStart", "../runtime/checks.ts"),
     ("failure", "../runtime/checks.ts"),
@@ -608,6 +609,14 @@ impl<'a> TsCtx<'a> {
 
     fn fma_sets(&self) -> Option<&FmaVarSets> {
         self.fma_ref.or(self.fma.as_ref())
+    }
+
+    /// This context for a peek frame: [`FmaVarSets::for_peek`].
+    pub(crate) fn for_peek(mut self) -> Self {
+        if let Some(f) = self.fma_ref.take() {
+            self.fma = Some(f.for_peek());
+        }
+        self
     }
 
     /// For a frame that runs once per bar as a whole, `body` being all of it:
@@ -1947,6 +1956,18 @@ impl StatementEmitter for TsStmt<'_> {
         let c = self.c;
         if contains_alloc_err_return(then_body) {
             return String::new();
+        }
+        if cond_comments.is_empty() {
+            if let Some(step) = c.fma_sets().and_then(|s| super::select_rule::admitted_step(condition, then_body, else_body, s)) {
+                let target = Expr::Var(step.acc.to_string());
+                let arm = |(op, x): &(BinOp, &Expr)| c.num(&Expr::BinOp(Box::new(target.clone()), op.clone(), Box::new((*x).clone())));
+                let (acc, a, b) = (c.num(&target), c.num(step.a), c.num(step.b));
+                return format!(
+                    "{pad}orderStepPick[0] = {acc};\n{pad}orderStepPick[1] = {};\n{pad}orderStepPick[2] = {};\n{pad}{acc} = orderStepPick[+({a} < {b}) | (+({b} < {a}) << 1)];\n",
+                    arm(&step.below),
+                    arm(&step.above),
+                );
+            }
         }
         // V8 keeps a branch here, which mispredicts on every bar of an unordered
         // series; a boolean to number is a setcc. Integer only: a real counter

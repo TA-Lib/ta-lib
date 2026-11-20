@@ -97,7 +97,7 @@ pub struct FmaVarSets {
 }
 
 impl FmaVarSets {
-    /// These sets with no ordered step admitted, for a Java or C# peek: a peek
+    /// These sets with no ordered step admitted, for a Java, C# or TS peek: a peek
     /// carries no sum to the next bar, and there its select runs no faster than
     /// the branch.
     #[must_use]
