@@ -1619,6 +1619,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        long d = a - b;\n");
     s.push_str("        return a - (d & (d >> 63));\n");
     s.push_str("    }\n\n");
+    s.push_str("    static double candleRange(int rangeType, double open, double high, double low, double close) {\n");
+    s.push_str("        return (rangeType == 0) ? Math.abs(close - open)\n");
+    s.push_str("            : (rangeType == 1) ? (high - low)\n");
+    s.push_str("            : (rangeType == 2) ? ((high - ((close >= open) ? close : open)) + (((close >= open) ? open : close) - low))\n");
+    s.push_str("            : 0.0;\n");
+    s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
     s.push_str("        if (startIdx < 0 || startIdx > INDEX_MAX) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");

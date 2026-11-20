@@ -250,6 +250,14 @@ final class Dispatch {
          case "CDLLONGLEGGEDDOJI":
             return core.cdllongleggeddoji(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
+         default:
+            return call2(h, startIdx, endIdx);
+      }
+   }
+
+   private static OutRange call2(ParamHolder h, int startIdx, int endIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "CDLLONGLINE":
             return core.cdllongline(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
@@ -442,6 +450,14 @@ final class Dispatch {
          case "HT_SINE":
             return core.htSine(
                startIdx, endIdx, h.realInput(0), h.realOutput(0), h.realOutput(1));
+         default:
+            return call3(h, startIdx, endIdx);
+      }
+   }
+
+   private static OutRange call3(ParamHolder h, int startIdx, int endIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "HT_TRENDLINE":
             return core.htTrendline(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -634,6 +650,14 @@ final class Dispatch {
          case "RSI":
             return core.rsi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         default:
+            return call4(h, startIdx, endIdx);
+      }
+   }
+
+   private static OutRange call4(ParamHolder h, int startIdx, int endIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "RVI":
             return core.rvi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
@@ -929,6 +953,14 @@ final class Dispatch {
             return core.cdlladderbottomLookback();
          case "CDLLONGLEGGEDDOJI":
             return core.cdllongleggeddojiLookback();
+         default:
+            return lookback2(h);
+      }
+   }
+
+   private static int lookback2(ParamHolder h) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "CDLLONGLINE":
             return core.cdllonglineLookback();
          case "CDLMARUBOZU":
@@ -1057,6 +1089,14 @@ final class Dispatch {
             return core.htPhasorLookback();
          case "HT_SINE":
             return core.htSineLookback();
+         default:
+            return lookback3(h);
+      }
+   }
+
+   private static int lookback3(ParamHolder h) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "HT_TRENDLINE":
             return core.htTrendlineLookback();
          case "HT_TRENDMODE":
@@ -1185,6 +1225,14 @@ final class Dispatch {
             return core.rogerssatchellLookback(h.intOpt(0), h.realOpt(1));
          case "RSI":
             return core.rsiLookback(h.intOpt(0));
+         default:
+            return lookback4(h);
+      }
+   }
+
+   private static int lookback4(ParamHolder h) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "RVI":
             return core.rviLookback(h.intOpt(0), h.intOpt(1));
          case "RVIR":
@@ -1425,6 +1473,14 @@ final class Dispatch {
             return core.cdlladderbottomDisplayShift(outputIdx);
          case "CDLLONGLEGGEDDOJI":
             return core.cdllongleggeddojiDisplayShift(outputIdx);
+         default:
+            return displayShift2(h, outputIdx);
+      }
+   }
+
+   private static int displayShift2(ParamHolder h, int outputIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "CDLLONGLINE":
             return core.cdllonglineDisplayShift(outputIdx);
          case "CDLMARUBOZU":
@@ -1553,6 +1609,14 @@ final class Dispatch {
             return core.htPhasorDisplayShift(outputIdx);
          case "HT_SINE":
             return core.htSineDisplayShift(outputIdx);
+         default:
+            return displayShift3(h, outputIdx);
+      }
+   }
+
+   private static int displayShift3(ParamHolder h, int outputIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "HT_TRENDLINE":
             return core.htTrendlineDisplayShift(outputIdx);
          case "HT_TRENDMODE":
@@ -1681,6 +1745,14 @@ final class Dispatch {
             return core.rogerssatchellDisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
          case "RSI":
             return core.rsiDisplayShift(h.intOpt(0), outputIdx);
+         default:
+            return displayShift4(h, outputIdx);
+      }
+   }
+
+   private static int displayShift4(ParamHolder h, int outputIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "RVI":
             return core.rviDisplayShift(h.intOpt(0), h.intOpt(1), outputIdx);
          case "RVIR":

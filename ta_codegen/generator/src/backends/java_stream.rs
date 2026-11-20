@@ -1870,17 +1870,19 @@ fn emit_open_body(
     counter: &Cell<usize>,
 ) -> bool {
     let sink = sink_frame_body(func, model, body, registry, helpers);
-    emit_open_body_sig(o, func, OutMode::Core);
     let open_body = cleanup_open_body(&build_open_body_java(model, body), registry);
-    emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
-    emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
-    emit_open_region(o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
-    let cur_source = CurSource::StridedArray;
-    emit_capture(
-        o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter, Some(cur_source), "",
-    );
-    let _ = writeln!(o, "      return RetCode.SUCCESS;");
-    let _ = writeln!(o, "   }}");
+    super::java::emit_inside_jit_limit(o, counter, |o| {
+        emit_open_body_sig(o, func, OutMode::Core);
+        emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
+        emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
+        emit_open_region(o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
+        let cur_source = CurSource::StridedArray;
+        emit_capture(
+            o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter, Some(cur_source), "",
+        );
+        let _ = writeln!(o, "      return RetCode.SUCCESS;");
+        let _ = writeln!(o, "   }}");
+    });
     let Some(sink) = sink else { return false };
     emit_sink_frame(o, func, model, &sink, step_settings, stream_fma, enums, registry, helpers, counter);
     true
@@ -1919,18 +1921,20 @@ fn emit_sink_frame(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_frame_sig(o, func);
-    emit_body_decls(o, func, sink);
-    emit_open_head(o, func, &model.outputs);
-    emit_open_validation(o, func, OutMode::Core, enums);
-    emit_anchor_guard(o);
-    emit_extras_and_candle(o, func, sink, registry, helpers, counter, stream_fma);
-    emit_open_region(o, func, sink, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
-    emit_capture(
-        o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter, Some(CurSource::Sink), "",
-    );
-    let _ = writeln!(o, "      return RetCode.SUCCESS;");
-    let _ = writeln!(o, "   }}");
+    super::java::emit_inside_jit_limit(o, counter, |o| {
+        emit_frame_sig(o, func);
+        emit_body_decls(o, func, sink);
+        emit_open_head(o, func, &model.outputs);
+        emit_open_validation(o, func, OutMode::Core, enums);
+        emit_anchor_guard(o);
+        emit_extras_and_candle(o, func, sink, registry, helpers, counter, stream_fma);
+        emit_open_region(o, func, sink, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
+        emit_capture(
+            o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter, Some(CurSource::Sink), "",
+        );
+        let _ = writeln!(o, "      return RetCode.SUCCESS;");
+        let _ = writeln!(o, "   }}");
+    });
 }
 
 /// The sink frame's signature: the merged one without the stride.

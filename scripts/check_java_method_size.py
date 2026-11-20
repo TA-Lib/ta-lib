@@ -26,13 +26,7 @@ LIMIT = 8000
 
 # (class relative to io.github.talib, method, descriptor or None while the
 # name has no overload).
-KNOWN = {
-    ("Core", "cdladvanceblockOpenImpl", None),
-    ("Core", "cdladvanceblockOpenSinkFrame", None),
-    ("metadata.Dispatch", "call", None),
-    ("metadata.Dispatch", "displayShift", None),
-    ("metadata.Dispatch", "lookback", None),
-}
+KNOWN = set()
 
 # The library measures ~5700 today; far below means the walk or parse broke.
 MIN_METHODS = 5000
@@ -151,8 +145,8 @@ def main():
     under = sorted((s for s in sized if s[3] <= LIMIT), key=lambda s: -s[3])
     for c, m, _, n in under[:5]:
         print("%-48s %5d bytes (%d under)" % ("%s.%s" % (c, m), n, LIMIT - n))
-    print("%d methods measured; none over %d bytes but the %d KNOWN debts."
-          % (len(sized), LIMIT, len(KNOWN)))
+    print("%d methods measured; none over %d bytes%s."
+          % (len(sized), LIMIT, " but the %d KNOWN debts" % len(KNOWN) if KNOWN else ""))
 
 
 if __name__ == "__main__":
