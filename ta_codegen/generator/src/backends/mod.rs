@@ -1,5 +1,4 @@
 pub mod abstract_rows;
-pub mod accrual_select;
 pub mod builtins;
 pub mod c;
 pub mod c_hygiene;

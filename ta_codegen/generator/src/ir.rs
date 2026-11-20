@@ -391,7 +391,7 @@ impl FuncDef {
     /// and C# always get an owned copy, their pre-check nests joined.
     #[must_use]
     pub fn resolved_for(&self, lang: Lang) -> std::borrow::Cow<'_, Self> {
-        let resolved = Self::accruals_selected(self.resolved_alternates(lang), lang);
+        let resolved = self.resolved_alternates(lang);
         if !matches!(lang, Lang::Java | Lang::CSharp | Lang::Ts | Lang::Go) {
             return resolved;
         }
@@ -402,32 +402,6 @@ impl FuncDef {
         out.private_body = crate::backends::ir_cleanup::join_pre_checks(&out.private_body);
         if let Some(stream) = &out.resolved_stream_body {
             out.resolved_stream_body = Some(crate::backends::ir_cleanup::join_pre_checks(stream));
-        }
-        std::borrow::Cow::Owned(out)
-    }
-
-    /// The coin-flip accumulations of C, Rust, Java and C# select their addends
-    /// (`backends::accrual_select`); the Go emitter picks its own as it renders.
-    fn accruals_selected(func: std::borrow::Cow<'_, Self>, lang: Lang) -> std::borrow::Cow<'_, Self> {
-        use crate::backends::accrual_select::rewrite;
-        if !matches!(lang, Lang::C | Lang::Rust | Lang::Java | Lang::CSharp) {
-            return func;
-        }
-        let body = rewrite(&func, &func.body);
-        let private = rewrite(&func, &func.private_body);
-        let stream = func.resolved_stream_body.as_ref().and_then(|b| rewrite(&func, b));
-        if body.is_none() && private.is_none() && stream.is_none() {
-            return func;
-        }
-        let mut out = func.into_owned();
-        if let Some(b) = body {
-            out.body = b;
-        }
-        if let Some(b) = private {
-            out.private_body = b;
-        }
-        if let Some(b) = stream {
-            out.resolved_stream_body = Some(b);
         }
         std::borrow::Cow::Owned(out)
     }

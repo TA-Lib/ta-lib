@@ -81,6 +81,7 @@ pub struct FmaCtx<'a> {
 
 /// Owned name-sets, for a renderer that does not otherwise track per-variable
 /// types. Built by [`build_fma_var_sets`].
+#[derive(Clone)]
 pub struct FmaVarSets {
     pub real_vars: HashSet<String>,
     pub index_vars: HashSet<String>,
@@ -96,6 +97,14 @@ pub struct FmaVarSets {
 }
 
 impl FmaVarSets {
+    /// These sets with no ordered step admitted, for a Java or C# peek: a peek
+    /// carries no sum to the next bar, and there its select runs no faster than
+    /// the branch.
+    #[must_use]
+    pub fn for_peek(&self) -> Self {
+        Self { ordered_step_targets: HashSet::new(), ..self.clone() }
+    }
+
     #[must_use]
     pub fn view(&self) -> FmaCtx<'_> {
         FmaCtx {

@@ -2490,29 +2490,17 @@ fn zero_pick<'e>(target: &Expr, value: &'e Expr, ctx: &CRenderCtx) -> Option<(&'
     None
 }
 
-/// An [`super::select_rule::ordered_step`] that adds under one order and
-/// subtracts under the other, on a real accumulator, as
-/// `acc = TA_ORDER_STEP(a, b, acc, x, y)`: `a < b` adds `x`, `b < a` subtracts
-/// `y`. The operands are evaluated more than once, so they must be pure.
+/// An [`super::select_rule::admitted_step`] that adds under one order and
+/// subtracts under the other, as `acc = TA_ORDER_STEP(a, b, acc, x, y)`:
+/// `a < b` adds `x`, `b < a` subtracts `y`.
 fn order_step(cond: &Expr, then_body: &[Statement], else_body: &[Statement], ctx: &CRenderCtx) -> Option<(Expr, [Expr; 5])> {
-    let sets = ctx.fma?;
-    let step = super::select_rule::ordered_step(cond, then_body, else_body)?;
-    if !sets.ordered_step_targets.contains(fma::stream_base(step.acc)) {
-        return None;
-    }
+    let step = super::select_rule::admitted_step(cond, then_body, else_body, ctx.fma?)?;
     let (a, b, up, dn) = match (&step.below, &step.above) {
         ((BinOp::Add, x), (BinOp::Sub, y)) => (step.a, step.b, *x, *y),
         ((BinOp::Sub, y), (BinOp::Add, x)) => (step.b, step.a, *x, *y),
         _ => return None,
     };
-    let fs = sets.view();
     let acc = Expr::Var(step.acc.to_string());
-    let int = |e: &Expr| matches!(e, Expr::IntLiteral(_)) || fma::is_definitely_integer(e, &fs);
-    let real = |e: &Expr| fma::expr_is_float_typed(e, Some(&fs));
-    let pure = |e: &Expr| !crate::streaming::expr_effect(e, &|f| MathFn::from_name(f).is_some());
-    if !real(&acc) || int(a) || int(b) || !(real(a) || real(b)) || ![a, b, up, dn].into_iter().all(pure) {
-        return None;
-    }
     Some((acc.clone(), [a.clone(), b.clone(), acc, up.clone(), dn.clone()]))
 }
 
@@ -2816,19 +2804,6 @@ fn render_func_call(
         super::eager_select::EAGER_ALL => {
             let terms: Vec<String> = args.iter().map(|a| c_bit(a, &render_expr(a, ctx, registry, helpers))).collect();
             return format!("(({}) == {})", super::eager_select::join(&terms, " + "), args.len());
-        }
-        super::accrual_select::ADDEND | super::accrual_select::SUBTRAHEND => {
-            let [Expr::BinOp(a, op, b), v] = args else { panic!("{fname} takes a comparison and a value") };
-            let r = |x: &Expr| render_expr(x, ctx, registry, helpers);
-            let pick = if fname == super::accrual_select::ADDEND { "TA_ADDEND" } else { "TA_SUBTRAHEND" };
-            let op = match op {
-                BinOp::Greater => "GT",
-                BinOp::Less => "LT",
-                BinOp::GreaterEq => "GE",
-                BinOp::LessEq => "LE",
-                other => panic!("{fname} picks on an ordering, not {other:?}"),
-            };
-            return format!("{pick}_IF_{op}({}, {}, {})", r(a), r(b), r(v));
         }
         _ => {}
     }

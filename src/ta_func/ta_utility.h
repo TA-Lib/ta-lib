@@ -404,35 +404,6 @@
    #define TA_COLOR_MIN(c, o) ( (c) >= (o) ? (double)(o) : (double)(c) )
 #endif
 
-/* What an accumulation raised or lowered on a coin flip adds and subtracts:
- * ADDEND is `a > b ? x : -0.0` and SUBTRAHEND `a > b ? x : 0.0`, and the same
- * with `<`, `>=` and `<=`. The zero's sign is load-bearing: adding -0.0 and
- * subtracting +0.0 leave every sum's bits as they were, a -0.0 sum included.
- * On SSE2 a compare mask, which gcc and clang cannot turn back into the branch
- * they make of the ternary; the mask is false on a NaN, as the comparison is.
- */
-#if defined( __SSE2__ ) || defined( _M_X64 ) || ( defined( _M_IX86_FP ) && _M_IX86_FP >= 2 )
-   #define TA_ADDEND_MASK(m, x) _mm_cvtsd_f64( _mm_or_pd( _mm_and_pd( (m), _mm_set_sd( (double)(x) ) ), _mm_andnot_pd( (m), _mm_set_sd( -0.0 ) ) ) )
-   #define TA_SUBTRAHEND_MASK(m, x) _mm_cvtsd_f64( _mm_and_pd( (m), _mm_set_sd( (double)(x) ) ) )
-   #define TA_ADDEND_IF_GT(a, b, x) TA_ADDEND_MASK( _mm_cmpgt_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_ADDEND_IF_LT(a, b, x) TA_ADDEND_MASK( _mm_cmplt_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_ADDEND_IF_GE(a, b, x) TA_ADDEND_MASK( _mm_cmpge_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_ADDEND_IF_LE(a, b, x) TA_ADDEND_MASK( _mm_cmple_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_SUBTRAHEND_IF_GT(a, b, x) TA_SUBTRAHEND_MASK( _mm_cmpgt_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_SUBTRAHEND_IF_LT(a, b, x) TA_SUBTRAHEND_MASK( _mm_cmplt_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_SUBTRAHEND_IF_GE(a, b, x) TA_SUBTRAHEND_MASK( _mm_cmpge_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-   #define TA_SUBTRAHEND_IF_LE(a, b, x) TA_SUBTRAHEND_MASK( _mm_cmple_sd( _mm_set_sd( (a) ), _mm_set_sd( (b) ) ), (x) )
-#else
-   #define TA_ADDEND_IF_GT(a, b, x) ( (a) > (b) ? (double)(x) : -0.0 )
-   #define TA_ADDEND_IF_LT(a, b, x) ( (a) < (b) ? (double)(x) : -0.0 )
-   #define TA_ADDEND_IF_GE(a, b, x) ( (a) >= (b) ? (double)(x) : -0.0 )
-   #define TA_ADDEND_IF_LE(a, b, x) ( (a) <= (b) ? (double)(x) : -0.0 )
-   #define TA_SUBTRAHEND_IF_GT(a, b, x) ( (a) > (b) ? (double)(x) : 0.0 )
-   #define TA_SUBTRAHEND_IF_LT(a, b, x) ( (a) < (b) ? (double)(x) : 0.0 )
-   #define TA_SUBTRAHEND_IF_GE(a, b, x) ( (a) >= (b) ? (double)(x) : 0.0 )
-   #define TA_SUBTRAHEND_IF_LE(a, b, x) ( (a) <= (b) ? (double)(x) : 0.0 )
-#endif
-
 /* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
  * Don't use i++ or func(i) with these macros !
  */

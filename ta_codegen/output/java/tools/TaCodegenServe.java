@@ -180923,7 +180923,7 @@ class Core {
           outIdx = 0;
           for( i = startIdx; i <= endIdx; i += 1 ) {
              tempReal = inReal[i];
-             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((tempReal > prevReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
+             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
              outReal[outIdx++] = prevOBV;
              prevReal = tempReal;
           }
@@ -180955,7 +180955,7 @@ class Core {
           outIdx = 0;
           for( i = startIdx; i <= endIdx; i += 1 ) {
              tempReal = (double)inReal[i];
-             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits((double)inVolume[i]) ^ Long.MIN_VALUE) & ((tempReal > prevReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits((double)inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
+             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits((double)inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits((double)inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
              outReal[outIdx++] = prevOBV;
              prevReal = tempReal;
           }
@@ -181224,7 +181224,7 @@ class Core {
        {
           double tempReal = 0.0;
           tempReal = inReal;
-          sp.prevOBV = sp.prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume) ^ Long.MIN_VALUE) & ((tempReal > sp.prevReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume) & ((tempReal < sp.prevReal) ? -1L : 0L));
+          sp.prevOBV = sp.prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume) ^ Long.MIN_VALUE) & ((sp.prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume) & ((tempReal < sp.prevReal) ? -1L : 0L));
           sp.cur_outReal = sp.prevOBV;
           sp.prevReal = tempReal;
        }
@@ -181253,7 +181253,7 @@ class Core {
           outIdx = 0;
           for( i = startIdx; i <= endIdx; i += 1 ) {
              tempReal = inReal[i];
-             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((tempReal > prevReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
+             prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
              outReal[outIdx++ * outStride] = prevOBV;
              prevReal = tempReal;
           }
@@ -250238,7 +250238,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c708aaaa2599202b";
+    static final String SPLICED_GENCODE_DIGEST = "cb3841ca74ed9b2d";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

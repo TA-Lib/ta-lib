@@ -25,6 +25,7 @@ use crate::ir::{BinOp, Expr, Statement};
 use crate::streaming::{expr_var_names, walk_expr, walk_stmt_exprs};
 
 use super::builtins::{strip_unlikely, MathFn};
+use super::fma::{self, FmaVarSets};
 
 pub(super) fn bare(e: &Expr) -> &Expr {
     match e {
@@ -285,6 +286,50 @@ pub(super) fn ordered_step<'s>(cond: &'s Expr, then_body: &'s [Statement], else_
         return None;
     }
     Some(OrderedStep { acc, a, b, below: (op1.clone(), v1), above: (op2.clone(), v2) })
+}
+
+/// An [`ordered_step`] on a real accumulator that [`ordered_step_targets`]
+/// admits, comparing reals: the form a backend may render branch-free. Its
+/// operands are evaluated more than once, so they must be pure.
+pub(super) fn admitted_step<'s>(cond: &'s Expr, then_body: &'s [Statement], else_body: &'s [Statement], sets: &FmaVarSets) -> Option<OrderedStep<'s>> {
+    let step = ordered_step(cond, then_body, else_body)?;
+    if !sets.ordered_step_targets.contains(fma::stream_base(step.acc)) {
+        return None;
+    }
+    let fs = sets.view();
+    let int = |e: &Expr| matches!(e, Expr::IntLiteral(_)) || fma::is_definitely_integer(e, &fs);
+    let real = |e: &Expr| fma::expr_is_float_typed(e, Some(&fs));
+    let pure = |e: &Expr| !crate::streaming::expr_effect(e, &|f| MathFn::from_name(f).is_some());
+    let (a, b) = (step.a, step.b);
+    if !real(&Expr::Var(step.acc.to_string())) || int(a) || int(b) || !(real(a) || real(b)) || ![a, b, step.below.1, step.above.1].into_iter().all(pure) {
+        return None;
+    }
+    Some(step)
+}
+
+/// `(condition, addend)`: the addend where the condition holds, else `-0.0`.
+pub(crate) const ADDEND: &str = "ta_addend_if";
+/// `(condition, subtrahend)`: the subtrahend where the condition holds, else `+0.0`.
+pub(crate) const SUBTRAHEND: &str = "ta_subtrahend_if";
+
+pub(crate) fn is_accrual_pick(name: &str) -> bool {
+    name == ADDEND || name == SUBTRAHEND
+}
+
+/// `step` as `acc = acc op1 PICK(a < b, x) op2 PICK(b < a, y)`, each `PICK` an
+/// [`ADDEND`] or a [`SUBTRAHEND`] by its operator. Adding `-0.0` or subtracting
+/// `+0.0` leaves the bits of every sum but a signaling NaN as they were, a `-0.0`
+/// sum included, and a taken arm runs the branch's own operation on its own
+/// operands.
+pub(super) fn addend_form(step: &OrderedStep<'_>) -> (Expr, Expr) {
+    let acc = Expr::Var(step.acc.to_string());
+    let less = |l: &Expr, r: &Expr| Expr::BinOp(Box::new(l.clone()), BinOp::Less, Box::new(r.clone()));
+    let mut sum = acc.clone();
+    for (c, (op, v)) in [(less(step.a, step.b), &step.below), (less(step.b, step.a), &step.above)] {
+        let pick = if *op == BinOp::Add { ADDEND } else { SUBTRAHEND };
+        sum = Expr::BinOp(Box::new(sum), op.clone(), Box::new(Expr::FuncCall(pick.to_string(), vec![c, (*v).clone()])));
+    }
+    (acc, sum)
 }
 
 /// The accumulators of the [`ordered_step`]s in a body's bar loops (an
