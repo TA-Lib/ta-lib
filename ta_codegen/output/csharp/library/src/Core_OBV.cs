@@ -120,11 +120,7 @@ public partial class Core
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
+         prevOBV = prevOBV + Pick(MaskLt(prevReal, tempReal), inVolume[i], -0.0) - Pick(MaskLt(tempReal, prevReal), inVolume[i], 0.0);
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;
       }
@@ -161,11 +157,7 @@ public partial class Core
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = (double)inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += (double)inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= (double)inVolume[i];
-         }
+         prevOBV = prevOBV + Pick(MaskLt(prevReal, tempReal), (double)inVolume[i], -0.0) - Pick(MaskLt(tempReal, prevReal), (double)inVolume[i], 0.0);
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;
       }
@@ -475,11 +467,7 @@ public partial class Core
    {
       double tempReal = 0.0;
       tempReal = inReal;
-      if( tempReal > sp.prevReal ) {
-         sp.prevOBV += inVolume;
-      } else if( tempReal < sp.prevReal ) {
-         sp.prevOBV -= inVolume;
-      }
+      sp.prevOBV = sp.prevOBV + Pick(MaskLt(sp.prevReal, tempReal), inVolume, -0.0) - Pick(MaskLt(tempReal, sp.prevReal), inVolume, 0.0);
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
@@ -511,11 +499,7 @@ public partial class Core
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
+         prevOBV = prevOBV + Pick(MaskLt(prevReal, tempReal), inVolume[i], -0.0) - Pick(MaskLt(tempReal, prevReal), inVolume[i], 0.0);
          outReal[outIdx++ * outStride] = prevOBV;
          prevReal = tempReal;
       }

@@ -2492,6 +2492,18 @@ fn render_func_call(
     helpers: &HelperRegistry,
 ) -> String {
     assert!(!super::eager_select::is_pseudo_call(fname), "{fname} is rendered by C and Rust only");
+    if super::accrual_select::is_accrual_pick(fname) {
+        let [c, v] = args else { panic!("{fname} takes a condition and a value") };
+        let (c, v) = (render_expr(c, ctx, registry, helpers), render_expr(v, ctx, registry, helpers));
+        // A mask the JIT forms with a conditional move, where it keeps a
+        // ternary over doubles a branch. The addend's sign bit is flipped in
+        // and back out, so a cleared mask leaves -0.0.
+        return if fname == super::accrual_select::ADDEND {
+            format!("Double.longBitsToDouble(((Double.doubleToRawLongBits({v}) ^ Long.MIN_VALUE) & (({c}) ? -1L : 0L)) ^ Long.MIN_VALUE)")
+        } else {
+            format!("Double.longBitsToDouble(Double.doubleToRawLongBits({v}) & (({c}) ? -1L : 0L))")
+        };
+    }
     let key_call = match fname {
         super::java_keyscan::KEY_BITS => Some("Double.doubleToRawLongBits"),
         super::java_keyscan::KEY_REAL => Some("Double.longBitsToDouble"),

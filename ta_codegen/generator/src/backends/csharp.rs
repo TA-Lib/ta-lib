@@ -3184,6 +3184,19 @@ fn render_func_call(
     helpers: &HelperRegistry,
 ) -> String {
     assert!(!super::eager_select::is_pseudo_call(fname), "{fname} is rendered by C and Rust only");
+    if super::accrual_select::is_accrual_pick(fname) {
+        let [Expr::BinOp(lhs, op, rhs), v] = args else { panic!("{fname} takes a comparison and a value") };
+        let (mask, low, high) = match op {
+            BinOp::Less => ("MaskLt", lhs, rhs),
+            BinOp::Greater => ("MaskLt", rhs, lhs),
+            BinOp::LessEq => ("MaskLe", lhs, rhs),
+            BinOp::GreaterEq => ("MaskLe", rhs, lhs),
+            other => panic!("{fname} picks on an ordering, not {other:?}"),
+        };
+        let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
+        let zero = if fname == super::accrual_select::ADDEND { "-0.0" } else { "0.0" };
+        return format!("Pick({mask}({}, {}), {}, {zero})", r(low), r(high), r(v));
+    }
     // Check if this is a call to a helper function that can be inlined
     if let Some(helper) = helpers.get(fname) {
         if let Some(inlined_expr) = try_inline_expr(helper, args) {

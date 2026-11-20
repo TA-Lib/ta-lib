@@ -10312,7 +10312,7 @@ fn peek_with(
             }
             other => other,
         },
-        &Some,
+        &|s| Some(crate::backends::accrual_select::branched(s)),
     )[..];
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
     let transition = &drop_stores_no_load_reaches(transition, &bufs)[..];

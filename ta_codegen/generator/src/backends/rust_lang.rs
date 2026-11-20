@@ -5622,6 +5622,14 @@ fn render_func_call(
             })
             .collect();
         format!("({})", super::eager_select::join(&atoms, op))
+    } else if super::accrual_select::is_accrual_pick(fname) {
+        let [c, v] = args else { panic!("{fname} takes a condition and a value") };
+        let zero = if fname == super::accrual_select::ADDEND { "-0.0" } else { "0.0" };
+        format!(
+            "std::hint::select_unpredictable({}, {}, {zero})",
+            render_condition(c, ctx, opt_real_params, registry, helpers),
+            render_expr(v, ctx, opt_real_params, registry, helpers)
+        )
     } else if fname == super::eager_select::EAGER_ALL {
         let terms: Vec<String> = args
             .iter()

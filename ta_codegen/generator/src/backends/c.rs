@@ -2817,6 +2817,19 @@ fn render_func_call(
             let terms: Vec<String> = args.iter().map(|a| c_bit(a, &render_expr(a, ctx, registry, helpers))).collect();
             return format!("(({}) == {})", super::eager_select::join(&terms, " + "), args.len());
         }
+        super::accrual_select::ADDEND | super::accrual_select::SUBTRAHEND => {
+            let [Expr::BinOp(a, op, b), v] = args else { panic!("{fname} takes a comparison and a value") };
+            let r = |x: &Expr| render_expr(x, ctx, registry, helpers);
+            let pick = if fname == super::accrual_select::ADDEND { "TA_ADDEND" } else { "TA_SUBTRAHEND" };
+            let op = match op {
+                BinOp::Greater => "GT",
+                BinOp::Less => "LT",
+                BinOp::GreaterEq => "GE",
+                BinOp::LessEq => "LE",
+                other => panic!("{fname} picks on an ordering, not {other:?}"),
+            };
+            return format!("{pick}_IF_{op}({}, {}, {})", r(a), r(b), r(v));
+        }
         _ => {}
     }
     // C candle macros: emit preprocessor macro calls instead of expanded code.
