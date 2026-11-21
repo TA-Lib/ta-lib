@@ -1541,7 +1541,7 @@ impl CsStmt<'_> {
             let len = if k == 0 { TRIP.to_string() } else { format!("{first}.Length") };
             let _ = writeln!(out, "{pad}   var {} = {}.Slice({}, {len});", lane_name(*j, *d), window.array, render(&start));
         }
-        let width = unroll_width(&pass, &steps);
+        let width = super::window::unroll_width(&pass, &steps);
         out.push_str(&self.window_passes(body, &pass, w, width, &first, indent + 3));
         for (v, d) in &moved {
             let op = if *d > 0 { "+=" } else { "-=" };
@@ -2360,48 +2360,6 @@ fn render_assign_target(
         },
         _ => render_expr(expr, ctx, registry, helpers),
     }
-}
-
-/// Passes per trip of a loop over windows that carries no scalar, or `None`
-/// for one. Values rest on the copies keeping pass order
-/// ([`super::lockstep::unrollable`]); the rest is when four pay: every element
-/// a lane at the counter, no index read as a value, every call one RyuJIT
-/// compiles in the loop, and each array the pass stores to reached through
-/// one lane, since a store a later pass loads paces the loop as a carried
-/// scalar would.
-fn unroll_width(pass: &[&Statement], steps: &BTreeMap<String, i64>) -> Option<usize> {
-    use std::collections::BTreeSet;
-    fn stores(list: &[Statement], out: &mut BTreeSet<String>) {
-        for s in list {
-            match s {
-                Statement::Assign { target: Expr::ArrayAccess(a, _), .. } => {
-                    out.insert(a.clone());
-                }
-                Statement::If { then_body, else_body, .. } => {
-                    stores(then_body, out);
-                    stores(else_body, out);
-                }
-                _ => {}
-            }
-        }
-    }
-    let mut ok = true;
-    let mut offsets: BTreeMap<String, BTreeSet<(usize, i64)>> = BTreeMap::new();
-    let mut written = BTreeSet::new();
-    for s in pass {
-        ok &= !super::lockstep::as_step(s).is_some_and(|(v, _)| steps.contains_key(v));
-        super::lockstep::each_access(s, &mut |array, idx, _| match super::window::marker_of(idx) {
-            Some(m) => {
-                offsets.entry(array.to_string()).or_default().insert(m);
-            }
-            None => ok = false,
-        });
-        streaming::walk_stmt_exprs(s, &mut |top| streaming::walk_expr(top, &mut |e| ok &= !matches!(e, Expr::Var(n) if steps.contains_key(n))));
-        stores(std::slice::from_ref(*s), &mut written);
-    }
-    ok &= written.iter().all(|a| offsets.get(a).is_none_or(|l| l.len() == 1));
-    let inline = |m: MathFn| matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min | MathFn::Floor | MathFn::Ceil);
-    super::lockstep::unrollable(pass, &inline).filter(|_| ok).map(|_| 4)
 }
 
 /// An `int` expression a window's pass count may be taken from.
@@ -3454,31 +3412,6 @@ mod tests {
 
     fn load_enums() -> HashMap<String, EnumDef> {
         parser::enums::load_enums(&input_base().join("enums.yaml"))
-    }
-
-    /// `out[k] = a[k] * b[k]` over windows runs four passes per trip; an
-    /// element one pass leaves for the next, a call RyuJIT keeps a call, an
-    /// access off the counter or an index read as a value keeps one.
-    #[test]
-    fn unroll_width_refuses_what_crosses_passes() {
-        use crate::backends::window::marker;
-        let at = |a: &str, j: usize, d: i64| Expr::ArrayAccess(a.to_string(), Box::new(marker(j, d)));
-        let var = |n: &str| Expr::Var(n.to_string());
-        let set = |t: Expr, v: Expr| Statement::Assign { target: t, value: v, compound: false };
-        let bin = |l: Expr, op: BinOp, r: Expr| Expr::BinOp(Box::new(l), op, Box::new(r));
-        let call = |f: &str, a: Expr| Expr::FuncCall(f.to_string(), vec![a]);
-        let width = |body: &[Statement]| {
-            let facts = super::super::lockstep::Facts::of(body);
-            let pass: Vec<&Statement> = body.iter().collect();
-            unroll_width(&pass, &facts.induction())
-        };
-        assert_eq!(width(&[set(at("out", 2, 0), bin(at("a", 0, 0), BinOp::Mul, at("b", 1, 0)))]), Some(4));
-        assert_eq!(width(&[set(var("t"), at("a", 0, 0)), set(at("out", 1, 0), call("floor", var("t")))]), Some(4), "a scalar set before it is read");
-        assert_eq!(width(&[set(at("out", 1, 0), call("exp", at("a", 0, 0)))]), None, "a library call");
-        assert_eq!(width(&[set(at("b", 0, 1), bin(at("b", 0, 1), BinOp::Add, at("b", 0, 0)))]), None, "a running sum through memory");
-        assert_eq!(width(&[set(at("out", 1, 0), Expr::ArrayAccess("a".to_string(), Box::new(var("j"))))]), None, "an access off the counter");
-        let index = [set(at("out", 1, 0), var("i")), super::super::lockstep::step("i", 1)];
-        assert_eq!(width(&index), None, "an index read as a value");
     }
 
     /// The emitter's method names and the registry's cross-call resolution are

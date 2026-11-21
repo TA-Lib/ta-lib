@@ -3172,7 +3172,9 @@ impl TsStmt<'_> {
     /// An outermost batch loop that moves several cursors in lockstep, whose
     /// passes are only assignments, none carrying a scalar to the next pass, as
     /// one counter from zero with each window's start held in a constant: V8
-    /// runs several cursors slower than one. `None` renders the loop as written.
+    /// runs several cursors slower than one. Where
+    /// [`super::window::unroll_width`] allows, a trip runs that many passes and
+    /// a tail loop the rest. `None` renders the loop as written.
     #[allow(clippy::too_many_lines)]
     fn windowed(&self, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, indent: usize) -> Option<String> {
         use super::lockstep::{as_step, carries_scalar, inline, Facts, Names};
@@ -3239,26 +3241,47 @@ impl TsStmt<'_> {
             })
             .map(|(v, d)| (v, *d))
             .collect();
-        let subs: HashMap<String, Expr> = lanes
-            .iter()
-            .map(|&(j, d)| {
-                let Expr::Var(m) = super::window::marker(j, d) else { unreachable!() };
-                (m, Expr::BinOp(Box::new(Expr::Var(lane(j, d))), BinOp::Add, Box::new(Expr::Var(PASS.to_string()))))
-            })
-            .collect();
-        let pass: Vec<Statement> = plan
-            .body
-            .iter()
-            .filter(|s| !moved.iter().any(|(v, _)| own_step(s, v)))
-            .map(|s| match s {
-                Statement::Assign { target, value, compound } => Statement::Assign {
-                    target: crate::helper_registry::substitute_expr(target, &subs),
-                    value: crate::helper_registry::substitute_expr(value, &subs),
-                    compound: *compound,
-                },
-                other => other.clone(),
-            })
-            .collect();
+        let kept: Vec<&Statement> = plan.body.iter().filter(|s| !moved.iter().any(|(v, _)| own_step(s, v))).collect();
+        // A fused site renders as fma's fast path with a call behind it, so
+        // its loop stays rolled, as a pass making a call does.
+        let fused = fma::EMIT_FMA
+            && c.fma_sets().is_some_and(|fs| {
+                let mut any = false;
+                for s in &kept {
+                    crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                        crate::streaming::walk_expr(top, &mut |x| {
+                            if let Expr::BinOp(l, op, r) = x {
+                                any |= fma::fuse_inexact_operands(l, op, r, &fs.view()).is_some();
+                            }
+                        });
+                    });
+                }
+                any
+            });
+        let width = super::window::unroll_width(&kept, &steps).filter(|_| !fused);
+        let copy = |e: i64| -> Vec<Statement> {
+            let subs: HashMap<String, Expr> = lanes
+                .iter()
+                .map(|&(j, d)| {
+                    let Expr::Var(m) = super::window::marker(j, d) else { unreachable!() };
+                    let at = Expr::BinOp(Box::new(Expr::Var(lane(j, d))), BinOp::Add, Box::new(Expr::Var(PASS.to_string())));
+                    let at = if e == 0 { at } else { Expr::BinOp(Box::new(at), BinOp::Add, Box::new(Expr::IntLiteral(e))) };
+                    // `| 0` lets V8 add in int32 with no overflow check.
+                    (m, if width.is_some() { Expr::BinOp(Box::new(at), BinOp::BitwiseOr, Box::new(Expr::IntLiteral(0))) } else { at })
+                })
+                .collect();
+            kept.iter()
+                .filter(|s| e == 0 || !matches!(s, Statement::Comment(_)))
+                .map(|s| match s {
+                    Statement::Assign { target, value, compound } => Statement::Assign {
+                        target: crate::helper_registry::substitute_expr(target, &subs),
+                        value: crate::helper_registry::substitute_expr(value, &subs),
+                        compound: *compound,
+                    },
+                    other => (*other).clone(),
+                })
+                .collect()
+        };
         for n in [TRIP, PASS] {
             c.env.declare(n, CType::Int32);
         }
@@ -3281,12 +3304,27 @@ impl TsStmt<'_> {
             };
             let _ = writeln!(out, "{pad}  const {} = {};", lane(j, d), c.value_for(CType::Int32, &start));
         }
-        let _ = writeln!(out, "{pad}  for (let {PASS} = 0; {PASS} < {TRIP}; {PASS}++) {{");
-        c.in_loop(|| {
-            for s in &pass {
-                out.push_str(&self.walk_stmt(s, indent + 4));
+        let render = |copies: std::ops::Range<i64>, out: &mut String| {
+            c.in_loop(|| {
+                for s in copies.flat_map(copy) {
+                    out.push_str(&self.walk_stmt(&s, indent + 4));
+                }
+            });
+        };
+        match width {
+            Some(width) => {
+                assert!(width.is_power_of_two(), "a trip of {width} passes");
+                let whole = format!("{TRIP} & ~{}", width - 1);
+                let _ = writeln!(out, "{pad}  for (let {PASS} = 0; {PASS} < ({whole}); {PASS} = ({PASS} + {width}) | 0) {{");
+                render(0..i64::try_from(width).expect("a small width"), &mut out);
+                let _ = writeln!(out, "{pad}  }}");
+                let _ = writeln!(out, "{pad}  for (let {PASS} = {whole}; {PASS} < {TRIP}; {PASS} = ({PASS} + 1) | 0) {{");
             }
-        });
+            None => {
+                let _ = writeln!(out, "{pad}  for (let {PASS} = 0; {PASS} < {TRIP}; {PASS}++) {{");
+            }
+        }
+        render(0..1, &mut out);
         let _ = writeln!(out, "{pad}  }}");
         for (v, d) in &moved {
             let op = if *d > 0 { "+=" } else { "-=" };

@@ -19,6 +19,7 @@
 
 use std::collections::BTreeMap;
 
+use super::builtins::MathFn;
 pub(crate) use super::lockstep::Names;
 use super::lockstep::{as_step, bin, each_access, flatten, form, int, invariant, linear, shifted, step, step_of, substitute, trailing_step, var, Facts, Reach};
 use crate::ir::{BinOp, CircBuf, Expr, Statement};
@@ -168,6 +169,47 @@ fn variant_branches(pass: &[Statement], facts: &Facts, scalar_ok: bool) -> bool 
     })
 }
 
+/// Passes per trip of a loop over windows that carries no scalar, or `None`
+/// for one. Values rest on the copies keeping pass order
+/// ([`super::lockstep::unrollable`]); the rest is when four pay: every element
+/// a lane at the counter, no index read as a value, every call one the JIT
+/// compiles in the loop, and each array the pass stores to reached through
+/// one lane, since a store a later pass loads paces the loop as a carried
+/// scalar would.
+pub(crate) fn unroll_width(pass: &[&Statement], steps: &BTreeMap<String, i64>) -> Option<usize> {
+    use std::collections::BTreeSet;
+    fn stores(list: &[Statement], out: &mut BTreeSet<String>) {
+        for s in list {
+            match s {
+                Statement::Assign { target: Expr::ArrayAccess(a, _), .. } => {
+                    out.insert(a.clone());
+                }
+                Statement::If { then_body, else_body, .. } => {
+                    stores(then_body, out);
+                    stores(else_body, out);
+                }
+                _ => {}
+            }
+        }
+    }
+    let mut ok = true;
+    let mut offsets: BTreeMap<String, BTreeSet<(usize, i64)>> = BTreeMap::new();
+    let mut written = BTreeSet::new();
+    for s in pass {
+        ok &= !as_step(s).is_some_and(|(v, _)| steps.contains_key(v));
+        each_access(s, &mut |array, idx, _| match marker_of(idx) {
+            Some(m) => {
+                offsets.entry(array.to_string()).or_default().insert(m);
+            }
+            None => ok = false,
+        });
+        crate::streaming::walk_stmt_exprs(s, &mut |top| crate::streaming::walk_expr(top, &mut |e| ok &= !matches!(e, Expr::Var(n) if steps.contains_key(n))));
+        stores(std::slice::from_ref(*s), &mut written);
+    }
+    ok &= written.iter().all(|a| offsets.get(a).is_none_or(|l| l.len() == 1));
+    let inline = |m: MathFn| matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min | MathFn::Floor | MathFn::Ceil);
+    super::lockstep::unrollable(pass, &inline).filter(|_| ok).map(|_| 4)
+}
 
 // ---------------------------------------------------------------------------
 // The header
@@ -1148,5 +1190,27 @@ mod tests {
         }
         let body = [set(at("out", v("k")), v("_windowStart")), inc("i"), inc("k")];
         assert!(run(&lt, &body).is_some());
+    }
+
+    /// `out[k] = a[k] * b[k]` over windows runs four passes per trip; an
+    /// element one pass leaves for the next, a call the JIT keeps a call, an
+    /// access off the counter or an index read as a value keeps one.
+    #[test]
+    fn unroll_width_refuses_what_crosses_passes() {
+        let at = |a: &str, j: usize, d: i64| Expr::ArrayAccess(a.to_string(), Box::new(marker(j, d)));
+        let set = |t: Expr, v: Expr| Statement::Assign { target: t, value: v, compound: false };
+        let call = |f: &str, a: Expr| Expr::FuncCall(f.to_string(), vec![a]);
+        let width = |body: &[Statement]| {
+            let facts = Facts::of(body);
+            let pass: Vec<&Statement> = body.iter().collect();
+            unroll_width(&pass, &facts.induction())
+        };
+        assert_eq!(width(&[set(at("out", 2, 0), bin(at("a", 0, 0), BinOp::Mul, at("b", 1, 0)))]), Some(4));
+        assert_eq!(width(&[set(v("t"), at("a", 0, 0)), set(at("out", 1, 0), call("floor", v("t")))]), Some(4), "a scalar set before it is read");
+        assert_eq!(width(&[set(at("out", 1, 0), call("exp", at("a", 0, 0)))]), None, "a library call");
+        assert_eq!(width(&[set(at("b", 0, 1), bin(at("b", 0, 1), BinOp::Add, at("b", 0, 0)))]), None, "a running sum through memory");
+        assert_eq!(width(&[set(at("out", 1, 0), Expr::ArrayAccess("a".to_string(), Box::new(v("j"))))]), None, "an access off the counter");
+        let index = [set(at("out", 1, 0), v("i")), step("i", 1)];
+        assert_eq!(width(&index), None, "an index read as a value");
     }
 }

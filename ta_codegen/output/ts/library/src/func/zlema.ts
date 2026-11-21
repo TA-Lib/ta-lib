@@ -154,8 +154,14 @@ export function zlemaImpl(
       const _wn = endIdx - today + 1;
       const _w1_0 = outIdx;
       const _w0_0 = today;
-      for (let _wk = 0; _wk < _wn; _wk++) {
-        outReal[_w1_0 + _wk] = inReal[_w0_0 + _wk];
+      for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
+        outReal[(_w1_0 + _wk + 1) | 0] = inReal[(_w0_0 + _wk + 1) | 0];
+        outReal[(_w1_0 + _wk + 2) | 0] = inReal[(_w0_0 + _wk + 2) | 0];
+        outReal[(_w1_0 + _wk + 3) | 0] = inReal[(_w0_0 + _wk + 3) | 0];
+      }
+      for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
       }
       outIdx += _wn;
       today += _wn;

@@ -100,8 +100,14 @@ export function medpriceImpl(
     const _w2_0 = outIdx;
     const _w0_0 = i;
     const _w1_0 = i;
-    for (let _wk = 0; _wk < _wn; _wk++) {
-      outReal[_w2_0 + _wk] = (inHigh[_w0_0 + _wk] + inLow[_w1_0 + _wk]) / 2.0;
+    for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = (inHigh[(_w0_0 + _wk) | 0] + inLow[(_w1_0 + _wk) | 0]) / 2.0;
+      outReal[(_w2_0 + _wk + 1) | 0] = (inHigh[(_w0_0 + _wk + 1) | 0] + inLow[(_w1_0 + _wk + 1) | 0]) / 2.0;
+      outReal[(_w2_0 + _wk + 2) | 0] = (inHigh[(_w0_0 + _wk + 2) | 0] + inLow[(_w1_0 + _wk + 2) | 0]) / 2.0;
+      outReal[(_w2_0 + _wk + 3) | 0] = (inHigh[(_w0_0 + _wk + 3) | 0] + inLow[(_w1_0 + _wk + 3) | 0]) / 2.0;
+    }
+    for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = (inHigh[(_w0_0 + _wk) | 0] + inLow[(_w1_0 + _wk) | 0]) / 2.0;
     }
     i += _wn;
     outIdx += _wn;

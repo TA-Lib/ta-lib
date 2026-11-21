@@ -160,12 +160,34 @@ export function eriImpl(
       const _w0_0 = today;
       const _w4_0 = outIdx;
       const _w3_0 = outIdx;
-      for (let _wk = 0; _wk < _wn; _wk++) {
-        tempHT = inHigh[_w1_0 + _wk];
-        tempLT = inLow[_w2_0 + _wk];
-        tempReal = inClose[_w0_0 + _wk];
-        outBullPower[_w4_0 + _wk] = tempHT - tempReal;
-        outBearPower[_w3_0 + _wk] = tempLT - tempReal;
+      for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+        tempHT = inHigh[(_w1_0 + _wk) | 0];
+        tempLT = inLow[(_w2_0 + _wk) | 0];
+        tempReal = inClose[(_w0_0 + _wk) | 0];
+        outBullPower[(_w4_0 + _wk) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 1) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 1) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 1) | 0];
+        outBullPower[(_w4_0 + _wk + 1) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 1) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 2) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 2) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 2) | 0];
+        outBullPower[(_w4_0 + _wk + 2) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 2) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 3) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 3) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 3) | 0];
+        outBullPower[(_w4_0 + _wk + 3) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 3) | 0] = tempLT - tempReal;
+      }
+      for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+        tempHT = inHigh[(_w1_0 + _wk) | 0];
+        tempLT = inLow[(_w2_0 + _wk) | 0];
+        tempReal = inClose[(_w0_0 + _wk) | 0];
+        outBullPower[(_w4_0 + _wk) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk) | 0] = tempLT - tempReal;
       }
       outIdx += _wn;
       today += _wn;

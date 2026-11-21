@@ -91,8 +91,14 @@ export function subImpl(
     const _w2_0 = outIdx;
     const _w0_0 = i;
     const _w1_0 = i;
-    for (let _wk = 0; _wk < _wn; _wk++) {
-      outReal[_w2_0 + _wk] = inReal0[_w0_0 + _wk] - inReal1[_w1_0 + _wk];
+    for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = inReal0[(_w0_0 + _wk) | 0] - inReal1[(_w1_0 + _wk) | 0];
+      outReal[(_w2_0 + _wk + 1) | 0] = inReal0[(_w0_0 + _wk + 1) | 0] - inReal1[(_w1_0 + _wk + 1) | 0];
+      outReal[(_w2_0 + _wk + 2) | 0] = inReal0[(_w0_0 + _wk + 2) | 0] - inReal1[(_w1_0 + _wk + 2) | 0];
+      outReal[(_w2_0 + _wk + 3) | 0] = inReal0[(_w0_0 + _wk + 3) | 0] - inReal1[(_w1_0 + _wk + 3) | 0];
+    }
+    for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = inReal0[(_w0_0 + _wk) | 0] - inReal1[(_w1_0 + _wk) | 0];
     }
     i += _wn;
     outIdx += _wn;

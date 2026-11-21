@@ -2857,21 +2857,130 @@ fn c_percentrank_counts_by_adding_in_step_and_peek_only() {
     }
 }
 
+/// A TypeScript loop over windows: its body, the window starts declared for
+/// it, and its passes per trip: one for a rolled loop and for an unrolled
+/// loop's tail, which follows its group and reads the group's starts.
+struct TsWindowed {
+    pass: Vec<String>,
+    starts: Vec<String>,
+    width: usize,
+    tail: bool,
+}
+
+fn ts_windowed_loops(ts: &str) -> Vec<TsWindowed> {
+    let rolled = regex::Regex::new(r"^(\s*)for \(let _wk = 0; _wk < _wn; _wk\+\+\) \{$").unwrap();
+    let group = regex::Regex::new(r"^(\s*)for \(let _wk = 0; _wk < \(_wn & ~(\d+)\); _wk = \(_wk \+ (\d+)\) \| 0\) \{$").unwrap();
+    let tail = regex::Regex::new(r"^(\s*)for \(let _wk = _wn & ~(\d+); _wk < _wn; _wk = \(_wk \+ 1\) \| 0\) \{$").unwrap();
+    let start = regex::Regex::new(r"^\s*const (_w\w+) = .+;$").unwrap();
+    let lines: Vec<&str> = ts.lines().collect();
+    let starts_above = |h: usize| -> Vec<String> {
+        let starts: Vec<String> = lines[..h].iter().rev().map_while(|l| start.captures(l)).map(|c| c[1].to_string()).filter(|w| w != "_wn").collect();
+        assert!(lines[h - 1 - starts.len()].trim_start().starts_with("const _wn = "), "a loop over windows must take its trip first:\n{ts}");
+        starts
+    };
+    let mut out: Vec<TsWindowed> = Vec::new();
+    for (h, line) in lines.iter().enumerate() {
+        let (c, width, is_tail, starts) = if let Some(c) = rolled.captures(line) {
+            (c, 1, false, starts_above(h))
+        } else if let Some(c) = group.captures(line) {
+            let w: usize = c[3].parse().unwrap();
+            assert_eq!(c[2].parse::<usize>().unwrap() + 1, w, "a group loop must stop where its passes no longer fit:\n{line}");
+            (c, w, false, starts_above(h))
+        } else if let Some(c) = tail.captures(line) {
+            let g = out.last().filter(|g| g.width > 1 && !g.tail).unwrap_or_else(|| panic!("a tail loop without its group:\n{ts}"));
+            assert_eq!(c[2].parse::<usize>().unwrap() + 1, g.width, "the tail must start where its group stopped:\n{line}");
+            assert_eq!(lines[h - 1], format!("{}}}", &c[1]), "the tail must follow its group at once:\n{ts}");
+            let starts = g.starts.clone();
+            (c, 1, true, starts)
+        } else {
+            continue;
+        };
+        let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
+        out.push(TsWindowed { pass: lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), starts, width, tail: is_tail });
+    }
+    out
+}
+
+/// `line` with each window access's offset past `_wk` mapped through `f`,
+/// written `+ c` even where `c` is 0.
+fn ts_lane_offsets(line: &str, f: impl Fn(usize) -> usize) -> String {
+    let lane = regex::Regex::new(r"\((_w\w+) \+ _wk(?: \+ (\d+))?\) \| 0").unwrap();
+    lane.replace_all(line, |m: &regex::Captures| format!("({} + _wk + {}) | 0", &m[1], f(m.get(2).map_or(0, |c| c.as_str().parse().unwrap())))).into_owned()
+}
+
 /// TypeScript runs a lockstep batch loop of plain assignments on one counter,
 /// each cursor's start held in a constant (ADD, MOM); a loop with a branch
-/// (TRANGE) or a single cursor (STDDEV's root pass) keeps its form.
+/// (TRANGE) or a single cursor (STDDEV's root pass) keeps its form. A pass
+/// with no call V8 keeps a call runs four times per trip, each access
+/// `(start + _wk + c) | 0`, then a tail runs the rest. Each copy, and the
+/// tail, must be copy 0 moved by its offset: a dropped statement in one copy
+/// changes values only on the bars that copy runs.
 #[test]
 fn typescript_lockstep_loops_run_one_counter() {
     let (registry, helpers) = (make_registry(), make_helpers());
-    for (name, loops) in [("add", 1), ("mom", 1), ("trange", 0), ("stddev", 0)] {
+    let step = regex::Regex::new(r"^\s*\w+(\+\+|--| \+= | -= )").unwrap();
+    let access = regex::Regex::new(r"(\w+)\[([^\]]*)\]").unwrap();
+    let lane = regex::Regex::new(r"^\((_w\w+) \+ _wk(?: \+ (\d+))?\) \| 0$").unwrap();
+    let module = |name: &str| {
         let (func, enums) = load_indicator(name);
-        let ts = backends::ts::generate(&func, &enums, registry, helpers);
-        let lines: Vec<&str> = ts.lines().collect();
-        let heads: Vec<usize> = (0..lines.len()).filter(|&i| lines[i].trim_start() == "for (let _wk = 0; _wk < _wn; _wk++) {").collect();
-        assert_eq!(heads.len(), loops, "{name}:\n{ts}");
-        for h in heads {
-            let pass = lines[h + 1].trim_start();
-            assert!(pass.contains("_wk]") && !pass.contains("++") && lines[h + 2].trim_start() == "}", "{name}: one pass, every access at the counter:\n{ts}");
+        backends::ts::generate(&func, &enums, registry, helpers)
+    };
+    if !common::sweep_filtered() {
+        for (name, unrolled) in [("add", 1), ("mom", 1), ("trange", 0), ("stddev", 0)] {
+            let ts = module(name);
+            let loops = ts_windowed_loops(&ts);
+            assert_eq!(loops.iter().filter(|l| !l.tail).count(), unrolled, "{name}:\n{ts}");
+            assert!(loops.iter().all(|l| l.width == 4 || l.tail), "{name}: four passes per trip:\n{ts}");
         }
     }
+    let mut unrolled = 0usize;
+    for name in discover_indicators() {
+        let ts = module(&name);
+        let loops = ts_windowed_loops(&ts);
+        for (i, l) in loops.iter().enumerate() {
+            if l.width == 1 && !l.tail {
+                continue;
+            }
+            assert!(!l.pass.iter().any(|x| step.is_match(x)), "{name}: an index steps inside an unrolled loop:\n{ts}");
+            let lanes = |copy: &[String]| -> Vec<(String, usize)> {
+                let mut found = Vec::new();
+                for x in copy {
+                    for a in access.captures_iter(x) {
+                        let m = lane.captures(&a[2]).unwrap_or_else(|| panic!("{name}: `{}` in an unrolled loop is not its window plus the counter:\n{ts}", &a[0]));
+                        assert!(l.starts.iter().any(|w| *w == m[1]), "{name}: `{}` reads a window the loop does not start:\n{ts}", &a[0]);
+                        let c = m.get(2).map_or(0, |c| c.as_str().parse().unwrap());
+                        assert!(c < l.width, "{name}: `{}` reaches past the {} passes the test leaves room for:\n{ts}", &a[0], l.width);
+                        found.push((m[1].to_string(), c));
+                    }
+                }
+                found
+            };
+            if l.tail {
+                lanes(&l.pass);
+                continue;
+            }
+            let code = cs_pass_code(&l.pass);
+            assert_eq!(code.len() % l.width, 0, "{name}: an unrolled loop whose copies differ in length:\n{ts}");
+            let copies: Vec<&[String]> = code.chunks(code.len() / l.width).collect();
+            let first = lanes(copies[0]);
+            assert!(!first.is_empty() && first.iter().all(|(_, c)| *c == 0), "{name}: copy 0 of an unrolled pass is not at the counter:\n{ts}");
+            let base: Vec<String> = copies[0].iter().map(|x| ts_lane_offsets(x, |c| c)).collect();
+            for (e, copy) in copies.iter().enumerate() {
+                let got = lanes(copy);
+                assert_eq!(got.len(), first.len(), "{name}: copy {e} makes another number of accesses than copy 0:\n{ts}");
+                for ((w, c), (w0, c0)) in got.iter().zip(&first) {
+                    assert!(w == w0 && *c == c0 + e, "{name}: copy {e} reads `{w}` at {c}, where copy 0 reads `{w0}` at {c0}:\n{ts}");
+                }
+                let rebased: Vec<String> = copy.iter().map(|x| ts_lane_offsets(x, |c| c - e)).collect();
+                assert_eq!(rebased, base, "{name}: copy {e} of an unrolled pass is not copy 0:\n{ts}");
+            }
+            let tail = loops.get(i + 1).filter(|t| t.tail).unwrap_or_else(|| panic!("{name}: an unrolled loop without its tail:\n{ts}"));
+            let tail_code: Vec<String> = cs_pass_code(&tail.pass).iter().map(|x| ts_lane_offsets(x, |c| c)).collect();
+            assert_eq!(tail_code, base, "{name}: the tail of an unrolled loop is not its copy 0:\n{ts}");
+        }
+        let groups = loops.iter().filter(|l| l.width > 1).count();
+        assert_eq!(groups, loops.iter().filter(|l| l.tail).count(), "{name}: an unrolled loop without its tail:\n{ts}");
+        unrolled += groups;
+    }
+    assert!(common::sweep_filtered() || unrolled >= 25, "only {unrolled} TypeScript loops over windows are unrolled");
 }
