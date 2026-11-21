@@ -2918,7 +2918,7 @@ fn ts_lane_offsets(line: &str, f: impl Fn(usize) -> usize) -> String {
 #[test]
 fn typescript_lockstep_loops_run_one_counter() {
     let (registry, helpers) = (make_registry(), make_helpers());
-    let step = regex::Regex::new(r"^\s*\w+(\+\+|--| \+= | -= )").unwrap();
+    let step = regex::Regex::new(r"^\s*\w+(\+\+|--| \+= \d+| -= \d+);$").unwrap();
     let access = regex::Regex::new(r"(\w+)\[([^\]]*)\]").unwrap();
     let lane = regex::Regex::new(r"^\((_w\w+) \+ _wk(?: \+ (\d+))?\) \| 0$").unwrap();
     let module = |name: &str| {
