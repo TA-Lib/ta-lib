@@ -3,11 +3,11 @@
 # policy=monotone: a run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/15.2.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	7709bad55a898c201302dfa40e709ee0cddef971
-#generated	2026-11-19T21:10:38Z
+#commit	db2b4fa47f570cbfacb14663cd8d4926d53c70eb
+#generated	2026-11-21T13:10:09Z
 AC	batch	0	647497
 AC	open	0	564093
 AC	openfill	0	604575
@@ -1217,7 +1217,7 @@ WMA	batch	0	335626
 WMA	open	0	315940
 WMA	openfill	0	356288
 WMA	peek	0	37902
-WMA	update	0	89729
+WMA	update	0	89727
 ZIGZAG	batch	0	453715
 ZIGZAG	open	0	357820
 ZIGZAG	openfill	0	480171
@@ -1227,4 +1227,4 @@ ZLEMA	batch	0	199858
 ZLEMA	open	0	160139
 ZLEMA	openfill	0	200057
 ZLEMA	peek	0	48143
-ZLEMA	update	0	60430
+ZLEMA	update	0	60429
