@@ -191,6 +191,7 @@ import * as m_macd from '../src/func/macd.ts';
 import * as m_macdext from '../src/func/macdext.ts';
 import * as m_macdfix from '../src/func/macdfix.ts';
 import * as m_macdv from '../src/func/macdv.ts';
+import * as m_maenv from '../src/func/maenv.ts';
 import * as m_mama from '../src/func/mama.ts';
 import * as m_marketfi from '../src/func/marketfi.ts';
 import * as m_massi from '../src/func/massi.ts';
@@ -2874,6 +2875,52 @@ const PROBES: Probe[] = [
     ],
   },
   {
+    name: 'MAENV',
+    batch: m_maenv.maenvPositional,
+    body: m_maenv.maenvImpl,
+    lookback: m_maenv.maenvLookbackPositional,
+    open: m_maenv.maenvOpenPositional,
+    fill: m_maenv.maenvOpenAndFillPositional,
+    ins: ['real'],
+    outs: ['f', 'f', 'f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['minimums', 1, -3e37, -3e37, MAType.DEFAULT],
+      ['optInMAType=SMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SMA],
+      ['optInMAType=SMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SMA],
+      ['optInMAType=EMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.EMA],
+      ['optInMAType=EMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.EMA],
+      ['optInMAType=WMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.WMA],
+      ['optInMAType=WMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.WMA],
+      ['optInMAType=DEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEMA],
+      ['optInMAType=DEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEMA],
+      ['optInMAType=TEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TEMA],
+      ['optInMAType=TEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TEMA],
+      ['optInMAType=TRIMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TRIMA],
+      ['optInMAType=TRIMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TRIMA],
+      ['optInMAType=KAMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.KAMA],
+      ['optInMAType=KAMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.KAMA],
+      ['optInMAType=MAMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.MAMA],
+      ['optInMAType=MAMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.MAMA],
+      ['optInMAType=T3', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.T3],
+      ['optInMAType=T3, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.T3],
+      ['optInMAType=HMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.HMA],
+      ['optInMAType=HMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.HMA],
+      ['optInMAType=DISABLED', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DISABLED],
+      ['optInMAType=DISABLED, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DISABLED],
+      ['optInMAType=DEFAULT', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['optInMAType=DEFAULT, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['optInMAType=ZLEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ZLEMA],
+      ['optInMAType=ZLEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ZLEMA],
+      ['optInMAType=RMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.RMA],
+      ['optInMAType=RMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.RMA],
+      ['optInMAType=VIDYA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
+      ['optInMAType=VIDYA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
+      ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=ALMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+    ],
+  },
+  {
     name: 'MAMA',
     batch: m_mama.mamaPositional,
     body: m_mama.mamaImpl,
@@ -4415,7 +4462,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 244;
+const CORPUS = 245;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

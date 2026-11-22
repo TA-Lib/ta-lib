@@ -302,6 +302,7 @@ public final class Functions {
       put(m, f_MACDEXT());
       put(m, f_MACDFIX());
       put(m, f_MACDV());
+      put(m, f_MAENV());
       put(m, f_MAMA());
       put(m, f_MARKETFI());
       put(m, f_MASSI());
@@ -3066,6 +3067,41 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outMACDV", 0x00000701),
             new OutputInfo(OutputType.REAL, "outMACDVSignal", 0x00000704),
             new OutputInfo(OutputType.REAL, "outMACDVHist", 0x00000710)
+         ));
+   }
+
+   private static FuncInfo f_MAENV() {
+      return new FuncInfo(
+         "MAENV", "Overlap Studies", "Moving Average Envelope", 0x03000008,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInPercentUp", 0x00100000,
+               "Percent up", "Percent of the moving average added to form the upper band", 10.0,
+               -3e37, 3e37, 2, 0.5, 20.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInPercentDn", 0x00100000,
+               "Percent down", "Percent of the moving average subtracted to form the lower band", 10.0,
+               -3e37, 3e37, 2, 0.5, 20.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
+               "MA Type", "Type of Moving Average", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
+            new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
          ));
    }
 

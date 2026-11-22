@@ -246,7 +246,7 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (36)
+//! ## Overlap Studies (37)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALLIGATOR`](Core::alligator) — Williams Alligator
@@ -264,6 +264,7 @@
 //! * [`KAMA`](Core::kama) — Kaufman Adaptive Moving Average
 //! * [`KC`](Core::kc) — Keltner Channels
 //! * [`MA`](Core::ma) — Moving average
+//! * [`MAENV`](Core::maenv) — Moving Average Envelope
 //! * [`MAMA`](Core::mama) — MESA Adaptive Moving Average
 //! * [`MAVP`](Core::mavp) — Moving average with variable period
 //! * [`MCGD`](Core::mcgd) — McGinley Dynamic

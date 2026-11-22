@@ -61,6 +61,7 @@ ErrorNumber test_func_kstext  ( TA_History *history );
 ErrorNumber test_func_chop    ( TA_History *history );
 ErrorNumber test_func_cmf     ( TA_History *history );
 ErrorNumber test_func_kc      ( TA_History *history );
+ErrorNumber test_func_maenv   ( TA_History *history );
 ErrorNumber test_func_donchian( TA_History *history );
 ErrorNumber test_func_rma     ( TA_History *history );
 ErrorNumber test_func_cksp    ( TA_History *history );

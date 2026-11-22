@@ -135,6 +135,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
 - [KC](/functions/kc.md) — Keltner Channels
 - [MA](/functions/ma.md) — Moving average
+- [MAENV](/functions/maenv.md) — Moving Average Envelope
 - [MAMA](/functions/mama.md) — MESA Adaptive Moving Average
 - [MAVP](/functions/mavp.md) — Moving average with variable period
 - [MCGD](/functions/mcgd.md) — McGinley Dynamic

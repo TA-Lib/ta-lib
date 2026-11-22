@@ -531,11 +531,13 @@ pub enum FuncId {
     ALLIGATOR,
     /// Gator Oscillator — [`Core::gator`](crate::Core::gator).
     GATOR,
+    /// Moving Average Envelope — [`Core::maenv`](crate::Core::maenv).
+    MAENV,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 244;
+    pub const COUNT: usize = 245;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -896,7 +898,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 244] = [
+static FUNC_TABLE: [FuncInfo; 245] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3581,10 +3583,21 @@ static FUNC_TABLE: [FuncInfo; 244] = [
         outputs: &[OutputInfo { param_name: "outUpper", kind: OutputType::Real, flags: OutputFlags(0x00004510) }, OutputInfo { param_name: "outLower", kind: OutputType::Real, flags: OutputFlags(0x00004610) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::MAENV,
+        name: "MAENV",
+        group: Group::OverlapStudies,
+        hint: "Moving Average Envelope",
+        flags: FuncFlags(0x03000008),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInPercentUp", display_name: "Percent up", hint: "Percent of the moving average added to form the upper band", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 10.0, suggested: (0.5, 20.0, 0.5) } }, OptInputInfo { param_name: "optInPercentDn", display_name: "Percent down", hint: "Percent of the moving average subtracted to form the lower band", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 10.0, suggested: (0.5, 20.0, 0.5) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
+        outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        unst_id: None,
+    },
 ];
 
 /// [`FuncInfo::attributes`], indexed by [`FuncId`].
-static ATTRIBUTES: [&str; 244] = [
+static ATTRIBUTES: [&str; 245] = [
     "{}",
     "{}",
     "{}",
@@ -3824,6 +3837,7 @@ static ATTRIBUTES: [&str; 244] = [
     "{}",
     "{}",
     "{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}",
+    "{}",
     "{}",
     "{}",
     "{}",
@@ -4091,6 +4105,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "SORTINO" => FuncId::SORTINO,
         "ALLIGATOR" => FuncId::ALLIGATOR,
         "GATOR" => FuncId::GATOR,
+        "MAENV" => FuncId::MAENV,
         _ => return None,
     })
 }
@@ -4600,6 +4615,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SORTINO => self.core.sortino_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
             FuncId::ALLIGATOR => self.core.alligator_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
             FuncId::GATOR => self.core.gator_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
+            FuncId::MAENV => self.core.maenv_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?),
         }
     }
 
@@ -4857,6 +4873,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SORTINO => self.core.sortino_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
             FuncId::ALLIGATOR => self.core.alligator_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], output_idx),
             FuncId::GATOR => self.core.gator_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], output_idx),
+            FuncId::MAENV => self.core.maenv_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?, output_idx),
         }
     }
 
@@ -8257,6 +8274,23 @@ impl<'a> ParamHolder<'a> {
                 let res = self.core.gator(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::MAENV => {
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let e3 = MAType::try_from(self.int_opt[3])?;
+                let o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.maenv(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

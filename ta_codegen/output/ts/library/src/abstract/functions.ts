@@ -1682,6 +1682,22 @@ export function catalog(dispatch: ReadonlyMap<string, Thunks>): FunctionCatalog 
         { type: OutputType.REAL, paramName: 'outMACDVHist', key: 'outMacdvHist', flags: 0x00000710 },
       ],
       '{"outputs":{"outMACDV":{"levels":[-150,-50,50,150]}}}', dispatch),
+    FuncInfo.of('MAENV', 'Overlap Studies', 'Moving Average Envelope', 0x03000008,
+      [
+        { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
+      ],
+      [
+        { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 20.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+        { type: OptInputType.REAL_RANGE, paramName: 'optInPercentUp', key: 'percentUp', flags: 0x00100000, displayName: 'Percent up', hint: 'Percent of the moving average added to form the upper band', defaultValue: 10.0, min: -3e37, max: 3e37, precision: 2, suggestedStart: 0.5, suggestedEnd: 20.0, suggestedIncrement: 0.5 },
+        { type: OptInputType.REAL_RANGE, paramName: 'optInPercentDn', key: 'percentDn', flags: 0x00100000, displayName: 'Percent down', hint: 'Percent of the moving average subtracted to form the lower band', defaultValue: 10.0, min: -3e37, max: 3e37, precision: 2, suggestedStart: 0.5, suggestedEnd: 20.0, suggestedIncrement: 0.5 },
+        { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
+      ],
+      [
+        { type: OutputType.REAL, paramName: 'outRealUpperBand', key: 'outUpperBand', flags: 0x00000800 },
+        { type: OutputType.REAL, paramName: 'outRealMiddleBand', key: 'outMiddleBand', flags: 0x00000001 },
+        { type: OutputType.REAL, paramName: 'outRealLowerBand', key: 'outLowerBand', flags: 0x00001000 },
+      ],
+      '{}', dispatch),
     FuncInfo.of('MAMA', 'Overlap Studies', 'MESA Adaptive Moving Average', 0x0B000004,
       [
         { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },

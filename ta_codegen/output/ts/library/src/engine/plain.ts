@@ -343,6 +343,8 @@ export { macdfix, macdfixLookback, macdfixDisplayShift, macdfixOpen, macdfixOpen
 export type { MacdfixOptions, MacdfixResult } from '../func/macdfix.ts';
 export { macdv, macdvLookback, macdvDisplayShift, macdvOpen, macdvOpenAndFill, MacdvStream, MacdvOut } from '../func/macdv.ts';
 export type { MacdvOptions, MacdvResult } from '../func/macdv.ts';
+export { maenv, maenvLookback, maenvDisplayShift, maenvOpen, maenvOpenAndFill, MaenvStream, MaenvOut } from '../func/maenv.ts';
+export type { MaenvOptions, MaenvResult } from '../func/maenv.ts';
 export { mama, mamaLookback, mamaDisplayShift, mamaOpen, mamaOpenAndFill, MamaStream, MamaOut } from '../func/mama.ts';
 export type { MamaOptions, MamaResult } from '../func/mama.ts';
 export { marketfi, marketfiLookback, marketfiDisplayShift, marketfiOpen, marketfiOpenAndFill, MarketfiStream } from '../func/marketfi.ts';

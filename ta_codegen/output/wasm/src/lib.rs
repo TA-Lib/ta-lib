@@ -3086,6 +3086,35 @@ pub unsafe extern "C" fn macdv_batch(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn maenv_batch(
+    startIdx: usize,
+    endIdx: usize,
+    inReal: *const f64,
+    len: usize,
+    optInTimePeriod: i32,
+    optInPercentUp: f64,
+    optInPercentDn: f64,
+    optInMAType: i32,
+    outRealUpperBand: *mut f64,
+    outRealMiddleBand: *mut f64,
+    outRealLowerBand: *mut f64,
+    out_len: usize,
+) -> i32 {
+    entered();
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+        return DECLINED;
+    };
+    let (Some(inReal), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inReal, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
+        return DECLINED;
+    };
+    answer(CORE.maenv(startIdx, endIdx, inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn marketfi_batch(
     startIdx: usize,
     endIdx: usize,

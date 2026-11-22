@@ -1697,6 +1697,22 @@ var registry = [...]FuncInfo{
 			{OutputReal, "outMACDVHist", 0x00000710},
 		},
 		"{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}", lookbackMACDV, displayShiftMACDV, callMACDV},
+	{"MAENV", GroupOverlapStudies, "Moving Average Envelope", 0x03000008, -1,
+		[]InputInfo{
+			{InputReal, "inReal", 0x00000000, nil},
+		},
+		[]OptInputInfo{
+			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 20.0, IntegerRange{1, 100000, 20, 1, 200, 1}},
+			{OptRealRange, "optInPercentUp", "Percent up", "Percent of the moving average added to form the upper band", 0x00100000, 10.0, RealRange{-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5}},
+			{OptRealRange, "optInPercentDn", "Percent down", "Percent of the moving average subtracted to form the lower band", 0x00100000, 10.0, RealRange{-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+		},
+		[]OutputInfo{
+			{OutputReal, "outRealUpperBand", 0x00000800},
+			{OutputReal, "outRealMiddleBand", 0x00000001},
+			{OutputReal, "outRealLowerBand", 0x00001000},
+		},
+		"{}", lookbackMAENV, displayShiftMAENV, callMAENV},
 	{"MAMA", GroupOverlapStudies, "MESA Adaptive Moving Average", 0x0B000004, talib.FuncUnstIdMAMA,
 		[]InputInfo{
 			{InputReal, "inReal", 0x00000000, nil},
@@ -4573,6 +4589,18 @@ func displayShiftMACDV(c *talib.Core, h *ParamHolder, outputIdx int) (int, error
 
 func callMACDV(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRange, error) {
 	return c.MACDV(startIdx, endIdx, h.prices[0][1], h.prices[0][2], h.prices[0][3], h.intOpts[0], h.intOpts[1], h.intOpts[2], h.realOuts[0], h.realOuts[1], h.realOuts[2])
+}
+
+func lookbackMAENV(c *talib.Core, h *ParamHolder) (int, error) {
+	return c.MAENVLookback(h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]))
+}
+
+func displayShiftMAENV(c *talib.Core, h *ParamHolder, outputIdx int) (int, error) {
+	return c.MAENVDisplayShift(h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]), outputIdx)
+}
+
+func callMAENV(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRange, error) {
+	return c.MAENV(startIdx, endIdx, h.reals[0], h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]), h.realOuts[0], h.realOuts[1], h.realOuts[2])
 }
 
 func lookbackMAMA(c *talib.Core, h *ParamHolder) (int, error) {

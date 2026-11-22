@@ -1025,6 +1025,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["MAENV"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.MaenvImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["MAMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.MamaImpl(
@@ -2494,6 +2500,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["MAENV"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.MaenvImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["MAMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.MamaImpl(
@@ -3208,6 +3220,7 @@ internal static class NoPhantomIoBinder
         ["MACDEXT"] = static (core, c) => core.MacdextOpen(c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5)),
         ["MACDFIX"] = static (core, c) => core.MacdfixOpen(c.Series(0), c.IntOpt(0)),
         ["MACDV"] = static (core, c) => core.MacdvOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        ["MAENV"] = static (core, c) => core.MaenvOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
         ["MAMA"] = static (core, c) => core.MamaOpen(c.Series(0), c.RealOpt(0), c.RealOpt(1)),
         ["MARKETFI"] = static (core, c) => core.MarketfiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume)),
         ["MASSI"] = static (core, c) => core.MassiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),

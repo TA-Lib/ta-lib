@@ -268,7 +268,7 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
             with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
         let expected: std::collections::BTreeSet<&str> =
             ["alligator", "bbands", "gator", "ichimoku", "kc", "kdj", "kstext", "macdext",
-             "sqzmom", "stoch", "stochf", "stochrsi"]
+             "maenv", "sqzmom", "stoch", "stochf", "stochrsi"]
                 .into_iter()
                 .filter(|n| common::swept(n))
                 .collect();

@@ -4197,6 +4197,38 @@ int TA_MACDV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_MACDV_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_MAENV_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_MAENV(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInPercentUp*/
+               params->optIn[2].data.optInReal, /* optInPercentDn*/
+               (TA_MAType)params->optIn[3].data.optInInteger, /* optInMAType*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outRealUpperBand */
+               params->out[1].data.outReal, /*  outRealMiddleBand */
+               params->out[2].data.outReal /*  outRealLowerBand */
+               );
+}
+unsigned int TA_MAENV_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_MAENV_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInPercentUp*/
+                    params->optIn[2].data.optInReal, /* optInPercentDn*/
+                    (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
+}
+int TA_MAENV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MAENV_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, (TA_MAType)params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

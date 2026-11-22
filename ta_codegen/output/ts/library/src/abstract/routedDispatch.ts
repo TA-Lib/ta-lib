@@ -187,6 +187,7 @@ import * as MACD from '../engine/func/macd.ts';
 import * as MACDEXT from '../engine/func/macdext.ts';
 import * as MACDFIX from '../engine/func/macdfix.ts';
 import * as MACDV from '../engine/func/macdv.ts';
+import * as MAENV from '../engine/func/maenv.ts';
 import * as MAMA from '../func/mama.ts';
 import * as MARKETFI from '../engine/func/marketfi.ts';
 import * as MASSI from '../engine/func/massi.ts';
@@ -1037,6 +1038,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => MACDV.macdvLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.core),
     displayShift: (h, o) => MACDV.macdvDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], o, h.core),
     call: (h, s, e) => MACDV.macdvPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.prices[0]![3]!, h.opts[0], h.opts[1], h.opts[2], h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.outputs[2] as Float64Array, h.core),
+  }],
+  ['MAENV', {
+    lookback: (h) => MAENV.maenvLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, h.core),
+    displayShift: (h, o) => MAENV.maenvDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, o, h.core),
+    call: (h, s, e) => MAENV.maenvPositional(s, e, h.inputs[0]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.outputs[2] as Float64Array, h.core),
   }],
   ['MAMA', {
     lookback: (h) => MAMA.mamaLookbackPositional(h.opts[0], h.opts[1], h.core),

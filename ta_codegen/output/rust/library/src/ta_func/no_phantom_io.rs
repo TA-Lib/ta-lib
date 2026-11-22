@@ -13786,6 +13786,106 @@ fn legs_MACDV(r: &mut Report) {
     r.legs_done("MACDV", 3);
 }
 
+const V_MAENV: &[(&str, i32, f64, f64, MAType)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("minimums", 1i32, -3e37f64, -3e37f64, MAType::DEFAULT),
+    ("optInMAType=SMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=SMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=EMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=EMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=WMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=WMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=DEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=DEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=TEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TRIMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=TRIMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=KAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=KAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=MAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=MAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=T3", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=T3, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=HMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=HMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=DISABLED", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DISABLED, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DEFAULT", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=DEFAULT, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=ZLEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=VIDYA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
+    ("optInMAType=VIDYA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::VIDYA),
+    ("optInMAType=ALMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ALMA),
+    ("optInMAType=ALMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ALMA),
+];
+
+fn sub_MAENV(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType) in V_MAENV {
+        let Ok(lb) = core.maenv_lookback(optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType) else { continue; };
+        r.control("MAENV", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.maenv_impl(0, lb, &inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("MAENV", label); continue; }
+        r.quiet("MAENV", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.maenv_impl(0, lb - 1, &inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_MAENV(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInPercentUp = Core::REAL_DEFAULT;
+    let optInPercentDn = Core::REAL_DEFAULT;
+    let optInMAType = MAType::DEFAULT;
+    let Ok(lb) = core.maenv_lookback(optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType) else { r.no_legs("MAENV"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MAENV", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.maenv_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MAENV", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.maenv_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("MAENV", 1);
+}
+
 const V_MAMA: &[(&str, f64, f64)] = &[
     ("defaults", Core::REAL_DEFAULT, Core::REAL_DEFAULT),
     ("minimums", 0.01f64, 0.01f64),
@@ -20639,6 +20739,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("MACDEXT", sub_MACDEXT, legs_MACDEXT),
     ("MACDFIX", sub_MACDFIX, legs_MACDFIX),
     ("MACDV", sub_MACDV, legs_MACDV),
+    ("MAENV", sub_MAENV, legs_MAENV),
     ("MAMA", sub_MAMA, legs_MAMA),
     ("MARKETFI", sub_MARKETFI, legs_MARKETFI),
     ("MASSI", sub_MASSI, legs_MASSI),
@@ -20770,7 +20871,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 244, "probe count");
+    assert_eq!(PROBES.len(), 245, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

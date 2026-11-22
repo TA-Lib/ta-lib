@@ -2729,7 +2729,7 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 18] = [
+    let expected: [(&str, &str); 19] = [
         ("ALLIGATOR", "each rma writes one of the three lines and is entered at lookbackTotal \
                  over a median buffer that begins lookbackTotal bars before startIdx, so it \
                  clamps nothing: its count is endIdx-startIdx+1, the count ALLIGATOR returns"),
@@ -2763,6 +2763,9 @@ fn composed_sub_call_destination_funcs() {
                  length the memmove gives outKST"),
         ("MACDEXT", "the body RUNTIME-CHECKS the premise (outNbElement1 == endIdx-startIdx+1+lookbackSignal) \
                  and bails otherwise, so signal count == N_MACDEXT"),
+        ("MAENV", "as KDJ -- ma is handed outBegIdx/outNBElement themselves and MAENV returns them \
+                 unmodified, so the final count IS that callee's count. maenv_lookback delegates \
+                 to ma_lookback, so the two anchors agree by construction too"),
         ("PERCENTB", "as BBW, in the STREAM alternate every backend streams from -- its var \
                  writes outReal and is handed outBegIdx/outNBElement themselves, and PERCENTB \
                  returns them unmodified. Entered at the MA's begIdx its count is endIdx - \
@@ -3025,7 +3028,7 @@ fn classified_corpus() -> Vec<(String, ir::Lang, Result<Vec<String>, String>)> {
 /// hand derivation of that 0.
 #[test]
 fn composed_edge_classes_are_pinned() {
-    let expected: [(&str, &[&str], &str); 27] = [
+    let expected: [(&str, &[&str], &str); 28] = [
         ("ADXR", &["tap lagdepth.adx.1.t0 ge1 Oldest <- (adx,1) map0 adx[outIdx]"],
             "outReal[i] averages adx[i+(p-1)] with adx[i], a lag fixed by the period and \
              at least 1 for every accepted one"),
@@ -3082,6 +3085,7 @@ fn composed_edge_classes_are_pinned() {
         ], "after the period swap both MAs start at startIdx - lookbackSignal, at or after the \
             larger of their lookbacks, so both begin there with equal counts; an MA lookback over \
             a swapped parameter has no interval, so the prover cannot order it against that max"),
+        ("MAENV", &[], ""),
         ("PERCENTB", &[
             "presumed lagzero.tempX.1.map0.r0 <- (tempX,1) map0.then tempX[i]",
             "presumed lagzero.tempX.1.map0.r1 <- (tempX,1) map0.else tempX[i]",

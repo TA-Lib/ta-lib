@@ -330,6 +330,107 @@ DEF_FUNCTION_ATTRIBUTES( MACDV,
                        );
 /* MACDV END */
 
+/* MAENV BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MAENV_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   20,
+   "Time period",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_MAENV_PercentUp =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   2,
+   0.5,
+   20.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MAENV_PercentUp =
+{
+   TA_OptInput_RealRange,
+   "optInPercentUp",
+   TA_OPTIN_IS_PERCENT,
+
+   "Percent up",
+   (const void *)&TA_DEF_MAENV_PercentUp,
+   10.0,
+   "Percent of the moving average added to form the upper band",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_MAENV_PercentDn =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   2,
+   0.5,
+   20.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MAENV_PercentDn =
+{
+   TA_OptInput_RealRange,
+   "optInPercentDn",
+   TA_OPTIN_IS_PERCENT,
+
+   "Percent down",
+   (const void *)&TA_DEF_MAENV_PercentDn,
+   10.0,
+   "Percent of the moving average subtracted to form the lower band",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAENV_UpperBand =
+                               { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAENV_MiddleBand =
+                               { TA_Output_Real, "outRealMiddleBand", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAENV_LowerBand =
+                               { TA_Output_Real, "outRealLowerBand", TA_OUT_LOWER_LIMIT };
+
+static const TA_InputParameterInfo    *TA_MAENV_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MAENV_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_MAENV_UpperBand,
+  &TA_DEF_UI_Output_Real_MAENV_MiddleBand,
+  &TA_DEF_UI_Output_Real_MAENV_LowerBand,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MAENV_OptInputs[] =
+{ &TA_DEF_UI_D_MAENV_TimePeriod,
+  &TA_DEF_UI_D_MAENV_PercentUp,
+  &TA_DEF_UI_D_MAENV_PercentDn,
+  &TA_DEF_UI_MA_Method,
+  NULL
+};
+
+DEF_FUNCTION( MAENV,
+              TA_GroupId_OverlapStudies,
+              "Moving Average Envelope",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
+             );
+/* MAENV END */
+
 /* MAMA BEGIN */
 static const TA_RealRange TA_DEF_MAMA_FastLimit =
 {
@@ -1077,6 +1178,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDEXT),
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MACDV),
+   ADD_TO_TABLE(MAENV),
    ADD_TO_TABLE(MAMA),
    ADD_TO_TABLE(MARKETFI),
    ADD_TO_TABLE(MASSI),

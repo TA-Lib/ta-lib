@@ -154,6 +154,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_MACDEXT.c \
 	ta_MACDFIX.c \
 	ta_MACDV.c \
+	ta_MAENV.c \
 	ta_MAMA.c \
 	ta_MARKETFI.c \
 	ta_MASSI.c \
