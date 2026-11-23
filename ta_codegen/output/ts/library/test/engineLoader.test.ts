@@ -105,8 +105,19 @@ class Unfused extends real.Instance {
   }
 }
 
-const FAILING: readonly (readonly ['compile' | 'fma', Partial<Api>])[] = [
+/** A `WebAssembly.Instance` that refuses the memory-less preflight module as a runtime that forbids instantiation does. */
+class Uninstantiable extends real.Instance {
+  constructor(module: object, imports: object) {
+    super(module, imports);
+    if (!('memory' in this.exports)) {
+      throw new RangeError('WebAssembly.Instance(): instantiation is not allowed');
+    }
+  }
+}
+
+const FAILING: readonly (readonly ['compile' | 'instantiate' | 'fma', Partial<Api>])[] = [
   ['compile', { Module: moduleStub(true) }],
+  ['instantiate', { Module: moduleStub(false), Instance: Uninstantiable }],
   ['fma', { Module: moduleStub(false), Instance: Unfused }],
 ];
 

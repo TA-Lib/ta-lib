@@ -92,7 +92,7 @@ const CODE_NAME = Object.fromEntries(
 /**
  * The one error class the library throws. Match on {@link TALibError.code}:
  * it survives a second copy of the package, where `instanceof` does not; a
- * structured clone, as `postMessage` makes, keeps only the message.
+ * structured clone, as `postMessage` makes, drops `code` and `retCode`.
  */
 export class TALibError extends Error {
   override readonly name = 'TALibError';

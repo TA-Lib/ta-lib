@@ -171,9 +171,9 @@ export class FuncInfo {
   readonly outputs: readonly OutputInfo[];
   /**
    * Metadata no flag can carry, such as an output's reference levels, as one JSON
-   * object; `'{}'` when none. The same bytes as C's `TA_GetFuncAttributes`, so a
-   * parameter's entry is keyed by its C `paramName`, not its `key`. Ignore a key you
-   * do not know: a release may add one
+   * object; `'{}'` when none. The same bytes as C's `TA_GetFuncAttributes`, so an
+   * entry is keyed by C's `paramName` (`outReal`), not by the row's `key`
+   * (`values`). Ignore a key you do not know: a release may add one
    * ([keys](https://ta-lib.org/spec/abstract/#attributes)).
    */
   readonly attributes: string;

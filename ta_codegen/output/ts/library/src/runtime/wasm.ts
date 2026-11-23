@@ -100,7 +100,8 @@ export const PREFLIGHT = 'AGFzbQEAAAABCAFgA3x8fAF8AwIBAAcFAQFwAAAKFgEUACAA/RQgAf
  *   or `react-native` build resolves to).
  * - `'compile'`: the runtime cannot compile the engine, as one without
  *   relaxed SIMD or under a Content-Security-Policy that forbids WebAssembly does.
- * - `'instantiate'`: the engine compiled but could not be instantiated.
+ * - `'instantiate'`: the engine, or its preflight module, compiled but could not be
+ *   instantiated.
  * - `'fma'`: this runtime does not fuse the multiply-add the engine relies on, so
  *   its values would differ from the TypeScript engine's.
  * - `'trap'`: the engine failed during calls too many times and was given up.
@@ -137,7 +138,7 @@ let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
 let budget = BUDGET;
 let retired = 0;
-let verdict: 'compile' | 'fma' | null | undefined;
+let verdict: 'compile' | 'instantiate' | 'fma' | null | undefined;
 
 /** @internal */
 export type BytesImport = () => Promise<{ readonly WASM_BASE64: string }>;
@@ -349,9 +350,9 @@ async function load(): Promise<EngineStatus | null> {
   if (live !== null || compiled !== null || failure !== null) {
     return null;
   }
-  const refused = preflight();
-  if (refused !== null) {
-    failure = refused;
+  const blocked = preflight();
+  if (blocked !== null) {
+    failure = blocked;
     return null;
   }
   const epoch = generation;
@@ -401,13 +402,20 @@ async function load(): Promise<EngineStatus | null> {
  * Why the engine cannot run here, judged once on {@link PREFLIGHT}, so that a
  * runtime that would refuse the engine imports and compiles none of its bytes.
  */
-function preflight(): 'compile' | 'fma' | null {
+function preflight(): 'compile' | 'instantiate' | 'fma' | null {
   if (verdict === undefined) {
+    let module: WasmModule;
     try {
-      const madd = new WebAssembly.Instance(new WebAssembly.Module(decode(PREFLIGHT)), {}).exports.p as WasmBatch;
-      verdict = madd(PROBE[0], PROBE[0], PROBE[1]) === FUSED ? null : 'fma';
+      module = new WebAssembly.Module(decode(PREFLIGHT));
     } catch {
       verdict = 'compile';
+      return verdict;
+    }
+    try {
+      const madd = new WebAssembly.Instance(module, {}).exports.p as WasmBatch;
+      verdict = madd(PROBE[0], PROBE[0], PROBE[1]) === FUSED ? null : 'fma';
+    } catch {
+      verdict = 'instantiate';
     }
   }
   return verdict;
@@ -433,9 +441,9 @@ function current(compile: boolean): WasmEngine | null {
     if (source === null || !compile) {
       return null;
     }
-    const refused = preflight();
-    if (refused !== null) {
-      failure = refused;
+    const blocked = preflight();
+    if (blocked !== null) {
+      failure = blocked;
       return null;
     }
     try {

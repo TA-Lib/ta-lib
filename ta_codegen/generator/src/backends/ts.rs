@@ -1584,10 +1584,8 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
     s
 }
 
-/// The options check: an omitted object returns at once, and an own key off
-/// the identity chain reaches the cold `unknownOption`, which also sees each
-/// inherited enumerable key. Keep the chain in the interface's order, so the
-/// common keys compare first.
+/// The options check: keep the chain in the interface's order, so the common
+/// keys compare first.
 fn gen_options_of(func: &FuncDef) -> String {
     let names = ts_names(&func.name);
     let keys = options_keys(func);

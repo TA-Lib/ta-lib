@@ -234,7 +234,7 @@ fn frame_call(func: &FuncDef) -> String {
 /// the call forms cannot route one call differently; empty for an untabled
 /// function. Only the whole input routes: it is the shape the entries were
 /// timed on. The options form reads the range before the options are checked,
-/// so it must not throw on any `options`.
+/// so it must tolerate a null or primitive `options`.
 fn route_check(route: Option<Route>, positional: bool) -> String {
     let Some(route) = route else {
         return String::new();
