@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/15.2.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	db2b4fa47f570cbfacb14663cd8d4926d53c70eb
-#generated	2026-11-21T13:10:09Z
+#commit	01606d43e096300f09944b9a0c5f02fda8272733
+#generated	2026-11-23T15:33:01Z
 AC	batch	0	647497
 AC	open	0	564093
 AC	openfill	0	604575
@@ -763,6 +763,11 @@ MACDV	open	0	834576
 MACDV	openfill	0	1014320
 MACDV	peek	0	95250
 MACDV	update	0	118029
+MAENV	batch	0	180331
+MAENV	open	0	182175
+MAENV	openfill	0	180629
+MAENV	peek	0	104462
+MAENV	update	0	168973
 MAMA	batch	0	6214227
 MAMA	open	0	5995664
 MAMA	openfill	0	6135390
