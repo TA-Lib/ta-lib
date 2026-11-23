@@ -38,7 +38,7 @@ import { sarext as sarextJs, sarextLookbackPositional, sarextOptionsOf, sarextPo
 import type { SarextOptions, SarextResult } from '../../func/sarext.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/sarext.ts';
 
@@ -154,17 +154,8 @@ function sarextWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -208,10 +199,18 @@ function sarextWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return sarextBuffered(first, last, n, inHighArg, inLowArg, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal);
+  const lookback = sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return sarextBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -220,36 +219,39 @@ function sarextWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.sarext_batch(first, last, inHighAt, inLowAt, n, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outRealAt, outLen);
+    count = w.x.sarext_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: SarextResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: SarextResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function sarextBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outReal: Float64Array<ArrayBuffer>): SarextResult | null {
-  const room = outputRoom(first, last, sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort), [inHighArg, inLowArg], [outReal], [Float64Array]);
+function sarextBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outReal: Float64Array<ArrayBuffer>): SarextResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -257,7 +259,7 @@ function sarextBuffered(first: number, last: number, n: number, inHighArg: Array
   if (inHigh === null || inHigh.length !== n || inLow === null || inLow.length !== n) {
     return fellThrough('input');
   }
-  const range = sarextInto(first, last, n, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, room);
+  const range = sarextInto(first, last, lo, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -266,7 +268,7 @@ function sarextPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -287,11 +289,19 @@ function sarextPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort), [inHigh, inLow], [outReal], [Float64Array]);
+  const lookback = sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -299,24 +309,27 @@ function sarextPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n) {
     return fellThrough('input');
   }
-  return sarextInto(startIdx, endIdx, n, inHighF64, inLowF64, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, room);
+  return sarextInto(startIdx, endIdx, lo, inHighF64, inLowF64, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, room);
 }
 
-function sarextInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outReal: Float64Array, room: number): OutRange | null {
+function sarextInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.sarext_batch(first, last, inHighAt, inLowAt, n, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outRealAt, outLen);
+    count = w.x.sarext_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -326,7 +339,7 @@ function sarextInto(first: number, last: number, n: number, inHigh: Float64Array
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

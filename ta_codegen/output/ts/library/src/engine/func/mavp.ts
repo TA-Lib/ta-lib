@@ -39,7 +39,7 @@ import type { MavpOptions, MavpResult } from '../../func/mavp.ts';
 import type { MAType } from '../../enums.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/mavp.ts';
 
@@ -146,17 +146,8 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -193,10 +184,18 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return mavpBuffered(first, last, n, real, periods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal);
+  const lookback = mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return mavpBuffered(first, last, lo, lookback, n, real, periods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -205,36 +204,39 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const inPeriodsBars = seriesBars(inPeriods, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const inPeriodsAt = at + n * 8;
-  w.f64.set(inPeriods, inPeriodsAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const inPeriodsAt = at + len * 8;
+  w.f64.set(inPeriodsBars, inPeriodsAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.mavp_batch(first, last, inRealAt, inPeriodsAt, n, optInMinPeriod, optInMaxPeriod, optInMAType, outRealAt, outLen);
+    count = w.x.mavp_batch(first - lo, last - lo, inRealAt, inPeriodsAt, len, optInMinPeriod, optInMaxPeriod, optInMAType, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: MavpResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: MavpResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function mavpBuffered(first: number, last: number, n: number, real: ArrayLike<number>, periods: ArrayLike<number>, optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outReal: Float64Array<ArrayBuffer>): MavpResult | null {
-  const room = outputRoom(first, last, mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType), [real, periods], [outReal], [Float64Array]);
+function mavpBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, periods: ArrayLike<number>, optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outReal: Float64Array<ArrayBuffer>): MavpResult | null {
+  const room = outputRoom(first, last, lookback, [real, periods], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -242,7 +244,7 @@ function mavpBuffered(first: number, last: number, n: number, real: ArrayLike<nu
   if (inReal === null || inReal.length !== n || inPeriods === null || inPeriods.length !== n) {
     return fellThrough('input');
   }
-  const range = mavpInto(first, last, n, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, room);
+  const range = mavpInto(first, last, lo, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -251,7 +253,7 @@ function mavpPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -275,11 +277,19 @@ function mavpPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType), [inReal, inPeriods], [outReal], [Float64Array]);
+  const lookback = mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal, inPeriods], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
@@ -287,24 +297,27 @@ function mavpPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (inRealF64 === null || inRealF64.length !== n || inPeriodsF64 === null || inPeriodsF64.length !== n) {
     return fellThrough('input');
   }
-  return mavpInto(startIdx, endIdx, n, inRealF64, inPeriodsF64, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, room);
+  return mavpInto(startIdx, endIdx, lo, inRealF64, inPeriodsF64, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, room);
 }
 
-function mavpInto(first: number, last: number, n: number, inReal: Float64Array, inPeriods: Float64Array, optInMinPeriod: number, optInMaxPeriod: number, optInMAType: number, outReal: Float64Array, room: number): OutRange | null {
+function mavpInto(first: number, last: number, lo: number, inReal: Float64Array, inPeriods: Float64Array, optInMinPeriod: number, optInMaxPeriod: number, optInMAType: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const inPeriodsBars = seriesBars(inPeriods, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const inPeriodsAt = at + n * 8;
-  w.f64.set(inPeriods, inPeriodsAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const inPeriodsAt = at + len * 8;
+  w.f64.set(inPeriodsBars, inPeriodsAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.mavp_batch(first, last, inRealAt, inPeriodsAt, n, optInMinPeriod, optInMaxPeriod, optInMAType, outRealAt, outLen);
+    count = w.x.mavp_batch(first - lo, last - lo, inRealAt, inPeriodsAt, len, optInMinPeriod, optInMaxPeriod, optInMAType, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -314,7 +327,7 @@ function mavpInto(first: number, last: number, n: number, inReal: Float64Array, 
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

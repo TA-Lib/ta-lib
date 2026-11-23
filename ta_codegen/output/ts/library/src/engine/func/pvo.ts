@@ -39,7 +39,7 @@ import type { PvoOptions, PvoResult } from '../../func/pvo.ts';
 import type { MAType } from '../../enums.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/pvo.ts';
 
@@ -153,17 +153,8 @@ function pvoWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -197,10 +188,18 @@ function pvoWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return pvoBuffered(first, last, n, inVolumeArg, optInFastPeriod, optInSlowPeriod, optInMAType, outReal);
+  const lookback = pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return pvoBuffered(first, last, lo, lookback, n, inVolumeArg, optInFastPeriod, optInSlowPeriod, optInMAType, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inVolume = routedSeries(inVolumeArg);
@@ -208,41 +207,43 @@ function pvoWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inVolumeBars = seriesBars(inVolume, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inVolumeAt = at;
-  w.f64.set(inVolume, inVolumeAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inVolumeBars, inVolumeAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.pvo_batch(first, last, inVolumeAt, n, optInFastPeriod, optInSlowPeriod, optInMAType, outRealAt, outLen);
+    count = w.x.pvo_batch(first - lo, last - lo, inVolumeAt, len, optInFastPeriod, optInSlowPeriod, optInMAType, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: PvoResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: PvoResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function pvoBuffered(first: number, last: number, n: number, inVolumeArg: ArrayLike<number>, optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outReal: Float64Array<ArrayBuffer>): PvoResult | null {
-  const room = outputRoom(first, last, pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType), [inVolumeArg], [outReal], [Float64Array]);
+function pvoBuffered(first: number, last: number, lo: number, lookback: number, n: number, inVolumeArg: ArrayLike<number>, optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outReal: Float64Array<ArrayBuffer>): PvoResult | null {
+  const room = outputRoom(first, last, lookback, [inVolumeArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inVolume = routedSeries(inVolumeArg);
   if (inVolume === null || inVolume.length !== n) {
     return fellThrough('input');
   }
-  const range = pvoInto(first, last, n, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, room);
+  const range = pvoInto(first, last, lo, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -251,7 +252,7 @@ function pvoPositionalWasm(startIdx: number, endIdx: number, inVolume: ArrayLike
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -272,33 +273,43 @@ function pvoPositionalWasm(startIdx: number, endIdx: number, inVolume: ArrayLike
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType), [inVolume], [outReal], [Float64Array]);
+  const lookback = pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inVolume], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inVolumeF64 = routedSeries(inVolume);
   if (inVolumeF64 === null || inVolumeF64.length !== n) {
     return fellThrough('input');
   }
-  return pvoInto(startIdx, endIdx, n, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, room);
+  return pvoInto(startIdx, endIdx, lo, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, room);
 }
 
-function pvoInto(first: number, last: number, n: number, inVolume: Float64Array, optInFastPeriod: number, optInSlowPeriod: number, optInMAType: number, outReal: Float64Array, room: number): OutRange | null {
+function pvoInto(first: number, last: number, lo: number, inVolume: Float64Array, optInFastPeriod: number, optInSlowPeriod: number, optInMAType: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inVolumeBars = seriesBars(inVolume, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inVolumeAt = at;
-  w.f64.set(inVolume, inVolumeAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inVolumeBars, inVolumeAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.pvo_batch(first, last, inVolumeAt, n, optInFastPeriod, optInSlowPeriod, optInMAType, outRealAt, outLen);
+    count = w.x.pvo_batch(first - lo, last - lo, inVolumeAt, len, optInFastPeriod, optInSlowPeriod, optInMAType, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -308,7 +319,7 @@ function pvoInto(first: number, last: number, n: number, inVolume: Float64Array,
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

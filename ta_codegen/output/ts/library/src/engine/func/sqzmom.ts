@@ -38,7 +38,7 @@ import { sqzmom as sqzmomJs, sqzmomLookbackPositional, sqzmomOptionsOf, sqzmomPo
 import type { SqzmomOptions, SqzmomResult } from '../../func/sqzmom.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/sqzmom.ts';
 
@@ -186,17 +186,8 @@ function sqzmomWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -237,10 +228,18 @@ function sqzmomWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outMomentum !== undefined || outSqueeze !== undefined) {
-    return sqzmomBuffered(first, last, n, inHighArg, inLowArg, inCloseArg, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze);
+  const lookback = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 12)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outMomentum !== undefined || outSqueeze !== undefined) {
+    return sqzmomBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, inCloseArg, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze);
+  }
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 12)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -250,39 +249,43 @@ function sqzmomWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 12);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 12);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outMomentumAt = at + n * 24;
-  const outSqueezeAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outMomentumAt = at + len * 24;
+  const outSqueezeAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.sqzmom_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumAt, outSqueezeAt, outLen);
+    count = w.x.sqzmom_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumAt, outSqueezeAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: SqzmomResult = { begIdx: w.begIdx(), outMomentum: w.reals(outMomentumAt, count), outSqueeze: w.ints(outSqueezeAt, count) };
+  const result: SqzmomResult = { begIdx: w.begIdx() + lo, outMomentum: w.reals(outMomentumAt, count), outSqueeze: w.ints(outSqueezeAt, count) };
   w.done();
   return result;
 }
 
-function sqzmomBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outMomentum: Float64Array<ArrayBuffer> | undefined, outSqueeze: Int32Array<ArrayBuffer> | undefined): SqzmomResult | null {
-  const room = outputRoom(first, last, sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow), [inHighArg, inLowArg, inCloseArg], [outMomentum, outSqueeze], [Float64Array, Int32Array]);
+function sqzmomBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outMomentum: Float64Array<ArrayBuffer> | undefined, outSqueeze: Int32Array<ArrayBuffer> | undefined): SqzmomResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg, inCloseArg], [outMomentum, outSqueeze], [Float64Array, Int32Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 12)) {
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 12)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -293,7 +296,7 @@ function sqzmomBuffered(first: number, last: number, n: number, inHighArg: Array
   }
   const outMomentumBuf = outMomentum ?? new Float64Array(room === 0 ? 1 : room);
   const outSqueezeBuf = outSqueeze ?? new Int32Array(room === 0 ? 1 : room);
-  const range = sqzmomInto(first, last, n, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumBuf, outSqueezeBuf, room);
+  const range = sqzmomInto(first, last, lo, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumBuf, outSqueezeBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outMomentum: outMomentumBuf.subarray(0, range.count), outSqueeze: outSqueezeBuf.subarray(0, range.count) };
 }
 
@@ -302,7 +305,7 @@ function sqzmomPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -323,11 +326,19 @@ function sqzmomPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow), [inHigh, inLow, inClose], [outMomentum, outSqueeze], [Float64Array, Int32Array]);
+  const lookback = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow, inClose], [outMomentum, outSqueeze], [Float64Array, Int32Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (endIdx - startIdx + 1) * 12)) {
+  if (!engineFor((endIdx - lo + 1) * 24 + (endIdx - startIdx + 1) * 12)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -336,27 +347,31 @@ function sqzmomPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n || inCloseF64 === null || inCloseF64.length !== n) {
     return fellThrough('input');
   }
-  return sqzmomInto(startIdx, endIdx, n, inHighF64, inLowF64, inCloseF64, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze, room);
+  return sqzmomInto(startIdx, endIdx, lo, inHighF64, inLowF64, inCloseF64, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze, room);
 }
 
-function sqzmomInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outMomentum: Float64Array, outSqueeze: Int32Array, room: number): OutRange | null {
+function sqzmomInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outMomentum: Float64Array, outSqueeze: Int32Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 12);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 12);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outMomentumAt = at + n * 24;
-  const outSqueezeAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outMomentumAt = at + len * 24;
+  const outSqueezeAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.sqzmom_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumAt, outSqueezeAt, outLen);
+    count = w.x.sqzmom_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentumAt, outSqueezeAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -366,7 +381,7 @@ function sqzmomInto(first: number, last: number, n: number, inHigh: Float64Array
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outMomentumAt, count, outMomentum);
   w.intsInto(outSqueezeAt, count, outSqueeze);
   w.done();

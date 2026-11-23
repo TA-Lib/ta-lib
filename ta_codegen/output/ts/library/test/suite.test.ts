@@ -64,7 +64,7 @@ const TESTS: Record<string, number> = {
   'engineBytes.test.ts': 2,
   'engineContract.test.ts': 26,
   'engineLoader.test.ts': 11,
-  'engineParity.test.ts': 4,
+  'engineParity.test.ts': 5,
   'engineRouting.test.ts': 2,
   'engineTraps.test.ts': 3,
   'inputForms.test.ts': 1,

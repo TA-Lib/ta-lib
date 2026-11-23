@@ -38,7 +38,7 @@ import { smi as smiJs, smiLookbackPositional, smiOptionsOf, smiPositional as smi
 import type { SmiOptions, SmiResult } from '../../func/smi.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/smi.ts';
 
@@ -173,17 +173,8 @@ function smiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -220,10 +211,18 @@ function smiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outSMI !== undefined || outSMISignal !== undefined) {
-    return smiBuffered(first, last, n, inHighArg, inLowArg, inCloseArg, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal);
+  const lookback = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outSMI !== undefined || outSMISignal !== undefined) {
+    return smiBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, inCloseArg, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal);
+  }
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -233,39 +232,43 @@ function smiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outSMIAt = at + n * 24;
-  const outSMISignalAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outSMIAt = at + len * 24;
+  const outSMISignalAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.smi_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIAt, outSMISignalAt, outLen);
+    count = w.x.smi_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIAt, outSMISignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: SmiResult = { begIdx: w.begIdx(), outSmi: w.reals(outSMIAt, count), outSmiSignal: w.reals(outSMISignalAt, count) };
+  const result: SmiResult = { begIdx: w.begIdx() + lo, outSmi: w.reals(outSMIAt, count), outSmiSignal: w.reals(outSMISignalAt, count) };
   w.done();
   return result;
 }
 
-function smiBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outSMI: Float64Array<ArrayBuffer> | undefined, outSMISignal: Float64Array<ArrayBuffer> | undefined): SmiResult | null {
-  const room = outputRoom(first, last, smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod), [inHighArg, inLowArg, inCloseArg], [outSMI, outSMISignal], [Float64Array, Float64Array]);
+function smiBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outSMI: Float64Array<ArrayBuffer> | undefined, outSMISignal: Float64Array<ArrayBuffer> | undefined): SmiResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg, inCloseArg], [outSMI, outSMISignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -276,7 +279,7 @@ function smiBuffered(first: number, last: number, n: number, inHighArg: ArrayLik
   }
   const outSMIBuf = outSMI ?? new Float64Array(room === 0 ? 1 : room);
   const outSMISignalBuf = outSMISignal ?? new Float64Array(room === 0 ? 1 : room);
-  const range = smiInto(first, last, n, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIBuf, outSMISignalBuf, room);
+  const range = smiInto(first, last, lo, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIBuf, outSMISignalBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outSmi: outSMIBuf.subarray(0, range.count), outSmiSignal: outSMISignalBuf.subarray(0, range.count) };
 }
 
@@ -285,7 +288,7 @@ function smiPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -306,11 +309,19 @@ function smiPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod), [inHigh, inLow, inClose], [outSMI, outSMISignal], [Float64Array, Float64Array]);
+  const lookback = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow, inClose], [outSMI, outSMISignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 24 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -319,27 +330,31 @@ function smiPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n || inCloseF64 === null || inCloseF64.length !== n) {
     return fellThrough('input');
   }
-  return smiInto(startIdx, endIdx, n, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal, room);
+  return smiInto(startIdx, endIdx, lo, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal, room);
 }
 
-function smiInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outSMI: Float64Array, outSMISignal: Float64Array, room: number): OutRange | null {
+function smiInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outSMI: Float64Array, outSMISignal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outSMIAt = at + n * 24;
-  const outSMISignalAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outSMIAt = at + len * 24;
+  const outSMISignalAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.smi_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIAt, outSMISignalAt, outLen);
+    count = w.x.smi_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMIAt, outSMISignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -349,7 +364,7 @@ function smiInto(first: number, last: number, n: number, inHigh: Float64Array, i
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outSMIAt, count, outSMI);
   w.realsInto(outSMISignalAt, count, outSMISignal);
   w.done();

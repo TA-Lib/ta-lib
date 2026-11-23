@@ -38,7 +38,7 @@ import { crsi as crsiJs, crsiLookbackPositional, crsiOptionsOf, crsiPositional a
 import type { CrsiOptions, CrsiResult } from '../../func/crsi.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/crsi.ts';
 
@@ -149,17 +149,8 @@ function crsiWasm(real: ArrayLike<number>, options: CrsiOptions | undefined): Cr
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -190,10 +181,18 @@ function crsiWasm(real: ArrayLike<number>, options: CrsiOptions | undefined): Cr
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return crsiBuffered(first, last, n, real, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal);
+  const lookback = crsiLookbackPositional(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return crsiBuffered(first, last, lo, lookback, n, real, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -201,41 +200,43 @@ function crsiWasm(real: ArrayLike<number>, options: CrsiOptions | undefined): Cr
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.crsi_batch(first, last, inRealAt, n, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outRealAt, outLen);
+    count = w.x.crsi_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: CrsiResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: CrsiResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function crsiBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInStreakPeriod: number, optInRankPeriod: number, outReal: Float64Array<ArrayBuffer>): CrsiResult | null {
-  const room = outputRoom(first, last, crsiLookbackPositional(optInTimePeriod, optInStreakPeriod, optInRankPeriod), [real], [outReal], [Float64Array]);
+function crsiBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInStreakPeriod: number, optInRankPeriod: number, outReal: Float64Array<ArrayBuffer>): CrsiResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
   if (inReal === null || inReal.length !== n) {
     return fellThrough('input');
   }
-  const range = crsiInto(first, last, n, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal, room);
+  const range = crsiInto(first, last, lo, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -244,7 +245,7 @@ function crsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -262,33 +263,43 @@ function crsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, crsiLookbackPositional(optInTimePeriod, optInStreakPeriod, optInRankPeriod), [inReal], [outReal], [Float64Array]);
+  const lookback = crsiLookbackPositional(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return crsiInto(startIdx, endIdx, n, inRealF64, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal, room);
+  return crsiInto(startIdx, endIdx, lo, inRealF64, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal, room);
 }
 
-function crsiInto(first: number, last: number, n: number, inReal: Float64Array, optInTimePeriod: number, optInStreakPeriod: number, optInRankPeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function crsiInto(first: number, last: number, lo: number, inReal: Float64Array, optInTimePeriod: number, optInStreakPeriod: number, optInRankPeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.crsi_batch(first, last, inRealAt, n, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outRealAt, outLen);
+    count = w.x.crsi_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -298,7 +309,7 @@ function crsiInto(first: number, last: number, n: number, inReal: Float64Array, 
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

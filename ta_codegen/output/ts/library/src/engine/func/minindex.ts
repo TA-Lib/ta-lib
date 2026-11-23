@@ -38,7 +38,7 @@ import { minindex as minindexJs, minindexLookbackPositional, minindexOptionsOf, 
 import type { MinindexOptions, MinindexResult } from '../../func/minindex.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/minindex.ts';
 
@@ -160,10 +160,15 @@ function minindexWasm(real: ArrayLike<number>, options: MinindexOptions | undefi
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outInteger !== undefined) {
-    return minindexBuffered(first, last, n, real, optInTimePeriod, outInteger);
+  const lookback = minindexLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 4)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outInteger !== undefined) {
+    return minindexBuffered(first, last, lo, lookback, n, real, optInTimePeriod, outInteger);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 4)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -171,41 +176,44 @@ function minindexWasm(real: ArrayLike<number>, options: MinindexOptions | undefi
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 4);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 4);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outIntegerAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outIntegerAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.minindex_batch(first, last, inRealAt, n, optInTimePeriod, outIntegerAt, outLen);
+    count = w.x.minindex_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, outIntegerAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: MinindexResult = { begIdx: w.begIdx(), values: w.ints(outIntegerAt, count) };
+  w.shiftInts(outIntegerAt, count, lo);
+  const result: MinindexResult = { begIdx: w.begIdx() + lo, values: w.ints(outIntegerAt, count) };
   w.done();
   return result;
 }
 
-function minindexBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, outInteger: Int32Array<ArrayBuffer>): MinindexResult | null {
-  const room = outputRoom(first, last, minindexLookbackPositional(optInTimePeriod), [real], [outInteger], [Int32Array]);
+function minindexBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, outInteger: Int32Array<ArrayBuffer>): MinindexResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outInteger], [Int32Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 4)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 4)) {
     return null;
   }
   const inReal = routedSeries(real);
   if (inReal === null || inReal.length !== n) {
     return fellThrough('input');
   }
-  const range = minindexInto(first, last, n, inReal, optInTimePeriod, outInteger, room);
+  const range = minindexInto(first, last, lo, inReal, optInTimePeriod, outInteger, room);
   return range === null ? null : { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
@@ -229,43 +237,51 @@ function minindexPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayL
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, minindexLookbackPositional(optInTimePeriod), [inReal], [outInteger], [Int32Array]);
+  const lookback = minindexLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outInteger], [Int32Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 4)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 4)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return minindexInto(startIdx, endIdx, n, inRealF64, optInTimePeriod, outInteger, room);
+  return minindexInto(startIdx, endIdx, lo, inRealF64, optInTimePeriod, outInteger, room);
 }
 
-function minindexInto(first: number, last: number, n: number, inReal: Float64Array, optInTimePeriod: number, outInteger: Int32Array, room: number): OutRange | null {
+function minindexInto(first: number, last: number, lo: number, inReal: Float64Array, optInTimePeriod: number, outInteger: Int32Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 4);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 4);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outIntegerAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outIntegerAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.minindex_batch(first, last, inRealAt, n, optInTimePeriod, outIntegerAt, outLen);
+    count = w.x.minindex_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, outIntegerAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
+  w.shiftInts(outIntegerAt, count, lo);
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.intsInto(outIntegerAt, count, outInteger);
   w.done();
   return new OutRange(begIdx, count);

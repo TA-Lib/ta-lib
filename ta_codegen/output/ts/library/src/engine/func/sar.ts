@@ -38,7 +38,7 @@ import { sar as sarJs, sarLookbackPositional, sarOptionsOf, sarPositional as sar
 import type { SarOptions, SarResult } from '../../func/sar.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/sar.ts';
 
@@ -153,17 +153,8 @@ function sarWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -195,10 +186,18 @@ function sarWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return sarBuffered(first, last, n, inHighArg, inLowArg, optInAcceleration, optInMaximum, outReal);
+  const lookback = sarLookbackPositional(optInAcceleration, optInMaximum);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return sarBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, optInAcceleration, optInMaximum, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -207,36 +206,39 @@ function sarWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.sar_batch(first, last, inHighAt, inLowAt, n, optInAcceleration, optInMaximum, outRealAt, outLen);
+    count = w.x.sar_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInAcceleration, optInMaximum, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: SarResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: SarResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function sarBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInAcceleration: number, optInMaximum: number, outReal: Float64Array<ArrayBuffer>): SarResult | null {
-  const room = outputRoom(first, last, sarLookbackPositional(optInAcceleration, optInMaximum), [inHighArg, inLowArg], [outReal], [Float64Array]);
+function sarBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInAcceleration: number, optInMaximum: number, outReal: Float64Array<ArrayBuffer>): SarResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -244,7 +246,7 @@ function sarBuffered(first: number, last: number, n: number, inHighArg: ArrayLik
   if (inHigh === null || inHigh.length !== n || inLow === null || inLow.length !== n) {
     return fellThrough('input');
   }
-  const range = sarInto(first, last, n, inHigh, inLow, optInAcceleration, optInMaximum, outReal, room);
+  const range = sarInto(first, last, lo, inHigh, inLow, optInAcceleration, optInMaximum, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -253,7 +255,7 @@ function sarPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -274,11 +276,19 @@ function sarPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, sarLookbackPositional(optInAcceleration, optInMaximum), [inHigh, inLow], [outReal], [Float64Array]);
+  const lookback = sarLookbackPositional(optInAcceleration, optInMaximum);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -286,24 +296,27 @@ function sarPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<n
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n) {
     return fellThrough('input');
   }
-  return sarInto(startIdx, endIdx, n, inHighF64, inLowF64, optInAcceleration, optInMaximum, outReal, room);
+  return sarInto(startIdx, endIdx, lo, inHighF64, inLowF64, optInAcceleration, optInMaximum, outReal, room);
 }
 
-function sarInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, optInAcceleration: number, optInMaximum: number, outReal: Float64Array, room: number): OutRange | null {
+function sarInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, optInAcceleration: number, optInMaximum: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.sar_batch(first, last, inHighAt, inLowAt, n, optInAcceleration, optInMaximum, outRealAt, outLen);
+    count = w.x.sar_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInAcceleration, optInMaximum, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -313,7 +326,7 @@ function sarInto(first: number, last: number, n: number, inHigh: Float64Array, i
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

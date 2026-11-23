@@ -39,7 +39,7 @@ import type { BbandsOptions, BbandsResult } from '../../func/bbands.ts';
 import type { MAType } from '../../enums.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/bbands.ts';
 
@@ -186,10 +186,15 @@ function bbandsWasm(real: ArrayLike<number>, options: BbandsOptions | undefined)
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outRealUpperBand !== undefined || outRealMiddleBand !== undefined || outRealLowerBand !== undefined) {
-    return bbandsBuffered(first, last, n, real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+  const lookback = bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 24)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outRealUpperBand !== undefined || outRealMiddleBand !== undefined || outRealLowerBand !== undefined) {
+    return bbandsBuffered(first, last, lo, lookback, n, real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 24)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -197,36 +202,38 @@ function bbandsWasm(real: ArrayLike<number>, options: BbandsOptions | undefined)
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 24);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 24);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealUpperBandAt = at + n * 8;
-  const outRealMiddleBandAt = at + n * 8 + outLen * 8;
-  const outRealLowerBandAt = at + n * 8 + outLen * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealUpperBandAt = at + len * 8;
+  const outRealMiddleBandAt = at + len * 8 + outLen * 8;
+  const outRealLowerBandAt = at + len * 8 + outLen * 16;
   let count: number;
   try {
-    count = w.x.bbands_batch(first, last, inRealAt, n, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandAt, outRealMiddleBandAt, outRealLowerBandAt, outLen);
+    count = w.x.bbands_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandAt, outRealMiddleBandAt, outRealLowerBandAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: BbandsResult = { begIdx: w.begIdx(), outUpperBand: w.reals(outRealUpperBandAt, count), outMiddleBand: w.reals(outRealMiddleBandAt, count), outLowerBand: w.reals(outRealLowerBandAt, count) };
+  const result: BbandsResult = { begIdx: w.begIdx() + lo, outUpperBand: w.reals(outRealUpperBandAt, count), outMiddleBand: w.reals(outRealMiddleBandAt, count), outLowerBand: w.reals(outRealLowerBandAt, count) };
   w.done();
   return result;
 }
 
-function bbandsBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outRealUpperBand: Float64Array<ArrayBuffer> | undefined, outRealMiddleBand: Float64Array<ArrayBuffer> | undefined, outRealLowerBand: Float64Array<ArrayBuffer> | undefined): BbandsResult | null {
-  const room = outputRoom(first, last, bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType), [real], [outRealUpperBand, outRealMiddleBand, outRealLowerBand], [Float64Array, Float64Array, Float64Array]);
+function bbandsBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outRealUpperBand: Float64Array<ArrayBuffer> | undefined, outRealMiddleBand: Float64Array<ArrayBuffer> | undefined, outRealLowerBand: Float64Array<ArrayBuffer> | undefined): BbandsResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outRealUpperBand, outRealMiddleBand, outRealLowerBand], [Float64Array, Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 24)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 24)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -236,7 +243,7 @@ function bbandsBuffered(first: number, last: number, n: number, real: ArrayLike<
   const outRealUpperBandBuf = outRealUpperBand ?? new Float64Array(room === 0 ? 1 : room);
   const outRealMiddleBandBuf = outRealMiddleBand ?? new Float64Array(room === 0 ? 1 : room);
   const outRealLowerBandBuf = outRealLowerBand ?? new Float64Array(room === 0 ? 1 : room);
-  const range = bbandsInto(first, last, n, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandBuf, outRealMiddleBandBuf, outRealLowerBandBuf, room);
+  const range = bbandsInto(first, last, lo, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandBuf, outRealMiddleBandBuf, outRealLowerBandBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outUpperBand: outRealUpperBandBuf.subarray(0, range.count), outMiddleBand: outRealMiddleBandBuf.subarray(0, range.count), outLowerBand: outRealLowerBandBuf.subarray(0, range.count) };
 }
 
@@ -263,35 +270,42 @@ function bbandsPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLik
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType), [inReal], [outRealUpperBand, outRealMiddleBand, outRealLowerBand], [Float64Array, Float64Array, Float64Array]);
+  const lookback = bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outRealUpperBand, outRealMiddleBand, outRealLowerBand], [Float64Array, Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 24)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 24)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return bbandsInto(startIdx, endIdx, n, inRealF64, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand, room);
+  return bbandsInto(startIdx, endIdx, lo, inRealF64, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand, room);
 }
 
-function bbandsInto(first: number, last: number, n: number, inReal: Float64Array, optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: number, outRealUpperBand: Float64Array, outRealMiddleBand: Float64Array, outRealLowerBand: Float64Array, room: number): OutRange | null {
+function bbandsInto(first: number, last: number, lo: number, inReal: Float64Array, optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: number, outRealUpperBand: Float64Array, outRealMiddleBand: Float64Array, outRealLowerBand: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 24);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 24);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealUpperBandAt = at + n * 8;
-  const outRealMiddleBandAt = at + n * 8 + outLen * 8;
-  const outRealLowerBandAt = at + n * 8 + outLen * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealUpperBandAt = at + len * 8;
+  const outRealMiddleBandAt = at + len * 8 + outLen * 8;
+  const outRealLowerBandAt = at + len * 8 + outLen * 16;
   let count: number;
   try {
-    count = w.x.bbands_batch(first, last, inRealAt, n, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandAt, outRealMiddleBandAt, outRealLowerBandAt, outLen);
+    count = w.x.bbands_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBandAt, outRealMiddleBandAt, outRealLowerBandAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -301,7 +315,7 @@ function bbandsInto(first: number, last: number, n: number, inReal: Float64Array
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealUpperBandAt, count, outRealUpperBand);
   w.realsInto(outRealMiddleBandAt, count, outRealMiddleBand);
   w.realsInto(outRealLowerBandAt, count, outRealLowerBand);

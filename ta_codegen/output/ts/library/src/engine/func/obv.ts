@@ -38,7 +38,7 @@ import { obv as obvJs, obvLookbackPositional, obvOptionsOf, obvPositional as obv
 import type { ObvOptions, ObvResult } from '../../func/obv.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/obv.ts';
 
@@ -157,10 +157,15 @@ function obvWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | u
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return obvBuffered(first, last, n, real, inVolumeArg, outReal);
+  const lookback = obvLookbackPositional();
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outReal !== undefined) {
+    return obvBuffered(first, last, lo, lookback, n, real, inVolumeArg, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -169,36 +174,39 @@ function obvWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | u
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const inVolumeBars = seriesBars(inVolume, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const inVolumeAt = at + n * 8;
-  w.f64.set(inVolume, inVolumeAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const inVolumeAt = at + len * 8;
+  w.f64.set(inVolumeBars, inVolumeAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.obv_batch(first, last, inRealAt, inVolumeAt, n, outRealAt, outLen);
+    count = w.x.obv_batch(first - lo, last - lo, inRealAt, inVolumeAt, len, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: ObvResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: ObvResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function obvBuffered(first: number, last: number, n: number, real: ArrayLike<number>, inVolumeArg: ArrayLike<number>, outReal: Float64Array<ArrayBuffer>): ObvResult | null {
-  const room = outputRoom(first, last, obvLookbackPositional(), [real, inVolumeArg], [outReal], [Float64Array]);
+function obvBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, inVolumeArg: ArrayLike<number>, outReal: Float64Array<ArrayBuffer>): ObvResult | null {
+  const room = outputRoom(first, last, lookback, [real, inVolumeArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -206,7 +214,7 @@ function obvBuffered(first: number, last: number, n: number, real: ArrayLike<num
   if (inReal === null || inReal.length !== n || inVolume === null || inVolume.length !== n) {
     return fellThrough('input');
   }
-  const range = obvInto(first, last, n, inReal, inVolume, outReal, room);
+  const range = obvInto(first, last, lo, inReal, inVolume, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -230,11 +238,16 @@ function obvPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, obvLookbackPositional(), [inReal, inVolume], [outReal], [Float64Array]);
+  const lookback = obvLookbackPositional();
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal, inVolume], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
@@ -242,24 +255,27 @@ function obvPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (inRealF64 === null || inRealF64.length !== n || inVolumeF64 === null || inVolumeF64.length !== n) {
     return fellThrough('input');
   }
-  return obvInto(startIdx, endIdx, n, inRealF64, inVolumeF64, outReal, room);
+  return obvInto(startIdx, endIdx, lo, inRealF64, inVolumeF64, outReal, room);
 }
 
-function obvInto(first: number, last: number, n: number, inReal: Float64Array, inVolume: Float64Array, outReal: Float64Array, room: number): OutRange | null {
+function obvInto(first: number, last: number, lo: number, inReal: Float64Array, inVolume: Float64Array, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const inVolumeBars = seriesBars(inVolume, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const inVolumeAt = at + n * 8;
-  w.f64.set(inVolume, inVolumeAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const inVolumeAt = at + len * 8;
+  w.f64.set(inVolumeBars, inVolumeAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.obv_batch(first, last, inRealAt, inVolumeAt, n, outRealAt, outLen);
+    count = w.x.obv_batch(first - lo, last - lo, inRealAt, inVolumeAt, len, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -269,7 +285,7 @@ function obvInto(first: number, last: number, n: number, inReal: Float64Array, i
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

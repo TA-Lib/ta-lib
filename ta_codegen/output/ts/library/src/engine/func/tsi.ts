@@ -38,7 +38,7 @@ import { tsi as tsiJs, tsiLookbackPositional, tsiOptionsOf, tsiPositional as tsi
 import type { TsiOptions, TsiResult } from '../../func/tsi.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/tsi.ts';
 
@@ -157,17 +157,8 @@ function tsiWasm(real: ArrayLike<number>, options: TsiOptions | undefined): TsiR
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -196,10 +187,18 @@ function tsiWasm(real: ArrayLike<number>, options: TsiOptions | undefined): TsiR
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return tsiBuffered(first, last, n, real, optInFirstPeriod, optInSecondPeriod, outReal);
+  const lookback = tsiLookbackPositional(optInFirstPeriod, optInSecondPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return tsiBuffered(first, last, lo, lookback, n, real, optInFirstPeriod, optInSecondPeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -207,41 +206,43 @@ function tsiWasm(real: ArrayLike<number>, options: TsiOptions | undefined): TsiR
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.tsi_batch(first, last, inRealAt, n, optInFirstPeriod, optInSecondPeriod, outRealAt, outLen);
+    count = w.x.tsi_batch(first - lo, last - lo, inRealAt, len, optInFirstPeriod, optInSecondPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: TsiResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: TsiResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function tsiBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInFirstPeriod: number, optInSecondPeriod: number, outReal: Float64Array<ArrayBuffer>): TsiResult | null {
-  const room = outputRoom(first, last, tsiLookbackPositional(optInFirstPeriod, optInSecondPeriod), [real], [outReal], [Float64Array]);
+function tsiBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInFirstPeriod: number, optInSecondPeriod: number, outReal: Float64Array<ArrayBuffer>): TsiResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
   if (inReal === null || inReal.length !== n) {
     return fellThrough('input');
   }
-  const range = tsiInto(first, last, n, inReal, optInFirstPeriod, optInSecondPeriod, outReal, room);
+  const range = tsiInto(first, last, lo, inReal, optInFirstPeriod, optInSecondPeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -250,7 +251,7 @@ function tsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -268,33 +269,43 @@ function tsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, tsiLookbackPositional(optInFirstPeriod, optInSecondPeriod), [inReal], [outReal], [Float64Array]);
+  const lookback = tsiLookbackPositional(optInFirstPeriod, optInSecondPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return tsiInto(startIdx, endIdx, n, inRealF64, optInFirstPeriod, optInSecondPeriod, outReal, room);
+  return tsiInto(startIdx, endIdx, lo, inRealF64, optInFirstPeriod, optInSecondPeriod, outReal, room);
 }
 
-function tsiInto(first: number, last: number, n: number, inReal: Float64Array, optInFirstPeriod: number, optInSecondPeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function tsiInto(first: number, last: number, lo: number, inReal: Float64Array, optInFirstPeriod: number, optInSecondPeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.tsi_batch(first, last, inRealAt, n, optInFirstPeriod, optInSecondPeriod, outRealAt, outLen);
+    count = w.x.tsi_batch(first - lo, last - lo, inRealAt, len, optInFirstPeriod, optInSecondPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -304,7 +315,7 @@ function tsiInto(first: number, last: number, n: number, inReal: Float64Array, o
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

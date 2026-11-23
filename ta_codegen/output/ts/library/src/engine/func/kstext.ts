@@ -39,7 +39,7 @@ import type { KstextOptions, KstextResult } from '../../func/kstext.ts';
 import type { MAType } from '../../enums.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/kstext.ts';
 
@@ -178,17 +178,8 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -239,10 +230,18 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outKST !== undefined || outKSTSignal !== undefined) {
-    return kstextBuffered(first, last, n, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal);
+  const lookback = kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outKST !== undefined || outKSTSignal !== undefined) {
+    return kstextBuffered(first, last, lo, lookback, n, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -250,35 +249,37 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outKSTAt = at + n * 8;
-  const outKSTSignalAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outKSTAt = at + len * 8;
+  const outKSTSignalAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.kstext_batch(first, last, inRealAt, n, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTAt, outKSTSignalAt, outLen);
+    count = w.x.kstext_batch(first - lo, last - lo, inRealAt, len, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTAt, outKSTSignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: KstextResult = { begIdx: w.begIdx(), outKst: w.reals(outKSTAt, count), outKstSignal: w.reals(outKSTSignalAt, count) };
+  const result: KstextResult = { begIdx: w.begIdx() + lo, outKst: w.reals(outKSTAt, count), outKstSignal: w.reals(outKSTSignalAt, count) };
   w.done();
   return result;
 }
 
-function kstextBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outKST: Float64Array<ArrayBuffer> | undefined, outKSTSignal: Float64Array<ArrayBuffer> | undefined): KstextResult | null {
-  const room = outputRoom(first, last, kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType), [real], [outKST, outKSTSignal], [Float64Array, Float64Array]);
+function kstextBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outKST: Float64Array<ArrayBuffer> | undefined, outKSTSignal: Float64Array<ArrayBuffer> | undefined): KstextResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outKST, outKSTSignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -287,7 +288,7 @@ function kstextBuffered(first: number, last: number, n: number, real: ArrayLike<
   }
   const outKSTBuf = outKST ?? new Float64Array(room === 0 ? 1 : room);
   const outKSTSignalBuf = outKSTSignal ?? new Float64Array(room === 0 ? 1 : room);
-  const range = kstextInto(first, last, n, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTBuf, outKSTSignalBuf, room);
+  const range = kstextInto(first, last, lo, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTBuf, outKSTSignalBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outKst: outKSTBuf.subarray(0, range.count), outKstSignal: outKSTSignalBuf.subarray(0, range.count) };
 }
 
@@ -296,7 +297,7 @@ function kstextPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLik
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -317,34 +318,44 @@ function kstextPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLik
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType), [inReal], [outKST, outKSTSignal], [Float64Array, Float64Array]);
+  const lookback = kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outKST, outKSTSignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return kstextInto(startIdx, endIdx, n, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal, room);
+  return kstextInto(startIdx, endIdx, lo, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal, room);
 }
 
-function kstextInto(first: number, last: number, n: number, inReal: Float64Array, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: number, optInSignalMAType: number, outKST: Float64Array, outKSTSignal: Float64Array, room: number): OutRange | null {
+function kstextInto(first: number, last: number, lo: number, inReal: Float64Array, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: number, optInSignalMAType: number, outKST: Float64Array, outKSTSignal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outKSTAt = at + n * 8;
-  const outKSTSignalAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outKSTAt = at + len * 8;
+  const outKSTSignalAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.kstext_batch(first, last, inRealAt, n, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTAt, outKSTSignalAt, outLen);
+    count = w.x.kstext_batch(first - lo, last - lo, inRealAt, len, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKSTAt, outKSTSignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -354,7 +365,7 @@ function kstextInto(first: number, last: number, n: number, inReal: Float64Array
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outKSTAt, count, outKST);
   w.realsInto(outKSTSignalAt, count, outKSTSignal);
   w.done();

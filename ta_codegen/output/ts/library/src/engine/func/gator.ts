@@ -38,7 +38,7 @@ import { gator as gatorJs, gatorLookbackPositional, gatorOptionsOf, gatorPositio
 import type { GatorOptions, GatorResult } from '../../func/gator.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/gator.ts';
 
@@ -170,17 +170,8 @@ function gatorWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -221,10 +212,18 @@ function gatorWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outUpper !== undefined || outLower !== undefined) {
-    return gatorBuffered(first, last, n, inHighArg, inLowArg, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpper, outLower);
+  const lookback = gatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outUpper !== undefined || outLower !== undefined) {
+    return gatorBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpper, outLower);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -233,37 +232,40 @@ function gatorWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outUpperAt = at + n * 16;
-  const outLowerAt = at + n * 16 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outUpperAt = at + len * 16;
+  const outLowerAt = at + len * 16 + outLen * 8;
   let count: number;
   try {
-    count = w.x.gator_batch(first, last, inHighAt, inLowAt, n, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperAt, outLowerAt, outLen);
+    count = w.x.gator_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperAt, outLowerAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: GatorResult = { begIdx: w.begIdx(), outUpper: w.reals(outUpperAt, count), outLower: w.reals(outLowerAt, count) };
+  const result: GatorResult = { begIdx: w.begIdx() + lo, outUpper: w.reals(outUpperAt, count), outLower: w.reals(outLowerAt, count) };
   w.done();
   return result;
 }
 
-function gatorBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number, outUpper: Float64Array<ArrayBuffer> | undefined, outLower: Float64Array<ArrayBuffer> | undefined): GatorResult | null {
-  const room = outputRoom(first, last, gatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift), [inHighArg, inLowArg], [outUpper, outLower], [Float64Array, Float64Array]);
+function gatorBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number, outUpper: Float64Array<ArrayBuffer> | undefined, outLower: Float64Array<ArrayBuffer> | undefined): GatorResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg], [outUpper, outLower], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -273,7 +275,7 @@ function gatorBuffered(first: number, last: number, n: number, inHighArg: ArrayL
   }
   const outUpperBuf = outUpper ?? new Float64Array(room === 0 ? 1 : room);
   const outLowerBuf = outLower ?? new Float64Array(room === 0 ? 1 : room);
-  const range = gatorInto(first, last, n, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperBuf, outLowerBuf, room);
+  const range = gatorInto(first, last, lo, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperBuf, outLowerBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outUpper: outUpperBuf.subarray(0, range.count), outLower: outLowerBuf.subarray(0, range.count) };
 }
 
@@ -282,7 +284,7 @@ function gatorPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -303,11 +305,19 @@ function gatorPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, gatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift), [inHigh, inLow], [outUpper, outLower], [Float64Array, Float64Array]);
+  const lookback = gatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow], [outUpper, outLower], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -315,25 +325,28 @@ function gatorPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n) {
     return fellThrough('input');
   }
-  return gatorInto(startIdx, endIdx, n, inHighF64, inLowF64, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpper, outLower, room);
+  return gatorInto(startIdx, endIdx, lo, inHighF64, inLowF64, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpper, outLower, room);
 }
 
-function gatorInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number, outUpper: Float64Array, outLower: Float64Array, room: number): OutRange | null {
+function gatorInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number, outUpper: Float64Array, outLower: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outUpperAt = at + n * 16;
-  const outLowerAt = at + n * 16 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outUpperAt = at + len * 16;
+  const outLowerAt = at + len * 16 + outLen * 8;
   let count: number;
   try {
-    count = w.x.gator_batch(first, last, inHighAt, inLowAt, n, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperAt, outLowerAt, outLen);
+    count = w.x.gator_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpperAt, outLowerAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -343,7 +356,7 @@ function gatorInto(first: number, last: number, n: number, inHigh: Float64Array,
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outUpperAt, count, outUpper);
   w.realsInto(outLowerAt, count, outLower);
   w.done();

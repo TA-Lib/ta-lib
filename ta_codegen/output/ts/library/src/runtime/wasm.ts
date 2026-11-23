@@ -209,6 +209,16 @@ export class WasmEngine {
     }
   }
 
+  /** Adds `by` to `count` int32s in linear memory: bar positions the module counted from bar `by`. */
+  shiftInts(address: number, count: number, by: number): void {
+    if (by !== 0 && count > 0) {
+      const a = new Int32Array(this.memory.buffer, address, count);
+      for (let i = 0; i < count; i++) {
+        a[i] += by;
+      }
+    }
+  }
+
   memoryBytes(): number {
     return this.memory.buffer.byteLength;
   }
@@ -604,6 +614,14 @@ export function routedSeries(x: unknown): Float64Array | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * @internal Bars `lo` to `lo + len - 1` of `x`, without a copy. Not `subarray`,
+ * which looks up a species constructor and so may run caller code.
+ */
+export function seriesBars(x: Float64Array, lo: number, len: number): Float64Array {
+  return lo === 0 && len === x.length ? x : new Float64Array(x.buffer, x.byteOffset + lo * 8, len);
 }
 
 /**

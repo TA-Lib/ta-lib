@@ -38,7 +38,7 @@ import { imi as imiJs, imiLookbackPositional, imiOptionsOf, imiPositional as imi
 import type { ImiOptions, ImiResult } from '../../func/imi.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/imi.ts';
 
@@ -135,17 +135,8 @@ function imiWasm(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | u
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -175,10 +166,18 @@ function imiWasm(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | u
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return imiBuffered(first, last, n, inOpenArg, inCloseArg, optInTimePeriod, outReal);
+  const lookback = imiLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return imiBuffered(first, last, lo, lookback, n, inOpenArg, inCloseArg, optInTimePeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inOpen = routedSeries(inOpenArg);
@@ -187,36 +186,39 @@ function imiWasm(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | u
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inOpenBars = seriesBars(inOpen, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inOpenAt = at;
-  w.f64.set(inOpen, inOpenAt / 8);
-  const inCloseAt = at + n * 8;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inOpenBars, inOpenAt / 8);
+  const inCloseAt = at + len * 8;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.imi_batch(first, last, inOpenAt, inCloseAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.imi_batch(first - lo, last - lo, inOpenAt, inCloseAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: ImiResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: ImiResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function imiBuffered(first: number, last: number, n: number, inOpenArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): ImiResult | null {
-  const room = outputRoom(first, last, imiLookbackPositional(optInTimePeriod), [inOpenArg, inCloseArg], [outReal], [Float64Array]);
+function imiBuffered(first: number, last: number, lo: number, lookback: number, n: number, inOpenArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): ImiResult | null {
+  const room = outputRoom(first, last, lookback, [inOpenArg, inCloseArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inOpen = routedSeries(inOpenArg);
@@ -224,7 +226,7 @@ function imiBuffered(first: number, last: number, n: number, inOpenArg: ArrayLik
   if (inOpen === null || inOpen.length !== n || inClose === null || inClose.length !== n) {
     return fellThrough('input');
   }
-  const range = imiInto(first, last, n, inOpen, inClose, optInTimePeriod, outReal, room);
+  const range = imiInto(first, last, lo, inOpen, inClose, optInTimePeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -233,7 +235,7 @@ function imiPositionalWasm(startIdx: number, endIdx: number, inOpen: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -254,11 +256,19 @@ function imiPositionalWasm(startIdx: number, endIdx: number, inOpen: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, imiLookbackPositional(optInTimePeriod), [inOpen, inClose], [outReal], [Float64Array]);
+  const lookback = imiLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inOpen, inClose], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inOpenF64 = routedSeries(inOpen);
@@ -266,24 +276,27 @@ function imiPositionalWasm(startIdx: number, endIdx: number, inOpen: ArrayLike<n
   if (inOpenF64 === null || inOpenF64.length !== n || inCloseF64 === null || inCloseF64.length !== n) {
     return fellThrough('input');
   }
-  return imiInto(startIdx, endIdx, n, inOpenF64, inCloseF64, optInTimePeriod, outReal, room);
+  return imiInto(startIdx, endIdx, lo, inOpenF64, inCloseF64, optInTimePeriod, outReal, room);
 }
 
-function imiInto(first: number, last: number, n: number, inOpen: Float64Array, inClose: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function imiInto(first: number, last: number, lo: number, inOpen: Float64Array, inClose: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inOpenBars = seriesBars(inOpen, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inOpenAt = at;
-  w.f64.set(inOpen, inOpenAt / 8);
-  const inCloseAt = at + n * 8;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inOpenBars, inOpenAt / 8);
+  const inCloseAt = at + len * 8;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.imi_batch(first, last, inOpenAt, inCloseAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.imi_batch(first - lo, last - lo, inOpenAt, inCloseAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -293,7 +306,7 @@ function imiInto(first: number, last: number, n: number, inOpen: Float64Array, i
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

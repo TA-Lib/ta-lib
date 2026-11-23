@@ -38,7 +38,7 @@ import { div as divJs, divLookbackPositional, divOptionsOf, divPositional as div
 import type { DivOptions, DivResult } from '../../func/div.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/div.ts';
 
@@ -157,10 +157,15 @@ function divWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: Di
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return divBuffered(first, last, n, real0, real1, outReal);
+  const lookback = divLookbackPositional();
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outReal !== undefined) {
+    return divBuffered(first, last, lo, lookback, n, real0, real1, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal0 = routedSeries(real0);
@@ -169,36 +174,39 @@ function divWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: Di
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inReal0Bars = seriesBars(inReal0, lo, len);
+  const inReal1Bars = seriesBars(inReal1, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inReal0At = at;
-  w.f64.set(inReal0, inReal0At / 8);
-  const inReal1At = at + n * 8;
-  w.f64.set(inReal1, inReal1At / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inReal0Bars, inReal0At / 8);
+  const inReal1At = at + len * 8;
+  w.f64.set(inReal1Bars, inReal1At / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.div_batch(first, last, inReal0At, inReal1At, n, outRealAt, outLen);
+    count = w.x.div_batch(first - lo, last - lo, inReal0At, inReal1At, len, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: DivResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: DivResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function divBuffered(first: number, last: number, n: number, real0: ArrayLike<number>, real1: ArrayLike<number>, outReal: Float64Array<ArrayBuffer>): DivResult | null {
-  const room = outputRoom(first, last, divLookbackPositional(), [real0, real1], [outReal], [Float64Array]);
+function divBuffered(first: number, last: number, lo: number, lookback: number, n: number, real0: ArrayLike<number>, real1: ArrayLike<number>, outReal: Float64Array<ArrayBuffer>): DivResult | null {
+  const room = outputRoom(first, last, lookback, [real0, real1], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal0 = routedSeries(real0);
@@ -206,7 +214,7 @@ function divBuffered(first: number, last: number, n: number, real0: ArrayLike<nu
   if (inReal0 === null || inReal0.length !== n || inReal1 === null || inReal1.length !== n) {
     return fellThrough('input');
   }
-  const range = divInto(first, last, n, inReal0, inReal1, outReal, room);
+  const range = divInto(first, last, lo, inReal0, inReal1, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -230,11 +238,16 @@ function divPositionalWasm(startIdx: number, endIdx: number, inReal0: ArrayLike<
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, divLookbackPositional(), [inReal0, inReal1], [outReal], [Float64Array]);
+  const lookback = divLookbackPositional();
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal0, inReal1], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inReal0F64 = routedSeries(inReal0);
@@ -242,24 +255,27 @@ function divPositionalWasm(startIdx: number, endIdx: number, inReal0: ArrayLike<
   if (inReal0F64 === null || inReal0F64.length !== n || inReal1F64 === null || inReal1F64.length !== n) {
     return fellThrough('input');
   }
-  return divInto(startIdx, endIdx, n, inReal0F64, inReal1F64, outReal, room);
+  return divInto(startIdx, endIdx, lo, inReal0F64, inReal1F64, outReal, room);
 }
 
-function divInto(first: number, last: number, n: number, inReal0: Float64Array, inReal1: Float64Array, outReal: Float64Array, room: number): OutRange | null {
+function divInto(first: number, last: number, lo: number, inReal0: Float64Array, inReal1: Float64Array, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inReal0Bars = seriesBars(inReal0, lo, len);
+  const inReal1Bars = seriesBars(inReal1, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inReal0At = at;
-  w.f64.set(inReal0, inReal0At / 8);
-  const inReal1At = at + n * 8;
-  w.f64.set(inReal1, inReal1At / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inReal0Bars, inReal0At / 8);
+  const inReal1At = at + len * 8;
+  w.f64.set(inReal1Bars, inReal1At / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.div_batch(first, last, inReal0At, inReal1At, n, outRealAt, outLen);
+    count = w.x.div_batch(first - lo, last - lo, inReal0At, inReal1At, len, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -269,7 +285,7 @@ function divInto(first: number, last: number, n: number, inReal0: Float64Array, 
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

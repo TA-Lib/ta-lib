@@ -38,7 +38,7 @@ import { cksp as ckspJs, ckspLookbackPositional, ckspOptionsOf, ckspPositional a
 import type { CkspOptions, CkspResult } from '../../func/cksp.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optionalInt32, optionalReal, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/cksp.ts';
 
@@ -174,17 +174,8 @@ function ckspWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -219,10 +210,18 @@ function ckspWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outHighStop !== undefined || outLowStop !== undefined) {
-    return ckspBuffered(first, last, n, inHighArg, inLowArg, inCloseArg, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop);
+  const lookback = ckspLookbackPositional(optInTimePeriod, optInMultiplier, optInStopPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outHighStop !== undefined || outLowStop !== undefined) {
+    return ckspBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, inCloseArg, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop);
+  }
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -232,39 +231,43 @@ function ckspWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outHighStopAt = at + n * 24;
-  const outLowStopAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outHighStopAt = at + len * 24;
+  const outLowStopAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.cksp_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopAt, outLowStopAt, outLen);
+    count = w.x.cksp_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopAt, outLowStopAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: CkspResult = { begIdx: w.begIdx(), outHighStop: w.reals(outHighStopAt, count), outLowStop: w.reals(outLowStopAt, count) };
+  const result: CkspResult = { begIdx: w.begIdx() + lo, outHighStop: w.reals(outHighStopAt, count), outLowStop: w.reals(outLowStopAt, count) };
   w.done();
   return result;
 }
 
-function ckspBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, optInMultiplier: number, optInStopPeriod: number, outHighStop: Float64Array<ArrayBuffer> | undefined, outLowStop: Float64Array<ArrayBuffer> | undefined): CkspResult | null {
-  const room = outputRoom(first, last, ckspLookbackPositional(optInTimePeriod, optInMultiplier, optInStopPeriod), [inHighArg, inLowArg, inCloseArg], [outHighStop, outLowStop], [Float64Array, Float64Array]);
+function ckspBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, inCloseArg: ArrayLike<number>, optInTimePeriod: number, optInMultiplier: number, optInStopPeriod: number, outHighStop: Float64Array<ArrayBuffer> | undefined, outLowStop: Float64Array<ArrayBuffer> | undefined): CkspResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg, inCloseArg], [outHighStop, outLowStop], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 24 + (last - first + 1) * 16)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -275,7 +278,7 @@ function ckspBuffered(first: number, last: number, n: number, inHighArg: ArrayLi
   }
   const outHighStopBuf = outHighStop ?? new Float64Array(room === 0 ? 1 : room);
   const outLowStopBuf = outLowStop ?? new Float64Array(room === 0 ? 1 : room);
-  const range = ckspInto(first, last, n, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopBuf, outLowStopBuf, room);
+  const range = ckspInto(first, last, lo, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopBuf, outLowStopBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outHighStop: outHighStopBuf.subarray(0, range.count), outLowStop: outLowStopBuf.subarray(0, range.count) };
 }
 
@@ -284,7 +287,7 @@ function ckspPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -305,11 +308,19 @@ function ckspPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, ckspLookbackPositional(optInTimePeriod, optInMultiplier, optInStopPeriod), [inHigh, inLow, inClose], [outHighStop, outLowStop], [Float64Array, Float64Array]);
+  const lookback = ckspLookbackPositional(optInTimePeriod, optInMultiplier, optInStopPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow, inClose], [outHighStop, outLowStop], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 24 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 24 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -318,27 +329,31 @@ function ckspPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n || inCloseF64 === null || inCloseF64.length !== n) {
     return fellThrough('input');
   }
-  return ckspInto(startIdx, endIdx, n, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop, room);
+  return ckspInto(startIdx, endIdx, lo, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop, room);
 }
 
-function ckspInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInTimePeriod: number, optInMultiplier: number, optInStopPeriod: number, outHighStop: Float64Array, outLowStop: Float64Array, room: number): OutRange | null {
+function ckspInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, inClose: Float64Array, optInTimePeriod: number, optInMultiplier: number, optInStopPeriod: number, outHighStop: Float64Array, outLowStop: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 24 + outLen * 16);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const inCloseBars = seriesBars(inClose, lo, len);
+  const w = wasmFrame(len * 24 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const inCloseAt = at + n * 16;
-  w.f64.set(inClose, inCloseAt / 8);
-  const outHighStopAt = at + n * 24;
-  const outLowStopAt = at + n * 24 + outLen * 8;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const inCloseAt = at + len * 16;
+  w.f64.set(inCloseBars, inCloseAt / 8);
+  const outHighStopAt = at + len * 24;
+  const outLowStopAt = at + len * 24 + outLen * 8;
   let count: number;
   try {
-    count = w.x.cksp_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopAt, outLowStopAt, outLen);
+    count = w.x.cksp_batch(first - lo, last - lo, inHighAt, inLowAt, inCloseAt, len, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStopAt, outLowStopAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -348,7 +363,7 @@ function ckspInto(first: number, last: number, n: number, inHigh: Float64Array, 
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outHighStopAt, count, outHighStop);
   w.realsInto(outLowStopAt, count, outLowStop);
   w.done();

@@ -38,7 +38,7 @@ import { kst as kstJs, kstLookbackPositional, kstOptionsOf, kstPositional as kst
 import type { KstOptions, KstResult } from '../../func/kst.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/kst.ts';
 
@@ -176,17 +176,8 @@ function kstWasm(real: ArrayLike<number>, options: KstOptions | undefined): KstR
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -230,10 +221,18 @@ function kstWasm(real: ArrayLike<number>, options: KstOptions | undefined): KstR
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outKST !== undefined || outKSTSignal !== undefined) {
-    return kstBuffered(first, last, n, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal);
+  const lookback = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outKST !== undefined || outKSTSignal !== undefined) {
+    return kstBuffered(first, last, lo, lookback, n, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -241,35 +240,37 @@ function kstWasm(real: ArrayLike<number>, options: KstOptions | undefined): KstR
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outKSTAt = at + n * 8;
-  const outKSTSignalAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outKSTAt = at + len * 8;
+  const outKSTSignalAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.kst_batch(first, last, inRealAt, n, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTAt, outKSTSignalAt, outLen);
+    count = w.x.kst_batch(first - lo, last - lo, inRealAt, len, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTAt, outKSTSignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: KstResult = { begIdx: w.begIdx(), outKst: w.reals(outKSTAt, count), outKstSignal: w.reals(outKSTSignalAt, count) };
+  const result: KstResult = { begIdx: w.begIdx() + lo, outKst: w.reals(outKSTAt, count), outKstSignal: w.reals(outKSTSignalAt, count) };
   w.done();
   return result;
 }
 
-function kstBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outKST: Float64Array<ArrayBuffer> | undefined, outKSTSignal: Float64Array<ArrayBuffer> | undefined): KstResult | null {
-  const room = outputRoom(first, last, kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod), [real], [outKST, outKSTSignal], [Float64Array, Float64Array]);
+function kstBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outKST: Float64Array<ArrayBuffer> | undefined, outKSTSignal: Float64Array<ArrayBuffer> | undefined): KstResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outKST, outKSTSignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -278,7 +279,7 @@ function kstBuffered(first: number, last: number, n: number, real: ArrayLike<num
   }
   const outKSTBuf = outKST ?? new Float64Array(room === 0 ? 1 : room);
   const outKSTSignalBuf = outKSTSignal ?? new Float64Array(room === 0 ? 1 : room);
-  const range = kstInto(first, last, n, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTBuf, outKSTSignalBuf, room);
+  const range = kstInto(first, last, lo, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTBuf, outKSTSignalBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outKst: outKSTBuf.subarray(0, range.count), outKstSignal: outKSTSignalBuf.subarray(0, range.count) };
 }
 
@@ -287,7 +288,7 @@ function kstPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -305,34 +306,44 @@ function kstPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod), [inReal], [outKST, outKSTSignal], [Float64Array, Float64Array]);
+  const lookback = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outKST, outKSTSignal], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return kstInto(startIdx, endIdx, n, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal, room);
+  return kstInto(startIdx, endIdx, lo, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal, room);
 }
 
-function kstInto(first: number, last: number, n: number, inReal: Float64Array, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outKST: Float64Array, outKSTSignal: Float64Array, room: number): OutRange | null {
+function kstInto(first: number, last: number, lo: number, inReal: Float64Array, optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outKST: Float64Array, outKSTSignal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outKSTAt = at + n * 8;
-  const outKSTSignalAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outKSTAt = at + len * 8;
+  const outKSTSignalAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.kst_batch(first, last, inRealAt, n, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTAt, outKSTSignalAt, outLen);
+    count = w.x.kst_batch(first - lo, last - lo, inRealAt, len, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKSTAt, outKSTSignalAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -342,7 +353,7 @@ function kstInto(first: number, last: number, n: number, inReal: Float64Array, o
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outKSTAt, count, outKST);
   w.realsInto(outKSTSignalAt, count, outKSTSignal);
   w.done();

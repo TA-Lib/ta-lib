@@ -39,7 +39,7 @@ import type { StochrsiOptions, StochrsiResult } from '../../func/stochrsi.ts';
 import type { MAType } from '../../enums.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/stochrsi.ts';
 
@@ -148,17 +148,8 @@ function stochrsiWasm(real: ArrayLike<number>, options: StochrsiOptions | undefi
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -195,10 +186,18 @@ function stochrsiWasm(real: ArrayLike<number>, options: StochrsiOptions | undefi
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outFastK !== undefined || outFastD !== undefined) {
-    return stochrsiBuffered(first, last, n, real, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD);
+  const lookback = stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outFastK !== undefined || outFastD !== undefined) {
+    return stochrsiBuffered(first, last, lo, lookback, n, real, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -206,35 +205,37 @@ function stochrsiWasm(real: ArrayLike<number>, options: StochrsiOptions | undefi
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outFastKAt = at + n * 8;
-  const outFastDAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outFastKAt = at + len * 8;
+  const outFastDAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.stochrsi_batch(first, last, inRealAt, n, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKAt, outFastDAt, outLen);
+    count = w.x.stochrsi_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKAt, outFastDAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: StochrsiResult = { begIdx: w.begIdx(), outFastK: w.reals(outFastKAt, count), outFastD: w.reals(outFastDAt, count) };
+  const result: StochrsiResult = { begIdx: w.begIdx() + lo, outFastK: w.reals(outFastKAt, count), outFastD: w.reals(outFastDAt, count) };
   w.done();
   return result;
 }
 
-function stochrsiBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outFastK: Float64Array<ArrayBuffer> | undefined, outFastD: Float64Array<ArrayBuffer> | undefined): StochrsiResult | null {
-  const room = outputRoom(first, last, stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType), [real], [outFastK, outFastD], [Float64Array, Float64Array]);
+function stochrsiBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outFastK: Float64Array<ArrayBuffer> | undefined, outFastD: Float64Array<ArrayBuffer> | undefined): StochrsiResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outFastK, outFastD], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 16)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 16)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -243,7 +244,7 @@ function stochrsiBuffered(first: number, last: number, n: number, real: ArrayLik
   }
   const outFastKBuf = outFastK ?? new Float64Array(room === 0 ? 1 : room);
   const outFastDBuf = outFastD ?? new Float64Array(room === 0 ? 1 : room);
-  const range = stochrsiInto(first, last, n, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKBuf, outFastDBuf, room);
+  const range = stochrsiInto(first, last, lo, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKBuf, outFastDBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outFastK: outFastKBuf.subarray(0, range.count), outFastD: outFastDBuf.subarray(0, range.count) };
 }
 
@@ -252,7 +253,7 @@ function stochrsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayL
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -273,34 +274,44 @@ function stochrsiPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayL
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType), [inReal], [outFastK, outFastD], [Float64Array, Float64Array]);
+  const lookback = stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outFastK, outFastD], [Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 16)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 16)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return stochrsiInto(startIdx, endIdx, n, inRealF64, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD, room);
+  return stochrsiInto(startIdx, endIdx, lo, inRealF64, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD, room);
 }
 
-function stochrsiInto(first: number, last: number, n: number, inReal: Float64Array, optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: number, outFastK: Float64Array, outFastD: Float64Array, room: number): OutRange | null {
+function stochrsiInto(first: number, last: number, lo: number, inReal: Float64Array, optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: number, outFastK: Float64Array, outFastD: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 16);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 16);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outFastKAt = at + n * 8;
-  const outFastDAt = at + n * 8 + outLen * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outFastKAt = at + len * 8;
+  const outFastDAt = at + len * 8 + outLen * 8;
   let count: number;
   try {
-    count = w.x.stochrsi_batch(first, last, inRealAt, n, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKAt, outFastDAt, outLen);
+    count = w.x.stochrsi_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastKAt, outFastDAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -310,7 +321,7 @@ function stochrsiInto(first: number, last: number, n: number, inReal: Float64Arr
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outFastKAt, count, outFastK);
   w.realsInto(outFastDAt, count, outFastD);
   w.done();

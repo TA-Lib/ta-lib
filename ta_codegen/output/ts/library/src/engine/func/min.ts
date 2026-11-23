@@ -38,7 +38,7 @@ import { min as minJs, minLookbackPositional, minOptionsOf, minPositional as min
 import type { MinOptions, MinResult } from '../../func/min.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/min.ts';
 
@@ -126,17 +126,8 @@ function minWasm(real: ArrayLike<number>, options: MinOptions | undefined): MinR
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -163,10 +154,18 @@ function minWasm(real: ArrayLike<number>, options: MinOptions | undefined): MinR
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return minBuffered(first, last, n, real, optInTimePeriod, outReal);
+  const lookback = minLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outReal !== undefined) {
+    return minBuffered(first, last, lo, lookback, n, real, optInTimePeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -174,41 +173,43 @@ function minWasm(real: ArrayLike<number>, options: MinOptions | undefined): MinR
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.min_batch(first, last, inRealAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.min_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: MinResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: MinResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function minBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): MinResult | null {
-  const room = outputRoom(first, last, minLookbackPositional(optInTimePeriod), [real], [outReal], [Float64Array]);
+function minBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): MinResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 8)) {
     return null;
   }
   const inReal = routedSeries(real);
   if (inReal === null || inReal.length !== n) {
     return fellThrough('input');
   }
-  const range = minInto(first, last, n, inReal, optInTimePeriod, outReal, room);
+  const range = minInto(first, last, lo, inReal, optInTimePeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -217,7 +218,7 @@ function minPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -235,33 +236,43 @@ function minPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, minLookbackPositional(optInTimePeriod), [inReal], [outReal], [Float64Array]);
+  const lookback = minLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return minInto(startIdx, endIdx, n, inRealF64, optInTimePeriod, outReal, room);
+  return minInto(startIdx, endIdx, lo, inRealF64, optInTimePeriod, outReal, room);
 }
 
-function minInto(first: number, last: number, n: number, inReal: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function minInto(first: number, last: number, lo: number, inReal: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 8);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outRealAt = at + n * 8;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outRealAt = at + len * 8;
   let count: number;
   try {
-    count = w.x.min_batch(first, last, inRealAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.min_batch(first - lo, last - lo, inRealAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -271,7 +282,7 @@ function minInto(first: number, last: number, n: number, inReal: Float64Array, o
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

@@ -38,7 +38,7 @@ import { ac as acJs, acLookbackPositional, acOptionsOf, acPositional as acPositi
 import type { AcOptions, AcResult } from '../../func/ac.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/ac.ts';
 
@@ -190,10 +190,15 @@ function acWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return acBuffered(first, last, n, inHighArg, inLowArg, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal);
+  const lookback = acLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outReal !== undefined) {
+    return acBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -202,36 +207,39 @@ function acWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.ac_batch(first, last, inHighAt, inLowAt, n, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outRealAt, outLen);
+    count = w.x.ac_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: AcResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: AcResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function acBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outReal: Float64Array<ArrayBuffer>): AcResult | null {
-  const room = outputRoom(first, last, acLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod), [inHighArg, inLowArg], [outReal], [Float64Array]);
+function acBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outReal: Float64Array<ArrayBuffer>): AcResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -239,7 +247,7 @@ function acBuffered(first: number, last: number, n: number, inHighArg: ArrayLike
   if (inHigh === null || inHigh.length !== n || inLow === null || inLow.length !== n) {
     return fellThrough('input');
   }
-  const range = acInto(first, last, n, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal, room);
+  const range = acInto(first, last, lo, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -266,11 +274,16 @@ function acPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<nu
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, acLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod), [inHigh, inLow], [outReal], [Float64Array]);
+  const lookback = acLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -278,24 +291,27 @@ function acPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLike<nu
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n) {
     return fellThrough('input');
   }
-  return acInto(startIdx, endIdx, n, inHighF64, inLowF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal, room);
+  return acInto(startIdx, endIdx, lo, inHighF64, inLowF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outReal, room);
 }
 
-function acInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function acInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.ac_batch(first, last, inHighAt, inLowAt, n, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outRealAt, outLen);
+    count = w.x.ac_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -305,7 +321,7 @@ function acInto(first: number, last: number, n: number, inHigh: Float64Array, in
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

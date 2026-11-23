@@ -38,7 +38,7 @@ import { macdfix as macdfixJs, macdfixLookbackPositional, macdfixOptionsOf, macd
 import type { MacdfixOptions, MacdfixResult } from '../../func/macdfix.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/macdfix.ts';
 
@@ -145,17 +145,8 @@ function macdfixWasm(real: ArrayLike<number>, options: MacdfixOptions | undefine
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0) {
-    if (n < WASM_FROM_BARS) {
-      return null;
-    }
-    if (options !== undefined && options !== null) {
-      const s = options.startIdx;
-      const e = options.endIdx;
-      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
-        return null;
-      }
-    }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   if (engineDown()) {
     return null;
@@ -184,10 +175,18 @@ function macdfixWasm(real: ArrayLike<number>, options: MacdfixOptions | undefine
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outMACD !== undefined || outMACDSignal !== undefined || outMACDHist !== undefined) {
-    return macdfixBuffered(first, last, n, real, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+  const lookback = macdfixLookbackPositional(optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 24)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (engineRoute.mode === 0 && last - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  if (outMACD !== undefined || outMACDSignal !== undefined || outMACDHist !== undefined) {
+    return macdfixBuffered(first, last, lo, lookback, n, real, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+  }
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 24)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -195,36 +194,38 @@ function macdfixWasm(real: ArrayLike<number>, options: MacdfixOptions | undefine
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 24);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 24);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outMACDAt = at + n * 8;
-  const outMACDSignalAt = at + n * 8 + outLen * 8;
-  const outMACDHistAt = at + n * 8 + outLen * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outMACDAt = at + len * 8;
+  const outMACDSignalAt = at + len * 8 + outLen * 8;
+  const outMACDHistAt = at + len * 8 + outLen * 16;
   let count: number;
   try {
-    count = w.x.macdfix_batch(first, last, inRealAt, n, optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
+    count = w.x.macdfix_batch(first - lo, last - lo, inRealAt, len, optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: MacdfixResult = { begIdx: w.begIdx(), outMacd: w.reals(outMACDAt, count), outMacdSignal: w.reals(outMACDSignalAt, count), outMacdHist: w.reals(outMACDHistAt, count) };
+  const result: MacdfixResult = { begIdx: w.begIdx() + lo, outMacd: w.reals(outMACDAt, count), outMacdSignal: w.reals(outMACDSignalAt, count), outMacdHist: w.reals(outMACDHistAt, count) };
   w.done();
   return result;
 }
 
-function macdfixBuffered(first: number, last: number, n: number, real: ArrayLike<number>, optInSignalPeriod: number, outMACD: Float64Array<ArrayBuffer> | undefined, outMACDSignal: Float64Array<ArrayBuffer> | undefined, outMACDHist: Float64Array<ArrayBuffer> | undefined): MacdfixResult | null {
-  const room = outputRoom(first, last, macdfixLookbackPositional(optInSignalPeriod), [real], [outMACD, outMACDSignal, outMACDHist], [Float64Array, Float64Array, Float64Array]);
+function macdfixBuffered(first: number, last: number, lo: number, lookback: number, n: number, real: ArrayLike<number>, optInSignalPeriod: number, outMACD: Float64Array<ArrayBuffer> | undefined, outMACDSignal: Float64Array<ArrayBuffer> | undefined, outMACDHist: Float64Array<ArrayBuffer> | undefined): MacdfixResult | null {
+  const room = outputRoom(first, last, lookback, [real], [outMACD, outMACDSignal, outMACDHist], [Float64Array, Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (last - first + 1) * 24)) {
+  if (!engineFor((last - lo + 1) * 8 + (last - first + 1) * 24)) {
     return null;
   }
   const inReal = routedSeries(real);
@@ -234,7 +235,7 @@ function macdfixBuffered(first: number, last: number, n: number, real: ArrayLike
   const outMACDBuf = outMACD ?? new Float64Array(room === 0 ? 1 : room);
   const outMACDSignalBuf = outMACDSignal ?? new Float64Array(room === 0 ? 1 : room);
   const outMACDHistBuf = outMACDHist ?? new Float64Array(room === 0 ? 1 : room);
-  const range = macdfixInto(first, last, n, inReal, optInSignalPeriod, outMACDBuf, outMACDSignalBuf, outMACDHistBuf, room);
+  const range = macdfixInto(first, last, lo, inReal, optInSignalPeriod, outMACDBuf, outMACDSignalBuf, outMACDHistBuf, room);
   return range === null ? null : { begIdx: range.begIdx, outMacd: outMACDBuf.subarray(0, range.count), outMacdSignal: outMACDSignalBuf.subarray(0, range.count), outMacdHist: outMACDHistBuf.subarray(0, range.count) };
 }
 
@@ -243,7 +244,7 @@ function macdfixPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLi
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
     return null;
   }
   if (engineDown()) {
@@ -261,35 +262,45 @@ function macdfixPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLi
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, macdfixLookbackPositional(optInSignalPeriod), [inReal], [outMACD, outMACDSignal, outMACDHist], [Float64Array, Float64Array, Float64Array]);
+  const lookback = macdfixLookbackPositional(optInSignalPeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  if (engineRoute.mode === 0 && endIdx - lo + 1 < WASM_FROM_BARS) {
+    return null;
+  }
+  const room = outputRoom(startIdx, endIdx, lookback, [inReal], [outMACD, outMACDSignal, outMACDHist], [Float64Array, Float64Array, Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 8 + (endIdx - startIdx + 1) * 24)) {
+  if (!engineFor((endIdx - lo + 1) * 8 + (endIdx - startIdx + 1) * 24)) {
     return null;
   }
   const inRealF64 = routedSeries(inReal);
   if (inRealF64 === null || inRealF64.length !== n) {
     return fellThrough('input');
   }
-  return macdfixInto(startIdx, endIdx, n, inRealF64, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, room);
+  return macdfixInto(startIdx, endIdx, lo, inRealF64, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, room);
 }
 
-function macdfixInto(first: number, last: number, n: number, inReal: Float64Array, optInSignalPeriod: number, outMACD: Float64Array, outMACDSignal: Float64Array, outMACDHist: Float64Array, room: number): OutRange | null {
+function macdfixInto(first: number, last: number, lo: number, inReal: Float64Array, optInSignalPeriod: number, outMACD: Float64Array, outMACDSignal: Float64Array, outMACDHist: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 8 + outLen * 24);
+  const len = last - lo + 1;
+  const inRealBars = seriesBars(inReal, lo, len);
+  const w = wasmFrame(len * 8 + outLen * 24);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inRealAt = at;
-  w.f64.set(inReal, inRealAt / 8);
-  const outMACDAt = at + n * 8;
-  const outMACDSignalAt = at + n * 8 + outLen * 8;
-  const outMACDHistAt = at + n * 8 + outLen * 16;
+  w.f64.set(inRealBars, inRealAt / 8);
+  const outMACDAt = at + len * 8;
+  const outMACDSignalAt = at + len * 8 + outLen * 8;
+  const outMACDHistAt = at + len * 8 + outLen * 16;
   let count: number;
   try {
-    count = w.x.macdfix_batch(first, last, inRealAt, n, optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
+    count = w.x.macdfix_batch(first - lo, last - lo, inRealAt, len, optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -299,7 +310,7 @@ function macdfixInto(first: number, last: number, n: number, inReal: Float64Arra
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outMACDAt, count, outMACD);
   w.realsInto(outMACDSignalAt, count, outMACDSignal);
   w.realsInto(outMACDHistAt, count, outMACDHist);

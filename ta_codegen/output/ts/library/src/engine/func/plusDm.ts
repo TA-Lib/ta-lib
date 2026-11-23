@@ -38,7 +38,7 @@ import { plusDm as plusDmJs, plusDmLookbackPositional, plusDmOptionsOf, plusDmPo
 import type { PlusDmOptions, PlusDmResult } from '../../func/plusDm.ts';
 import { Core } from '../../runtime/core.ts';
 import { OutRange } from '../../runtime/outRange.ts';
-import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
+import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32, outputRoom, refused, routedSeries, seriesBars, seriesLength, strictFallThrough, trapped, usesDefaultCore, wasmFrame } from '../../runtime/wasm.ts';
 
 export * from '../../func/plusDm.ts';
 
@@ -170,10 +170,15 @@ function plusDmWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   if (first < 0 || last < first || last >= n) {
     return fellThrough('range');
   }
-  if (outReal !== undefined) {
-    return plusDmBuffered(first, last, n, inHighArg, inLowArg, optInTimePeriod, outReal);
+  const lookback = plusDmLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  const lo = (first > lookback ? first : lookback) - lookback;
+  if (outReal !== undefined) {
+    return plusDmBuffered(first, last, lo, lookback, n, inHighArg, inLowArg, optInTimePeriod, outReal);
+  }
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -182,36 +187,39 @@ function plusDmWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
     return fellThrough('input');
   }
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.plus_dm_batch(first, last, inHighAt, inLowAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.plus_dm_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
   }
-  const result: PlusDmResult = { begIdx: w.begIdx(), values: w.reals(outRealAt, count) };
+  const result: PlusDmResult = { begIdx: w.begIdx() + lo, values: w.reals(outRealAt, count) };
   w.done();
   return result;
 }
 
-function plusDmBuffered(first: number, last: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): PlusDmResult | null {
-  const room = outputRoom(first, last, plusDmLookbackPositional(optInTimePeriod), [inHighArg, inLowArg], [outReal], [Float64Array]);
+function plusDmBuffered(first: number, last: number, lo: number, lookback: number, n: number, inHighArg: ArrayLike<number>, inLowArg: ArrayLike<number>, optInTimePeriod: number, outReal: Float64Array<ArrayBuffer>): PlusDmResult | null {
+  const room = outputRoom(first, last, lookback, [inHighArg, inLowArg], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (last - first + 1) * 8)) {
+  if (!engineFor((last - lo + 1) * 16 + (last - first + 1) * 8)) {
     return null;
   }
   const inHigh = routedSeries(inHighArg);
@@ -219,7 +227,7 @@ function plusDmBuffered(first: number, last: number, n: number, inHighArg: Array
   if (inHigh === null || inHigh.length !== n || inLow === null || inLow.length !== n) {
     return fellThrough('input');
   }
-  const range = plusDmInto(first, last, n, inHigh, inLow, optInTimePeriod, outReal, room);
+  const range = plusDmInto(first, last, lo, inHigh, inLow, optInTimePeriod, outReal, room);
   return range === null ? null : { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
@@ -246,11 +254,16 @@ function plusDmPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {
     return fellThrough('range');
   }
-  const room = outputRoom(startIdx, endIdx, plusDmLookbackPositional(optInTimePeriod), [inHigh, inLow], [outReal], [Float64Array]);
+  const lookback = plusDmLookbackPositional(optInTimePeriod);
+  if (lookback < 0) {
+    return fellThrough('parameter');
+  }
+  const lo = (startIdx > lookback ? startIdx : lookback) - lookback;
+  const room = outputRoom(startIdx, endIdx, lookback, [inHigh, inLow], [outReal], [Float64Array]);
   if (room < 0) {
     return fellThrough(room === -1 ? 'parameter' : 'buffer');
   }
-  if (!engineFor(n * 16 + (endIdx - startIdx + 1) * 8)) {
+  if (!engineFor((endIdx - lo + 1) * 16 + (endIdx - startIdx + 1) * 8)) {
     return null;
   }
   const inHighF64 = routedSeries(inHigh);
@@ -258,24 +271,27 @@ function plusDmPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (inHighF64 === null || inHighF64.length !== n || inLowF64 === null || inLowF64.length !== n) {
     return fellThrough('input');
   }
-  return plusDmInto(startIdx, endIdx, n, inHighF64, inLowF64, optInTimePeriod, outReal, room);
+  return plusDmInto(startIdx, endIdx, lo, inHighF64, inLowF64, optInTimePeriod, outReal, room);
 }
 
-function plusDmInto(first: number, last: number, n: number, inHigh: Float64Array, inLow: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
+function plusDmInto(first: number, last: number, lo: number, inHigh: Float64Array, inLow: Float64Array, optInTimePeriod: number, outReal: Float64Array, room: number): OutRange | null {
   const outLen = last - first + 1;
-  const w = wasmFrame(n * 16 + outLen * 8);
+  const len = last - lo + 1;
+  const inHighBars = seriesBars(inHigh, lo, len);
+  const inLowBars = seriesBars(inLow, lo, len);
+  const w = wasmFrame(len * 16 + outLen * 8);
   if (w === null) {
     return null;
   }
   const at = w.base;
   const inHighAt = at;
-  w.f64.set(inHigh, inHighAt / 8);
-  const inLowAt = at + n * 8;
-  w.f64.set(inLow, inLowAt / 8);
-  const outRealAt = at + n * 16;
+  w.f64.set(inHighBars, inHighAt / 8);
+  const inLowAt = at + len * 8;
+  w.f64.set(inLowBars, inLowAt / 8);
+  const outRealAt = at + len * 16;
   let count: number;
   try {
-    count = w.x.plus_dm_batch(first, last, inHighAt, inLowAt, n, optInTimePeriod, outRealAt, outLen);
+    count = w.x.plus_dm_batch(first - lo, last - lo, inHighAt, inLowAt, len, optInTimePeriod, outRealAt, outLen);
   } catch (e) {
     return trapped(w, e);
   }
@@ -285,7 +301,7 @@ function plusDmInto(first: number, last: number, n: number, inHigh: Float64Array
   if (count > room) {
     return fellThrough('overrun');
   }
-  const begIdx = w.begIdx();
+  const begIdx = w.begIdx() + lo;
   w.realsInto(outRealAt, count, outReal);
   w.done();
   return new OutRange(begIdx, count);

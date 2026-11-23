@@ -77,7 +77,7 @@ The published package is emitted from the same sources twice: `--removeComments 
 
 ### 2.1 WebAssembly {#wasm}
 
-WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` and `ta-lib/abstract` entries run each batch call in their WebAssembly engine or in TypeScript, choosing by function and series length, with or without your own output buffers, and the results are the same either way, bit for bit on finite inputs. A call runs in TypeScript, with the same values, when it passes a `core` other than the `Core.DEFAULT` object, asks for a range that is not the whole input, computes in place, or can reach a transcendental function.
+WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` and `ta-lib/abstract` entries run each batch call in their WebAssembly engine or in TypeScript, choosing by function and by the number of bars the call reads, with or without your own output buffers, and the results are the same either way, bit for bit on finite inputs. A call runs in TypeScript, with the same values, when it passes a `core` other than the `Core.DEFAULT` object, computes in place, or can reach a transcendental function.
 
 There is nothing to configure. In Node.js the engine loads on the first call that uses it, and awaiting `ready()` first moves its one-time compile out of that call. In a browser, and in any bundle built without the `node` export condition, calls run in TypeScript until `ready()` has loaded the engine, which each Worker calls for itself:
 
