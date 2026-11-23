@@ -86,7 +86,7 @@ const { begIdx, values } = ema(close, { timePeriod: 30, core });
 Each batch call runs in a WebAssembly engine or in TypeScript, chosen by function and series
 length, with the same results either way, bit for bit on finite inputs. That holds with or
 without your own output buffers, and through `ta-lib/abstract`. A call that passes a `core`
-other than `Core.DEFAULT` runs in TypeScript.
+other than `Core.DEFAULT`, or asks for a range that is not the whole input, runs in TypeScript.
 
 Nothing to configure. In Node.js the engine loads on the first call that uses it; awaiting
 `ready()` first moves its one-time compile out of that call. In a browser, and in any bundle

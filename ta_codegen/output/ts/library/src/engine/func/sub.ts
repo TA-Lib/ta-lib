@@ -128,8 +128,17 @@ function subWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: Su
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
+  if (engineRoute.mode === 0) {
+    if (n < WASM_FROM_BARS) {
+      return null;
+    }
+    if (options !== undefined && options !== null) {
+      const s = options.startIdx;
+      const e = options.endIdx;
+      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
+        return null;
+      }
+    }
   }
   if (engineDown()) {
     return null;
@@ -212,7 +221,7 @@ function subPositionalWasm(startIdx: number, endIdx: number, inReal0: ArrayLike<
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
     return null;
   }
   if (engineDown()) {

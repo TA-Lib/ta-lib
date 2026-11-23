@@ -155,8 +155,17 @@ function cdlthrustingWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
+  if (engineRoute.mode === 0) {
+    if (n < WASM_FROM_BARS) {
+      return null;
+    }
+    if (options !== undefined && options !== null) {
+      const s = options.startIdx;
+      const e = options.endIdx;
+      if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {
+        return null;
+      }
+    }
   }
   if (engineDown()) {
     return null;
@@ -247,7 +256,7 @@ function cdlthrustingPositionalWasm(startIdx: number, endIdx: number, inOpen: Ar
   if (n < 1) {
     return fellThrough('input');
   }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {
     return null;
   }
   if (engineDown()) {

@@ -192,10 +192,10 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
     assert!(params > 0);
 }
 
-/// A routing-table entry. Under the threshold the call must go to `./js`
-/// without counting a fall-through (the strict gates read the counter) and
-/// without taking a frame (which loads the engine); from the threshold on it
-/// must route in table mode.
+/// A routing-table entry. Under the threshold, or over a range that is not the
+/// whole input, the call must go to `./js` without counting a fall-through (the
+/// strict gates read the counter) and without taking a frame (which loads the
+/// engine); a whole-input call from the threshold on must route in table mode.
 #[test]
 fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     if crate::common::sweep_filtered() {
@@ -211,22 +211,28 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let public = &text[at("export function sma(")..at("function smaWasm(")];
     assert!(!public.contains("engineRoute.mode !== 0"), "a tabled function routes in table mode:\n{public}");
     assert_eq!(text.matches("WASM_FROM_BARS").count(), 3, "{text}");
-    let gate = "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n";
-    // Each front checks the threshold before anything but the input's length,
-    // and before the frame: the options front takes its own, the copy into
-    // buffers takes one and checks no threshold.
-    for (front, next) in [("function smaWasm(", "function smaBuffered("), ("function smaPositionalWasm(", "function smaInto(")] {
+    let options_gate = "  if (engineRoute.mode === 0) {\n    if (n < WASM_FROM_BARS) {\n      return null;\n    }\n    \
+                        if (options !== undefined && options !== null) {\n      const s = options.startIdx;\n      const e = options.endIdx;\n      \
+                        if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {\n        return null;\n      }\n    }\n  }\n";
+    let positional_gate = "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || startIdx !== 0 || endIdx !== n - 1)) {\n    return null;\n  }\n";
+    // Each front checks the threshold and the range before anything but the
+    // input's length, and before the frame: the options front takes its own,
+    // the copy into buffers takes one and checks neither.
+    for (front, next, gate) in
+        [("function smaWasm(", "function smaBuffered(", options_gate), ("function smaPositionalWasm(", "function smaInto(", positional_gate)]
+    {
         let body = &text[at(front)..at(next)];
-        let gate_at = body.find(gate).unwrap_or_else(|| panic!("no threshold check:\n{body}"));
+        let gate_at = body.find(gate).unwrap_or_else(|| panic!("no threshold and range check:\n{body}"));
         assert!(body.find("const n = seriesLength(").unwrap() < gate_at);
         assert!(!body[..gate_at].contains("wasmFrame("), "{front} takes the frame before the threshold:\n{body}");
         assert_eq!(body[..gate_at].matches("fellThrough(").count(), 1, "only an empty input counts above the threshold check:\n{body}");
         assert!(body[..gate_at].contains("if (n < 1) {\n    return fellThrough('input');"), "{body}");
+        assert!(body.find("if (engineDown()) {").unwrap() > gate_at, "{front} reads the engine state before the range:\n{body}");
     }
-    // A call the threshold leaves in `./js` walks its option keys there alone.
+    // A call the table leaves in `./js` walks its option keys there alone.
     let options_front = &text[at("function smaWasm(")..at("function smaBuffered(")];
     let walk = options_front.find("o = smaOptionsOf('SMA', options);").unwrap_or_else(|| panic!("no options walk:\n{options_front}"));
-    assert!(walk > options_front.find(gate).unwrap(), "the options walk precedes the threshold:\n{options_front}");
+    assert!(walk > options_front.find(options_gate).unwrap(), "the options walk precedes the table's check:\n{options_front}");
     let into = &text[at("function smaInto(")..];
     assert!(into.contains("wasmFrame(") && !into.contains("WASM_FROM_BARS"));
 
@@ -236,7 +242,7 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
 }
 
 /// A ranged entry: the same check, closed above, so a call over the range
-/// stays in `./js` exactly as one under it does.
+/// stays in `./js` exactly as one under it does, and a partial range as well.
 #[test]
 fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
     let (sma, _) = load_indicator("sma");
@@ -245,8 +251,14 @@ fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
     assert!(text.contains("\nconst WASM_FROM_BARS = 37;\nconst WASM_TO_BARS = 90;\n"), "{text}");
     assert_eq!(text.matches("WASM_TO_BARS").count(), 3, "{text}");
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
-    let gate = "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n";
-    for (front, next) in [("function smaWasm(", "function smaBuffered("), ("function smaPositionalWasm(", "function smaInto(")] {
+    let options_gate = "  if (engineRoute.mode === 0) {\n    if (n < WASM_FROM_BARS || n > WASM_TO_BARS) {\n      return null;\n    }\n    \
+                        if (options !== undefined && options !== null) {\n      const s = options.startIdx;\n      const e = options.endIdx;\n      \
+                        if ((s !== undefined && s !== 0) || (e !== undefined && e !== n - 1)) {\n        return null;\n      }\n    }\n  }\n";
+    let positional_gate =
+        "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS || startIdx !== 0 || endIdx !== n - 1)) {\n    return null;\n  }\n";
+    for (front, next, gate) in
+        [("function smaWasm(", "function smaBuffered(", options_gate), ("function smaPositionalWasm(", "function smaInto(", positional_gate)]
+    {
         let body = &text[at(front)..at(next)];
         let gate_at = body.find(gate).unwrap_or_else(|| panic!("no bounded check:\n{body}"));
         assert_eq!(body.matches("WASM_TO_BARS").count(), 1, "{body}");
@@ -267,6 +279,8 @@ fn ts_engine_routing_test_checks_both_ends_of_a_ranged_entry() {
     assert!(row("EMA").ends_with(" bars: 7 },"), "{text}");
     assert!(text.contains("\nconst MAX_BARS = 200001;\n"), "MAX_BARS must reach one bar over the range:\n{text}");
     assert!(text.contains("const over = run(row, row.to + 1);"), "{text}");
+    assert!(text.contains("for (const span of [{ startIdx: 1 }, { endIdx: row.bars - 2 }]) {"), "{text}");
+    assert!(text.contains("const whole = run(row, row.bars, { startIdx: 0, endIdx: row.bars - 1 });"), "{text}");
     assert!(text.contains("[['options', call], ['buffered', callBuffered], ['positional', callPositional]]"), "{text}");
 }
 

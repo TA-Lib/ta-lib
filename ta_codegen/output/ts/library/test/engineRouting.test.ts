@@ -279,11 +279,12 @@ function head(n: number): Data {
 }
 
 type Ran = { ran: number; fell: number };
+type Span = { startIdx?: number; endIdx?: number };
 
-/** One call through each entry at `n` bars: the module's batch calls and the fall-throughs the default entry's call made. */
-function call(row: Row, n: number): Ran {
-  const args = row.args(head(n));
-  const where = `${row.name} at ${n} bars`;
+/** One call through each entry at `n` bars, over `span` when given: the module's batch calls and the fall-throughs the default entry's call made. */
+function call(row: Row, n: number, span?: Span): Ran {
+  const args = span === undefined ? row.args(head(n)) : [...row.args(head(n)), span];
+  const where = `${row.name} at ${n} bars${span === undefined ? '' : ` over ${JSON.stringify(span)}`}`;
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
   const a = (routed as unknown as Record<string, Fn>)[row.fn](...args);
@@ -299,12 +300,12 @@ function call(row: Row, n: number): Ran {
 }
 
 /** {@link call} with a caller buffer for every output. */
-function callBuffered(row: Row, n: number): Ran {
+function callBuffered(row: Row, n: number, span?: Span): Ran {
   const d = head(n);
-  const where = `${row.name} into buffers at ${n} bars`;
+  const where = `${row.name} into buffers at ${n} bars${span === undefined ? '' : ` over ${JSON.stringify(span)}`}`;
   const mine = blank(row.outs, n);
   const theirs = blank(row.outs, n);
-  const given = (bs: Arr[]): unknown[] => [...row.args(d), Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]]))];
+  const given = (bs: Arr[]): unknown[] => [...row.args(d), { ...span, ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])) }];
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
   const a = (routed as unknown as Record<string, Fn>)[row.fn](...given(mine));
@@ -317,26 +318,29 @@ function callBuffered(row: Row, n: number): Ran {
 }
 
 /** {@link call} for the positional tier, the one the Abstract API calls, with every parameter at its default. */
-function callPositional(row: Row, n: number): Ran {
+function callPositional(row: Row, n: number, span?: Span): Ran {
   const d = head(n);
-  const where = `${row.pos} at ${n} bars`;
+  const s = span?.startIdx ?? 0;
+  const e = span?.endIdx ?? n - 1;
+  const where = `${row.pos} at ${n} bars over ${s}..${e}`;
   const m = MODULES.get(row.stem)!;
   const mine = blank(row.outs, n);
   const theirs = blank(row.outs, n);
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
-  const a = m.routed[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
+  const a = m.routed[row.pos](s, e, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
   const ran = hooks.moduleCalls() - entered;
   const counted = hooks.fallThroughCount() - fell;
-  const b = m.js[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
+  const b = m.js[row.pos](s, e, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
   assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count], where);
   mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions checked. */
-function sweep(mode: string): number {
+/** Every tabled function under and at its bar count, at and over the end of its range, over part of the input and the explicit whole of it, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions and the partial-range calls checked. */
+function sweep(mode: string): { checked: number; partial: number } {
   let checked = 0;
+  let partial = 0;
   for (const [form, run] of [['options', call], ['buffered', callBuffered], ['positional', callPositional]] as const) {
     for (const row of TABLED) {
       if (row.bars > 1) {
@@ -355,23 +359,34 @@ function sweep(mode: string): number {
         assert.equal(over.ran, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
         assert.equal(over.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
       }
+      for (const span of [{ startIdx: 1 }, { endIdx: row.bars - 2 }]) {
+        const part = run(row, row.bars, span);
+        assert.equal(part.ran, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars over ${JSON.stringify(span)} entered the module; the table routes only the whole input`);
+        assert.equal(part.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars over ${JSON.stringify(span)} counted a fall-through`);
+        partial++;
+      }
+      const whole = run(row, row.bars, { startIdx: 0, endIdx: row.bars - 1 });
+      assert.equal(whole.ran, 1, `${mode}, ${form}: ${row.name} at ${row.bars} bars over the explicit whole input: the module counted ${whole.ran} batch calls, not one`);
+      assert.equal(whole.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars over the explicit whole input fell through as '${hooks.lastFallThrough()}'`);
       if (form === 'options') checked++;
     }
     const off = run(UNTABLED, UNTABLED.bars);
     assert.equal(off.ran, 0, `${mode}, ${form}: ${UNTABLED.name}, which the table does not name, entered the module`);
     assert.equal(off.fell, 0, `${mode}, ${form}: ${UNTABLED.name} counted a fall-through`);
   }
-  return checked;
+  return { checked, partial };
 }
 
-test('a fresh engine routes by the table: each tabled function over its bar counts, and no other function', () => {
-  const checked = sweep('fresh');
+test('a fresh engine routes by the table: each tabled function over its bar counts and the whole input only, and no other function', () => {
+  const { checked, partial } = sweep('fresh');
   assert.ok(checked >= TABLED_FLOOR, `${checked} tabled functions checked; the table names ${TABLED_FLOOR}`);
+  assert.ok(partial >= 6 * TABLED_FLOOR, `${partial} partial-range calls checked; two per call form for each of ${TABLED_FLOOR} tabled functions`);
   if (TABLED_FLOOR > 0) assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
 });
 
 test('table mode routes by the table again after force mode', () => {
   hooks.setEngineMode('force');
   hooks.setEngineMode('table');
-  assert.ok(sweep('table after force') >= TABLED_FLOOR);
+  const { checked, partial } = sweep('table after force');
+  assert.ok(checked >= TABLED_FLOOR && partial >= 6 * TABLED_FLOOR);
 });
