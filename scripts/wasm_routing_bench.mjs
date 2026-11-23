@@ -5,7 +5,8 @@
 //
 // Usage: node scripts/wasm_routing_bench.mjs <package-dir> <FUNC> [--bars=30,60,...]
 //                                            [--rounds=N] [--sample-ms=20] [--warm-ms=1000]
-//                                            [--form=options|buffered|abstract]
+//                                            [--form=options|params|buffered|abstract]
+//                                            [--tail=K] [--engine=force|table]
 //
 // <package-dir> is an installed `ta-lib` package, or the library directory with
 // dist/ built (bytes module included). Prints one JSON line per (function, bars).
@@ -14,9 +15,17 @@
 //
 // --form picks the call both arms time: `options` (the default, and the only
 // form the table takes) passes an options object and lets the call allocate its
-// outputs; `buffered` passes output buffers allocated once per bar count;
+// outputs; `params` does too, with every optional parameter at its default in
+// the object; `buffered` passes output buffers allocated once per bar count;
 // `abstract` calls a parameter holder of ta-lib/js/abstract against one of
 // ta-lib/abstract, both bound once per bar count.
+//
+// --tail=K asks for the last K bars (startIdx n - K) of an n-bar input; not with
+// `abstract`. --engine=table leaves the default entry in table mode instead of
+// forcing WASM, so its arm, still named `wasm`, times whichever engine the table
+// picks, and each line says in `inModule` whether the checked call ran in WASM.
+// A line names each of these only when given; the routing table refuses
+// such lines, as it does every form but `options`.
 //
 // One function per process: V8's tier-up, inlining and GC state left behind by
 // another function's calls would bias whichever arm runs after them.
@@ -36,17 +45,18 @@ if (!process.execArgv.some((a) => a === '--single-threaded-gc' || a === '--singl
   process.exit(child.status ?? 1);
 }
 
-const FORMS = ['options', 'buffered', 'abstract'];
+const FORMS = ['options', 'params', 'buffered', 'abstract'];
+const ENGINES = ['force', 'table'];
 const DEFAULT_BARS = [30, 60, 125, 250, 500, 1000, 2500, 5000, 10000, 50000, 100000, 200000];
 
 function usage(msg) {
   if (msg) console.error(msg);
-  console.error('usage: wasm_routing_bench.mjs <package-dir> <FUNC> [--bars=a,b,...] [--rounds=N] [--sample-ms=MS] [--warm-ms=MS] [--form=options|buffered|abstract]');
+  console.error('usage: wasm_routing_bench.mjs <package-dir> <FUNC> [--bars=a,b,...] [--rounds=N] [--sample-ms=MS] [--warm-ms=MS] [--form=options|params|buffered|abstract] [--tail=K] [--engine=force|table]');
   process.exit(2);
 }
 
 const positional = [];
-const opt = { bars: DEFAULT_BARS, rounds: 15, sampleMs: 20, warmMs: 1000, form: 'options' };
+const opt = { bars: DEFAULT_BARS, rounds: 15, sampleMs: 20, warmMs: 1000, form: 'options', tail: undefined, engine: 'force' };
 for (const a of process.argv.slice(2)) {
   const m = /^--([a-z-]+)=(.*)$/.exec(a);
   if (!m) {
@@ -59,13 +69,20 @@ for (const a of process.argv.slice(2)) {
   else if (k === 'sample-ms') opt.sampleMs = Number(v);
   else if (k === 'warm-ms') opt.warmMs = Number(v);
   else if (k === 'form') opt.form = v;
+  else if (k === 'tail') opt.tail = Number(v);
+  else if (k === 'engine') opt.engine = v;
   else usage(`unknown option --${k}`);
 }
 if (positional.length !== 2) usage();
 if (!opt.bars.every((b) => Number.isInteger(b) && b > 0)) usage('--bars takes positive integers');
 if (!(Number.isInteger(opt.rounds) && opt.rounds >= 1)) usage('--rounds takes a positive integer');
 if (!FORMS.includes(opt.form)) usage(`--form takes ${FORMS.join(', ')}`);
+if (!ENGINES.includes(opt.engine)) usage(`--engine takes ${ENGINES.join(', ')}`);
+if (opt.tail !== undefined && !(Number.isInteger(opt.tail) && opt.tail >= 1)) usage('--tail takes a positive integer');
+if (opt.tail !== undefined && opt.form === 'abstract') usage('--tail does not apply to --form=abstract');
+const tableMode = opt.engine === 'table';
 const [pkgArg, FUNC] = positional;
+const head = { func: FUNC, form: opt.form, ...(opt.tail !== undefined && { tail: opt.tail }), ...(tableMode && { engine: 'table' }) };
 const bars = [...new Set(opt.bars)].sort((a, b) => a - b);
 
 // --- the package's own entries, as a consumer's import would resolve them ---
@@ -82,7 +99,7 @@ const js = await import(fileOf(exp['./js'].default));
 // process loads, the likelier the GC storm above: metadata comes from the pure one.
 const pureAbstract = exp['./js/abstract'];
 if (opt.form === 'abstract' && pureAbstract === undefined) {
-  emit({ func: positional[1], form: opt.form, error: 'this package has no ta-lib/js/abstract, so no routed ta-lib/abstract to time against it' });
+  emit({ ...head, error: 'this package has no ta-lib/js/abstract, so no routed ta-lib/abstract to time against it' });
   process.exit(1);
 }
 const meta = await import(fileOf((pureAbstract ?? exp['./abstract']).default));
@@ -101,7 +118,7 @@ const jsFn = js[fname];
 const wasmFn = engine[fname];
 
 if (wasmFn === jsFn) {
-  emit({ func: FUNC, form: opt.form, wasm: false, note: 'no WASM export: the default entry re-exports ta-lib/js' });
+  emit({ ...head, wasm: false, note: 'no WASM export: the default entry re-exports ta-lib/js' });
   process.exit(0);
 }
 
@@ -242,14 +259,23 @@ function armsFor(n, args) {
   const named = Object.fromEntries(args.map((a, i) => ['a' + i, a]));
   const list = Object.keys(named).join(', ');
   const read = `r[${JSON.stringify(outKey)}][0]`;
-  if (opt.form === 'options') {
+  const tail = opt.tail === undefined ? [] : [['startIdx', n - opt.tail]];
+  if (opt.form === 'options' && tail.length === 0) {
     const arm = (fn) => ({ once: () => fn(...args, {}), run: runner(fn, named, `f(${list}, {})`, read) });
+    return { js: arm(jsFn), wasm: arm(wasmFn), same: sameBits, out: (ref) => ref[outKey] };
+  }
+  if (opt.form === 'options' || opt.form === 'params') {
+    const params = opt.form === 'params' ? info.optInputs.map((p) => [p.key, p.defaultValue]) : [];
+    const arm = (fn) => {
+      const o = Object.fromEntries([...params, ...tail]);
+      return { once: () => fn(...args, o), run: runner(fn, { ...named, o }, `f(${list}, o)`, read) };
+    };
     return { js: arm(jsFn), wasm: arm(wasmFn), same: sameBits, out: (ref) => ref[outKey] };
   }
   if (opt.form === 'buffered') {
     const arm = (fn) => {
       const bufs = blank(n);
-      const o = Object.fromEntries(info.outputs.map((x, k) => [x.key === 'values' ? x.paramName : x.key, bufs[k]]));
+      const o = Object.fromEntries([...info.outputs.map((x, k) => [x.key === 'values' ? x.paramName : x.key, bufs[k]]), ...tail]);
       return { bufs, once: () => fn(...args, o), run: runner(fn, { ...named, o }, `f(${list}, o)`, read) };
     };
     const a = { js: arm(jsFn), wasm: arm(wasmFn) };
@@ -275,6 +301,7 @@ function armsFor(n, args) {
 
 const NOT_WASM = {
   options: 'forced call did not run in WASM with the bits of ta-lib/js',
+  params: 'forced call did not run in WASM with the bits of ta-lib/js',
   buffered: 'forced call into caller buffers did not run in WASM with the bits of ta-lib/js (a package from before buffered calls ran in WASM fails here)',
   abstract: 'forced ta-lib/abstract call did not run in WASM with the bits of ta-lib/js/abstract (a package whose ta-lib/abstract is not routed fails here)',
 };
@@ -328,10 +355,16 @@ function stats(ns) {
   };
 }
 
-hooks.setEngineMode('force');
-const measured = bars.filter((n) => n >= lookback + 2);
+if (!tableMode) hooks.setEngineMode('force');
+else if (typeof engine.ready !== 'function') usage('this package\'s default entry has no ready(), so no table mode to time');
+else await engine.ready();
+const measured = bars.filter((n) => n >= lookback + 2 && !(opt.tail > n));
 for (const n of bars) {
-  if (n < lookback + 2) emit({ func: FUNC, form: opt.form, bars: n, lookback, skip: 'bars below lookback + 2' });
+  if (n < lookback + 2) emit({ ...head, bars: n, lookback, skip: 'bars below lookback + 2' });
+  else if (opt.tail > n) {
+    console.error(`${FUNC}: skipping ${n} bars: --tail=${opt.tail} is longer than the input`);
+    emit({ ...head, bars: n, lookback, skip: 'bars below --tail' });
+  }
 }
 
 let warmed = false;
@@ -346,8 +379,10 @@ for (const n of measured) {
   const status = hooks.engineStatus();
   const ref = form.js.once();
   const equal = form.same(got, ref);
-  if (fell !== 0 || moduleCalls !== 1 || status.engine !== 'wasm' || !equal) {
-    emit({ func: FUNC, form: opt.form, bars: n, error: NOT_WASM[opt.form], fallThroughs: fell, moduleCalls, reason: hooks.lastFallThrough(), engine: status, bitsEqual: equal });
+  const inModule = moduleCalls === 1;
+  if (fell !== 0 || !equal || (tableMode ? moduleCalls > 1 : !inModule || status.engine !== 'wasm')) {
+    const error = tableMode ? 'table-mode call fell through, entered the module more than once, or differs from the bits of ta-lib/js' : NOT_WASM[opt.form];
+    emit({ ...head, bars: n, error, fallThroughs: fell, moduleCalls, reason: hooks.lastFallThrough(), engine: status, bitsEqual: equal });
     process.exit(1);
   }
   const out = form.out(ref);
@@ -377,19 +412,19 @@ for (const n of measured) {
   const majors = await majorGcs();
   const fellDuring = hooks.fallThroughCount();
   if (fellDuring !== 0) {
-    emit({ func: FUNC, form: opt.form, bars: n, error: 'fall-through while timing', fallThroughs: fellDuring, reason: hooks.lastFallThrough() });
+    emit({ ...head, bars: n, error: 'fall-through while timing', fallThroughs: fellDuring, reason: hooks.lastFallThrough() });
     process.exit(1);
   }
   const js_ = { reps: reps.js, ...stats(ns.js) };
   const wasm_ = { reps: reps.wasm, ...stats(ns.wasm) };
   emit({
-    func: FUNC,
-    form: opt.form,
+    ...head,
     bars: n,
     lookback,
     rounds: opt.rounds,
     bitsEqual: true,
     fallThroughs: 0,
+    ...(tableMode && { inModule }),
     majorGcs: majors,
     nonzero,
     outputs: out.length,
