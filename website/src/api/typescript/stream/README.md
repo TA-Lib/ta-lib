@@ -72,7 +72,7 @@ const c = cdldojiOpen({ open, high, low, close });
 const pattern = c.update(o, h, l, cl);
 ```
 
-Without a sink, `update`, `peek` and `value` each return a new object. Passing one sink makes them allocation-free: they overwrite its fields and return it. The price is that **its contents are only valid until the next call that writes it**, so a `peek` into the sink `update` filled overwrites it. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
+Without a sink, `update`, `peek` and `value` each return a new object. Passing one sink reuses it: they overwrite its fields and return it, so no result object is created. The price is that **its contents are only valid until the next call that writes it**, so a `peek` into the sink `update` filled overwrites it. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
 
 ## Array-Fill Open
 

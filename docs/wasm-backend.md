@@ -36,5 +36,5 @@
 
 | # | Question | Settled by |
 |---|---|---|
-| W-O2 | A second binary with no relaxed SIMD and a software `fma`, for a runtime that fails W4 only on the fused check. Its `fma` must be `runtime/fma.ts`'s algorithm: a libm `fma` compiled to WASM is slower than TypeScript on every multiply-add chain | Its timings against TypeScript on a chain function and on one with no fused site, and the binary's size |
+| W-O2 | A second binary with no relaxed SIMD and a software `fma`, for a runtime that fails W4 only on the fused check, such as Bun on x86-64, whose engine computes `f64x2.relaxed_madd` unfused, so `ready()` reports reason `'fma'` there. Its `fma` must be `runtime/fma.ts`'s algorithm: a libm `fma` compiled to WASM is slower than TypeScript on every multiply-add chain | Its timings against TypeScript on a chain function and on one with no fused site, and the binary's size |
 | W-O5 | Auto-vectorisation with only `f64x2.relaxed_madd` relaxed: rewrite each relaxed min and max to `f64x2.pmin` and `f64x2.pmax` after the link | Bits on NaN and signed-zero inputs against the unvectorised module, then timings |

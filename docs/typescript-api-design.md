@@ -108,7 +108,7 @@ const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 20 });
 ```ts
 const m = macdOpen(history);
 const { outMacd, outMacdSignal } = m.update(101.2);   // a new object
-m.update(101.5, sink);                                 // fills and returns sink: no allocation
+m.update(101.5, sink);                                 // fills and returns sink: no result object
 ```
 
 - `update`, `peek` and `value` of a multi-output stream take an optional sink and return it, or a new object. Sink fields carry the result names (`outMacd`); a fresh sink starts at `NaN`.
