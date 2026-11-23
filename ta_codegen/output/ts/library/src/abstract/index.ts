@@ -39,6 +39,11 @@ import { answerRuntimeInfo, type RuntimeInfoKey } from './runtimeInfo.ts';
 import { DISPATCH } from './routedDispatch.ts';
 import { catalog, type FunctionCatalog } from './functions.ts';
 
+export { TALibError, RetCode } from '../runtime/errors.ts';
+export type { FailureRetCode, RetCodeName } from '../runtime/errors.ts';
+export { OutRange } from '../runtime/outRange.ts';
+export { Core, CoreBuilder, CandleSetting, CandleSettingType, RangeType } from '../runtime/core.ts';
+export { MAType, FuncUnstId } from '../enums.ts';
 export { FuncFlags, InputFlags, InputType, OptInputFlags, OptInputType, OutputFlags, OutputType } from './flags.ts';
 export { FuncInfo } from './funcInfo.ts';
 export type {
@@ -65,7 +70,12 @@ export const Functions: FunctionCatalog = catalog(DISPATCH);
 
 /**
  * Run-time state of this library, by key: the TypeScript analog of C's
- * `TA_GetRuntimeInfo()`. The keys: https://ta-lib.org/spec/abstract/#runtime-info.
+ * `TA_GetRuntimeInfo()` (https://ta-lib.org/spec/abstract/#runtime-info).
+ *
+ * - `vmath.transcendental`, `count.initialize`, `count.shutdown`: 0.
+ * - `wasm.engine`: 1 when this entry's WebAssembly engine is loaded, else 0.
+ * - `wasm.reason`: 0 while it is loaded, else its `EngineReason`:
+ *   1 `'not-loaded'`, 2 `'unavailable'`, 3 `'compile'`, 4 `'instantiate'`, 5 `'fma'`, 6 `'trap'`.
  *
  * @param key - One of the keys above; any other string is rejected at run time.
  * @throws `TALibError` with code `TA_BAD_PARAM` for an unknown key.

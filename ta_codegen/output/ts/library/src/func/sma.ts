@@ -202,8 +202,8 @@ export interface SmaOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -314,10 +314,10 @@ export function smaDisplayShift(outputIdx: number, options?: SmaOptions): number
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
  *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
  *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   input, a range bound that is not an int32, an integer parameter that is not an
- *   int32, a parameter outside its range, an input too short for the range, a buffer
- *   that is empty, too short or of the wrong type or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts

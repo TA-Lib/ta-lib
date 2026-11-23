@@ -292,6 +292,11 @@ fn sweep_abstract(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, s
     if routed_only != engine || !js_only.is_empty() {
         sweep.failures.push(format!("abstract entries: only ./abstract exports {routed_only:?}, only ./js/abstract {js_only:?}"));
     }
+    let runtime = entry_exports(&backends::ts::runtime_exports(""));
+    let unexported: Vec<&String> = runtime.difference(&js_public).collect();
+    if runtime.len() < 10 || !unexported.is_empty() {
+        sweep.failures.push(format!("abstract entries do not re-export the default entry's runtime names {unexported:?}"));
+    }
     let plain = &files.iter().find(|(n, _)| *n == "plain.ts").expect("abstract/plain.ts").1;
     let plain_public = entry_exports(plain);
     if plain_public != public {
@@ -306,7 +311,7 @@ fn sweep_abstract(funcs: &[ir::FuncDef], enums: &HashMap<String, ir::EnumDef>, s
         sweep_module(&format!("abstract/{name}"), text, &public, sweep);
     }
     let documented: usize = sweep.public_exports.values().sum::<usize>() - before;
-    if documented < public.len() - engine.len() {
+    if documented < public.len() - engine.len() - runtime.len() {
         sweep.failures.push(format!("abstract: {} barrel name(s), {documented} documented declaration(s)", public.len()));
     }
     sweep_module("js/abstract/index.ts", &js_entry, &public, sweep);

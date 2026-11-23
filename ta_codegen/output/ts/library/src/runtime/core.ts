@@ -50,16 +50,27 @@ import { RetCode, TALibError } from './errors.ts';
 
 /** The candle attribute a {@link CandleSetting} describes; C's order. */
 export const CandleSettingType = Object.freeze({
+  /** The length above which a real body counts as long. */
   BODY_LONG: 0,
+  /** The length above which a real body counts as very long. */
   BODY_VERY_LONG: 1,
+  /** The length below which a real body counts as short. */
   BODY_SHORT: 2,
+  /** The length below which a real body makes the candle a doji. */
   BODY_DOJI: 3,
+  /** The length above which a shadow counts as long. */
   SHADOW_LONG: 4,
+  /** The length above which a shadow counts as very long. */
   SHADOW_VERY_LONG: 5,
+  /** The length below which a shadow counts as short. */
   SHADOW_SHORT: 6,
+  /** The length below which a shadow counts as very short. */
   SHADOW_VERY_SHORT: 7,
+  /** The distance within which two prices count as near. */
   NEAR: 8,
+  /** The distance beyond which two prices count as far apart. */
   FAR: 9,
+  /** The distance within which two prices count as equal. */
   EQUAL: 10,
   /** Selects every setting, for {@link CoreBuilder.restoreCandleDefault} only. Pinned at 11; not a count. */
   ALL_CANDLE_SETTINGS: 11,
@@ -68,26 +79,37 @@ export type CandleSettingType = (typeof CandleSettingType)[keyof typeof CandleSe
 
 /** How a candle range is measured; C's order. */
 export const RangeType = Object.freeze({
+  /** The real body: open to close. */
   REAL_BODY: 0,
+  /** The whole candle: high to low. */
   HIGH_LOW: 1,
+  /** The mean of the upper and lower shadows. */
   SHADOWS: 2,
 } as const);
 export type RangeType = (typeof RangeType)[keyof typeof RangeType];
 
 const INDEX_MAX = 100000000;
-const UNSTABLE_AUTO_PREC_4 = INDEX_MAX + 4;
-const UNSTABLE_AUTO_PREC_8 = INDEX_MAX + 8;
+const UNSTABLE_AUTO_PREC_4 = 100000004;
+const UNSTABLE_AUTO_PREC_8 = 100000008;
 const FUNC_UNST_COUNT = FuncUnstIds.Count;
 
 /** One candlestick threshold: `factor` times the average of `rangeType` over `avgPeriod` previous candles. */
 export class CandleSetting {
-  readonly settingType: CandleSettingType;
+  /** The candle attribute this setting judges. */
+  readonly settingType: Exclude<CandleSettingType, typeof CandleSettingType.ALL_CANDLE_SETTINGS>;
+  /** What is measured on each candle and averaged. */
   readonly rangeType: RangeType;
   /** 0 means no averaging. */
   readonly avgPeriod: number;
+  /** The multiplier that turns the average into the threshold. */
   readonly factor: number;
 
-  constructor(settingType: CandleSettingType, rangeType: RangeType, avgPeriod: number, factor: number) {
+  constructor(
+    settingType: Exclude<CandleSettingType, typeof CandleSettingType.ALL_CANDLE_SETTINGS>,
+    rangeType: RangeType,
+    avgPeriod: number,
+    factor: number,
+  ) {
     this.settingType = settingType;
     this.rangeType = rangeType;
     this.avgPeriod = avgPeriod;
@@ -176,7 +198,7 @@ export class CoreBuilder {
       throw badParam(`candleSetting: factor must be finite and not negative, got ${factor}`);
     }
     this.candleSettings[settingType] = new CandleSetting(
-      (settingType | 0) as CandleSettingType,
+      (settingType | 0) as Exclude<CandleSettingType, typeof CandleSettingType.ALL_CANDLE_SETTINGS>,
       (rangeType | 0) as RangeType,
       avgPeriod | 0,
       factor,
@@ -297,8 +319,5 @@ export class Core {
     const stored = this.unstablePeriods[slot];
     return stored <= INDEX_MAX ? stored : stored === UNSTABLE_AUTO_PREC_4 ? prec4 : prec8;
   }
-
-  static {
-    Object.freeze(this);
-  }
 }
+Object.freeze(Core);

@@ -52,7 +52,7 @@ pub fn common() -> impl Iterator<Item = &'static str> {
     KEYS.iter().filter(|k| k.scope == Scope::Common).map(|k| k.name)
 }
 
-/// Where the keys are described. The one description: no emitted doc repeats it.
+/// Where the keys are described.
 const SPEC: &str = "https://ta-lib.org/spec/abstract/#runtime-info";
 
 fn quoted(separator: &str) -> String {
@@ -203,10 +203,17 @@ pub fn ts_fn() -> String {
 /// An abstract entry's `getRuntimeInfo`, answering from `status`.
 #[must_use]
 pub fn ts_entry_fn(status: &str) -> String {
+    let common = common().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
+    let reasons = WASM_REASONS.iter().zip(1..).map(|(r, code)| format!("{code} `'{r}'`")).collect::<Vec<_>>().join(", ");
     format!(
         "\n/**\n\
          \x20* Run-time state of this library, by key: the TypeScript analog of C's\n\
-         \x20* `TA_GetRuntimeInfo()`. The keys: {SPEC}.\n\
+         \x20* `TA_GetRuntimeInfo()` ({SPEC}).\n\
+         \x20*\n\
+         \x20* - {common}: 0.\n\
+         \x20* - `wasm.engine`: 1 when this entry's WebAssembly engine is loaded, else 0.\n\
+         \x20* - `wasm.reason`: 0 while it is loaded, else its `EngineReason`:\n\
+         \x20*   {reasons}.\n\
          \x20*\n\
          \x20* @param key - One of the keys above; any other string is rejected at run time.\n\
          \x20* @throws `TALibError` with code `TA_BAD_PARAM` for an unknown key.\n\

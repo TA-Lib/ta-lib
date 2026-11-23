@@ -430,8 +430,8 @@ export interface StochfOptions {
    */
   fastDMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -555,10 +555,10 @@ export function stochfDisplayShift(outputIdx: number, options?: StochfOptions): 
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
  *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
  *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   input, a range bound that is not an int32, an integer parameter that is not an
- *   int32, a parameter outside its range, an input too short for the range, a buffer
- *   that is empty, too short or of the wrong type, two buffers sharing memory or a
- *   buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
  *   anything is written.
  *
  * @example
@@ -878,8 +878,9 @@ export class StochfStream {
 
 /**
  * The outputs of one STOCHF bar, as `update`, `peek` and `value` return them.
- * Passed back to one of them, it is filled and returned again, with no allocation;
- * it holds its values until the next call that writes it. A new one holds `NaN`.
+ * Passed back to one of them, it is filled and returned again, so no result object
+ * is created; it holds its values until the next call that writes it. A new one
+ * holds `NaN`.
  */
 export class StochfOut {
   /** Raw %K stochastic line. */

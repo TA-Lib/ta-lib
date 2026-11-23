@@ -13,8 +13,8 @@
   2. Contents. The tarball holds exactly package.json, README.md, LICENSE and
      one .js plus one .d.ts per src/ module, a hand-written src/ .d.ts standing
      for a module the build writes; every packed .js opens with the
-     licence and holds no other comment, and every function's .d.ts keeps its
-     TSDoc; LICENSE and README are
+     licence and holds no other comment and no class static block, and every
+     function's .d.ts keeps its TSDoc; LICENSE and README are
      byte-identical to their sources; the version is VERSION; every code
      `exports` subpath, and each condition nested in one, lists "types" first
      and "default" last, and each non-root one has a typesVersions entry naming
@@ -344,6 +344,7 @@ def check_package(out_dir, ver, diff_snapshot):
                             % (subpath, conditions.get("types")))
 
     failures += dist_comment_failures(entries)
+    failures += static_block_failures(entries)
 
     tops, members, parse_failures = internal_names()
     failures += parse_failures
@@ -386,6 +387,18 @@ def dist_comment_failures(entries):
     print("--- comments checked: %d .js hold the licence alone, %d function .d.ts keep their TSDoc"
           % (len(js) - sum(e in bad for e in js), len(dts) - sum(e in bad for e in dts)))
     return failures
+
+
+STATIC_BLOCK = re.compile(rb"^\s*static\s*\{", re.M)
+
+
+def static_block_failures(entries):
+    bad = sorted(e for e in entries if e.startswith("package/dist/") and e.endswith(".js")
+                 and STATIC_BLOCK.search(entries[e]))
+    if bad:
+        return ["a class static block, which Metro's stock Babel preset rejects, in %s"
+                % ", ".join(e[len("package/"):] for e in bad[:10])]
+    return []
 
 
 def install(tarball, project):

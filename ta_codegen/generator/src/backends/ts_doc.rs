@@ -77,7 +77,7 @@ pub fn batch_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         "options that are not a plain object",
         "an option key the function does not have",
         "a `core` that is not a `Core`",
-        "an absent input",
+        "an absent or empty input",
         "a range bound that is not an int32",
     ];
     if func.optional_inputs.iter().any(|o| matches!(o.param_type, ParamType::Integer | ParamType::Enum(_))) {
@@ -182,7 +182,7 @@ pub fn param_text(func: &FuncDef, opt: &OptInput, enums: &HashMap<String, EnumDe
 }
 
 pub const START_IDX_KEY: &str =
-    "First bar of the requested range (default 0). Bars before it are still read as warm-up. Batch calls only.";
+    "First bar of the requested range (default 0). The lookback's bars before it are still read. Batch calls only.";
 pub const END_IDX_KEY: &str =
     "Last bar of the requested range, inclusive (default the last bar of the first input). Batch calls only.";
 pub const CORE_KEY: &str = CORE_PARAM;
@@ -451,8 +451,8 @@ pub fn out_class_docs(func: &FuncDef) -> String {
     let mut b = Block::new("");
     b.para(&format!(
         "The outputs of one {} bar, as `update`, `peek` and `value` return them. Passed back to one \
-         of them, it is filled and returned again, with no allocation; it holds its values until \
-         the next call that writes it. A new one holds `NaN`.",
+         of them, it is filled and returned again, so no result object is created; it holds its \
+         values until the next call that writes it. A new one holds `NaN`.",
         func.name
     ));
     b.render()
