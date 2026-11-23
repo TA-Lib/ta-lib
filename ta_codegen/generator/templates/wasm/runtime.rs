@@ -53,7 +53,9 @@ pub extern "C" fn scratch(bytes: usize) -> *mut f64 {
     let mut buf = SCRATCH.lock().unwrap_or_else(PoisonError::into_inner);
     let words = bytes.div_ceil(size_of::<f64>());
     if buf.len() < words {
-        buf.resize(words, 0.0);
+        // Released before the larger one is allocated, which may then reuse its space.
+        *buf = Vec::new();
+        *buf = vec![0.0; words];
     }
     let start = buf.as_ptr() as usize;
     FRAME[0].store(start, Ordering::Relaxed);
