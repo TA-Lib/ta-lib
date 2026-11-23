@@ -45,7 +45,7 @@
  *  090807 MF     Initial Version
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -132,7 +132,7 @@ export function expPositional(
  * Options of {@link exp}, {@link expLookback}, {@link expDisplayShift},
  * {@link expOpen} and {@link expOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface ExpOptions {
   /**
@@ -160,6 +160,22 @@ export interface ExpOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function expOptionsOf(funcName: string, options: ExpOptions | undefined): ExpOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link exp} returns, and {@link expOpenAndFill} with its stream. */
 export interface ExpResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -175,15 +191,16 @@ export interface ExpResult {
  * Number of leading input bars {@link exp} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ExpOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ExpOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function expLookback(options?: ExpOptions): number {
-  const o = optionsOf('EXP lookback', options);
+  const o = expOptionsOf('EXP lookback', options);
   return expLookbackPositional(coreOf('EXP lookback', o.core));
 }
 
@@ -194,15 +211,16 @@ export function expLookback(options?: ExpOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ExpOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ExpOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function expDisplayShift(outputIdx: number, options?: ExpOptions): number {
-  const o = optionsOf('EXP displayShift', options);
+  const o = expOptionsOf('EXP displayShift', options);
   return expDisplayShiftPositional(outputIdx, coreOf('EXP displayShift', o.core));
 }
 
@@ -227,11 +245,11 @@ export function expDisplayShift(outputIdx: number, options?: ExpOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -246,7 +264,7 @@ export function expDisplayShift(outputIdx: number, options?: ExpOptions): number
  * @see [`sqrt`](https://ta-lib.org/functions/sqrt)
  */
 export function exp(real: ArrayLike<number>, options?: ExpOptions): ExpResult {
-  const o = optionsOf('EXP', options);
+  const o = expOptionsOf('EXP', options);
   if (o.endIdx === undefined) {
     requireSeries('EXP', 'real', real);
   }
@@ -484,13 +502,13 @@ export function expOpenAndFillPositional(
  * history bar, bit-identical to {@link exp} there.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ExpOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ExpOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `expLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core` or an absent
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -504,7 +522,7 @@ export function expOpenAndFillPositional(
  * ```
  */
 export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStream {
-  const o = optionsOf('EXP open', options);
+  const o = expOptionsOf('EXP open', options);
   const core = coreOf('EXP open', o.core);
   return expOpenPositional(real, core);
 }
@@ -514,17 +532,18 @@ export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStrea
  * same pass, bit-identically to {@link exp}.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link ExpOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link ExpOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link exp} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `expLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input or a buffer too short, of the wrong
+ *   type or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -537,7 +556,7 @@ export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStrea
  * ```
  */
 export function expOpenAndFill(real: ArrayLike<number>, options?: ExpOptions): ExpResult & { stream: ExpStream } {
-  const o = optionsOf('EXP openAndFill', options);
+  const o = expOptionsOf('EXP openAndFill', options);
   const core = coreOf('EXP openAndFill', o.core);
   const capacity = fillCapacity(expLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

@@ -223,6 +223,10 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
         assert_eq!(body[..gate_at].matches("fellThrough(").count(), 1, "only an empty input counts above the threshold check:\n{body}");
         assert!(body[..gate_at].contains("if (n < 1) {\n    return fellThrough('input');"), "{body}");
     }
+    // A call the threshold leaves in `./js` walks its option keys there alone.
+    let options_front = &text[at("function smaWasm(")..at("function smaBuffered(")];
+    let walk = options_front.find("o = smaOptionsOf('SMA', options);").unwrap_or_else(|| panic!("no options walk:\n{options_front}"));
+    assert!(walk > options_front.find(gate).unwrap(), "the options walk precedes the threshold:\n{options_front}");
     let into = &text[at("function smaInto(")..];
     assert!(into.contains("wasmFrame(") && !into.contains("WASM_FROM_BARS"));
 

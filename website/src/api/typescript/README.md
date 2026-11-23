@@ -159,7 +159,7 @@ import { smaLookback } from 'ta-lib';
 const lookback = smaLookback({ timePeriod: 30 });   // 29 for a 30-period SMA
 ```
 
-Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
+Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the option keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -183,7 +183,8 @@ Misuse throws a `TALibError` rather than returning a return code. Its `code` nam
 | `endIdx` negative, above `Core.INDEX_MAX`, or below `startIdx` | `'TA_OUT_OF_RANGE_END_INDEX'` |
 | Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
-| Options that are not a plain object, an array included | `'TA_BAD_PARAM'` |
+| Options that are not a plain object, such as an array, a `Map` or a `Core` | `'TA_BAD_PARAM'` |
+| An option key the function does not have, such as a misspelt `timeperiod` | `'TA_BAD_PARAM'` |
 | Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
 | A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
 | An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |

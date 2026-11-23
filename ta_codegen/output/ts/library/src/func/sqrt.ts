@@ -45,7 +45,7 @@
  *  090807 MF     Initial Version
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -138,7 +138,7 @@ export function sqrtPositional(
  * Options of {@link sqrt}, {@link sqrtLookback}, {@link sqrtDisplayShift},
  * {@link sqrtOpen} and {@link sqrtOpenAndFill}. Every key is optional: an omitted
  * or `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface SqrtOptions {
   /**
@@ -166,6 +166,22 @@ export interface SqrtOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function sqrtOptionsOf(funcName: string, options: SqrtOptions | undefined): SqrtOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link sqrt} returns, and {@link sqrtOpenAndFill} with its stream. */
 export interface SqrtResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -181,15 +197,16 @@ export interface SqrtResult {
  * Number of leading input bars {@link sqrt} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link SqrtOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link SqrtOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function sqrtLookback(options?: SqrtOptions): number {
-  const o = optionsOf('SQRT lookback', options);
+  const o = sqrtOptionsOf('SQRT lookback', options);
   return sqrtLookbackPositional(coreOf('SQRT lookback', o.core));
 }
 
@@ -200,15 +217,16 @@ export function sqrtLookback(options?: SqrtOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link SqrtOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link SqrtOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function sqrtDisplayShift(outputIdx: number, options?: SqrtOptions): number {
-  const o = optionsOf('SQRT displayShift', options);
+  const o = sqrtOptionsOf('SQRT displayShift', options);
   return sqrtDisplayShiftPositional(outputIdx, coreOf('SQRT displayShift', o.core));
 }
 
@@ -233,11 +251,11 @@ export function sqrtDisplayShift(outputIdx: number, options?: SqrtOptions): numb
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -250,7 +268,7 @@ export function sqrtDisplayShift(outputIdx: number, options?: SqrtOptions): numb
  * ```
  */
 export function sqrt(real: ArrayLike<number>, options?: SqrtOptions): SqrtResult {
-  const o = optionsOf('SQRT', options);
+  const o = sqrtOptionsOf('SQRT', options);
   if (o.endIdx === undefined) {
     requireSeries('SQRT', 'real', real);
   }
@@ -488,13 +506,13 @@ export function sqrtOpenAndFillPositional(
  * history bar, bit-identical to {@link sqrt} there.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link SqrtOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link SqrtOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `sqrtLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core` or an absent
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -507,7 +525,7 @@ export function sqrtOpenAndFillPositional(
  * ```
  */
 export function sqrtOpen(real: ArrayLike<number>, options?: SqrtOptions): SqrtStream {
-  const o = optionsOf('SQRT open', options);
+  const o = sqrtOptionsOf('SQRT open', options);
   const core = coreOf('SQRT open', o.core);
   return sqrtOpenPositional(real, core);
 }
@@ -517,17 +535,18 @@ export function sqrtOpen(real: ArrayLike<number>, options?: SqrtOptions): SqrtSt
  * same pass, bit-identically to {@link sqrt}.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link SqrtOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link SqrtOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link sqrt} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `sqrtLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input or a buffer too short, of the wrong
+ *   type or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -539,7 +558,7 @@ export function sqrtOpen(real: ArrayLike<number>, options?: SqrtOptions): SqrtSt
  * ```
  */
 export function sqrtOpenAndFill(real: ArrayLike<number>, options?: SqrtOptions): SqrtResult & { stream: SqrtStream } {
-  const o = optionsOf('SQRT openAndFill', options);
+  const o = sqrtOptionsOf('SQRT openAndFill', options);
   const core = coreOf('SQRT openAndFill', o.core);
   const capacity = fillCapacity(sqrtLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

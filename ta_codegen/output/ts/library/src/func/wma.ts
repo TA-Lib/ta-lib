@@ -49,7 +49,7 @@
  *               and on the bar a large value leaves the window.
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -333,7 +333,7 @@ export function wmaPositional(
  * Options of {@link wma}, {@link wmaLookback}, {@link wmaDisplayShift},
  * {@link wmaOpen} and {@link wmaOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface WmaOptions {
   /**
@@ -366,6 +366,22 @@ export interface WmaOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function wmaOptionsOf(funcName: string, options: WmaOptions | undefined): WmaOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link wma} returns, and {@link wmaOpenAndFill} with its stream. */
 export interface WmaResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -381,15 +397,16 @@ export interface WmaResult {
  * Number of leading input bars {@link wma} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link WmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link WmaOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function wmaLookback(options?: WmaOptions): number {
-  const o = optionsOf('WMA lookback', options);
+  const o = wmaOptionsOf('WMA lookback', options);
   return wmaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('WMA lookback', o.core));
 }
 
@@ -400,15 +417,16 @@ export function wmaLookback(options?: WmaOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link WmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link WmaOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function wmaDisplayShift(outputIdx: number, options?: WmaOptions): number {
-  const o = optionsOf('WMA displayShift', options);
+  const o = wmaOptionsOf('WMA displayShift', options);
   return wmaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('WMA displayShift', o.core));
 }
 
@@ -435,12 +453,12 @@ export function wmaDisplayShift(outputIdx: number, options?: WmaOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an integer parameter that is not an
+ *   int32, a parameter outside its range, an input too short for the range, a buffer
+ *   that is empty, too short or of the wrong type or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -458,7 +476,7 @@ export function wmaDisplayShift(outputIdx: number, options?: WmaOptions): number
  * @see [`tema`](https://ta-lib.org/functions/tema)
  */
 export function wma(real: ArrayLike<number>, options?: WmaOptions): WmaResult {
-  const o = optionsOf('WMA', options);
+  const o = wmaOptionsOf('WMA', options);
   if (o.endIdx === undefined) {
     requireSeries('WMA', 'real', real);
   }
@@ -1136,13 +1154,14 @@ export function wmaOpenAndFillPositional(
  * history bar, bit-identical to {@link wma} there.
  *
  * @param real - Warm-up history. Source price/data series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link WmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link WmaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `wmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1156,7 +1175,7 @@ export function wmaOpenAndFillPositional(
  * ```
  */
 export function wmaOpen(real: ArrayLike<number>, options?: WmaOptions): WmaStream {
-  const o = optionsOf('WMA open', options);
+  const o = wmaOptionsOf('WMA open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('WMA open', o.core);
   return wmaOpenPositional(real, optInTimePeriod, core);
@@ -1167,18 +1186,19 @@ export function wmaOpen(real: ArrayLike<number>, options?: WmaOptions): WmaStrea
  * same pass, bit-identically to {@link wma}.
  *
  * @param real - Warm-up history. Source price/data series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link WmaOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link WmaOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link wma} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `wmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1191,7 +1211,7 @@ export function wmaOpen(real: ArrayLike<number>, options?: WmaOptions): WmaStrea
  * ```
  */
 export function wmaOpenAndFill(real: ArrayLike<number>, options?: WmaOptions): WmaResult & { stream: WmaStream } {
-  const o = optionsOf('WMA openAndFill', options);
+  const o = wmaOptionsOf('WMA openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('WMA openAndFill', o.core);
   const capacity = fillCapacity(wmaLookbackPositional(optInTimePeriod, core), real);

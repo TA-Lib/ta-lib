@@ -48,7 +48,7 @@
  *  112605 MF   Fix outBegIdx when startIdx != 0
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -159,7 +159,8 @@ export function typpricePositional(
  * Options of {@link typprice}, {@link typpriceLookback},
  * {@link typpriceDisplayShift}, {@link typpriceOpen} and
  * {@link typpriceOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface TyppriceOptions {
   /**
@@ -187,6 +188,22 @@ export interface TyppriceOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function typpriceOptionsOf(funcName: string, options: TyppriceOptions | undefined): TyppriceOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link typprice} returns, and {@link typpriceOpenAndFill} with its stream. */
 export interface TyppriceResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -199,15 +216,16 @@ export interface TyppriceResult {
  * Number of leading input bars {@link typprice} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link TyppriceOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link TyppriceOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function typpriceLookback(options?: TyppriceOptions): number {
-  const o = optionsOf('TYPPRICE lookback', options);
+  const o = typpriceOptionsOf('TYPPRICE lookback', options);
   return typpriceLookbackPositional(coreOf('TYPPRICE lookback', o.core));
 }
 
@@ -218,15 +236,16 @@ export function typpriceLookback(options?: TyppriceOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link TyppriceOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link TyppriceOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function typpriceDisplayShift(outputIdx: number, options?: TyppriceOptions): number {
-  const o = optionsOf('TYPPRICE displayShift', options);
+  const o = typpriceOptionsOf('TYPPRICE displayShift', options);
   return typpriceDisplayShiftPositional(outputIdx, coreOf('TYPPRICE displayShift', o.core));
 }
 
@@ -250,11 +269,11 @@ export function typpriceDisplayShift(outputIdx: number, options?: TyppriceOption
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -273,7 +292,7 @@ export function typpriceDisplayShift(outputIdx: number, options?: TyppriceOption
  */
 export function typprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: TyppriceOptions): TyppriceResult {
   requireArgument('TYPPRICE', 'prices', prices);
-  const o = optionsOf('TYPPRICE', options);
+  const o = typpriceOptionsOf('TYPPRICE', options);
   if (o.endIdx === undefined) {
     requireSeries('TYPPRICE', 'prices.high', prices.high);
     requireSeries('TYPPRICE', 'prices.low', prices.low);
@@ -559,13 +578,14 @@ export function typpriceOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link TyppriceOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link TyppriceOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `typpriceLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input or histories of different lengths.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input or histories of different
+ *   lengths.
  *
  * @example
  * ```ts
@@ -584,7 +604,7 @@ export function typpriceOpenAndFillPositional(
  */
 export function typpriceOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: TyppriceOptions): TyppriceStream {
   requireArgument('TYPPRICE open', 'prices', prices);
-  const o = optionsOf('TYPPRICE open', options);
+  const o = typpriceOptionsOf('TYPPRICE open', options);
   const core = coreOf('TYPPRICE open', o.core);
   return typpriceOpenPositional(prices.high, prices.low, prices.close, core);
 }
@@ -597,18 +617,18 @@ export function typpriceOpen(prices: { open?: ArrayLike<number> | undefined; hig
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link TyppriceOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link TyppriceOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link typprice} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `typpriceLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, histories of different lengths or a buffer too short, of the wrong type
- *   or starting where another buffer or a `Float64Array` input starts, or, on a
- *   history long enough to open, one sharing memory with another buffer or a
- *   `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, histories of different
+ *   lengths or a buffer too short, of the wrong type or starting where another
+ *   buffer or a `Float64Array` input starts, or, on a history long enough to open,
+ *   one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -626,7 +646,7 @@ export function typpriceOpen(prices: { open?: ArrayLike<number> | undefined; hig
  */
 export function typpriceOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: TyppriceOptions): TyppriceResult & { stream: TyppriceStream } {
   requireArgument('TYPPRICE openAndFill', 'prices', prices);
-  const o = optionsOf('TYPPRICE openAndFill', options);
+  const o = typpriceOptionsOf('TYPPRICE openAndFill', options);
   const core = coreOf('TYPPRICE openAndFill', o.core);
   const capacity = fillCapacity(typpriceLookbackPositional(core), prices.high, prices.low, prices.close);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

@@ -46,7 +46,7 @@
  */
 
 
-import { float64, isOptionsObject, overlaps } from './checks.ts';
+import { float64, overlaps } from './checks.ts';
 import { Core } from './core.ts';
 
 /** @internal */
@@ -87,7 +87,6 @@ const OUT_OF_FRAME = -2147483647;
 /** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
-const NO_OPTIONS = Object.freeze({});
 
 /**
  * Why the WebAssembly engine is not loaded:
@@ -472,14 +471,6 @@ export class StrictFallThrough extends Error {
  */
 export function strictFallThrough(funcName: string, _accepted: unknown): never {
   throw new StrictFallThrough(funcName, lastReason);
-}
-
-/** @internal An omitted options object, or one `ta-lib/js` accepts; `null` for anything else. */
-export function routedOptions<T extends object>(options: T | undefined): T | null {
-  if (options === undefined) {
-    return NO_OPTIONS as T;
-  }
-  return isOptionsObject(options) ? options : null;
 }
 
 /** @internal */

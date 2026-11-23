@@ -73,7 +73,13 @@ pub fn batch_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
             names.result_type
         ),
     );
-    let mut causes = vec!["options that are not an object", "a `core` that is not a `Core`", "an absent input", "a range bound that is not an int32"];
+    let mut causes = vec![
+        "options that are not a plain object",
+        "an option key the function does not have",
+        "a `core` that is not a `Core`",
+        "an absent input",
+        "a range bound that is not an int32",
+    ];
     if func.optional_inputs.iter().any(|o| matches!(o.param_type, ParamType::Integer | ParamType::Enum(_))) {
         causes.push("an integer parameter that is not an int32");
     }
@@ -138,7 +144,7 @@ pub fn options_docs(func: &FuncDef) -> String {
     let mut b = Block::new("");
     b.para(&format!(
         "Options of {}. Every key is optional: an omitted or `undefined` key takes its default, and a \
-         call ignores the keys it has no use for.",
+         call ignores the keys it has no use for. A key that is not one of these is `TA_BAD_PARAM`.",
         any_and(&refs)
     ));
     b.render()
@@ -207,7 +213,7 @@ pub fn result_field_text(func: &FuncDef, out: &Output) -> String {
     format!("{desc}{stop} `{key}[k]` is the value at input bar `begIdx + k`.")
 }
 
-const OPTIONS_IGNORED: &str = "other keys are ignored";
+const OPTIONS_IGNORED: &str = "the function's other option keys are ignored";
 
 /// `<n>Lookback`.
 #[must_use]
@@ -234,8 +240,8 @@ pub fn lookback_docs(func: &FuncDef) -> String {
 
 /// Lookback and display shift answer a rejected parameter with a value, but
 /// not a caller error in the call's shape.
-const OPTIONS_THROW: &str =
-    "`TALibError` with code `TA_BAD_PARAM` when `options` is not an object or `core` is not a `Core`.";
+const OPTIONS_THROW: &str = "`TALibError` with code `TA_BAD_PARAM` for options that are not a plain object, an \
+     option key the function does not have or a `core` that is not a `Core`.";
 
 /// `<n>DisplayShift`.
 #[must_use]
@@ -467,7 +473,12 @@ const CEILING_THROWS: &str =
 
 fn open_throws(func: &FuncDef, fill: bool) -> String {
     let names = ts_names(&func.name);
-    let mut causes = vec!["options that are not an object", "a `core` that is not a `Core`", "an absent input"];
+    let mut causes = vec![
+        "options that are not a plain object",
+        "an option key the function does not have",
+        "a `core` that is not a `Core`",
+        "an absent input",
+    ];
     if func.optional_inputs.iter().any(|o| matches!(o.param_type, ParamType::Integer | ParamType::Enum(_))) {
         causes.push("an integer parameter that is not an int32");
     }

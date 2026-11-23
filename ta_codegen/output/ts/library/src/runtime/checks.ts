@@ -352,28 +352,59 @@ export function badSink(funcName: string, className: string): TALibError {
   return new TALibError(RetCode.BAD_PARAM, `${funcName}: out must be a ${className}`);
 }
 
-const NO_OPTIONS = Object.freeze({});
+/** @internal What an omitted options object reads as. */
+export const NO_OPTIONS = Object.freeze({});
 
-/** @internal What {@link optionsOf} accepts as an options object. */
-export function isOptionsObject(options: unknown): options is object {
-  return typeof options === 'object' && options !== null && !Array.isArray(options) && !ArrayBuffer.isView(options);
+/**
+ * @internal An options object must be plain: its prototype null or a root
+ * prototype, which `Object.prototype` is in every realm. A `Core`, a `Map`, an
+ * array or any class instance passed where the options go would otherwise run
+ * the call with every default and no error.
+ */
+export function isPlainOptions(options: unknown): boolean {
+  if (typeof options !== 'object' || options === null) {
+    return false;
+  }
+  const proto: unknown = Object.getPrototypeOf(options);
+  return proto === Object.prototype || proto === null || Object.getPrototypeOf(proto) === null;
+}
+
+/** @internal */
+export function notPlainOptions(funcName: string, options: unknown): TALibError {
+  let got: string;
+  if (Array.isArray(options)) {
+    got = 'an array';
+  } else if (ArrayBuffer.isView(options)) {
+    got = 'a typed array or DataView';
+  } else if (typeof options === 'object' && options !== null) {
+    const ctor: unknown = (Object.getPrototypeOf(options) as { constructor?: unknown }).constructor;
+    const name = typeof ctor === 'function' ? ctor.name : '';
+    got = name !== '' && name !== 'Object' ? `an instance of ${name}` : 'an object that inherits from another object';
+  } else {
+    got = show(options);
+  }
+  return new TALibError(RetCode.BAD_PARAM, `${funcName}: options must be a plain object, got ${got}`);
 }
 
 /**
- * @internal The options object of a public call: an omitted one has every
- * default. `null`, a primitive or an array is a caller error, not a request for
- * defaults: a second series passed where the options go would otherwise run
- * the call with every default and no error.
+ * @internal A `for...in` key off the function's own keys (`keys`, space
+ * separated). `for...in` also yields inherited enumerable keys, which are not
+ * the caller's and pass.
  */
-export function optionsOf<T extends object>(funcName: string, options: T | undefined): T {
-  if (options === undefined) {
-    return NO_OPTIONS as T;
+export function unknownOption(funcName: string, options: object, key: string, keys: string): void {
+  if (!Object.hasOwn(options, key)) {
+    return;
   }
-  if (!isOptionsObject(options)) {
-    const got = Array.isArray(options) ? 'an array' : ArrayBuffer.isView(options) ? 'a typed array or DataView' : show(options);
-    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: options must be a plain object, got ${got}`);
-  }
-  return options;
+  const loose = looseKey(key);
+  const near = keys.split(' ').find((k) => looseKey(k) === loose);
+  const hint = near === undefined ? '' : `; did you mean ${show(near)}?`;
+  throw new TALibError(RetCode.BAD_PARAM, `${funcName}: unknown option ${show(key)}${hint}`);
+}
+
+/** A key as C (`optInSlowK_MAType`) or a caller ignoring case would spell it. */
+function looseKey(key: string): string {
+  const k = key.toLowerCase().replace(/_/g, '');
+  return k.startsWith('optin') ? k.slice(5) : k;
 }
 
 /**

@@ -3093,3 +3093,51 @@ test('the default entry replaces exactly the routed batch calls and re-exports e
   }
   for (const name of names) assert.ok(name in j, `${name} is not a ta-lib/js export`);
 });
+
+test('every routed function rejects a key that is not one of its option keys before the module, as ta-lib/js does, and runs in WASM given every key it has', () => {
+  hooks.setEngineMode('strict');
+  hooks.resetFallThroughs();
+  let rejected = 0;
+  let ran = 0;
+  try {
+    for (const row of ROWS) {
+      const f = (routed as unknown as Record<string, Fn>)[row.fn];
+      const g = (js as unknown as Record<string, Fn>)[row.fn];
+      const keys = [...row.params.map((p) => p.key), 'startIdx', 'endIdx', 'core', ...row.bufs];
+      for (const bad of [{ [keys[0].toUpperCase()]: undefined }, new Map()]) {
+        const where = `${row.name} ${bad instanceof Map ? 'a Map' : `key ${keys[0].toUpperCase()}`}`;
+        const want = outcome(g, [...row.args(DATA), bad]);
+        const entered = hooks.moduleCalls();
+        const got = outcome(f, [...row.args(DATA), bad]);
+        assert.ok(want.error instanceof TALibError && want.error.code === 'TA_BAD_PARAM', `${where}: ta-lib/js gave ${String(want.error)}`);
+        assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}`);
+        assert.equal(got.error.message, want.error.message, where);
+        assert.equal(hooks.lastFallThrough(), 'options', where);
+        assert.equal(hooks.moduleCalls(), entered, `${where}: entered the module`);
+        rejected++;
+      }
+      const mine = blank(row.outs, N);
+      const theirs = blank(row.outs, N);
+      const every = (bs: Arr[]): Record<string, unknown> => ({
+        ...Object.fromEntries(row.params.map((p) => [p.key, undefined])),
+        startIdx: 0,
+        endIdx: N - 1,
+        core: Core.DEFAULT,
+        ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])),
+      });
+      assert.deepEqual(Object.keys(every(mine)).sort(), [...keys].sort(), `${row.name}: the object misses a key`);
+      const entered = hooks.moduleCalls();
+      const got = outcome(f, [...row.args(DATA), every(mine)]);
+      assert.equal(got.error, undefined, `${row.name} every key: ${String(got.error)}`);
+      assert.equal(hooks.moduleCalls() - entered, 1, `${row.name} every key: the module counted no batch call`);
+      sameResult(got.value!, outcome(g, [...row.args(DATA), every(theirs)]).value!, `${row.name} every key`);
+      sameBuffers(mine, theirs, `${row.name} every key`);
+      ran++;
+    }
+    assert.equal(hooks.fallThroughCount(), rejected, 'a call ta-lib/js accepts fell through');
+  } finally {
+    hooks.setEngineMode('table');
+  }
+  assert.equal(rejected, 2 * ROWS.length);
+  assert.equal(ran, ROWS.length);
+});

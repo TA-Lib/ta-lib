@@ -51,7 +51,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -369,7 +369,8 @@ export function macdextPositional(
  * Options of {@link macdext}, {@link macdextLookback},
  * {@link macdextDisplayShift}, {@link macdextOpen} and {@link macdextOpenAndFill}.
  * Every key is optional: an omitted or `undefined` key takes its default, and a
- * call ignores the keys it has no use for.
+ * call ignores the keys it has no use for. A key that is not one of these is
+ * `TA_BAD_PARAM`.
  */
 export interface MacdextOptions {
   /**
@@ -449,6 +450,22 @@ export interface MacdextOptions {
   outMacdHist?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function macdextOptionsOf(funcName: string, options: MacdextOptions | undefined): MacdextOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastPeriod' && k !== 'fastMaType' && k !== 'slowPeriod' && k !== 'slowMaType' && k !== 'signalPeriod' && k !== 'signalMaType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outMacd' && k !== 'outMacdSignal' && k !== 'outMacdHist') {
+      unknownOption(funcName, options, k, 'fastPeriod fastMaType slowPeriod slowMaType signalPeriod signalMaType startIdx endIdx core outMacd outMacdSignal outMacdHist');
+    }
+  }
+  return options;
+}
+
 /** What {@link macdext} returns, and {@link macdextOpenAndFill} with its stream. */
 export interface MacdextResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -474,15 +491,16 @@ export interface MacdextResult {
  * Number of leading input bars {@link macdext} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MacdextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MacdextOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function macdextLookback(options?: MacdextOptions): number {
-  const o = optionsOf('MACDEXT lookback', options);
+  const o = macdextOptionsOf('MACDEXT lookback', options);
   return macdextLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastMaType, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowMaType, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), coreOf('MACDEXT lookback', o.core));
 }
 
@@ -493,15 +511,16 @@ export function macdextLookback(options?: MacdextOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MacdextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MacdextOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions): number {
-  const o = optionsOf('MACDEXT displayShift', options);
+  const o = macdextOptionsOf('MACDEXT displayShift', options);
   return macdextDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastMaType, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowMaType, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('MACDEXT displayShift', o.core));
 }
 
@@ -537,12 +556,13 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an integer parameter that is not an
+ *   int32, a parameter outside its range, an input too short for the range, a buffer
+ *   that is empty, too short or of the wrong type, two buffers sharing memory or a
+ *   buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -576,7 +596,7 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  */
 export function macdext(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult {
-  const o = optionsOf('MACDEXT', options);
+  const o = macdextOptionsOf('MACDEXT', options);
   if (o.endIdx === undefined) {
     requireSeries('MACDEXT', 'real', real);
   }
@@ -1175,14 +1195,14 @@ export function macdextOpenAndFillPositional(
  * last history bar, bit-identical to {@link macdext} there.
  *
  * @param real - Warm-up history. Source series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MacdextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MacdextOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32 or a parameter outside its
- *   range.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1203,7 +1223,7 @@ export function macdextOpenAndFillPositional(
  * ```
  */
 export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): MacdextStream {
-  const o = optionsOf('MACDEXT open', options);
+  const o = macdextOptionsOf('MACDEXT open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInFastMAType = orDefault(o.fastMaType, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
@@ -1219,18 +1239,19 @@ export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): 
  * same pass, bit-identically to {@link macdext}.
  *
  * @param real - Warm-up history. Source series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link MacdextOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link MacdextOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link macdext} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or a buffer too short, of the
+ *   wrong type or starting where another buffer or a `Float64Array` input starts,
+ *   or, on a history long enough to open, one sharing memory with another buffer or
+ *   a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1256,7 +1277,7 @@ export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): 
  * ```
  */
 export function macdextOpenAndFill(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult & { stream: MacdextStream } {
-  const o = optionsOf('MACDEXT openAndFill', options);
+  const o = macdextOptionsOf('MACDEXT openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInFastMAType = orDefault(o.fastMaType, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);

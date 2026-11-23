@@ -48,7 +48,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -454,7 +454,7 @@ export function kstextPositional(
  * Options of {@link kstext}, {@link kstextLookback}, {@link kstextDisplayShift},
  * {@link kstextOpen} and {@link kstextOpenAndFill}. Every key is optional: an
  * omitted or `undefined` key takes its default, and a call ignores the keys it has
- * no use for.
+ * no use for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface KstextOptions {
   /**
@@ -549,6 +549,22 @@ export interface KstextOptions {
   outKstSignal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function kstextOptionsOf(funcName: string, options: KstextOptions | undefined): KstextOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'roc1Period' && k !== 'roc2Period' && k !== 'roc3Period' && k !== 'roc4Period' && k !== 'ma1Period' && k !== 'ma2Period' && k !== 'ma3Period' && k !== 'ma4Period' && k !== 'signalPeriod' && k !== 'rocMaType' && k !== 'signalMaType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outKst' && k !== 'outKstSignal') {
+      unknownOption(funcName, options, k, 'roc1Period roc2Period roc3Period roc4Period ma1Period ma2Period ma3Period ma4Period signalPeriod rocMaType signalMaType startIdx endIdx core outKst outKstSignal');
+    }
+  }
+  return options;
+}
+
 /** What {@link kstext} returns, and {@link kstextOpenAndFill} with its stream. */
 export interface KstextResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -566,15 +582,16 @@ export interface KstextResult {
  * Number of leading input bars {@link kstext} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstextOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function kstextLookback(options?: KstextOptions): number {
-  const o = optionsOf('KSTEXT lookback', options);
+  const o = kstextOptionsOf('KSTEXT lookback', options);
   return kstextLookbackPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.ma1Period, Core.INTEGER_DEFAULT), orDefault(o.ma2Period, Core.INTEGER_DEFAULT), orDefault(o.ma3Period, Core.INTEGER_DEFAULT), orDefault(o.ma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.rocMaType, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), coreOf('KSTEXT lookback', o.core));
 }
 
@@ -585,15 +602,16 @@ export function kstextLookback(options?: KstextOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstextOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): number {
-  const o = optionsOf('KSTEXT displayShift', options);
+  const o = kstextOptionsOf('KSTEXT displayShift', options);
   return kstextDisplayShiftPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.ma1Period, Core.INTEGER_DEFAULT), orDefault(o.ma2Period, Core.INTEGER_DEFAULT), orDefault(o.ma3Period, Core.INTEGER_DEFAULT), orDefault(o.ma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.rocMaType, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('KSTEXT displayShift', o.core));
 }
 
@@ -637,12 +655,13 @@ export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): 
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an integer parameter that is not an
+ *   int32, a parameter outside its range, an input too short for the range, a buffer
+ *   that is empty, too short or of the wrong type, two buffers sharing memory or a
+ *   buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -674,7 +693,7 @@ export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): 
  * @see [`coppock`](https://ta-lib.org/functions/coppock)
  */
 export function kstext(real: ArrayLike<number>, options?: KstextOptions): KstextResult {
-  const o = optionsOf('KSTEXT', options);
+  const o = kstextOptionsOf('KSTEXT', options);
   if (o.endIdx === undefined) {
     requireSeries('KSTEXT', 'real', real);
   }
@@ -1430,14 +1449,14 @@ export function kstextOpenAndFillPositional(
  * last history bar, bit-identical to {@link kstext} there.
  *
  * @param real - Warm-up history. Source price series (canonically the close)
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstextOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstextOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32 or a parameter outside its
- *   range.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1463,7 +1482,7 @@ export function kstextOpenAndFillPositional(
  * ```
  */
 export function kstextOpen(real: ArrayLike<number>, options?: KstextOptions): KstextStream {
-  const o = optionsOf('KSTEXT open', options);
+  const o = kstextOptionsOf('KSTEXT open', options);
   const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
   const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
   const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
@@ -1484,18 +1503,19 @@ export function kstextOpen(real: ArrayLike<number>, options?: KstextOptions): Ks
  * same pass, bit-identically to {@link kstext}.
  *
  * @param real - Warm-up history. Source price series (canonically the close)
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link KstextOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link KstextOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link kstext} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or a buffer too short, of the
+ *   wrong type or starting where another buffer or a `Float64Array` input starts,
+ *   or, on a history long enough to open, one sharing memory with another buffer or
+ *   a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1525,7 +1545,7 @@ export function kstextOpen(real: ArrayLike<number>, options?: KstextOptions): Ks
  * ```
  */
 export function kstextOpenAndFill(real: ArrayLike<number>, options?: KstextOptions): KstextResult & { stream: KstextStream } {
-  const o = optionsOf('KSTEXT openAndFill', options);
+  const o = kstextOptionsOf('KSTEXT openAndFill', options);
   const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
   const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
   const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);

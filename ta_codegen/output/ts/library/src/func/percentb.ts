@@ -47,7 +47,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -420,7 +420,8 @@ export function percentbPositional(
  * Options of {@link percentb}, {@link percentbLookback},
  * {@link percentbDisplayShift}, {@link percentbOpen} and
  * {@link percentbOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface PercentbOptions {
   /**
@@ -470,6 +471,22 @@ export interface PercentbOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function percentbOptionsOf(funcName: string, options: PercentbOptions | undefined): PercentbOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'nbDevUp' && k !== 'nbDevDn' && k !== 'maType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod nbDevUp nbDevDn maType startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link percentb} returns, and {@link percentbOpenAndFill} with its stream. */
 export interface PercentbResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -485,15 +502,16 @@ export interface PercentbResult {
  * Number of leading input bars {@link percentb} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PercentbOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PercentbOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function percentbLookback(options?: PercentbOptions): number {
-  const o = optionsOf('PERCENTB lookback', options);
+  const o = percentbOptionsOf('PERCENTB lookback', options);
   return percentbLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('PERCENTB lookback', o.core));
 }
 
@@ -504,15 +522,16 @@ export function percentbLookback(options?: PercentbOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PercentbOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PercentbOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function percentbDisplayShift(outputIdx: number, options?: PercentbOptions): number {
-  const o = optionsOf('PERCENTB displayShift', options);
+  const o = percentbOptionsOf('PERCENTB displayShift', options);
   return percentbDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('PERCENTB displayShift', o.core));
 }
 
@@ -546,12 +565,13 @@ export function percentbDisplayShift(outputIdx: number, options?: PercentbOption
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an integer parameter that is not an
+ *   int32, a real parameter that is not a number, a parameter outside its range, an
+ *   input too short for the range, a buffer that is empty, too short or of the wrong
+ *   type or a buffer sharing memory with a `Float64Array` input it is not. Checked
+ *   before anything is written.
  *
  * @example
  * ```ts
@@ -572,7 +592,7 @@ export function percentbDisplayShift(outputIdx: number, options?: PercentbOption
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  */
 export function percentb(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult {
-  const o = optionsOf('PERCENTB', options);
+  const o = percentbOptionsOf('PERCENTB', options);
   if (o.endIdx === undefined) {
     requireSeries('PERCENTB', 'real', real);
   }
@@ -1042,14 +1062,15 @@ export function percentbOpenAndFillPositional(
  * last history bar, bit-identical to {@link percentb} there.
  *
  * @param real - Warm-up history. Input data series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PercentbOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PercentbOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a real parameter that is not a
- *   number or a parameter outside its range.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a real parameter that is not a number or a parameter outside
+ *   its range.
  *
  * @example
  * ```ts
@@ -1068,7 +1089,7 @@ export function percentbOpenAndFillPositional(
  * ```
  */
 export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions): PercentbStream {
-  const o = optionsOf('PERCENTB open', options);
+  const o = percentbOptionsOf('PERCENTB open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
   const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
@@ -1082,19 +1103,19 @@ export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions)
  * the same pass, bit-identically to {@link percentb}.
  *
  * @param real - Warm-up history. Input data series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link PercentbOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link PercentbOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link percentb} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or a buffer too short, of the wrong type
- *   or starting where another buffer or a `Float64Array` input starts, or, on a
- *   history long enough to open, one sharing memory with another buffer or a
- *   `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a real parameter that is not a number, a parameter outside its
+ *   range or a buffer too short, of the wrong type or starting where another buffer
+ *   or a `Float64Array` input starts, or, on a history long enough to open, one
+ *   sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1112,7 +1133,7 @@ export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions)
  * ```
  */
 export function percentbOpenAndFill(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult & { stream: PercentbStream } {
-  const o = optionsOf('PERCENTB openAndFill', options);
+  const o = percentbOptionsOf('PERCENTB openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
   const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);

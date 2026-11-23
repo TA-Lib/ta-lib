@@ -45,7 +45,7 @@
  *  090807 MF     Initial Version
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -132,7 +132,7 @@ export function cosPositional(
  * Options of {@link cos}, {@link cosLookback}, {@link cosDisplayShift},
  * {@link cosOpen} and {@link cosOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CosOptions {
   /**
@@ -160,6 +160,22 @@ export interface CosOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function cosOptionsOf(funcName: string, options: CosOptions | undefined): CosOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link cos} returns, and {@link cosOpenAndFill} with its stream. */
 export interface CosResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -172,15 +188,16 @@ export interface CosResult {
  * Number of leading input bars {@link cos} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CosOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CosOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cosLookback(options?: CosOptions): number {
-  const o = optionsOf('COS lookback', options);
+  const o = cosOptionsOf('COS lookback', options);
   return cosLookbackPositional(coreOf('COS lookback', o.core));
 }
 
@@ -191,15 +208,16 @@ export function cosLookback(options?: CosOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CosOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CosOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cosDisplayShift(outputIdx: number, options?: CosOptions): number {
-  const o = optionsOf('COS displayShift', options);
+  const o = cosOptionsOf('COS displayShift', options);
   return cosDisplayShiftPositional(outputIdx, coreOf('COS displayShift', o.core));
 }
 
@@ -220,11 +238,11 @@ export function cosDisplayShift(outputIdx: number, options?: CosOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   input, a range bound that is not an int32, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -241,7 +259,7 @@ export function cosDisplayShift(outputIdx: number, options?: CosOptions): number
  * @see [`cosh`](https://ta-lib.org/functions/cosh)
  */
 export function cos(real: ArrayLike<number>, options?: CosOptions): CosResult {
-  const o = optionsOf('COS', options);
+  const o = cosOptionsOf('COS', options);
   if (o.endIdx === undefined) {
     requireSeries('COS', 'real', real);
   }
@@ -481,13 +499,13 @@ export function cosOpenAndFillPositional(
  * history bar, bit-identical to {@link cos} there.
  *
  * @param real - Warm-up history. Input values, treated as angles in radians.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CosOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CosOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cosLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core` or an absent
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -501,7 +519,7 @@ export function cosOpenAndFillPositional(
  * ```
  */
 export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStream {
-  const o = optionsOf('COS open', options);
+  const o = cosOptionsOf('COS open', options);
   const core = coreOf('COS open', o.core);
   return cosOpenPositional(real, core);
 }
@@ -511,17 +529,18 @@ export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStrea
  * same pass, bit-identically to {@link cos}.
  *
  * @param real - Warm-up history. Input values, treated as angles in radians.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CosOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CosOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cos} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cosLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input or a buffer too short, of the wrong
+ *   type or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -534,7 +553,7 @@ export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStrea
  * ```
  */
 export function cosOpenAndFill(real: ArrayLike<number>, options?: CosOptions): CosResult & { stream: CosStream } {
-  const o = optionsOf('COS openAndFill', options);
+  const o = cosOptionsOf('COS openAndFill', options);
   const core = coreOf('COS openAndFill', o.core);
   const capacity = fillCapacity(cosLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

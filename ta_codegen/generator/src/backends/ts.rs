@@ -102,6 +102,9 @@ pub struct TsNames {
     pub open_internal: String,
     /// `@internal` `(core, ins.., startIdx, opts.., outBegIdx, outNBElement, outs..) => <N>Stream`.
     pub open_and_fill_internal: String,
+    /// `@internal` `(funcName, options) => <N>Options`: the one options check
+    /// of every call that takes the object, the routed front's included.
+    pub options_of: String,
 }
 
 #[must_use]
@@ -127,6 +130,7 @@ pub fn ts_names(func_name: &str) -> TsNames {
         open_and_fill_positional: format!("{base}OpenAndFillPositional"),
         open_internal: format!("{base}OpenInternal"),
         open_and_fill_internal: format!("{base}OpenAndFillInternal"),
+        options_of: format!("{base}OptionsOf"),
     }
 }
 
@@ -323,9 +327,7 @@ pub fn api_inputs(func: &FuncDef) -> Vec<ApiInput<'_>> {
 /// When two collide: a parameter, a range key, `core` or a buffer key; or two
 /// outputs, `begIdx` or `stream` in the result.
 pub fn assert_unique_keys(func: &FuncDef) {
-    let mut keys: Vec<String> = func.optional_inputs.iter().map(|o| param_key(&o.name)).collect();
-    keys.extend(["startIdx", "endIdx", "core"].map(String::from));
-    keys.extend(func.outputs.iter().map(|o| buffer_key(func, o)));
+    let keys = options_keys(func);
     for (k, key) in keys.iter().enumerate() {
         assert!(!keys[..k].contains(key), "{}: options key `{key}` is not unique", func.name);
     }
@@ -334,6 +336,15 @@ pub fn assert_unique_keys(func: &FuncDef) {
     for (k, key) in results.iter().enumerate() {
         assert!(!results[..k].contains(key), "{}: result key `{key}` is not unique", func.name);
     }
+}
+
+/// The keys of `<N>Options`, in its declaration order.
+#[must_use]
+pub fn options_keys(func: &FuncDef) -> Vec<String> {
+    let mut keys: Vec<String> = func.optional_inputs.iter().map(|o| param_key(&o.name)).collect();
+    keys.extend(["startIdx", "endIdx", "core"].map(String::from));
+    keys.extend(func.outputs.iter().map(|o| buffer_key(func, o)));
+    keys
 }
 
 /// The module file stem of an indicator: its lowerCamel name.
@@ -424,7 +435,10 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("overlapsPartly", "../runtime/checks.ts"),
     ("sharedMemory", "../runtime/checks.ts"),
     ("rejectedParams", "../runtime/checks.ts"),
-    ("optionsOf", "../runtime/checks.ts"),
+    ("NO_OPTIONS", "../runtime/checks.ts"),
+    ("isPlainOptions", "../runtime/checks.ts"),
+    ("notPlainOptions", "../runtime/checks.ts"),
+    ("unknownOption", "../runtime/checks.ts"),
     ("orDefault", "../runtime/checks.ts"),
     ("batchCapacity", "../runtime/checks.ts"),
     ("fillCapacity", "../runtime/checks.ts"),
@@ -1488,7 +1502,7 @@ pub(crate) fn api_prologue(func: &FuncDef, entry: &str, batch: bool) -> String {
     for a in inputs.iter().filter(|a| a.is_price) {
         let _ = writeln!(s, "  requireArgument('{entry}', '{0}', {0});", a.name);
     }
-    let _ = writeln!(s, "  const o = optionsOf('{entry}', options);");
+    let _ = writeln!(s, "  const o = {}('{entry}', options);", ts_names(&func.name).options_of);
     if batch && !inputs.is_empty() {
         s.push_str("  if (o.endIdx === undefined) {\n");
         for a in &inputs {
@@ -1558,6 +1572,7 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
         let _ = writeln!(s, "  {}?: {} | undefined;", buffer_key(func, out), public_array_ts_type(&out.param_type));
     }
     s.push_str("}\n");
+    s.push_str(&gen_options_of(func));
     let _ = write!(s, "\n{}export interface {} {{\n", super::ts_doc::result_docs(func), names.result_type);
     s.push_str(&super::ts_doc::member(super::ts_doc::BEG_IDX_FIELD));
     s.push_str("  begIdx: number;\n");
@@ -1567,6 +1582,23 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
     }
     s.push_str("}\n");
     s
+}
+
+/// The options check: an omitted object returns at once, and an own key off
+/// the identity chain reaches the cold `unknownOption`, which also sees each
+/// inherited enumerable key. Keep the chain in the interface's order, so the
+/// common keys compare first.
+fn gen_options_of(func: &FuncDef) -> String {
+    let names = ts_names(&func.name);
+    let keys = options_keys(func);
+    let chain: Vec<String> = keys.iter().map(|k| format!("k !== '{k}'")).collect();
+    format!(
+        "\n/** @internal */\nexport function {}(funcName: string, options: {t} | undefined): {t} {{\n  if (options === undefined) {{\n    return NO_OPTIONS;\n  }}\n  if (!isPlainOptions(options)) {{\n    throw notPlainOptions(funcName, options);\n  }}\n  for (const k in options) {{\n    if ({}) {{\n      unknownOption(funcName, options, k, '{}');\n    }}\n  }}\n  return options;\n}}\n",
+        names.options_of,
+        chain.join(" && "),
+        keys.join(" "),
+        t = names.options_type,
+    )
 }
 
 fn gen_api_lookback(func: &FuncDef) -> String {
@@ -1579,10 +1611,11 @@ fn gen_api_lookback(func: &FuncDef) -> String {
         .collect();
     args.push(format!("coreOf('{entry}', o.core)"));
     format!(
-        "\n{}export function {}(options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        "\n{}export function {}(options?: {}): number {{\n  const o = {}('{entry}', options);\n  return {}({});\n}}\n",
         super::ts_doc::lookback_docs(func),
         names.lookback,
         names.options_type,
+        names.options_of,
         names.lookback_positional,
         args.join(", ")
     )
@@ -1600,10 +1633,11 @@ fn gen_api_display_shift(func: &FuncDef) -> String {
     args.push(idx.to_string());
     args.push(format!("coreOf('{entry}', o.core)"));
     format!(
-        "\n{}export function {}({idx}: number, options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        "\n{}export function {}({idx}: number, options?: {}): number {{\n  const o = {}('{entry}', options);\n  return {}({});\n}}\n",
         super::ts_doc::display_shift_docs(func),
         names.display_shift,
         names.options_type,
+        names.options_of,
         names.display_shift_positional,
         args.join(", ")
     )
