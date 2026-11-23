@@ -211,6 +211,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_SORTINO.c \
 	ta_SQRT.c \
 	ta_SQZMOM.c \
+	ta_SSF.c \
 	ta_STC.c \
 	ta_STDDEV.c \
 	ta_STOCH.c \

@@ -4433,6 +4433,24 @@ static int example_SQZMOM( void )
    return 0;
 }
 
+static int example_SSF( void )
+{
+   int n = 252;
+   double series[252]; /* your data, oldest first */
+   double out[252];
+   int outBegIdx, outNBElement;
+   { int i; for( i = 0; i < n; i++ ) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0; }
+   outBegIdx = -1; outNBElement = 0;
+
+   TA_Initialize();
+   TA_SSF( 0, n - 1, series, 10, &outBegIdx, &outNBElement, out );
+   if( !check( "SSF", outNBElement > 2 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d: [%.4f, ..., %.4f]\n", outNBElement, outBegIdx, out[0], out[outNBElement - 1] );
+   if( !check( "SSF", all_finite( out, outNBElement ) ) ) { TA_Shutdown(); return 1; }
+   TA_Shutdown();
+   return 0;
+}
+
 static int example_STC( void )
 {
    int n = 252;
@@ -5384,6 +5402,7 @@ int main( void )
    example_SORTINO();
    example_SQRT();
    example_SQZMOM();
+   example_SSF();
    example_STC();
    example_STDDEV();
    example_STOCH();
@@ -5421,6 +5440,6 @@ int main( void )
    example_WMA();
    example_ZIGZAG();
    example_ZLEMA();
-   printf( "ta_examples: %d examples, %d failures\n", 245, failures );
+   printf( "ta_examples: %d examples, %d failures\n", 246, failures );
    return failures == 0 ? 0 : 1;
 }

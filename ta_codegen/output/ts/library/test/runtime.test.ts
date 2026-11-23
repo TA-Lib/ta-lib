@@ -112,7 +112,7 @@ test('sentinels match C', () => {
 
 test('Core.DEFAULT has zero unstable periods and the C candle defaults', () => {
   const d = Core.DEFAULT;
-  assert.equal(d.unstablePeriods.length, 37);
+  assert.equal(d.unstablePeriods.length, 38);
   assert.ok(d.unstablePeriods.every((p) => p === 0));
   const expected: [number, number, number][] = [
     [RangeType.REAL_BODY, 10, 1.0],
@@ -161,7 +161,7 @@ test('unstablePeriod rejects out-of-domain periods and ids, writing nothing', ()
     assertBadParam(() => b.unstablePeriod(FuncUnstId.ALL, bad));
   }
   assertBadParam(() => b.unstablePeriod(FuncUnstId.EMA, '3' as unknown as number));
-  for (const bad of [-1, 37, 65534, 2.5, NaN]) {
+  for (const bad of [-1, 38, 65534, 2.5, NaN]) {
     assertBadParam(() => b.unstablePeriod(bad as FuncUnstId, 1));
   }
   const core = b.build();
@@ -169,7 +169,7 @@ test('unstablePeriod rejects out-of-domain periods and ids, writing nothing', ()
   assert.equal(core.unstablePeriods.reduce((a, p) => a + p, 0), 5);
   // @ts-expect-error ALL names no single function, so the type refuses it as well
   assertBadParam(() => core.unstablePeriod(FuncUnstId.ALL));
-  assertBadParam(() => core.unstablePeriod(37 as OneFunc));
+  assertBadParam(() => core.unstablePeriod(38 as OneFunc));
 });
 
 test('candleSetting validates every argument, writing nothing on a rejection', () => {

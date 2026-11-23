@@ -36,7 +36,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
@@ -80,7 +80,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
@@ -560,7 +560,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal variable-period moving average. Must hold at least
     *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
@@ -639,7 +639,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal variable-period moving average. Must hold at least
     *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be

@@ -206,6 +206,7 @@ SMI                 Stochastic Momentum Index
 SORTINO             Rolling Sortino Ratio
 SQRT                Vector Square Root
 SQZMOM              Squeeze Momentum and Level
+SSF                 Ehlers SuperSmoother Filter
 STC                 Schaff Trend Cycle
 STDDEV              Standard Deviation
 STOCH               Stochastic

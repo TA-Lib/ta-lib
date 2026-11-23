@@ -19,6 +19,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - SHARPE: Rolling Sharpe Ratio, annualized mean excess return over its standard deviation (#571)
   - SKEW: Rolling Skewness, the adjusted Fisher-Pearson coefficient (#569)
   - SORTINO: Rolling Sortino Ratio, annualized mean excess return over its downside deviation (#572)
+  - SSF: Ehlers SuperSmoother Filter, a two-pole low-pass smoother with a zero at Nyquist (#609)
+- New MAType (for MA, BBANDS, STOCH etc...):
+  - TA_MAType_SSF (#609)
 
 ### Faster
 - ~2x to 5x, up to 7x in batch: most candlestick patterns, batch and streaming. Pre-check,

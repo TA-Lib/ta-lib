@@ -977,6 +977,7 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_FUNC_UNST_SWAK_2PHP",    34, TA_FUNC_UNST_SWAK_2PHP },
       { "TA_FUNC_UNST_SWAK_BP",      35, TA_FUNC_UNST_SWAK_BP },
       { "TA_FUNC_UNST_FISHER",       36, TA_FUNC_UNST_FISHER },
+      { "TA_FUNC_UNST_SSF",          37, TA_FUNC_UNST_SSF },
       /* Pinned so adding an indicator can never move it (#144). */
       { "TA_FUNC_UNST_ALL",       65535, TA_FUNC_UNST_ALL }
    };
@@ -997,7 +998,8 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_MAType_ZLEMA",    12, TA_MAType_ZLEMA },
       { "TA_MAType_RMA",      13, TA_MAType_RMA },
       { "TA_MAType_VIDYA",    14, TA_MAType_VIDYA },
-      { "TA_MAType_ALMA",     15, TA_MAType_ALMA }
+      { "TA_MAType_ALMA",     15, TA_MAType_ALMA },
+      { "TA_MAType_SSF",      16, TA_MAType_SSF }
    };
 
    /* Returned to every caller and mapped by name in the wrappers (ta-lib-python

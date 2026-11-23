@@ -72,7 +72,7 @@ fn abstract_rows_unstable_period_set_is_exactly_the_declared_ids() {
         ("SWAK_BUTTER", 32),
         ("SWAK_HP", 33),
         ("SWAK_2PHP", 34),
-        ("SWAK_BP", 35), ("FISHER", 36),
+        ("SWAK_BP", 35), ("FISHER", 36), ("SSF", 37),
     ];
 
     let rows = abstract_rows_of(&all_indicators());

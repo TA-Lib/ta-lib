@@ -179,7 +179,7 @@ function apoWasm(real: ArrayLike<number>, options: ApoOptions | undefined): ApoR
   const optInFastPeriod = optInFastPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInFastPeriodArg;
   const optInSlowPeriod = optInSlowPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriodArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outReal = o.outReal;
@@ -254,7 +254,7 @@ function apoPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<n
   if (!isInt32(optInFastPeriod) || !isInt32(optInSlowPeriod) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outReal === undefined) {

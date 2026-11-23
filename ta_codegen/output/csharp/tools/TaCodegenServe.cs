@@ -430,6 +430,7 @@ public class TaCodegenServe {
             else if (method == "TA_SORTINO") return Handle_SORTINO(p, startIdx, endIdx);
             else if (method == "TA_SQRT") return Handle_SQRT(p, startIdx, endIdx);
             else if (method == "TA_SQZMOM") return Handle_SQZMOM(p, startIdx, endIdx);
+            else if (method == "TA_SSF") return Handle_SSF(p, startIdx, endIdx);
             else if (method == "TA_STC") return Handle_STC(p, startIdx, endIdx);
             else if (method == "TA_STDDEV") return Handle_STDDEV(p, startIdx, endIdx);
             else if (method == "TA_STOCH") return Handle_STOCH(p, startIdx, endIdx);
@@ -884,6 +885,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_SQRT\"");
                 sb.Append(",");
                 sb.Append("\"TA_SQZMOM\"");
+                sb.Append(",");
+                sb.Append("\"TA_SSF\"");
                 sb.Append(",");
                 sb.Append("\"TA_STC\"");
                 sb.Append(",");
@@ -4091,6 +4094,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -6003,6 +6007,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -6293,6 +6298,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -31535,6 +31541,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -32092,6 +32099,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -34031,6 +34039,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -34543,6 +34552,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -35396,6 +35406,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -36330,6 +36341,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -40528,6 +40540,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -41593,6 +41606,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -42235,6 +42249,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -47436,6 +47451,214 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
+    static string Sv_SSF(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        int roundMask = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.SsfImpl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.SsfLookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.SsfOpen(fz_c, optInTimePeriod); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                Core.SsfStream _fh = c2.SsfOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.SsfOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SsfOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SsfStream st;
+                try { st = c2.SsfOpen(fz_c[..p], optInTimePeriod); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++; roundMask |= 1 << rd;
+                double v0 = st.Value;
+                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    double pk = default;
+                    try { pk = st.Peek(fz_c[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        double rp = default;
+                        try { rp = st.Peek(fz_c[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.Update(fz_c[t]);
+                    if (pkTook && (SvBne(pk, up))) peekAll = false;
+                    try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.Advance();
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        Array.Fill(f0, (double)-1.2345678901234e300);
+                        Core.SsfStream sA = c2.SsfOpenAndFill(fz_c[..p0], optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uP = sA.Update(fz_c[t]);
+                            if (SvXtierNe(uP, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyPreDiverged\":" + t; }
+                        }
+                        Core.SsfStream sB = sA.Clone();
+                        sB.Advance();
+                        sB.Advance();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.Update(fz_c[t]);
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.SsfStream sQ = c2.SsfOpen(fz_c[..pa], optInTimePeriod);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            double uq = sQ.Update(fz_c[t]);
+                            sink += uq;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.SsfOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SsfOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SsfStream sD = c2.SsfOpen(fz_c, int.MinValue);
+                Core.SsfStream sE = c2.SsfOpen(fz_c, 10);
+                double vD = sD.Value;
+                double vE = sE.Value;
+                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.SsfImpl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.SsfStream stA = c2.SsfOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+    }
+
     static string Sv_STC(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -47912,6 +48135,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -48179,6 +48403,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -48447,6 +48672,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -55643,6 +55869,7 @@ public class TaCodegenServe {
         case "TA_SORTINO": return Sv_SORTINO(req);
         case "TA_SQRT": return Sv_SQRT(req);
         case "TA_SQZMOM": return Sv_SQZMOM(req);
+        case "TA_SSF": return Sv_SSF(req);
         case "TA_STC": return Sv_STC(req);
         case "TA_STDDEV": return Sv_STDDEV(req);
         case "TA_STOCH": return Sv_STOCH(req);
@@ -79118,6 +79345,114 @@ public class TaCodegenServe {
         }
     }
 
+    static void RideSsf(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, System.Text.StringBuilder sb)
+    {
+        if (!RideGate(p)) return;
+        RideResult r = new RideResult();
+        RideBodySsf(core, p, endIdx, inReal, optInTimePeriod, r);
+        r.Emit(sb);
+    }
+
+    static void RideBodySsf(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
+    {
+        try { r.Lb = core.SsfLookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
+        int lb = r.Lb;
+        int navail = endIdx + 1;
+        if (inReal.Length < navail) navail = inReal.Length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.M = m;
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
+        if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
+
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SSF");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
+        {
+            r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
+        try { OutRange _rr = core.Ssf(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SsfOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SsfOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
+        if (nb == 0) { r.Skip = 5; return; }
+        if (beg != lb) { r.Skip = 6; return; }
+
+        try
+        {
+            bool cmp;
+            var st = core.SsfOpen(inReal.AsSpan(0, lb + 1), optInTimePeriod);
+            var uv = st.Value;
+            cmp = true;
+            if (cmp && SvXtierNe(rb0[lb - beg], uv, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv); }
+            if (cmp) r.OpenBars++;
+            if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = lb; }
+            for (int t = lb + 1; r.Ok && t < m; t++)
+            {
+                uv = st.Update(inReal[t]);
+                cmp = true;
+                if (cmp && SvXtierNe(rb0[t - beg], uv, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv); }
+                if (cmp) r.OpenBars++;
+                if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = t; }
+            }
+        }
+        catch (Exception) { r.Ok = false; r.Leg = 1; }
+
+        if (r.Ok)
+        {
+            double[] fb0 = new double[m];
+            try
+            {
+                var st2 = core.SsfOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0);
+                if (st2.OutRange.BegIdx != beg || st2.OutRange.Count != nb) { r.Ok = false; r.Leg = 2; }
+                if (r.Ok)
+                {
+                    for (int k = 0; k < nb; k++)
+                    {
+                        bool cmp = true;
+                        if (cmp && SvXtierNe(rb0[k], fb0[k], ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb0[k]); }
+                        if (cmp) r.FillBars++;
+                        if (!cmp) { r.Ok = false; r.Leg = 2; r.Bar = beg + k; break; }
+                    }
+                }
+            }
+            catch (Exception) { r.Ok = false; r.Leg = 2; }
+        }
+
+        if (r.Ok)
+        {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
+        }
+    }
+
     static void RideStc(Core core, JsonElement p, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, System.Text.StringBuilder sb)
     {
         if (!RideGate(p)) return;
@@ -84093,6 +84428,10 @@ public class TaCodegenServe {
             double optInFactorNarrow = GetDouble(p, "optInFactorNarrow", 0.0);
             return core.SqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
         }
+        case "SSF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SsfLookback(optInTimePeriod);
+        }
         case "STC": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
@@ -85119,6 +85458,10 @@ public class TaCodegenServe {
             double optInFactorNormal = GetDouble(p, "optInFactorNormal", 0.0);
             double optInFactorNarrow = GetDouble(p, "optInFactorNarrow", 0.0);
             return core.SqzmomDisplayShift(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, GetInt(p, "outputIdx", 0));
+        }
+        case "SSF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SsfDisplayShift(optInTimePeriod, GetInt(p, "outputIdx", 0));
         }
         case "STC": {
             int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
@@ -121698,6 +122041,171 @@ public class TaCodegenServe {
         sb.Append($",\"timing_ns\":{elapsedNs}");
         sb.Append(_timedFields);
         RideSqzmom(core, p, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, sb);
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    static TimedResult Timed_SSF(int iters, int mode, Core core, int startIdx, int endIdx, double[] inReal, int optInTimePeriod, double[] outArr0) {
+        RetCode rc = RetCode.Success;
+        int outBegIdx = 0, outNBElement = 0;
+        ReadOnlySpan<double> _warm_inReal = mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        long _j0 = System.Runtime.JitInfo.GetCompiledMethodCount(false);
+        long _t0 = GetNanoTime();
+        if (mode == 0) {
+            for (int _i = 0; _i < iters; _i++)
+                rc = core.SsfImpl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+        } else if (mode == 1) {
+            for (int _i = 0; _i < iters; _i++)
+                core.SsfOpen(_warm_inReal, optInTimePeriod);
+        } else {
+            for (int _i = 0; _i < iters; _i++) {
+                Core.SsfStream _wh = core.SsfOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx = _wh.OutRange.BegIdx;
+                outNBElement = _wh.OutRange.Count;
+            }
+        }
+        long _ns = GetNanoTime() - _t0;
+        return new TimedResult(rc, outBegIdx, outNBElement, _ns, System.Runtime.JitInfo.GetCompiledMethodCount(false) - _j0);
+    }
+
+    static string Handle_SSF(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+        } else {
+            inReal = GetDoubleArray(p, "inReal");
+        }
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["SSF"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.SsfLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _ns = 0;
+        string _timedFields = "";
+        if (GetInt(p, "timed", 0) != 0) {
+            try {
+                var _w = new WarmUp($"SSF/{bench_mode}/{optInTimePeriod}");
+                TimedResult _r = default;
+                while (_w.Next(_r.Ns)) _r = Timed_SSF(_w.Iters, bench_mode, core, startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                int _retimed = 0;
+                do _r = Timed_SSF(bench_iters, bench_mode, core, startIdx, endIdx, inReal, optInTimePeriod, outArr0); while (_r.Jit > 0 && _retimed++ < WarmUp.Retimes);
+                rc = _r.Rc;
+                outBegIdx = _r.BegIdx;
+                outNBElement = _r.NbElement;
+                _ns = _r.Ns;
+                _timedFields = _w.Fields(_r);
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+        } else {
+            long _t0 = 0;
+            for (int _bi = 0; _bi <= bench_iters; _bi++) {
+                if (_bi == 1) _t0 = GetNanoTime();
+                if (bench_mode == 0) {
+                    try {
+                        OutRange _pr = core.Ssf(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                        outBegIdx = _pr.BegIdx;
+                        outNBElement = _pr.Count;
+                        rc = RetCode.Success;
+                    } catch (Exception _e) when (_e is ITALibFailure) {
+                        rc = ((ITALibFailure)_e).RetCode;
+                        outBegIdx = 0;
+                        outNBElement = 0;
+                    }
+                } else if (bench_mode == 1) {
+                    try {
+                        core.SsfOpen(_warm_inReal, optInTimePeriod);
+                        rc = RetCode.Success;
+                    } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                        rc = ((ITALibFailure)_e3).RetCode;
+                    }
+                } else {
+                    try {
+                        Core.SsfStream _wh = core.SsfOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                        outBegIdx = _wh.OutRange.BegIdx;
+                        outNBElement = _wh.OutRange.Count;
+                        rc = RetCode.Success;
+                    } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                        rc = ((ITALibFailure)_e3).RetCode;
+                        outBegIdx = 0;
+                        outNBElement = 0;
+                    }
+                }
+            }
+            _ns = GetNanoTime() - _t0;
+        }
+        long elapsedNs = _ns / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inReal = new float[inReal.Length];
+            for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            try {
+                OutRange _fr = core.Ssf(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            var hb = new System.Text.StringBuilder();
+            hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
+            RideSsf(core, p, endIdx, inReal, optInTimePeriod, hb);
+            hb.Append("}");
+            return hb.ToString();
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append(_timedFields);
+        RideSsf(core, p, endIdx, inReal, optInTimePeriod, sb);
         sb.Append("}");
         return sb.ToString();
     }

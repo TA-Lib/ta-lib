@@ -85,10 +85,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -188,10 +190,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -492,10 +496,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outKST` — Know Sure Thing line.
     /// * `outKSTSignal` — Signal line: MA of the line.
     ///

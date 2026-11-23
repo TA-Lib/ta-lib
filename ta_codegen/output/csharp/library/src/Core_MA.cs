@@ -66,6 +66,7 @@ public partial class Core
     *  092926 MF,CC Add VIDYA (issue #474).
     *  092926 MF,CC Add ALMA (issue #475).
     *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
+    *  112326 MF,CC Add SSF (issue #609).
     */
    /// <summary>
    /// Number of leading input bars <c>Ma</c> consumes before it can produce its
@@ -80,7 +81,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
@@ -144,6 +145,9 @@ public partial class Core
       case MAType.ALMA:
          retValue = AlmaLookback(optInTimePeriod, 6.0, 0.85);
          break;
+      case MAType.SSF:
+         retValue = SsfLookback(optInTimePeriod);
+         break;
       default:
          retValue = 0;
          break;
@@ -162,7 +166,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
@@ -366,6 +370,12 @@ public partial class Core
          outNBElement = _xr13.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.SSF:
+         OutRange _xr14 = Ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr14.BegIdx;
+         outNBElement = _xr14.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -527,6 +537,12 @@ public partial class Core
          outNBElement = _xr13.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.SSF:
+         OutRange _xr14 = Ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr14.BegIdx;
+         outNBElement = _xr14.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -546,6 +562,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</description></item>
    /// <item><description><c>TA_MAType_DISABLED</c> bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</description></item>
+   /// <item><description><c>TA_MAType_SSF</c> takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</description></item>
    /// <item><description><c>TA_MAType_DEFAULT</c> selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</description></item>
    /// </list>
    /// <para>
@@ -568,7 +585,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
@@ -610,6 +627,7 @@ public partial class Core
    /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Vidya(int, int, ReadOnlySpan{double}, int, int, Span{double})"/>
    /// <seealso cref="Core.Alma(int, int, ReadOnlySpan{double}, int, double, double, Span{double})"/>
+   /// <seealso cref="Core.Ssf(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<double> inReal,
@@ -642,6 +660,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</description></item>
    /// <item><description><c>TA_MAType_DISABLED</c> bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</description></item>
+   /// <item><description><c>TA_MAType_SSF</c> takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</description></item>
    /// <item><description><c>TA_MAType_DEFAULT</c> selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</description></item>
    /// </list>
    /// <para>
@@ -670,7 +689,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
@@ -714,6 +733,7 @@ public partial class Core
    /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    /// <seealso cref="Core.Vidya(int, int, ReadOnlySpan{double}, int, int, Span{double})"/>
    /// <seealso cref="Core.Alma(int, int, ReadOnlySpan{double}, int, double, double, Span{double})"/>
+   /// <seealso cref="Core.Ssf(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<float> inReal,
@@ -850,6 +870,9 @@ public partial class Core
             case MAType.ALMA:
                this.sub = new AlmaStream((AlmaStream) other.sub!);
                break;
+            case MAType.SSF:
+               this.sub = new SsfStream((SsfStream) other.sub!);
+               break;
             default:
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
             }
@@ -966,6 +989,10 @@ public partial class Core
             cur_outReal = ((AlmaStream) sp.sub!).Peek(inReal);
             break;
          }
+         case MAType.SSF: {
+            cur_outReal = ((SsfStream) sp.sub!).Peek(inReal);
+            break;
+         }
          default:
             break; /* unreachable: open rejects arms without a sub-stream */
          }
@@ -1052,6 +1079,10 @@ public partial class Core
       }
       case MAType.ALMA: {
          sp.cur_outReal = ((AlmaStream) sp.sub!).Update(inReal);
+         break;
+      }
+      case MAType.SSF: {
+         sp.cur_outReal = ((SsfStream) sp.sub!).Update(inReal);
          break;
       }
       default:
@@ -1203,6 +1234,14 @@ public partial class Core
       }
       case MAType.ALMA: {
          AlmaStream sub = AlmaOpenInternal(inReal, startIdx, optInTimePeriod, 6.0, 0.85);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.SSF: {
+         SsfStream sub = SsfOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -1374,6 +1413,14 @@ public partial class Core
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case MAType.SSF: {
+         SsfStream sub = SsfOpenAndFill(inReal, optInTimePeriod, outReal);
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
@@ -1505,6 +1552,12 @@ public partial class Core
       }
       case MAType.ALMA: {
          AlmaStream sub = AlmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, 6.0, 0.85, out outBegIdx, out outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.SSF: {
+         SsfStream sub = SsfOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1687,6 +1740,10 @@ public partial class Core
          sp.cur_outReal = AlmaStepTape((AlmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
          break;
       }
+      case MAType.SSF: {
+         sp.cur_outReal = SsfStepTape((SsfStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
@@ -1760,6 +1817,10 @@ public partial class Core
          cur_outReal = AlmaPeekTape((AlmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
          break;
       }
+      case MAType.SSF: {
+         cur_outReal = SsfPeekTape((SsfStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
@@ -1801,6 +1862,8 @@ public partial class Core
          return VidyaTapeDetach((VidyaStream) sp.sub!);
       case MAType.ALMA:
          return AlmaTapeDetach((AlmaStream) sp.sub!);
+      case MAType.SSF:
+         return SsfTapeDetach((SsfStream) sp.sub!);
       default:
          return 0;
       }

@@ -209,7 +209,7 @@ function macdextWasm(real: ArrayLike<number>, options: MacdextOptions | undefine
   const optInSlowMAType = optInSlowMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInSlowMATypeArg;
   const optInSignalPeriod = optInSignalPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriodArg;
   const optInSignalMAType = optInSignalMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInSignalMATypeArg;
-  if (optInFastMAType === 7 || optInFastMAType === 15 || optInSlowMAType === 7 || optInSlowMAType === 15 || optInSignalMAType === 7 || optInSignalMAType === 15) {
+  if (optInFastMAType === 7 || optInFastMAType === 15 || optInFastMAType === 16 || optInSlowMAType === 7 || optInSlowMAType === 15 || optInSlowMAType === 16 || optInSignalMAType === 7 || optInSignalMAType === 15 || optInSignalMAType === 16) {
     return fellThrough('declined');
   }
   const outMACD = o.outMacd;
@@ -291,7 +291,7 @@ function macdextPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLi
   if (!isInt32(optInFastPeriod) || !isInt32(optInFastMAType) || !isInt32(optInSlowPeriod) || !isInt32(optInSlowMAType) || !isInt32(optInSignalPeriod) || !isInt32(optInSignalMAType)) {
     return fellThrough('parameter');
   }
-  if (optInFastMAType === 7 || optInFastMAType === 15 || optInSlowMAType === 7 || optInSlowMAType === 15 || optInSignalMAType === 7 || optInSignalMAType === 15) {
+  if (optInFastMAType === 7 || optInFastMAType === 15 || optInFastMAType === 16 || optInSlowMAType === 7 || optInSlowMAType === 15 || optInSlowMAType === 16 || optInSignalMAType === 7 || optInSignalMAType === 15 || optInSignalMAType === 16) {
     return fellThrough('declined');
   }
   if (outMACD === undefined || outMACDSignal === undefined || outMACDHist === undefined) {

@@ -68,6 +68,8 @@ export const MAType = Object.freeze({
   VIDYA: 14,
   /** Arnaud Legoux Moving Average. */
   ALMA: 15,
+  /** Ehlers SuperSmoother Filter. */
+  SSF: 16,
 } as const);
 /** A member of {@link MAType}. */
 export type MAType = (typeof MAType)[keyof typeof MAType];
@@ -75,7 +77,7 @@ export type MAType = (typeof MAType)[keyof typeof MAType];
 /** @internal Bounds of the domain a {@link MAType} parameter accepts; not members. */
 export const MATypes = Object.freeze({
   Min: 0,
-  Max: 15,
+  Max: 16,
 } as const);
 
 /** Identifies a function whose unstable period can be set. */
@@ -146,6 +148,8 @@ export const FuncUnstId = Object.freeze({
   SWAK_BP: 35,
   /** Unstable-period id of `fisher`. */
   FISHER: 36,
+  /** Unstable-period id of `ssf`. */
+  SSF: 37,
   /** Wildcard: every function at once. Pinned, so adding an indicator never moves it. */
   ALL: 65535,
 } as const);
@@ -155,5 +159,5 @@ export type FuncUnstId = (typeof FuncUnstId)[keyof typeof FuncUnstId];
 /** @internal */
 export const FuncUnstIds = Object.freeze({
   /** Size of the unstable-period table; mirrors C's `TA_FUNC_UNST_COUNT`. */
-  Count: 37,
+  Count: 38,
 } as const);

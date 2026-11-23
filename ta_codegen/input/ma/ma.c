@@ -22,6 +22,7 @@
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
  *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
+ *  112326 MF,CC Add SSF (issue #609).
  */
 
 int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
@@ -87,6 +88,10 @@ int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
 
       case TA_MAType_ALMA:
          retValue = alma_lookback( optInTimePeriod, 6.0, 0.85 );
+         break;
+
+      case TA_MAType_SSF:
+         retValue = ssf_lookback( optInTimePeriod );
          break;
 
       default:
@@ -239,6 +244,12 @@ TA_RetCode ma(int startIdx, int endIdx,
       case TA_MAType_ALMA:
          retCode = alma( startIdx, endIdx, inReal,
             optInTimePeriod, 6.0, 0.85,
+            outBegIdx, outNBElement, outReal );
+         break;
+
+      case TA_MAType_SSF:
+         retCode = ssf( startIdx, endIdx, inReal,
+            optInTimePeriod,
             outBegIdx, outNBElement, outReal );
          break;
 

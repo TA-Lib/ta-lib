@@ -32,8 +32,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int stochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -79,8 +79,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -315,8 +315,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
@@ -400,8 +400,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.

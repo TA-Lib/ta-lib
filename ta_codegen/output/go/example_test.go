@@ -4785,6 +4785,22 @@ func ExampleCore_SQZMOM() {
 	// squeeze = [-1, ..., 1]
 }
 
+func ExampleCore_SSF() {
+	series := make([]float64, 252) // your data, oldest first
+	for i := range series {
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
+	}
+	out := make([]float64, 252)
+
+	core := talib.NewCore()
+	r, err := core.SSF(0, len(series)-1, series, 10, out)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [98.3806, ..., 95.8430]
+}
+
 func ExampleCore_STC() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
