@@ -22,6 +22,7 @@
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
  *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
+ *  112326 MF,CC Add SSF (issue #609).
  */
 
    /**
@@ -36,7 +37,7 @@
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-    *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+    *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int maLookback( int optInTimePeriod, MAType optInMAType )
@@ -100,6 +101,9 @@
       case ALMA:
          retValue = almaLookback(optInTimePeriod, 6.0, 0.85);
          break;
+      case SSF:
+         retValue = ssfLookback(optInTimePeriod);
+         break;
       default:
          retValue = 0;
          break;
@@ -118,7 +122,7 @@
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-    *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+    *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -295,6 +299,12 @@
          outNBElement.value = _xr13.count();
          retCode = RetCode.SUCCESS;
          break;
+      case SSF:
+         OutRange _xr14 = ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx.value = _xr14.begIdx();
+         outNBElement.value = _xr14.count();
+         retCode = RetCode.SUCCESS;
+         break;
       default:
          retCode = RetCode.BAD_PARAM;
          break;
@@ -430,6 +440,12 @@
          outNBElement.value = _xr13.count();
          retCode = RetCode.SUCCESS;
          break;
+      case SSF:
+         OutRange _xr14 = ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx.value = _xr14.begIdx();
+         outNBElement.value = _xr14.count();
+         retCode = RetCode.SUCCESS;
+         break;
       default:
          retCode = RetCode.BAD_PARAM;
          break;
@@ -446,6 +462,7 @@
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
     * <li>{@code TA_MAType_DISABLED} bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</li>
+    * <li>{@code TA_MAType_SSF} takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</li>
     * <li>{@code TA_MAType_DEFAULT} selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -462,7 +479,7 @@
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-    *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+    *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
     *        empty: an empty array is an absent output.
@@ -493,6 +510,7 @@
     * @see Core#rma
     * @see Core#vidya
     * @see Core#alma
+    * @see Core#ssf
     */
    public OutRange ma( int startIdx,
                        int endIdx,
@@ -526,6 +544,7 @@
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
     * <li>{@code TA_MAType_DISABLED} bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</li>
+    * <li>{@code TA_MAType_SSF} takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</li>
     * <li>{@code TA_MAType_DEFAULT} selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -545,7 +564,7 @@
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-    *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+    *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
     *        empty: an empty array is an absent output.
@@ -576,6 +595,7 @@
     * @see Core#rma
     * @see Core#vidya
     * @see Core#alma
+    * @see Core#ssf
     */
    public OutRange ma( int startIdx,
                        int endIdx,
@@ -716,6 +736,9 @@
             case ALMA:
                this.sub = new AlmaStream((AlmaStream) other.sub);
                break;
+            case SSF:
+               this.sub = new SsfStream((SsfStream) other.sub);
+               break;
             default:
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
             }
@@ -812,6 +835,9 @@
          }
          case 13: {
             return ((AlmaStream) sub).peek(inReal);
+         }
+         case 14: {
+            return ((SsfStream) sub).peek(inReal);
          }
          default:
             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -918,6 +944,10 @@
       }
       case 13: {
          sp.cur_outReal = ((AlmaStream) sub).update(inReal);
+         return;
+      }
+      case 14: {
+         sp.cur_outReal = ((SsfStream) sub).update(inReal);
          return;
       }
       default:
@@ -1084,6 +1114,15 @@
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.arm = 13;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case SSF: {
+         SsfStream sub = ssfOpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.arm = 14;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
@@ -1259,6 +1298,15 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case SSF: {
+         SsfStream sub = ssfOpenAndFill(inReal, optInTimePeriod, outReal);
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
+         sp.sub = sub;
+         sp.arm = 14;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BAD_PARAM;
       }
@@ -1404,6 +1452,13 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case SSF: {
+         SsfStream sub = ssfOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.arm = 14;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BAD_PARAM;
       }
@@ -1545,6 +1600,8 @@
          return vidyaStepTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       case 13:
          return almaStepTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+      case 14:
+         return ssfStepTape((SsfStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       default:
          throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
       }
@@ -1594,6 +1651,8 @@
          return vidyaPeekTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       case 13:
          return almaPeekTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+      case 14:
+         return ssfPeekTape((SsfStream) sp.sub, tape, tapeBase, tapeMask, inReal);
       default:
          throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
       }
@@ -1630,6 +1689,8 @@
          return vidyaTapeDetach((VidyaStream) sp.sub);
       case 13:
          return almaTapeDetach((AlmaStream) sp.sub);
+      case 14:
+         return ssfTapeDetach((SsfStream) sp.sub);
       default:
          return 0;
       }

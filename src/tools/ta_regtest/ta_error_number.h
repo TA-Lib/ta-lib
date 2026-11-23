@@ -635,6 +635,9 @@ typedef enum
   TA_VORTEX_CANCEL             = 1733,
   TA_ULTOSC_CANCEL             = 1734,
 
+  /* (#609) SSF legs that ran while comparing nothing. */
+  TA_SSF_VACUOUS               = 1735,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

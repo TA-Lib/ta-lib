@@ -541,8 +541,8 @@ export interface BbandsOptions {
   /**
    * Moving-average type for the middle band (default `MAType.SMA`; values: 0=SMA,
    * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
-   * `MAType.DEFAULT` selects the default).
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF; `Core.INTEGER_DEFAULT`
+   * or `MAType.DEFAULT` selects the default).
    */
   maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
   /**

@@ -70,14 +70,16 @@ public partial class Core
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">MA type used to smooth into K (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowD_Period">Smoothing period for the D signal line (default 3; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">MA type used for the D line (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int KdjLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
@@ -122,14 +124,16 @@ public partial class Core
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">MA type used to smooth into K (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowD_Period">Smoothing period for the D signal line (default 3; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">MA type used for the D line (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -352,14 +356,16 @@ public partial class Core
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">MA type used to smooth into K (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowD_Period">Smoothing period for the D signal line (default 3; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">MA type used for the D line (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outK">Raw stochastic smoothed by SlowK_Period MA. Must hold at least <c>endIdx -
    /// max(startIdx, KdjLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
@@ -479,14 +485,16 @@ public partial class Core
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">MA type used to smooth into K (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowD_Period">Smoothing period for the D signal line (default 3; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">MA type used for the D line (default 13 = RMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outK">Raw stochastic smoothed by SlowK_Period MA. Must hold at least <c>endIdx -
    /// max(startIdx, KdjLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>

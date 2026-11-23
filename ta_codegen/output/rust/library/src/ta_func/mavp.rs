@@ -84,7 +84,7 @@ impl Core {
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -126,7 +126,7 @@ impl Core {
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -438,7 +438,7 @@ impl Core {
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=10000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `outReal` — variable-period moving average.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.

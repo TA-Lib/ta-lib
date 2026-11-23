@@ -31,6 +31,7 @@ An Auto level sets the unstable period by precision instead of by bars: for each
 | `SWAK_HP` | `ceil(K*n/6)` | proof |
 | `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | proof |
 | `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | proof |
+| `SSF` | `ceil(7*(K+2)*n/31)` | proof |
 | `FISHER` | `ceil(5*(K+6)/2)` | proof, limiter |
 | `T3` | `ceil(11*(X+4)*n/8)` | measurement |
 | `KAMA` | `25*X*isqrt(n)` | measurement |
@@ -42,7 +43,7 @@ An Auto level sets the unstable period by precision instead of by bars: for each
 | `MAMA` | `H + ceil(2*K/max(fast, slow))`, `fast` and `slow` its two limits | measurement |
 | `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | measurement |
 
-The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rows give 0 at a period of 1, where the function does no smoothing.
+The `E`, `W`, `K*n`, `T3`, `KAMA`, `VIDYA` and `SSF` rows give 0 at a period of 1, where the function does no smoothing.
 
 `measurement`: the count is a formula sized on measured series, with margin; it is not a bound ([a longer count](/spec/auto-stabilization/#fixed-count)). `ratio` marks an output that divides by a smoothed value or by a price, `limiter` a state snapped at a limit ([no level](/spec/auto-stabilization/#no-level)).
 

@@ -847,6 +847,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"SWAK_BUTTER",  TA_FUNC_UNST_SWAK_BUTTER},
     {"SWAK_GAUSS",   TA_FUNC_UNST_SWAK_GAUSS},
     {"SWAK_HP",      TA_FUNC_UNST_SWAK_HP},
+    {"SSF",          TA_FUNC_UNST_SSF},
     {"T3",           TA_FUNC_UNST_T3},
     /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
     {"DEMA",         TA_FUNC_UNST_EMA},
@@ -7503,7 +7504,8 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
         /* One optVals slot per optInput (default assumed beyond nbOpt). */
         double val = (optVals && (int)i < nbOpt) ? optVals[i] : oi->defaultValue;
         if( oi->paramName && strstr(oi->paramName, "MAType") &&
-            ((int)val == TA_MAType_MAMA || (int)val == TA_MAType_ALMA) )
+            ((int)val == TA_MAType_MAMA || (int)val == TA_MAType_ALMA
+             || (int)val == TA_MAType_SSF) )
             return 1;
     }
     return 0;

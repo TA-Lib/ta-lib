@@ -49,8 +49,8 @@
     *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -109,8 +109,8 @@
     *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -686,8 +686,8 @@
     *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
     *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
     *        values, and never be empty: an empty array is an absent output.
@@ -768,8 +768,8 @@
     *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
     *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
     *        values, and never be empty: an empty array is an absent output.

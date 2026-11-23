@@ -3234,6 +3234,18 @@ public class ExamplesTest {
         check("SQZMOM", allFinite(momentum, r.count()));
     }
 
+    static void ssf() {
+        double[] series = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        double[] out = new double[252];
+
+        Core core = Core.DEFAULT;
+        OutRange r = core.ssf(0, series.length - 1, series, 10, out);
+        if (!check("SSF", r.count() > 2)) return;
+        System.out.printf(Locale.ROOT, "%d values from bar %d: [%.4f, ..., %.4f]%n", r.count(), r.begIdx(), out[0], out[r.count() - 1]);
+        check("SSF", allFinite(out, r.count()));
+    }
+
     static void stc() {
         double[] series = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
@@ -3967,6 +3979,7 @@ public class ExamplesTest {
         sortino();
         sqrt();
         sqzmom();
+        ssf();
         stc();
         stddev();
         stoch();

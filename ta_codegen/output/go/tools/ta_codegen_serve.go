@@ -864,7 +864,7 @@ func evalPredicate(p params) string {
 	return string(append(b, "]}"...))
 }
 
-const functionList = `{"functions":["TA_AC","TA_ACCBANDS","TA_ACOS","TA_AD","TA_ADD","TA_ADOSC","TA_ADR","TA_ADX","TA_ADXR","TA_ALLIGATOR","TA_ALMA","TA_AO","TA_APO","TA_AROON","TA_AROONOSC","TA_ASI","TA_ASIN","TA_ATAN","TA_ATR","TA_AVGDEV","TA_AVGPRICE","TA_BBANDS","TA_BBW","TA_BETA","TA_BOP","TA_CCI","TA_CDL2CROWS","TA_CDL3BLACKCROWS","TA_CDL3INSIDE","TA_CDL3LINESTRIKE","TA_CDL3OUTSIDE","TA_CDL3STARSINSOUTH","TA_CDL3WHITESOLDIERS","TA_CDLABANDONEDBABY","TA_CDLADVANCEBLOCK","TA_CDLBELTHOLD","TA_CDLBREAKAWAY","TA_CDLCLOSINGMARUBOZU","TA_CDLCONCEALBABYSWALL","TA_CDLCOUNTERATTACK","TA_CDLDARKCLOUDCOVER","TA_CDLDOJI","TA_CDLDOJISTAR","TA_CDLDRAGONFLYDOJI","TA_CDLENGULFING","TA_CDLEVENINGDOJISTAR","TA_CDLEVENINGSTAR","TA_CDLGAPSIDESIDEWHITE","TA_CDLGRAVESTONEDOJI","TA_CDLHAMMER","TA_CDLHANGINGMAN","TA_CDLHARAMI","TA_CDLHARAMICROSS","TA_CDLHIGHWAVE","TA_CDLHIKKAKE","TA_CDLHIKKAKEMOD","TA_CDLHOMINGPIGEON","TA_CDLIDENTICAL3CROWS","TA_CDLINNECK","TA_CDLINVERTEDHAMMER","TA_CDLKICKING","TA_CDLKICKINGBYLENGTH","TA_CDLLADDERBOTTOM","TA_CDLLONGLEGGEDDOJI","TA_CDLLONGLINE","TA_CDLMARUBOZU","TA_CDLMATCHINGLOW","TA_CDLMATHOLD","TA_CDLMORNINGDOJISTAR","TA_CDLMORNINGSTAR","TA_CDLONNECK","TA_CDLPIERCING","TA_CDLRICKSHAWMAN","TA_CDLRISEFALL3METHODS","TA_CDLSEPARATINGLINES","TA_CDLSHOOTINGSTAR","TA_CDLSHORTLINE","TA_CDLSPINNINGTOP","TA_CDLSTALLEDPATTERN","TA_CDLSTICKSANDWICH","TA_CDLTAKURI","TA_CDLTASUKIGAP","TA_CDLTHRUSTING","TA_CDLTRISTAR","TA_CDLUNIQUE3RIVER","TA_CDLUPSIDEGAP2CROWS","TA_CDLXSIDEGAP3METHODS","TA_CE","TA_CEIL","TA_CG","TA_CHOP","TA_CHOPTR","TA_CKSP","TA_CMF","TA_CMO","TA_CMOU","TA_COPPOCK","TA_CORREL","TA_COS","TA_COSH","TA_CRSI","TA_CTI","TA_CUMSUM","TA_CVI","TA_DEMA","TA_DIV","TA_DONCHIAN","TA_DOSC","TA_DPO","TA_DX","TA_EFI","TA_EMA","TA_EMV","TA_ER","TA_ERI","TA_EXP","TA_FISHER","TA_FLOOR","TA_FOSC","TA_FRACTAL","TA_FRAMA","TA_GATOR","TA_HA","TA_HMA","TA_HT_DCPERIOD","TA_HT_DCPHASE","TA_HT_PHASOR","TA_HT_SINE","TA_HT_TRENDLINE","TA_HT_TRENDMODE","TA_IBS","TA_ICHIMOKU","TA_IMI","TA_KAMA","TA_KC","TA_KDJ","TA_KST","TA_KSTEXT","TA_KURTOSIS","TA_KVO","TA_LINEARREG","TA_LINEARREG_ANGLE","TA_LINEARREG_INTERCEPT","TA_LINEARREG_SLOPE","TA_LN","TA_LOG10","TA_MA","TA_MACD","TA_MACDEXT","TA_MACDFIX","TA_MACDV","TA_MAENV","TA_MAMA","TA_MARKETFI","TA_MASSI","TA_MAVP","TA_MAX","TA_MAXINDEX","TA_MCGD","TA_MEDIAN","TA_MEDPRICE","TA_MFI","TA_MIDPOINT","TA_MIDPRICE","TA_MIN","TA_MININDEX","TA_MINMAX","TA_MINMAXINDEX","TA_MINUS_DI","TA_MINUS_DM","TA_MOM","TA_MULT","TA_NATR","TA_NVI","TA_OBV","TA_PERCENTB","TA_PERCENTILE","TA_PERCENTRANK","TA_PLUS_DI","TA_PLUS_DM","TA_PPO","TA_PSO","TA_PVI","TA_PVO","TA_PVT","TA_QSTICK","TA_RMA","TA_ROC","TA_ROCP","TA_ROCR","TA_ROCR100","TA_ROGERSSATCHELL","TA_RSI","TA_RVI","TA_RVIR","TA_RVOL","TA_SAR","TA_SAREXT","TA_SHARPE","TA_SI","TA_SIN","TA_SINH","TA_SKEW","TA_SMA","TA_SMI","TA_SORTINO","TA_SQRT","TA_SQZMOM","TA_STC","TA_STDDEV","TA_STOCH","TA_STOCHF","TA_STOCHRSI","TA_SUB","TA_SUM","TA_SUPERTREND","TA_SWAK_2PHP","TA_SWAK_BP","TA_SWAK_BUTTER","TA_SWAK_GAUSS","TA_SWAK_HP","TA_T3","TA_TAN","TA_TANH","TA_TEMA","TA_TRANGE","TA_TRIMA","TA_TRIX","TA_TSF","TA_TSI","TA_TYPPRICE","TA_ULTOSC","TA_VAR","TA_VHF","TA_VIDYA","TA_VORTEX","TA_VWAP","TA_VWMA","TA_WAD","TA_WAVETREND","TA_WCLPRICE","TA_WILLR","TA_WMA","TA_ZIGZAG","TA_ZLEMA"]}`
+const functionList = `{"functions":["TA_AC","TA_ACCBANDS","TA_ACOS","TA_AD","TA_ADD","TA_ADOSC","TA_ADR","TA_ADX","TA_ADXR","TA_ALLIGATOR","TA_ALMA","TA_AO","TA_APO","TA_AROON","TA_AROONOSC","TA_ASI","TA_ASIN","TA_ATAN","TA_ATR","TA_AVGDEV","TA_AVGPRICE","TA_BBANDS","TA_BBW","TA_BETA","TA_BOP","TA_CCI","TA_CDL2CROWS","TA_CDL3BLACKCROWS","TA_CDL3INSIDE","TA_CDL3LINESTRIKE","TA_CDL3OUTSIDE","TA_CDL3STARSINSOUTH","TA_CDL3WHITESOLDIERS","TA_CDLABANDONEDBABY","TA_CDLADVANCEBLOCK","TA_CDLBELTHOLD","TA_CDLBREAKAWAY","TA_CDLCLOSINGMARUBOZU","TA_CDLCONCEALBABYSWALL","TA_CDLCOUNTERATTACK","TA_CDLDARKCLOUDCOVER","TA_CDLDOJI","TA_CDLDOJISTAR","TA_CDLDRAGONFLYDOJI","TA_CDLENGULFING","TA_CDLEVENINGDOJISTAR","TA_CDLEVENINGSTAR","TA_CDLGAPSIDESIDEWHITE","TA_CDLGRAVESTONEDOJI","TA_CDLHAMMER","TA_CDLHANGINGMAN","TA_CDLHARAMI","TA_CDLHARAMICROSS","TA_CDLHIGHWAVE","TA_CDLHIKKAKE","TA_CDLHIKKAKEMOD","TA_CDLHOMINGPIGEON","TA_CDLIDENTICAL3CROWS","TA_CDLINNECK","TA_CDLINVERTEDHAMMER","TA_CDLKICKING","TA_CDLKICKINGBYLENGTH","TA_CDLLADDERBOTTOM","TA_CDLLONGLEGGEDDOJI","TA_CDLLONGLINE","TA_CDLMARUBOZU","TA_CDLMATCHINGLOW","TA_CDLMATHOLD","TA_CDLMORNINGDOJISTAR","TA_CDLMORNINGSTAR","TA_CDLONNECK","TA_CDLPIERCING","TA_CDLRICKSHAWMAN","TA_CDLRISEFALL3METHODS","TA_CDLSEPARATINGLINES","TA_CDLSHOOTINGSTAR","TA_CDLSHORTLINE","TA_CDLSPINNINGTOP","TA_CDLSTALLEDPATTERN","TA_CDLSTICKSANDWICH","TA_CDLTAKURI","TA_CDLTASUKIGAP","TA_CDLTHRUSTING","TA_CDLTRISTAR","TA_CDLUNIQUE3RIVER","TA_CDLUPSIDEGAP2CROWS","TA_CDLXSIDEGAP3METHODS","TA_CE","TA_CEIL","TA_CG","TA_CHOP","TA_CHOPTR","TA_CKSP","TA_CMF","TA_CMO","TA_CMOU","TA_COPPOCK","TA_CORREL","TA_COS","TA_COSH","TA_CRSI","TA_CTI","TA_CUMSUM","TA_CVI","TA_DEMA","TA_DIV","TA_DONCHIAN","TA_DOSC","TA_DPO","TA_DX","TA_EFI","TA_EMA","TA_EMV","TA_ER","TA_ERI","TA_EXP","TA_FISHER","TA_FLOOR","TA_FOSC","TA_FRACTAL","TA_FRAMA","TA_GATOR","TA_HA","TA_HMA","TA_HT_DCPERIOD","TA_HT_DCPHASE","TA_HT_PHASOR","TA_HT_SINE","TA_HT_TRENDLINE","TA_HT_TRENDMODE","TA_IBS","TA_ICHIMOKU","TA_IMI","TA_KAMA","TA_KC","TA_KDJ","TA_KST","TA_KSTEXT","TA_KURTOSIS","TA_KVO","TA_LINEARREG","TA_LINEARREG_ANGLE","TA_LINEARREG_INTERCEPT","TA_LINEARREG_SLOPE","TA_LN","TA_LOG10","TA_MA","TA_MACD","TA_MACDEXT","TA_MACDFIX","TA_MACDV","TA_MAENV","TA_MAMA","TA_MARKETFI","TA_MASSI","TA_MAVP","TA_MAX","TA_MAXINDEX","TA_MCGD","TA_MEDIAN","TA_MEDPRICE","TA_MFI","TA_MIDPOINT","TA_MIDPRICE","TA_MIN","TA_MININDEX","TA_MINMAX","TA_MINMAXINDEX","TA_MINUS_DI","TA_MINUS_DM","TA_MOM","TA_MULT","TA_NATR","TA_NVI","TA_OBV","TA_PERCENTB","TA_PERCENTILE","TA_PERCENTRANK","TA_PLUS_DI","TA_PLUS_DM","TA_PPO","TA_PSO","TA_PVI","TA_PVO","TA_PVT","TA_QSTICK","TA_RMA","TA_ROC","TA_ROCP","TA_ROCR","TA_ROCR100","TA_ROGERSSATCHELL","TA_RSI","TA_RVI","TA_RVIR","TA_RVOL","TA_SAR","TA_SAREXT","TA_SHARPE","TA_SI","TA_SIN","TA_SINH","TA_SKEW","TA_SMA","TA_SMI","TA_SORTINO","TA_SQRT","TA_SQZMOM","TA_SSF","TA_STC","TA_STDDEV","TA_STOCH","TA_STOCHF","TA_STOCHRSI","TA_SUB","TA_SUM","TA_SUPERTREND","TA_SWAK_2PHP","TA_SWAK_BP","TA_SWAK_BUTTER","TA_SWAK_GAUSS","TA_SWAK_HP","TA_T3","TA_TAN","TA_TANH","TA_TEMA","TA_TRANGE","TA_TRIMA","TA_TRIX","TA_TSF","TA_TSI","TA_TYPPRICE","TA_ULTOSC","TA_VAR","TA_VHF","TA_VIDYA","TA_VORTEX","TA_VWAP","TA_VWMA","TA_WAD","TA_WAVETREND","TA_WCLPRICE","TA_WILLR","TA_WMA","TA_ZIGZAG","TA_ZLEMA"]}`
 
 func (s *server) dispatch(method string, p params) string {
 	switch method {
@@ -1331,6 +1331,8 @@ func function(method string) func(*server, params) string {
 		return rpcSQRT
 	case "TA_SQZMOM":
 		return rpcSQZMOM
+	case "TA_SSF":
+		return rpcSSF
 	case "TA_STC":
 		return rpcSTC
 	case "TA_STDDEV":
@@ -4996,6 +4998,24 @@ func rpcSQZMOM(s *server, p params) string {
 	})
 }
 
+func rpcSSF(s *server, p params) string {
+	optInTimePeriod := p.integer("optInTimePeriod")
+	s.pin(p, talib.FuncUnstIdSSF)
+	return s.batch(p, []inSlot{{"inReal", 3, 3}}, []outSlot{{"outReal", false}}, func() (int, error) {
+		return s.core.SSFLookback(optInTimePeriod)
+	}, func(c *call) (talib.OutRange, error) {
+		return s.core.SSF(c.start, c.end, c.in[0], optInTimePeriod, c.r[0])
+	}, func(in [][]float64) error {
+		_, _, err := s.core.SSFOpen(in[0], optInTimePeriod)
+		return err
+	}, func(in [][]float64, c *call) (talib.OutRange, error) {
+		_, r, err := s.core.SSFOpenAndFill(in[0], optInTimePeriod, c.r[0])
+		return r, err
+	}, func(c *call) string {
+		return rideSSF(s.core, p, c.end, c.in[0], optInTimePeriod)
+	})
+}
+
 func rpcSTC(s *server, p params) string {
 	optInFastPeriod := p.integer("optInFastPeriod")
 	optInSlowPeriod := p.integer("optInSlowPeriod")
@@ -6139,6 +6159,8 @@ func (s *server) streamVerify(p params) string {
 		return svSQRT(s, p)
 	case "TA_SQZMOM":
 		return svSQZMOM(s, p)
+	case "TA_SSF":
+		return svSSF(s, p)
 	case "TA_STC":
 		return svSTC(s, p)
 	case "TA_STDDEV":
@@ -10692,6 +10714,9 @@ func svAPO(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -13862,6 +13887,9 @@ func svBBANDS(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -14389,6 +14417,9 @@ func svBBW(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -54875,6 +54906,9 @@ func svKDJ(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -55843,6 +55877,9 @@ func svKSTEXT(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -59096,6 +59133,9 @@ func svMA(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -59975,6 +60015,9 @@ func svMACDEXT(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -61531,6 +61574,9 @@ func svMAENV(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -63174,6 +63220,9 @@ func svMAVP(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -70166,6 +70215,9 @@ func svPERCENTB(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -71896,6 +71948,9 @@ func svPPO(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -72941,6 +72996,9 @@ func svPVO(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -81631,6 +81689,350 @@ func svSQZMOM(s *server, p params) string {
 	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
 }
 
+func svSSF(s *server, p params) string {
+	svShape := p.i32("gen_shape", 0)
+	svSeed := p.i32("gen_seed", 0)
+	svN := min(max(int(p.i32("gen_n", 0)), 2), 256)
+	svK := int(p.i32("unstablePeriod", 0))
+	optInTimePeriod := int(p.i32("optInTimePeriod", 10))
+	fzO, fzH, fzL, fzC, fzV, fzOI := make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN), make([]float64, svN)
+	fuzzGen(svShape, svSeed, svN, fzO, fzH, fzL, fzC, fzV, fzOI)
+	b0 := make([]float64, svN)
+	legs := 0
+	roundMask := 0
+	allOk := true
+	peekAll := true
+	peekReps := 0
+	peekRejects := 0
+	peekRepAll := true
+	fillChecked := 0
+	fillOk := true
+	beg, nb := 0, 0
+	diag := ""
+	rangeChecked := 0
+	rangeOk := true
+	rangeLegs := 0
+	rangeSites := 0
+	valueChecked := 0
+	valueOk := true
+	valueLegs := 0
+	cloneChecked := 0
+	cloneOk := true
+	cloneLegs := 0
+	zsign := int64(0)
+	rounds := 1
+	for rd := 0; rd < rounds; rd++ {
+		core := *s.core
+		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
+		rc := 0
+		br, err := c2.SSF(0, svN-1, fzC, optInTimePeriod, b0)
+		if err != nil {
+			rc = retCodeOf(err)
+			beg, nb = 0, 0
+		} else {
+			beg, nb = br.BegIdx, br.NBElement
+		}
+		lb, lbErr := c2.SSFLookback(optInTimePeriod)
+		if lbErr != nil {
+			lb = 1 << 30
+		}
+		if rc != 0 || nb == 0 {
+			_, _, oErr := c2.SSFOpen(fzC, optInTimePeriod)
+			openRejects := oErr != nil
+			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
+		}
+		fillChecked = 1
+		{
+			f0 := svCanaryF(svN)
+			fh, fr, err := c2.SSFOpenAndFill(fzC, optInTimePeriod, f0)
+			if err != nil {
+				fillOk = false
+			} else {
+				rangeChecked = 1
+				rangeLegs++
+				rangeSites |= 1
+				if fh.OutRange() != br {
+					rangeOk = false
+				}
+				if fr.BegIdx != beg || fr.NBElement != nb {
+					fillOk = false
+				} else {
+					for i := 0; i < nb; i++ {
+						if svXtierNe(f0[i], b0[i], &zsign) {
+							fillOk = false
+						}
+					}
+					for i := nb; i < svN; i++ {
+						if svBne(f0[i], svCanary) {
+							fillOk = false
+						}
+					}
+				}
+			}
+			if _, _, err := c2.SSFOpenAndFill(fzC, optInTimePeriod, fzC); !errors.Is(err, talib.BadParam) {
+				fillOk = false
+			}
+		}
+		pcs := []int{lb + 1, lb + 13, svN / 2, svN - 1}
+		sort.Ints(pcs)
+		first := -1
+		prevP := -1
+		for _, P := range pcs {
+			if P < lb+1 || P > svN-1 || P == prevP {
+				continue
+			}
+			prevP = P
+			if first < 0 {
+				first = P
+			}
+			st, v0, err := c2.SSFOpen(fzC[:P], optInTimePeriod)
+			if err != nil {
+				allOk = false
+				if diag == "" {
+					diag = fmt.Sprintf(`,"openRejectP":%d`, P)
+				}
+				continue
+			}
+			legs++
+			roundMask |= 1 << rd
+			if svXtierNe(v0, b0[P-1-beg], &zsign) {
+				allOk = false
+				if diag == "" {
+					diag = fmt.Sprintf(`,"badBar":%d,"badOut":0,"where":"open"`, P-1)
+				}
+			}
+			va0 := st.Value()
+			valueChecked = 1
+			valueLegs++
+			if svBne(va0, v0) {
+				valueOk = false
+				if diag == "" {
+					diag = `,"valueAfterOpen":1`
+				}
+			}
+			for t := P; t < svN; t++ {
+				pk0, pkErr := st.Peek(fzC[t])
+				if pkErr != nil {
+					peekRejects++
+				}
+				if t%7 == 0 {
+					if _, err := st.Peek(fzC[t-1]); err != nil {
+						peekRejects++
+					}
+					rp0, rpErr := st.Peek(fzC[t])
+					if pkErr == nil && rpErr == nil {
+						peekReps++
+						if svBne(rp0, pk0) {
+							peekRepAll = false
+						}
+					} else {
+						peekRejects++
+					}
+				}
+				up0, err := st.Update(fzC[t])
+				if err != nil {
+					allOk = false
+					if diag == "" {
+						diag = fmt.Sprintf(`,"updateRejected":%d`, t)
+					}
+					break
+				}
+				if pkErr == nil {
+					if svBne(pk0, up0) {
+						peekAll = false
+					}
+				}
+				if _, err := st.Peek(fzC[t-1]); err != nil {
+					peekRejects++
+				}
+				vu0 := st.Value()
+				valueLegs++
+				if svBne(vu0, up0) {
+					valueOk = false
+					if diag == "" {
+						diag = `,"valueAfterUpdate":1`
+					}
+				}
+				if svXtierNe(up0, b0[t-beg], &zsign) {
+					allOk = false
+					if diag == "" {
+						diag = fmt.Sprintf(`,"badBar":%d,"badOut":0,"batchv":"%016x","streamv":"%016x"`, t, math.Float64bits(b0[t-beg]), math.Float64bits(up0))
+					}
+				}
+			}
+			if allOk {
+				rangeChecked = 1
+				rangeLegs++
+				rangeSites |= 2
+				if st.OutRange() != br {
+					rangeOk = false
+				}
+				rangeLegs++
+				rangeSites |= 16
+				if st.Advance() != nil {
+					rangeOk = false
+				}
+				if r := st.OutRange(); r.BegIdx != beg || r.NBElement != nb+1 {
+					rangeOk = false
+				}
+			}
+		}
+		if first > 0 {
+			p0 := first
+			f0 := svCanaryF(svN)
+			sa, _, err := c2.SSFOpenAndFill(fzC[:p0], optInTimePeriod, f0)
+			if err != nil {
+				cloneOk = false
+				if diag == "" {
+					diag = `,"copyOpenReject":1`
+				}
+			} else {
+				va0 := sa.Value()
+				valueLegs++
+				if svBne(va0, f0[0]) {
+					valueOk = false
+					if diag == "" {
+						diag = `,"valueAfterFill":1`
+					}
+				}
+				mid := (p0 + svN) / 2
+				forked := true
+				for t := p0; t < mid; t++ {
+					ua0, err := sa.Update(fzC[t])
+					if err != nil {
+						forked = false
+						cloneOk = false
+						if diag == "" {
+							diag = fmt.Sprintf(`,"copyPreRejected":%d`, t)
+						}
+						break
+					}
+					if svXtierNe(ua0, b0[t-beg], &zsign) {
+						cloneOk = false
+						if diag == "" {
+							diag = fmt.Sprintf(`,"copyPreDiverged":%d`, t)
+						}
+					}
+				}
+				sb := sa.Clone()
+				if sb.Advance() != nil || sb.Advance() != nil {
+					forked = false
+					cloneOk = false
+					if diag == "" {
+						diag = `,"copyAdvanceRejected":1`
+					}
+				}
+				fk0 := make([]float64, svN)
+				if forked {
+					for t := mid; t < svN; t++ {
+						ub0, err := sb.Update(fzC[t])
+						if err != nil {
+							forked = false
+							cloneOk = false
+							if diag == "" {
+								diag = fmt.Sprintf(`,"copyRejected":%d`, t)
+							}
+							break
+						}
+						if svXtierNe(ub0, b0[t-beg], &zsign) {
+							cloneOk = false
+							if diag == "" {
+								diag = fmt.Sprintf(`,"copyDiverged":%d`, t)
+							}
+						}
+						fk0[t] = ub0
+						vu0 := sb.Value()
+						valueLegs++
+						if svBne(vu0, ub0) {
+							valueOk = false
+							if diag == "" {
+								diag = `,"valueAfterUpdate":1`
+							}
+						}
+					}
+				}
+				if forked {
+					for t := mid; t < svN; t++ {
+						ua0, err := sa.Update(fzC[t])
+						if err != nil {
+							forked = false
+							cloneOk = false
+							if diag == "" {
+								diag = fmt.Sprintf(`,"copyRejected":%d`, t)
+							}
+							break
+						}
+						if svBne(ua0, fk0[t]) || svXtierNe(ua0, b0[t-beg], &zsign) {
+							cloneOk = false
+							if diag == "" {
+								diag = fmt.Sprintf(`,"copyDiverged":%d`, t)
+							}
+						}
+						vu0 := sa.Value()
+						valueLegs++
+						if svBne(vu0, ua0) {
+							valueOk = false
+							if diag == "" {
+								diag = `,"valueAfterUpdate":1`
+							}
+						}
+					}
+				}
+				if cloneOk && forked {
+					cloneChecked = 1
+					cloneLegs++
+					rangeChecked = 1
+					rangeLegs++
+					rangeSites |= 8
+					if sa.OutRange() != br {
+						rangeOk = false
+						if diag == "" {
+							diag = `,"copyRangeSrc":1`
+						}
+					}
+					if r := sb.OutRange(); r.BegIdx != beg || r.NBElement != nb+2 {
+						rangeOk = false
+						if diag == "" {
+							diag = `,"copyRange":1`
+						}
+					}
+				}
+			}
+		}
+		if lb >= 1 && lb < svN {
+			_, _, err := c2.SSFOpen(fzC[:lb], optInTimePeriod)
+			if err == nil {
+				allOk = false
+				if diag == "" {
+					diag = `,"shortHistoryAccepted":1`
+				}
+			} else if !errors.Is(err, talib.InsufficientHistory) {
+				allOk = false
+				if diag == "" {
+					diag = `,"shortHistoryWrongType":1`
+				}
+			}
+			f0 := svCanaryF(svN)
+			_, _, err = c2.SSFOpenAndFill(fzC[:lb], optInTimePeriod, f0)
+			if err == nil {
+				allOk = false
+				if diag == "" {
+					diag = `,"shortHistoryFillAccepted":1`
+				}
+			} else if !errors.Is(err, talib.InsufficientHistory) {
+				allOk = false
+				if diag == "" {
+					diag = `,"shortHistoryFillWrongType":1`
+				}
+			}
+		}
+	}
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+}
+
 func svSTC(s *server, p params) string {
 	svShape := p.i32("gen_shape", 0)
 	svSeed := p.i32("gen_seed", 0)
@@ -82361,6 +82763,9 @@ func svSTOCH(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -82807,6 +83212,9 @@ func svSTOCHF(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -83254,6 +83662,9 @@ func svSTOCHRSI(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(29), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -133664,6 +134075,181 @@ func rideSQZMOM(core *talib.Core, p params, endIdx int, inHigh []float64, inLow 
 	return r.emit()
 }
 
+func rideSSF(core *talib.Core, p params, endIdx int, inReal []float64, optInTimePeriod int) string {
+	if !rideGate(p) {
+		return ""
+	}
+	r := newRide()
+	lb, lbErr := core.SSFLookback(optInTimePeriod)
+	if lbErr == nil {
+		r.lb = lb
+	}
+	navail := endIdx + 1
+	if len(inReal) < navail {
+		navail = len(inReal)
+	}
+	m := navail
+	if lbErr == nil {
+		m = 2*lb + 10
+	}
+	if m > navail {
+		m = navail
+	}
+	r.m = m
+	if m > rideMaxBars {
+		r.skip = 1
+		return r.emit()
+	}
+	if m < 1 {
+		r.skip = 2
+		return r.emit()
+	}
+	if lbErr == nil && m < lb+2 {
+		r.skip = 3
+		return r.emit()
+	}
+	if !rideFinite(inReal[:m]) {
+		r.skip = 4
+		return r.emit()
+	}
+	key := fuzzHashInit()
+	key = rideMixStr(key, "TA_SSF")
+	key = rideMixU64(key, uint64(m))
+	key = rideMixU64(key, rideGen)
+	key = rideMixU64(key, uint64(p.i64("unstablePeriod", 0)))
+	key = rideMixU64(key, uint64(optInTimePeriod))
+	key = rideMixF64s(key, inReal[:m])
+	key = fuzzHashFin(key)
+	slot := key % rideSeenN
+	if e := rideSeen[slot]; e.key == key {
+		r.dedup = 1
+		r.openBars = e.open
+		r.fillBars = e.fill
+		return r.emit()
+	}
+	rb0 := make([]float64, m)
+	br, err := core.SSF(0, m-1, inReal[:m], optInTimePeriod, rb0)
+	if err != nil {
+		r.rcBatch = retCodeOf(err)
+		r.rcOpen = rideCode(core.SSFOpen(inReal[:m], optInTimePeriod))
+		fb0 := make([]float64, m)
+		r.rcFill = rideCode(core.SSFOpenAndFill(inReal[:m], optInTimePeriod, fb0))
+		cmp := r.rcOpen == r.rcBatch
+		if cmp {
+			r.rej++
+		}
+		if !cmp {
+			r.ok = false
+			r.leg = 3
+		}
+		cmp = r.rcFill == r.rcBatch
+		if cmp {
+			r.rej++
+		}
+		if !cmp {
+			r.ok = false
+			r.leg = 3
+		}
+		return r.emit()
+	}
+	if lbErr != nil {
+		r.skip = 7
+		return r.emit()
+	}
+	beg, nb := br.BegIdx, br.NBElement
+	if nb == 0 {
+		r.skip = 5
+		return r.emit()
+	}
+	if beg != lb {
+		r.skip = 6
+		return r.emit()
+	}
+	st, u0, err := core.SSFOpen(inReal[:lb+1], optInTimePeriod)
+	if err != nil {
+		r.ok = false
+		r.leg = 1
+		r.bar = lb
+	} else {
+		cmp := true
+		if cmp && svXtierNe(rb0[lb-beg], u0, &r.benign) {
+			cmp = false
+			r.out = 0
+			r.batch = math.Float64bits(rb0[lb-beg])
+			r.stream = math.Float64bits(u0)
+		}
+		if cmp {
+			r.openBars++
+		}
+		if !cmp {
+			r.ok = false
+			r.leg = 1
+			r.bar = lb
+		}
+		for t := lb + 1; t < m; t++ {
+			u0, err := st.Update(inReal[t])
+			if err != nil {
+				r.ok = false
+				r.leg = 1
+				r.bar = t
+				break
+			}
+			cmp := true
+			if cmp && svXtierNe(rb0[t-beg], u0, &r.benign) {
+				cmp = false
+				r.out = 0
+				r.batch = math.Float64bits(rb0[t-beg])
+				r.stream = math.Float64bits(u0)
+			}
+			if cmp {
+				r.openBars++
+			}
+			if !cmp {
+				r.ok = false
+				r.leg = 1
+				r.bar = t
+			}
+			if !r.ok {
+				break
+			}
+		}
+	}
+	if r.ok {
+		fb0 := make([]float64, m)
+		_, rng, err := core.SSFOpenAndFill(inReal[:m], optInTimePeriod, fb0)
+		if err != nil {
+			r.ok = false
+			r.leg = 2
+		} else if rng.BegIdx != beg || rng.NBElement != nb {
+			r.ok = false
+			r.leg = 2
+		} else {
+			for k := 0; k < nb; k++ {
+				cmp := true
+				if cmp && svXtierNe(rb0[k], fb0[k], &r.benign) {
+					cmp = false
+					r.out = 0
+					r.batch = math.Float64bits(rb0[k])
+					r.stream = math.Float64bits(fb0[k])
+				}
+				if cmp {
+					r.fillBars++
+				}
+				if !cmp {
+					r.ok = false
+					r.leg = 2
+					r.bar = beg + k
+					break
+				}
+			}
+		}
+	}
+	if r.ok {
+		rideSeen[slot] = rideEntry{key, r.openBars, r.fillBars}
+	}
+	return r.emit()
+}
+
 func rideSTC(core *talib.Core, p params, endIdx int, inReal []float64, optInFastPeriod int, optInSlowPeriod int, optInCyclePeriod int) string {
 	if !rideGate(p) {
 		return ""
@@ -153483,6 +154069,63 @@ func bsSQZMOM(r *benchRun) {
 	r.row("SQZMOM", nil, lb, hb, acc+float64(nb))
 }
 
+func bsSSF(r *benchRun) {
+	optInTimePeriod := benchInt(r.periodOr(10))
+	lb, err := r.core.SSFLookback(optInTimePeriod)
+	if err != nil {
+		lb = -1
+	}
+	iters, mask := r.iters, r.mask&(benchFeedMax-1)
+	r.reserve(lb + iters)
+	rt0, f0 := r.rt[3], &r.feed[3]
+	acc, nb := 0.0, 0
+	for pass := range r.tb {
+		t := max(lb, 0)
+		t0 := time.Now()
+		for it := 0; it < iters; it++ {
+			rt0[t] = f0[it&mask]
+			o, _ := r.core.SSF(t, t, rt0, optInTimePeriod, r.outR[0])
+			nb = o.NBElement
+			acc += r.outR[0][0]
+			t++
+		}
+		r.tb[pass] = time.Since(t0)
+	}
+	r.trackStart()
+	st, _, err := r.core.SSFOpen(r.in[3], optInTimePeriod)
+	hb := r.trackEnd()
+	if err != nil {
+		r.row("SSF", err, lb, 0, acc+float64(nb))
+		return
+	}
+	for pass := range r.tu {
+		t0 := time.Now()
+		for it := 0; it < iters; it++ {
+			v0, _ := st.Update(f0[it&mask])
+			acc += v0
+		}
+		r.tu[pass] = time.Since(t0)
+	}
+	blk := r.blk
+	for pass := range r.tp {
+		var tp time.Duration
+		for b := 0; b < r.nblk; b++ {
+			t0 := time.Now()
+			for it := b * blk; it < (b+1)*blk; it++ {
+				v0, _ := st.Peek(f0[it&mask])
+				acc += v0
+			}
+			tp += time.Since(t0)
+			for it := b * blk; it < (b+1)*blk; it++ {
+				v0, _ := st.Update(f0[it&mask])
+				acc += v0
+			}
+		}
+		r.tp[pass] = tp
+	}
+	r.row("SSF", nil, lb, hb, acc+float64(nb))
+}
+
 func bsSTC(r *benchRun) {
 	optInFastPeriod := benchInt(23)
 	optInSlowPeriod := benchInt(50)
@@ -156319,6 +156962,9 @@ func benchStreamAll(r *benchRun, filter string) {
 	}
 	if benchMatches(filter, "SQZMOM") {
 		bsSQZMOM(r)
+	}
+	if benchMatches(filter, "SSF") {
+		bsSSF(r)
 	}
 	if benchMatches(filter, "STC") {
 		bsSTC(r)

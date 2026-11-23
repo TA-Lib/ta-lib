@@ -479,7 +479,8 @@ static const TA_IntegerDataPair TA_MA_TypeDataPair[] =
    {12,"ZLEMA"},
    {13,"RMA"},
    {14,"VIDYA"},
-   {15,"ALMA"}
+   {15,"ALMA"},
+   {16,"SSF"}
 };
 
 const TA_IntegerList TA_MA_TypeList =

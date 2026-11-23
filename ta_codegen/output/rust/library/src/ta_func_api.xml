@@ -10853,6 +10853,51 @@
 	</FinancialFunction>
 
 
+	<!-- SSF -->
+	<FinancialFunction>
+		<Abbreviation>SSF</Abbreviation>
+		<ShortDescription>Ehlers SuperSmoother Filter</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
+			<Flag>Uses Transcendental</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Critical period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>10000</Maximum>
+					<SuggestedStart>5</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- STC -->
 	<FinancialFunction>
 		<Abbreviation>STC</Abbreviation>

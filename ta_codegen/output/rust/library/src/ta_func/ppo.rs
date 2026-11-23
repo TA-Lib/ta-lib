@@ -84,7 +84,8 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -121,7 +122,8 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -528,7 +530,8 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outReal` — PPO value in percent.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.

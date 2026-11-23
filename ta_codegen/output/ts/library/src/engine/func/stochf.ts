@@ -193,7 +193,7 @@ function stochfWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const optInFastK_Period = optInFastK_PeriodArg === undefined ? Core.INTEGER_DEFAULT : optInFastK_PeriodArg;
   const optInFastD_Period = optInFastD_PeriodArg === undefined ? Core.INTEGER_DEFAULT : optInFastD_PeriodArg;
   const optInFastD_MAType = optInFastD_MATypeArg === undefined ? Core.INTEGER_DEFAULT : optInFastD_MATypeArg;
-  if (optInFastD_MAType === 7 || optInFastD_MAType === 15) {
+  if (optInFastD_MAType === 7 || optInFastD_MAType === 15 || optInFastD_MAType === 16) {
     return fellThrough('declined');
   }
   const outFastK = o.outFastK;
@@ -283,7 +283,7 @@ function stochfPositionalWasm(startIdx: number, endIdx: number, inHigh: ArrayLik
   if (!isInt32(optInFastK_Period) || !isInt32(optInFastD_Period) || !isInt32(optInFastD_MAType)) {
     return fellThrough('parameter');
   }
-  if (optInFastD_MAType === 7 || optInFastD_MAType === 15) {
+  if (optInFastD_MAType === 7 || optInFastD_MAType === 15 || optInFastD_MAType === 16) {
     return fellThrough('declined');
   }
   if (outFastK === undefined || outFastD === undefined) {

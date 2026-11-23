@@ -191,7 +191,7 @@ function maenvWasm(real: ArrayLike<number>, options: MaenvOptions | undefined): 
   const optInPercentUp = optInPercentUpArg === undefined ? Core.REAL_DEFAULT : optInPercentUpArg;
   const optInPercentDn = optInPercentDnArg === undefined ? Core.REAL_DEFAULT : optInPercentDnArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outRealUpperBand = o.outUpperBand;
@@ -270,7 +270,7 @@ function maenvPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike
   if (!isInt32(optInTimePeriod) || !isReal(optInPercentUp) || !isReal(optInPercentDn) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outRealUpperBand === undefined || outRealMiddleBand === undefined || outRealLowerBand === undefined) {

@@ -56,6 +56,7 @@
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
  *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
+ *  112326 MF,CC Add SSF (issue #609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -72,6 +73,7 @@ import { KamaStream, kamaLookbackPositional, kamaOpenAndFillInternal, kamaOpenAn
 import { MamaOut, MamaStream, mamaLookbackPositional, mamaOpenAndFillInternal, mamaOpenAndFillPositional, mamaOpenInternal, mamaPeekTape, mamaPositional, mamaStepTape, mamaTapeDetach } from './mama.ts';
 import { RmaStream, rmaLookbackPositional, rmaOpenAndFillInternal, rmaOpenAndFillPositional, rmaOpenInternal, rmaPeekTape, rmaPositional, rmaStepTape, rmaTapeDetach } from './rma.ts';
 import { SmaStream, smaLookbackPositional, smaOpenAndFillInternal, smaOpenAndFillPositional, smaOpenInternal, smaPeekTape, smaPositional, smaStepTape, smaTapeDetach } from './sma.ts';
+import { SsfStream, ssfLookbackPositional, ssfOpenAndFillInternal, ssfOpenAndFillPositional, ssfOpenInternal, ssfPeekTape, ssfPositional, ssfStepTape, ssfTapeDetach } from './ssf.ts';
 import { T3Stream, t3LookbackPositional, t3OpenAndFillInternal, t3OpenAndFillPositional, t3OpenInternal, t3PeekTape, t3Positional, t3StepTape, t3TapeDetach } from './t3.ts';
 import { TemaStream, temaLookbackPositional, temaOpenAndFillInternal, temaOpenAndFillPositional, temaOpenInternal, temaPeekTape, temaPositional, temaStepTape, temaTapeDetach } from './tema.ts';
 import { TrimaStream, trimaLookbackPositional, trimaOpenAndFillInternal, trimaOpenAndFillPositional, trimaOpenInternal, trimaPeekTape, trimaPositional, trimaStepTape, trimaTapeDetach } from './trima.ts';
@@ -156,6 +158,10 @@ export function maLookbackPositional(optInTimePeriod: number, optInMAType: MATyp
     }
     case MAType.ALMA: {
       retValue = almaLookbackPositional(optInTimePeriod, 6.0, 0.85, core);
+      break;
+    }
+    case MAType.SSF: {
+      retValue = ssfLookbackPositional(optInTimePeriod, core);
       break;
     }
     default: {
@@ -372,6 +378,13 @@ export function maImpl(
       retCode = RetCode.SUCCESS;
       break;
     }
+    case MAType.SSF: {
+      const _xr14 = ssfPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      outBegIdx.value = _xr14.begIdx;
+      outNBElement.value = _xr14.count;
+      retCode = RetCode.SUCCESS;
+      break;
+    }
     default: {
       retCode = RetCode.BAD_PARAM;
       break;
@@ -434,7 +447,7 @@ export interface MaOptions {
   /**
    * Which moving-average algorithm to dispatch to (default `MAType.SMA`; values:
    * 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   * 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   * 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    * `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
    */
   maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
@@ -540,6 +553,8 @@ export function maDisplayShift(outputIdx: number, options?: MaOptions): number {
  * - `MAType.DISABLED` bypasses smoothing explicitly, for any period: the output is
  *   a copy of the input with a lookback of 0. Every function that takes an MAType
  *   parameter accepts it.
+ * - `MAType.SSF` takes a period up to SSF's own maximum, which is below this
+ *   function's; a longer one is rejected.
  * - `MAType.DEFAULT` selects the documented default of the parameter it is passed
  *   to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType
  *   parameter accepts it.
@@ -585,6 +600,7 @@ export function maDisplayShift(outputIdx: number, options?: MaOptions): number {
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`vidya`](https://ta-lib.org/functions/vidya)
  * @see [`alma`](https://ta-lib.org/functions/alma)
+ * @see [`ssf`](https://ta-lib.org/functions/ssf)
  */
 export function ma(real: ArrayLike<number>, options?: MaOptions): MaResult {
   const o = maOptionsOf('MA', options);
@@ -622,7 +638,7 @@ export class MaStream {
   /** @internal */
   cur_outReal: number = 0;
   /** @internal */
-  sub: SmaStream | EmaStream | WmaStream | DemaStream | TemaStream | TrimaStream | KamaStream | MamaStream | T3Stream | HmaStream | ZlemaStream | RmaStream | VidyaStream | AlmaStream | null = null;
+  sub: SmaStream | EmaStream | WmaStream | DemaStream | TemaStream | TrimaStream | KamaStream | MamaStream | T3Stream | HmaStream | ZlemaStream | RmaStream | VidyaStream | AlmaStream | SsfStream | null = null;
   /** @internal */
   arm: number = 0;
   /** @internal */
@@ -745,6 +761,9 @@ export class MaStream {
       case 13: {
         return (sub as AlmaStream).peek(inReal);
       }
+      case 14: {
+        return (sub as SsfStream).peek(inReal);
+      }
       default:
         throw failure('MA peek', RetCode.INTERNAL_ERROR);
     }
@@ -836,6 +855,10 @@ function maStepImpl(sp: MaStream, inReal: number): void {
     }
     case 13: {
       sp.cur_outReal = (sub as AlmaStream).update(inReal);
+      return;
+    }
+    case 14: {
+      sp.cur_outReal = (sub as SsfStream).update(inReal);
       return;
     }
     default:
@@ -1012,6 +1035,15 @@ function maOpenImpl(
       sp.outRangeCount = sub.outRangeCount;
       sp.sub = sub;
       sp.arm = 13;
+      sp.cur_outReal = sub.cur_outReal;
+      break;
+    }
+    case MAType.SSF: {
+      const sub = ssfOpenInternal(core, inReal, startIdx, optInTimePeriod);
+      sp.outRangeBegIdx = sub.outRangeBegIdx;
+      sp.outRangeCount = sub.outRangeCount;
+      sp.sub = sub;
+      sp.arm = 14;
       sp.cur_outReal = sub.cur_outReal;
       break;
     }
@@ -1200,6 +1232,15 @@ function maOpenAndFillImpl(
       sp.cur_outReal = sub.cur_outReal;
       break;
     }
+    case MAType.SSF: {
+      const sub = ssfOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
+      outBegIdx.value = sub.outRangeBegIdx;
+      outNBElement.value = sub.outRangeCount;
+      sp.sub = sub;
+      sp.arm = 14;
+      sp.cur_outReal = sub.cur_outReal;
+      break;
+    }
     default:
       return RetCode.BAD_PARAM;
   }
@@ -1355,6 +1396,13 @@ function maOpenAndFillInternalImpl(
       const sub = almaOpenAndFillInternal(core, inReal, startIdx, optInTimePeriod, 6.0, 0.85, outBegIdx, outNBElement, outReal);
       sp.sub = sub;
       sp.arm = 13;
+      sp.cur_outReal = sub.cur_outReal;
+      break;
+    }
+    case MAType.SSF: {
+      const sub = ssfOpenAndFillInternal(core, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.sub = sub;
+      sp.arm = 14;
       sp.cur_outReal = sub.cur_outReal;
       break;
     }
@@ -1613,6 +1661,10 @@ export function maStepTape(sp: MaStream, tape: Float64Array, tapeBase: number, t
       sp.cur_outReal = almaStepTape(sp.sub as AlmaStream, tape, tapeBase, tapeMask, inReal);
       break;
     }
+    case 14: {
+      sp.cur_outReal = ssfStepTape(sp.sub as SsfStream, tape, tapeBase, tapeMask, inReal);
+      break;
+    }
     default:
       break;
   }
@@ -1669,6 +1721,9 @@ export function maPeekTape(sp: MaStream, tape: Float64Array, tapeBase: number, t
     case 13: {
       return almaPeekTape(sp.sub as AlmaStream, tape, tapeBase, tapeMask, inReal);
     }
+    case 14: {
+      return ssfPeekTape(sp.sub as SsfStream, tape, tapeBase, tapeMask, inReal);
+    }
     default:
       throw failure('MA peek', RetCode.INTERNAL_ERROR);
   }
@@ -1705,6 +1760,8 @@ export function maTapeDetach(sp: MaStream): number {
       return vidyaTapeDetach(sp.sub as VidyaStream);
     case 13:
       return almaTapeDetach(sp.sub as AlmaStream);
+    case 14:
+      return ssfTapeDetach(sp.sub as SsfStream);
     default:
       return 0;
   }
