@@ -138,8 +138,11 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
   let instances = 0;
   wasm.Instance = new Proxy(Instance, {
     construct(target, args, newTarget) {
-      instances++;
-      return Reflect.construct(target, args, newTarget) as object;
+      const instance = Reflect.construct(target, args, newTarget) as { exports: object };
+      if ('memory' in instance.exports) {
+        instances++;
+      }
+      return instance;
     },
   });
   hooks.resetEngine();

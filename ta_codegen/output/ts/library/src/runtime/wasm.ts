@@ -87,6 +87,8 @@ const OUT_OF_FRAME = -2147483647;
 /** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
+/** @internal A module whose one export is lane 0 of `f64x2.relaxed_madd` over its three splatted arguments. */
+export const PREFLIGHT = 'AGFzbQEAAAABCAFgA3x8fAF8AwIBAAcFAQFwAAAKFgEUACAA/RQgAf0UIAL9FP2HAv0hAAs=';
 
 /**
  * Why the WebAssembly engine is not loaded:
@@ -96,7 +98,7 @@ const FUSED = 2 ** -29 + 2 ** -60;
  * - `'unavailable'`: the engine's bytes could not be loaded, or this entry has
  *   no engine (`ta-lib/js/abstract`, and the entries a `workerd`, `edge-light`
  *   or `react-native` build resolves to).
- * - `'compile'`: the runtime refused to compile the engine, as one without
+ * - `'compile'`: the runtime cannot compile the engine, as one without
  *   relaxed SIMD or under a Content-Security-Policy that forbids WebAssembly does.
  * - `'instantiate'`: the engine compiled but could not be instantiated.
  * - `'fma'`: this runtime does not fuse the multiply-add the engine relies on, so
@@ -135,6 +137,7 @@ let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
 let budget = BUDGET;
 let retired = 0;
+let verdict: 'compile' | 'fma' | null | undefined;
 
 /** @internal */
 export type BytesImport = () => Promise<{ readonly WASM_BASE64: string }>;
@@ -288,6 +291,7 @@ export function resetEngine(): void {
   failure = null;
   traps = 0;
   loading = null;
+  verdict = undefined;
   generation++;
 }
 
@@ -345,6 +349,11 @@ async function load(): Promise<EngineStatus | null> {
   if (live !== null || compiled !== null || failure !== null) {
     return null;
   }
+  const refused = preflight();
+  if (refused !== null) {
+    failure = refused;
+    return null;
+  }
   const epoch = generation;
   let base64 = source;
   if (base64 === null) {
@@ -388,6 +397,22 @@ async function load(): Promise<EngineStatus | null> {
   return null;
 }
 
+/**
+ * Why the engine cannot run here, judged once on {@link PREFLIGHT}, so that a
+ * runtime that would refuse the engine imports and compiles none of its bytes.
+ */
+function preflight(): 'compile' | 'fma' | null {
+  if (verdict === undefined) {
+    try {
+      const madd = new WebAssembly.Instance(new WebAssembly.Module(decode(PREFLIGHT)), {}).exports.p as WasmBatch;
+      verdict = madd(PROBE[0], PROBE[0], PROBE[1]) === FUSED ? null : 'fma';
+    } catch {
+      verdict = 'compile';
+    }
+  }
+  return verdict;
+}
+
 function decode(base64: string): Uint8Array {
   const text = atob(base64);
   const bytes = new Uint8Array(text.length);
@@ -406,6 +431,11 @@ function current(compile: boolean): WasmEngine | null {
   }
   if (compiled === null) {
     if (source === null || !compile) {
+      return null;
+    }
+    const refused = preflight();
+    if (refused !== null) {
+      failure = refused;
       return null;
     }
     try {

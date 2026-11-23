@@ -90,7 +90,8 @@ async function csp() {
   }
   check('csp-calls-answer-from-typescript', bad.length === 0 && hooks.moduleCalls() === 0 && hooks.fallThroughCount() === calls.length,
     bad.length ? bad.join('; ') : `${calls.length} calls bit-identical to ta-lib/js, ${hooks.moduleCalls()} module call(s), ${hooks.fallThroughCount()} fall-through(s) (${hooks.lastFallThrough()})`);
-  check('csp-compiled-asynchronously', compiles.sync === 0, `${compiles.sync} synchronous WebAssembly.Module construction(s)`);
+  check('csp-only-the-preflight-compiled', compiles.small === 1 && compiles.sync === 0 && compiles.async === 0,
+    `${compiles.small} small and ${compiles.sync} large synchronous WebAssembly.Module construction(s), ${compiles.async} asynchronous compile(s)`);
 }
 
 let failure = null;

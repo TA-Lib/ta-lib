@@ -63,7 +63,7 @@ const TESTS: Record<string, number> = {
   'batchContract.test.ts': 10,
   'engineBytes.test.ts': 2,
   'engineContract.test.ts': 26,
-  'engineLoader.test.ts': 7,
+  'engineLoader.test.ts': 11,
   'engineParity.test.ts': 4,
   'engineRouting.test.ts': 2,
   'engineTraps.test.ts': 3,

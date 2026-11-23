@@ -20,7 +20,8 @@
      entered the module, and a call before ready() did not, nor was the bytes
      chunk fetched before ready(); under /csp/, served with a
      Content-Security-Policy that forbids WebAssembly, ready() resolves to the
-     TypeScript engine with its reason, every call answers with the bits of
+     TypeScript engine with its reason, having compiled only the preflight
+     module and fetched no bytes chunk, every call answers with the bits of
      ta-lib/js, and nothing throws; under /abstract/, a ta-lib/abstract call
      before ready() stays in TypeScript and fetches no bytes chunk, and after
      it, in strict mode, the same call enters the module with the same bits.
@@ -60,7 +61,7 @@ PLAIN = ["before-ready-call-stayed-in-typescript", "ready-resolves-wasm", "compi
          "strict-bits-ema", "strict-bits-t3", "strict-bits-macd", "strict-bits-sma",
          "strict-bits-cdlengulfing", "module-counter-advanced", "plain-nothing-threw"]
 CSP_RUN = ["csp-ready-resolves-js-with-reason", "csp-calls-answer-from-typescript",
-           "csp-compiled-asynchronously", "csp-nothing-threw"]
+           "csp-only-the-preflight-compiled", "csp-nothing-threw"]
 ABSTRACT = ["abstract-before-ready-stayed-in-typescript", "abstract-ready-resolves-wasm",
             "abstract-compiled-asynchronously", "abstract-strict-bits-EMA", "abstract-strict-bits-BBANDS",
             "abstract-strict-bits-CDLENGULFING", "abstract-nothing-threw"]
@@ -377,12 +378,15 @@ def main():
                     missing = [name for name in expected if name not in seen]
                     if missing:
                         failures.append("%s: the page reported no %s" % (mode, ", ".join(missing)))
-                    if mode != "csp":
-                        with server.lock:
-                            log = list(server.log)
+                    with server.lock:
+                        log = list(server.log)
+                    fetched = [i for i, (verb, path) in enumerate(log)
+                               if verb == "GET" and chunk and path == "/%s/%s" % (mode, chunk)]
+                    if mode == "csp":
+                        report("csp-bytes-never-fetched", chunk and not fetched,
+                               "the bytes chunk %s was fetched %d time(s)" % (chunk, len(fetched)))
+                    else:
                         marker = ("POST", "/mark/%s/before-ready" % mode)
-                        fetched = [i for i, (verb, path) in enumerate(log)
-                                   if verb == "GET" and chunk and path == "/%s/%s" % (mode, chunk)]
                         at = log.index(marker) if marker in log else None
                         report("bytes-fetched-only-after-ready" if mode == "plain"
                                else "%s-bytes-fetched-only-after-ready" % mode,
