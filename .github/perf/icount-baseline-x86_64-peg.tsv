@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/15.2.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	7014726a06d4819d333fe9b96d6e2fd64baaab31
-#generated	2026-11-24T01:30:28Z
+#commit	02928d2e2fb391f3ef723ffbeb96aeaba8c17b5b
+#generated	2026-11-24T03:34:18Z
 AC	batch	0	647497
 AC	open	0	564093
 AC	openfill	0	604575
@@ -115,7 +115,7 @@ AVGPRICE	peek	0	48141
 AVGPRICE	update	0	57359
 BBANDS	batch	0	762759
 BBANDS	open	0	948632
-BBANDS	openfill	0	947286
+BBANDS	openfill	0	947266
 BBANDS	peek	0	200718
 BBANDS	update	0	313451
 BBW	batch	0	715561
@@ -684,8 +684,8 @@ KC	openfill	0	546612
 KC	peek	0	178194
 KC	update	0	223247
 KDJ	batch	0	2348487
-KDJ	open	0	2588428
-KDJ	openfill	0	2587262
+KDJ	open	0	2580107
+KDJ	openfill	0	2578941
 KDJ	peek	0	346618
 KDJ	update	0	452005
 KST	batch	0	2055737
@@ -693,7 +693,7 @@ KST	open	0	1877259
 KST	openfill	0	2074893
 KST	peek	0	142351
 KST	update	0	238070
-KSTEXT	batch	0	1909279
+KSTEXT	batch	0	1909270
 KSTEXT	open	0	2312358
 KSTEXT	openfill	0	2312863
 KSTEXT	peek	0	425999
@@ -1064,18 +1064,18 @@ STDDEV	openfill	0	608290
 STDDEV	peek	0	91152
 STDDEV	update	0	139006
 STOCH	batch	0	1786898
-STOCH	open	0	2052851
-STOCH	openfill	0	2026191
+STOCH	open	0	2035812
+STOCH	openfill	0	2017671
 STOCH	peek	0	244213
 STOCH	update	0	366957
 STOCHF	batch	0	1685883
-STOCHF	open	0	1767880
-STOCHF	openfill	0	1775308
+STOCHF	open	0	1759362
+STOCHF	openfill	0	1758280
 STOCHF	peek	0	192891
 STOCHF	update	0	270711
 STOCHRSI	batch	0	1757909
-STOCHRSI	open	0	1833991
-STOCHRSI	openfill	0	1832888
+STOCHRSI	open	0	1822765
+STOCHRSI	openfill	0	1821662
 STOCHRSI	peek	0	229730
 STOCHRSI	update	0	359107
 SUB	batch	0	30114
