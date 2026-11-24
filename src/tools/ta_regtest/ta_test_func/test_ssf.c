@@ -91,9 +91,9 @@
  *        call TA_BAD_PARAM, before any buffer is sized from it; at the cap
  *        both succeed.
  *
- *   SERVER_VERIFY: the constant and Nyquist shapes, the golden call at P = 20,
- *   the period cap and two rejected takers are routed: the --codegen sweep
- *   reaches none of them.
+ *   SERVER_VERIFY: the constant and Nyquist shapes, the golden call at P = 20
+ *   and the period cap are routed, and every taker's lookback at and past
+ *   SSF's cap is compared: the --codegen sweep reaches none of them.
  */
 
 /**** Headers ****/
@@ -122,7 +122,7 @@
 #define SSF_GAIN_CMP      40000
 #define SSF_LOOKBACK_CMP  96
 #define SSF_INPLACE_CMP   18386
-#define SSF_ROUTE_CMP     6
+#define SSF_ROUTE_CMP     40
 #define SSF_GOLDEN_CMP    19
 #define SSF_EDGE_CMP      6
 #define SSF_MA_CMP        23
@@ -843,6 +843,34 @@ static TA_RetCode ssfTaker( int k, int P, int n, int *lookback, int *begIdx, int
    }
 }
 
+/* ssfTaker's parameters, in signature order, for the lookback comparison. */
+static int ssfTakerOpt( int k, int P, double opt[], const char **name )
+{
+   const double S = (double)TA_MAType_SSF, M = (double)TA_MAType_SMA, p = (double)P;
+   static const char * const fn[SSF_NB_TAKER] =
+   {
+      "BBANDS", "BBW", "PERCENTB", "MACDEXT", "MACDEXT", "MACDEXT", "APO", "PPO", "PVO",
+      "STOCH", "STOCH", "STOCHF", "STOCHRSI", "KDJ", "KDJ", "KSTEXT", "KSTEXT", "MAENV"
+   };
+   const double v[SSF_NB_TAKER][11] =
+   {
+      { p, 2, 2, S }, { p, 2, 2, S }, { p, 2, 2, S },
+      { p, S, 26, M, 9, M }, { 12, M, p, S, 9, M }, { 12, M, 26, M, p, S },
+      { 12, p, S }, { 12, p, S }, { 12, p, S },
+      { 5, p, S, 3, M }, { 5, 3, M, p, S }, { 5, p, S }, { 14, 5, p, S },
+      { 9, p, S, 3, M }, { 9, 3, M, p, S },
+      { 10, 15, 20, 30, p, 10, 10, 15, 9, S, M }, { 10, 15, 20, 30, 10, 10, 10, 15, p, M, S },
+      { p, 2.5, 2.5, S }
+   };
+   static const int nb[SSF_NB_TAKER] = { 4, 4, 4, 6, 6, 6, 3, 3, 3, 5, 5, 3, 4, 5, 5, 11, 11, 4 };
+   int i;
+
+   for( i = 0; i < nb[k]; i++ )
+      opt[i] = v[k][i];
+   *name = fn[k];
+   return nb[k];
+}
+
 static ErrorNumber test_ssf_takers( void )
 {
    int k, n, lookback, begIdx, nbElement;
@@ -881,42 +909,31 @@ static ErrorNumber test_ssf_takers( void )
       g_ssfTakerCmp++;
    }
 
-   /* The other languages' rejection of the same calls. */
+   /* Every language's lookback for the same parameters: one past the cap it
+    * is the rejection, -1. server_verify() compares no rejected call. */
    if( server_verify_active() )
    {
-      double opt[6];
-      int cmpBefore;
+      static const int caps[] = { 10001, 10000 };
+      double opt[11];
+      const char *name;
+      int nbOpt, c, before;
 
-      rc = ssfTaker( 0, 10001, SSF_N_ROUTE, &lookback, &begIdx, &nbElement );
-      opt[0] = 10001.0; opt[1] = 2.0; opt[2] = 2.0; opt[3] = (double)TA_MAType_SSF;
-      cmpBefore = server_verify_comparisons();
-      e = server_verify( "BBANDS", 0, SSF_N_ROUTE-1, SSF_N_ROUTE, rc, 0, 0,
-                         (const TA_Real*[]){ ssfIn, NULL }, opt, 4,
-                         (const TA_Real*[]){ ssfOut, ssfAlias, ssfOut3, NULL }, NULL );
-      if( e != TA_TEST_PASS )
-         return e;
-      if( server_verify_comparisons() == cmpBefore )
+      for( k = 0; k < SSF_NB_TAKER; k++ )
+      for( c = 0; c < NB_OF(caps); c++ )
       {
-         printf( "SSF taker BBANDS: compared no server despite live pipes\n" );
-         return TA_SV_ROUTED_VACUOUS;
+         nbOpt = ssfTakerOpt( k, caps[c], opt, &name );
+         before = server_verify_lookback_values();
+         e = server_verify_lookback_value( name, opt, nbOpt );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_lookback_values() == before )
+         {
+            printf( "SSF taker %s [P=%d]: compared no server lookback despite live pipes\n",
+                    ssfTakerName[k], caps[c] );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+         g_ssfRouteCmp++;
       }
-      g_ssfRouteCmp++;
-
-      rc = ssfTaker( 5, 10001, SSF_N_ROUTE, &lookback, &begIdx, &nbElement );
-      opt[0] = 12.0; opt[1] = (double)TA_MAType_SMA; opt[2] = 26.0;
-      opt[3] = (double)TA_MAType_SMA; opt[4] = 10001.0; opt[5] = (double)TA_MAType_SSF;
-      cmpBefore = server_verify_comparisons();
-      e = server_verify( "MACDEXT", 0, SSF_N_ROUTE-1, SSF_N_ROUTE, rc, 0, 0,
-                         (const TA_Real*[]){ ssfIn, NULL }, opt, 6,
-                         (const TA_Real*[]){ ssfOut, ssfAlias, ssfOut3, NULL }, NULL );
-      if( e != TA_TEST_PASS )
-         return e;
-      if( server_verify_comparisons() == cmpBefore )
-      {
-         printf( "SSF taker MACDEXT: compared no server despite live pipes\n" );
-         return TA_SV_ROUTED_VACUOUS;
-      }
-      g_ssfRouteCmp++;
    }
 
    return TA_TEST_PASS;
