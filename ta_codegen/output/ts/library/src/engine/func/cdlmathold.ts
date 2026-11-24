@@ -44,69 +44,7 @@ export * from '../../func/cdlmathold.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * A five-candle bullish continuation pattern: a long white candle, an upside
- * real-body-gapped small black candle, two more small falling candles that hold
- * within the first body, and a final white candle closing above the reaction days'
- * highs. Signals continuation of the prior uptrend. Hit = bullish continuation of
- * the existing uptrend.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold).
- *
- * **Notes**
- * - The colors of the third and fourth (reaction) candles are not checked,
- *   although they are classically black.
- * - The continuation reading assumes a prior uptrend, which is not verified.
- * - Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7
- *   million candle lines; he explicitly warns the 78% continuation rate he
- *   measured "will likely be wrong or at least subject to large change as
- *   additional samples become available."
- *   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
- *   93rd of 103 patterns by how often it occurs ([Mat
- *   Hold](https://thepatternsite.com/MatHold.html)), and it fires once in [about
- *   16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlmatholdLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlmatholdOptions}.
- * @returns `begIdx` and the values; see {@link CdlmatholdResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, a real parameter that is not
- *   a number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { cdlmathold } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlmathold({ open, high, low, close }, {
- *   penetration: 0.5,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlrisefall3methods`](https://ta-lib.org/functions/cdlrisefall3methods)
- * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
- */
+/** @internal */
 export function cdlmathold(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmatholdOptions): CdlmatholdResult {
   let routed: CdlmatholdResult | null;
   try {

@@ -44,78 +44,7 @@ export * from '../../func/smi.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * Stochastic Momentum Index: where the close sits relative to the **midpoint** of
- * the recent high/low range, double-smoothed. Lane's stochastic measures the close
- * against the bottom of the range; Blau measures it against the middle, then
- * smooths numerator and denominator separately with two exponential averages
- * before dividing, which is what buys the low-lag, smooth-contoured curve. The
- * result runs -100 to +100 rather than 0 to 100, so the zero line is the
- * reference: positive means the close is above the midpoint of its range, negative
- * below. Extreme readings mark overbought and oversold conditions, and crossings
- * of the signal line are the usual trade trigger.
- *
- * Formula and more info at
- * [ta-lib.org/functions/smi](https://ta-lib.org/functions/smi).
- *
- * **Notes**
- * - A window whose bars are all flat (every high equal to its low) leaves both the
- *   numerator and the denominator at zero. Rather than divide, SMI emits 0 there,
- *   its neutral value, as CCI and IMI emit theirs. Some implementations divide
- *   unguarded and return a non-finite value.
- * - Each exponential average is seeded with a simple average of its own first
- *   inputs, the same seeding TA-Lib's EMA uses, so the first published values
- *   converge toward an unlimited-history result rather than reproducing it
- *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
- *   that warm-up. Implementations seeding from a single first sample — Tulip and
- *   TradingView among them — differ over the transient and agree once it decays.
- * - One output range covers both outputs, so the SMI values consumed by the signal
- *   line's own warm-up are not published.
- *
- * `outSmi[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link smiLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price
- *   series. `low`: Low price series. `close`: Close price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link SmiOptions}.
- * @returns `begIdx` and the values; see {@link SmiResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { smi } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
- *   timePeriod: 13,
- *   fastPeriod: 2,
- *   slowPeriod: 25,
- *   signalPeriod: 9,
- * });
- * console.log(outSmi.length + ' values from bar ' + begIdx + ':');
- * console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
- * console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
- * ```
- * @see [`stoch`](https://ta-lib.org/functions/stoch)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- * @see [`willr`](https://ta-lib.org/functions/willr)
- * @see [`macd`](https://ta-lib.org/functions/macd)
- */
+/** @internal */
 export function smi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SmiOptions): SmiResult {
   let routed: SmiResult | null;
   try {

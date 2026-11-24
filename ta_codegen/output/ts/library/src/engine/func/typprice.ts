@@ -42,48 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/typprice.ts';
 
-/**
- * Typical Price: the average of the high, low, and close of each bar. A single
- * representative price per period.
- *
- * Formula and more info at
- * [ta-lib.org/functions/typprice](https://ta-lib.org/functions/typprice).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link typpriceLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link TyppriceOptions}.
- * @returns `begIdx` and the values; see {@link TyppriceResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { typprice } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = typprice({ high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
- * @see [`avgprice`](https://ta-lib.org/functions/avgprice)
- */
+/** @internal */
 export function typprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: TyppriceOptions): TyppriceResult {
   if (engineRoute.mode !== 0) {
     let routed: TyppriceResult | null;

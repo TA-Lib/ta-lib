@@ -44,75 +44,7 @@ export * from '../../func/gator.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Bill Williams' Gator Oscillator: how far apart the three Alligator lines are, as
- * two histograms. The upper bars are the gap between Jaw and Teeth, the lower bars
- * the gap between Teeth and Lips drawn below zero. Both growing is the alligator
- * eating, a trend under way; both shrinking toward zero is it falling asleep, the
- * lines converging in a range. One side growing while the other shrinks is it
- * waking or sated, the turn from one state into the other. It is read under the
- * Alligator ([`ALLIGATOR`](https://ta-lib.org/functions/alligator)), the
- * Profitunity leg it measures.
- *
- * Formula and more info at
- * [ta-lib.org/functions/gator](https://ta-lib.org/functions/gator).
- *
- * **Notes**
- * - Each line is drawn ahead by its own shift, so the line drawn further ahead is
- *   read back by the difference of the two shifts. `gatorDisplayShift` reports
- *   where a chart draws each histogram, the smaller of its two lines' shifts; it
- *   changes nothing about the values or the returned range.
- * - Each histogram computes its own lines, each seeded over the bars its own
- *   lookback reaches back, so the Teeth an output reads can differ from the
- *   `alligator` Teeth by the seed until it has decayed; setting the `RMA` unstable
- *   period closes the gap.
- * - A zero Lower is `+0.0`.
- *
- * `outUpper[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link gatorLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link GatorOptions}.
- * @returns `begIdx` and the values; see {@link GatorResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { gator } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outUpper, outLower } = gator({ high, low }, {
- *   jawPeriod: 13,
- *   jawShift: 8,
- *   teethPeriod: 8,
- *   teethShift: 5,
- *   lipsPeriod: 5,
- *   lipsShift: 3,
- * });
- * console.log(outUpper.length + ' values from bar ' + begIdx + ':');
- * console.log('outUpper = [' + outUpper[0].toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1].toFixed(4) + ']');
- * console.log('outLower = [' + outLower[0].toFixed(4) + ', ..., ' + outLower[outLower.length - 1].toFixed(4) + ']');
- * ```
- * @see [`alligator`](https://ta-lib.org/functions/alligator)
- * @see [`ao`](https://ta-lib.org/functions/ao)
- * @see [`ac`](https://ta-lib.org/functions/ac)
- * @see [`rma`](https://ta-lib.org/functions/rma)
- */
+/** @internal */
 export function gator(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: GatorOptions): GatorResult {
   let routed: GatorResult | null;
   try {

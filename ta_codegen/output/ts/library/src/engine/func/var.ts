@@ -44,49 +44,7 @@ export * from '../../func/var.ts';
 
 const WASM_FROM_BARS = 2500;
 
-/**
- * Rolling population variance of a real series over a given period. Measures
- * dispersion of values around their mean. Higher values indicate greater
- * dispersion; 0 means constant input.
- *
- * Formula and more info at
- * [ta-lib.org/functions/var](https://ta-lib.org/functions/var).
- *
- * **Notes**
- * - Computes population variance (divides by the period), not the sample variance
- *   (n-1) used by some definitions.
- * - The deviation-count parameter is accepted but has no effect on the result.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link varLookback} is a success with empty outputs.
- *
- * @param real - Source series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link VarOptions}.
- * @returns `begIdx` and the values; see {@link VarResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { var_ } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = var_(series, { timePeriod: 5, nbDev: 1 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- */
+/** @internal */
 export function var_(real: ArrayLike<number>, options?: VarOptions): VarResult {
   let routed: VarResult | null;
   try {

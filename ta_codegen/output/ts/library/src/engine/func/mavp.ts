@@ -45,59 +45,7 @@ export * from '../../func/mavp.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * Moving average whose period varies per bar, driven by a companion period series.
- * For each bar it computes an MA of the selected type over the (clamped) period
- * given by periods.
- *
- * Formula and more info at
- * [ta-lib.org/functions/mavp](https://ta-lib.org/functions/mavp).
- *
- * **Notes**
- * - Fractional per-bar periods are truncated to whole numbers before being clamped
- *   to the minimum and maximum period.
- * - Period values of 1 perform no smoothing (the bar's output equals its input);
- *   the minimum allowed period is 1 since 0.6.5.
- * - `minPeriod` must not exceed `maxPeriod`; a larger minimum is rejected.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link mavpLookback} is a success with empty outputs.
- *
- * @param real - series to be averaged.
- * @param periods - per-bar desired MA period.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MavpOptions}.
- * @returns `begIdx` and the values; see {@link MavpResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { MAType, mavp } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- * const periods = new Float64Array(252); // one period per bar
- *
- * const { begIdx, values } = mavp(series, periods, {
- *   minPeriod: 2,
- *   maxPeriod: 30,
- *   maType: MAType.SMA,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- * @see [`mama`](https://ta-lib.org/functions/mama)
- * @see [`t3`](https://ta-lib.org/functions/t3)
- */
+/** @internal */
 export function mavp(real: ArrayLike<number>, periods: ArrayLike<number>, options?: MavpOptions): MavpResult {
   let routed: MavpResult | null;
   try {

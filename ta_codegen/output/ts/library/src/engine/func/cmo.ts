@@ -42,48 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/cmo.ts';
 
-/**
- * Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed
- * average up-moves and down-moves. Identical to RSI except the numerator uses
- * (gain-loss) instead of gain. Bounded in \[-100,+100]; positive = net upward
- * momentum, negative = net downward.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cmo](https://ta-lib.org/functions/cmo).
- *
- * **Notes**
- * - Gains and losses are smoothed with Wilder's method (as in RSI) rather than the
- *   simple period sums of Chande's original definition.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cmoLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CmoOptions}.
- * @returns `begIdx` and the values; see {@link CmoResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { cmo } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cmo(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`rsi`](https://ta-lib.org/functions/rsi)
- */
+/** @internal */
 export function cmo(real: ArrayLike<number>, options?: CmoOptions): CmoResult {
   if (engineRoute.mode !== 0) {
     let routed: CmoResult | null;

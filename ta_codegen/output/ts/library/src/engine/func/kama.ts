@@ -44,53 +44,7 @@ export * from '../../func/kama.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar
- * to an efficiency ratio (directional move vs. total volatility). Reacts fast in
- * trends and smooths in ranging markets. Flat KAMA = non-trending/ranging market.
- * KAMA tracking price closely = efficient trend.
- *
- * Formula and more info at
- * [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama).
- *
- * **Notes**
- * - A period of 1 performs no smoothing: the output is a copy of the input,
- *   consistent with `MA(period=1)` for every MAType. (The natural KAMA math at
- *   period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is
- *   always 1, so the copy is made explicit.) Allowed since 0.6.5.
- * - The output never leaves the range of the prices it has seen.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link kamaLookback} is a success with empty outputs.
- *
- * @param real - Source price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link KamaOptions}.
- * @returns `begIdx` and the values; see {@link KamaResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { kama } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = kama(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`mama`](https://ta-lib.org/functions/mama)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- */
+/** @internal */
 export function kama(real: ArrayLike<number>, options?: KamaOptions): KamaResult {
   let routed: KamaResult | null;
   try {

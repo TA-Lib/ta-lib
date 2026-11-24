@@ -44,60 +44,7 @@ export * from '../../func/macdfix.ts';
 
 const WASM_FROM_BARS = 250;
 
-/**
- * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
- * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
- * period. Signal-line crossovers and histogram sign flag momentum shifts.
- *
- * Formula and more info at
- * [ta-lib.org/functions/macdfix](https://ta-lib.org/functions/macdfix).
- *
- * **Notes**
- * - A signal period of 1 disables signal-line smoothing: the signal equals the
- *   MACD line and the histogram is zero. Before 0.6.5 this parameter value
- *   produced misaligned output (issues #48/#59).
- *
- * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link macdfixLookback} is a success with empty outputs.
- *
- * @param real - Source series (typically close)
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MacdfixOptions}.
- * @returns `begIdx` and the values; see {@link MacdfixResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { macdfix } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const {
- *   begIdx,
- *   outMacd,
- *   outMacdSignal,
- *   outMacdHist,
- * } = macdfix(series, { signalPeriod: 9 });
- * console.log(outMacd.length + ' values from bar ' + begIdx + ':');
- * console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
- * console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
- * console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
- * ```
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`macdext`](https://ta-lib.org/functions/macdext)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`apo`](https://ta-lib.org/functions/apo)
- */
+/** @internal */
 export function macdfix(real: ArrayLike<number>, options?: MacdfixOptions): MacdfixResult {
   let routed: MacdfixResult | null;
   try {

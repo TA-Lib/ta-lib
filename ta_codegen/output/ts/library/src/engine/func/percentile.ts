@@ -44,70 +44,7 @@ export * from '../../func/percentile.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Rolling percentile by the nearest-rank method: sort the trailing window
- * ascending and report the value whose 1-based ordinal rank is the P-th percentile
- * of the window size. The result is always a value that actually occurred in the
- * window, never an interpolation, so it stays on the price scale and never invents
- * a level the series never traded at. At P = 50 with an odd window it is the
- * rolling median; at the extremes it degenerates to the rolling minimum and
- * maximum.
- *
- * Formula and more info at
- * [ta-lib.org/functions/percentile](https://ta-lib.org/functions/percentile).
- *
- * **Notes**
- * - The nearest-rank method is one of several incompatible percentile conventions.
- *   The linear-interpolation family (Hyndman & Fan type 7, the default of most
- *   statistical packages, and TradingView's `ta.percentile_linear_interpolation`)
- *   reports a weighted blend of two neighbouring order statistics and can emit a
- *   value that never occurred. That is a different indicator, not a mode of this
- *   one: PERCENTILE's parameter list is fixed at a window and a percentage, and a
- *   method selector cannot be appended to it later without changing the function's
- *   arity.
- * - A tail percentile rests on the few values beyond it: at N = 30, P = 95 is the
- *   second-largest value in the window. For a stable estimate keep about ten
- *   values beyond the percentile, N ≥ 1000 / min(P, 100 − P): 100 bars at P = 10
- *   or 90, 200 at P = 5 or 95.
- * - Every input value in the window must be finite. A NaN makes every comparison
- *   against it false, which breaks the ordering the rank index is read from.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link percentileLookback} is a success with empty outputs.
- *
- * @param real - Source series to take the percentile of.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link PercentileOptions}.
- * @returns `begIdx` and the values; see {@link PercentileResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { percentile } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = percentile(series, {
- *   timePeriod: 100,
- *   percentile: 50,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`min`](https://ta-lib.org/functions/min)
- * @see [`max`](https://ta-lib.org/functions/max)
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- */
+/** @internal */
 export function percentile(real: ArrayLike<number>, options?: PercentileOptions): PercentileResult {
   let routed: PercentileResult | null;
   try {

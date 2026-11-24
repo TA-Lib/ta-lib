@@ -42,62 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/wad.ts';
 
-/**
- * Williams' Accumulation/Distribution: a cumulative line meant to expose whether a
- * security is quietly under accumulation (informed buying) or distribution
- * (informed selling) beneath the surface of price. Larry Williams built it to
- * catch that shift before price confirms it — traders watch for the line to
- * diverge from price, since a line that keeps rising while price stalls or falls
- * points to accumulation, and one that stalls while price pushes to a new high
- * points to distribution. **It consumes no volume.** Larry Williams' original
- * multiplies each move by that bar's volume; Steven Achelis published the
- * modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd
- * ed., p.368), and the industry kept Williams' name on that no-volume form. That
- * industry-wide decision is enough for TA-Lib to ship the same form under the same
- * name. What remains once the multiplier is dropped is a signed close-to-close
- * move measured on the true range, so it is grouped as a momentum indicator, not a
- * volume one.
- *
- * Formula and more info at
- * [ta-lib.org/functions/wad](https://ta-lib.org/functions/wad).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link wadLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link WadOptions}.
- * @returns `begIdx` and the values; see {@link WadResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { wad } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = wad({ high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ad`](https://ta-lib.org/functions/ad)
- * @see [`adosc`](https://ta-lib.org/functions/adosc)
- * @see [`nvi`](https://ta-lib.org/functions/nvi)
- * @see [`obv`](https://ta-lib.org/functions/obv)
- * @see [`pvi`](https://ta-lib.org/functions/pvi)
- */
+/** @internal */
 export function wad(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WadOptions): WadResult {
   if (engineRoute.mode !== 0) {
     let routed: WadResult | null;

@@ -42,51 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/qstick.ts';
 
-/**
- * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a
- * simple moving average of the candle body, close minus open. It measures how
- * bullish or bearish the bodies have been over the window, independently of the
- * wicks — above zero the bodies closed up on balance, below zero they closed down,
- * and the zero-line crossings are the signal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/qstick](https://ta-lib.org/functions/qstick).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link qstickLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `close`: Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link QstickOptions}.
- * @returns `begIdx` and the values; see {@link QstickResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { qstick } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = qstick({ open, close }, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`cmo`](https://ta-lib.org/functions/cmo)
- * @see [`imi`](https://ta-lib.org/functions/imi)
- * @see [`mom`](https://ta-lib.org/functions/mom)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- */
+/** @internal */
 export function qstick(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: QstickOptions): QstickResult {
   if (engineRoute.mode !== 0) {
     let routed: QstickResult | null;

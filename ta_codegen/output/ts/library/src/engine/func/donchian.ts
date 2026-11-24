@@ -42,72 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/donchian.ts';
 
-/**
- * Donchian Channels: three overlap lines built from rolling price extrema. The
- * upper band is the highest high and the lower band the lowest low over the
- * period; the middle line is their midpoint. Richard Donchian's original four-week
- * rule — generally credited as the first published systematic trend-following
- * system — buys a break above the high of the preceding weeks and sells a break
- * below their low.
- *
- * Formula and more info at
- * [ta-lib.org/functions/donchian](https://ta-lib.org/functions/donchian).
- *
- * **Notes**
- * - The window includes the current bar, matching TradingView
- *   (`ta.highest`/`ta.lowest`), NinjaTrader, ta4j, pandas-ta and every other
- *   library that ships Donchian Channels.
- * - A breakout rule compares the current bar against the **previous** bar's band —
- *   `High[t] > Upper[t-1]` — which is where the one-bar offset belongs. Reading
- *   `Upper[t]` against `High[t]` can never signal, because `High[t]` is inside the
- *   window that produced it.
- * - Upper, Middle and Lower are bit-identical to `MAX(high, N)`, `MIDPRICE(N)` and
- *   `MIN(low, N)`. DONCHIAN computes all three in one pass under the name users
- *   look for.
- * - The middle line is the channel midpoint, not a moving average of price.
- * - No smoothing or recursion is involved, so there is no unstable period: outputs
- *   are exact from the first bar.
- *
- * `outUpperBand[k]` is the value at input bar `begIdx + k`; every output is
- * exactly as long as the number of values written, and nothing is padded. A range
- * that ends before {@link donchianLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link DonchianOptions}.
- * @returns `begIdx` and the values; see {@link DonchianResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { donchian } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const {
- *   begIdx,
- *   outUpperBand,
- *   outMiddleBand,
- *   outLowerBand,
- * } = donchian({ high, low }, { timePeriod: 20 });
- * console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
- * console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
- * console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
- * console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
- * ```
- */
+/** @internal */
 export function donchian(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianResult {
   if (engineRoute.mode !== 0) {
     let routed: DonchianResult | null;

@@ -44,60 +44,7 @@ export * from '../../func/stc.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic,
- * each pass smoothed by half. Bounded 0 to 100, read against 25 and 75: turning up
- * from below 25 is bullish, turning down from above 75 bearish.
- *
- * Formula and more info at
- * [ta-lib.org/functions/stc](https://ta-lib.org/functions/stc).
- *
- * **Notes**
- * - The smoothing factor is fixed at 0.5, as in Schaff's published code.
- * - The MACD line is TA-Lib's: both EMAs are seeded with a simple average over
- *   windows ending on the same bar. The published code runs the EMAs from the
- *   first bar of the data.
- * - If the slow period is set smaller than the fast period, the two are swapped,
- *   as in `MACD`.
- * - Being recursive, an output depends on how much history precedes it. The
- *   unstable period warms the two smoothers; the EMA unstable period warms the
- *   MACD line.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link stcLookback} is a success with empty outputs.
- *
- * @param real - Input series (typically close)
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link StcOptions}.
- * @returns `begIdx` and the values; see {@link StcResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { stc } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = stc(series, {
- *   fastPeriod: 23,
- *   slowPeriod: 50,
- *   cyclePeriod: 10,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`stochf`](https://ta-lib.org/functions/stochf)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- */
+/** @internal */
 export function stc(real: ArrayLike<number>, options?: StcOptions): StcResult {
   let routed: StcResult | null;
   try {

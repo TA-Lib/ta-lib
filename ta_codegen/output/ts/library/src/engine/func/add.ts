@@ -45,45 +45,7 @@ export * from '../../func/add.ts';
 const WASM_FROM_BARS = 2500;
 const WASM_TO_BARS = 10000;
 
-/**
- * Element-wise addition of two input series.
- *
- * Formula and more info at
- * [ta-lib.org/functions/add](https://ta-lib.org/functions/add).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link addLookback} is a success with empty outputs.
- *
- * @param real0 - First operand series.
- * @param real1 - Second operand series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link AddOptions}.
- * @returns `begIdx` and the values; see {@link AddResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { add } from 'ta-lib';
- *
- * const series0 = new Float64Array(252); // your data, oldest first
- * const series1 = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = add(series0, series1);
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`sub`](https://ta-lib.org/functions/sub)
- * @see [`mult`](https://ta-lib.org/functions/mult)
- * @see [`div`](https://ta-lib.org/functions/div)
- */
+/** @internal */
 export function add(real0: ArrayLike<number>, real1: ArrayLike<number>, options?: AddOptions): AddResult {
   let routed: AddResult | null;
   try {

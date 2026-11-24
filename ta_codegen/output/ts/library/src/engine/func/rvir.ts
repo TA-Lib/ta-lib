@@ -44,59 +44,7 @@ export * from '../../func/rvir.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of his
- * own indicator, which runs the 1993 RVI over the daily highs and again over the
- * daily lows and averages the two indices. Output is bounded \[0..100] and is
- * interpreted like RVI: above 50 the highs and lows have been more volatile while
- * rising than while falling, below 50 the reverse. Dorsey's stated reason for the
- * revision is that a high and a low carry the day's range, so the pair answers the
- * question the close alone can only approximate.
- *
- * Formula and more info at
- * [ta-lib.org/functions/rvir](https://ta-lib.org/functions/rvir).
- *
- * **Notes**
- * - RVIR is the 1995 revision; [`RVI`](https://ta-lib.org/functions/rvi) is the
- *   1993 version.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link rvirLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link RvirOptions}.
- * @returns `begIdx` and the values; see {@link RvirResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { rvir } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = rvir({ high, low }, {
- *   timePeriod: 14,
- *   stdDevPeriod: 10,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`rvi`](https://ta-lib.org/functions/rvi)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- * @see [`atr`](https://ta-lib.org/functions/atr)
- */
+/** @internal */
 export function rvir(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RvirOptions): RvirResult {
   let routed: RvirResult | null;
   try {

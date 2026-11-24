@@ -10,7 +10,6 @@ use super::ts::{self, api_input_sig, api_inputs, buffer_key, module_stem, param_
 use super::ts_phantom_io::TsSpelling;
 use super::wasm;
 use crate::ir::{EnumDef, FuncDef, OptInput, ParamType};
-use crate::registry::Registry;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
@@ -305,8 +304,7 @@ fn wrapper(f: &Front, name: &str, tabled: bool) -> String {
 /// in new arrays itself; `<n>Into` copies into the caller's buffers.
 #[allow(clippy::implicit_hasher, clippy::too_many_lines)]
 #[must_use]
-pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &Registry, route: Option<Route>) -> String {
-    super::ts_doc::seed_function_names(registry.names());
+pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, route: Option<Route>) -> String {
     let names = ts_names(&func.name);
     let stem = module_stem(func);
     let js_fn = format!("{stem}Js");
@@ -519,7 +517,9 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     s.push_str(&wrapper(
         &Front {
-            docs: &super::ts_doc::batch_docs(func, enums, registry),
+            // Its declaration and TSDoc are the `./js` function's, through the
+            // `export *` above: `stripInternal` drops this one, so the docs ship once.
+            docs: "/** @internal */\n",
             public: &names.public,
             sig: &sig.join(", "),
             result: &names.result_type,
@@ -605,7 +605,7 @@ pub fn render_node_entry() -> String {
 /// # Panics
 /// When the routing table is invalid or an output path cannot be written.
 #[allow(clippy::implicit_hasher)]
-pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &Registry, root: &Path, lib: &Path) {
+pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path, lib: &Path) {
     let table = load_routing(&root.join("ta_codegen/input").join(ROUTING_FILE), funcs);
     let dir = lib.join("src/engine");
     let func_dir = dir.join("func");
@@ -613,7 +613,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, registry: &
     let mut written = BTreeSet::new();
     for f in routed(funcs) {
         let name = format!("{}.ts", module_stem(f));
-        crate::emit::write_if_changed(func_dir.join(&name), render_routed(f, funcs, enums, registry, table.get(&f.name).copied())).unwrap();
+        crate::emit::write_if_changed(func_dir.join(&name), render_routed(f, funcs, enums, table.get(&f.name).copied())).unwrap();
         written.insert(name);
     }
     for entry in std::fs::read_dir(&func_dir).unwrap().flatten() {

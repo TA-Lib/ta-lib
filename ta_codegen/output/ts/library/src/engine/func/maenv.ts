@@ -43,75 +43,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optio
 
 export * from '../../func/maenv.ts';
 
-/**
- * Moving Average Envelope: a moving average with one band a fixed percentage above
- * it and one a fixed percentage below. The bands keep a constant proportional
- * distance from the average, so price reaching a band reads as stretched relative
- * to its recent mean, and a move beyond one as unusual strength or weakness.
- *
- * Formula and more info at
- * [ta-lib.org/functions/maenv](https://ta-lib.org/functions/maenv).
- *
- * **Notes**
- * - The percentages are in percent: 10, not 0.1, places a band 10% from the moving
- *   average.
- * - Each band has its own percentage; the usual single-percentage envelope is the
- *   case where both are equal. A negative percentage puts its band on the other
- *   side of the average.
- * - **The input is assumed positive.** Each band sits a percent of the moving
- *   average away from it. Where the average is 0 both bands equal it, and where it
- *   is negative the two bands trade places; no error is returned. A series that
- *   reaches or crosses zero, such as an oscillator or a spread, has no meaningful
- *   result here.
- * - A displaced envelope is a shift of the plot by a number of bars. The outputs
- *   are not displaced.
- *
- * `outUpperBand[k]` is the value at input bar `begIdx + k`; every output is
- * exactly as long as the number of values written, and nothing is padded. A range
- * that ends before {@link maenvLookback} is a success with empty outputs.
- *
- * @param real - Input data series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MaenvOptions}.
- * @returns `begIdx` and the values; see {@link MaenvResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { MAType, maenv } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const {
- *   begIdx,
- *   outUpperBand,
- *   outMiddleBand,
- *   outLowerBand,
- * } = maenv(series, {
- *   timePeriod: 20,
- *   percentUp: 10,
- *   percentDn: 10,
- *   maType: MAType.SMA,
- * });
- * console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
- * console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
- * console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
- * console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`bbands`](https://ta-lib.org/functions/bbands)
- * @see [`kc`](https://ta-lib.org/functions/kc)
- * @see [`accbands`](https://ta-lib.org/functions/accbands)
- */
+/** @internal */
 export function maenv(real: ArrayLike<number>, options?: MaenvOptions): MaenvResult {
   if (engineRoute.mode !== 0) {
     let routed: MaenvResult | null;

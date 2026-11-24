@@ -44,60 +44,7 @@ export * from '../../func/cdlstalledpattern.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * A three-candle pattern of three white candles with consecutively higher closes
- * where the third loses momentum (a small body riding on the shoulder of the
- * second's long body). It is a bearish reversal signal of a stalling advance. A
- * hit (-100) is bearish: the uptrend is stalling and may reverse.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlstalledpattern](https://ta-lib.org/functions/cdlstalledpattern).
- *
- * **Notes**
- * - The pattern classically appears in an uptrend, but this function does not
- *   verify a prior uptrend; the caller must confirm it.
- * - Bulkowski's testing shows this classically-bearish pattern actually acts as a
- *   bullish continuation 77% of the time — the reverse of the label — because
- *   price tends to close above the pattern's top rather than turning down.
- *   ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlstalledpatternLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlstalledpatternOptions}.
- * @returns `begIdx` and the values; see {@link CdlstalledpatternResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlstalledpattern } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlstalledpattern({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdladvanceblock`](https://ta-lib.org/functions/cdladvanceblock)
- * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
- * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
- */
+/** @internal */
 export function cdlstalledpattern(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult {
   let routed: CdlstalledpatternResult | null;
   try {

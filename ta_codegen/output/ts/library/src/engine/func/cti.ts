@@ -42,57 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/cti.ts';
 
-/**
- * John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of the last
- * `timePeriod` closes against a straight line of positive slope. Bounded in -1..+1
- * by construction — `+1` is a perfectly linear uptrend, `-1` a perfectly linear
- * downtrend, `0` no linear trend. Trend strength and direction in one bounded
- * number, with no smoothing, no recursion and no filter coefficients.
- * Arithmetically it is [`CORREL`](https://ta-lib.org/functions/correl) of the
- * series against a ramp, with the ramp side collapsed to closed-form constants.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cti](https://ta-lib.org/functions/cti).
- *
- * **Notes**
- * - A flat window returns exactly `0.0` rather than holding the previous value as
- *   the author's listing does; holding would make the function path-dependent.
- * - The result is clamped into -1..+1, as `CORREL` is: rounding in three sums can
- *   put a coefficient slightly outside its own range.
- * - `timePeriod` starts at 2, not 1: at `n = 1` the closed form `n²(n²−1)/12` is
- *   identically zero and every window is degenerate.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link ctiLookback} is a success with empty outputs.
- *
- * @param real - The series to measure the trend of.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CtiOptions}.
- * @returns `begIdx` and the values; see {@link CtiResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { cti } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cti(series, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`correl`](https://ta-lib.org/functions/correl)
- * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
- * @see [`vhf`](https://ta-lib.org/functions/vhf)
- */
+/** @internal */
 export function cti(real: ArrayLike<number>, options?: CtiOptions): CtiResult {
   if (engineRoute.mode !== 0) {
     let routed: CtiResult | null;

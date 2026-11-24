@@ -44,60 +44,7 @@ export * from '../../func/skew.ts';
 
 const WASM_FROM_BARS = 5000;
 
-/**
- * An estimate, from the trailing window, of the skewness of the distribution its
- * values come from: the third standardised moment. An asymmetry measure: above 0
- * the distribution has a longer tail above its mean, below 0 a longer tail below
- * it, and a symmetric window reads 0. The companion to
- * [`KURTOSIS`](https://ta-lib.org/functions/kurtosis),
- * [`VAR`](https://ta-lib.org/functions/var) and
- * [`STDDEV`](https://ta-lib.org/functions/stddev) in the same group.
- *
- * Formula and more info at
- * [ta-lib.org/functions/skew](https://ta-lib.org/functions/skew).
- *
- * **Notes**
- * - This is `G1`, the form Excel `SKEW`, `scipy.stats.skew(bias=False)` and R
- *   `e1071::skewness(type = 2)` compute. Two other estimators are in circulation,
- *   each a constant multiple of `g1` rather than a rounding convention: `g1`
- *   itself (`scipy.stats.skew(bias=True)`) and `b1 = g1 · ((n−1)/n)^(3/2)`
- *   (`type = 3`).
- * - One reading apart from `n−1` equal ones gives exactly `√n`, above the rest
- *   when the odd one is above and `−√n` when it is below. That is the largest
- *   magnitude a window can reach, so a window dominated by one outlier is
- *   legitimately far from 0.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link skewLookback} is a success with empty outputs.
- *
- * @param real - The series to measure.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link SkewOptions}.
- * @returns `begIdx` and the values; see {@link SkewResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { skew } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = skew(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`kurtosis`](https://ta-lib.org/functions/kurtosis)
- * @see [`var_`](https://ta-lib.org/functions/var)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- */
+/** @internal */
 export function skew(real: ArrayLike<number>, options?: SkewOptions): SkewResult {
   let routed: SkewResult | null;
   try {

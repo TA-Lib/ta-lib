@@ -44,69 +44,7 @@ export * from '../../func/hma.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Hull Moving Average, published by Alan Hull in 2005: a moving average built to
- * track price with far less lag than an [`SMA`](https://ta-lib.org/functions/sma),
- * [`WMA`](https://ta-lib.org/functions/wma) or
- * [`EMA`](https://ta-lib.org/functions/ema) of the same length while staying
- * smooth. It first removes lag by doubling a half-period
- * [`WMA`](https://ta-lib.org/functions/wma) and subtracting the full-period one —
- * extrapolating the average toward current price — then smooths that de-lagged
- * series with a final WMA over the square root of the period. HMA is also
- * selectable as a moving-average type (`MAType.HMA`) wherever an `maType`
- * parameter is accepted ([`MA`](https://ta-lib.org/functions/ma),
- * [`BBANDS`](https://ta-lib.org/functions/bbands),
- * [`STOCH`](https://ta-lib.org/functions/stoch),
- * [`MACDEXT`](https://ta-lib.org/functions/macdext), ...).
- *
- * Formula and more info at
- * [ta-lib.org/functions/hma](https://ta-lib.org/functions/hma).
- *
- * **Notes**
- * - The two derived periods `n/2` and `sqrt(n)` are **truncated** to integers,
- *   exactly as in Alan Hull's own statement of the formula (`Integer()`); Tulip
- *   Indicators and pandas-ta do the same. Some other published descriptions round
- *   to nearest instead, which changes both the values and, for the square root,
- *   the lookback — a visibly different line, not a tolerance-level difference.
- *   TA-Lib follows the author.
- * - The default period of 20 is Alan Hull's own default. It is also a period on
- *   which the truncate and round-to-nearest conventions coincide (20/2 is exact;
- *   sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting
- *   platform using the other convention still lands on TA-Lib's values.
- * - A period of 1 performs no smoothing: the output is a copy of the input.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link hmaLookback} is a success with empty outputs.
- *
- * @param real - Source price series, close by convention.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link HmaOptions}.
- * @returns `begIdx` and the values; see {@link HmaResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { hma } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = hma(series, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`wma`](https://ta-lib.org/functions/wma)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- */
+/** @internal */
 export function hma(real: ArrayLike<number>, options?: HmaOptions): HmaResult {
   let routed: HmaResult | null;
   try {

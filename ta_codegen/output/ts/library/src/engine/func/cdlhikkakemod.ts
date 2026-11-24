@@ -44,57 +44,7 @@ export * from '../../func/cdlhikkakemod.ts';
 
 const WASM_FROM_BARS = 2500;
 
-/**
- * A four-candle pattern: two successively narrower inside bars, then a breakout
- * bar, with the second candle closing near one extreme of its range. Bullish or
- * bearish reversal signal. Bullish (+) or bearish (-) reversal; per the code's
- * note it is significant in a downtrend (bull) or uptrend (bear), context the code
- * does not verify.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlhikkakemod](https://ta-lib.org/functions/cdlhikkakemod).
- *
- * **Notes**
- * - Does not verify the prior trend (downtrend for bullish, uptrend for bearish)
- *   that this reversal pattern assumes.
- * - A bar that is both a new setup and the confirmation of an earlier one reports
- *   the new setup; the earlier one ends unconfirmed.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlhikkakemodLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlhikkakemodOptions}.
- * @returns `begIdx` and the values; see {@link CdlhikkakemodResult}. Each output
- *   is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlhikkakemod } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlhikkakemod({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlhikkake`](https://ta-lib.org/functions/cdlhikkake)
- */
+/** @internal */
 export function cdlhikkakemod(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakemodOptions): CdlhikkakemodResult {
   let routed: CdlhikkakemodResult | null;
   try {

@@ -42,66 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optio
 
 export * from '../../func/sharpe.ts';
 
-/**
- * The rolling Sharpe ratio: the mean return in excess of a risk-free rate, divided
- * by the standard deviation of that excess return, over a trailing window. A
- * drift-over-volatility measure of the series itself, scaled to a year. Above 0
- * the window's returns beat the risk-free rate on average; the larger the value,
- * the more return per unit of volatility.
- *
- * Formula and more info at
- * [ta-lib.org/functions/sharpe](https://ta-lib.org/functions/sharpe).
- *
- * **Notes**
- * - This is Sharpe's 1994 *ex post* ratio with a constant benchmark, over simple
- *   returns and the sample (`n−1`) standard deviation.
- * - A window whose returns are all equal has no spread: the result is +Inf or -Inf
- *   by the sign of the mean excess return, and NaN when that mean is exactly 0.
- *   With an annualization of 0 it is NaN there and 0 elsewhere.
- * - The risk-free rate is per bar, in the same unit as the returns. For an annual
- *   rate `R`, pass `(1+R)^(1/A) − 1`, where `A` is the annualization; it is not
- *   de-annualized for you.
- * - An annualization of 1 gives the raw per-bar ratio.
- * - A zero price leaves no return to measure from it: the return of the bar after
- *   it counts as 0.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link sharpeLookback} is a success with empty outputs.
- *
- * @param real - The price series; its returns are computed internally.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link SharpeOptions}.
- * @returns `begIdx` and the values; see {@link SharpeResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { sharpe } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = sharpe(series, {
- *   timePeriod: 20,
- *   riskFreeRate: 0,
- *   annualization: 252,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- * @see [`var_`](https://ta-lib.org/functions/var)
- * @see [`beta`](https://ta-lib.org/functions/beta)
- * @see [`rocp`](https://ta-lib.org/functions/rocp)
- */
+/** @internal */
 export function sharpe(real: ArrayLike<number>, options?: SharpeOptions): SharpeResult {
   if (engineRoute.mode !== 0) {
     let routed: SharpeResult | null;

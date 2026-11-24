@@ -44,61 +44,7 @@ export * from '../../func/cdl3blackcrows.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * A four-bar pattern: a white candle followed by three consecutive black (down)
- * candles with successively lower closes, each opening inside the prior black's
- * real body. It is a bearish reversal signal. A hit (-100) signals a bearish
- * reversal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdl3blackcrows](https://ta-lib.org/functions/cdl3blackcrows).
- *
- * **Notes**
- * - Does not verify the prior mature uptrend the pattern classically assumes for
- *   significance.
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
- *   60th of 103 patterns by how often it occurs ([Three Black
- *   Crows](https://thepatternsite.com/ThreeBlackCrows.html)), and it fires 13
- *   times in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdl3blackcrowsLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link Cdl3blackcrowsOptions}.
- * @returns `begIdx` and the values; see {@link Cdl3blackcrowsResult}. Each output
- *   is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdl3blackcrows } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdl3blackcrows({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
- * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
- * @see [`cdladvanceblock`](https://ta-lib.org/functions/cdladvanceblock)
- */
+/** @internal */
 export function cdl3blackcrows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult {
   let routed: Cdl3blackcrowsResult | null;
   try {

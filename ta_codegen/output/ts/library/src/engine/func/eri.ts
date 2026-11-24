@@ -44,62 +44,7 @@ export * from '../../func/eri.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading
- * for a Living* (1993) — how far the bar's high and low sit from an EMA of the
- * close. Bulls strong enough to push the high above the average read as positive
- * Bull Power; bears dragging the low below it read as negative Bear Power.
- *
- * Formula and more info at
- * [ta-lib.org/functions/eri](https://ta-lib.org/functions/eri).
- *
- * **Notes**
- * - ERI is a cancelling difference: near the zero crossings that carry its signal,
- *   tiny EMA discrepancies are amplified without bound in relative terms. Compare
- *   against external values with an absolute tolerance.
- * - No MAType parameter: every canonical source fixes the EMA, and a selectable
- *   average would invent a variant nobody ships.
- *
- * `outBullPower[k]` is the value at input bar `begIdx + k`; every output is
- * exactly as long as the number of values written, and nothing is padded. A range
- * that ends before {@link eriLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price
- *   series. `low`: Low price series. `close`: Close price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link EriOptions}.
- * @returns `begIdx` and the values; see {@link EriResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { eri } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
- *   timePeriod: 13,
- * });
- * console.log(outBullPower.length + ' values from bar ' + begIdx + ':');
- * console.log('outBullPower = [' + outBullPower[0].toFixed(4) + ', ..., ' + outBullPower[outBullPower.length - 1].toFixed(4) + ']');
- * console.log('outBearPower = [' + outBearPower[0].toFixed(4) + ', ..., ' + outBearPower[outBearPower.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`efi`](https://ta-lib.org/functions/efi)
- * @see [`macd`](https://ta-lib.org/functions/macd)
- */
+/** @internal */
 export function eri(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult {
   let routed: EriResult | null;
   try {

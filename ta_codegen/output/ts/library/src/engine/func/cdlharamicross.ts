@@ -44,59 +44,7 @@ export * from '../../func/cdlharamicross.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * A two-candle reversal pattern: a long real body followed by a doji whose real
- * body is contained within the first candle's real body (the doji variant of the
- * Harami). Bullish after a black first candle, bearish after a white first candle.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlharamicross](https://ta-lib.org/functions/cdlharamicross).
- *
- * **Notes**
- * - Does not verify the prior trend (downtrend for bullish, uptrend for bearish)
- *   that the reversal signal assumes.
- * - Bulkowski's testing found the bearish Harami Cross behaves opposite its
- *   textbook label even more strongly than the plain Harami: it acts as a bullish
- *   CONTINUATION 57% of the time rather than a bearish reversal, and the bullish
- *   Harami Cross likewise fails to reverse the downtrend 55% of the time.
- *   ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlharamicrossLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlharamicrossOptions}.
- * @returns `begIdx` and the values; see {@link CdlharamicrossResult}. Each output
- *   is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlharamicross } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlharamicross({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
- * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
- */
+/** @internal */
 export function cdlharamicross(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamicrossOptions): CdlharamicrossResult {
   let routed: CdlharamicrossResult | null;
   try {

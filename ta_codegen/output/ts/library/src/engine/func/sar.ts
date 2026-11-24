@@ -44,63 +44,7 @@ export * from '../../func/sar.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that
- * accelerates toward price via an acceleration factor. Signals trend direction and
- * trailing exit points. SAR below price = uptrend (long); SAR above price =
- * downtrend (short). Price crossing SAR flips direction.
- *
- * Formula and more info at
- * [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar).
- *
- * **Notes**
- * - Wilder left a few details open, so SAR values can differ between charting
- *   tools, mostly near the start of a series and on reversal bars. TA-Lib's
- *   choices:
- * - The first direction comes from Wilder's own Directional Movement on the first
- *   two bars (as in MINUS_DM): short if the low fell by more than the high rose,
- *   long otherwise.
- * - A bar that touches the SAR exactly counts as a reversal.
- * - Wilder's clamping rule is applied before checking for a reversal, so price
- *   must reach the clamped stop to trigger one.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link sarLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link SarOptions}.
- * @returns `begIdx` and the values; see {@link SarResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, a real parameter that is not
- *   a number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { sar } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = sar({ high, low }, {
- *   acceleration: 0.02,
- *   maximum: 0.2,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`sarext`](https://ta-lib.org/functions/sarext)
- * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
- * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
- */
+/** @internal */
 export function sar(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarOptions): SarResult {
   let routed: SarResult | null;
   try {

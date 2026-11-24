@@ -42,55 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/aroon.ts';
 
-/**
- * Aroon reports how recently the highest high and lowest low occurred within a
- * rolling window of length timePeriod, as two 0-100 oscillators. Indicates trend
- * strength and direction. Up near 100 = a very recent new high (strong uptrend);
- * Down near 100 = a very recent new low. Up/Down crossovers signal trend shifts.
- *
- * Formula and more info at
- * [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon).
- *
- * `outAroonDown[k]` is the value at input bar `begIdx + k`; every output is
- * exactly as long as the number of values written, and nothing is padded. A range
- * that ends before {@link aroonLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link AroonOptions}.
- * @returns `begIdx` and the values; see {@link AroonResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { aroon } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
- *   timePeriod: 14,
- * });
- * console.log(outAroonDown.length + ' values from bar ' + begIdx + ':');
- * console.log('outAroonDown = [' + outAroonDown[0].toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1].toFixed(4) + ']');
- * console.log('outAroonUp = [' + outAroonUp[0].toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1].toFixed(4) + ']');
- * ```
- * @see [`aroonosc`](https://ta-lib.org/functions/aroonosc)
- * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
- * @see [`min`](https://ta-lib.org/functions/min)
- * @see [`max`](https://ta-lib.org/functions/max)
- */
+/** @internal */
 export function aroon(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AroonOptions): AroonResult {
   if (engineRoute.mode !== 0) {
     let routed: AroonResult | null;

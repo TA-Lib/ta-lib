@@ -42,65 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/ac.ts';
 
-/**
- * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading Dimensions*,
- * 1998): the rate at which market momentum is itself speeding up or slowing down.
- * Where the Awesome Oscillator ([`AO`](https://ta-lib.org/functions/ao)) measures
- * momentum, this measures the change in that momentum, by taking the oscillator's
- * distance above or below its own moving average. Because acceleration turns
- * before speed does, the reading changes sign ahead of the oscillator it is built
- * from — it is meant as the early half of a pair, not as a signal on its own.
- * Above zero acceleration is with the bulls, below zero with the bears, and it is
- * drawn as a zero-centred histogram whose colour convention is the bar-to-bar
- * change: rising bars accelerating, falling bars decelerating. Williams' rule of
- * thumb is that two same-coloured bars are what confirms the turn, which is why
- * the sign and the direction matter more than the level. The oscillator is one leg
- * of Williams' Profitunity system, alongside the Awesome Oscillator
- * ([`AO`](https://ta-lib.org/functions/ao)) and the Alligator.
- *
- * Formula and more info at
- * [ta-lib.org/functions/ac](https://ta-lib.org/functions/ac).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link acLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link AcOptions}.
- * @returns `begIdx` and the values; see {@link AcResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { ac } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = ac({ high, low }, {
- *   fastPeriod: 5,
- *   slowPeriod: 34,
- *   signalPeriod: 5,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ao`](https://ta-lib.org/functions/ao)
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- * @see [`ppo`](https://ta-lib.org/functions/ppo)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- */
+/** @internal */
 export function ac(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AcOptions): AcResult {
   if (engineRoute.mode !== 0) {
     let routed: AcResult | null;

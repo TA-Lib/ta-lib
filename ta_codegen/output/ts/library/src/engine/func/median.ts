@@ -44,64 +44,7 @@ export * from '../../func/median.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * The middle order statistic of the trailing window: the central value when
- * `timePeriod` is odd, the mean of the two central values when it is even. A
- * robust measure of central tendency — unlike
- * [`SMA`](https://ta-lib.org/functions/sma), a single spike moves it by at most
- * one rank however large the spike is, which is what makes it useful as a filter
- * rather than as a level. Not to be confused with
- * [`MEDPRICE`](https://ta-lib.org/functions/medprice), which is `(High + Low) / 2`
- * of one bar and is not an order statistic.
- *
- * Formula and more info at
- * [ta-lib.org/functions/median](https://ta-lib.org/functions/median).
- *
- * **Notes**
- * - This is not [`PERCENTILE`](https://ta-lib.org/functions/percentile) at 50.
- *   `PERCENTILE` reports the nearest rank, which at even `n` selects the **lower**
- *   of the two central values: on a 4-bar window of `1, 2, 3, 4` this function
- *   returns `2.5` and `PERCENTILE` returns `2`. At odd `n` the two agree bit for
- *   bit.
- * - At even `n` the output can therefore be a value the series never traded at,
- *   which is the deliberate opposite of `PERCENTILE`'s design property.
- * - `timePeriod` is not restricted to odd values: TA-Lib has no odd-only range
- *   mechanism, and it would surprise any caller reaching for a 20-bar median.
- * - Every input value must be finite. A NaN makes every comparison against it
- *   false, which breaks the order the window is kept in, and the output can stay
- *   wrong long after the NaN has left the window.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link medianLookback} is a success with empty outputs.
- *
- * @param real - The series to take the median of.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MedianOptions}.
- * @returns `begIdx` and the values; see {@link MedianResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { median } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = median(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`percentile`](https://ta-lib.org/functions/percentile)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- */
+/** @internal */
 export function median(real: ArrayLike<number>, options?: MedianOptions): MedianResult {
   let routed: MedianResult | null;
   try {

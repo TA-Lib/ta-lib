@@ -44,58 +44,7 @@ export * from '../../func/vhf.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Vertical Horizontal Filter: Adam White's trend-versus-range filter, the range a
- * window covered divided by the path it actually travelled. Bounded in \[0,1].
- * Values near 1 mean the market covered most of its path in one direction
- * (trending); values near 0 mean it retraced repeatedly and went nowhere (choppy).
- * Like ADX it measures trend *strength*, not direction, but it uses no smoothing
- * and carries no recursion. A common use is regime selection: run trend-following
- * logic while VHF is high, oscillator logic while it is low.
- *
- * Formula and more info at
- * [ta-lib.org/functions/vhf](https://ta-lib.org/functions/vhf).
- *
- * **Notes**
- * - A window whose closes are all identical has no vertical movement and no
- *   horizontal movement. VHF reports 0 there. Other libraries differ: Tulip
- *   Indicators leaves the division unguarded and emits NaN, pandas-ta-classic
- *   perturbs the numerator and emits +Inf.
- * - Adam White later described an 18-bar VHF smoothed by a 6-bar moving average.
- *   That variant is not implemented here; apply a moving average to `outReal` to
- *   obtain it.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link vhfLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series, canonically the close.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link VhfOptions}.
- * @returns `begIdx` and the values; see {@link VhfResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { vhf } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = vhf(series, { timePeriod: 28 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`adx`](https://ta-lib.org/functions/adx)
- * @see [`cmo`](https://ta-lib.org/functions/cmo)
- * @see [`cmou`](https://ta-lib.org/functions/cmou)
- */
+/** @internal */
 export function vhf(real: ArrayLike<number>, options?: VhfOptions): VhfResult {
   let routed: VhfResult | null;
   try {

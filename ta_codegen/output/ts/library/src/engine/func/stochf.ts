@@ -45,60 +45,7 @@ export * from '../../func/stochf.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Fast Stochastic Oscillator: the raw %K line and its moving-average-smoothed %D
- * line. Unlike STOCH (which slows both lines), STOCHF returns the unsmoothed FastK
- * and FastD. Oscillates 0-100; >80 overbought, \<20 oversold.
- *
- * Formula and more info at
- * [ta-lib.org/functions/stochf](https://ta-lib.org/functions/stochf).
- *
- * **Notes**
- * - When the high-low range over the window is zero, %K is set to 0 instead of
- *   being undefined.
- *
- * `outFastK[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link stochfLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link StochfOptions}.
- * @returns `begIdx` and the values; see {@link StochfResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { MAType, stochf } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outFastK, outFastD } = stochf({ high, low, close }, {
- *   fastKPeriod: 5,
- *   fastDPeriod: 3,
- *   fastDMaType: MAType.SMA,
- * });
- * console.log(outFastK.length + ' values from bar ' + begIdx + ':');
- * console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
- * console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
- * ```
- * @see [`stoch`](https://ta-lib.org/functions/stoch)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- */
+/** @internal */
 export function stochf(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochfOptions): StochfResult {
   let routed: StochfResult | null;
   try {

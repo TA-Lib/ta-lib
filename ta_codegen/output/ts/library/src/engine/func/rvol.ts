@@ -42,64 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/rvol.ts';
 
-/**
- * Relative Volume: today's volume as a ratio to the average volume of the bars
- * that came before it. A value of 1 means the bar traded exactly its recent
- * average, above 1 means unusual participation, below 1 means the move is thin.
- * Because the current bar is excluded from its own baseline, a volume spike shows
- * up at full size instead of being diluted by the average it is compared against.
- * Read it as a confirmation filter rather than a direction signal: it says how
- * much conviction is behind a price move, not which way. Breakouts on a high ratio
- * are the ones that tend to follow through; the same breakout near 1 is the one to
- * distrust.
- *
- * Formula and more info at
- * [ta-lib.org/functions/rvol](https://ta-lib.org/functions/rvol).
- *
- * **Notes**
- * - The baseline is the mean of the N bars *preceding* the current one, so RVOL
- *   needs one bar more than a moving average of the same period before it emits a
- *   value.
- * - A window in which every bar traded nothing has a baseline of zero and no
- *   defined ratio: that element is ±Inf, or NaN when the current bar is also zero.
- *   Real volume is non-negative, so this only happens on a dead window — an
- *   instrument that did not trade at all, or a series carrying no volume, such as
- *   a cash-index feed.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link rvolLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `volume`: Volume of
- *   each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link RvolOptions}.
- * @returns `begIdx` and the values; see {@link RvolResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { rvol } from 'ta-lib';
- *
- * const volume = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`obv`](https://ta-lib.org/functions/obv)
- * @see [`pvo`](https://ta-lib.org/functions/pvo)
- * @see [`vwma`](https://ta-lib.org/functions/vwma)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- */
+/** @internal */
 export function rvol(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: RvolOptions): RvolResult {
   if (engineRoute.mode !== 0) {
     let routed: RvolResult | null;

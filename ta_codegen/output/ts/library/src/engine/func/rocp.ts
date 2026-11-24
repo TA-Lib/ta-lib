@@ -44,53 +44,7 @@ export * from '../../func/rocp.ts';
 
 const WASM_FROM_BARS = 1000;
 
-/**
- * Rate of change expressed as a fraction of the price timePeriod bars ago.
- * Normalized and centered at zero (positive or negative). >0 rising vs N bars ago,
- * \<0 falling; equals ROC/100.
- *
- * Formula and more info at
- * [ta-lib.org/functions/rocp](https://ta-lib.org/functions/rocp).
- *
- * **Notes**
- * - **The input is assumed positive.** The price `timePeriod` bars back is the
- *   divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small
- *   and the output very large; no error is returned. A series that reaches or
- *   crosses zero, such as an oscillator or a spread, has no meaningful result
- *   here.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link rocpLookback} is a success with empty outputs.
- *
- * @param real - Source price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link RocpOptions}.
- * @returns `begIdx` and the values; see {@link RocpResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { rocp } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = rocp(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`roc`](https://ta-lib.org/functions/roc)
- * @see [`rocr`](https://ta-lib.org/functions/rocr)
- * @see [`rocr100`](https://ta-lib.org/functions/rocr100)
- * @see [`mom`](https://ta-lib.org/functions/mom)
- */
+/** @internal */
 export function rocp(real: ArrayLike<number>, options?: RocpOptions): RocpResult {
   let routed: RocpResult | null;
   try {

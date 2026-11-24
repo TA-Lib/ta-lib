@@ -205,7 +205,7 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let funcs = corpus();
     let enums = load_enums();
     let sma = funcs.iter().find(|f| f.name == "SMA").unwrap();
-    let text = backends::ts_engine::render_routed(sma, &funcs, &enums, make_registry(), Some(Route { from: 37, to: None }));
+    let text = backends::ts_engine::render_routed(sma, &funcs, &enums, Some(Route { from: 37, to: None }));
     assert!(text.contains("\nconst WASM_FROM_BARS = 37;\n"), "{text}");
     assert!(!text.contains("WASM_TO_BARS"), "an open entry has no upper bound:\n{text}");
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
@@ -240,7 +240,7 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let into = &text[at("function smaInto(")..];
     assert!(into.contains("wasmFrame(") && !into.contains("WASM_FROM_BARS"));
 
-    let untabled = backends::ts_engine::render_routed(sma, &funcs, &enums, make_registry(), None);
+    let untabled = backends::ts_engine::render_routed(sma, &funcs, &enums, None);
     assert!(!untabled.contains("WASM_FROM_BARS"));
     assert!(untabled.contains("  if (engineRoute.mode !== 0) {\n"));
 }
@@ -253,7 +253,7 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
 fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
     let (sma, _) = load_indicator("sma");
     let enums = load_enums();
-    let text = ts_engine::render_routed(&sma, std::slice::from_ref(&sma), &enums, make_registry(), Some(Route { from: 37, to: Some(90) }));
+    let text = ts_engine::render_routed(&sma, std::slice::from_ref(&sma), &enums, Some(Route { from: 37, to: Some(90) }));
     assert!(text.contains("\nconst WASM_FROM_BARS = 37;\nconst WASM_TO_BARS = 90;\n"), "{text}");
     assert_eq!(text.matches("WASM_TO_BARS").count(), 3, "{text}");
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
@@ -283,7 +283,7 @@ fn ts_engine_copies_only_the_bars_a_range_reads() {
     let zigzag = funcs.iter().find(|f| f.name == "ZIGZAG").unwrap();
     let positions: Vec<&str> = zigzag.outputs.iter().filter(|o| o.flags.iter().any(|f| f == "bar_index")).map(|o| o.name.as_str()).collect();
     assert_eq!(positions, ["outPivotIdx"]);
-    let text = ts_engine::render_routed(zigzag, &funcs, &enums, make_registry(), None);
+    let text = ts_engine::render_routed(zigzag, &funcs, &enums, None);
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
     for (front, next) in [("function zigzagWasm(", "function zigzagBuffered("), ("function zigzagPositionalWasm(", "function zigzagInto(")] {
         let body = &text[at(front)..at(next)];
@@ -308,7 +308,7 @@ fn ts_engine_copies_only_the_bars_a_range_reads() {
     assert!(into.contains("  const begIdx = w.begIdx() + lo;\n"), "{into}");
 
     let ema = funcs.iter().find(|f| f.name == "EMA").unwrap();
-    let plain = ts_engine::render_routed(ema, &funcs, &enums, make_registry(), None);
+    let plain = ts_engine::render_routed(ema, &funcs, &enums, None);
     assert!(!plain.contains("shiftInts"), "EMA holds no bar position:\n{plain}");
 }
 

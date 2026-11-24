@@ -44,73 +44,7 @@ export * from '../../func/tsi.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * True Strength Index: William Blau's double-smoothed momentum oscillator. The
- * one-bar price change is smoothed twice with exponential averages, and the same
- * pair of averages is applied to the magnitude of that change; the ratio of the
- * two is scaled by 100. Dividing the smoothed signed momentum by the smoothed
- * absolute momentum normalises the reading, so the result is bounded by -100 and
- * +100 and comparable across instruments. The double smoothing is what separates
- * it from a raw momentum plot: the curve is smooth enough to read while keeping
- * far less lag than a single average of the same total length. Zero is the
- * reference line — positive means the smoothed momentum is net upward, negative
- * net downward — and its crossings are the usual trade trigger. Extreme readings
- * mark overbought and oversold conditions, and divergence against price is the
- * classic Blau reading. A signal line is not part of the output; apply `EMA` to
- * `outReal` to obtain one, since no source agrees on its period.
- *
- * Formula and more info at
- * [ta-lib.org/functions/tsi](https://ta-lib.org/functions/tsi).
- *
- * **Notes**
- * - An input whose every change is exactly zero leaves both the numerator and the
- *   denominator at zero. Rather than divide, TSI emits 0 there, its neutral value,
- *   as CCI and IMI emit theirs. Some implementations divide unguarded and return a
- *   non-finite value.
- * - Each exponential average is seeded with a simple average of its own first
- *   inputs, the same seeding TA-Lib's EMA uses, so the first published values
- *   converge toward an unlimited-history result rather than reproducing it
- *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
- *   that warm-up. Implementations seeding from a single first sample —
- *   trading-signals among them — differ over the transient and agree once it
- *   decays.
- * - The parameters are named by the order they are applied in, not fast and slow.
- *   Blau's published pair applies the longer average first, the inverse of the
- *   differenced fast/slow pairs elsewhere in the library, so swapping them
- *   silently returns a different indicator with the same lookback.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link tsiLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series, canonically the close.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link TsiOptions}.
- * @returns `begIdx` and the values; see {@link TsiResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { tsi } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = tsi(series, { firstPeriod: 25, secondPeriod: 13 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`smi`](https://ta-lib.org/functions/smi)
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`cmo`](https://ta-lib.org/functions/cmo)
- * @see [`rsi`](https://ta-lib.org/functions/rsi)
- */
+/** @internal */
 export function tsi(real: ArrayLike<number>, options?: TsiOptions): TsiResult {
   let routed: TsiResult | null;
   try {
