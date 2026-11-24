@@ -58,11 +58,13 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType )
 {
    int retValue;
+   int stochfLookback;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
@@ -79,7 +81,15 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period,
       optInFastD_MAType = 0;
    else if( (int)optInFastD_MAType < TA_MATYPE_MIN || (int)optInFastD_MAType > TA_MATYPE_MAX )
       return -1;
-   retValue = TA_RSI_Lookback(optInTimePeriod) + TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF).
+    */
+   stochfLookback = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+   if( stochfLookback < 0 )
+   {
+      return -1;
+   }
+   retValue = TA_RSI_Lookback(optInTimePeriod) + stochfLookback;
    return retValue;
 }
 
@@ -169,10 +179,14 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
     * the unsmoothed stoch RSI. If you do not care about the smoothing of
     * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
     */
-   *outBegIdx= 0;
-   *outNBElement= 0;
    /* Adjust startIdx to account for the lookback period. */
    lookbackSTOCHF = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+   if( lookbackSTOCHF < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = TA_RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
    if( startIdx < lookbackTotal )
    {
@@ -266,9 +280,13 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
    if( outFastK == outFastD )
       return TA_BAD_PARAM;
 
+   lookbackSTOCHF = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+   if( lookbackSTOCHF < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    *outBegIdx= 0;
    *outNBElement= 0;
-   lookbackSTOCHF = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
    lookbackTotal = TA_RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
    if( startIdx < lookbackTotal )
    {
@@ -411,10 +429,15 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHRSI_OpenBody( struct TA_STOCHRSI_Stream
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      dummyBegIdx = 0;
-      dummyNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+      if( lookbackSTOCHF < 0 )
+      {
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
+         return TA_BAD_PARAM;
+      }
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
       lookbackTotal = TA_RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal )
       {

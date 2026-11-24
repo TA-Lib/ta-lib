@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  092526 MF,CC  First version (issue #449).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Percentb</c> consumes before it can
@@ -1146,6 +1147,9 @@ public partial class Core
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       int lagNb0 = 0;
       lookbackTotal = PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal ) {
          firstIdx = lookbackTotal;

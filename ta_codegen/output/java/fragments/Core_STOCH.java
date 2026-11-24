@@ -24,6 +24,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -82,12 +83,22 @@
          optInSlowD_MAType = MAType.SMA;
       }
       int retValue;
+      int maLookback;
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
-      /* Add the smoothing being done for %K slow */
-      retValue += maLookback(optInSlowK_Period, optInSlowK_MAType);
-      /* Add the smoothing being done for %D slow. */
-      retValue += maLookback(optInSlowD_Period, optInSlowD_MAType);
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
+      maLookback = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
       return retValue ;
 
    }
@@ -223,7 +234,13 @@
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.
@@ -433,7 +450,13 @@
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1136,7 +1159,13 @@
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.

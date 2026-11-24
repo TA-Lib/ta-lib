@@ -70,11 +70,13 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType )
 {
    int retValue;
+   int maLookback;
    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
       optInFastK_Period = 5;
    else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
@@ -89,8 +91,15 @@ TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period,
       return -1;
    /* Account for the initial data needed for Fast-K. */
    retValue = optInFastK_Period - 1;
-   /* Add the smoothing being done for Fast-D */
-   retValue += TA_MA_Lookback(optInFastD_Period,optInFastD_MAType);
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF).
+    */
+   maLookback = TA_MA_Lookback(optInFastD_Period,optInFastD_MAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   retValue += maLookback;
    return retValue;
 }
 
@@ -198,6 +207,10 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
    /* Identify the lookback needed. */
    lookbackK = optInFastK_Period - 1;
    lookbackFastD = TA_MA_Lookback(optInFastD_Period,optInFastD_MAType);
+   if( lookbackFastD < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = lookbackK + lookbackFastD;
    /* Move up the start index if there is not
     * enough initial data.
@@ -426,6 +439,10 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
    i = 0;
    lookbackK = optInFastK_Period - 1;
    lookbackFastD = TA_MA_Lookback(optInFastD_Period,optInFastD_MAType);
+   if( lookbackFastD < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = lookbackK + lookbackFastD;
    if( startIdx < lookbackTotal )
    {
@@ -729,6 +746,11 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = TA_MA_Lookback(optInFastD_Period,optInFastD_MAType);
+      if( lookbackFastD < 0 )
+      {
+         TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
+         return TA_BAD_PARAM;
+      }
       lookbackTotal = lookbackK + lookbackFastD;
       /* Move up the start index if there is not
        * enough initial data.

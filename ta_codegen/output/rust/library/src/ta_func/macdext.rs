@@ -56,6 +56,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -120,14 +121,15 @@ impl Core {
         }
         let mut tempInteger: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
-        // Find the MA with the largest lookback
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
         lookbackLargest = self.ma_lookback(optInFastPeriod, optInFastMAType)?;
         tempInteger = self.ma_lookback(optInSlowPeriod, optInSlowMAType)?;
         if tempInteger > lookbackLargest {
             lookbackLargest = tempInteger;
         }
-        // Add to the largest MA lookback the signal line lookback
-        return Ok((lookbackLargest + self.ma_lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
+        tempInteger = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
+        return Ok(lookbackLargest + tempInteger);
     }
     /// Display shift of one output of [`Core::macdext`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

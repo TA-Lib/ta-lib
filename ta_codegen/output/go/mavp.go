@@ -103,6 +103,9 @@ func (c *Core) mavpImpl(startIdx, endIdx int32, inReal, inPeriods []float64, opt
 		return BadParam
 	}
 	lookbackTotal = c.maLookback(optInMaxPeriod, optInMAType)
+	if lookbackTotal < 0 {
+		return BadParam
+	}
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
 	}

@@ -58,6 +58,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType )
@@ -88,15 +89,29 @@ TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMATy
       optInSignalMAType = 0;
    else if( (int)optInSignalMAType < TA_MATYPE_MIN || (int)optInSignalMAType > TA_MATYPE_MAX )
       return -1;
-   /* Find the MA with the largest lookback */
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF).
+    */
    lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
+   if( lookbackLargest < 0 )
+   {
+      return -1;
+   }
    tempInteger = TA_MA_Lookback(optInSlowPeriod,optInSlowMAType);
+   if( tempInteger < 0 )
+   {
+      return -1;
+   }
    if( tempInteger > lookbackLargest )
    {
       lookbackLargest = tempInteger;
    }
-   /* Add to the largest MA lookback the signal line lookback */
-   return lookbackLargest + TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   tempInteger = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( tempInteger < 0 )
+   {
+      return -1;
+   }
+   return lookbackLargest + tempInteger;
 }
 
 TA_LIB_API int TA_MACDEXT_DisplayShift( int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int outputIdx )
@@ -211,13 +226,25 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
    }
    /* Find the MA with the largest lookback */
    lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
+   if( lookbackLargest < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    tempInteger = TA_MA_Lookback(optInSlowPeriod,optInSlowMAType);
+   if( tempInteger < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    if( tempInteger > lookbackLargest )
    {
       lookbackLargest = tempInteger;
    }
    /* Add the lookback needed for the signal line */
    lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( lookbackSignal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = lookbackSignal + lookbackLargest;
    /* Move up the start index if there is not
     * enough initial data.
@@ -400,12 +427,24 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
       optInFastMAType = tempMAType;
    }
    lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
+   if( lookbackLargest < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    tempInteger = TA_MA_Lookback(optInSlowPeriod,optInSlowMAType);
+   if( tempInteger < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    if( tempInteger > lookbackLargest )
    {
       lookbackLargest = tempInteger;
    }
    lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( lookbackSignal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = lookbackSignal + lookbackLargest;
    if( startIdx < lookbackTotal )
    {
@@ -610,13 +649,28 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
+      if( lookbackLargest < 0 )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+         return TA_BAD_PARAM;
+      }
       tempInteger = TA_MA_Lookback(optInSlowPeriod,optInSlowMAType);
+      if( tempInteger < 0 )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+         return TA_BAD_PARAM;
+      }
       if( tempInteger > lookbackLargest )
       {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+      if( lookbackSignal < 0 )
+      {
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+         return TA_BAD_PARAM;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.

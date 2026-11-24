@@ -68,6 +68,7 @@ public partial class Core
     *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
     *               range that the guard still called "not flat".
+    *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Stoch</c> consumes before it can produce
@@ -123,12 +124,22 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
+      int maLookback = 0;
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
-      /* Add the smoothing being done for %K slow */
-      retValue += MaLookback(optInSlowK_Period, optInSlowK_MAType);
-      /* Add the smoothing being done for %D slow. */
-      retValue += MaLookback(optInSlowD_Period, optInSlowD_MAType);
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = MaLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
+      maLookback = MaLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
       return retValue ;
 
    }
@@ -273,7 +284,13 @@ public partial class Core
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = MaLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackDSlow = MaLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.
@@ -502,7 +519,13 @@ public partial class Core
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = MaLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackDSlow = MaLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1240,7 +1263,13 @@ public partial class Core
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = MaLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackDSlow = MaLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.

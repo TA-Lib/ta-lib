@@ -275,6 +275,9 @@ fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
 /// copy of the whole input; only the frame's size shows it.
 #[test]
 fn ts_engine_copies_only_the_bars_a_range_reads() {
+    if crate::common::sweep_filtered() {
+        return;
+    }
     let funcs = corpus();
     let enums = load_enums();
     let zigzag = funcs.iter().find(|f| f.name == "ZIGZAG").unwrap();

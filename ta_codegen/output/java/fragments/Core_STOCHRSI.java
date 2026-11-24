@@ -14,6 +14,7 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -60,7 +61,15 @@
          optInFastD_MAType = MAType.SMA;
       }
       int retValue;
-      retValue = rsiLookback(optInTimePeriod) + stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      int stochfLookback;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      stochfLookback = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( stochfLookback < 0 ) {
+         return -1 ;
+      }
+      retValue = rsiLookback(optInTimePeriod) + stochfLookback;
       return retValue ;
 
    }
@@ -166,10 +175,13 @@
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -250,9 +262,12 @@
       if( outFastK == outFastD ) {
          return RetCode.BAD_PARAM ;
       }
+      lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -722,10 +737,13 @@
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

@@ -17106,6 +17106,7 @@ class Core {
      *                by var.c's scale-relative reseed floor; the square root is
      *                unconditional. Bands no longer collapse on a fine tick.
      *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -17164,7 +17165,13 @@ class Core {
            * Open is tied to lookback+1. The middle band still begins at the MA's earlier
            * begIdx internally and is realigned to this later bar in bbands() below.
            */
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
           maLookback = maLookback(optInTimePeriod, optInMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
           stddevLookback = stddevLookback(optInTimePeriod, 1.0);
           return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
@@ -140065,6 +140072,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090426 MF,CC  First version (issue #365).
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -140210,6 +140218,9 @@ class Core {
              return RetCode.BAD_PARAM ;
           }
           lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           /* Nothing to produce: the range ends before the lookback. Answering here
            * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
            * its own argument check would reject before any array is touched.
@@ -140286,6 +140297,9 @@ class Core {
              return RetCode.BAD_PARAM ;
           }
           lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           if( lookbackTotal > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
@@ -140781,6 +140795,9 @@ class Core {
           double[] sc_outD = outStride == 1 ? outD : new double[historyLen];
           double[] sc_outJ = outStride == 1 ? outJ : new double[historyLen];
           lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           /* Nothing to produce: the range ends before the lookback. Answering here
            * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
            * its own argument check would reject before any array is touched.
@@ -142800,6 +142817,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  100126 MF,CC  First version (#491).
      *  101126 MF,CC  Each lookback is asked once per call (#522).
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -142898,20 +142916,44 @@ class Core {
           }
           int legMax;
           int leg;
-          legMax = optInROC1Period + maLookback(optInMA1Period, optInROCMAType);
-          leg = optInROC2Period + maLookback(optInMA2Period, optInROCMAType);
+          int maLookback;
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
+          maLookback = maLookback(optInMA1Period, optInROCMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          legMax = optInROC1Period + maLookback;
+          maLookback = maLookback(optInMA2Period, optInROCMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          leg = optInROC2Period + maLookback;
           if( leg > legMax ) {
              legMax = leg;
           }
-          leg = optInROC3Period + maLookback(optInMA3Period, optInROCMAType);
+          maLookback = maLookback(optInMA3Period, optInROCMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          leg = optInROC3Period + maLookback;
           if( leg > legMax ) {
              legMax = leg;
           }
-          leg = optInROC4Period + maLookback(optInMA4Period, optInROCMAType);
+          maLookback = maLookback(optInMA4Period, optInROCMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          leg = optInROC4Period + maLookback;
           if( leg > legMax ) {
              legMax = leg;
           }
-          return legMax + maLookback(optInSignalPeriod, optInSignalMAType) ;
+          maLookback = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          return legMax + maLookback ;
 
        }
        /**
@@ -143061,14 +143103,29 @@ class Core {
            * starts on the first bar the signal consumes, and the line accumulates
            * its legs left to right. Changing either breaks the equality.
            */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           /* lookbackTotal must stay kstext_lookback() of the same parameters. */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          if( lookbackMA1 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          if( lookbackMA2 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          if( lookbackMA3 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          if( lookbackMA4 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = optInROC1Period + lookbackMA1;
           tempInteger = optInROC2Period + lookbackMA2;
           if( tempInteger > lookbackTotal ) {
@@ -143254,13 +143311,28 @@ class Core {
           if( outKST == outKSTSignal ) {
              return RetCode.BAD_PARAM ;
           }
+          lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          if( lookbackMA1 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          if( lookbackMA2 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          if( lookbackMA3 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          if( lookbackMA4 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           outBegIdx.value = 0;
           outNBElement.value = 0;
-          lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-          lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
-          lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
-          lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
-          lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
           lookbackTotal = optInROC1Period + lookbackMA1;
           tempInteger = optInROC2Period + lookbackMA2;
           if( tempInteger > lookbackTotal ) {
@@ -143922,14 +143994,29 @@ class Core {
            * starts on the first bar the signal consumes, and the line accumulates
            * its legs left to right. Changing either breaks the equality.
            */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           /* lookbackTotal must stay kstext_lookback() of the same parameters. */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          if( lookbackMA1 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          if( lookbackMA2 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          if( lookbackMA3 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          if( lookbackMA4 < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = optInROC1Period + lookbackMA1;
           tempInteger = optInROC2Period + lookbackMA2;
           if( tempInteger > lookbackTotal ) {
@@ -154929,6 +155016,7 @@ class Core {
      *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
      *                when all three MA types are EMA (bit-exact).
      *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -154995,14 +155083,25 @@ class Core {
           }
           int tempInteger;
           int lookbackLargest;
-          /* Find the MA with the largest lookback */
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
           lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+          if( lookbackLargest < 0 ) {
+             return -1 ;
+          }
           tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+          if( tempInteger < 0 ) {
+             return -1 ;
+          }
           if( tempInteger > lookbackLargest ) {
              lookbackLargest = tempInteger;
           }
-          /* Add to the largest MA lookback the signal line lookback */
-          return lookbackLargest + maLookback(optInSignalPeriod, optInSignalMAType) ;
+          tempInteger = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( tempInteger < 0 ) {
+             return -1 ;
+          }
+          return lookbackLargest + tempInteger ;
 
        }
        /**
@@ -155137,12 +155236,21 @@ class Core {
           }
           /* Find the MA with the largest lookback */
           lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+          if( lookbackLargest < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+          if( tempInteger < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           if( tempInteger > lookbackLargest ) {
              lookbackLargest = tempInteger;
           }
           /* Add the lookback needed for the signal line */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackSignal + lookbackLargest;
           /* Move up the start index if there is not
            * enough initial data.
@@ -155280,11 +155388,20 @@ class Core {
              optInFastMAType = tempMAType;
           }
           lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+          if( lookbackLargest < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+          if( tempInteger < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           if( tempInteger > lookbackLargest ) {
              lookbackLargest = tempInteger;
           }
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackSignal + lookbackLargest;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -155823,12 +155940,21 @@ class Core {
           }
           /* Find the MA with the largest lookback */
           lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+          if( lookbackLargest < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+          if( tempInteger < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           if( tempInteger > lookbackLargest ) {
              lookbackLargest = tempInteger;
           }
           /* Add the lookback needed for the signal line */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+          if( lookbackSignal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackSignal + lookbackLargest;
           /* Move up the start index if there is not
            * enough initial data.
@@ -163575,6 +163701,7 @@ class Core {
      *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
      *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
      *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -163716,6 +163843,9 @@ class Core {
            * to calculate at least one output.
            */
           lookbackTotal = maLookback(optInMaxPeriod, optInMAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           /* Move up the start index if there is not
            * enough initial data.
            */
@@ -163972,6 +164102,9 @@ class Core {
              return RetCode.BAD_PARAM ;
           }
           lookbackTotal = maLookback(optInMaxPeriod, optInMAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -182183,6 +182316,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  092526 MF,CC  First version (issue #449).
+     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
      */
 
     /* Using percentb_ALT1 for TA_ALT={BATCH,JAVA} */
@@ -183211,6 +183345,9 @@ class Core {
           double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
           int lagNb0 = 0;
           lookbackTotal = percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+          if( lookbackTotal < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           firstIdx = startIdx;
           if( firstIdx < lookbackTotal ) {
              firstIdx = lookbackTotal;
@@ -218716,6 +218853,7 @@ class Core {
      *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
      *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
      *               range that the guard still called "not flat".
+     *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -218774,12 +218912,22 @@ class Core {
              optInSlowD_MAType = MAType.SMA;
           }
           int retValue;
+          int maLookback;
           /* Account for the initial data needed for Fast-K. */
           retValue = optInFastK_Period - 1;
-          /* Add the smoothing being done for %K slow */
-          retValue += maLookback(optInSlowK_Period, optInSlowK_MAType);
-          /* Add the smoothing being done for %D slow. */
-          retValue += maLookback(optInSlowD_Period, optInSlowD_MAType);
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
+          maLookback = maLookback(optInSlowK_Period, optInSlowK_MAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          retValue += maLookback;
+          maLookback = maLookback(optInSlowD_Period, optInSlowD_MAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          retValue += maLookback;
           return retValue ;
 
        }
@@ -218915,7 +219063,13 @@ class Core {
           /* Identify the lookback needed. */
           lookbackK = optInFastK_Period - 1;
           lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+          if( lookbackKSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackDSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
           /* Move up the start index if there is not
            * enough initial data.
@@ -219125,7 +219279,13 @@ class Core {
           i = 0;
           lookbackK = optInFastK_Period - 1;
           lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+          if( lookbackKSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackDSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -219828,7 +219988,13 @@ class Core {
           /* Identify the lookback needed. */
           lookbackK = optInFastK_Period - 1;
           lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+          if( lookbackKSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackDSlow < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
           /* Move up the start index if there is not
            * enough initial data.
@@ -220134,6 +220300,7 @@ class Core {
      *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
      *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
      *               range that the guard still called "not flat".
+     *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -220173,10 +220340,17 @@ class Core {
              optInFastD_MAType = MAType.SMA;
           }
           int retValue;
+          int maLookback;
           /* Account for the initial data needed for Fast-K. */
           retValue = optInFastK_Period - 1;
-          /* Add the smoothing being done for Fast-D */
-          retValue += maLookback(optInFastD_Period, optInFastD_MAType);
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
+          maLookback = maLookback(optInFastD_Period, optInFastD_MAType);
+          if( maLookback < 0 ) {
+             return -1 ;
+          }
+          retValue += maLookback;
           return retValue ;
 
        }
@@ -220293,6 +220467,9 @@ class Core {
           /* Identify the lookback needed. */
           lookbackK = optInFastK_Period - 1;
           lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
+          if( lookbackFastD < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackFastD;
           /* Move up the start index if there is not
            * enough initial data.
@@ -220482,6 +220659,9 @@ class Core {
           i = 0;
           lookbackK = optInFastK_Period - 1;
           lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
+          if( lookbackFastD < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackFastD;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -221141,6 +221321,9 @@ class Core {
           /* Identify the lookback needed. */
           lookbackK = optInFastK_Period - 1;
           lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
+          if( lookbackFastD < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = lookbackK + lookbackFastD;
           /* Move up the start index if there is not
            * enough initial data.
@@ -221417,6 +221600,7 @@ class Core {
      *  101103 PP   Initial creation of code.
      *  112603 MF   Add independent control to the RSI period.
      *  020605 AA   Fix #1117656. NULL pointer assignement.
+     *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
      */
 
        /**
@@ -221463,7 +221647,15 @@ class Core {
              optInFastD_MAType = MAType.SMA;
           }
           int retValue;
-          retValue = rsiLookback(optInTimePeriod) + stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+          int stochfLookback;
+          /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+           * range is narrower than this function's (SSF).
+           */
+          stochfLookback = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+          if( stochfLookback < 0 ) {
+             return -1 ;
+          }
+          retValue = rsiLookback(optInTimePeriod) + stochfLookback;
           return retValue ;
 
        }
@@ -221569,10 +221761,13 @@ class Core {
            * the unsmoothed stoch RSI. If you do not care about the smoothing of
            * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
            */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
           lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+          if( lookbackSTOCHF < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -221653,9 +221848,12 @@ class Core {
           if( outFastK == outFastD ) {
              return RetCode.BAD_PARAM ;
           }
+          lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+          if( lookbackSTOCHF < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
           outBegIdx.value = 0;
           outNBElement.value = 0;
-          lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
           lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -222125,10 +222323,13 @@ class Core {
            * the unsmoothed stoch RSI. If you do not care about the smoothing of
            * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
            */
-          outBegIdx.value = 0;
-          outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
           lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+          if( lookbackSTOCHF < 0 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
           lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -251904,7 +252105,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "bc36fc47f7c0764c";
+    static final String SPLICED_GENCODE_DIGEST = "06b21c5a321c7bf2";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -330430,6 +330631,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[21] = svK;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -330437,7 +330639,6 @@ public class TaCodegenServe {
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
-            c2.unstablePeriod[21] = svK;
             RetCode rc;
             try { rc = c2.stochrsiImpl(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }

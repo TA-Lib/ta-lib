@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #365).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_KDJ_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -153,6 +154,10 @@ TA_LIB_API TA_RetCode TA_KDJ( int    startIdx,
       return TA_BAD_PARAM;
 
    lookbackTotal = TA_KDJ_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
+   if( lookbackTotal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    /* Nothing to produce: the range ends before the lookback. Answering here
     * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
     * its own argument check would reject before any array is touched.
@@ -243,6 +248,10 @@ TA_RetCode TA_S_KDJ( int    startIdx,
       return TA_BAD_PARAM;
 
    lookbackTotal = TA_KDJ_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
+   if( lookbackTotal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    if( lookbackTotal > endIdx )
    {
       *outBegIdx= 0;
@@ -343,6 +352,11 @@ static TA_OPEN_INLINE TA_RetCode TA_KDJ_OpenBody( struct TA_KDJ_Stream **stream,
       int i;
       int lookbackTotal;
       lookbackTotal = TA_KDJ_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
+      if( lookbackTotal < 0 )
+      {
+         TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ );
+         return TA_BAD_PARAM;
+      }
       /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.

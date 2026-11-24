@@ -54,8 +54,13 @@ func (c *Core) stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_M
 		return -1
 	}
 	var retValue int32
+	var maLookback int32
 	retValue = optInFastK_Period - 1
-	retValue += c.maLookback(optInFastD_Period, optInFastD_MAType)
+	maLookback = c.maLookback(optInFastD_Period, optInFastD_MAType)
+	if maLookback < 0 {
+		return -1
+	}
+	retValue += maLookback
 	return retValue
 }
 
@@ -99,6 +104,9 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	}
 	lookbackK = optInFastK_Period - 1
 	lookbackFastD = c.maLookback(optInFastD_Period, optInFastD_MAType)
+	if lookbackFastD < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackK + lookbackFastD
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
@@ -686,6 +694,9 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 	i = 0
 	lookbackK = optInFastK_Period - 1
 	lookbackFastD = c.maLookback(optInFastD_Period, optInFastD_MAType)
+	if lookbackFastD < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackK + lookbackFastD
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal

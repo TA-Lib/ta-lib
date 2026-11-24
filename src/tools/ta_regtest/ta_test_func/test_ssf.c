@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  112326 MF,CC  First version (#609).
+ *  112426 MF,CC  The MA-type takers refuse SSF past its cap (#609).
  */
 
 /* Description:
@@ -85,8 +86,14 @@
  *        non-zero unstable period, a period over SSF's cap is refused through
  *        MA, and MAVP over a constant period array is TA_SSF.
  *
+ *    10. TAKERS: every other function taking an MA type, with SSF on each of
+ *        its MA-type parameters: one past SSF's cap the lookback is -1 and the
+ *        call TA_BAD_PARAM, before any buffer is sized from it; at the cap
+ *        both succeed.
+ *
  *   SERVER_VERIFY: the constant and Nyquist shapes, the golden call at P = 20
- *   and the period cap are routed: the --codegen sweep reaches none of them.
+ *   and the period cap are routed, and every taker's lookback at and past
+ *   SSF's cap is compared: the --codegen sweep reaches none of them.
  */
 
 /**** Headers ****/
@@ -115,14 +122,16 @@
 #define SSF_GAIN_CMP      40000
 #define SSF_LOOKBACK_CMP  96
 #define SSF_INPLACE_CMP   18386
-#define SSF_ROUTE_CMP     4
+#define SSF_ROUTE_CMP     40
 #define SSF_GOLDEN_CMP    19
 #define SSF_EDGE_CMP      6
 #define SSF_MA_CMP        23
+#define SSF_TAKER_CMP     54
 
 static double ssfIn[SSF_N_MAX];
 static double ssfOut[SSF_N_MAX];
 static double ssfAlias[SSF_N_MAX];
+static double ssfOut3[SSF_N_MAX];
 
 static int g_ssfDcCmp;
 static int g_ssfNyqCmp;
@@ -133,6 +142,7 @@ static int g_ssfRouteCmp;
 static int g_ssfGoldenCmp;
 static int g_ssfEdgeCmp;
 static int g_ssfMaCmp;
+static int g_ssfTakerCmp;
 
 static const int ssfPeriods[] = { 2, 3, 5, 10, 20, 100, 1000, 10000 };
 static const double ssfLevel[] = { 0.00777, 100.0, 30000.7 };
@@ -151,6 +161,7 @@ static ErrorNumber test_ssf_range( const TA_Real *in );
 static ErrorNumber test_ssf_golden( const TA_Real *close );
 static ErrorNumber test_ssf_edges( void );
 static ErrorNumber test_ssf_ma( void );
+static ErrorNumber test_ssf_takers( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_ssf( TA_History *history )
@@ -160,6 +171,7 @@ ErrorNumber test_func_ssf( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    g_ssfDcCmp = g_ssfNyqCmp = g_ssfGainCmp = g_ssfLookbackCmp = 0;
    g_ssfInplaceCmp = g_ssfRouteCmp = g_ssfGoldenCmp = g_ssfEdgeCmp = g_ssfMaCmp = 0;
+   g_ssfTakerCmp = 0;
 
    err = test_ssf_dc();
    if( err == TA_TEST_PASS )
@@ -176,6 +188,8 @@ ErrorNumber test_func_ssf( TA_History *history )
       err = test_ssf_edges();
    if( err == TA_TEST_PASS )
       err = test_ssf_ma();
+   if( err == TA_TEST_PASS )
+      err = test_ssf_takers();
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
@@ -189,15 +203,16 @@ ErrorNumber test_func_ssf( TA_History *history )
             || g_ssfGainCmp != SSF_GAIN_CMP || g_ssfLookbackCmp != SSF_LOOKBACK_CMP
             || g_ssfInplaceCmp != SSF_INPLACE_CMP || g_ssfGoldenCmp != SSF_GOLDEN_CMP
             || g_ssfEdgeCmp != SSF_EDGE_CMP || g_ssfMaCmp != SSF_MA_CMP
+            || g_ssfTakerCmp != SSF_TAKER_CMP
             || ( server_verify_active() && g_ssfRouteCmp != SSF_ROUTE_CMP ) ) )
    {
       printf( "SSF Fail: coverage counters (dc %d, nyquist %d, gain %d, lookback %d, "
-              "inplace %d, routed %d, golden %d, edges %d, ma %d) are not what this "
-              "file was written with (%d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
+              "inplace %d, routed %d, golden %d, edges %d, ma %d, takers %d) are not what "
+              "this file was written with (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_ssfDcCmp, g_ssfNyqCmp, g_ssfGainCmp, g_ssfLookbackCmp, g_ssfInplaceCmp,
-              g_ssfRouteCmp, g_ssfGoldenCmp, g_ssfEdgeCmp, g_ssfMaCmp,
+              g_ssfRouteCmp, g_ssfGoldenCmp, g_ssfEdgeCmp, g_ssfMaCmp, g_ssfTakerCmp,
               SSF_DC_CMP, SSF_NYQ_CMP, SSF_GAIN_CMP, SSF_LOOKBACK_CMP, SSF_INPLACE_CMP,
-              SSF_ROUTE_CMP, SSF_GOLDEN_CMP, SSF_EDGE_CMP, SSF_MA_CMP );
+              SSF_ROUTE_CMP, SSF_GOLDEN_CMP, SSF_EDGE_CMP, SSF_MA_CMP, SSF_TAKER_CMP );
       return TA_SSF_VACUOUS;
    }
 
@@ -745,6 +760,180 @@ static ErrorNumber test_ssf_ma( void )
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
       g_ssfMaCmp++;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (10) The MA-type takers. A callee lookback of -1 used to be added into the
+ * taker's own lookback and buffer sizes (a heap overflow in TA_MACDEXT, found
+ * by the abstract-API fuzzer). */
+#define SSF_NB_TAKER 18
+static const char * const ssfTakerName[SSF_NB_TAKER] =
+{
+   "BBANDS", "BBW", "PERCENTB", "MACDEXT fast", "MACDEXT slow", "MACDEXT signal",
+   "APO", "PPO", "PVO", "STOCH slowK", "STOCH slowD", "STOCHF", "STOCHRSI",
+   "KDJ slowK", "KDJ slowD", "KSTEXT ROC MAs", "KSTEXT signal", "MAENV"
+};
+
+static TA_RetCode ssfTaker( int k, int P, int n, int *lookback, int *begIdx, int *nbElement )
+{
+   const double *x = ssfIn;
+   double *o1 = ssfOut, *o2 = ssfAlias, *o3 = ssfOut3;
+   const TA_MAType S = TA_MAType_SSF, M = TA_MAType_SMA;
+
+   switch( k )
+   {
+   case 0:
+      *lookback = TA_BBANDS_Lookback( P, 2.0, 2.0, S );
+      return TA_BBANDS( 0, n-1, x, P, 2.0, 2.0, S, begIdx, nbElement, o1, o2, o3 );
+   case 1:
+      *lookback = TA_BBW_Lookback( P, 2.0, 2.0, S );
+      return TA_BBW( 0, n-1, x, P, 2.0, 2.0, S, begIdx, nbElement, o1 );
+   case 2:
+      *lookback = TA_PERCENTB_Lookback( P, 2.0, 2.0, S );
+      return TA_PERCENTB( 0, n-1, x, P, 2.0, 2.0, S, begIdx, nbElement, o1 );
+   case 3:
+      *lookback = TA_MACDEXT_Lookback( P, S, 26, M, 9, M );
+      return TA_MACDEXT( 0, n-1, x, P, S, 26, M, 9, M, begIdx, nbElement, o1, o2, o3 );
+   case 4:
+      *lookback = TA_MACDEXT_Lookback( 12, M, P, S, 9, M );
+      return TA_MACDEXT( 0, n-1, x, 12, M, P, S, 9, M, begIdx, nbElement, o1, o2, o3 );
+   case 5:
+      *lookback = TA_MACDEXT_Lookback( 12, M, 26, M, P, S );
+      return TA_MACDEXT( 0, n-1, x, 12, M, 26, M, P, S, begIdx, nbElement, o1, o2, o3 );
+   case 6:
+      *lookback = TA_APO_Lookback( 12, P, S );
+      return TA_APO( 0, n-1, x, 12, P, S, begIdx, nbElement, o1 );
+   case 7:
+      *lookback = TA_PPO_Lookback( 12, P, S );
+      return TA_PPO( 0, n-1, x, 12, P, S, begIdx, nbElement, o1 );
+   case 8:
+      *lookback = TA_PVO_Lookback( 12, P, S );
+      return TA_PVO( 0, n-1, x, 12, P, S, begIdx, nbElement, o1 );
+   case 9:
+      *lookback = TA_STOCH_Lookback( 5, P, S, 3, M );
+      return TA_STOCH( 0, n-1, x, x, x, 5, P, S, 3, M, begIdx, nbElement, o1, o2 );
+   case 10:
+      *lookback = TA_STOCH_Lookback( 5, 3, M, P, S );
+      return TA_STOCH( 0, n-1, x, x, x, 5, 3, M, P, S, begIdx, nbElement, o1, o2 );
+   case 11:
+      *lookback = TA_STOCHF_Lookback( 5, P, S );
+      return TA_STOCHF( 0, n-1, x, x, x, 5, P, S, begIdx, nbElement, o1, o2 );
+   case 12:
+      *lookback = TA_STOCHRSI_Lookback( 14, 5, P, S );
+      return TA_STOCHRSI( 0, n-1, x, 14, 5, P, S, begIdx, nbElement, o1, o2 );
+   case 13:
+      *lookback = TA_KDJ_Lookback( 9, P, S, 3, M );
+      return TA_KDJ( 0, n-1, x, x, x, 9, P, S, 3, M, begIdx, nbElement, o1, o2, o3 );
+   case 14:
+      *lookback = TA_KDJ_Lookback( 9, 3, M, P, S );
+      return TA_KDJ( 0, n-1, x, x, x, 9, 3, M, P, S, begIdx, nbElement, o1, o2, o3 );
+   case 15:
+      *lookback = TA_KSTEXT_Lookback( 10, 15, 20, 30, P, 10, 10, 15, 9, S, M );
+      return TA_KSTEXT( 0, n-1, x, 10, 15, 20, 30, P, 10, 10, 15, 9, S, M,
+                        begIdx, nbElement, o1, o2 );
+   case 16:
+      *lookback = TA_KSTEXT_Lookback( 10, 15, 20, 30, 10, 10, 10, 15, P, M, S );
+      return TA_KSTEXT( 0, n-1, x, 10, 15, 20, 30, 10, 10, 10, 15, P, M, S,
+                        begIdx, nbElement, o1, o2 );
+   default:
+      *lookback = TA_MAENV_Lookback( P, 2.5, 2.5, S );
+      return TA_MAENV( 0, n-1, x, P, 2.5, 2.5, S, begIdx, nbElement, o1, o2, o3 );
+   }
+}
+
+/* ssfTaker's parameters, in signature order, for the lookback comparison. */
+static int ssfTakerOpt( int k, int P, double opt[], const char **name )
+{
+   const double S = (double)TA_MAType_SSF, M = (double)TA_MAType_SMA, p = (double)P;
+   static const char * const fn[SSF_NB_TAKER] =
+   {
+      "BBANDS", "BBW", "PERCENTB", "MACDEXT", "MACDEXT", "MACDEXT", "APO", "PPO", "PVO",
+      "STOCH", "STOCH", "STOCHF", "STOCHRSI", "KDJ", "KDJ", "KSTEXT", "KSTEXT", "MAENV"
+   };
+   const double v[SSF_NB_TAKER][11] =
+   {
+      { p, 2, 2, S }, { p, 2, 2, S }, { p, 2, 2, S },
+      { p, S, 26, M, 9, M }, { 12, M, p, S, 9, M }, { 12, M, 26, M, p, S },
+      { 12, p, S }, { 12, p, S }, { 12, p, S },
+      { 5, p, S, 3, M }, { 5, 3, M, p, S }, { 5, p, S }, { 14, 5, p, S },
+      { 9, p, S, 3, M }, { 9, 3, M, p, S },
+      { 10, 15, 20, 30, p, 10, 10, 15, 9, S, M }, { 10, 15, 20, 30, 10, 10, 10, 15, p, M, S },
+      { p, 2.5, 2.5, S }
+   };
+   static const int nb[SSF_NB_TAKER] = { 4, 4, 4, 6, 6, 6, 3, 3, 3, 5, 5, 3, 4, 5, 5, 11, 11, 4 };
+   int i;
+
+   for( i = 0; i < nb[k]; i++ )
+      opt[i] = v[k][i];
+   *name = fn[k];
+   return nb[k];
+}
+
+static ErrorNumber test_ssf_takers( void )
+{
+   int k, n, lookback, begIdx, nbElement;
+   TA_RetCode rc;
+   ErrorNumber e;
+
+   n = SSF_N_SHAPE;
+   ssfShapeSeries( n );
+
+   for( k = 0; k < SSF_NB_TAKER; k++ )
+   {
+      begIdx = nbElement = -7;
+      rc = ssfTaker( k, 10001, n, &lookback, &begIdx, &nbElement );
+      if( lookback != -1 )
+      {
+         printf( "SSF taker Fail [%s]: lookback %d one past SSF's cap, expected -1\n",
+                 ssfTakerName[k], lookback );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_ssfTakerCmp++;
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "SSF taker Fail [%s]: rc=%d one past SSF's cap, expected TA_BAD_PARAM\n",
+                 ssfTakerName[k], (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_ssfTakerCmp++;
+
+      rc = ssfTaker( k, 10000, n, &lookback, &begIdx, &nbElement );
+      if( rc != TA_SUCCESS || lookback < 0 || begIdx != lookback || begIdx + nbElement != n )
+      {
+         printf( "SSF taker Fail [%s]: at SSF's cap rc=%d lookback %d (%d,%d)\n",
+                 ssfTakerName[k], (int)rc, lookback, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_ssfTakerCmp++;
+   }
+
+   /* Every language's lookback for the same parameters: one past the cap it
+    * is the rejection, -1. server_verify() compares no rejected call. */
+   if( server_verify_active() )
+   {
+      static const int caps[] = { 10001, 10000 };
+      double opt[11];
+      const char *name;
+      int nbOpt, c, before;
+
+      for( k = 0; k < SSF_NB_TAKER; k++ )
+      for( c = 0; c < NB_OF(caps); c++ )
+      {
+         nbOpt = ssfTakerOpt( k, caps[c], opt, &name );
+         before = server_verify_lookback_values();
+         e = server_verify_lookback_value( name, opt, nbOpt );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_lookback_values() == before )
+         {
+            printf( "SSF taker %s [P=%d]: compared no server lookback despite live pipes\n",
+                    ssfTakerName[k], caps[c] );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+         g_ssfRouteCmp++;
+      }
    }
 
    return TA_TEST_PASS;

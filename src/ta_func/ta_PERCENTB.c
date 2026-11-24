@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092526 MF,CC  First version (issue #449).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_PERCENTB_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
@@ -870,6 +871,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
       double *tempMA;
       double *tempX;
       lookbackTotal = TA_PERCENTB_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType);
+      if( lookbackTotal < 0 )
+      {
+         TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+         return TA_BAD_PARAM;
+      }
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal )
       {

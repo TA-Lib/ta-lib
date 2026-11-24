@@ -45,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -149,20 +150,44 @@ export function kstextLookbackPositional(optInROC1Period: number, optInROC2Perio
   }
   let legMax = 0;
   let leg = 0;
-  legMax = optInROC1Period + maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
-  leg = optInROC2Period + maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  let maLookback = 0;
+  /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+   * range is narrower than this function's (SSF).
+   */
+  maLookback = maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  legMax = optInROC1Period + maLookback;
+  maLookback = maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  leg = optInROC2Period + maLookback;
   if (leg > legMax) {
     legMax = leg;
   }
-  leg = optInROC3Period + maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  maLookback = maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  leg = optInROC3Period + maLookback;
   if (leg > legMax) {
     legMax = leg;
   }
-  leg = optInROC4Period + maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
+  maLookback = maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  leg = optInROC4Period + maLookback;
   if (leg > legMax) {
     legMax = leg;
   }
-  return legMax + maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  maLookback = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  return legMax + maLookback;
 }
 
 /** @internal */
@@ -283,14 +308,29 @@ export function kstextImpl(
    * starts on the first bar the signal consumes, and the line accumulates
    * its legs left to right. Changing either breaks the equality.
    */
-  outBegIdx.value = 0;
-  outNBElement.value = 0;
   /* lookbackTotal must stay kstext_lookback() of the same parameters. */
   lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (lookbackSignal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA1 = maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  if (lookbackMA1 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA2 = maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  if (lookbackMA2 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA3 = maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  if (lookbackMA3 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA4 = maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
+  if (lookbackMA4 < 0) {
+    return RetCode.BAD_PARAM;
+  }
+  outBegIdx.value = 0;
+  outNBElement.value = 0;
   lookbackTotal = optInROC1Period + lookbackMA1;
   tempInteger = optInROC2Period + lookbackMA2;
   if (tempInteger > lookbackTotal) {
@@ -1126,14 +1166,29 @@ function kstextOpenImpl(
    * starts on the first bar the signal consumes, and the line accumulates
    * its legs left to right. Changing either breaks the equality.
    */
-  outBegIdx.value = 0;
-  outNBElement.value = 0;
   /* lookbackTotal must stay kstext_lookback() of the same parameters. */
   lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (lookbackSignal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA1 = maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  if (lookbackMA1 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA2 = maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  if (lookbackMA2 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA3 = maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  if (lookbackMA3 < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackMA4 = maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
+  if (lookbackMA4 < 0) {
+    return RetCode.BAD_PARAM;
+  }
+  outBegIdx.value = 0;
+  outNBElement.value = 0;
   lookbackTotal = optInROC1Period + lookbackMA1;
   tempInteger = optInROC2Period + lookbackMA2;
   if (tempInteger > lookbackTotal) {

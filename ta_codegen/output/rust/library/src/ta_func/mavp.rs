@@ -63,6 +63,7 @@
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module

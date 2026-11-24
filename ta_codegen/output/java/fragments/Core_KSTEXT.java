@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -109,20 +110,44 @@
       }
       int legMax;
       int leg;
-      legMax = optInROC1Period + maLookback(optInMA1Period, optInROCMAType);
-      leg = optInROC2Period + maLookback(optInMA2Period, optInROCMAType);
+      int maLookback;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = maLookback(optInMA1Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      legMax = optInROC1Period + maLookback;
+      maLookback = maLookback(optInMA2Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC2Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC3Period + maLookback(optInMA3Period, optInROCMAType);
+      maLookback = maLookback(optInMA3Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC3Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC4Period + maLookback(optInMA4Period, optInROCMAType);
+      maLookback = maLookback(optInMA4Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC4Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      return legMax + maLookback(optInSignalPeriod, optInSignalMAType) ;
+      maLookback = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      return legMax + maLookback ;
 
    }
    /**
@@ -272,14 +297,29 @@
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -465,13 +505,28 @@
       if( outKST == outKSTSignal ) {
          return RetCode.BAD_PARAM ;
       }
+      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
-      lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
-      lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
-      lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -1133,14 +1188,29 @@
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {

@@ -69,11 +69,21 @@ func (c *Core) macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod
 	var tempInteger int32
 	var lookbackLargest int32
 	lookbackLargest = c.maLookback(optInFastPeriod, optInFastMAType)
+	if lookbackLargest < 0 {
+		return -1
+	}
 	tempInteger = c.maLookback(optInSlowPeriod, optInSlowMAType)
+	if tempInteger < 0 {
+		return -1
+	}
 	if tempInteger > lookbackLargest {
 		lookbackLargest = tempInteger
 	}
-	return lookbackLargest + c.maLookback(optInSignalPeriod, optInSignalMAType)
+	tempInteger = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if tempInteger < 0 {
+		return -1
+	}
+	return lookbackLargest + tempInteger
 }
 
 func (c *Core) macdextImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType int32, outBegIdx, outNBElement *int32, outMACD, outMACDSignal, outMACDHist []float64) RetCode {
@@ -146,11 +156,20 @@ func (c *Core) macdextImpl(startIdx, endIdx int32, inReal []float64, optInFastPe
 		optInFastMAType = tempMAType
 	}
 	lookbackLargest = c.maLookback(optInFastPeriod, optInFastMAType)
+	if lookbackLargest < 0 {
+		return BadParam
+	}
 	tempInteger = c.maLookback(optInSlowPeriod, optInSlowMAType)
+	if tempInteger < 0 {
+		return BadParam
+	}
 	if tempInteger > lookbackLargest {
 		lookbackLargest = tempInteger
 	}
 	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if lookbackSignal < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackSignal + lookbackLargest
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
@@ -542,11 +561,20 @@ func (c *Core) macdextOpenImpl(sp *MACDEXTStream, inReal []float64, startIdx, op
 		optInFastMAType = tempMAType
 	}
 	lookbackLargest = c.maLookback(optInFastPeriod, optInFastMAType)
+	if lookbackLargest < 0 {
+		return BadParam
+	}
 	tempInteger = c.maLookback(optInSlowPeriod, optInSlowMAType)
+	if tempInteger < 0 {
+		return BadParam
+	}
 	if tempInteger > lookbackLargest {
 		lookbackLargest = tempInteger
 	}
 	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if lookbackSignal < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackSignal + lookbackLargest
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal

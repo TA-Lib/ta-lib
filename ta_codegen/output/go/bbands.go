@@ -61,6 +61,9 @@ func (c *Core) bbandsLookback(optInTimePeriod int32, optInNbDevUp, optInNbDevDn 
 	var maLookback int32
 	var stddevLookback int32
 	maLookback = c.maLookback(optInTimePeriod, optInMAType)
+	if maLookback < 0 {
+		return -1
+	}
 	stddevLookback = c.stddevLookback(optInTimePeriod, 1.0)
 	var _T0 int32
 	if maLookback > stddevLookback {

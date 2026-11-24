@@ -60,6 +60,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -97,10 +98,17 @@ export function stochfLookbackPositional(optInFastK_Period: number, optInFastD_P
     return -1;
   }
   let retValue = 0;
+  let maLookback = 0;
   /* Account for the initial data needed for Fast-K. */
   retValue = optInFastK_Period - 1;
-  /* Add the smoothing being done for Fast-D */
-  retValue += maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+   * range is narrower than this function's (SSF).
+   */
+  maLookback = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  retValue += maLookback;
   return retValue;
 }
 
@@ -203,6 +211,9 @@ export function stochfImpl(
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
   lookbackFastD = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackFastD < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackK + lookbackFastD;
   /* Move up the start index if there is not
    * enough initial data.
@@ -1048,6 +1059,9 @@ function stochfOpenImpl(
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
   lookbackFastD = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackFastD < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackK + lookbackFastD;
   /* Move up the start index if there is not
    * enough initial data.

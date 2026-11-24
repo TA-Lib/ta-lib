@@ -56,6 +56,7 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -107,7 +108,11 @@ impl Core {
             optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
-        retValue = self.rsi_lookback(optInTimePeriod)? + self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        let mut stochfLookback: usize = 0_usize;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        stochfLookback = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        retValue = self.rsi_lookback(optInTimePeriod)? + stochfLookback;
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::stochrsi`]: how many bars ahead (positive) or behind
@@ -218,10 +223,10 @@ impl Core {
         // version will be found in outFastD. The outFastK will still contain
         // the unsmoothed stoch RSI. If you do not care about the smoothing of
         // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rsi_lookback(optInTimePeriod).unwrap_or(usize::MAX) + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -501,10 +506,10 @@ impl Core {
         // version will be found in outFastD. The outFastK will still contain
         // the unsmoothed stoch RSI. If you do not care about the smoothing of
         // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rsi_lookback(optInTimePeriod)? + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;

@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090426 MF,CC  First version (issue #365).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Kdj</c> consumes before it can produce its
@@ -206,6 +207,9 @@ public partial class Core
          return RetCode.BadParam ;
       }
       lookbackTotal = KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
@@ -291,6 +295,9 @@ public partial class Core
          return RetCode.BadParam ;
       }
       lookbackTotal = KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -811,6 +818,9 @@ public partial class Core
       Span<double> sc_outD = outStride == 1 ? outD : new double[historyLen];
       Span<double> sc_outJ = outStride == 1 ? outJ : new double[historyLen];
       lookbackTotal = KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.

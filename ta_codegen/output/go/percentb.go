@@ -655,6 +655,9 @@ func (c *Core) percentbOpenImpl(sp *PERCENTBStream, inReal []float64, startIdx, 
 	}
 	lagNb0 := int32(0)
 	lookbackTotal = c.percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)
+	if lookbackTotal < 0 {
+		return BadParam
+	}
 	firstIdx = startIdx
 	if firstIdx < lookbackTotal {
 		firstIdx = lookbackTotal
