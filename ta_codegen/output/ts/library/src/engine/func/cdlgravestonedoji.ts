@@ -44,62 +44,7 @@ export * from '../../func/cdlgravestonedoji.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Single-candle doji whose open and close sit at the low of the day, leaving a
- * long upper shadow and no lower shadow. A doji variant whose bullish/bearish
- * meaning depends on the surrounding trend, which the code does not judge. A hit
- * marks a gravestone doji; its bullish vs bearish reversal meaning must be read
- * against the prevailing trend, which this function does not check.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlgravestonedoji](https://ta-lib.org/functions/cdlgravestonedoji).
- *
- * **Notes**
- * - Does not verify the prior trend that determines the pattern's bullish/bearish
- *   meaning.
- * - Bulkowski's testing found the bearish reversal traders expect actually shows
- *   up only 51% of the time — essentially random — and it ranks 77th of 103
- *   patterns for post-breakout performance.
- *   ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlgravestonedojiLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlgravestonedojiOptions}.
- * @returns `begIdx` and the values; see {@link CdlgravestonedojiResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlgravestonedoji } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlgravestonedoji({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
- * @see [`cdldragonflydoji`](https://ta-lib.org/functions/cdldragonflydoji)
- * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
- * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
- */
+/** @internal */
 export function cdlgravestonedoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult {
   let routed: CdlgravestonedojiResult | null;
   try {

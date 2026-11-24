@@ -44,64 +44,7 @@ export * from '../../func/crsi.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Connors RSI: a 0 to 100 oscillator, the plain average of three short-term
- * momentum readings on that same scale. The first is Wilder's RSI of the closes
- * over `timePeriod` bars. The second is an RSI over `streakPeriod` bars of the
- * up/down streak, the signed length of the current run of higher or lower closes
- * (+3 after three higher closes in a row, -2 after two lower ones); an unchanged
- * close resets the streak to 0. The third is the percent rank of the bar's one-bar
- * return, (close - previous close) / previous close, among the `rankPeriod`
- * returns before it: the percentage of them strictly below it. High readings mark
- * a short-term overbought market and low readings an oversold one.
- *
- * Formula and more info at
- * [ta-lib.org/functions/crsi](https://ta-lib.org/functions/crsi).
- *
- * **Notes**
- * - CRSI has no unstable period of its own: both RSI legs take `FuncUnstId.RSI`.
- *   They start warming up on the first bar the call reads (the streak's RSI one
- *   bar later, the streak being a change), so a leg that needs fewer bars than the
- *   lookback warms up over the spare ones.
- * - Finite input is a precondition. A NaN close does not propagate: the output
- *   stays finite and no error is reported, but the values that follow it are
- *   wrong.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link crsiLookback} is a success with empty outputs.
- *
- * @param real - Close price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CrsiOptions}.
- * @returns `begIdx` and the values; see {@link CrsiResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { crsi } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = crsi(series, {
- *   timePeriod: 3,
- *   streakPeriod: 2,
- *   rankPeriod: 100,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`rsi`](https://ta-lib.org/functions/rsi)
- * @see [`percentrank`](https://ta-lib.org/functions/percentrank)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- */
+/** @internal */
 export function crsi(real: ArrayLike<number>, options?: CrsiOptions): CrsiResult {
   let routed: CrsiResult | null;
   try {

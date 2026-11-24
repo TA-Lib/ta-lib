@@ -44,51 +44,7 @@ export * from '../../func/t3.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Tillson's T3: a low-lag moving average built from six chained EMAs, combined via
- * volume-factor-weighted coefficients. Not the same as EMA3, despite both being
- * called "triple EMA".
- *
- * Formula and more info at
- * [ta-lib.org/functions/t3](https://ta-lib.org/functions/t3).
- *
- * **Notes**
- * - A period of 1 performs no smoothing: the output is a copy of the input.
- *   Allowed since 0.6.5 (issues #48/#59).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link t3Lookback} is a success with empty outputs.
- *
- * @param real - Source series to smooth.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link T3Options}.
- * @returns `begIdx` and the values; see {@link T3Result}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { t3 } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = t3(series, { timePeriod: 5, vFactor: 0.7 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`dema`](https://ta-lib.org/functions/dema)
- * @see [`tema`](https://ta-lib.org/functions/tema)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- */
+/** @internal */
 export function t3(real: ArrayLike<number>, options?: T3Options): T3Result {
   let routed: T3Result | null;
   try {

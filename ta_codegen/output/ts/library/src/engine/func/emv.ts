@@ -44,72 +44,7 @@ export * from '../../func/emv.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Ease of Movement: the bar-to-bar move of the high-low midpoint divided by a box
- * ratio of volume to range, averaged over a trailing window. It is the numeric
- * form of Richard W. Arms, Jr.'s Equivolume box. The box ratio is positive
- * whenever the bar traded and has a range, so the sign follows the midpoint move.
- * A large positive value means price rose easily, on light volume relative to its
- * range; a large negative value means it fell easily. Values near zero mean volume
- * was heavy for the distance travelled, or price hardly moved. The output scales
- * with the instrument's volume and with the volume divisor, so its level is
- * comparable only within one instrument at one divisor. Traders mostly watch its
- * sign and its zero crossings.
- *
- * Formula and more info at
- * [ta-lib.org/functions/emv](https://ta-lib.org/functions/emv).
- *
- * **Notes**
- * - The range is in price points. Achelis's text gives it in eighths of a point,
- *   the pre-decimal US quote unit; that reading is reached by multiplying the
- *   divisor by 8.
- * - The divisor is a pure output scale: doubling it doubles every value. Pick one
- *   that suits the instrument's volume.
- * - A period of 1 returns the unsmoothed one-bar values. Smoothing is a simple
- *   moving average; for an exponential one, apply `EMA` to this function's output
- *   at a period of 1.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link emvLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar. `volume`: Volume of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link EmvOptions}.
- * @returns `begIdx` and the values; see {@link EmvResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { emv } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const volume = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = emv({ high, low, volume }, {
- *   timePeriod: 14,
- *   volumeDivisor: 10000,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- * @see [`marketfi`](https://ta-lib.org/functions/marketfi)
- * @see [`efi`](https://ta-lib.org/functions/efi)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- */
+/** @internal */
 export function emv(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EmvOptions): EmvResult {
   let routed: EmvResult | null;
   try {

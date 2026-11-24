@@ -44,77 +44,7 @@ export * from '../../func/dosc.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in
- * series, with a simple average of that smoothed line subtracted from it.
- * Constance Brown's reading is that the RSI's own swings are too noisy to time
- * with, so she smooths it twice and then plots the distance from its own average
- * as a histogram — MACD's histogram construction, applied to a smoothed RSI rather
- * than to price. The result is in RSI points, centred on zero: crossings of the
- * zero line mark the turn, and the height measures how far the smoothed RSI has
- * run from its mean.
- *
- * Formula and more info at
- * [ta-lib.org/functions/dosc](https://ta-lib.org/functions/dosc).
- *
- * **Notes**
- * - Every stage is a function TA-Lib already ships, and the output is identical,
- *   bit for bit, to `rsi` followed by two `ema` calls, a `sma` and a `sub`. That
- *   chain takes five calls and their intermediate buffers; this computes it in one
- *   pass without materialising them.
- * - Each exponential average is seeded with a simple average of its own first
- *   inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the
- *   first publishes. `CoreBuilder.unstablePeriod` on either `FuncUnstId.RSI` or
- *   `FuncUnstId.EMA` discards more of that warm-up, and the EMA setting counts
- *   twice because there are two exponential stages. Implementations seeding each
- *   stage from a single first sample differ over the transient and agree once it
- *   decays.
- * - The degenerate reading is whatever `rsi` answers when neither a gain nor a
- *   loss has been seen since the seed. Some other implementations answer 100 there
- *   and will disagree over that stretch.
- * - The periods are independent: no ordering between the two smoothing periods is
- *   required or checked. Swapping them changes the outputs, most at the start:
- *   each average is seeded on its own inputs, and that difference decays to
- *   rounding level. A signal period of 1 would make the output identically zero,
- *   so the minimum is 2.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link doscLookback} is a success with empty outputs.
- *
- * @param real - Input series, usually the close.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link DoscOptions}.
- * @returns `begIdx` and the values; see {@link DoscResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { dosc } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = dosc(series, {
- *   timePeriod: 14,
- *   firstPeriod: 5,
- *   secondPeriod: 3,
- *   signalPeriod: 9,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`rsi`](https://ta-lib.org/functions/rsi)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`ac`](https://ta-lib.org/functions/ac)
- */
+/** @internal */
 export function dosc(real: ArrayLike<number>, options?: DoscOptions): DoscResult {
   let routed: DoscResult | null;
   try {

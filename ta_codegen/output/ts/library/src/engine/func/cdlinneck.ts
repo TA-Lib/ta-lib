@@ -44,65 +44,7 @@ export * from '../../func/cdlinneck.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * A two-candle in-neck pattern: a long black candle followed by a white candle
- * that opens below the prior low and closes just barely into the prior body (near
- * the prior close). It is a bearish continuation signal. A hit signals bearish
- * continuation (the down move is expected to resume).
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlinneck](https://ta-lib.org/functions/cdlinneck).
- *
- * **Notes**
- * - Does not verify the preceding downtrend that this bearish continuation pattern
- *   assumes.
- * - Bulkowski's testing found the bearish continuation holds only 53% of the time
- *   — "near random" — though its overall post-breakout performance still ranks a
- *   strong 17th of 103.
- *   ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
- *   62nd of 103 patterns by how often it occurs ([In
- *   Neck](https://thepatternsite.com/InNeck.html)), and it fires 9 times in [about
- *   16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlinneckLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlinneckOptions}.
- * @returns `begIdx` and the values; see {@link CdlinneckResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlinneck } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlinneck({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlonneck`](https://ta-lib.org/functions/cdlonneck)
- * @see [`cdlthrusting`](https://ta-lib.org/functions/cdlthrusting)
- * @see [`cdlmatchinglow`](https://ta-lib.org/functions/cdlmatchinglow)
- */
+/** @internal */
 export function cdlinneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinneckOptions): CdlinneckResult {
   let routed: CdlinneckResult | null;
   try {

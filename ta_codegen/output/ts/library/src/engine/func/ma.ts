@@ -43,68 +43,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/ma.ts';
 
-/**
- * Generic moving-average dispatcher that forwards the job to the MA implementation
- * selected by maType. Single uniform interface over all TA-Lib moving averages.
- *
- * Formula and more info at
- * [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma).
- *
- * **Notes**
- * - A period of 1 performs no smoothing for every MAType: the output is a copy of
- *   the input.
- * - `MAType.DISABLED` bypasses smoothing explicitly, for any period: the output is
- *   a copy of the input with a lookback of 0. Every function that takes an MAType
- *   parameter accepts it.
- * - `MAType.SSF` takes a period up to SSF's own maximum, which is below this
- *   function's; a longer one is rejected.
- * - `MAType.DEFAULT` selects the documented default of the parameter it is passed
- *   to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType
- *   parameter accepts it.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link maLookback} is a success with empty outputs.
- *
- * @param real - Series to average.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MaOptions}.
- * @returns `begIdx` and the values; see {@link MaResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { MAType, ma } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = ma(series, { timePeriod: 30, maType: MAType.SMA });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`sma`](https://ta-lib.org/functions/sma)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`wma`](https://ta-lib.org/functions/wma)
- * @see [`dema`](https://ta-lib.org/functions/dema)
- * @see [`tema`](https://ta-lib.org/functions/tema)
- * @see [`trima`](https://ta-lib.org/functions/trima)
- * @see [`kama`](https://ta-lib.org/functions/kama)
- * @see [`mama`](https://ta-lib.org/functions/mama)
- * @see [`t3`](https://ta-lib.org/functions/t3)
- * @see [`hma`](https://ta-lib.org/functions/hma)
- * @see [`zlema`](https://ta-lib.org/functions/zlema)
- * @see [`rma`](https://ta-lib.org/functions/rma)
- * @see [`vidya`](https://ta-lib.org/functions/vidya)
- * @see [`alma`](https://ta-lib.org/functions/alma)
- * @see [`ssf`](https://ta-lib.org/functions/ssf)
- */
+/** @internal */
 export function ma(real: ArrayLike<number>, options?: MaOptions): MaResult {
   if (engineRoute.mode !== 0) {
     let routed: MaResult | null;

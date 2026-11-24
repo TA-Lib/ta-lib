@@ -44,63 +44,7 @@ export * from '../../func/cdlthrusting.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * A two-candle pattern: a long black candle followed by a white candle that opens
- * below the prior low and closes back into the prior body but below its midpoint.
- * It is a bearish continuation signal. A hit is bearish: the failed white push
- * back into the black body signals continuation of the down move.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlthrusting](https://ta-lib.org/functions/cdlthrusting).
- *
- * **Notes**
- * - The pattern is classically meaningful only in a downtrend, but this function
- *   does not verify any prior trend.
- * - Although the pattern can be read as bullish in an uptrend or when it recurs,
- *   this function ignores trend and always reports it as bearish.
- * - Bulkowski's testing found this classically-bearish continuation pattern
- *   actually acts as a bullish reversal 57% of the time — "near random" — though
- *   it ranks a strong 15th of 103 patterns for overall performance.
- *   ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlthrustingLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlthrustingOptions}.
- * @returns `begIdx` and the values; see {@link CdlthrustingResult}. Each output is
- *   a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlthrusting } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlthrusting({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlinneck`](https://ta-lib.org/functions/cdlinneck)
- * @see [`cdlonneck`](https://ta-lib.org/functions/cdlonneck)
- * @see [`cdlpiercing`](https://ta-lib.org/functions/cdlpiercing)
- * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
- */
+/** @internal */
 export function cdlthrusting(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlthrustingOptions): CdlthrustingResult {
   let routed: CdlthrustingResult | null;
   try {

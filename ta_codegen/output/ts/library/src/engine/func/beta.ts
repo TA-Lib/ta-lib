@@ -42,49 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/beta.ts';
 
-/**
- * Beta: the slope of a least-squares linear regression of one series' percentage
- * returns (y, from real1) against another's (x, from real0) over a rolling window.
- * Measures how much a security moves relative to a market index. Beta = 1 moves
- * with the index; \< 1 less volatile, > 1 more volatile.
- *
- * Formula and more info at
- * [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link betaLookback} is a success with empty outputs.
- *
- * @param real0 - Series whose returns are the regression x (market/index)
- * @param real1 - Series whose returns are the regression y (security)
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link BetaOptions}.
- * @returns `begIdx` and the values; see {@link BetaResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { beta } from 'ta-lib';
- *
- * const series0 = new Float64Array(252); // your data, oldest first
- * const series1 = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = beta(series0, series1, { timePeriod: 5 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`correl`](https://ta-lib.org/functions/correl)
- * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
- * @see [`var_`](https://ta-lib.org/functions/var)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- */
+/** @internal */
 export function beta(real0: ArrayLike<number>, real1: ArrayLike<number>, options?: BetaOptions): BetaResult {
   if (engineRoute.mode !== 0) {
     let routed: BetaResult | null;

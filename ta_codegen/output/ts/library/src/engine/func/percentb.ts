@@ -45,62 +45,7 @@ export * from '../../func/percentb.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at
- * the lower band and 1 at the upper band. Values below 0 or above 1 mean the input
- * is outside the bands.
- *
- * Formula and more info at
- * [ta-lib.org/functions/percentb](https://ta-lib.org/functions/percentb).
- *
- * **Notes**
- * - An input on the middle band reads `nbDevDn / (nbDevUp + nbDevDn)`: 0.5 with
- *   equal multipliers.
- * - With a simple moving average and both multipliers equal to k, %B = 0.5 + z /
- *   (2k), where z is the z-score of the input in its window.
- * - The result is a ratio; multiply by 100 to read it as a percentage.
- * - Any `maType` other than SMA is a TA-Lib generalisation, as it is for BBANDS:
- *   the deviation stays the population standard deviation about the simple mean.
- * - PERCENTB is bit for bit `(real - lower) / (upper - lower)` computed from
- *   BBANDS' own outputs, and 0.5 wherever those two bands are equal.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link percentbLookback} is a success with empty outputs.
- *
- * @param real - Input data series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link PercentbOptions}.
- * @returns `begIdx` and the values; see {@link PercentbResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a real parameter that is not a number, a parameter outside its
- *   range, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
- *
- * @example
- * ```ts
- * import { MAType, percentb } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = percentb(series, {
- *   timePeriod: 20,
- *   nbDevUp: 2,
- *   nbDevDn: 2,
- *   maType: MAType.SMA,
- * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`bbands`](https://ta-lib.org/functions/bbands)
- * @see [`bbw`](https://ta-lib.org/functions/bbw)
- * @see [`stochf`](https://ta-lib.org/functions/stochf)
- */
+/** @internal */
 export function percentb(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult {
   let routed: PercentbResult | null;
   try {

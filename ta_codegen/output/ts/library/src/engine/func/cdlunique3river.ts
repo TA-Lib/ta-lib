@@ -44,64 +44,7 @@ export * from '../../func/cdlunique3river.ts';
 
 const WASM_FROM_BARS = 2500;
 
-/**
- * A three-candle bullish reversal pattern: a long black candle, then a black
- * harami candle that makes a lower low, then a small white candle. Signals a
- * potential bullish reversal, ideally in a downtrend (trend not checked by the
- * code). A hit (+100) marks a bullish reversal; significant in a downtrend, which
- * the function does not verify.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlunique3river](https://ta-lib.org/functions/cdlunique3river).
- *
- * **Notes**
- * - Although classically a bullish reversal (and TA-Lib only emits +100),
- *   Bulkowski's testing found the opposite: it acts as a bearish continuation 60%
- *   of the time, ranking 60th of 103 patterns overall.
- *   ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
- *   89th of 103 patterns by how often it occurs ([Unique Three River
- *   Bottom](https://thepatternsite.com/Unique3RiverBottom.html)), and it fires 5
- *   times in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlunique3riverLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link Cdlunique3riverOptions}.
- * @returns `begIdx` and the values; see {@link Cdlunique3riverResult}. Each output
- *   is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlunique3river } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlunique3river({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
- * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)
- * @see [`cdl3inside`](https://ta-lib.org/functions/cdl3inside)
- */
+/** @internal */
 export function cdlunique3river(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlunique3riverOptions): Cdlunique3riverResult {
   let routed: Cdlunique3riverResult | null;
   try {

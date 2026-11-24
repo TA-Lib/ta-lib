@@ -44,62 +44,7 @@ export * from '../../func/cdlbelthold.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Single-candle pattern with a long real body that opens at (or near) its extreme.
- * A bullish belt-hold is a long white candle with no/very short lower shadow; a
- * bearish belt-hold is a long black candle with no/very short upper shadow. A
- * white hit is bullish (opens at the low, closes strong); a black hit is bearish
- * (opens at the high, closes weak).
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlbelthold](https://ta-lib.org/functions/cdlbelthold).
- *
- * **Notes**
- * - Does not verify the prior trend that the pattern's bullish/bearish reading
- *   classically assumes.
- * - Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of
- *   103 patterns for pure reversal reliability (bearish reverses 68% of the time)
- *   — though its overall post-breakout performance rank is a more middling
- *   62nd/63rd of 103.
- *   ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlbeltholdLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlbeltholdOptions}.
- * @returns `begIdx` and the values; see {@link CdlbeltholdResult}. Each output is
- *   a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlbelthold } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlbelthold({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlclosingmarubozu`](https://ta-lib.org/functions/cdlclosingmarubozu)
- * @see [`cdlmarubozu`](https://ta-lib.org/functions/cdlmarubozu)
- * @see [`cdllongline`](https://ta-lib.org/functions/cdllongline)
- */
+/** @internal */
 export function cdlbelthold(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlbeltholdOptions): CdlbeltholdResult {
   let routed: CdlbeltholdResult | null;
   try {

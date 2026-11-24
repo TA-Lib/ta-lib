@@ -42,57 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/nvi.ts';
 
-/**
- * Negative Volume Index: a running cumulative index that changes only on days when
- * volume falls versus the prior day, compounding that day's percentage price
- * change. The premise is that quiet, low-volume days reflect the actions of
- * well-informed "smart money", so NVI is read as a proxy for that cohort's
- * positioning.
- *
- * Formula and more info at
- * [ta-lib.org/functions/nvi](https://ta-lib.org/functions/nvi).
- *
- * **Notes**
- * - **The input is assumed positive.** The previous close is the divisor. Near
- *   zero the divisor is small and the output very large; no error is returned. A
- *   series that reaches or crosses zero, such as an oscillator or a spread, has no
- *   meaningful result here.
- * - The index compounds, so it has no upper bound. If a run of large rises ever
- *   pushes it past the largest representable number, the last representable value
- *   is carried forward instead of returning infinity. Real price series stay far
- *   away from that.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link nviLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `close`: Close price of
- *   each bar. `volume`: Volume of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link NviOptions}.
- * @returns `begIdx` and the values; see {@link NviResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { nvi } from 'ta-lib';
- *
- * const close = new Float64Array(252); // your data, oldest first
- * const volume = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = nvi({ close, volume });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- */
+/** @internal */
 export function nvi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: NviOptions): NviResult {
   if (engineRoute.mode !== 0) {
     let routed: NviResult | null;

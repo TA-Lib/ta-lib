@@ -45,77 +45,7 @@ export * from '../../func/macdext.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * MACD variant where the fast, slow, and signal moving averages each use a
- * user-selectable MA type. Outputs the MACD line, its signal line, and their
- * difference (histogram). Hist sign change (MACD crossing its signal line) flags
- * momentum shifts.
- *
- * Formula and more info at
- * [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext).
- *
- * **Notes**
- * - If the slow period is set smaller than the fast period, the fast and slow
- *   periods and their MA types are swapped so the slow moving average is always
- *   the longer one.
- * - A signal period of 1 disables signal-line smoothing for every signal MAType:
- *   the signal equals the MACD line and the histogram is zero.
- * - `MAType.MAMA` ignores its period argument, so it always produces the same
- *   series regardless of the period requested. If both `fastMaType` and
- *   `slowMaType` are set to MAMA, the fast and slow lines are therefore identical
- *   and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one
- *   side to get a meaningful spread.
- *
- * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link macdextLookback} is a success with empty outputs.
- *
- * @param real - Source series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MacdextOptions}.
- * @returns `begIdx` and the values; see {@link MacdextResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { MAType, macdext } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const {
- *   begIdx,
- *   outMacd,
- *   outMacdSignal,
- *   outMacdHist,
- * } = macdext(series, {
- *   fastPeriod: 12,
- *   fastMaType: MAType.SMA,
- *   slowPeriod: 26,
- *   slowMaType: MAType.SMA,
- *   signalPeriod: 9,
- *   signalMaType: MAType.SMA,
- * });
- * console.log(outMacd.length + ' values from bar ' + begIdx + ':');
- * console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
- * console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
- * console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
- * ```
- * @see [`macd`](https://ta-lib.org/functions/macd)
- * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`apo`](https://ta-lib.org/functions/apo)
- * @see [`ppo`](https://ta-lib.org/functions/ppo)
- */
+/** @internal */
 export function macdext(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult {
   let routed: MacdextResult | null;
   try {

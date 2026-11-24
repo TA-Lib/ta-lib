@@ -44,70 +44,7 @@ export * from '../../func/cg.ts';
 
 const WASM_FROM_BARS = 10000;
 
-/**
- * John Ehlers' Center of Gravity oscillator: the balance point of the last
- * `timePeriod` values, each weighted by its value and placed at its position
- * counting back from the current bar, which is position 1, negated so that it
- * rises with price. It is smooth and has essentially no lag. Ehlers reads turning
- * points from it and trades its crossings with a copy of itself delayed by one
- * bar. For a positive series it stays between -timePeriod and -1, and a flat
- * window sits at the midpoint, -(timePeriod+1)/2.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cg](https://ta-lib.org/functions/cg).
- *
- * **Notes**
- * - **The input is assumed positive.** The sum of the window is the divisor. Near
- *   zero the divisor is small and the output very large; no error is returned. A
- *   series that reaches or crosses zero, such as an oscillator or a spread, has no
- *   meaningful result here.
- * - Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE
- *   to reproduce it.
- * - His 2004 book presents the same oscillator shifted up by (timePeriod+1)/2, so
- *   that a flat window reads 0: add (timePeriod+1)/2 to the output to obtain that
- *   form.
- * - Where the window sums to exactly zero the author's listing keeps its previous
- *   value; TA-Lib returns -(timePeriod+1)/2, so every value depends on its own
- *   window alone.
- * - Both sums are exact before the divide, so a window summing to exactly zero is
- *   always recognised and the value does not depend on where the call started. The
- *   exception is a window holding a non-finite value, a value with bits below
- *   2^-1022 (every subnormal, and only values under about 2e-292), or values that
- *   together span more binary digits than the sums can hold exactly (97 at the
- *   default period, 84 at 1000, 58 at 100000): it is summed in floating point,
- *   oldest value first.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cgLookback} is a success with empty outputs.
- *
- * @param real - The series to measure.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CgOptions}.
- * @returns `begIdx` and the values; see {@link CgResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { cg } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cg(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`wma`](https://ta-lib.org/functions/wma)
- * @see [`medprice`](https://ta-lib.org/functions/medprice)
- * @see [`cti`](https://ta-lib.org/functions/cti)
- */
+/** @internal */
 export function cg(real: ArrayLike<number>, options?: CgOptions): CgResult {
   let routed: CgResult | null;
   try {

@@ -44,53 +44,7 @@ export * from '../../func/er.ts';
 
 const WASM_FROM_BARS = 1000;
 
-/**
- * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure
- * from *Smarter Trading* (1995) — the net directional movement over the period
- * divided by the total path travelled to get there. 1.0 is a perfectly efficient
- * (straight-line) move; values near 0 are churn. This is exactly the efficiency
- * ratio [`KAMA`](https://ta-lib.org/functions/kama) computes internally to set its
- * adaptive smoothing constant, exposed standalone and kept bit-identical to it.
- *
- * Formula and more info at
- * [ta-lib.org/functions/er](https://ta-lib.org/functions/er).
- *
- * **Notes**
- * - First output at index `P` (`P` one-bar changes need `P+1` prices). No unstable
- *   period, not start-dependent.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link erLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series (canonically close)
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link ErOptions}.
- * @returns `begIdx` and the values; see {@link ErResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { er } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = er(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`kama`](https://ta-lib.org/functions/kama)
- * @see [`mama`](https://ta-lib.org/functions/mama)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- * @see [`vhf`](https://ta-lib.org/functions/vhf)
- */
+/** @internal */
 export function er(real: ArrayLike<number>, options?: ErOptions): ErResult {
   let routed: ErResult | null;
   try {

@@ -44,58 +44,7 @@ export * from '../../func/cdlrickshawman.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * Single-candle doji with two long shadows whose body sits near the midpoint of
- * the high-low range. It is a neutral indecision signal, not a directional
- * (bullish/bearish) reversal. A hit marks market indecision/uncertainty; neutral,
- * neither bullish nor bearish.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlrickshawman](https://ta-lib.org/functions/cdlrickshawman).
- *
- * **Notes**
- * - Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but
- *   it has no investment implications that I have been able to find" — his testing
- *   shows it continues only 51% of the time, statistically random.
- *   ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlrickshawmanLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlrickshawmanOptions}.
- * @returns `begIdx` and the values; see {@link CdlrickshawmanResult}. Each output
- *   is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlrickshawman } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlrickshawman({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
- * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
- * @see [`cdlhighwave`](https://ta-lib.org/functions/cdlhighwave)
- */
+/** @internal */
 export function cdlrickshawman(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlrickshawmanOptions): CdlrickshawmanResult {
   let routed: CdlrickshawmanResult | null;
   try {

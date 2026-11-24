@@ -44,71 +44,7 @@ export * from '../../func/cdlrisefall3methods.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * A five-candle continuation pattern: a long candle, three small counter-color
- * candles that stay partly within the first candle's high-low range, then a long
- * same-color candle that resumes the trend. Bullish (rising) or bearish (falling)
- * continuation signal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlrisefall3methods](https://ta-lib.org/functions/cdlrisefall3methods).
- *
- * **Notes**
- * - Only the three-small-candle variant is detected; the classic pattern allowing
- *   two or more small candles is not supported.
- * - The middle candles need only partially overlap the first candle's range, not
- *   be fully contained within it.
- * - The prior trend the continuation reading assumes is not verified.
- * - Bulkowski's testing found Rising Three Methods continues 74% of the time and
- *   Falling Three Methods 71%, both as classically labeled, but he flags both
- *   samples as too thin to trust and left Falling Three Methods out of his book.
- *   ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
- *   Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by
- *   how often they occur
- *   ([rising](https://thepatternsite.com/Rising3Methods.html),
- *   [falling](https://thepatternsite.com/Falling3Methods.html)), and it fires 12
- *   times in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlrisefall3methodsLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see
- *   {@link Cdlrisefall3methodsOptions}.
- * @returns `begIdx` and the values; see {@link Cdlrisefall3methodsResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlrisefall3methods } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlrisefall3methods({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
- * @see [`cdl3inside`](https://ta-lib.org/functions/cdl3inside)
- * @see [`cdl3outside`](https://ta-lib.org/functions/cdl3outside)
- */
+/** @internal */
 export function cdlrisefall3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult {
   let routed: Cdlrisefall3methodsResult | null;
   try {

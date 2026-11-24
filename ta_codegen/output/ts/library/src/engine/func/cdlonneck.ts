@@ -44,59 +44,7 @@ export * from '../../func/cdlonneck.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * A two-candle on-neck pattern: a long black candle followed by a white candle
- * that opens below the prior candle's low and closes right at that low. Bearish
- * continuation signal. A hit is bearish (bearish continuation); the code does not
- * verify the assumed prior downtrend.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlonneck](https://ta-lib.org/functions/cdlonneck).
- *
- * **Notes**
- * - The bearish-continuation reading assumes a prior downtrend, which is not
- *   verified.
- * - Bulkowski's testing found the bearish continuation holds only 56% of the time,
- *   which he explicitly calls "near random."
- *   ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlonneckLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlonneckOptions}.
- * @returns `begIdx` and the values; see {@link CdlonneckResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlonneck } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlonneck({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlinneck`](https://ta-lib.org/functions/cdlinneck)
- * @see [`cdlthrusting`](https://ta-lib.org/functions/cdlthrusting)
- * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
- */
+/** @internal */
 export function cdlonneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckResult {
   let routed: CdlonneckResult | null;
   try {

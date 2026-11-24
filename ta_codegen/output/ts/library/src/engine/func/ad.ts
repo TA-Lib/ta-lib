@@ -45,50 +45,7 @@ export * from '../../func/ad.ts';
 const WASM_FROM_BARS = 1000;
 const WASM_TO_BARS = 5000;
 
-/**
- * Chaikin Accumulation/Distribution Line, a cumulative volume-flow indicator. Sums
- * a volume-weighted money-flow multiplier per bar to gauge buying vs. selling
- * pressure. Rising line = accumulation (buying pressure); falling = distribution.
- *
- * Formula and more info at
- * [ta-lib.org/functions/ad](https://ta-lib.org/functions/ad).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link adLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price of
- *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
- *   `volume`: Volume of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link AdOptions}.
- * @returns `begIdx` and the values; see {@link AdResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { ad } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- * const volume = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = ad({ high, low, close, volume });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`adosc`](https://ta-lib.org/functions/adosc)
- * @see [`obv`](https://ta-lib.org/functions/obv)
- */
+/** @internal */
 export function ad(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdOptions): AdResult {
   let routed: AdResult | null;
   try {

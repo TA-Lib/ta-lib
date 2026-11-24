@@ -44,46 +44,7 @@ export * from '../../func/tsf.ts';
 
 const WASM_FROM_BARS = 250;
 
-/**
- * Time Series Forecast: fits a least-squares linear regression line over the last
- * N bars and projects it one x-step beyond LINEARREG. Same regression as LINEARREG
- * but evaluated at x=period instead of x=period-1.
- *
- * Formula and more info at
- * [ta-lib.org/functions/tsf](https://ta-lib.org/functions/tsf).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link tsfLookback} is a success with empty outputs.
- *
- * @param real - Input series to regress and forecast.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link TsfOptions}.
- * @returns `begIdx` and the values; see {@link TsfResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { tsf } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = tsf(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
- * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
- * @see [`linearregIntercept`](https://ta-lib.org/functions/linearreg_intercept)
- * @see [`linearregAngle`](https://ta-lib.org/functions/linearreg_angle)
- */
+/** @internal */
 export function tsf(real: ArrayLike<number>, options?: TsfOptions): TsfResult {
   let routed: TsfResult | null;
   try {

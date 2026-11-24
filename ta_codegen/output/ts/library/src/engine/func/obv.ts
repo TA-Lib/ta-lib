@@ -42,45 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/obv.ts';
 
-/**
- * On Balance Volume: a running cumulative total of volume, added on up-price bars
- * and subtracted on down-price bars. Relates volume flow to price direction.
- *
- * Formula and more info at
- * [ta-lib.org/functions/obv](https://ta-lib.org/functions/obv).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link obvLookback} is a success with empty outputs.
- *
- * @param real - Price series, typically close.
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `volume`: Volume of
- *   each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link ObvOptions}.
- * @returns `begIdx` and the values; see {@link ObvResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { obv } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- * const volume = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = obv(series, { volume });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- */
+/** @internal */
 export function obv(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvResult {
   if (engineRoute.mode !== 0) {
     let routed: ObvResult | null;

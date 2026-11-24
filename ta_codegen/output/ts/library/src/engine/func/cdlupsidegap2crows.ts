@@ -44,63 +44,7 @@ export * from '../../func/cdlupsidegap2crows.ts';
 
 const WASM_FROM_BARS = 1000;
 
-/**
- * A three-candle bearish reversal pattern: a long white candle, then a small black
- * candle gapping up (a gap between the real bodies), then a black candle that
- * engulfs the second candle's real body but still closes above the first candle's
- * close. Signals a bearish reversal. A hit (-100) is a bearish reversal signal,
- * most meaningful in an uptrend.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlupsidegap2crows](https://ta-lib.org/functions/cdlupsidegap2crows).
- *
- * **Notes**
- * - The pattern classically assumes a prior uptrend, but this function does not
- *   verify any trend.
- * - Although classically a bearish reversal, Bulkowski's testing found this
- *   actually acts as a bullish continuation 60% of the time, and even when it does
- *   work "the price move is often lousy."
- *   ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))
- * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
- *   75th of 103 patterns by how often it occurs ([Upside Gap Two
- *   Crows](https://thepatternsite.com/UpGapTwoCrows.html)).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlupsidegap2crowsLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link Cdlupsidegap2crowsOptions}.
- * @returns `begIdx` and the values; see {@link Cdlupsidegap2crowsResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlupsidegap2crows } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlupsidegap2crows({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdl2crows`](https://ta-lib.org/functions/cdl2crows)
- * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
- */
+/** @internal */
 export function cdlupsidegap2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult {
   let routed: Cdlupsidegap2crowsResult | null;
   try {

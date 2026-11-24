@@ -13,8 +13,8 @@
   2. Contents. The tarball holds exactly package.json, README.md, LICENSE and
      one .js plus one .d.ts per src/ module, a hand-written src/ .d.ts standing
      for a module the build writes; every packed .js opens with the
-     licence and holds no other comment and no class static block, and every
-     function's .d.ts keeps its TSDoc; LICENSE and README are
+     licence and holds no other comment and no class static block, every
+     function's .d.ts keeps its TSDoc and no routed one repeats it; LICENSE and README are
      byte-identical to their sources; the version is VERSION; every code
      `exports` subpath, and each condition nested in one, lists "types" first
      and "default" last, and each non-root one has a typesVersions entry naming
@@ -168,14 +168,23 @@ def tarball_entries(path):
         return {m.name: tar.extractfile(m).read() for m in tar.getmembers() if m.isfile()}
 
 
+STAR_EXPORT = re.compile(r"^export\s+\*\s+from\s+'(\.[^']*)\.ts';")
+
+
 def internal_names():
     """({top-level name: module}, [(module, class, member)], failures) for every
-    declaration whose doc comment carries @internal."""
+    declaration whose doc comment carries @internal, except one whose name an
+    `export * from` in its module supplies untagged: stripping it leaves that
+    declaration, so the name is public."""
     tops, members, failures = {}, [], []
+    stars, declared, tagged = {}, {}, []
     for module in src_modules():
         path = os.path.join(SRC_DIR, module + ".ts")
         with open(path, encoding="utf-8") as f:
             lines = f.read().splitlines()
+        stars[module] = [os.path.normpath(os.path.join(os.path.dirname(module), m.group(1))).replace(os.sep, "/")
+                         for m in map(STAR_EXPORT.match, lines) if m]
+        declared[module] = {m.group(1) for m in map(TOP_DECL.match, lines) if m}
         cls = None
         i = 0
         while i < len(lines):
@@ -199,7 +208,7 @@ def internal_names():
                     reexport = re.match(r"^export\s+(?:type\s+)?\{([^}]*)\}", decl)
                     member = MEMBER_DECL.match(decl) if decl[:1].isspace() else None
                     if top:
-                        tops[top.group(1)] = module
+                        tagged.append((top.group(1), module))
                     elif reexport:
                         for part in reexport.group(1).split(","):
                             if part.strip():
@@ -210,6 +219,10 @@ def internal_names():
                         failures.append("%s/src/%s.ts:%d: cannot read the declaration "
                                         "@internal tags: %r" % (LIB_REL, module, j + 1, decl))
             i += 1
+    internal = set(tagged) | {(n, m) for n, m in tops.items()}
+    for name, module in tagged:
+        if not any(name in declared.get(t, ()) and (name, t) not in internal for t in stars[module]):
+            tops[name] = module
     return tops, members, failures
 
 
@@ -376,16 +389,23 @@ def dist_comment_failures(entries):
     and holds no other comment; every function's .d.ts keeps its TSDoc."""
     js = sorted(e for e in entries if e.startswith("package/dist/") and e.endswith(".js"))
     dts = sorted(e for e in entries if e.startswith("package/dist/func/") and e.endswith(".d.ts"))
+    routed = [e for e in entries if e.startswith("package/dist/engine/func/") and e.endswith(".d.ts")]
     bad = [e for e in js
            if not entries[e].startswith(b"/*! TA-LIB Copyright") or entries[e].count(b"/*") != 1
            or any(line.lstrip().startswith(b"//") for line in entries[e].splitlines())]
     bad += [e for e in dts if b"/**" not in entries[e]]
+    bad += [e for e in routed if b"/**" in entries[e]]
     failures = []
     if bad:
-        failures.append("JavaScript with a comment beyond the licence, or a function's .d.ts without TSDoc: %s"
+        failures.append("JavaScript with a comment beyond the licence, a function's .d.ts without TSDoc, "
+                        "or a routed .d.ts repeating it: %s"
                         % ", ".join(e[len("package/"):] for e in bad[:10]))
-    print("--- comments checked: %d .js hold the licence alone, %d function .d.ts keep their TSDoc"
-          % (len(js) - sum(e in bad for e in js), len(dts) - sum(e in bad for e in dts)))
+    if len(routed) < 200:
+        failures.append("only %d routed .d.ts in dist/engine/func/" % len(routed))
+    print("--- comments checked: %d .js hold the licence alone, %d function .d.ts keep their TSDoc, "
+          "%d routed .d.ts hold none"
+          % (len(js) - sum(e in bad for e in js), len(dts) - sum(e in bad for e in dts),
+             len(routed) - sum(e in bad for e in routed)))
     return failures
 
 

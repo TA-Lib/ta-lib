@@ -44,63 +44,7 @@ export * from '../../func/cdldojistar.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * A two-candle reversal pattern: a long real body followed by a doji whose real
- * body gaps away from it (up after a white body, down after a black body). Signals
- * a potential reversal of the prevailing trend. A hit flags a likely trend
- * reversal; true direction depends on the prevailing trend (bullish in a
- * downtrend, bearish in an uptrend), which the code does not itself verify.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdldojistar](https://ta-lib.org/functions/cdldojistar).
- *
- * **Notes**
- * - Does not verify the prior trend the reversal signal classically assumes.
- * - Bulkowski's testing contradicts the classic reading for the bullish case:
- *   theory says a bullish Doji Star (gapping down after a black candle) should be
- *   a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64%
- *   of the time — almost 2 out of 3, the opposite of the textbook signal.
- *   ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdldojistarLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdldojistarOptions}.
- * @returns `begIdx` and the values; see {@link CdldojistarResult}. Each output is
- *   a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdldojistar } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdldojistar({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)
- * @see [`cdleveningdojistar`](https://ta-lib.org/functions/cdleveningdojistar)
- * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
- * @see [`cdlmorningstar`](https://ta-lib.org/functions/cdlmorningstar)
- * @see [`cdleveningstar`](https://ta-lib.org/functions/cdleveningstar)
- */
+/** @internal */
 export function cdldojistar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojistarOptions): CdldojistarResult {
   let routed: CdldojistarResult | null;
   try {

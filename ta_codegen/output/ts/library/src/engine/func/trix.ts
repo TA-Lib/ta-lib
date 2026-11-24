@@ -44,54 +44,7 @@ export * from '../../func/trix.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator
- * that filters out price moves shorter than the chosen period. Oscillates around
- * zero; sign, zero-crossings and slope signal momentum direction.
- *
- * Formula and more info at
- * [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix).
- *
- * **Notes**
- * - **The input is assumed positive.** The previous triple-smoothed value is the
- *   divisor. Near zero the divisor is small and the output very large; no error is
- *   returned. A series that reaches or crosses zero, such as an oscillator or a
- *   spread, has no meaningful result here.
- * - The final rate-of-change step yields 0 when the previous smoothed value is
- *   exactly zero, rather than being undefined.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link trixLookback} is a success with empty outputs.
- *
- * @param real - Source series to smooth.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link TrixOptions}.
- * @returns `begIdx` and the values; see {@link TrixResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { trix } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = trix(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`ema`](https://ta-lib.org/functions/ema)
- * @see [`roc`](https://ta-lib.org/functions/roc)
- * @see [`rocr`](https://ta-lib.org/functions/rocr)
- * @see [`tema`](https://ta-lib.org/functions/tema)
- */
+/** @internal */
 export function trix(real: ArrayLike<number>, options?: TrixOptions): TrixResult {
   let routed: TrixResult | null;
   try {

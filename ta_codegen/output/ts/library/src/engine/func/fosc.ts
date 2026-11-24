@@ -44,59 +44,7 @@ export * from '../../func/fosc.ts';
 
 const WASM_FROM_BARS = 500;
 
-/**
- * Forecast Oscillator: the percentage by which the close deviates from the Time
- * Series Forecast that was made one bar earlier for the current bar. Positive
- * means price came in above what the regression projected, negative below; the
- * value oscillates around zero and crosses it whenever price meets its own
- * forecast. Persistent readings far from zero say the trend is running ahead of,
- * or lagging, its regression line.
- *
- * Formula and more info at
- * [ta-lib.org/functions/fosc](https://ta-lib.org/functions/fosc).
- *
- * **Notes**
- * - **The input is assumed positive.** The current value is the divisor. Where it
- *   is exactly 0 the output is 0. Near zero the divisor is small and the output
- *   very large; no error is returned. A series that reaches or crosses zero, such
- *   as an oscillator or a spread, has no meaningful result here.
- * - Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the
- *   close to the regression value of the window *ending at the same bar*, with no
- *   lag. FOSC is the lagged form Chande and Achelis describe.
- * - The default window is Chande's own suggestion, shorter than the one TA-Lib's
- *   TSF and LINEARREG default to.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link foscLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link FoscOptions}.
- * @returns `begIdx` and the values; see {@link FoscResult}. Each output is a view
- *   of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { fosc } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = fosc(series, { timePeriod: 5 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`tsf`](https://ta-lib.org/functions/tsf)
- * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
- * @see [`cmou`](https://ta-lib.org/functions/cmou)
- */
+/** @internal */
 export function fosc(real: ArrayLike<number>, options?: FoscOptions): FoscResult {
   let routed: FoscResult | null;
   try {

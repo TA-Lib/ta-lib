@@ -42,62 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, isReal, optio
 
 export * from '../../func/si.ts';
 
-/**
- * Wilder's Swing Index: one number rating each bar against the bar before it, from
- * both bars' open and close and the current bar's high and low, signed by the
- * direction of the swing. A strong close above the prior close on a wide range
- * reads high and positive, a strong down swing reads high and negative. It is
- * scaled against the limit move, the largest one-bar move the market allows, and
- * stays between -100 and +100 while every move is within that limit. J. Welles
- * Wilder Jr. introduced it in 1978 and trades its running total, ASI.
- *
- * Formula and more info at
- * [ta-lib.org/functions/si](https://ta-lib.org/functions/si).
- *
- * **Notes**
- * - Wilder rounds each value to a whole number when working by hand; the output is
- *   not rounded.
- * - A bar that moves more than the limit move can read beyond -100 or +100; the
- *   output is not clamped.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link siLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link SiOptions}.
- * @returns `begIdx` and the values; see {@link SiResult}. Each output is a view of
- *   its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, a real parameter that is not
- *   a number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { si } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = si({ open, high, low, close }, { limitMove: 3 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`asi`](https://ta-lib.org/functions/asi)
- * @see [`wad`](https://ta-lib.org/functions/wad)
- * @see [`trange`](https://ta-lib.org/functions/trange)
- * @see [`bop`](https://ta-lib.org/functions/bop)
- */
+/** @internal */
 export function si(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SiOptions): SiResult {
   if (engineRoute.mode !== 0) {
     let routed: SiResult | null;

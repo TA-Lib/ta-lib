@@ -44,60 +44,7 @@ export * from '../../func/cdlinvertedhammer.ts';
 
 const WASM_FROM_BARS = 60;
 
-/**
- * Single-candle pattern: a small real body with a long upper shadow and
- * little-to-no lower shadow that gaps down from the prior candle. A hit flags a
- * potential bullish reversal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlinvertedhammer](https://ta-lib.org/functions/cdlinvertedhammer).
- *
- * **Notes**
- * - Does not verify the preceding downtrend that the pattern classically assumes;
- *   it only checks the gap down from the immediately preceding candle.
- * - Despite the bullish-reversal label, Bulkowski's testing found this actually
- *   behaves as a bearish continuation 65% of the time — yet its overall
- *   post-breakout performance rank (6th of 103) is among the best of all
- *   candlestick patterns he studied.
- *   ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlinvertedhammerLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlinvertedhammerOptions}.
- * @returns `begIdx` and the values; see {@link CdlinvertedhammerResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlinvertedhammer } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlinvertedhammer({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlhammer`](https://ta-lib.org/functions/cdlhammer)
- * @see [`cdlshootingstar`](https://ta-lib.org/functions/cdlshootingstar)
- * @see [`cdlhangingman`](https://ta-lib.org/functions/cdlhangingman)
- */
+/** @internal */
 export function cdlinvertedhammer(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult {
   let routed: CdlinvertedhammerResult | null;
   try {

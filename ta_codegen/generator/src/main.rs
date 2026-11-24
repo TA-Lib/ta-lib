@@ -830,7 +830,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::ts::generate_package_files(all_funcs, &root, &ts_lib);
         backends::ts_abstract::generate(all_funcs, &enums, &ts_lib.join("src/abstract"));
         backends::ts_doc::write_example_tests(all_funcs, &enums, &ts_lib.join("test/gen"));
-        backends::ts_engine::generate(all_funcs, &enums, &registry, &root, &ts_lib);
+        backends::ts_engine::generate(all_funcs, &enums, &root, &ts_lib);
         backends::ts_engine::generate_parity_test(all_funcs, &enums, &ts_lib.join("test"));
         backends::ts_engine::generate_routing_test(all_funcs, &root, &ts_lib.join("test"));
     }
@@ -1214,11 +1214,13 @@ struct BuildStep {
 /// and holds no other comment, and every function's `.d.ts` keeps its TSDoc.
 /// Floored, so an empty `dist/` cannot pass.
 fn check_dist_comments(dist: &Path) -> bool {
-    let label = "  Checking dist/ for the licence alone in each .js and the TSDoc in each function's .d.ts...";
+    let label = "  Checking dist/ for the licence alone in each .js and the TSDoc in each function's .d.ts, once...";
     let mut js = Vec::new();
     collect_files(dist, "js", &[], &mut js);
     let mut dts = Vec::new();
     collect_files(&dist.join("func"), "ts", &[], &mut dts);
+    let mut routed = Vec::new();
+    collect_files(&dist.join("engine/func"), "ts", &[], &mut routed);
     let rel = |p: &PathBuf| p.strip_prefix(dist).unwrap_or(p).display().to_string();
     let mut bad: Vec<String> = js
         .iter()
@@ -1235,8 +1237,19 @@ fn check_dist_comments(dist: &Path) -> bool {
             .filter(|p| !std::fs::read_to_string(p).unwrap_or_default().contains("/**"))
             .map(rel),
     );
-    if js.len() < 240 || dts.len() < 200 {
-        println!("{label} FAILED ({} .js, {} func .d.ts; expected every module)", js.len(), dts.len());
+    bad.extend(
+        routed
+            .iter()
+            .filter(|p| std::fs::read_to_string(p).unwrap_or_default().contains("/**"))
+            .map(rel),
+    );
+    if js.len() < 240 || dts.len() < 200 || routed.len() < 200 {
+        println!(
+            "{label} FAILED ({} .js, {} func .d.ts, {} routed .d.ts; expected every module)",
+            js.len(),
+            dts.len(),
+            routed.len()
+        );
         return false;
     }
     if !bad.is_empty() {
@@ -1247,7 +1260,7 @@ fn check_dist_comments(dist: &Path) -> bool {
         );
         return false;
     }
-    println!("{label} OK ({} .js, {} .d.ts)", js.len(), dts.len());
+    println!("{label} OK ({} .js, {} .d.ts, {} routed .d.ts)", js.len(), dts.len(), routed.len());
     true
 }
 

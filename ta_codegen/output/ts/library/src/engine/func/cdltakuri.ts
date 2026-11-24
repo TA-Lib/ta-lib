@@ -44,56 +44,7 @@ export * from '../../func/cdltakuri.ts';
 
 const WASM_FROM_BARS = 30;
 
-/**
- * Single-candle pattern: a doji whose open and close sit at the high (no/very
- * short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with an
- * exceptionally long lower shadow. Emitted as a positive signal, but its
- * directional meaning depends on the prevailing trend, which the code does not
- * check. A hit marks a takuri (dragonfly-doji) line; a potential reversal only
- * when read against the trend (typically a bottom/bullish reversal after a
- * downtrend), which the code itself does not verify.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdltakuri](https://ta-lib.org/functions/cdltakuri).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdltakuriLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdltakuriOptions}.
- * @returns `begIdx` and the values; see {@link CdltakuriResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdltakuri } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdltakuri({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdldragonflydoji`](https://ta-lib.org/functions/cdldragonflydoji)
- * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
- * @see [`cdlhammer`](https://ta-lib.org/functions/cdlhammer)
- * @see [`cdlgravestonedoji`](https://ta-lib.org/functions/cdlgravestonedoji)
- */
+/** @internal */
 export function cdltakuri(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltakuriOptions): CdltakuriResult {
   let routed: CdltakuriResult | null;
   try {

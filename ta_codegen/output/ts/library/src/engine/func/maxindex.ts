@@ -42,49 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/maxindex.ts';
 
-/**
- * Returns the index of the highest input value within a rolling window of
- * timePeriod bars. Same as MAX but outputs the location instead of the value.
- *
- * Formula and more info at
- * [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex).
- *
- * **Notes**
- * - When several bars in a window share the highest value, the index of the most
- *   recent of them is returned.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link maxindexLookback} is a success with empty outputs.
- *
- * @param real - Input series to scan.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link MaxindexOptions}.
- * @returns `begIdx` and the values; see {@link MaxindexResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { maxindex } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = maxindex(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`max`](https://ta-lib.org/functions/max)
- * @see [`minindex`](https://ta-lib.org/functions/minindex)
- * @see [`min`](https://ta-lib.org/functions/min)
- * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
- */
+/** @internal */
 export function maxindex(real: ArrayLike<number>, options?: MaxindexOptions): MaxindexResult {
   if (engineRoute.mode !== 0) {
     let routed: MaxindexResult | null;

@@ -44,65 +44,7 @@ export * from '../../func/percentrank.ts';
 
 const WASM_FROM_BARS = 125;
 
-/**
- * Percent Rank: where the current value sits inside the distribution of the values
- * that came before it, as a percentage. Each bar is compared against the
- * `timePeriod` values immediately preceding it — the current bar is not part of
- * its own comparison set — and the output is the share of them it exceeds. 0 means
- * the current value is at or below every one of them, 100 means it is above all of
- * them, 50 means it is above half. It is a distribution-relative reading rather
- * than a price-relative one: unlike an oscillator built from ranges or averages,
- * it says nothing about how far the value moved, only how many of its recent
- * predecessors it overtook. That makes it flat-scaled across instruments and
- * directly comparable between them. It is best known as the third leg of Connors'
- * ConnorsRSI, applied there to one-day returns rather than to price.
- *
- * Formula and more info at
- * [ta-lib.org/functions/percentrank](https://ta-lib.org/functions/percentrank).
- *
- * **Notes**
- * - Ties are strict: a predecessor equal to the current value is not counted. A
- *   constant series therefore reports 0 on every bar. TradingView's
- *   `ta.percentrank` counts ties as well (less-than-or-equal), which reports 100
- *   on that same series; Pine parity is a different function, not a variant of
- *   this one, and the two agree only on windows with no repeated values.
- * - +0.0 and -0.0 compare equal, so a sign-only difference never contributes to
- *   the count.
- * - Finite input is a precondition. A NaN in the window fails every comparison, so
- *   it silently lowers the rank instead of propagating: the output stays finite
- *   and no error is reported.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link percentrankLookback} is a success with empty outputs.
- *
- * @param real - Source price/value series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link PercentrankOptions}.
- * @returns `begIdx` and the values; see {@link PercentrankResult}. Each output is
- *   a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { percentrank } from 'ta-lib';
- *
- * const series = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = percentrank(series, { timePeriod: 100 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
- * ```
- * @see [`rsi`](https://ta-lib.org/functions/rsi)
- * @see [`willr`](https://ta-lib.org/functions/willr)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- */
+/** @internal */
 export function percentrank(real: ArrayLike<number>, options?: PercentrankOptions): PercentrankResult {
   let routed: PercentrankResult | null;
   try {

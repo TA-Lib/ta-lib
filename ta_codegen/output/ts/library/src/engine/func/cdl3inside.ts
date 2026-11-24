@@ -44,62 +44,7 @@ export * from '../../func/cdl3inside.ts';
 
 const WASM_FROM_BARS = 500;
 
-/**
- * A three-candle reversal pattern: a long real body, then a short real body
- * totally engulfed by it (a harami), then a third candle of opposite color to the
- * first that closes past the first candle's open. Signals a bullish reversal
- * (three inside up, significant in a downtrend) or a bearish reversal (three
- * inside down, significant in an uptrend).
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdl3inside](https://ta-lib.org/functions/cdl3inside).
- *
- * **Notes**
- * - Does not verify the prior trend the pattern classically assumes (three inside
- *   up is meaningful in a downtrend, three inside down in an uptrend).
- * - Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65%
- *   of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a
- *   bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better
- *   than a coin flip.
- *   ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdl3insideLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link Cdl3insideOptions}.
- * @returns `begIdx` and the values; see {@link Cdl3insideResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdl3inside } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdl3inside({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
- * @see [`cdl3outside`](https://ta-lib.org/functions/cdl3outside)
- * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
- */
+/** @internal */
 export function cdl3inside(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3insideOptions): Cdl3insideResult {
   let routed: Cdl3insideResult | null;
   try {

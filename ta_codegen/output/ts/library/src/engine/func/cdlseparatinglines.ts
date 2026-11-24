@@ -44,59 +44,7 @@ export * from '../../func/cdlseparatinglines.ts';
 
 const WASM_FROM_BARS = 250;
 
-/**
- * A two-candle continuation pattern: the second candle opposes the first in color,
- * opens at the same price as the first, and is a long-bodied belt hold. Bullish
- * (white second candle) or bearish (black second candle) continuation signal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlseparatinglines](https://ta-lib.org/functions/cdlseparatinglines).
- *
- * **Notes**
- * - A prior trend is not verified, nor that the pattern aligns with it.
- * - Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd
- *   of 103 patterns by how often they occur
- *   ([bullish](https://thepatternsite.com/SeparateLinesBull.html),
- *   [bearish](https://thepatternsite.com/SeparateLinesBear.html)). It fires more
- *   often in crypto: 120 times in [about 16,000 daily
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlseparatinglinesLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlseparatinglinesOptions}.
- * @returns `begIdx` and the values; see {@link CdlseparatinglinesResult}. Each
- *   output is a view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlseparatinglines } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlseparatinglines({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlbelthold`](https://ta-lib.org/functions/cdlbelthold)
- * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
- */
+/** @internal */
 export function cdlseparatinglines(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlseparatinglinesOptions): CdlseparatinglinesResult {
   let routed: CdlseparatinglinesResult | null;
   try {

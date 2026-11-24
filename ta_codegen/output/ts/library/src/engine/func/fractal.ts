@@ -44,75 +44,7 @@ export * from '../../func/fractal.ts';
 
 const WASM_FROM_BARS = 1000;
 
-/**
- * Williams Fractal: a causal swing-pivot detector. A bar is a swing high when its
- * high strictly exceeds the highs of the `leftBars` bars before it and the
- * `rightBars` bars after it; a swing low is the mirror on the lows. Bill Williams'
- * original is the symmetric five-candle case; independent left and right arms
- * generalise it. The right arm cannot be known until it has closed, so the value
- * is written on the bar that completes the pivot, `rightBars` bars after the pivot
- * itself. Each output value therefore describes the bar `rightBars` back, not the
- * bar it is written at: a flag at output index `k` names input bar
- * `begIdx + k - rightBars`, whose price is `high[...]` / `low[...]` at that index.
- * The display shift both outputs report, `-rightBars`, is that offset: a chart
- * draws each flag that many bars to the left. The two outputs are independent
- * flags rather than one signed value, because an outside bar can be a swing high
- * and a swing low at once.
- *
- * Formula and more info at
- * [ta-lib.org/functions/fractal](https://ta-lib.org/functions/fractal).
- *
- * **Notes**
- * - Strict on both sides: a bar tied with any other bar of its window is not a
- *   pivot. TradingView's Pine runtime differs: its `ta.pivothigh` / `ta.pivotlow`
- *   let a tie with an older bar stand and let a tie with a newer bar cancel, i.e.
- *   non-strict left and strict right — so a plateau Pine reports as a pivot is not
- *   one here.
- * - Each output is decided on its own side: a high tied with any other high in the
- *   window forces `outSwingHigh` to 0 while leaving `outSwingLow` free to fire
- *   100, and the mirror holds. Only a window flat in both series emits 0 on both.
- *
- * `outSwingHigh[k]` is the value at input bar `begIdx + k`; every output is
- * exactly as long as the number of values written, and nothing is padded. A range
- * that ends before {@link fractalLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `high`: High price
- *   series. `low`: Low price series.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link FractalOptions}.
- * @returns `begIdx` and the values; see {@link FractalResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an integer parameter that is
- *   not an int32, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { fractal } from 'ta-lib';
- *
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
- *   leftBars: 2,
- *   rightBars: 2,
- * });
- * console.log(outSwingHigh.length + ' values from bar ' + begIdx + ':');
- * console.log('outSwingHigh = [' + outSwingHigh[0] + ', ..., ' + outSwingHigh[outSwingHigh.length - 1] + ']');
- * console.log('outSwingLow = [' + outSwingLow[0] + ', ..., ' + outSwingLow[outSwingLow.length - 1] + ']');
- * ```
- * @see [`aroon`](https://ta-lib.org/functions/aroon)
- * @see [`maxindex`](https://ta-lib.org/functions/maxindex)
- * @see [`minindex`](https://ta-lib.org/functions/minindex)
- * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
- */
+/** @internal */
 export function fractal(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FractalOptions): FractalResult {
   let routed: FractalResult | null;
   try {

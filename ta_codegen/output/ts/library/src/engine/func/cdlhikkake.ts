@@ -42,63 +42,7 @@ import { engineDown, engineFor, engineRoute, fellThrough, isInt32, optionalInt32
 
 export * from '../../func/cdlhikkake.ts';
 
-/**
- * A 3-bar pattern: an inside bar followed by a false breakout, optionally later
- * confirmed by a follow-through bar. Signals a bullish or bearish
- * reversal/continuation depending on the breakout direction. A false-breakout
- * setup: positive = bullish, negative = bearish; magnitude 200 flags the
- * confirming bar.
- *
- * Formula and more info at
- * [ta-lib.org/functions/cdlhikkake](https://ta-lib.org/functions/cdlhikkake).
- *
- * **Notes**
- * - The name comes from the Japanese word for a deceptive move or "trap" —
- *   fitting, since the pattern exists to catch traders acting on a false breakout.
- *   Bulkowski's testing of the confirmed pattern found the trap itself barely
- *   beats a coin flip: the bullish variant continues as expected only 52% of the
- *   time and the bearish variant exactly 50% ("random"), both ranking in the
- *   bottom fifth (83rd-84th of 105) for post-breakout performance.
- *   ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))
- * - A bar that is both a new setup and the confirmation of an earlier one reports
- *   the new setup; the earlier one ends unconfirmed.
- *
- * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
- * long as the number of values written, and nothing is padded. A range that ends
- * before {@link cdlhikkakeLookback} is a success with empty outputs.
- *
- * @param prices - One series per price component this function reads, all of one
- *   length; other components may be present and are ignored. `open`: Open price of
- *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
- * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
- *   `core` and output buffers, each optional; see {@link CdlhikkakeOptions}.
- * @returns `begIdx` and the values; see {@link CdlhikkakeResult}. Each output is a
- *   view of its buffer, the caller's or a new one.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
- *   option key the function does not have, a `core` that is not a `Core`, an absent
- *   or empty input, a range bound that is not an int32, an input too short for the
- *   range, a buffer that is empty, too short or of the wrong type or a buffer
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { cdlhikkake } from 'ta-lib';
- *
- * const open = new Float64Array(252); // your data, oldest first
- * const high = new Float64Array(252); // your data, oldest first
- * const low = new Float64Array(252); // your data, oldest first
- * const close = new Float64Array(252); // your data, oldest first
- *
- * const { begIdx, values } = cdlhikkake({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0] + ', ..., ' + values[values.length - 1] + ']');
- * ```
- * @see [`cdlhikkakemod`](https://ta-lib.org/functions/cdlhikkakemod)
- * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
- */
+/** @internal */
 export function cdlhikkake(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakeOptions): CdlhikkakeResult {
   if (engineRoute.mode !== 0) {
     let routed: CdlhikkakeResult | null;
